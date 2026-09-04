@@ -4,7 +4,6 @@ import { useMemo } from "react";
 import Link from "next/link";
 import { Globe, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
@@ -232,40 +231,59 @@ export function ClientsListTable({
           </div>
         )}
         {sorted.map((client) => (
-          <Card key={client.id} className="rounded-xl border border-border/80 bg-card shadow-xs transition-colors hover:bg-muted/40">
-            <CardContent className="p-4">
-              <div className="space-y-1.5">
-                <Link
-                  href={`/app/clients/${client.id}`}
-                  className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
-                >
-                  {client.name}
-                </Link>
-                {client.companyName && (
-                  <p className="text-xs text-muted-foreground">
-                    {client.companyName}
-                  </p>
-                )}
-                <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
-                  <Badge variant="outline" className="text-[10px] rounded-md border-border/70">
-                    {client.projectCount} {t("proyek", "projects")}
-                  </Badge>
+          <div
+            key={client.id}
+            className="rounded-xl border border-border/80 bg-card p-3.5 space-y-2.5 shadow-xs transition-colors hover:bg-muted/40"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
+                  {client.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="min-w-0">
+                  <Link
+                    href={`/app/clients/${client.id}`}
+                    className="text-sm font-semibold text-foreground hover:text-primary transition-colors truncate block"
+                  >
+                    {client.name}
+                  </Link>
+                  {client.companyName && (
+                    <p className="text-xs text-muted-foreground truncate">
+                      {client.companyName}
+                    </p>
+                  )}
+                </div>
+              </div>
+              <Badge
+                variant="outline"
+                className={
+                  client.status === "active"
+                    ? "gap-1 text-[10px] font-medium border-primary/30 bg-primary/10 text-primary rounded-full px-2 py-0 h-5 shrink-0"
+                    : "gap-1 text-[10px] font-medium border-border/80 bg-muted/60 text-muted-foreground rounded-full px-2 py-0 h-5 shrink-0"
+                }
+              >
+                <span className={`h-1 w-1 rounded-full ${client.status === "active" ? "bg-primary" : "bg-muted-foreground"}`} />
+                {statusLabel(client.status)}
+              </Badge>
+            </div>
+
+            <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/60">
+              <div className="flex items-center gap-2">
+                <Badge variant="outline" className="text-[10px] rounded-md border-border/70 h-5 px-2 font-normal text-muted-foreground">
+                  {client.projectCount} {t("proyek", "projects")}
+                </Badge>
+                {client.portalEnabled ? (
                   <Badge
                     variant="outline"
-                    className={
-                      client.status === "active"
-                        ? "gap-1 text-[10px] font-medium border-primary/30 bg-primary/10 text-primary rounded-full px-2"
-                        : "gap-1 text-[10px] font-medium border-border/80 bg-muted/60 text-muted-foreground rounded-full px-2"
-                    }
+                    className="gap-1 text-[10px] font-medium border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-full px-2 py-0 h-5"
                   >
-                    <span className={`h-1 w-1 rounded-full ${client.status === "active" ? "bg-primary" : "bg-muted-foreground"}`} />
-                    {statusLabel(client.status)}
+                    <Globe className="h-2.5 w-2.5" /> {t("Portal Aktif", "Portal Active")}
                   </Badge>
-                </div>
-                {canWrite ? <div className="pt-2"><ClientStatusEditDialog clientId={client.id} clientName={client.name} currentStatus={client.status} /></div> : null}
+                ) : null}
               </div>
-            </CardContent>
-          </Card>
+              {canWrite ? <ClientStatusEditDialog clientId={client.id} clientName={client.name} currentStatus={client.status} /> : null}
+            </div>
+          </div>
         ))}
       </div>
     </>

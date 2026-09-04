@@ -184,23 +184,46 @@ export function TasksListTable({
               }}
               members={members}
               defaultOpen={isFocus}
+              className="block"
             >
               <div
                 id={isFocus ? `task-${task.id}` : undefined}
-                className={`cursor-pointer rounded-lg border bg-card p-4 space-y-2 transition-colors hover:bg-muted/50 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
+                className={`cursor-pointer rounded-xl border border-border/80 bg-card p-3.5 space-y-2.5 shadow-xs transition-colors hover:bg-muted/40 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
               >
                 <div className="flex items-start justify-between gap-2">
-                  <p className="text-sm font-medium flex-1 min-w-0">{task.title}</p>
-                  <Badge variant={sb.variant} className="text-[10px] shrink-0">{sb.label}</Badge>
-                </div>
-                <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
-                  {task.projectName && <span>{task.projectName}</span>}
-                  {task.assigneeName && <span>· {task.assigneeName}</span>}
-                </div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <Badge variant="outline" className={`text-[10px] ${taskPriorityColor(task.priority)}`}>
-                    {taskPriorityLabel(task.priority, lang)}
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${task.status === "done" ? "bg-emerald-500/10 text-emerald-600" : "bg-primary/10 text-primary"}`}>
+                      <CheckSquare2 className="h-3 w-3" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold text-foreground hover:text-primary transition-colors truncate">{task.title}</p>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        {task.mode === "reusable" ? (
+                          <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">Reusable</span>
+                        ) : (
+                          <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">Workflow</span>
+                        )}
+                        {task.projectName && <span className="text-xs text-muted-foreground truncate">· {task.projectName}</span>}
+                      </div>
+                    </div>
+                  </div>
+                  <Badge
+                    variant="outline"
+                    className={`gap-1 text-[10px] px-2 py-0 h-5 rounded-full font-medium shrink-0 ${sb.variant === "default" ? "border-primary/30 bg-primary/10 text-primary" : "border-border/80 bg-muted/60 text-muted-foreground"}`}
+                  >
+                    <span className={`h-1 w-1 rounded-full ${task.status === "done" ? "bg-emerald-600" : task.status === "in_progress" ? "bg-blue-600" : "bg-muted-foreground"}`} />
+                    {sb.label}
                   </Badge>
+                </div>
+
+                <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/60 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className={`text-[10px] px-2 py-0 h-5 rounded-full font-medium ${taskPriorityColor(task.priority)}`}>
+                      {task.priority === "urgent" && <AlertTriangle className="mr-0.5 h-2.5 w-2.5" />}
+                      {taskPriorityLabel(task.priority, lang)}
+                    </Badge>
+                    {task.assigneeName && <span className="truncate">· {task.assigneeName}</span>}
+                  </div>
                   {task.dueDate && (
                     <span className={`text-xs flex items-center gap-1 ${dueTone(task)}`}>
                       <Clock className="h-3 w-3" />

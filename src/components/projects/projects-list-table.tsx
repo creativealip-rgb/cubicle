@@ -241,30 +241,32 @@ export function ProjectsListTable({
 
       <div className="md:hidden space-y-3">
         {sorted.map((project) => (
-          <div key={project.id} className="rounded-xl border border-border/80 bg-card p-4 space-y-3 shadow-xs transition-colors hover:bg-muted/40">
+          <div key={project.id} className="rounded-xl border border-border/80 bg-card p-3.5 space-y-2.5 shadow-xs transition-colors hover:bg-muted/40">
             <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <Link
-                  href={`/app/projects/${project.id}`}
-                  className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
-                >
-                  {project.name}
-                </Link>
-                <div className="text-xs text-muted-foreground truncate mt-0.5">
-                  {project.clientName || "—"}
+              <div className="flex items-center gap-2 min-w-0">
+                <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                  <FolderKanban className="h-3 w-3" />
+                </div>
+                <div className="min-w-0">
+                  <Link
+                    href={`/app/projects/${project.id}`}
+                    className="text-sm font-semibold text-foreground hover:text-primary transition-colors truncate block"
+                  >
+                    {project.name}
+                  </Link>
+                  <div className="text-xs text-muted-foreground truncate">
+                    {project.clientName || "—"}
+                  </div>
                 </div>
               </div>
               <StatusPill status={project.status} />
             </div>
 
-            <div className="space-y-1.5">
-              <div className="text-xs text-muted-foreground">
-                {t("Progres", "Progress")}
-              </div>
+            <div className="space-y-1">
               <ProgressBar project={project} label={t("Progres", "Progress")} />
             </div>
 
-            <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/60">
               <DueCell project={project} />
               {canWrite ? <ProjectStatusEditDialog projectId={project.id} projectName={project.name} currentStatus={project.status} /> : null}
             </div>
