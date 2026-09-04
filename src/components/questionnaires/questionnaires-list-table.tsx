@@ -51,10 +51,10 @@ export function QuestionnairesListTable({
   );
 
   return (
-    <div className="hidden overflow-hidden rounded-lg border bg-card md:block">
-      <Table className="[&_td]:p-3 [&_th]:px-3">
+    <div className="hidden overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs md:block">
+      <Table className="[&_td]:p-3 sm:[&_td]:px-4 sm:[&_td]:py-3.5 [&_th]:px-3 sm:[&_th]:px-4">
         <TableHeader>
-          <TableRow>
+          <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/80">
             <TableHead>
               <SortableHeader
                 label={t("Nama", "Name")}
@@ -94,36 +94,36 @@ export function QuestionnairesListTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sorted.map((q, index) => (
+          {sorted.map((q) => (
             <TableRow
               key={q.id}
-              className={`border-b border-slate-200 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
+              className="border-b border-border/60 transition-colors hover:bg-muted/40"
             >
               <TableCell>
                 <Link
                   href={`/app/questionnaires/${q.id}`}
-                  className="text-sm font-medium hover:underline"
+                  className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
                 >
                   {q.name}
                 </Link>
                 {q.description && (
-                  <p className="mt-0.5 line-clamp-1 text-xs text-slate-500">
+                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                     {q.description}
                   </p>
                 )}
               </TableCell>
-              <TableCell className="text-sm text-slate-600">{q.fieldCount}</TableCell>
-              <TableCell className="text-sm">
-                <Badge variant="default">{q.submitted}</Badge>
+              <TableCell className="text-xs text-muted-foreground">{q.fieldCount}</TableCell>
+              <TableCell className="text-xs">
+                <Badge variant="outline" className="text-xs font-semibold rounded-md border-border/70">{q.submitted}</Badge>
               </TableCell>
-              <TableCell className="text-sm">
+              <TableCell className="text-xs">
                 {q.pending > 0 ? (
-                  <Badge variant="secondary">{q.pending}</Badge>
+                  <Badge variant="outline" className="text-xs font-semibold rounded-md border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400">{q.pending}</Badge>
                 ) : (
-                  <span className="text-slate-400">0</span>
+                  <span className="text-xs text-muted-foreground">0</span>
                 )}
               </TableCell>
-              <TableCell className="text-xs text-slate-500">
+              <TableCell className="text-xs text-muted-foreground">
                 {new Date(q.updatedAt).toLocaleDateString(
                   lang === "en" ? "en-US" : "id-ID",
                 )}
@@ -131,7 +131,7 @@ export function QuestionnairesListTable({
               <TableCell className="text-right">
                 <Link
                   href={`/app/questionnaires/${q.id}`}
-                  className="text-sm text-indigo-600 hover:underline"
+                  className="text-xs font-semibold text-primary hover:underline"
                 >
                   {t("Buka", "Open")}
                 </Link>

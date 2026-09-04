@@ -123,10 +123,10 @@ export function ProposalsListTable({
   );
 
   return (
-    <div className="overflow-hidden rounded-lg border bg-card">
-      <Table className="[&_td]:p-3 [&_th]:px-3">
+    <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
+      <Table className="[&_td]:p-3 sm:[&_td]:px-4 sm:[&_td]:py-3.5 [&_th]:px-3 sm:[&_th]:px-4">
         <TableHeader>
-          <TableRow>
+          <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/80">
             <TableHead>
               <SortableHeader
                 label={t("Judul", "Title")}
@@ -167,17 +167,17 @@ export function ProposalsListTable({
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sorted.map((p, index) => {
+          {sorted.map((p) => {
             const status = projectStatusVariant(p.status, lang);
             return (
               <TableRow
                 key={p.id}
-                className={`border-b border-slate-200 hover:bg-slate-100/70 ${index % 2 === 1 ? "!bg-slate-50" : "!bg-white"}`}
+                className="border-b border-border/60 transition-colors hover:bg-muted/40"
               >
                 <TableCell>
                   <Link
                     href={`/app/proposals/${p.id}`}
-                    className="font-medium text-sm hover:underline"
+                    className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
                   >
                     {p.title}
                   </Link>

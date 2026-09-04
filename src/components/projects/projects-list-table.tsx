@@ -189,8 +189,8 @@ export function ProjectsListTable({
   }
 
   return (
-    <div className="rounded-lg border bg-card">
-      <div className="hidden md:grid grid-cols-12 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">
+    <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
+      <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-3 text-xs font-semibold text-muted-foreground bg-muted/40 border-b border-border/80 items-center">
         <div className="col-span-3">
           <SortableHeader
             as="div"
@@ -204,7 +204,7 @@ export function ProjectsListTable({
           <TableHeaderFilter label={t("Klien", "Client")} queryKey="clientId" value={currentClientId} basePath="/app/projects" options={[{ value: "all", label: t("Semua klien", "All clients") }, ...clients.map((client) => ({ value: client.id, label: client.name }))]} className="text-xs" />
         </div>
         <div className="col-span-2">
-          <span className="text-xs font-medium text-muted-foreground">{t("Status", "Status")}</span>
+          <span className="text-xs font-semibold text-muted-foreground">{t("Status", "Status")}</span>
         </div>
         <div className="col-span-2">
           <TableHeaderFilter label={t("Progres", "Progress")} queryKey="billingType" value={billingType} basePath="/app/projects" options={[
@@ -244,16 +244,16 @@ export function ProjectsListTable({
 
       <div className="md:hidden space-y-3">
         {sorted.map((project) => (
-          <div key={project.id} className="rounded-lg border bg-card p-4 space-y-3 transition-colors hover:bg-muted/50">
+          <div key={project.id} className="rounded-xl border border-border/80 bg-card p-4 space-y-3 shadow-xs transition-colors hover:bg-muted/40">
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
                 <Link
                   href={`/app/projects/${project.id}`}
-                  className="font-medium hover:underline"
+                  className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
                 >
                   {project.name}
                 </Link>
-                <div className="text-sm text-muted-foreground truncate">
+                <div className="text-xs text-muted-foreground truncate mt-0.5">
                   {project.clientName || "—"}
                 </div>
               </div>
@@ -278,17 +278,17 @@ export function ProjectsListTable({
       {sorted.map((project) => (
         <div
           key={project.id}
-          className="hidden md:grid grid-cols-12 gap-4 border-b p-3 items-center transition-colors last:border-0 hover:bg-muted/50"
+          className="hidden md:grid grid-cols-12 gap-4 border-b border-border/60 px-4 py-3.5 items-center transition-colors last:border-0 hover:bg-muted/40"
         >
           <div className="col-span-3">
             <Link
               href={`/app/projects/${project.id}`}
-              className="font-medium hover:underline"
+              className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
             >
               {project.name}
             </Link>
           </div>
-          <div className="col-span-2 text-sm text-muted-foreground truncate">
+          <div className="col-span-2 text-xs text-muted-foreground truncate">
             {project.clientName || "—"}
           </div>
           <div className="col-span-2">

@@ -92,8 +92,8 @@ export function ClientsListTable({
 
   return (
     <>
-      <div className="hidden md:block rounded-lg border bg-card">
-        <div className="grid grid-cols-7 gap-4 p-3 text-xs font-medium text-muted-foreground border-b">
+      <div className="hidden md:block overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
+        <div className="grid grid-cols-7 gap-4 px-4 py-3 text-xs font-semibold text-muted-foreground bg-muted/40 border-b border-border/80 items-center">
           <div className="col-span-2">
             <SortableHeader
               as="div"
@@ -145,12 +145,12 @@ export function ClientsListTable({
         {sorted.map((client) => (
           <div
             key={client.id}
-            className="grid grid-cols-7 gap-4 border-b p-3 items-center transition-colors last:border-0 hover:bg-muted/50"
+            className="grid grid-cols-7 gap-4 border-b border-border/60 px-4 py-3.5 items-center transition-colors last:border-0 hover:bg-muted/40"
           >
             <div className="col-span-2">
               <Link
                 href={`/app/clients/${client.id}`}
-                className="font-medium hover:underline"
+                className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
               >
                 {client.name}
               </Link>
@@ -160,7 +160,7 @@ export function ClientsListTable({
                     <Badge
                       key={tag}
                       variant="outline"
-                      className="text-[10px] px-1.5 py-0"
+                      className="text-[10px] px-1.5 py-0 rounded-md bg-muted/40 text-muted-foreground border-border/60"
                     >
                       {tag}
                     </Badge>
@@ -168,15 +168,15 @@ export function ClientsListTable({
                 </div>
               )}
             </div>
-            <div className="text-sm text-muted-foreground truncate">
+            <div className="text-xs text-muted-foreground truncate">
               {client.companyName || "—"}
             </div>
-            <div className="text-sm">{client.projectCount}</div>
+            <div className="text-xs font-medium text-foreground">{client.projectCount}</div>
             <div>
               {client.portalEnabled ? (
                 <Badge
                   variant="outline"
-                  className="gap-1 text-[11px] font-medium border-emerald-500/30 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                  className="gap-1 text-[11px] font-medium border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-full px-2"
                 >
                   <Globe className="h-3 w-3" /> {t("Portal Aktif", "Portal Active")}
                 </Badge>
@@ -186,9 +186,14 @@ export function ClientsListTable({
             </div>
             <div>
               <Badge
-                variant={client.status === "active" ? "default" : "secondary"}
-                className="text-xs"
+                variant="outline"
+                className={
+                  client.status === "active"
+                    ? "gap-1.5 text-xs font-medium border-primary/30 bg-primary/10 text-primary rounded-full px-2.5"
+                    : "gap-1.5 text-xs font-medium border-border/80 bg-muted/60 text-muted-foreground rounded-full px-2.5"
+                }
               >
+                <span className={`h-1.5 w-1.5 rounded-full ${client.status === "active" ? "bg-primary" : "bg-muted-foreground"}`} />
                 {statusLabel(client.status)}
               </Badge>
             </div>
@@ -221,30 +226,33 @@ export function ClientsListTable({
           </div>
         )}
         {sorted.map((client) => (
-          <Card key={client.id} className="rounded-lg border bg-card transition-colors hover:bg-muted/50">
+          <Card key={client.id} className="rounded-xl border border-border/80 bg-card shadow-xs transition-colors hover:bg-muted/40">
             <CardContent className="p-4">
-              <div className="space-y-1">
+              <div className="space-y-1.5">
                 <Link
                   href={`/app/clients/${client.id}`}
-                  className="font-medium hover:underline"
+                  className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
                 >
                   {client.name}
                 </Link>
                 {client.companyName && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-xs text-muted-foreground">
                     {client.companyName}
                   </p>
                 )}
-                <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <Badge variant="outline" className="text-[10px]">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground pt-1">
+                  <Badge variant="outline" className="text-[10px] rounded-md border-border/70">
                     {client.projectCount} {t("proyek", "projects")}
                   </Badge>
                   <Badge
-                    variant={
-                      client.status === "active" ? "default" : "secondary"
+                    variant="outline"
+                    className={
+                      client.status === "active"
+                        ? "gap-1 text-[10px] font-medium border-primary/30 bg-primary/10 text-primary rounded-full px-2"
+                        : "gap-1 text-[10px] font-medium border-border/80 bg-muted/60 text-muted-foreground rounded-full px-2"
                     }
-                    className="text-[10px]"
                   >
+                    <span className={`h-1 w-1 rounded-full ${client.status === "active" ? "bg-primary" : "bg-muted-foreground"}`} />
                     {statusLabel(client.status)}
                   </Badge>
                 </div>
