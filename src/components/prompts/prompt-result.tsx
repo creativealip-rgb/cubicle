@@ -56,41 +56,73 @@ function promptJson(result: PromptGenerationResult): string {
 
 export function PromptResult({ result, loading, view = "cards", onEdit, onRegenerate }: PromptResultProps) {
   const { t } = useT();
-  if (loading) return <div className="flex min-h-[220px] items-center justify-center rounded-xl border bg-white p-4"><div className="text-center"><div className="mx-auto mb-2 h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"/><p className="text-xs font-medium">{t("Menyusun materi…", "Generating…")}</p><p className="text-[11px] text-muted-foreground">{t("Brief sedang diolah menjadi hasil siap pakai.", "Your brief is being turned into ready-to-use material.")}</p></div></div>;
-  if (!result) return <div className="flex min-h-[220px] items-center justify-center rounded-xl border bg-white p-4 text-center"><div><FileText className="mx-auto mb-2 h-7 w-7 text-muted-foreground/50"/><p className="text-xs font-semibold">{t("Hasil akan muncul di sini", "Your result will appear here")}</p><p className="mt-0.5 text-[11px] text-muted-foreground">{t("Pilih jenis konten, isi brief, lalu generate materi.", "Pick a content type, fill in the brief, then generate.")}</p></div></div>;
+  if (loading) {
+    return (
+      <div className="flex min-h-[300px] items-center justify-center rounded-xl border bg-card p-6 shadow-xs">
+        <div className="text-center space-y-2">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          <p className="text-xs font-semibold text-foreground">{t("Menyusun materi dengan AI…", "Generating with AI…")}</p>
+          <p className="text-[11px] text-muted-foreground">{t("Brief sedang diolah menjadi materi visual & copy siap pakai.", "Transforming brief into ready-to-use visuals & copy.")}</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!result) {
+    return (
+      <div className="flex min-h-[300px] items-center justify-center rounded-xl border bg-card p-6 text-center shadow-xs">
+        <div className="space-y-2 max-w-xs">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <FileText className="h-6 w-6" />
+          </div>
+          <p className="text-sm font-semibold text-foreground">{t("Hasil Generasi Prompt", "Prompt Generation Output")}</p>
+          <p className="text-xs text-muted-foreground">{t("Pilih template konten di atas, isi formulir brief, lalu klik tombol Generate.", "Select a template above, fill out the brief, and hit Generate.")}</p>
+        </div>
+      </div>
+    );
+  }
 
   const json = promptJson(result);
 
-  return <div className="min-h-[220px] rounded-xl border bg-white p-3.5 sm:p-4">
-    <div className="mb-3">
-      <p className="text-[10px] font-medium uppercase tracking-wide text-primary">{t("Hasil", "Result")}</p>
-      <h2 className="mt-0.5 text-base font-semibold">{result.title}</h2>
-      <div className="mt-2.5 flex flex-wrap items-center justify-end gap-1.5 border-t pt-2.5">
-        <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={onEdit}><Pencil className="mr-1 h-3.5 w-3.5"/>{t("Edit brief", "Edit brief")}</Button>
-        <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs" onClick={onRegenerate}><RotateCcw className="mr-1 h-3.5 w-3.5"/>{t("Generate ulang", "Regenerate")}</Button>
-      </div>
-    </div>
-    {view === "prompt" ? (
-      <div>
-        <div className="max-h-[380px] overflow-auto rounded-lg bg-slate-950 p-3">
-          <pre className="whitespace-pre-wrap font-mono text-[11px] leading-4 text-slate-100">{json}</pre>
-        </div>
-        <div className="mt-2.5">
-          <CopyButton text={json} actionLabel={t("Copy JSON", "Copy JSON")} doneLabel={t("Tersalin", "Copied")} toastLabel={t("JSON prompt disalin", "Prompt JSON copied")} />
-        </div>
-      </div>
-    ) : (
-      <div className="space-y-2.5">
-        {result.readyOutput.map((item, index) => (
-          <div key={`${item.label}-${index}`} className="rounded-lg border bg-slate-50/70 p-3">
-            <div className="mb-1 flex items-center justify-between gap-2">
-              <p className="text-[10px] font-medium uppercase tracking-wide text-muted-foreground">{item.label}</p>
-              <CopyButton text={item.content} actionLabel={t("Copy", "Copy")} doneLabel={t("Tersalin", "Copied")} toastLabel={t("Hasil disalin", "Result copied")} />
-            </div>
-            <p className="whitespace-pre-wrap text-sm leading-relaxed">{item.content}</p>
+  return (
+    <div className="rounded-xl border bg-card p-4 shadow-xs space-y-3">
+      <div className="border-b pb-3">
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-[10px] font-bold uppercase tracking-wider text-primary">{t("Hasil Generasi", "Generated Result")}</p>
+          <div className="flex items-center gap-1.5">
+            <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs rounded-lg" onClick={onEdit}>
+              <Pencil className="mr-1 h-3 w-3" />{t("Edit brief", "Edit brief")}
+            </Button>
+            <Button variant="outline" size="sm" className="h-7 px-2.5 text-xs rounded-lg" onClick={onRegenerate}>
+              <RotateCcw className="mr-1 h-3 w-3" />{t("Generate ulang", "Regenerate")}
+            </Button>
           </div>
-        ))}
+        </div>
+        <h2 className="mt-1 text-sm sm:text-base font-semibold text-foreground">{result.title}</h2>
       </div>
-    )}
-  </div>;
+
+      {view === "prompt" ? (
+        <div className="space-y-2">
+          <div className="max-h-[420px] overflow-auto rounded-lg bg-slate-950 p-3.5 border border-slate-800">
+            <pre className="whitespace-pre-wrap font-mono text-xs leading-5 text-slate-100">{json}</pre>
+          </div>
+          <div className="flex justify-end">
+            <CopyButton text={json} actionLabel={t("Copy JSON", "Copy JSON")} doneLabel={t("Tersalin", "Copied")} toastLabel={t("JSON prompt disalin", "Prompt JSON copied")} />
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-2.5">
+          {result.readyOutput.map((item, index) => (
+            <div key={`${item.label}-${index}`} className="rounded-lg border bg-muted/20 p-3 space-y-1.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{item.label}</p>
+                <CopyButton text={item.content} actionLabel={t("Copy", "Copy")} doneLabel={t("Tersalin", "Copied")} toastLabel={t("Hasil disalin", "Result copied")} />
+              </div>
+              <p className="whitespace-pre-wrap text-xs sm:text-sm leading-relaxed text-foreground">{item.content}</p>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
