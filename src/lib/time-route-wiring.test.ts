@@ -7,8 +7,8 @@ const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 describe("Billing-aware Waktu route wiring", () => {
   it("exposes canonical Harian and Mingguan navigation", () => {
     const header = read("src/components/time/time-header.tsx");
-    expect(header).toContain('href: "/app/time?view=daily"');
-    expect(header).toContain('href: "/app/time?view=weekly"');
+    expect(header).toContain('href="/app/time?view=daily"');
+    expect(header).toContain('href="/app/time?view=weekly"');
     expect(header).not.toContain('href: "/app/time/approvals"');
     expect(header).not.toContain("Persetujuan");
     expect(header).not.toContain("Tautan");

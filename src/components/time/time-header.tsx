@@ -3,51 +3,62 @@
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Clock } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
 import { PageHeader } from "@/components/ui/page-header";
+import { Button } from "@/components/ui/button";
 
 export function TimeHeader({ actions }: { actions?: React.ReactNode }) {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const { t } = useT();
 
-  const primaryTabs = [
-    { href: "/app/time?view=daily", label: t("Harian", "Daily"), mobileLabel: t("Harian", "Daily") },
-    { href: "/app/time?view=weekly", label: t("Mingguan", "Weekly"), mobileLabel: t("Mingguan", "Weekly") },
-  ] as const;
+  const currentView = pathname === "/app/time" ? (searchParams.get("view") ?? "daily") : "daily";
 
   return (
-    <header className="space-y-3 sm:space-y-4">
+    <header className="space-y-4">
       <PageHeader
         icon={Clock}
-        title={t("Waktu", "Time")}
-        description={t("Catat durasi kerja harian dan kelola timesheet mingguan proyek.", "Log daily work hours and manage weekly project timesheets.")}
+        title={t("Waktu & Timesheet", "Time & Timesheet")}
+        description={t(
+          "Catat durasi kerja harian, jalankan timer proyek, dan kelola timesheet mingguan.",
+          "Log daily work hours, track project timers, and manage weekly timesheets.",
+        )}
         actions={actions}
       />
 
-      <div className="border-b">
-        <nav aria-label={t("Navigasi waktu", "Time navigation")} className="flex min-w-0 gap-0.5 sm:gap-1">
-          {primaryTabs.map((tab) => {
-            const active = pathname === "/app/time" && (searchParams.get("view") ?? "daily") === (tab.href.includes("weekly") ? "weekly" : "daily");
-            return (
-              <Link
-                key={tab.href}
-                href={tab.href}
-                aria-current={active ? "page" : undefined}
-                className={cn(
-                  "min-h-10 shrink-0 border-b-2 px-3 py-2 text-xs font-semibold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                  active
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground",
-                )}
-              >
-                <span className="sm:hidden">{tab.mobileLabel}</span>
-                <span className="hidden sm:inline">{tab.label}</span>
-              </Link>
-            );
-          })}
-        </nav>
+      {/* Segmented Pill Navigation */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="inline-flex rounded-xl bg-muted/70 p-1 border shadow-xs">
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            className={`h-8 rounded-lg px-4 text-xs font-semibold transition-all ${
+              currentView === "daily"
+                ? "bg-background text-foreground shadow-sm hover:bg-background"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Link href="/app/time?view=daily">
+              {t("Harian (Daily)", "Daily")}
+            </Link>
+          </Button>
+
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            className={`h-8 rounded-lg px-4 text-xs font-semibold transition-all ${
+              currentView === "weekly"
+                ? "bg-background text-foreground shadow-sm hover:bg-background"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Link href="/app/time?view=weekly">
+              {t("Mingguan (Weekly)", "Weekly")}
+            </Link>
+          </Button>
+        </div>
       </div>
     </header>
   );

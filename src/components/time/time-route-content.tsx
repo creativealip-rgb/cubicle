@@ -13,6 +13,16 @@ import { PdfExportButton } from "@/components/time/pdf-export-button";
 import Link from "next/link";
 
 import { TimePageShell } from "@/components/time/time-header";
+import { Card, CardContent } from "@/components/ui/card";
+import { Clock, Briefcase, Zap } from "lucide-react";
+
+function formatDurationMinutes(minutes: number): string {
+  const h = Math.floor(minutes / 60);
+  const m = minutes % 60;
+  if (h === 0) return `${m}m`;
+  if (m === 0) return `${h}h`;
+  return `${h}h ${m}m`;
+}
 import { TimesheetApprovalPanel } from "@/components/time/timesheet-approval-panel";
 import { weekStartIso } from "@/lib/timesheet-approval";
 import { uniqueRecentTimerCombinations } from "@/lib/timer-combinations";
@@ -202,8 +212,75 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
     </>
   ) : null;
 
+  const totalPeriodMinutes = entries.reduce((acc, curr) => acc + (curr.durationMinutes || curr.manualMinutes || 0), 0);
+  const billablePeriodMinutes = entries.filter((e) => e.billable).reduce((acc, curr) => acc + (curr.durationMinutes || curr.manualMinutes || 0), 0);
+  const billableRate = totalPeriodMinutes > 0 ? Math.round((billablePeriodMinutes / totalPeriodMinutes) * 100) : 100;
+
   return (
     <TimePageShell actions={primaryActions}>
+      {/* 3-KPI Work Hours Summary Banner */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+        <Card className="rounded-xl border shadow-none bg-card">
+          <CardContent className="p-3.5 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                {view === "weekly" ? t("Total Jam Mingguan", "Weekly Tracked") : t("Total Jam Terpilih", "Tracked Hours")}
+              </p>
+              <p className="mt-0.5 text-xl font-bold tracking-tight text-foreground tabular-nums">
+                {formatDurationMinutes(totalPeriodMinutes)}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {entries.length} {t("log tercatat", "entries logged")}
+              </p>
+            </div>
+            <div className="h-9 w-9 rounded-lg bg-blue-500/10 text-blue-600 flex items-center justify-center shrink-0">
+              <Clock className="h-4 w-4" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl border shadow-none bg-card">
+          <CardContent className="p-3.5 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                {t("Jam Billable", "Billable Ratio")}
+              </p>
+              <p className="mt-0.5 text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
+                {billableRate}% <span className="text-xs font-normal text-muted-foreground">({formatDurationMinutes(billablePeriodMinutes)})</span>
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {t("Dapat ditagihkan ke klien", "Billable to clients")}
+              </p>
+            </div>
+            <div className="h-9 w-9 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
+              <Briefcase className="h-4 w-4" />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="rounded-xl border shadow-none bg-card">
+          <CardContent className="p-3.5 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
+                {t("Status Tracker", "Tracker Status")}
+              </p>
+              <div className="mt-0.5 flex items-center gap-1.5">
+                <span className={`inline-block h-2 w-2 rounded-full ${activeTimer ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground"}`} />
+                <span className="text-sm font-bold text-foreground">
+                  {activeTimer ? (activeTimer.projectName || t("Timer Aktif", "Timer Running")) : t("Siap Digunakan", "Ready")}
+                </span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                {activeTimer ? (activeTimer.taskTitle || activeTimer.description || t("Melacak durasi...", "Tracking...")) : t("Mulai timer atau log manual", "Start timer or log manual")}
+              </p>
+            </div>
+            <div className="h-9 w-9 rounded-lg bg-violet-500/10 text-violet-600 flex items-center justify-center shrink-0">
+              <Zap className="h-4 w-4" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {mode === "timer" && (
         <>
           {canWrite && <TimerWidget workspaceId={workspaceId} userId={user.id} clients={clientList} projects={writableProjectList} tasks={writableTaskList} activities={activityList} recentCombinations={recentTimerCombinations} initialTimer={activeTimer ? { id: activeTimer.id, clientId: activeTimer.clientId, projectId: activeTimer.projectId, activityId: activeTimer.activityId, taskId: activeTimer.taskId, description: activeTimer.description, tags: activeTimer.tags, startTime: activeTimer.startTime!, pausedAt: activeTimer.pausedAt, clientName: activeTimer.clientName, projectName: activeTimer.projectName, activityName: activeTimer.activityName, taskTitle: activeTimer.taskTitle } : null} />}
