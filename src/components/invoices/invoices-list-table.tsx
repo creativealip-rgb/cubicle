@@ -18,6 +18,7 @@ import { TableHeaderFilter } from "@/components/ui/table-header-filter";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { formatMoney } from "@/lib/utils";
+import { Receipt } from "lucide-react";
 
 function formatDate(date: string | Date | null | undefined, locale: string): string {
   if (!date) return "—";
@@ -144,7 +145,7 @@ export function InvoicesListTable({
         <Table className="[&_td]:px-3.5 [&_td]:py-2 [&_th]:px-3.5 [&_th]:py-2">
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/80">
-              <TableHead className="w-36">
+              <TableHead className="w-40">
                 <SortableHeader
                   label={t("No. Invoice", "Invoice No.")}
                   dir={dirFor("number")}
@@ -227,9 +228,14 @@ export function InvoicesListTable({
                   className="border-b border-border/60 transition-colors hover:bg-muted/40"
                 >
                   <TableCell className="font-mono text-xs font-semibold whitespace-nowrap">
-                    <Link href={buildInvoiceDetailUrl(inv.id, { type: "global" })} className="text-primary hover:underline font-bold">
-                      {formatInvoiceId(inv.invoiceNumber)}
-                    </Link>
+                    <div className="flex items-center gap-2">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                        <Receipt className="h-3 w-3" />
+                      </div>
+                      <Link href={buildInvoiceDetailUrl(inv.id, { type: "global" })} className="text-primary hover:underline font-bold">
+                        {formatInvoiceId(inv.invoiceNumber)}
+                      </Link>
+                    </div>
                   </TableCell>
                   <TableCell>
                     {inv.clientId ? (

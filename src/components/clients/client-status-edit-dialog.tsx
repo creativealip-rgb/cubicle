@@ -25,7 +25,7 @@ export function ClientStatusEditDialog({ clientId, clientName, currentStatus }: 
     finally { setLoading(false); }
   }
   return <Dialog open={open} onOpenChange={setOpen}>
-    <DialogTrigger asChild><Button variant="outline" size="sm" className="h-8 gap-1"><Pencil className="h-3 w-3" />{t("Ubah", "Edit")}</Button></DialogTrigger>
+    <DialogTrigger asChild><Button variant="outline" size="sm" className="h-6.5 px-2 text-[11px] gap-1 rounded-md"><Pencil className="h-2.5 w-2.5" />{t("Ubah", "Edit")}</Button></DialogTrigger>
     <DialogContent className="sm:max-w-sm"><DialogHeader><DialogTitle>{t("Edit status klien", "Edit client status")}</DialogTitle></DialogHeader>
       <p className="text-sm text-muted-foreground">{clientName}</p>
       <div className="space-y-2"><Label>{t("Status", "Status")}</Label><Select value={status} onValueChange={(value) => setStatus(value as typeof status)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">{t("Aktif", "Active")}</SelectItem><SelectItem value="inactive">{t("Tidak aktif", "Inactive")}</SelectItem><SelectItem value="archived">{t("Arsip", "Archived")}</SelectItem></SelectContent></Select></div>

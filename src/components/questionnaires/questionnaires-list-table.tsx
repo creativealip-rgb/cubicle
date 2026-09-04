@@ -15,6 +15,7 @@ import {
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
+import { ClipboardList } from "lucide-react";
 
 export type QuestionnaireListItem = {
   id: string;
@@ -106,17 +107,24 @@ export function QuestionnairesListTable({
               className="border-b border-border/60 transition-colors hover:bg-muted/40"
             >
               <TableCell>
-                <Link
-                  href={`/app/questionnaires/${q.id}`}
-                  className="text-xs font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[15rem]"
-                >
-                  {q.name}
-                </Link>
-                {q.description && (
-                  <p className="text-[10px] text-muted-foreground truncate max-w-[15rem]">
-                    {q.description}
-                  </p>
-                )}
+                <div className="flex items-center gap-2">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <ClipboardList className="h-3 w-3" />
+                  </div>
+                  <div className="min-w-0">
+                    <Link
+                      href={`/app/questionnaires/${q.id}`}
+                      className="text-xs font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[15rem]"
+                    >
+                      {q.name}
+                    </Link>
+                    {q.description && (
+                      <p className="text-[10px] text-muted-foreground truncate max-w-[15rem]">
+                        {q.description}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </TableCell>
               <TableCell className="text-xs text-muted-foreground tabular-nums">{q.fieldCount}</TableCell>
               <TableCell className="text-xs">

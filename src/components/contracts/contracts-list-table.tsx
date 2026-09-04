@@ -17,6 +17,7 @@ import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { SendContractButton } from "@/components/contracts/send-contract-button";
+import { FileSignature } from "lucide-react";
 
 export type ContractListItem = {
   id: string;
@@ -173,20 +174,27 @@ export function ContractsListTable({
                 className="border-b border-border/60 transition-colors hover:bg-muted/40"
               >
                 <TableCell>
-                  <Link
-                    href={`/app/contracts/${c.id}`}
-                    className="text-xs font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[15rem]"
-                  >
-                    {c.title}
-                  </Link>
-                  {c.validUntil ? (
-                    <p className="text-[10px] text-muted-foreground">
-                      {t("Berlaku s/d", "Valid until")}{" "}
-                      {new Date(c.validUntil).toLocaleDateString(
-                        lang === "en" ? "en-US" : "id-ID",
-                      )}
-                    </p>
-                  ) : null}
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                      <FileSignature className="h-3 w-3" />
+                    </div>
+                    <div className="min-w-0">
+                      <Link
+                        href={`/app/contracts/${c.id}`}
+                        className="text-xs font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[15rem]"
+                      >
+                        {c.title}
+                      </Link>
+                      {c.validUntil ? (
+                        <p className="text-[10px] text-muted-foreground">
+                          {t("Berlaku s/d", "Valid until")}{" "}
+                          {new Date(c.validUntil).toLocaleDateString(
+                            lang === "en" ? "en-US" : "id-ID",
+                          )}
+                        </p>
+                      ) : null}
+                    </div>
+                  </div>
                 </TableCell>
                 <TableCell className="text-xs">
                   {c.clientId ? <Link href={`/app/clients/${c.clientId}`} className="text-muted-foreground hover:text-primary hover:underline">{c.clientName}</Link> : <span className="text-muted-foreground">{c.clientName}</span>}
