@@ -311,28 +311,47 @@ export function InvoicesListTable({
         {sorted.map((inv) => {
           const status = invoiceStatusVariant(inv.status, lang);
           return (
-            <div key={inv.id} className="rounded-lg border bg-card p-4 space-y-3">
+            <div key={inv.id} className="rounded-xl border border-border/80 bg-card p-4 space-y-3 shadow-xs transition-colors hover:bg-muted/40">
               <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <Link
-                    href={buildInvoiceDetailUrl(inv.id, { type: "global" })}
-                    className="font-mono text-sm font-medium hover:underline"
-                  >
-                    {formatInvoiceId(inv.invoiceNumber)}
-                  </Link>
-                  <div className="text-sm text-muted-foreground truncate">
-                    {inv.clientCompany || inv.clientName}
+                <div className="min-w-0 flex items-center gap-2">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <Receipt className="h-3 w-3" />
                   </div>
-                  {(inv.projectName || inv.billingType) && (
-                    <div className="mt-0.5 text-xs text-muted-foreground truncate">
-                      {inv.projectName || "—"}
-                      {inv.billingType
-                        ? ` · ${billingTypeLabel(inv.billingType, lang)}`
-                        : ""}
+                  <div>
+                    <Link
+                      href={buildInvoiceDetailUrl(inv.id, { type: "global" })}
+                      className="font-mono text-sm font-semibold hover:underline text-primary"
+                    >
+                      {formatInvoiceId(inv.invoiceNumber)}
+                    </Link>
+                    <div className="text-sm text-muted-foreground truncate">
+                      {inv.clientCompany || inv.clientName}
                     </div>
-                  )}
+                  </div>
                 </div>
-                <Badge variant={status.variant} className="shrink-0">
+                <Badge
+                  variant="outline"
+                  className={`gap-1 text-[10px] font-medium rounded-full px-2 py-0 h-5 ${
+                    inv.status === "paid"
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                      : inv.status === "sent" || inv.status === "viewed"
+                      ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400"
+                      : inv.status === "overdue"
+                      ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400"
+                      : "border-border/80 bg-muted/60 text-muted-foreground"
+                  }`}
+                >
+                  <span
+                    className={`h-1 w-1 rounded-full ${
+                      inv.status === "paid"
+                        ? "bg-emerald-600"
+                        : inv.status === "sent" || inv.status === "viewed"
+                        ? "bg-blue-600"
+                        : inv.status === "overdue"
+                        ? "bg-rose-600"
+                        : "bg-muted-foreground"
+                    }`}
+                  />
                   {status.label}
                 </Badge>
               </div>
