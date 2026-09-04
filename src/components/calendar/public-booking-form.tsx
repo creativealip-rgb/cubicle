@@ -1,12 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Calendar as CalendarIcon, Clock, User, Mail, FileText, CheckCircle2, Loader2 } from "lucide-react";
+import { Calendar as CalendarIcon, Clock, CheckCircle2, Loader2 } from "lucide-react";
 import { createPublicAppointment, getAvailableSlots } from "@/lib/actions/appointments";
 
 interface Slot {
@@ -49,12 +48,13 @@ export function PublicBookingForm({
 
   const [isPending, startTransition] = useTransition();
 
-  function handleApplyDate() {
-    if (!selectedDate) return;
+  function handleApplyDate(newDate: string) {
+    setSelectedDate(newDate);
+    if (!newDate) return;
     startTransition(async () => {
       try {
         setSlotsError("");
-        const newSlots = await getAvailableSlots(workspace.id, selectedDate);
+        const newSlots = await getAvailableSlots(workspace.id, newDate);
         setSlots(newSlots);
         setSelectedSlot("");
       } catch (err) {
@@ -64,14 +64,23 @@ export function PublicBookingForm({
   }
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="text-lg">
-          <CalendarIcon className="mr-2 inline h-5 w-5" />
-          {t("Jadwalkan Janji Temu", "Schedule Appointment")}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+    <div className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
+      <div className="border-b border-border/80 bg-muted/40 p-4 sm:p-5 flex items-center justify-between">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <CalendarIcon className="h-4 w-4" />
+          </div>
+          <div>
+            <h2 className="text-sm font-bold text-foreground">{t("Jadwalkan Janji Temu", "Schedule Appointment")}</h2>
+            <p className="text-[11px] text-muted-foreground">{t("Pilih tanggal & slot waktu yang sesuai", "Choose your preferred date and time slot")}</p>
+          </div>
+        </div>
+        <span className="text-[10px] font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+          30 Min
+        </span>
+      </div>
+
+      <div className="p-5 sm:p-6">
         <form
           action={async () => {
             if (!title || !attendeeName || !attendeeEmail || !selectedSlot) return;
@@ -91,40 +100,39 @@ export function PublicBookingForm({
           }}
           className="space-y-4"
         >
-          <div className="space-y-2">
-            <Label htmlFor="title">
-              <FileText className="mr-1 inline h-4 w-4" />
-              {t("Judul", "Title")}
+          <div className="space-y-1.5">
+            <Label htmlFor="title" className="text-xs font-semibold text-foreground">
+              {t("Judul Sesi", "Session Title")}
             </Label>
             <Input
               id="title"
               name="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder={t("Contoh: Konsultasi proyek", "e.g. Project Consultation")}
+              placeholder={t("Contoh: Konsultasi Proyek Baru", "e.g. Project Consultation")}
+              className="h-10 text-sm rounded-xl"
               required
             />
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="attendeeName">
-                <User className="mr-1 inline h-4 w-4" />
-                {t("Nama Kamu", "Your Name")}
+            <div className="space-y-1.5">
+              <Label htmlFor="attendeeName" className="text-xs font-semibold text-foreground">
+                {t("Nama Lengkap", "Your Name")}
               </Label>
               <Input
                 id="attendeeName"
                 name="attendeeName"
                 value={attendeeName}
                 onChange={(e) => setAttendeeName(e.target.value)}
-                placeholder={t("Nama lengkap", "Your full name")}
+                placeholder={t("Nama lengkap Anda", "Your full name")}
+                className="h-10 text-sm rounded-xl"
                 required
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="attendeeEmail">
-                <Mail className="mr-1 inline h-4 w-4" />
-                {t("Email Kamu", "Your Email")}
+            <div className="space-y-1.5">
+              <Label htmlFor="attendeeEmail" className="text-xs font-semibold text-foreground">
+                {t("Alamat Email", "Email Address")}
               </Label>
               <Input
                 id="attendeeEmail"
@@ -133,63 +141,51 @@ export function PublicBookingForm({
                 value={attendeeEmail}
                 onChange={(e) => setAttendeeEmail(e.target.value)}
                 placeholder="you@example.com"
+                className="h-10 text-sm rounded-xl"
                 required
               />
             </div>
           </div>
 
           {/* Date picker */}
-          <div className="space-y-2">
-            <Label htmlFor="booking-date">
-              <CalendarIcon className="mr-1 inline h-4 w-4" />
-              {t("Tanggal", "Date")}
+          <div className="space-y-1.5">
+            <Label htmlFor="booking-date" className="text-xs font-semibold text-foreground flex items-center justify-between">
+              <span>{t("Pilih Tanggal", "Select Date")}</span>
+              <span className="text-[11px] font-normal text-muted-foreground">Zona: {timezone}</span>
             </Label>
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
-              <Input
-                id="booking-date"
-                type="date"
-                value={selectedDate}
-                onChange={(e) => setSelectedDate(e.target.value)}
-                className="min-h-11 w-full min-w-0"
-              />
-              <Button
-                type="button"
-                variant="outline"
-                className="min-h-11"
-                onClick={handleApplyDate}
-                disabled={isPending}
-              >
-                {isPending ? (
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                ) : (
-                  t("Terapkan tanggal", "Apply date")
-                )}
-              </Button>
-            </div>
+            <Input
+              id="booking-date"
+              type="date"
+              value={selectedDate}
+              onChange={(e) => handleApplyDate(e.target.value)}
+              className="h-10 text-sm rounded-xl"
+              required
+            />
           </div>
 
           {/* Available slots */}
-          <div className="space-y-2">
-            <Label>
-              <Clock className="mr-1 inline h-4 w-4" />
-              {t("Waktu Tersedia", "Available Times")}
+          <div className="space-y-2 pt-1">
+            <Label className="text-xs font-semibold text-foreground">
+              {t("Slot Waktu Tersedia", "Available Times")}
             </Label>
-            <p className="text-xs text-foreground/70">{t(`Zona waktu: ${timezone}`, `Timezone: ${timezone}`)}</p>
+            
             {isPending ? (
-              <div className="flex items-center justify-center rounded-lg border border-dashed p-6 text-sm text-muted-foreground">
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {t("Memuat waktu tersedia...", "Loading available times...")}
+              <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border/80 bg-muted/20 p-8 text-center">
+                <Loader2 className="h-6 w-6 animate-spin text-primary mb-2" />
+                <p className="text-xs text-muted-foreground">{t("Memuat slot waktu tersedia...", "Loading available times...")}</p>
               </div>
             ) : slotsError ? (
-              <p className="text-sm text-destructive">{slotsError}</p>
+              <p className="text-xs text-destructive bg-destructive/10 p-3 rounded-xl">{slotsError}</p>
             ) : slots.length === 0 ? (
-              <div className="rounded-lg border border-dashed p-6 text-center">
-                <CalendarIcon className="mx-auto mb-2 h-8 w-8 text-muted-foreground/50" />
-                <p className="text-sm text-foreground/70">
+              <div className="rounded-xl border border-dashed border-border/80 bg-muted/20 p-6 text-center">
+                <div className="mx-auto mb-2 flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                  <CalendarIcon className="h-4 w-4" />
+                </div>
+                <p className="text-xs font-medium text-foreground">
                   {t("Tidak ada slot tersedia pada tanggal ini", "No available slots for this date")}
                 </p>
-                <p className="text-xs text-foreground/70">
-                  {t("Coba pilih tanggal lain", "Try selecting a different date")}
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {t("Silakan pilih tanggal lain di kalender atas", "Try selecting a different date above")}
                 </p>
               </div>
             ) : (
@@ -200,10 +196,10 @@ export function PublicBookingForm({
                   return (
                     <label
                       key={i}
-                      className={`flex cursor-pointer flex-col items-center justify-center rounded-lg border p-3 text-center transition-colors ${
+                      className={`flex cursor-pointer items-center justify-between rounded-xl border px-3 py-2.5 transition-all ${
                         isChecked
-                          ? "border-primary bg-primary/10 font-semibold"
-                          : "hover:border-primary hover:bg-primary/5"
+                          ? "border-primary bg-primary/10 text-primary shadow-xs font-semibold ring-1 ring-primary"
+                          : "border-border/80 bg-card hover:bg-muted/40 hover:border-border text-foreground"
                       }`}
                     >
                       <input
@@ -215,14 +211,17 @@ export function PublicBookingForm({
                         className="sr-only"
                         required
                       />
-                      <span className="text-sm font-medium">
-                        {new Date(slot.start).toLocaleTimeString(lang === "en" ? "en-US" : "id-ID", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                          timeZone: timezone,
-                        })}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">30 min</span>
+                      <div className="flex items-center gap-1.5">
+                        <Clock className={`h-3.5 w-3.5 ${isChecked ? "text-primary" : "text-muted-foreground"}`} />
+                        <span className="text-xs font-mono">
+                          {new Date(slot.start).toLocaleTimeString(lang === "en" ? "en-US" : "id-ID", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            timeZone: timezone,
+                          })}
+                        </span>
+                      </div>
+                      <span className="text-[10px] opacity-75">30m</span>
                     </label>
                   );
                 })}
@@ -230,27 +229,27 @@ export function PublicBookingForm({
             )}
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">
-              <FileText className="mr-1 inline h-4 w-4" />
-              {t("Catatan (opsional)", "Notes (optional)")}
+          <div className="space-y-1.5 pt-1">
+            <Label htmlFor="notes" className="text-xs font-semibold text-foreground">
+              {t("Catatan / Kebutuhan (Opsional)", "Notes / Requirements (Optional)")}
             </Label>
             <Textarea
               id="notes"
               name="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder={t("Informasi tambahan...", "Any additional information...")}
+              placeholder={t("Jelaskan topik yang ingin dibahas...", "Any specific topics to discuss...")}
               rows={3}
+              className="text-sm rounded-xl resize-none"
             />
           </div>
 
-          <Button type="submit" className="w-full" disabled={!selectedSlot}>
-            <CheckCircle2 className="h-4 w-4" />
-            {t("Pesan Janji Temu", "Book Appointment")}
+          <Button type="submit" className="w-full h-11 rounded-xl font-semibold shadow-xs" disabled={!selectedSlot || !title || !attendeeName || !attendeeEmail}>
+            <CheckCircle2 className="mr-2 h-4 w-4" />
+            {t("Konfirmasi Janji Temu", "Confirm Booking")}
           </Button>
         </form>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
