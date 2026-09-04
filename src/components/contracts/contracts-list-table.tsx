@@ -181,12 +181,12 @@ export function ContractsListTable({
                     <div className="min-w-0">
                       <Link
                         href={`/app/contracts/${c.id}`}
-                        className="text-xs font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[15rem]"
+                        className="text-sm font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[15rem]"
                       >
                         {c.title}
                       </Link>
                       {c.validUntil ? (
-                        <p className="text-[10px] text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground">
                           {t("Berlaku s/d", "Valid until")}{" "}
                           {new Date(c.validUntil).toLocaleDateString(
                             lang === "en" ? "en-US" : "id-ID",
@@ -196,13 +196,13 @@ export function ContractsListTable({
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="text-xs">
+                <TableCell className="text-sm">
                   {c.clientId ? <Link href={`/app/clients/${c.clientId}`} className="text-muted-foreground hover:text-primary hover:underline">{c.clientName}</Link> : <span className="text-muted-foreground">{c.clientName}</span>}
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline" className="text-[10px] px-2 py-0 h-5 rounded-full font-medium border-border/80 bg-muted/60 text-muted-foreground">{status.label}</Badge>
                 </TableCell>
-                <TableCell className="text-[11px] text-muted-foreground whitespace-nowrap">
+                <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                   {activityLabel(c, t, lang)}
                 </TableCell>
                 <TableCell className="text-right align-middle">

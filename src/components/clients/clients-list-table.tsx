@@ -155,7 +155,7 @@ export function ClientsListTable({
                 <div className="flex items-center gap-1.5 flex-wrap">
                   <Link
                     href={`/app/clients/${client.id}`}
-                    className="text-xs font-semibold text-foreground hover:text-primary transition-colors truncate"
+                    className="text-sm font-semibold text-foreground hover:text-primary transition-colors truncate"
                   >
                     {client.name}
                   </Link>
@@ -174,10 +174,10 @@ export function ClientsListTable({
                 </div>
               </div>
             </div>
-            <div className="col-span-3 text-xs text-muted-foreground truncate">
+            <div className="col-span-3 text-sm text-muted-foreground truncate">
               {client.companyName || "—"}
             </div>
-            <div className="col-span-1 text-center text-xs font-medium text-foreground">{client.projectCount}</div>
+            <div className="col-span-1 text-center text-sm font-medium text-foreground">{client.projectCount}</div>
             <div className="col-span-2">
               {client.portalEnabled ? (
                 <Badge

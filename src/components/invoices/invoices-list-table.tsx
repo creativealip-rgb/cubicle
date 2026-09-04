@@ -227,7 +227,7 @@ export function InvoicesListTable({
                   key={inv.id}
                   className="border-b border-border/60 transition-colors hover:bg-muted/40"
                 >
-                  <TableCell className="font-mono text-xs font-semibold whitespace-nowrap">
+                  <TableCell className="font-mono text-sm font-semibold whitespace-nowrap">
                     <div className="flex items-center gap-2">
                       <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                         <Receipt className="h-3 w-3" />
@@ -239,16 +239,16 @@ export function InvoicesListTable({
                   </TableCell>
                   <TableCell>
                     {inv.clientId ? (
-                      <Link href={`/app/clients/${inv.clientId}`} className="text-xs font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[14rem]">
+                      <Link href={`/app/clients/${inv.clientId}`} className="text-sm font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[14rem]">
                         {inv.clientCompany || inv.clientName}
                       </Link>
                     ) : (
-                      <span className="text-xs font-semibold text-foreground block truncate max-w-[14rem]">
+                      <span className="text-sm font-semibold text-foreground block truncate max-w-[14rem]">
                         {inv.clientCompany || inv.clientName}
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="hidden lg:table-cell max-w-[10rem] truncate text-xs text-muted-foreground">
+                  <TableCell className="hidden lg:table-cell max-w-[10rem] truncate text-sm text-muted-foreground">
                     {inv.projectName || "—"}
                   </TableCell>
                   <TableCell className="hidden xl:table-cell">
@@ -257,19 +257,19 @@ export function InvoicesListTable({
                         {billingTypeLabel(inv.billingType, lang)}
                       </Badge>
                     ) : (
-                      <span className="text-xs text-muted-foreground">—</span>
+                      <span className="text-sm text-muted-foreground">—</span>
                     )}
                   </TableCell>
                   <TableCell className="whitespace-nowrap">
-                    <div className="text-xs font-medium text-foreground">{formatDate(inv.issueDate, locale)}</div>
-                    <div className="text-[10px] text-muted-foreground font-mono">
+                    <div className="text-sm font-medium text-foreground">{formatDate(inv.issueDate, locale)}</div>
+                    <div className="text-[11px] text-muted-foreground font-mono">
                       {t("Jatuh tempo", "Due")}: {formatDate(inv.dueDate, locale)}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right tabular-nums font-semibold text-xs whitespace-nowrap">
+                  <TableCell className="text-right tabular-nums font-semibold text-sm whitespace-nowrap">
                     <div className="text-foreground">{formatMoney(inv.total, inv.currency)}</div>
                     {inv.totalBase != null && inv.currency !== base && (
-                      <div className="text-[10px] text-muted-foreground font-mono">
+                      <div className="text-[11px] text-muted-foreground font-mono">
                         ≈ {formatMoney(inv.totalBase, base)}
                       </div>
                     )}

@@ -188,12 +188,12 @@ export function ProposalsListTable({
                     <div className="min-w-0">
                       <Link
                         href={`/app/proposals/${p.id}`}
-                        className="text-xs font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[15rem]"
+                        className="text-sm font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[15rem]"
                       >
                         {p.title}
                       </Link>
                       {p.validUntil ? (
-                        <p className="text-[10px] text-muted-foreground">
+                        <p className="text-[11px] text-muted-foreground">
                           {t("Berlaku s/d", "Valid until")}{" "}
                           {new Date(p.validUntil).toLocaleDateString(
                             lang === "en" ? "en-US" : "id-ID",
@@ -203,16 +203,16 @@ export function ProposalsListTable({
                     </div>
                   </div>
                 </TableCell>
-                <TableCell className="text-xs">
+                <TableCell className="text-sm">
                   {p.clientId ? <Link href={`/app/clients/${p.clientId}`} className="text-muted-foreground hover:text-primary hover:underline">{p.clientName}</Link> : <span className="text-muted-foreground">{p.clientName}</span>}
                 </TableCell>
                 <TableCell>
                   <Badge variant="outline" className="text-[10px] px-2 py-0 h-5 rounded-full font-medium border-border/80 bg-muted/60 text-muted-foreground">{status.label}</Badge>
                 </TableCell>
-                <TableCell className="text-right tabular-nums text-xs font-semibold whitespace-nowrap">
+                <TableCell className="text-right tabular-nums text-sm font-semibold whitespace-nowrap">
                   {formatMoney(p.total, p.currency)}
                 </TableCell>
-                <TableCell className="text-[11px] text-muted-foreground whitespace-nowrap">
+                <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                   {activityLabel(p, t, lang)}
                 </TableCell>
                 <TableCell className="text-right align-middle">

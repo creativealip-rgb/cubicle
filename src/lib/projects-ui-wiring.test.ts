@@ -9,7 +9,7 @@ const progressLib = readFileSync("src/lib/project-progress.ts", "utf8");
 describe("project list status pills", () => {
   it("uses semantic badge variants with a status dot", () => {
     expect(listTable).toContain("projectListStatusVariant");
-    expect(listTable).toContain("projectStatusDot");
+    expect(listTable).toContain("UniversalStatusBadge");
     expect(listTable).toContain("StatusPill");
   });
 

@@ -240,7 +240,7 @@ export function TasksListTable({
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="truncate text-xs font-semibold text-foreground hover:text-primary transition-colors">{task.title}</p>
+                        <p className="truncate text-sm font-semibold text-foreground hover:text-primary transition-colors">{task.title}</p>
                         {task.mode === "reusable" ? (
                           <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">Reusable</span>
                         ) : (
@@ -254,14 +254,14 @@ export function TasksListTable({
                       </div>
                     </div>
                   </div>
-                  <div className="text-xs text-muted-foreground w-44 truncate">
+                  <div className="text-sm text-muted-foreground w-44 truncate">
                     <span>{task.projectName ?? t("Tanpa proyek", "No project")}</span>
-                    {task.clientName ? <span className="text-[10px] opacity-75 block truncate">{task.clientName}</span> : null}
+                    {task.clientName ? <span className="text-[11px] opacity-75 block truncate">{task.clientName}</span> : null}
                   </div>
-                  <div className="text-xs text-muted-foreground w-28 truncate">
+                  <div className="text-sm text-muted-foreground w-28 truncate">
                     {task.assigneeName ?? <span className="text-muted-foreground/60">—</span>}
                   </div>
-                  <div className={`flex items-center gap-1 text-xs w-28 ${dueTone(task)}`}>
+                  <div className={`flex items-center gap-1 text-sm w-28 ${dueTone(task)}`}>
                     <Clock className="h-3 w-3" />
                     <span className="truncate">{formatDue(task)}</span>
                   </div>

@@ -114,27 +114,27 @@ export function QuestionnairesListTable({
                   <div className="min-w-0">
                     <Link
                       href={`/app/questionnaires/${q.id}`}
-                      className="text-xs font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[15rem]"
+                      className="text-sm font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[15rem]"
                     >
                       {q.name}
                     </Link>
                     {q.description && (
-                      <p className="text-[10px] text-muted-foreground truncate max-w-[15rem]">
+                      <p className="text-[11px] text-muted-foreground truncate max-w-[15rem]">
                         {q.description}
                       </p>
                     )}
                   </div>
                 </div>
               </TableCell>
-              <TableCell className="text-xs text-muted-foreground tabular-nums">{q.fieldCount}</TableCell>
-              <TableCell className="text-xs">
+              <TableCell className="text-sm text-muted-foreground tabular-nums">{q.fieldCount}</TableCell>
+              <TableCell className="text-sm">
                 <Badge variant="outline" className="text-[10px] px-2 py-0 h-5 rounded-full font-medium border-border/80 bg-muted/60 text-muted-foreground">{q.submitted}</Badge>
               </TableCell>
-              <TableCell className="text-xs">
+              <TableCell className="text-sm">
                 {q.pending > 0 ? (
                   <Badge variant="outline" className="text-[10px] px-2 py-0 h-5 rounded-full font-medium border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-400">{q.pending}</Badge>
                 ) : (
-                  <span className="text-xs text-muted-foreground font-mono">0</span>
+                  <span className="text-sm text-muted-foreground font-mono">0</span>
                 )}
               </TableCell>
               <TableCell className="text-xs text-muted-foreground whitespace-nowrap font-mono">

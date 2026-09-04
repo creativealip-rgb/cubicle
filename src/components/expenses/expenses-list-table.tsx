@@ -268,22 +268,22 @@ export function ExpensesListTable({
                 key={e.id}
                 className="border-b border-border/60 transition-colors hover:bg-muted/40"
               >
-                <TableCell className="text-xs text-muted-foreground font-mono tabular-nums whitespace-nowrap">
+                <TableCell className="text-sm text-muted-foreground font-mono tabular-nums whitespace-nowrap">
                   {e.date}
                 </TableCell>
                 <TableCell>
-                  <span className="text-xs font-semibold text-foreground">
+                  <span className="text-sm font-semibold text-foreground">
                     {e.description}
                   </span>
                   {e.vendor && (
-                    <span className="block text-[11px] text-muted-foreground">
+                    <span className="block text-xs text-muted-foreground">
                       {e.vendor}
                     </span>
                   )}
                 </TableCell>
                 <TableCell>
                   {e.categoryName ? (
-                    <span className="inline-flex items-center gap-1 text-xs text-foreground/90">
+                    <span className="inline-flex items-center gap-1.5 text-sm text-foreground/90">
                       <span
                         className="h-1.5 w-1.5 rounded-full shrink-0"
                         style={{ backgroundColor: e.categoryColor ?? "#64748b" }}
@@ -291,21 +291,21 @@ export function ExpensesListTable({
                       {e.categoryName}
                     </span>
                   ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
+                    <span className="text-sm text-muted-foreground">—</span>
                   )}
                 </TableCell>
-                <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
+                <TableCell className="hidden lg:table-cell text-sm text-muted-foreground">
                   {e.projectName ?? "—"}
                 </TableCell>
-                <TableCell className="hidden xl:table-cell text-xs text-muted-foreground">
+                <TableCell className="hidden xl:table-cell text-sm text-muted-foreground">
                   {e.clientName ?? "—"}
                 </TableCell>
-                <TableCell className="text-right font-medium text-xs whitespace-nowrap">
+                <TableCell className="text-right font-medium text-sm whitespace-nowrap">
                   <div className="tabular-nums">
                     {formatMoney(e.amount, e.currency)}
                   </div>
                   {e.amountBase != null && (
-                    <div className="text-[10px] text-muted-foreground tabular-nums">
+                    <div className="text-[11px] text-muted-foreground tabular-nums">
                       ≈ {formatMoney(e.amountBase, defaultCurrency)}
                     </div>
                   )}

@@ -9,7 +9,7 @@ import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 import { getProjectProgress, progressTone } from "@/lib/project-progress";
-import { projectListStatusVariant, projectStatusDot } from "@/lib/status-badge";
+import { projectListStatusVariant } from "@/lib/status-badge";
 import { UniversalStatusBadge } from "@/components/ui/universal-status-badge";
 
 import type { ProjectBillingType } from "@/lib/project-list-filters";
@@ -283,12 +283,12 @@ export function ProjectsListTable({
             </div>
             <Link
               href={`/app/projects/${project.id}`}
-              className="text-xs font-semibold text-foreground hover:text-primary transition-colors truncate block"
+              className="text-sm font-semibold text-foreground hover:text-primary transition-colors truncate block"
             >
               {project.name}
             </Link>
           </div>
-          <div className="col-span-2 text-xs text-muted-foreground truncate">
+          <div className="col-span-2 text-sm text-muted-foreground truncate">
             {project.clientName || "—"}
           </div>
           <div className="col-span-2">
