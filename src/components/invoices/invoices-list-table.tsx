@@ -18,7 +18,7 @@ import { TableHeaderFilter } from "@/components/ui/table-header-filter";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { formatMoney } from "@/lib/utils";
-import { Receipt } from "lucide-react";
+import { Receipt, Clock } from "lucide-react";
 
 function formatDate(date: string | Date | null | undefined, locale: string): string {
   if (!date) return "—";
@@ -311,27 +311,27 @@ export function InvoicesListTable({
         {sorted.map((inv) => {
           const status = invoiceStatusVariant(inv.status, lang);
           return (
-            <div key={inv.id} className="rounded-xl border border-border/80 bg-card p-4 space-y-3 shadow-xs transition-colors hover:bg-muted/40">
+            <div key={inv.id} className="rounded-xl border border-border/80 bg-card p-3.5 space-y-2.5 shadow-xs transition-colors hover:bg-muted/40">
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex items-center gap-2">
                   <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
                     <Receipt className="h-3 w-3" />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <Link
                       href={buildInvoiceDetailUrl(inv.id, { type: "global" })}
-                      className="font-mono text-sm font-semibold hover:underline text-primary"
+                      className="font-mono text-sm font-semibold hover:underline text-primary block truncate"
                     >
                       {formatInvoiceId(inv.invoiceNumber)}
                     </Link>
-                    <div className="text-sm text-muted-foreground truncate">
+                    <div className="text-xs text-muted-foreground truncate">
                       {inv.clientCompany || inv.clientName}
                     </div>
                   </div>
                 </div>
                 <Badge
                   variant="outline"
-                  className={`gap-1 text-[10px] font-medium rounded-full px-2 py-0 h-5 ${
+                  className={`gap-1 text-[10px] font-medium rounded-full px-2 py-0 h-5 shrink-0 ${
                     inv.status === "paid"
                       ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                       : inv.status === "sent" || inv.status === "viewed"
@@ -355,27 +355,15 @@ export function InvoicesListTable({
                   {status.label}
                 </Badge>
               </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-xs text-muted-foreground">
-                  {t("Total", "Total")}
-                </span>
-                <div className="text-right">
-                  <div className="tabular-nums font-medium">
-                    {formatMoney(inv.total, inv.currency)}
-                  </div>
-                  {inv.totalBase != null &&
-                    inv.currency?.toUpperCase() !== base && (
-                      <div className="text-xs text-muted-foreground">
-                        ≈ {formatMoney(inv.totalBase, base)}
-                      </div>
-                    )}
+
+              <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/60">
+                <div className="text-sm font-semibold text-foreground tabular-nums">
+                  {formatMoney(inv.total, inv.currency)}
                 </div>
-              </div>
-              <div className="flex items-center justify-between gap-3">
-                <span className="text-xs text-muted-foreground">
-                  {t("Jatuh Tempo", "Due Date")}
-                </span>
-                <span className="text-sm">{formatDate(inv.dueDate, locale)}</span>
+                <div className="flex items-center gap-1.5">
+                  <Clock className="h-3 w-3" />
+                  <span>{formatDate(inv.dueDate, locale)}</span>
+                </div>
               </div>
             </div>
           );
