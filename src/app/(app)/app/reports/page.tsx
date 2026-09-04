@@ -606,8 +606,8 @@ export default async function ReportsPage({
             </div>
           )}
 
-          {/* 4-KPI Strip: Pemasukan, Pengeluaran, Bersih, Piutang */}
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {/* 4-KPI Strip: Pemasukan, Pengeluaran, Bersih, Piutang (Aligned Compact Style) */}
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             {[
               {
                 label: t("Pemasukan Diterima", "Income Received"),
@@ -615,7 +615,7 @@ export default async function ReportsPage({
                 previous: previousIncome,
                 icon: TrendingUp,
                 tone: "text-emerald-600 dark:text-emerald-400",
-                bg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+                iconTone: "text-emerald-500",
               },
               {
                 label: t("Biaya Operasional", "Expenses"),
@@ -623,7 +623,7 @@ export default async function ReportsPage({
                 previous: previousExpense,
                 icon: TrendingDown,
                 tone: "text-rose-600 dark:text-rose-400",
-                bg: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+                iconTone: "text-rose-500",
               },
               {
                 label: t("Laba Bersih (Net)", "Net Profit"),
@@ -631,7 +631,7 @@ export default async function ReportsPage({
                 previous: previousNet,
                 icon: BarChart3,
                 tone: net >= 0 ? "text-blue-600 dark:text-blue-400" : "text-amber-600 dark:text-amber-400",
-                bg: net >= 0 ? "bg-blue-500/10 text-blue-600 dark:text-blue-400" : "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                iconTone: "text-blue-500",
               },
               {
                 label: t("Sisa Piutang", "Outstanding AR"),
@@ -639,44 +639,35 @@ export default async function ReportsPage({
                 previous: 0,
                 icon: Wallet,
                 tone: overdueTotal > 0 ? "text-amber-600 dark:text-amber-400" : "text-foreground",
-                bg: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+                iconTone: "text-violet-500",
                 subtitle: overdueTotal > 0 ? `${overdueItems.length} ${t("terlambat", "overdue")}` : `${receivables.length} ${t("invoice aktif", "active invoices")}`,
               },
             ].map((item) => {
               return (
                 <Card
                   key={item.label}
-                  className="rounded-xl border shadow-none bg-card transition-all"
+                  className="rounded-xl border shadow-none bg-card p-4 space-y-1 transition-all"
                 >
-                  <CardContent className="p-4 flex flex-col justify-between h-full">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider truncate">
-                        {item.label}
-                      </span>
-                      <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${item.bg}`}>
-                        <item.icon className="h-4 w-4" />
-                      </div>
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-medium text-muted-foreground truncate">
+                      {item.label}
+                    </span>
+                    <item.icon className={`h-4 w-4 ${item.iconTone} shrink-0`} />
+                  </div>
 
-                    <div className="mt-2">
-                      <div className={`text-xl font-bold tabular-nums tracking-tight truncate sm:text-2xl ${item.tone}`}>
-                        {formatMoney(item.value, baseCurrency)}
-                      </div>
-                      {item.subtitle ? (
-                        <p className="mt-1 text-[11px] font-medium text-muted-foreground truncate">
-                          {item.subtitle}
-                        </p>
-                      ) : item.value !== 0 || item.previous !== 0 ? (
-                        <p className="mt-1 text-[11px] text-muted-foreground truncate">
-                          {deltaText(item.value, item.previous, lang)}
-                        </p>
-                      ) : (
-                        <p className="mt-1 text-[11px] text-muted-foreground">
-                          {t("Periode ini", "This period")}
-                        </p>
-                      )}
-                    </div>
-                  </CardContent>
+                  <p className={`text-xl font-bold tracking-tight tabular-nums truncate ${item.tone}`}>
+                    {formatMoney(item.value, baseCurrency)}
+                  </p>
+
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground truncate">
+                    {item.subtitle ? (
+                      <span className="truncate">{item.subtitle}</span>
+                    ) : item.value !== 0 || item.previous !== 0 ? (
+                      <span className="truncate">{deltaText(item.value, item.previous, lang)}</span>
+                    ) : (
+                      <span>{t("Periode ini", "This period")}</span>
+                    )}
+                  </div>
                 </Card>
               );
             })}

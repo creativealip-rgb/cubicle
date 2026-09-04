@@ -6,8 +6,8 @@ const source = readFileSync(resolve(process.cwd(), "src/app/(app)/app/reports/pa
 
 describe("reports mobile hierarchy", () => {
   it("uses a compact responsive 4-KPI grid across devices", () => {
-    expect(source).toContain('className="grid grid-cols-2 gap-3 lg:grid-cols-4"');
-    expect(source).toContain('className="p-4 flex flex-col justify-between h-full"');
+    expect(source).toContain('className="grid grid-cols-2 gap-3 md:grid-cols-4"');
+    expect(source).toContain('className="rounded-xl border shadow-none bg-card p-4 space-y-1 transition-all"');
   });
 
   it("handles delta comparisons cleanly", () => {
