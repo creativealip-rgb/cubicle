@@ -231,7 +231,7 @@ export function TasksListTable({
             >
               <div
                 id={isFocus ? `task-${task.id}` : undefined}
-                className={`cursor-pointer border-b border-border/80 px-3.5 py-2.5 transition-colors last:border-b-0 hover:bg-muted/40 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
+                className={`cursor-pointer border-b border-border px-3.5 py-2.5 transition-colors last:border-b-0 hover:bg-muted/40 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
               >
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1 flex items-center gap-2">

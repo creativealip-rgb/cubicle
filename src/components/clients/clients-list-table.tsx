@@ -145,7 +145,7 @@ export function ClientsListTable({
         {sorted.map((client) => (
           <div
             key={client.id}
-            className="grid grid-cols-12 gap-3 border-b border-border/80 px-3.5 py-2.5 items-center transition-colors last:border-b-0 hover:bg-muted/40"
+            className="grid grid-cols-12 gap-3 border-b border-border px-3.5 py-2.5 items-center transition-colors last:border-b-0 hover:bg-muted/40"
           >
             <div className="col-span-4 flex items-center gap-2.5 min-w-0">
               <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">

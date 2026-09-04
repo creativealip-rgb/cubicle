@@ -104,7 +104,7 @@ export function QuestionnairesListTable({
           {sorted.map((q) => (
             <TableRow
               key={q.id}
-              className="border-b border-border/80 transition-colors hover:bg-muted/40"
+              className="border-b border-border transition-colors hover:bg-muted/40"
             >
               <TableCell>
                 <div className="flex items-center gap-2">
