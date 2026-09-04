@@ -93,111 +93,117 @@ export function ClientsListTable({
   return (
     <>
       <div className="hidden md:block overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
-        <div className="grid grid-cols-7 gap-4 px-4 py-3 text-xs font-semibold text-muted-foreground bg-muted/40 border-b border-border/80 items-center">
-          <div className="col-span-2">
+        <div className="grid grid-cols-12 gap-3 px-3.5 py-2 text-[11px] font-semibold text-muted-foreground bg-muted/40 border-b border-border/80 items-center">
+          <div className="col-span-4">
             <SortableHeader
               as="div"
               label={t("Klien", "Client")}
               dir={dirFor("name")}
               onClick={() => toggle("name")}
-              className="text-xs"
+              className="text-[11px] uppercase tracking-wider"
             />
           </div>
-          <div>
+          <div className="col-span-3">
             <SortableHeader
               as="div"
               label={t("Perusahaan", "Company")}
               dir={dirFor("company")}
               onClick={() => toggle("company")}
-              className="text-xs"
+              className="text-[11px] uppercase tracking-wider"
             />
           </div>
-          <div>
+          <div className="col-span-1 text-center">
             <SortableHeader
               as="div"
               label={t("Proyek", "Projects")}
               dir={dirFor("projects")}
               onClick={() => toggle("projects")}
-              className="text-xs"
+              className="text-[11px] uppercase tracking-wider justify-center"
             />
           </div>
-          <div>
+          <div className="col-span-2">
             <SortableHeader
               as="div"
               label={t("Portal", "Portal")}
               dir={dirFor("portal")}
               onClick={() => toggle("portal")}
-              className="text-xs"
+              className="text-[11px] uppercase tracking-wider"
             />
           </div>
-          <div>
+          <div className="col-span-1">
             <SortableHeader
               as="div"
               label={t("Status", "Status")}
               dir={dirFor("status")}
               onClick={() => toggle("status")}
-              className="text-xs"
+              className="text-[11px] uppercase tracking-wider"
             />
           </div>
-          <div className="text-right">{t("Aksi", "Action")}</div>
+          <div className="col-span-1 text-right text-[11px] uppercase tracking-wider">{t("Aksi", "Action")}</div>
         </div>
         {clients.length === 0 && emptyDesktop}
         {sorted.map((client) => (
           <div
             key={client.id}
-            className="grid grid-cols-7 gap-4 border-b border-border/60 px-4 py-3.5 items-center transition-colors last:border-0 hover:bg-muted/40"
+            className="grid grid-cols-12 gap-3 border-b border-border/60 px-3.5 py-2 items-center transition-colors last:border-0 hover:bg-muted/40"
           >
-            <div className="col-span-2">
-              <Link
-                href={`/app/clients/${client.id}`}
-                className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
-              >
-                {client.name}
-              </Link>
-              {client.tags && client.tags.length > 0 && (
-                <div className="flex gap-1 mt-1 flex-wrap">
-                  {client.tags.slice(0, 3).map((tag) => (
-                    <Badge
-                      key={tag}
-                      variant="outline"
-                      className="text-[10px] px-1.5 py-0 rounded-md bg-muted/40 text-muted-foreground border-border/60"
-                    >
-                      {tag}
-                    </Badge>
-                  ))}
+            <div className="col-span-4 flex items-center gap-2.5 min-w-0">
+              <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-xs font-bold text-primary">
+                {client.name.charAt(0).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <Link
+                    href={`/app/clients/${client.id}`}
+                    className="text-xs font-semibold text-foreground hover:text-primary transition-colors truncate"
+                  >
+                    {client.name}
+                  </Link>
+                  {client.tags && client.tags.length > 0 && (
+                    <div className="flex gap-1">
+                      {client.tags.slice(0, 2).map((tag) => (
+                        <span
+                          key={tag}
+                          className="text-[9px] px-1.5 py-0.2 rounded bg-muted/60 text-muted-foreground border border-border/60"
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
+              </div>
             </div>
-            <div className="text-xs text-muted-foreground truncate">
+            <div className="col-span-3 text-xs text-muted-foreground truncate">
               {client.companyName || "—"}
             </div>
-            <div className="text-xs font-medium text-foreground">{client.projectCount}</div>
-            <div>
+            <div className="col-span-1 text-center text-xs font-medium text-foreground">{client.projectCount}</div>
+            <div className="col-span-2">
               {client.portalEnabled ? (
                 <Badge
                   variant="outline"
-                  className="gap-1 text-[11px] font-medium border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-full px-2"
+                  className="gap-1 text-[10px] font-medium border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 rounded-full px-2 py-0 h-5"
                 >
-                  <Globe className="h-3 w-3" /> {t("Portal Aktif", "Portal Active")}
+                  <Globe className="h-2.5 w-2.5" /> {t("Portal Aktif", "Portal Active")}
                 </Badge>
               ) : (
                 <span className="text-xs text-muted-foreground">—</span>
               )}
             </div>
-            <div>
+            <div className="col-span-1">
               <Badge
                 variant="outline"
                 className={
                   client.status === "active"
-                    ? "gap-1.5 text-xs font-medium border-primary/30 bg-primary/10 text-primary rounded-full px-2.5"
-                    : "gap-1.5 text-xs font-medium border-border/80 bg-muted/60 text-muted-foreground rounded-full px-2.5"
+                    ? "gap-1 text-[10px] font-medium border-primary/30 bg-primary/10 text-primary rounded-full px-2 py-0 h-5"
+                    : "gap-1 text-[10px] font-medium border-border/80 bg-muted/60 text-muted-foreground rounded-full px-2 py-0 h-5"
                 }
               >
-                <span className={`h-1.5 w-1.5 rounded-full ${client.status === "active" ? "bg-primary" : "bg-muted-foreground"}`} />
+                <span className={`h-1 w-1 rounded-full ${client.status === "active" ? "bg-primary" : "bg-muted-foreground"}`} />
                 {statusLabel(client.status)}
               </Badge>
             </div>
-            <div className="flex justify-end">{canWrite ? <ClientStatusEditDialog clientId={client.id} clientName={client.name} currentStatus={client.status} /> : null}</div>
+            <div className="col-span-1 flex justify-end">{canWrite ? <ClientStatusEditDialog clientId={client.id} clientName={client.name} currentStatus={client.status} /> : null}</div>
           </div>
         ))}
       </div>

@@ -207,7 +207,7 @@ export function ExpensesListTable({
 
       {/* Desktop table */}
       <div className="hidden md:block overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
-        <Table className="[&_td]:p-3 [&_th]:px-3">
+        <Table className="[&_td]:px-3.5 [&_td]:py-2.5 [&_th]:px-3.5 [&_th]:py-2">
           <TableHeader>
             <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/80">
               <TableHead className="w-32">
@@ -215,6 +215,7 @@ export function ExpensesListTable({
                   label={t("Tanggal", "Date")}
                   dir={dirFor("date")}
                   onClick={() => toggle("date")}
+                  className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
               <TableHead>
@@ -222,6 +223,7 @@ export function ExpensesListTable({
                   label={t("Deskripsi", "Description")}
                   dir={dirFor("description")}
                   onClick={() => toggle("description")}
+                  className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
               <TableHead>
@@ -229,6 +231,7 @@ export function ExpensesListTable({
                   label={t("Kategori", "Category")}
                   dir={dirFor("category")}
                   onClick={() => toggle("category")}
+                  className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
               <TableHead className="hidden lg:table-cell">
@@ -236,6 +239,7 @@ export function ExpensesListTable({
                   label={t("Proyek", "Project")}
                   dir={dirFor("project")}
                   onClick={() => toggle("project")}
+                  className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
               <TableHead className="hidden xl:table-cell">
@@ -243,46 +247,45 @@ export function ExpensesListTable({
                   label={t("Klien", "Client")}
                   dir={dirFor("client")}
                   onClick={() => toggle("client")}
+                  className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
               <TableHead className="text-right whitespace-nowrap">
                 <SortableHeader
-                  label={t("Jumlah", "Amount")}
+                  label={t("Nominal", "Amount")}
                   dir={dirFor("amount")}
                   onClick={() => toggle("amount")}
                   align="right"
+                  className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
-              {canWrite && <TableHead className="w-28 text-right"></TableHead>}
+              <TableHead className="w-20 text-right text-[11px] uppercase tracking-wider">{t("Aksi", "Action")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((e, index) => (
+            {sorted.map((e) => (
               <TableRow
                 key={e.id}
-                className={`border-b border-border/70 hover:bg-muted/40 transition-colors ${
-                  index % 2 === 1 ? "bg-muted/10" : "bg-card"
-                }`}
+                className="border-b border-border/60 transition-colors hover:bg-muted/40"
               >
                 <TableCell className="text-xs text-muted-foreground font-mono tabular-nums whitespace-nowrap">
                   {e.date}
                 </TableCell>
                 <TableCell>
-                  <div className="font-semibold text-xs sm:text-sm text-foreground">{e.description}</div>
+                  <span className="text-xs font-semibold text-foreground">
+                    {e.description}
+                  </span>
                   {e.vendor && (
-                    <div className="text-[11px] text-muted-foreground">{e.vendor}</div>
-                  )}
-                  {(e.projectName || e.clientName) && (
-                    <div className="mt-0.5 text-[11px] text-muted-foreground lg:hidden">
-                      {[e.projectName, e.clientName].filter(Boolean).join(" · ")}
-                    </div>
+                    <span className="block text-[11px] text-muted-foreground">
+                      {e.vendor}
+                    </span>
                   )}
                 </TableCell>
                 <TableCell>
                   {e.categoryName ? (
-                    <span className="inline-flex items-center gap-1.5 text-xs font-medium bg-muted/50 px-2 py-0.5 rounded-md border border-border/50">
+                    <span className="inline-flex items-center gap-1 text-xs text-foreground/90">
                       <span
-                        className="h-2 w-2 rounded-full shrink-0"
+                        className="h-1.5 w-1.5 rounded-full shrink-0"
                         style={{ backgroundColor: e.categoryColor ?? "#64748b" }}
                       />
                       {e.categoryName}
@@ -291,22 +294,29 @@ export function ExpensesListTable({
                     <span className="text-xs text-muted-foreground">—</span>
                   )}
                 </TableCell>
-                <TableCell className="text-xs text-foreground/80 hidden lg:table-cell">
-                  {e.projectName ?? <span className="text-muted-foreground">—</span>}
+                <TableCell className="hidden lg:table-cell text-xs text-muted-foreground">
+                  {e.projectName ?? "—"}
                 </TableCell>
-                <TableCell className="text-xs text-foreground/80 hidden xl:table-cell">
-                  {e.clientName ?? <span className="text-muted-foreground">—</span>}
+                <TableCell className="hidden xl:table-cell text-xs text-muted-foreground">
+                  {e.clientName ?? "—"}
                 </TableCell>
-                <TableCell className="text-right tabular-nums font-bold text-xs sm:text-sm text-foreground whitespace-nowrap">
-                  <div>{formatMoney(e.amount, e.currency)}</div>
-                  {e.amountBase != null && e.currency?.toUpperCase() !== base && (
-                    <div className="text-[10px] font-normal text-muted-foreground font-mono mt-0.5">
-                      ≈ {formatMoney(e.amountBase, base)}
+                <TableCell className="text-right font-medium text-xs whitespace-nowrap">
+                  <div className="tabular-nums">
+                    {formatMoney(e.amount, e.currency)}
+                  </div>
+                  {e.amountBase != null && (
+                    <div className="text-[10px] text-muted-foreground tabular-nums">
+                      ≈ {formatMoney(e.amountBase, defaultCurrency)}
                     </div>
                   )}
                 </TableCell>
-                {canWrite && (
-                  <TableCell className="text-right">
+                <TableCell className="text-right">
+                  <div className="flex items-center justify-end gap-0.5">
+                    {e.receiptUrl && (
+                      <ReceiptLinkButton
+                        expenseId={e.id}
+                      />
+                    )}
                     <ExpenseActions
                       e={e}
                       canWrite={canWrite}
@@ -316,8 +326,8 @@ export function ExpensesListTable({
                       projects={projects}
                       clients={clients}
                     />
-                  </TableCell>
-                )}
+                  </div>
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
