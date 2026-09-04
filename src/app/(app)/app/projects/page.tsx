@@ -9,7 +9,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
-import { Briefcase } from "lucide-react";
+import { Briefcase, ChevronLeft, ChevronRight } from "lucide-react";
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
 import { ProjectsListTable } from "@/components/projects/projects-list-table";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -52,6 +52,7 @@ export default async function ProjectsPage({
     clientId?: string;
     status?: string;
     billingType?: string;
+    page?: string;
   }>;
 }) {
   const lang = await getCurrentLang();
@@ -62,7 +63,6 @@ export default async function ProjectsPage({
     completed: t("Selesai", "Completed"),
   };
   const tabLabel = (tab: ProjectStatusTab) => {
-
     return PROJECT_STATUS_LABELS[tab] ?? tab;
   };
 
@@ -79,6 +79,9 @@ export default async function ProjectsPage({
   const statusTab = parseStatusTab(params.status);
   const clientId = isUuid(params.clientId) ? params.clientId : undefined;
   const billingType = parseBillingType(params.billingType);
+  const rawPage = Number.parseInt(params.page ?? "1", 10);
+  const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+  const PAGE_SIZE = 10;
 
   // Plan limit (per-user free plan: max 5 projects)
   const [userPlan] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, user.id)).limit(1);
@@ -121,6 +124,18 @@ export default async function ProjectsPage({
   if (billingType === "package") whereClauses.push(eq(projects.billingType, "package"));
   else if (billingType) whereClauses.push(eq(projects.billingModel, billingType));
 
+  // Count total filtered projects for pagination
+  const [{ totalFiltered }] = await db
+    .select({ totalFiltered: sql<number>`count(distinct ${projects.id})::int` })
+    .from(projects)
+    .leftJoin(tasks, eq(tasks.projectId, projects.id))
+    .where(and(...whereClauses));
+
+  const filteredTotal = Number(totalFiltered) || 0;
+  const totalPages = Math.max(1, Math.ceil(filteredTotal / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const offset = (currentPage - 1) * PAGE_SIZE;
+
   const projectsList = await db
     .select({
       id: projects.id,
@@ -141,10 +156,11 @@ export default async function ProjectsPage({
     .from(projects)
     .leftJoin(clients, eq(clients.id, projects.clientId))
     .leftJoin(tasks, eq(tasks.projectId, projects.id))
-
     .where(and(...whereClauses))
     .groupBy(projects.id, clients.name)
-    .orderBy(desc(projects.createdAt));
+    .orderBy(desc(projects.createdAt))
+    .limit(PAGE_SIZE)
+    .offset(offset);
 
   const filtersForHref = {
     status: statusTab,
@@ -156,6 +172,9 @@ export default async function ProjectsPage({
   const selectedClient = clientId
     ? clientOptions.find((c) => c.id === clientId)
     : undefined;
+
+  const fromItem = filteredTotal === 0 ? 0 : offset + 1;
+  const toItem = Math.min(offset + PAGE_SIZE, filteredTotal);
 
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">
@@ -235,6 +254,50 @@ export default async function ProjectsPage({
         }}
         canWrite={canWrite}
       />
+
+      {/* Pagination */}
+      {filteredTotal > 0 && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <p className="text-xs text-muted-foreground sm:text-sm">
+            {t(
+              `Menampilkan ${fromItem}–${toItem} dari ${filteredTotal}`,
+              `Showing ${fromItem}–${toItem} of ${filteredTotal}`,
+            )}
+            {` · ${t(`${PAGE_SIZE}/halaman`, `${PAGE_SIZE}/page`)}`}
+          </p>
+          <div className="flex items-center gap-2">
+            {currentPage > 1 ? (
+              <Link href={buildProjectsHref({ ...filtersForHref, page: currentPage - 1 })}>
+                <Button variant="outline" size="sm" className="gap-1 h-7.5 text-xs">
+                  <ChevronLeft className="h-3.5 w-3.5" />
+                  {t("Sebelumnya", "Previous")}
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="outline" size="sm" className="gap-1 h-7.5 text-xs" disabled>
+                <ChevronLeft className="h-3.5 w-3.5" />
+                {t("Sebelumnya", "Previous")}
+              </Button>
+            )}
+            <span className="min-w-[4rem] text-center text-xs tabular-nums text-muted-foreground">
+              {currentPage}/{totalPages}
+            </span>
+            {currentPage < totalPages ? (
+              <Link href={buildProjectsHref({ ...filtersForHref, page: currentPage + 1 })}>
+                <Button variant="outline" size="sm" className="gap-1 h-7.5 text-xs">
+                  {t("Berikutnya", "Next")}
+                  <ChevronRight className="h-3.5 w-3.5" />
+                </Button>
+              </Link>
+            ) : (
+              <Button variant="outline" size="sm" className="gap-1 h-7.5 text-xs" disabled>
+                {t("Berikutnya", "Next")}
+                <ChevronRight className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
