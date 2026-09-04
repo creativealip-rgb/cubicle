@@ -178,7 +178,7 @@ export function ProposalsListTable({
             return (
               <TableRow
                 key={p.id}
-                className="border-b border-border/60 transition-colors hover:bg-muted/40"
+                className="border-b border-border transition-colors hover:bg-muted/40"
               >
                 <TableCell>
                   <div className="flex items-center gap-2">
