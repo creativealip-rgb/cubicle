@@ -43,13 +43,14 @@ export function TaskDetailSheet({
   projects = [],
   children,
   defaultOpen = false,
-}: TaskDetailSheetProps) {
+  className,
+}: TaskDetailSheetProps & { className?: string }) {
   const { t } = useT();
   const [open, setOpen] = useState(defaultOpen);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <div onClick={() => setOpen(true)} className="cursor-pointer">
+      <div onClick={() => setOpen(true)} className={className ?? "cursor-pointer"}>
         {children}
       </div>
       <DialogContent className="flex max-h-[min(90dvh,800px)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
