@@ -3,7 +3,6 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { Clock, Plus, FolderKanban } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { EmptyState } from "@/components/empty-state";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
@@ -11,6 +10,7 @@ import { useT } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 import { getProjectProgress, progressTone } from "@/lib/project-progress";
 import { projectListStatusVariant, projectStatusDot } from "@/lib/status-badge";
+import { UniversalStatusBadge } from "@/components/ui/universal-status-badge";
 
 import type { ProjectBillingType } from "@/lib/project-list-filters";
 import { TableHeaderFilter } from "@/components/ui/table-header-filter";
@@ -81,23 +81,23 @@ function ProgressBar({ project, label }: { project: ProjectListItem; label?: str
   const progress = getProjectProgress(project);
   const overdue = project.status !== "completed" && (dueDays(project.dueDate) ?? 0) < 0;
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-2 w-full">
       <div
         role="progressbar"
         aria-valuemin={0}
         aria-valuemax={100}
         aria-valuenow={progress.pct}
         aria-label={label ?? "Progress"}
-        className="relative h-5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted shadow-inner"
+        className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted/80"
       >
         <div
           className="h-full rounded-full transition-all"
-          style={{ width: `${progress.pct}%`, backgroundColor: progressTone(progress.pct, overdue) }}
+          style={{ width: `${Math.min(100, Math.max(progress.pct, 0))}%`, backgroundColor: progressTone(progress.pct, overdue) }}
         />
-        <div className="absolute inset-0 flex items-center justify-center text-[11px] font-semibold leading-none text-slate-700 mix-blend-multiply">
-          {progress.label}
-        </div>
       </div>
+      <span className="text-[10px] font-mono tabular-nums text-muted-foreground whitespace-nowrap">
+        {progress.label}
+      </span>
     </div>
   );
 }
@@ -158,10 +158,7 @@ export function ProjectsListTable({
   function StatusPill({ status }: { status: string }) {
     const config = projectListStatusVariant(status, locale === "en-US" ? "en" : "id");
     return (
-      <Badge variant={config.variant} className="text-xs gap-1.5">
-        <span className={cn("h-1.5 w-1.5 rounded-full", projectStatusDot(status))} />
-        {config.label}
-      </Badge>
+      <UniversalStatusBadge label={config.label} status={status} />
     );
   }
 
