@@ -143,17 +143,17 @@ export function NotificationsBell() {
         <Button
           variant="ghost"
           size="icon"
-          className="relative h-10 w-10 sm:h-9 sm:w-9"
+          className="relative h-8.5 w-8.5 rounded-lg text-foreground/80 hover:text-foreground hover:bg-muted/60"
           aria-label={`${t("Notifikasi", "Notifications")}${unread > 0 ? ` (${unread} ${t("belum dibaca", "unread")})` : ""}`}
           title={t("Notifikasi", "Notifications")}
         >
-          <Bell className="h-5 w-5" />
+          <Bell className="h-4 w-4" />
           {unread > 0 && (
             <span
               className={cn(
-                "absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full",
-                "bg-[#6647F0] text-white text-[10px] font-bold leading-[18px] text-center",
-                "ring-2 ring-background"
+                "absolute -top-0.5 -right-0.5 min-w-[17px] h-[17px] px-1 rounded-full",
+                "bg-primary text-primary-foreground text-[10px] font-bold leading-[17px] text-center",
+                "ring-2 ring-background shadow-xs"
               )}
               data-testid="notif-badge"
             >

@@ -254,15 +254,19 @@ export function AppTopbar({ user }: AppTopbarProps) {
         <>
           {/* Desktop / tablet wide search */}
           <form onSubmit={handleSearch} className="relative hidden min-w-0 flex-1 max-w-md sm:block">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
             <Input
               type="search"
               aria-label={t("Cari", "Search")}
-              placeholder={t("Cari…", "Search…")}
+              placeholder={t("Cari di ruang kerja…", "Search workspace…")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-9 pl-9 text-sm"
+              className="h-8.5 pl-9 pr-14 text-xs rounded-lg bg-muted/40 hover:bg-muted/60 focus:bg-background border-border/70 transition-all placeholder:text-muted-foreground/60"
             />
+            <div className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 hidden items-center gap-0.5 rounded border border-border/70 bg-background/80 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground shadow-2xs sm:flex">
+              <span>⌘</span>
+              <span>K</span>
+            </div>
           </form>
 
           {/* Phone: icon-only search */}
@@ -270,7 +274,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
             type="button"
             variant="ghost"
             size="icon"
-            className="h-11 w-11 shrink-0 sm:hidden"
+            className="h-10 w-10 shrink-0 sm:hidden rounded-lg"
             onClick={() => setSearchOpen(true)}
             aria-label={t("Cari", "Search")}
           >
@@ -282,8 +286,8 @@ export function AppTopbar({ user }: AppTopbarProps) {
             {canWrite && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="h-9 gap-1 px-2.5 sm:px-3">
-                    <Plus className="h-4 w-4" />
+                  <Button size="sm" className="h-8.5 gap-1.5 px-3 rounded-lg text-xs font-semibold shadow-xs">
+                    <Plus className="h-3.5 w-3.5" />
                     <span className="hidden sm:inline">
                       {t("Baru", "New")}
                     </span>
@@ -309,33 +313,35 @@ export function AppTopbar({ user }: AppTopbarProps) {
               </DropdownMenu>
             )}
 
-            {/* AI — tablet/desktop only */}
+            {/* AI Assistant — ambient tone */}
             <Button
               variant="outline"
               size="icon"
-              className="hidden h-9 w-9 text-blue-600 hover:bg-blue-50 hover:text-blue-700 md:inline-flex"
+              className="hidden h-8.5 w-8.5 rounded-lg text-primary border-primary/20 bg-primary/[0.04] hover:bg-primary/[0.08] hover:border-primary/40 md:inline-flex transition-all"
               onClick={() => window.dispatchEvent(new Event("cubicle:toggle-ai"))}
               aria-label={t("Asisten AI", "AI Assistant")}
               title={t("Asisten AI", "AI Assistant")}
             >
-              <Sparkles className="h-4 w-4" />
+              <Sparkles className="h-3.5 w-3.5" />
             </Button>
 
             <NotificationsBell />
 
-            {/* Workspace switcher — desktop only (mobile: inside avatar menu) */}
+            {/* Workspace switcher — desktop only with squircle avatar */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="hidden h-9 max-w-[160px] gap-1.5 text-muted-foreground lg:inline-flex"
+                  className="hidden h-8.5 max-w-[180px] gap-2 text-foreground/80 hover:text-foreground border border-transparent hover:border-border/60 hover:bg-muted/40 rounded-lg px-2 lg:inline-flex transition-all"
                 >
-                  <Building2 className="h-3.5 w-3.5 shrink-0" />
-                  <span className="truncate text-xs font-medium">
+                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-primary/10 text-[10px] font-bold text-primary">
+                    {(activeWorkspace?.name || "W").charAt(0).toUpperCase()}
+                  </div>
+                  <span className="truncate text-xs font-semibold">
                     {activeWorkspace?.name || t("Ruang Kerja", "Workspace")}
                   </span>
-                  <ChevronDown className="h-3 w-3 shrink-0" />
+                  <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-72">
