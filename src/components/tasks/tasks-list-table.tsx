@@ -2,7 +2,6 @@
 
 import { useMemo } from "react";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { EmptyState } from "@/components/empty-state";
 import { SortableHeader } from "@/components/ui/sortable-header";
@@ -137,37 +136,37 @@ export function TasksListTable({
   }
 
   return (
-    <div className="overflow-hidden rounded-lg border bg-card">
-      <div className="hidden items-center gap-4 border-b bg-muted/40 px-4 py-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground md:flex">
+    <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
+      <div className="hidden items-center gap-3 border-b border-border/80 bg-muted/40 px-3.5 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground md:flex">
         <div className="min-w-0 flex-1">
           <SortableHeader
             as="div"
             label={t("Judul", "Title")}
             dir={dirFor("title")}
             onClick={() => toggle("title")}
-            className="text-[11px] uppercase tracking-wide"
+            className="text-[11px] uppercase tracking-wider"
           />
         </div>
         <div className="w-44">
-          <TableHeaderFilter label={t("Proyek", "Project")} queryKey="projectId" value={currentFilters.projectId} basePath="/app/tasks" options={[{value:"all",label:t("Semua proyek","All projects")},...projects.map(p=>({value:p.id,label:p.name}))]} className="text-[11px] uppercase tracking-wide" />
+          <TableHeaderFilter label={t("Proyek", "Project")} queryKey="projectId" value={currentFilters.projectId} basePath="/app/tasks" options={[{value:"all",label:t("Semua proyek","All projects")},...projects.map(p=>({value:p.id,label:p.name}))]} className="text-[11px] uppercase tracking-wider" />
         </div>
         <div className="w-28">
-          <TableHeaderFilter label={t("Ditugaskan", "Assignee")} queryKey="assignee" value={currentFilters.assignee} basePath="/app/tasks" options={[{value:"all",label:t("Semua petugas","All assignees")},{value:"me",label:t("Saya","Me")},{value:"unassigned",label:t("Belum ditugaskan","Unassigned")},...members.filter(m=>m.id!==currentUserId).map(m=>({value:m.id,label:m.name||m.email||m.id.slice(0,8)}))]} className="text-[11px] uppercase tracking-wide" />
+          <TableHeaderFilter label={t("Ditugaskan", "Assignee")} queryKey="assignee" value={currentFilters.assignee} basePath="/app/tasks" options={[{value:"all",label:t("Semua petugas","All assignees")},{value:"me",label:t("Saya","Me")},{value:"unassigned",label:t("Belum ditugaskan","Unassigned")},...members.filter(m=>m.id!==currentUserId).map(m=>({value:m.id,label:m.name||m.email||m.id.slice(0,8)}))]} className="text-[11px] uppercase tracking-wider" />
         </div>
-        <div className="w-24">
+        <div className="w-28">
           <SortableHeader
             as="div"
             label={t("Tenggat", "Due")}
             dir={dirFor("dueDate")}
             onClick={() => toggle("dueDate")}
-            className="text-[11px] uppercase tracking-wide"
+            className="text-[11px] uppercase tracking-wider"
           />
         </div>
-        <div className="w-20">
-          <TableHeaderFilter label={t("Prioritas", "Priority")} queryKey="priority" value={currentFilters.priority} basePath="/app/tasks" options={[{value:"all",label:t("Semua prioritas","All priorities")},{value:"urgent",label:t("Mendesak","Urgent")},{value:"high",label:t("Tinggi","High")},{value:"medium",label:t("Sedang","Medium")},{value:"low",label:t("Rendah","Low")}]} className="text-[11px] uppercase tracking-wide" />
+        <div className="w-24">
+          <TableHeaderFilter label={t("Prioritas", "Priority")} queryKey="priority" value={currentFilters.priority} basePath="/app/tasks" options={[{value:"all",label:t("Semua prioritas","All priorities")},{value:"urgent",label:t("Mendesak","Urgent")},{value:"high",label:t("Tinggi","High")},{value:"medium",label:t("Sedang","Medium")},{value:"low",label:t("Rendah","Low")}]} className="text-[11px] uppercase tracking-wider" />
         </div>
         <div className="w-24">
-          <TableHeaderFilter label={t("Status", "Status")} queryKey="status" value={currentFilters.status} basePath="/app/tasks" options={[{value:"all",label:t("Semua status","All statuses")},{value:"todo",label:t("Belum Mulai","To Do")},{value:"in_progress",label:t("Dikerjakan","In Progress")},{value:"review",label:"Review"},{value:"done",label:t("Selesai","Done")}]} className="text-[11px] uppercase tracking-wide" />
+          <TableHeaderFilter label={t("Status", "Status")} queryKey="status" value={currentFilters.status} basePath="/app/tasks" options={[{value:"all",label:t("Semua status","All statuses")},{value:"todo",label:t("Belum Mulai","To Do")},{value:"in_progress",label:t("Dikerjakan","In Progress")},{value:"review",label:"Review"},{value:"done",label:t("Selesai","Done")}]} className="text-[11px] uppercase tracking-wider" />
         </div>
       </div>
 
@@ -230,46 +229,51 @@ export function TasksListTable({
               members={members}
               defaultOpen={isFocus}
             >
-              <Card
+              <div
                 id={isFocus ? `task-${task.id}` : undefined}
-                className={`cursor-pointer rounded-none border-0 !border-b shadow-none transition-colors last:border-b-0 hover:bg-muted/50 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
+                className={`cursor-pointer border-b border-border/60 px-3.5 py-2 transition-colors last:border-b-0 hover:bg-muted/40 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
               >
-                <CardContent className="grid gap-3 p-3 md:flex md:items-center md:gap-4">
+                <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium">{task.title}</p>
-                    {task.sourceNoteId ? (
-                      <p className="mt-0.5 text-[10px] text-muted-foreground">
-                        {t("Dari catatan", "From note")}
-                      </p>
-                    ) : null}
-                    <Badge variant="outline" className="mt-1 text-[10px] font-normal">
-                      {task.mode === "reusable" ? "Reusable" : "Workflow"}
-                    </Badge>
+                    <div className="flex items-center gap-1.5 flex-wrap">
+                      <p className="truncate text-xs font-semibold text-foreground hover:text-primary transition-colors">{task.title}</p>
+                      {task.mode === "reusable" ? (
+                        <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">Reusable</span>
+                      ) : (
+                        <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">Workflow</span>
+                      )}
+                      {task.sourceNoteId && (
+                        <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">
+                          {t("Catatan", "Note")}
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <div className="text-xs text-muted-foreground md:w-44">
-                    <p className="truncate">{task.projectName ?? t("Tanpa proyek", "No project")}</p>
-                    {task.clientName ? <p className="truncate text-[10px] opacity-80">{task.clientName}</p> : null}
+                  <div className="text-xs text-muted-foreground w-44 truncate">
+                    <span>{task.projectName ?? t("Tanpa proyek", "No project")}</span>
+                    {task.clientName ? <span className="text-[10px] opacity-75 block truncate">{task.clientName}</span> : null}
                   </div>
-                  <div className="text-xs text-muted-foreground md:w-28 md:truncate">
-                    {task.assigneeName ?? t("Belum ditugaskan", "Unassigned")}
+                  <div className="text-xs text-muted-foreground w-28 truncate">
+                    {task.assigneeName ?? <span className="text-muted-foreground/60">—</span>}
                   </div>
-                  <div className={`flex items-center gap-1 text-xs md:w-24 ${dueTone(task)}`}>
+                  <div className={`flex items-center gap-1 text-xs w-28 ${dueTone(task)}`}>
                     <Clock className="h-3 w-3" />
-                    {formatDue(task)}
+                    <span className="truncate">{formatDue(task)}</span>
                   </div>
-                  <div className="md:w-20">
-                    <Badge variant="outline" className={`text-[10px] ${taskPriorityColor(task.priority)}`}>
-                      {task.priority === "urgent" && <AlertTriangle className="mr-0.5 h-3 w-3" />}
+                  <div className="w-24">
+                    <Badge variant="outline" className={`text-[10px] px-2 py-0 h-5 rounded-full font-medium ${taskPriorityColor(task.priority)}`}>
+                      {task.priority === "urgent" && <AlertTriangle className="mr-0.5 h-2.5 w-2.5" />}
                       {taskPriorityLabel(task.priority, lang)}
                     </Badge>
                   </div>
-                  <div className="md:w-24">
-                    <Badge variant={sb.variant} className={`text-[10px] ${task.status === "review" ? "border-violet-300 bg-violet-50 text-violet-700" : ""}`}>
+                  <div className="w-24">
+                    <Badge variant="outline" className={`gap-1 text-[10px] px-2 py-0 h-5 rounded-full font-medium ${sb.variant === "default" ? "border-primary/30 bg-primary/10 text-primary" : "border-border/80 bg-muted/60 text-muted-foreground"}`}>
+                      <span className={`h-1 w-1 rounded-full ${task.status === "done" ? "bg-emerald-600" : task.status === "in_progress" ? "bg-blue-600" : "bg-muted-foreground"}`} />
                       {sb.label}
                     </Badge>
                   </div>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
             </TaskDetailSheet>
           );
         })}

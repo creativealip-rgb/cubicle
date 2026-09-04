@@ -126,7 +126,7 @@ export function ContractsListTable({
 
   return (
     <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
-      <Table className="[&_td]:p-3 sm:[&_td]:px-4 sm:[&_td]:py-3.5 [&_th]:px-3 sm:[&_th]:px-4">
+      <Table className="[&_td]:px-3.5 [&_td]:py-2 [&_th]:px-3.5 [&_th]:py-2">
         <TableHeader>
           <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/80">
             <TableHead>
@@ -134,6 +134,7 @@ export function ContractsListTable({
                 label={t("Judul", "Title")}
                 dir={dirFor("title")}
                 onClick={() => toggle("title")}
+                className="text-[11px] uppercase tracking-wider"
               />
             </TableHead>
             <TableHead>
@@ -141,6 +142,7 @@ export function ContractsListTable({
                 label={t("Klien", "Client")}
                 dir={dirFor("client")}
                 onClick={() => toggle("client")}
+                className="text-[11px] uppercase tracking-wider"
               />
             </TableHead>
             <TableHead>
@@ -148,6 +150,7 @@ export function ContractsListTable({
                 label={t("Status", "Status")}
                 dir={dirFor("status")}
                 onClick={() => toggle("status")}
+                className="text-[11px] uppercase tracking-wider"
               />
             </TableHead>
             <TableHead>
@@ -155,9 +158,10 @@ export function ContractsListTable({
                 label={t("Aktivitas", "Activity")}
                 dir={dirFor("activity")}
                 onClick={() => toggle("activity")}
+                className="text-[11px] uppercase tracking-wider"
               />
             </TableHead>
-            <TableHead className="text-right">{t("Aksi", "Actions")}</TableHead>
+            <TableHead className="text-right text-[11px] uppercase tracking-wider">{t("Aksi", "Actions")}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -171,12 +175,12 @@ export function ContractsListTable({
                 <TableCell>
                   <Link
                     href={`/app/contracts/${c.id}`}
-                    className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
+                    className="text-xs font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[15rem]"
                   >
                     {c.title}
                   </Link>
                   {c.validUntil ? (
-                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                    <p className="text-[10px] text-muted-foreground">
                       {t("Berlaku s/d", "Valid until")}{" "}
                       {new Date(c.validUntil).toLocaleDateString(
                         lang === "en" ? "en-US" : "id-ID",
@@ -184,13 +188,13 @@ export function ContractsListTable({
                     </p>
                   ) : null}
                 </TableCell>
-                <TableCell className="text-sm">
-                  {c.clientId ? <Link href={`/app/clients/${c.clientId}`} className="text-slate-600 hover:underline">{c.clientName}</Link> : c.clientName}
+                <TableCell className="text-xs">
+                  {c.clientId ? <Link href={`/app/clients/${c.clientId}`} className="text-muted-foreground hover:text-primary hover:underline">{c.clientName}</Link> : <span className="text-muted-foreground">{c.clientName}</span>}
                 </TableCell>
                 <TableCell>
-                  <Badge variant={status.variant}>{status.label}</Badge>
+                  <Badge variant="outline" className="text-[10px] px-2 py-0 h-5 rounded-full font-medium border-border/80 bg-muted/60 text-muted-foreground">{status.label}</Badge>
                 </TableCell>
-                <TableCell className="text-xs text-slate-500">
+                <TableCell className="text-[11px] text-muted-foreground whitespace-nowrap">
                   {activityLabel(c, t, lang)}
                 </TableCell>
                 <TableCell className="text-right align-middle">

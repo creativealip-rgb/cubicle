@@ -190,27 +190,27 @@ export function ProjectsListTable({
 
   return (
     <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
-      <div className="hidden md:grid grid-cols-12 gap-4 px-4 py-3 text-xs font-semibold text-muted-foreground bg-muted/40 border-b border-border/80 items-center">
+      <div className="hidden md:grid grid-cols-12 gap-3 px-3.5 py-2 text-[11px] font-semibold text-muted-foreground bg-muted/40 border-b border-border/80 items-center">
         <div className="col-span-3">
           <SortableHeader
             as="div"
             label={t("Proyek", "Project")}
             dir={dirFor("name")}
             onClick={() => toggle("name")}
-            className="text-xs"
+            className="text-[11px] uppercase tracking-wider"
           />
         </div>
         <div className="col-span-2">
-          <TableHeaderFilter label={t("Klien", "Client")} queryKey="clientId" value={currentClientId} basePath="/app/projects" options={[{ value: "all", label: t("Semua klien", "All clients") }, ...clients.map((client) => ({ value: client.id, label: client.name }))]} className="text-xs" />
+          <TableHeaderFilter label={t("Klien", "Client")} queryKey="clientId" value={currentClientId} basePath="/app/projects" options={[{ value: "all", label: t("Semua klien", "All clients") }, ...clients.map((client) => ({ value: client.id, label: client.name }))]} className="text-[11px] uppercase tracking-wider" />
         </div>
         <div className="col-span-2">
-          <span className="text-xs font-semibold text-muted-foreground">{t("Status", "Status")}</span>
+          <span className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">{t("Status", "Status")}</span>
         </div>
         <div className="col-span-2">
           <TableHeaderFilter label={t("Progres", "Progress")} queryKey="billingType" value={billingType} basePath="/app/projects" options={[
             { value: "all", label: t("Semua jenis", "All types") }, { value: "fixed_price", label: "Fixed Price" },
             { value: "hourly", label: t("Per Jam", "Hourly") }, { value: "retainer", label: "Retainer" }, { value: "package", label: t("Paket", "Package") },
-          ]} className="text-xs" />
+          ]} className="text-[11px] uppercase tracking-wider" />
         </div>
         <div className="col-span-2">
           <SortableHeader
@@ -218,10 +218,10 @@ export function ProjectsListTable({
             label={t("Jatuh Tempo", "Due")}
             dir={dirFor("dueDate")}
             onClick={() => toggle("dueDate")}
-            className="text-xs"
+            className="text-[11px] uppercase tracking-wider"
           />
         </div>
-        <div className="col-span-1 text-right">{t("Aksi", "Action")}</div>
+        <div className="col-span-1 text-right text-[11px] uppercase tracking-wider">{t("Aksi", "Action")}</div>
       </div>
 
       {projects.length === 0 && (
@@ -278,12 +278,12 @@ export function ProjectsListTable({
       {sorted.map((project) => (
         <div
           key={project.id}
-          className="hidden md:grid grid-cols-12 gap-4 border-b border-border/60 px-4 py-3.5 items-center transition-colors last:border-0 hover:bg-muted/40"
+          className="hidden md:grid grid-cols-12 gap-3 border-b border-border/60 px-3.5 py-2 items-center transition-colors last:border-0 hover:bg-muted/40"
         >
-          <div className="col-span-3">
+          <div className="col-span-3 min-w-0">
             <Link
               href={`/app/projects/${project.id}`}
-              className="text-sm font-semibold text-foreground hover:text-primary transition-colors"
+              className="text-xs font-semibold text-foreground hover:text-primary transition-colors truncate block"
             >
               {project.name}
             </Link>

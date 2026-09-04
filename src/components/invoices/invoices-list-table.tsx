@@ -140,15 +140,16 @@ export function InvoicesListTable({
 
   return (
     <>
-      <div className="hidden overflow-hidden rounded-lg border bg-card md:block">
-        <Table className="[&_td]:p-3 [&_th]:px-3">
+      <div className="hidden overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs md:block">
+        <Table className="[&_td]:px-3.5 [&_td]:py-2 [&_th]:px-3.5 [&_th]:py-2">
           <TableHeader>
-            <TableRow>
-              <TableHead>
+            <TableRow className="bg-muted/40 hover:bg-muted/40 border-b border-border/80">
+              <TableHead className="w-36">
                 <SortableHeader
                   label={t("No. Invoice", "Invoice No.")}
                   dir={dirFor("number")}
                   onClick={() => toggle("number")}
+                  className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
               <TableHead>
@@ -161,9 +162,10 @@ export function InvoicesListTable({
                     { value: "all", label: t("Semua klien", "All clients") },
                     ...clientOptions.map((client) => ({ value: client.id, label: client.name })),
                   ]}
+                  className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
-              <TableHead>
+              <TableHead className="hidden lg:table-cell">
                 <TableHeaderFilter
                   label={t("Proyek", "Project")}
                   queryKey="projectId"
@@ -173,9 +175,10 @@ export function InvoicesListTable({
                     { value: "all", label: t("Semua proyek", "All projects") },
                     ...projectOptions.map((project) => ({ value: project.id, label: project.name })),
                   ]}
+                  className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
-              <TableHead>
+              <TableHead className="hidden xl:table-cell">
                 <TableHeaderFilter
                   label={t("Jenis", "Type")}
                   queryKey="billing"
@@ -185,86 +188,110 @@ export function InvoicesListTable({
                     { value: "all", label: t("Semua jenis", "All types") },
                     ...billingOptions.map((option) => ({ value: option.id, label: option.name })),
                   ]}
+                  className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
-              <TableHead>
+              <TableHead className="w-36">
                 <SortableHeader
                   label={t("Tanggal", "Dates")}
                   dir={dirFor("issueDate")}
                   onClick={() => toggle("issueDate")}
+                  className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
-              <TableHead className="text-right">
+              <TableHead className="text-right whitespace-nowrap">
                 <SortableHeader
                   label={t("Total", "Total")}
                   dir={dirFor("total")}
                   onClick={() => toggle("total")}
                   align="right"
+                  className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
-              <TableHead>
+              <TableHead className="w-24">
                 <SortableHeader
                   label={t("Status", "Status")}
                   dir={dirFor("status")}
                   onClick={() => toggle("status")}
+                  className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
-
             </TableRow>
           </TableHeader>
           <TableBody>
-            {sorted.map((inv, index) => {
+            {sorted.map((inv) => {
               const status = invoiceStatusVariant(inv.status, lang);
               return (
                 <TableRow
                   key={inv.id}
-                  className={`border-b border-border/70 hover:bg-muted/40 transition-colors ${index % 2 === 1 ? "bg-muted/10" : "bg-card"}`}
+                  className="border-b border-border/60 transition-colors hover:bg-muted/40"
                 >
-                  <TableCell className="font-mono text-xs font-semibold py-3">
+                  <TableCell className="font-mono text-xs font-semibold whitespace-nowrap">
                     <Link href={buildInvoiceDetailUrl(inv.id, { type: "global" })} className="text-primary hover:underline font-bold">
                       {formatInvoiceId(inv.invoiceNumber)}
                     </Link>
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell>
                     {inv.clientId ? (
-                      <Link href={`/app/clients/${inv.clientId}`} className="font-medium text-foreground hover:underline text-xs sm:text-sm">
+                      <Link href={`/app/clients/${inv.clientId}`} className="text-xs font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[14rem]">
                         {inv.clientCompany || inv.clientName}
                       </Link>
                     ) : (
-                      <span className="font-medium text-foreground text-xs sm:text-sm">
+                      <span className="text-xs font-semibold text-foreground block truncate max-w-[14rem]">
                         {inv.clientCompany || inv.clientName}
                       </span>
                     )}
                   </TableCell>
-                  <TableCell className="max-w-[10rem] truncate text-xs text-muted-foreground py-3">
+                  <TableCell className="hidden lg:table-cell max-w-[10rem] truncate text-xs text-muted-foreground">
                     {inv.projectName || "—"}
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell className="hidden xl:table-cell">
                     {inv.billingType ? (
-                      <Badge variant="outline" className="font-medium text-[10px] px-1.5 py-0">
+                      <Badge variant="outline" className="font-medium text-[9px] px-1.5 py-0 rounded bg-muted/60 text-muted-foreground border-border/60">
                         {billingTypeLabel(inv.billingType, lang)}
                       </Badge>
                     ) : (
                       <span className="text-xs text-muted-foreground">—</span>
                     )}
                   </TableCell>
-                  <TableCell className="py-3">
+                  <TableCell className="whitespace-nowrap">
                     <div className="text-xs font-medium text-foreground">{formatDate(inv.issueDate, locale)}</div>
-                    <div className="text-[10px] text-muted-foreground font-mono mt-0.5">
+                    <div className="text-[10px] text-muted-foreground font-mono">
                       {t("Jatuh tempo", "Due")}: {formatDate(inv.dueDate, locale)}
                     </div>
                   </TableCell>
-                  <TableCell className="text-right tabular-nums font-bold text-xs sm:text-sm py-3">
+                  <TableCell className="text-right tabular-nums font-semibold text-xs whitespace-nowrap">
                     <div className="text-foreground">{formatMoney(inv.total, inv.currency)}</div>
-                    {inv.totalBase != null &&
-                      inv.currency?.toUpperCase() !== base && (
-                        <div className="text-[10px] font-normal text-muted-foreground mt-0.5 font-mono">
-                          ≈ {formatMoney(inv.totalBase, base)}
-                        </div>
-                      )}
+                    {inv.totalBase != null && inv.currency !== base && (
+                      <div className="text-[10px] text-muted-foreground font-mono">
+                        ≈ {formatMoney(inv.totalBase, base)}
+                      </div>
+                    )}
                   </TableCell>
-                  <TableCell className="py-3">
-                    <Badge variant={status.variant} className="text-[10px] font-semibold">
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={`gap-1 text-[10px] font-medium rounded-full px-2 py-0 h-5 ${
+                        inv.status === "paid"
+                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                          : inv.status === "sent" || inv.status === "viewed"
+                          ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400"
+                          : inv.status === "overdue"
+                          ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400"
+                          : "border-border/80 bg-muted/60 text-muted-foreground"
+                      }`}
+                    >
+                      <span
+                        className={`h-1 w-1 rounded-full ${
+                          inv.status === "paid"
+                            ? "bg-emerald-600"
+                            : inv.status === "sent" || inv.status === "viewed"
+                            ? "bg-blue-600"
+                            : inv.status === "overdue"
+                            ? "bg-rose-600"
+                            : "bg-muted-foreground"
+                        }`}
+                      />
                       {status.label}
                     </Badge>
                   </TableCell>
@@ -274,7 +301,6 @@ export function InvoicesListTable({
           </TableBody>
         </Table>
       </div>
-
       <div className="md:hidden space-y-3">
         {sorted.map((inv) => {
           const status = invoiceStatusVariant(inv.status, lang);
