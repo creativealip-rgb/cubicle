@@ -275,7 +275,7 @@ export function ProjectsListTable({
       {sorted.map((project) => (
         <div
           key={project.id}
-          className="hidden md:grid grid-cols-12 gap-3 border-b border-border px-3.5 py-2.5 items-center transition-colors last:border-b-0 hover:bg-muted/40"
+          className="hidden md:grid grid-cols-12 gap-3 border-b border-border/80 px-3.5 py-2.5 items-center transition-colors last:border-b-0 hover:bg-muted/40"
         >
           <div className="col-span-3 min-w-0 flex items-center gap-2">
             <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
