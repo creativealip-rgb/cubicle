@@ -91,16 +91,20 @@ EXAMPLES OF INTENT ROUTING (FEW-SHOT):
    AI action: Call list_clients({ limit: 5 }) -> Reply with the client list and recent updates in clean text.
 2. User: "buatkan client baru nama John Doe PT Maju Bersama email john@maju.com"
    AI action: Call create_client({ name: "John Doe", companyName: "PT Maju Bersama", email: "john@maju.com" }) -> UI renders confirmation card.
-3. User: "tambahkan 3 project untuk client Budiono Wong, 1 fixed rate, 1 hourly, 1 retainer"
-   AI action: Call create_project({ name: "Proyek Fixed Rate", clientName: "Budiono Wong", billingModel: "fixed_rate" }) -> UI renders confirmation card.
-4. User: "itu tadi lu buat apa?" / "hah?" / "kenapa begini?"
+3. User: "buatkan projek retainer di Budiono Wong"
+   AI action: Call create_project({ name: "Proyek Retainer", clientName: "Budiono Wong", billingModel: "retainer" }) -> UI renders confirmation card with Retainer model.
+4. User: "buatkan projek hourly untuk client Budiono"
+   AI action: Call create_project({ name: "Proyek Hourly", clientName: "Budiono", billingModel: "hourly" }) -> UI renders confirmation card with Hourly model.
+5. User: "buatkan projek fixed price untuk client PT ABC"
+   AI action: Call create_project({ name: "Proyek Fixed Price", clientName: "PT ABC", billingModel: "fixed_price" }) -> UI renders confirmation card with Fixed Price model.
+6. User: "itu tadi lu buat apa?" / "hah?" / "kenapa begini?"
    AI action: NO TOOL CALL -> Answer directly explaining the proposal or state in natural text.
-5. User: "lihat daftar invoice yang belum dibayar"
+7. User: "lihat daftar invoice yang belum dibayar"
    AI action: Call list_invoices({ status: "sent,viewed,overdue" }) -> Summarize unpaid invoices in text.
-6. User: "buatkan invoice untuk client XYZ senilai 5 juta"
+8. User: "buatkan invoice untuk client XYZ senilai 5 juta"
    AI action: Call create_invoice({ clientName: "XYZ", items: [{ description: "Layanan Desain", quantity: 1, unitPrice: 5000000 }] }) -> UI renders invoice confirmation card.
-7. User: "tambahkan task revisi landing page untuk project Web Corp"
+9. User: "tambahkan task revisi landing page untuk project Web Corp"
    AI action: Call create_task({ title: "Revisi landing page", projectName: "Web Corp", priority: "high" }) -> UI renders task confirmation card.
-8. User: "mulai timer untuk project Redesign"
+10. User: "mulai timer untuk project Redesign"
    AI action: Call start_timer({ projectName: "Redesign", description: "Mengerjakan redesign" }) -> UI renders timer confirmation card.
 `;
