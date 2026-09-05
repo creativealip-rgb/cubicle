@@ -106,7 +106,7 @@ type Message = {
   error?: string;
   meta?: string;
   confirmation?: Confirmation;
-  confirmationStatus?: "pending" | "done" | "failed";
+  confirmationStatus?: "pending" | "done" | "failed" | "cancelled";
   status?: string; // "Thinking…" / "Running list_clients…" / undefined
   toolEvents?: Array<{ name: string; result: unknown }>;
 };
@@ -759,7 +759,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
   function dismissAction(idx: number) {
     setMessages((prev) => {
       const copy = [...prev];
-      copy[idx] = { ...copy[idx], confirmationStatus: "done" };
+      copy[idx] = { ...copy[idx], confirmationStatus: "cancelled" };
       return copy;
     });
   }
@@ -1154,6 +1154,12 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                           <div className="mt-2 flex items-center gap-1 text-xs text-destructive font-semibold">
                             <XCircle className="h-3 w-3" />
                             <span>Action failed</span>
+                          </div>
+                        )}
+                        {m.confirmation && m.confirmationStatus === "cancelled" && (
+                          <div className="mt-2 flex items-center gap-1 text-xs text-muted-foreground font-semibold">
+                            <XCircle className="h-3 w-3" />
+                            <span>{lang === "id" ? "Dibatalkan" : "Cancelled"}</span>
                           </div>
                         )}
 

@@ -766,17 +766,7 @@ async function createProjectAction(args: {
   }
 
   if (!resolvedClientId) {
-    const [firstClient] = await db
-      .select({ id: clients.id, name: clients.name })
-      .from(clients)
-      .where(eq(clients.workspaceId, ws.id))
-      .limit(1);
-    if (firstClient) {
-      resolvedClientId = firstClient.id;
-      resolvedClientName = firstClient.name;
-    } else {
-      return { error: "No clients found. Please create a client first." };
-    }
+    return { error: `Client not found: ${args.clientName?.trim() || "missing client"}` };
   }
 
   return {
@@ -822,17 +812,7 @@ async function createInvoiceAction(args: {
   }
 
   if (!resolvedClientId) {
-    const [firstClient] = await db
-      .select({ id: clients.id, name: clients.name })
-      .from(clients)
-      .where(eq(clients.workspaceId, ws.id))
-      .limit(1);
-    if (firstClient) {
-      resolvedClientId = firstClient.id;
-      resolvedClientName = firstClient.name;
-    } else {
-      return { error: "No client found. Please provide a client name or create one first." };
-    }
+    return { error: `Client not found: ${args.clientName?.trim() || "missing client"}` };
   }
 
   let resolvedProjectId = args.projectId;
@@ -848,6 +828,9 @@ async function createInvoiceAction(args: {
       resolvedProjectId = foundProj.id;
       resolvedProjectName = foundProj.name;
     }
+  }
+  if (args.projectName && !resolvedProjectId) {
+    return { error: `Project not found: ${args.projectName}` };
   }
 
   const items = args.items.map((it) => ({
@@ -897,6 +880,9 @@ async function createTaskAction(args: {
       resolvedProjectId = foundProj.id;
       resolvedProjectName = foundProj.name;
     }
+  }
+  if (!resolvedProjectId) {
+    return { error: `Project not found: ${args.projectName?.trim() || "missing project"}` };
   }
 
   return {

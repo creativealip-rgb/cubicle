@@ -5,7 +5,7 @@ import { and, eq, ne, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { activityLogs, invoices, tasks } from "@/db/schema";
-import { assertWorkspaceWritable } from "@/lib/access";
+import { assertClientInWorkspace, assertProjectInWorkspace, assertTaskInWorkspace, assertWorkspaceWritable } from "@/lib/access";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 import { enforcePlanApiRateLimit } from "@/lib/plan-api-rate-limit";
 import { checkAiRateLimitDb, getAiEntitlementFailure, getUserPlan, releaseAiQuota } from "@/lib/plan";
@@ -158,6 +158,7 @@ export async function POST(req: NextRequest) {
       const { getWorkspaceForCurrentUser } = await import("@/lib/workspace");
       const wsId = await getWorkspaceForCurrentUser();
       await assertWorkspaceWritable(db, session.user.id, wsId);
+      await assertClientInWorkspace(db, session.user.id, wsId, p.clientId);
       const { checkEntityLimit } = await import("@/lib/plan");
       const projLimit = await checkEntityLimit(wsId, "projects", plan);
       if (!projLimit.allowed) {
@@ -206,6 +207,11 @@ export async function POST(req: NextRequest) {
       const { getWorkspaceForCurrentUser } = await import("@/lib/workspace");
       const wsId = await getWorkspaceForCurrentUser();
       await assertWorkspaceWritable(db, session.user.id, wsId);
+      await assertClientInWorkspace(db, session.user.id, wsId, p.clientId);
+      if (p.projectId) {
+        const project = await assertProjectInWorkspace(db, session.user.id, wsId, p.projectId);
+        if (project.clientId !== p.clientId) return NextResponse.json({ error: "Project does not belong to client" }, { status: 400 });
+      }
       const { checkEntityLimit } = await import("@/lib/plan");
       const invLimit = await checkEntityLimit(wsId, "invoices", plan);
       if (!invLimit.allowed) {
@@ -282,6 +288,8 @@ export async function POST(req: NextRequest) {
       const { getWorkspaceForCurrentUser } = await import("@/lib/workspace");
       const wsId = await getWorkspaceForCurrentUser();
       await assertWorkspaceWritable(db, session.user.id, wsId);
+      if (!p.projectId) return NextResponse.json({ error: "Project is required" }, { status: 400 });
+      await assertProjectInWorkspace(db, session.user.id, wsId, p.projectId);
 
       const { projects, tasks } = await import("@/db/schema");
 
@@ -332,6 +340,9 @@ export async function POST(req: NextRequest) {
       const { getWorkspaceForCurrentUser } = await import("@/lib/workspace");
       const wsId = await getWorkspaceForCurrentUser();
       await assertWorkspaceWritable(db, session.user.id, wsId);
+      if (p.taskId) await assertTaskInWorkspace(db, session.user.id, wsId, p.taskId);
+      if (p.projectId) await assertProjectInWorkspace(db, session.user.id, wsId, p.projectId);
+      if (p.clientId) await assertClientInWorkspace(db, session.user.id, wsId, p.clientId);
       const { timeEntries } = await import("@/db/schema");
 
       // Stop existing running timer if any

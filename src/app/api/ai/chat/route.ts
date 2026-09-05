@@ -182,14 +182,10 @@ export async function POST(req: NextRequest) {
       .slice(-MAX_HISTORY);
     const last = userMsgs[userMsgs.length - 1];
     if (!last || last.role !== "user") {
-      // If the very last message in body is user with text, take that
-      const fallbackUser = [...body.messages].reverse().find((m) => m.role === "user" && Boolean(m.content && m.content.trim()));
-      if (!fallbackUser) {
-        return new Response(
-          JSON.stringify({ error: "last message must be from user" }),
-          { status: 400, headers: { "Content-Type": "application/json" } },
-        );
-      }
+      return new Response(
+        JSON.stringify({ error: "last message must be from user" }),
+        { status: 400, headers: { "Content-Type": "application/json" } },
+      );
     }
 
     await appendMessage(conversationId, { role: "user", content: last.content });
@@ -399,7 +395,7 @@ async function runAgentLoop(opts: {
             );
             send("confirm", { tool: tc.function.name, confirmation: r.confirmation });
             send("done", {
-              conversationId: undefined, // set by route via different path
+              conversationId,
               usage: totalUsage,
               toolCalls: toolCallCount,
             });
