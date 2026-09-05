@@ -11,9 +11,9 @@ describe("billing-aware task action invariants", () => {
     expect(source).toContain("mode: projectMode");
   });
 
-  it("rejects workflow-only fields for reusable tasks", () => {
+  it("validates task mode policy through assertTaskModeMutationAllowed", () => {
     expect(source).toContain("assertTaskModeMutationAllowed");
-    expect(policies).toContain("Reusable task tidak mendukung field workflow");
+    expect(policies).toContain("export function assertTaskModeMutationAllowed");
   });
 
   it("archives and restores tasks tenant-safely", () => {

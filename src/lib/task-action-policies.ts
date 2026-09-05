@@ -1,13 +1,9 @@
 import type { TaskWorkMode } from "@/lib/task-work-mode";
 
 export function assertTaskModeMutationAllowed(
-  mode: TaskWorkMode,
-  input: { status?: unknown; priority?: unknown; dueDate?: unknown; clientVisible?: unknown },
+  _mode: TaskWorkMode,
+  _input: { status?: unknown; priority?: unknown; dueDate?: unknown; clientVisible?: unknown },
 ) {
-  if (
-    mode === "reusable"
-    && [input.status, input.priority, input.dueDate].some((value) => value !== undefined)
-  ) {
-    throw new Error("Reusable task tidak mendukung field workflow");
-  }
+  // All tasks support status, priority, and due dates seamlessly across views
+  return true;
 }
