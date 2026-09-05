@@ -176,6 +176,62 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
 
+  // Floating draggable state
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartRef = useRef<{ startX: number; startY: number; initX: number; initY: number }>({
+    startX: 0,
+    startY: 0,
+    initX: 0,
+    initY: 0,
+  });
+
+  const onHeaderPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isFullpage) return;
+    // Don't drag if clicking interactive buttons
+    if ((e.target as HTMLElement).closest("button, a, input, textarea")) return;
+    
+    e.currentTarget.setPointerCapture(e.pointerId);
+    setIsDragging(true);
+
+    const initialPos = pos || {
+      x: window.innerWidth - Math.min(420, window.innerWidth - 32) - 24,
+      y: window.innerHeight - Math.min(640, window.innerHeight * 0.85) - 80,
+    };
+
+    dragStartRef.current = {
+      startX: e.clientX,
+      startY: e.clientY,
+      initX: initialPos.x,
+      initY: initialPos.y,
+    };
+  };
+
+  const onHeaderPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging || isFullpage) return;
+    const deltaX = e.clientX - dragStartRef.current.startX;
+    const deltaY = e.clientY - dragStartRef.current.startY;
+
+    const widgetWidth = Math.min(420, window.innerWidth - 32);
+    const widgetHeight = Math.min(640, window.innerHeight * 0.85);
+
+    const maxX = window.innerWidth - widgetWidth - 8;
+    const maxY = window.innerHeight - widgetHeight - 8;
+
+    const nextX = Math.max(8, Math.min(maxX, dragStartRef.current.initX + deltaX));
+    const nextY = Math.max(8, Math.min(maxY, dragStartRef.current.initY + deltaY));
+
+    setPos({ x: nextX, y: nextY });
+  };
+
+  const onHeaderPointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (isFullpage) return;
+    setIsDragging(false);
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {}
+  };
+
   useEffect(() => {
     if (open) inputRef.current?.focus();
   }, [open]);
@@ -614,13 +670,19 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
     <>
       {open && (
         <div
+          style={
+            !isFullpage && pos
+              ? { left: `${pos.x}px`, top: `${pos.y}px`, bottom: "auto", right: "auto" }
+              : undefined
+          }
           className={cn(
             isFullpage
               ? "flex h-full w-full flex-row overflow-hidden"
-              : "fixed bottom-4 right-4 z-50 flex flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl",
+              : "fixed bottom-4 right-4 z-50 flex flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl transition-shadow",
             isFullpage
               ? ""
               : "h-[min(640px,85vh)] w-[min(420px,calc(100vw-2rem))] md:bottom-20 md:right-6",
+            isDragging && "shadow-3xl ring-2 ring-primary/40 select-none",
           )}
         >
           {/* Left Sidebar for Fullpage: Chat History (ChatGPT style) */}
@@ -742,8 +804,17 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between gap-2 border-b bg-gradient-to-r from-primary to-[#5333DD] px-4 py-3 text-white shadow-xs">
-                      <div className="flex items-center gap-2.5">
+                    <div
+                      onPointerDown={onHeaderPointerDown}
+                      onPointerMove={onHeaderPointerMove}
+                      onPointerUp={onHeaderPointerUp}
+                      onPointerCancel={onHeaderPointerUp}
+                      className={cn(
+                        "flex items-center justify-between gap-2 border-b bg-gradient-to-r from-primary to-[#5333DD] px-4 py-3 text-white shadow-xs cursor-grab active:cursor-grabbing select-none",
+                        isDragging && "cursor-grabbing",
+                      )}
+                    >
+                      <div className="flex items-center gap-2.5 pointer-events-none">
                         <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/20 text-white backdrop-blur-xs">
                           <Sparkles className="h-4 w-4" />
                         </div>
@@ -760,7 +831,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 pointer-events-auto">
                         <button
                           onClick={startNewChat}
                           className="rounded-lg p-1.5 text-white/80 hover:bg-white/20 hover:text-white transition"
