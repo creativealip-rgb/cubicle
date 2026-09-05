@@ -115,41 +115,41 @@ export default async function TasksPage({
         ) : null
       }
     />
-    <TaskPageTabs current={tab} />
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <TaskPageTabs current={tab} />
+
+      <form className="relative w-full sm:w-64">
+        <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+        <Input
+          name="search"
+          aria-label={t("Cari tugas", "Search tasks")}
+          defaultValue={search}
+          placeholder={t("Cari tugas...", "Search tasks...")}
+          className="pl-8"
+        />
+        {tab !== "tasks" && <input type="hidden" name="tab" value={tab} />}
+        {params.status && <input type="hidden" name="status" value={params.status} />}
+        {params.priority && <input type="hidden" name="priority" value={params.priority} />}
+        {params.projectId && <input type="hidden" name="projectId" value={params.projectId} />}
+        {params.assignee && <input type="hidden" name="assignee" value={params.assignee} />}
+        {params.view && <input type="hidden" name="view" value={params.view} />}
+      </form>
+    </div>
+
     {tab === "templates" ? (
       <TaskTemplateWorkspace templates={templates} projects={taskProjects} />
     ) : (
       <>
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0 flex-1">
-            <ActiveFilterSummary
-              basePath="/app/tasks"
-              filters={[
-                { key: "search", label: t("Pencarian", "Search"), value: search },
-                { key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name },
-                { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee },
-                { key: "priority", label: t("Prioritas", "Priority"), value: params.priority },
-                { key: "status", label: "Status", value: params.status },
-              ]}
-            />
-          </div>
-
-          <form className="relative w-full sm:w-64 shrink-0 sm:ml-auto">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              name="search"
-              aria-label={t("Cari tugas", "Search tasks")}
-              defaultValue={search}
-              placeholder={t("Cari tugas...", "Search tasks...")}
-              className="pl-8"
-            />
-            {params.status && <input type="hidden" name="status" value={params.status} />}
-            {params.priority && <input type="hidden" name="priority" value={params.priority} />}
-            {params.projectId && <input type="hidden" name="projectId" value={params.projectId} />}
-            {params.assignee && <input type="hidden" name="assignee" value={params.assignee} />}
-            {params.view && <input type="hidden" name="view" value={params.view} />}
-          </form>
-        </div>
+        <ActiveFilterSummary
+          basePath="/app/tasks"
+          filters={[
+            { key: "search", label: t("Pencarian", "Search"), value: search },
+            { key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name },
+            { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee },
+            { key: "priority", label: t("Prioritas", "Priority"), value: params.priority },
+            { key: "status", label: "Status", value: params.status },
+          ]}
+        />
       {view === "weekly" ? (
         <TasksWeeklyTracker tasks={taskList} />
       ) : view === "board" ? (
