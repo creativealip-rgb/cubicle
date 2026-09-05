@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Clock,
   Package,
+  FolderKanban,
 } from "lucide-react";
 import { PortalTaskList } from "./portal-task-list";
 import { PortalFileList } from "./portal-file-list";
@@ -914,31 +915,29 @@ export function ProjectAccordion({
     return (
       <Card
         key={project.id}
-        className={`overflow-hidden border-l-4 transition-shadow duration-200 ${statusMeta.borderClass} ${
-          isExpanded ? "shadow-sm" : ""
+        className={`overflow-hidden rounded-2xl border transition-all duration-200 ${
+          isExpanded ? "border-primary/40 shadow-sm" : "border-border/80 hover:border-primary/30 shadow-xs"
         }`}
       >
-        {/* Collapsed header — always visible */}
+        {/* Collapsed header — ultra-compact, crisp, modern linear style */}
         <div
-          className="flex cursor-pointer flex-col gap-3 p-5 transition-colors hover:bg-muted/30 sm:flex-row sm:items-start sm:justify-between"
+          className="flex cursor-pointer flex-col gap-2.5 p-3.5 sm:p-4 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center sm:justify-between"
           onClick={() => toggleProject(project.id)}
         >
-          <div className="flex min-w-0 flex-1 items-start gap-3">
-            <ChevronRight
-              className={`mt-0.5 h-5 w-5 shrink-0 text-foreground portal-chevron ${
-                isExpanded ? "portal-chevron-open" : ""
-              }`}
-            />
+          <div className="flex min-w-0 flex-1 items-center gap-3">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+              <FolderKanban className="h-4 w-4" />
+            </div>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2.5">
-                <span className="truncate text-base font-semibold">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="truncate text-sm font-bold text-foreground">
                   {project.name}
                 </span>
-                <Badge variant="secondary" className="shrink-0 text-[11px]">
+                <Badge variant="secondary" className="shrink-0 text-[10px] font-semibold h-5 px-2 rounded-full border border-border/80 bg-muted/60 text-muted-foreground">
                   {projectBillingLabel(project, t)}
                 </Badge>
               </div>
-              <div className="mt-1.5">
+              <div className="mt-0.5">
                 <ProjectSummary
                   project={project}
                   tasks={tasks}
@@ -948,14 +947,8 @@ export function ProjectAccordion({
             </div>
           </div>
           <div className="ml-8 flex shrink-0 flex-col items-end gap-2 sm:ml-0">
-            <Badge
-              variant="outline"
-              className={`w-fit text-[11px] ${statusMeta.badgeClass}`}
-            >
-              {statusMeta.label}
-            </Badge>
             {billingHoursLabel && (
-              <div className="flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-foreground">
+              <div className="flex items-center gap-1.5 whitespace-nowrap text-xs font-semibold text-muted-foreground">
                 {project.billingType === "package" ? (
                   <Package className="h-3.5 w-3.5 text-muted-foreground" />
                 ) : (
@@ -964,6 +957,13 @@ export function ProjectAccordion({
                 <span>{billingHoursLabel}</span>
               </div>
             )}
+            <Badge
+              variant="outline"
+              className={`text-[10px] font-bold h-5 px-2 rounded-full border ${statusMeta.badgeClass}`}
+            >
+              <span className="mr-1 h-1.5 w-1.5 rounded-full bg-current" />
+              {statusMeta.label}
+            </Badge>
           </div>
         </div>
 
