@@ -10,7 +10,7 @@ describe("document editor layout wiring", () => {
 
     expect(shell).toContain('pathname.startsWith("/app/proposals/")');
     expect(shell).toContain('pathname.startsWith("/app/contracts/")');
-    expect(shell).toContain('(focusEditor || documentEditor) && "md:p-0 md:pb-0"');
+    expect(shell).toContain('(focusEditor || documentEditor || onBrainPage)');
     expect(shell).toContain('collapsed={focusEditor || collapsed}');
   });
 

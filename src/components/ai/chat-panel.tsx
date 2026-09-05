@@ -605,14 +605,74 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
         <div
           className={cn(
             isFullpage
-              ? "flex h-full w-full max-w-4xl mx-auto flex-col"
+              ? "flex h-full w-full flex-row overflow-hidden"
               : "fixed bottom-4 right-4 z-50 flex flex-col overflow-hidden rounded-2xl border bg-white shadow-2xl",
             isFullpage
               ? ""
               : "h-[min(640px,85vh)] w-[min(420px,calc(100vw-2rem))] md:bottom-20 md:right-6",
           )}
         >
-          <div className="flex min-h-0 flex-1 flex-col">
+          {/* Left Sidebar for Fullpage: Chat History (ChatGPT style) */}
+          {isFullpage && (
+            <aside className="hidden md:flex w-64 lg:w-72 shrink-0 flex-col border-r border-border/80 bg-card/60 backdrop-blur-md">
+              <div className="p-3.5 border-b border-border/60 flex items-center justify-between">
+                <Button
+                  onClick={startNewChat}
+                  className="w-full h-9 rounded-xl font-semibold text-xs gap-2 bg-primary text-primary-foreground shadow-xs justify-center"
+                >
+                  <Plus className="h-4 w-4" />
+                  {lang === "id" ? "Obrolan Baru" : "New Chat"}
+                </Button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                <div className="px-2 py-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Clock className="h-3 w-3" />
+                  {lang === "id" ? "Riwayat Percakapan" : "Recent Chats"}
+                </div>
+
+                {conversations.length === 0 ? (
+                  <p className="px-3 py-6 text-center text-xs text-muted-foreground italic">
+                    {lang === "id" ? "Belum ada riwayat." : "No chats yet."}
+                  </p>
+                ) : (
+                  conversations.map((c) => (
+                    <div
+                      key={c.id}
+                      className={cn(
+                        "group flex items-center justify-between rounded-xl px-2.5 py-2 text-xs transition-all",
+                        c.id === conversationId
+                          ? "bg-primary/10 text-primary font-bold border border-primary/20"
+                          : "text-foreground hover:bg-muted/60"
+                      )}
+                    >
+                      <button
+                        onClick={() => loadConversation(c.id)}
+                        className="flex min-w-0 flex-1 flex-col items-start text-left truncate"
+                      >
+                        <span className="w-full truncate font-medium">{c.title}</span>
+                        <span className="text-[10px] text-muted-foreground font-normal">
+                          {formatRelativeTime(c.updatedAt)}
+                        </span>
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteConversation(c.id);
+                        }}
+                        className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity"
+                        title={lang === "id" ? "Hapus chat" : "Delete chat"}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ))
+                )}
+              </div>
+            </aside>
+          )}
+
+          <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden">
             {/* Full-page welcome (empty state, big screen) — AI workspace hub feel */}
             {isFullpage && messages.length === 0 ? (
               <AssistantEmptyState
@@ -718,9 +778,9 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                 <div
                   ref={scrollRef}
                   className={cn(
-                    "flex-1 space-y-4 overflow-y-auto",
+                    "flex-1 overflow-y-auto min-h-0",
                     isFullpage
-                      ? "bg-transparent px-4 sm:px-6 py-6"
+                      ? "bg-transparent px-4 sm:px-8 py-6 w-full space-y-4"
                       : "space-y-3 bg-slate-50 px-3 py-4",
                   )}
                 >
@@ -874,13 +934,13 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                 </div>
 
                 {/* Input — Sticky GPT-like Bottom Bar */}
-                <div className={cn("border-t border-border/80 bg-card/90 backdrop-blur-md", isFullpage ? "sticky bottom-0 z-20 px-4 sm:px-6 py-3.5 shadow-lg" : "bg-white p-2")}>
+                <div className={cn("border-t border-border/80 bg-card/95 backdrop-blur-md shrink-0", isFullpage ? "sticky bottom-0 z-20 px-4 sm:px-8 py-3.5 shadow-lg w-full" : "bg-white p-2")}>
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
                       send(input);
                     }}
-                    className={cn("flex items-end gap-2", isFullpage && "max-w-4xl mx-auto")}
+                    className={cn("flex items-end gap-2", isFullpage && "w-full")}
                   >
                     <textarea
                       ref={inputRef}
