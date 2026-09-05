@@ -86,7 +86,7 @@ export function AssistantEmptyState({
           variant="outline"
           size="sm"
           onClick={openHistory}
-          className="h-8 rounded-xl text-xs font-semibold gap-1.5 shadow-xs"
+          className="h-8 rounded-xl text-xs font-semibold gap-1.5 shadow-xs md:hidden"
         >
           <History className="h-3.5 w-3.5 text-muted-foreground" />
           {copy.history}
