@@ -22,6 +22,9 @@ const STATUS_LABELS: Record<string, [string, string]> = {
   pending: ["Menunggu", "Pending"],
   rejected: ["Ditolak", "Rejected"],
   sent: ["Terkirim", "Sent"],
+  todo: ["Perlu dikerjakan", "To Do"],
+  review: ["Menunggu review", "In Review"],
+  done: ["Selesai", "Completed"],
 };
 
 export function portalStatusLabel(status: string, lang: PortalLang) {
@@ -31,6 +34,15 @@ export function portalStatusLabel(status: string, lang: PortalLang) {
 
 export function portalRequestStatusLabel(status: string, lang: PortalLang) {
   return portalStatusLabel(status, lang);
+}
+
+export function portalPriorityLabel(priority: string, lang: PortalLang) {
+  const p = priority.toLowerCase();
+  if (p === "urgent") return lang === "en" ? "Urgent" : "Mendesak";
+  if (p === "high") return lang === "en" ? "High" : "Tinggi";
+  if (p === "medium") return lang === "en" ? "Medium" : "Sedang";
+  if (p === "low") return lang === "en" ? "Low" : "Rendah";
+  return priority;
 }
 
 export function portalProjectProgressLabel(

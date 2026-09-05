@@ -11,7 +11,7 @@ describe("portal project progress wiring", () => {
 
   it("keeps task completion secondary for hourly and package work", () => {
     expect(source).toContain("billingProgress.label");
-    expect(source).toContain("{done}/{total} tugas selesai");
+    expect(source).toContain('t("tugas selesai", "tasks completed")');
   });
 
   it("only derives awaiting closure from task completion for per-project billing", () => {

@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { respondPortalTask } from "@/lib/actions/tasks";
 import { useT } from "@/lib/i18n-client";
-import { portalLocale, portalStatusLabel } from "@/lib/portal-i18n";
+import { portalLocale, portalStatusLabel, portalPriorityLabel } from "@/lib/portal-i18n";
 
 export interface PortalTaskTimeEntry {
   id: string;
@@ -75,7 +75,7 @@ export function PortalTaskList({
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
 
-  const priorityVariant = (p: string) => {
+  const _priorityVariant = (p: string) => {
     if (p === "urgent") return "destructive" as const;
     if (p === "high") return "default" as const;
     return "outline" as const;
@@ -161,17 +161,26 @@ export function PortalTaskList({
 
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-medium">{task.title}</p>
+                  <p className="text-sm font-bold text-foreground">{task.title}</p>
                   <Badge
                     variant="outline"
-                    className={`text-[10px] ${
+                    className={`text-[10px] font-bold h-5 px-2 rounded-full border ${
                       awaiting
-                        ? "border-amber-300 bg-amber-100 text-amber-800"
+                        ? "border-amber-500/30 bg-amber-500/10 text-amber-800 dark:text-amber-400"
                         : task.status === "done"
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                          : ""
+                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                          : "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400"
                     }`}
                   >
+                    <span
+                      className={`mr-1 h-1.5 w-1.5 rounded-full ${
+                        awaiting
+                          ? "bg-amber-500"
+                          : task.status === "done"
+                            ? "bg-emerald-500"
+                            : "bg-blue-600"
+                      }`}
+                    />
                     {portalStatusLabel(task.status, lang)}
                   </Badge>
                 </div>
@@ -182,13 +191,13 @@ export function PortalTaskList({
                 )}
                 <div className="mt-1 flex flex-wrap items-center gap-2">
                   <Badge
-                    variant={priorityVariant(task.priority)}
-                    className="text-[10px]"
+                    variant="secondary"
+                    className="text-[10px] font-medium h-5 px-2 rounded-full border border-border/80 bg-muted/60 text-muted-foreground"
                   >
-                    {task.priority}
+                    {portalPriorityLabel(task.priority, lang)}
                   </Badge>
                   {task.dueDate && (
-                    <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
+                    <span className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground">
                       <Clock className="h-3 w-3" />
                       {new Date(task.dueDate).toLocaleDateString(
                         portalLocale(lang),

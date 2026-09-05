@@ -34,6 +34,8 @@ import {
   FileSpreadsheet,
   Bell,
   Sparkles,
+  FolderKanban,
+  Receipt,
 } from "lucide-react";
 import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
@@ -965,10 +967,23 @@ export default async function ClientPortalPage({
                 requests: pendingClientRequests.length,
               }}
               projects={
-                <section>
-                  <h2 className="mb-4 text-xl font-semibold">
-                    {t("Proyek", "Projects")}
-                  </h2>
+                <section className="space-y-3.5">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                      <FolderKanban className="h-3.5 w-3.5" />
+                    </div>
+                    <div>
+                      <h2 className="text-base sm:text-lg font-bold text-foreground leading-tight">
+                        {t("Proyek Aktif", "Active Projects")}
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        {t(
+                          "Pantau progres pengerjaan tugas, jadwal, dan status proyek kamu.",
+                          "Track task progress, schedule, and your project status.",
+                        )}
+                      </p>
+                    </div>
+                  </div>
                   {clientProjects.length === 0 ? (
                     <Card>
                       <CardContent className="py-8 text-center text-muted-foreground">
@@ -1079,10 +1094,23 @@ export default async function ClientPortalPage({
                 />
               }
               invoices={
-                <section>
-                  <h2 className="mb-4 text-xl font-semibold">
-                    {t("Invoice", "Invoices")}
-                  </h2>
+                <section className="space-y-3.5">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                      <Receipt className="h-3.5 w-3.5" />
+                    </div>
+                    <div>
+                      <h2 className="text-base sm:text-lg font-bold text-foreground leading-tight">
+                        {t("Daftar Invoice", "Invoices")}
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        {t(
+                          "Riwayat tagihan, status pembayaran, dan unduh dokumen invoice.",
+                          "Billing history, payment status, and download invoice documents.",
+                        )}
+                      </p>
+                    </div>
+                  </div>
                   <PortalInvoices
                     invoices={clientInvoices.map((inv) => ({
                       id: inv.id,
@@ -1109,10 +1137,23 @@ export default async function ClientPortalPage({
                 </section>
               }
               requests={
-                <section>
-                  <h2 className="mb-4 text-xl font-semibold">
-                    {t("Permintaan", "Requests")}
-                  </h2>
+                <section className="space-y-3.5">
+                  <div className="flex items-center gap-2">
+                    <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                      <Bell className="h-3.5 w-3.5" />
+                    </div>
+                    <div>
+                      <h2 className="text-base sm:text-lg font-bold text-foreground leading-tight">
+                        {t("Permintaan & Laporan", "Requests & Reports")}
+                      </h2>
+                      <p className="text-xs text-muted-foreground">
+                        {t(
+                          "Riwayat permintaan meeting, request laporan, dan respons dari tim.",
+                          "History of meeting requests, report requests, and team responses.",
+                        )}
+                      </p>
+                    </div>
+                  </div>
                   <PortalRequestList
                     requests={clientPortalRequests.map((request) => ({
                       ...request,

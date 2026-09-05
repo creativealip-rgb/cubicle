@@ -3,7 +3,6 @@
 import { useState, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
 import {
   ChevronDown,
   ChevronRight,
@@ -443,9 +442,12 @@ function ProjectExpandedContent({
         </div>
       )}
       {!isByHours && !isByPackage && project.budget && (
-        <p className="text-xs text-muted-foreground">
-          Anggaran: {formatCurrency(project.budget, project.currency || "IDR")}
-        </p>
+        <div className="flex items-center gap-2 rounded-xl border border-border/80 bg-muted/20 px-3 py-2 text-xs">
+          <span className="font-semibold text-muted-foreground">{t("Anggaran", "Budget")}:</span>
+          <span className="font-mono font-bold text-foreground">
+            {formatCurrency(project.budget, project.currency || "IDR")}
+          </span>
+        </div>
       )}
 
       {/* Hours Summary (by_hours / by_package) */}
@@ -710,36 +712,30 @@ function ProjectExpandedContent({
           />
         )}
 
-      {/* Tasks */}
+      {/* Tasks — direct open for instant visibility */}
       {tasks.length > 0 && (
-        <details
-          className="group rounded-lg border bg-background"
-          open={tasks.length <= 3}
-        >
-          <summary className="flex min-h-11 cursor-pointer list-none items-center justify-between gap-3 px-4 py-2 text-sm font-semibold [&::-webkit-details-marker]:hidden">
-            <span className="flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" /> {t("Tugas", "Tasks")} (
-              {tasks.length})
-            </span>
-            <ChevronDown className="h-4 w-4 transition-transform group-open:rotate-180" />
-          </summary>
-          <div className="border-t p-3">
-            <PortalTaskList
-              token={token}
-              tasks={tasks.map((t) => ({
-                id: t.id,
-                title: t.title,
-                description: t.description,
-                status: t.status,
-                priority: t.priority,
-                dueDate: t.dueDate ? String(t.dueDate) : null,
-                updatedAt: String(t.updatedAt),
-                hoursMinutes: taskHoursMap?.get(t.id) ?? 0,
-                timeEntries: taskEntriesMap?.get(t.id) ?? [],
-              }))}
-            />
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <h4 className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+              {t("Daftar Tugas", "Tasks")} ({tasks.length})
+            </h4>
           </div>
-        </details>
+          <PortalTaskList
+            token={token}
+            tasks={tasks.map((t) => ({
+              id: t.id,
+              title: t.title,
+              description: t.description,
+              status: t.status,
+              priority: t.priority,
+              dueDate: t.dueDate ? String(t.dueDate) : null,
+              updatedAt: String(t.updatedAt),
+              hoursMinutes: taskHoursMap?.get(t.id) ?? 0,
+              timeEntries: taskEntriesMap?.get(t.id) ?? [],
+            }))}
+          />
+        </div>
       )}
 
       {/* Files */}
@@ -768,18 +764,19 @@ function ProjectExpandedContent({
       )}
 
       {/* Contact team — WA / email only */}
-      <Separator />
-      <div>
-        <h4 className="mb-2 text-sm font-semibold">
-          {t("Hubungi tim", "Contact team")}
-        </h4>
-        <PortalContactButtons
-          phone={ownerWhatsAppPhone}
-          email={ownerEmail}
-          ownerName={ownerName}
-          projectName={project.name}
-          compact
-        />
+      <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <span className="text-xs font-semibold text-muted-foreground">
+            {t("Ada pertanyaan tentang proyek ini?", "Have questions about this project?")}
+          </span>
+          <PortalContactButtons
+            phone={ownerWhatsAppPhone}
+            email={ownerEmail}
+            ownerName={ownerName}
+            projectName={project.name}
+            compact
+          />
+        </div>
       </div>
     </CardContent>
   );
@@ -807,10 +804,14 @@ function ProjectSummary({
       {isTaskProgress && total > 0 ? (
         <div className="flex items-center gap-2">
           {progressPie(pct)}
-          <span className="text-xs font-medium text-foreground">{done}/{total} tugas selesai</span>
+          <span className="text-xs font-medium text-foreground">
+            {done}/{total} {t("tugas selesai", "tasks completed")}
+          </span>
         </div>
       ) : total > 0 ? (
-        <p className="text-[11px] text-muted-foreground">{done}/{total} tugas selesai</p>
+        <p className="text-[11px] text-muted-foreground">
+          {done}/{total} {t("tugas selesai", "tasks completed")}
+        </p>
       ) : (
         <span className="text-xs text-muted-foreground">{t("Belum ada tugas", "No tasks yet")}</span>
       )}
