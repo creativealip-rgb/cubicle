@@ -121,18 +121,20 @@ export default async function TasksPage({
     ) : (
       <>
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <ActiveFilterSummary
-            basePath="/app/tasks"
-            filters={[
-              { key: "search", label: t("Pencarian", "Search"), value: search },
-              { key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name },
-              { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee },
-              { key: "priority", label: t("Prioritas", "Priority"), value: params.priority },
-              { key: "status", label: "Status", value: params.status },
-            ]}
-          />
+          <div className="min-w-0 flex-1">
+            <ActiveFilterSummary
+              basePath="/app/tasks"
+              filters={[
+                { key: "search", label: t("Pencarian", "Search"), value: search },
+                { key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name },
+                { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee },
+                { key: "priority", label: t("Prioritas", "Priority"), value: params.priority },
+                { key: "status", label: "Status", value: params.status },
+              ]}
+            />
+          </div>
 
-          <form className="relative w-full sm:w-64">
+          <form className="relative w-full sm:w-64 shrink-0 sm:ml-auto">
             <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
             <Input
               name="search"
