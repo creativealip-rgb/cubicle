@@ -16,7 +16,7 @@ describe("client detail two-column layout", () => {
     const profileEnd = source.indexOf("</aside>", profileStart);
     const profile = source.slice(profileStart, profileEnd);
 
-    expect(source).toContain("Kembali ke Klien");
+    expect(source).toContain("Klien");
     expect(profile).toContain("Proyek Aktif");
     expect(profile).toContain("Invoice Belum Lunas");
     expect(profile).toContain("Catatan Internal");

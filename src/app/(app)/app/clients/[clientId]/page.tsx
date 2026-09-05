@@ -23,7 +23,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ClientTabsNav } from "@/components/clients/client-tabs-nav";
 import Link from "next/link";
 import {
-  ArrowLeft,
   Download,
   Wallet,
   FolderKanban,
@@ -278,88 +277,89 @@ export default async function ClientDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Top Navigation & Unified Executive PageHeader */}
-      <div className="space-y-2">
-        <div className="flex items-center">
-          <Link
-            href="/app/clients"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <ArrowLeft className="h-3.5 w-3.5" /> {t("Kembali ke Klien", "Back to Clients")}
-          </Link>
-        </div>
-
-        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-r from-card via-card to-primary/[0.04] p-4 sm:p-5 shadow-xs transition-all">
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-xs">
-                <Users className="h-5 w-5" />
+      {/* Unified Executive PageHeader with Integrated Breadcrumb */}
+      <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-r from-card via-card to-primary/[0.04] p-4 sm:p-5 shadow-xs transition-all">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-xs">
+              <Users className="h-6 w-6" />
+            </div>
+            <div className="min-w-0 space-y-0.5">
+              {/* Breadcrumb row */}
+              <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
+                <Link
+                  href="/app/clients"
+                  className="transition-colors hover:text-primary hover:underline"
+                >
+                  {t("Klien", "Clients")}
+                </Link>
+                <span>/</span>
+                <span className="text-foreground/80 truncate max-w-[200px]">{client.name}</span>
               </div>
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate leading-tight">
-                    {client.name}
-                  </h1>
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] font-bold h-5 px-2 rounded-full border ${
-                      client.status === "active"
-                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                        : "border-border/80 bg-muted/60 text-muted-foreground"
+
+              <div className="flex flex-wrap items-center gap-2">
+                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate leading-tight">
+                  {client.name}
+                </h1>
+                <Badge
+                  variant="outline"
+                  className={`text-[10px] font-bold h-5 px-2 rounded-full border ${
+                    client.status === "active"
+                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                      : "border-border/80 bg-muted/60 text-muted-foreground"
+                  }`}
+                >
+                  <span
+                    className={`mr-1 h-1.5 w-1.5 rounded-full ${
+                      client.status === "active" ? "bg-emerald-500" : "bg-muted-foreground"
                     }`}
-                  >
-                    <span
-                      className={`mr-1 h-1.5 w-1.5 rounded-full ${
-                        client.status === "active" ? "bg-emerald-500" : "bg-muted-foreground"
-                      }`}
-                    />
-                    {client.status === "active"
-                      ? t("Aktif", "Active")
-                      : client.status === "inactive"
-                        ? t("Tidak aktif", "Inactive")
-                        : client.status === "archived"
-                          ? t("Arsip", "Archived")
-                          : client.status}
-                  </Badge>
-                </div>
-                {client.companyName && (
-                  <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate mt-0.5">
-                    {client.companyName}
-                  </p>
-                )}
+                  />
+                  {client.status === "active"
+                    ? t("Aktif", "Active")
+                    : client.status === "inactive"
+                      ? t("Tidak aktif", "Inactive")
+                      : client.status === "archived"
+                        ? t("Arsip", "Archived")
+                        : client.status}
+                </Badge>
               </div>
+              {client.companyName && (
+                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
+                  {client.companyName}
+                </p>
+              )}
             </div>
+          </div>
 
-            {/* Action Group */}
-            <div className="flex flex-wrap items-center gap-2 shrink-0">
-              <Button size="sm" variant="outline" className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs" asChild>
-                <a href={`/api/clients/${client.id}/export/xlsx`} download>
-                  <Download className="h-3.5 w-3.5 text-muted-foreground" /> Excel
-                </a>
-              </Button>
-              <ClientEditDialog
-                defaultValues={{
-                  id: client.id,
-                  clientNumber: client.clientNumber,
-                  name: client.name,
-                  companyName: client.companyName ?? "",
-                  email: client.email ?? "",
-                  phone: client.phone ?? "",
-                  website: client.website ?? "",
-                  address: client.address ?? "",
-                  tags: client.tags ?? [],
-                  internalNotes: client.internalNotes ?? "",
-                  portalSlug: client.portalSlug ?? "",
-                  portalSlugEnabled: client.portalSlugEnabled ?? true,
-                }}
-              />
-              <PermanentDeleteButton
-                entityType="client"
-                entityId={client.id}
-                entityName={client.name}
-                redirectTo="/app/clients"
-              />
-            </div>
+          {/* Action Group */}
+          <div className="flex flex-wrap items-center gap-2 shrink-0 sm:self-center">
+            <Button size="sm" variant="outline" className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs" asChild>
+              <a href={`/api/clients/${client.id}/export/xlsx`} download>
+                <Download className="h-3.5 w-3.5 text-muted-foreground" /> Excel
+              </a>
+            </Button>
+            <ClientEditDialog
+              defaultValues={{
+                id: client.id,
+                clientNumber: client.clientNumber,
+                name: client.name,
+                companyName: client.companyName ?? "",
+                email: client.email ?? "",
+                phone: client.phone ?? "",
+                website: client.website ?? "",
+                address: client.address ?? "",
+                tags: client.tags ?? [],
+                internalNotes: client.internalNotes ?? "",
+                portalSlug: client.portalSlug ?? "",
+                portalSlugEnabled: client.portalSlugEnabled ?? true,
+              }}
+            />
+            <PermanentDeleteButton
+              entityType="client"
+              entityId={client.id}
+              entityName={client.name}
+              redirectTo="/app/clients"
+            />
           </div>
         </div>
       </div>
