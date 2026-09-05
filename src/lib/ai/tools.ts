@@ -873,6 +873,45 @@ async function createInvoiceAction(args: {
   };
 }
 
+async function createTaskAction(args: {
+  title: string;
+  description?: string;
+  projectId?: string;
+  projectName?: string;
+  priority?: "low" | "medium" | "high" | "urgent";
+  dueDate?: string;
+}) {
+  const ws = await getWorkspace();
+  if (!args.title?.trim()) return { error: "Task title is required" };
+
+  let resolvedProjectId = args.projectId;
+  let resolvedProjectName = args.projectName;
+
+  if (!resolvedProjectId && args.projectName) {
+    const [foundProj] = await db
+      .select({ id: projects.id, name: projects.name })
+      .from(projects)
+      .where(and(eq(projects.workspaceId, ws.id), sql`lower(${projects.name}) = ${args.projectName.toLowerCase().trim()}`))
+      .limit(1);
+    if (foundProj) {
+      resolvedProjectId = foundProj.id;
+      resolvedProjectName = foundProj.name;
+    }
+  }
+
+  return {
+    confirmation: {
+      kind: "create_task" as const,
+      title: args.title.trim(),
+      description: args.description?.trim() || null,
+      projectId: resolvedProjectId || null,
+      projectName: resolvedProjectName || null,
+      priority: args.priority || "medium",
+      dueDate: args.dueDate || null,
+    },
+  };
+}
+
 async function startTimerAction(args: {
   taskId?: string;
   taskTitle?: string;
@@ -2139,6 +2178,7 @@ export type ToolName =
   | "create_client"
   | "create_project"
   | "create_invoice"
+  | "create_task"
   | "start_timer";
 
 export const ACTION_TOOLS = new Set<string>([
@@ -2147,6 +2187,7 @@ export const ACTION_TOOLS = new Set<string>([
   "create_client",
   "create_project",
   "create_invoice",
+  "create_task",
   "start_timer",
 ]);
 
@@ -2226,6 +2267,8 @@ export async function executeTool(
       return createProjectAction(args as { name: string; clientId?: string; clientName?: string; billingModel?: string; budget?: number; dueDate?: string });
     case "create_invoice":
       return createInvoiceAction(args as { clientId?: string; clientName?: string; projectId?: string; projectName?: string; dueDate?: string; currency?: string; items: Array<{ description: string; quantity: number; unitPrice: number }> });
+    case "create_task":
+      return createTaskAction(args as { title: string; description?: string; projectId?: string; projectName?: string; priority?: "low" | "medium" | "high" | "urgent"; dueDate?: string });
     case "start_timer":
       return startTimerAction(args as { taskId?: string; taskTitle?: string; projectId?: string; projectName?: string; clientId?: string; clientName?: string; description?: string });
     default:

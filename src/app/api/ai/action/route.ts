@@ -270,6 +270,63 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, result: { invoice: created } });
     }
 
+    if (request.kind === "create_task") {
+      const p = request.payload as {
+        title: string;
+        description?: string | null;
+        projectId?: string | null;
+        priority?: "low" | "medium" | "high" | "urgent";
+        dueDate?: string | null;
+      };
+      if (!p?.title?.trim()) return NextResponse.json({ error: "Task title is required" }, { status: 400 });
+      const { getWorkspaceForCurrentUser } = await import("@/lib/workspace");
+      const wsId = await getWorkspaceForCurrentUser();
+      await assertWorkspaceWritable(db, session.user.id, wsId);
+
+      const { projects, tasks } = await import("@/db/schema");
+
+      // Resolve a valid project in workspace if not specified
+      let resolvedProjectId = p.projectId;
+      if (!resolvedProjectId) {
+        const [firstProj] = await db
+          .select({ id: projects.id })
+          .from(projects)
+          .where(eq(projects.workspaceId, wsId))
+          .limit(1);
+        if (!firstProj) {
+          return NextResponse.json({ error: "No projects found in workspace. Please create a project first." }, { status: 400 });
+        }
+        resolvedProjectId = firstProj.id;
+      }
+
+      const taskId = crypto.randomUUID();
+      const [created] = await db.insert(tasks).values({
+        id: taskId,
+        workspaceId: wsId,
+        projectId: resolvedProjectId,
+        title: p.title.trim(),
+        description: p.description?.trim() || null,
+        status: "todo",
+        priority: p.priority || "medium",
+        dueDate: p.dueDate || null,
+        assigneeId: session.user.id,
+        mode: "workflow",
+        lifecycle: "active",
+        behavior: "one_time",
+        position: 0,
+      }).returning({ id: tasks.id, title: tasks.title });
+
+      await db.insert(activityLogs).values({
+        workspaceId: wsId,
+        actorId: session.user.id,
+        action: "ai.task_created",
+        entityType: "task",
+        entityId: taskId,
+        metadata: { title: p.title.trim(), projectId: resolvedProjectId },
+      });
+      return NextResponse.json({ ok: true, result: { task: created } });
+    }
+
     if (request.kind === "start_timer") {
       const p = request.payload as { taskId?: string; projectId?: string; clientId?: string; description?: string };
       const { getWorkspaceForCurrentUser } = await import("@/lib/workspace");

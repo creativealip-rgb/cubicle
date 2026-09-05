@@ -49,6 +49,15 @@ export type AssistantConfirmation =
       total: number;
     }
   | {
+      kind: "create_task";
+      title: string;
+      description?: string | null;
+      projectId?: string | null;
+      projectName?: string | null;
+      priority?: "low" | "medium" | "high" | "urgent";
+      dueDate?: string | null;
+    }
+  | {
       kind: "start_timer";
       taskId?: string;
       taskTitle?: string;
@@ -103,6 +112,8 @@ export function AssistantConfirmationCard({
         return isId ? "Konfirmasi Buat Proyek Baru" : "Confirm New Project Creation";
       case "create_invoice":
         return isId ? "Konfirmasi Penerbitan Invoice" : "Confirm Invoice Creation";
+      case "create_task":
+        return isId ? "Konfirmasi Buat Tugas Baru" : "Confirm New Task Creation";
       case "start_timer":
         return isId ? "Mulai Timer Pelacakan Waktu" : "Start Task Time Tracker";
     }
@@ -120,6 +131,8 @@ export function AssistantConfirmationCard({
         return <FolderPlus className="h-4 w-4 text-indigo-600" />;
       case "create_invoice":
         return <Receipt className="h-4 w-4 text-emerald-600" />;
+      case "create_task":
+        return <Sparkles className="h-4 w-4 text-purple-600" />;
       case "start_timer":
         return <Play className="h-4 w-4 text-primary fill-primary" />;
     }
@@ -141,6 +154,8 @@ export function AssistantConfirmationCard({
         return isId ? "✓ Buat Proyek" : "✓ Create Project";
       case "create_invoice":
         return isId ? "✓ Buat Invoice" : "✓ Create Invoice";
+      case "create_task":
+        return isId ? "✓ Buat Tugas" : "✓ Create Task";
       case "start_timer":
         return isId ? "✓ Mulai Timer" : "✓ Start Timer";
     }
@@ -294,6 +309,37 @@ export function AssistantConfirmationCard({
               </table>
             </div>
           </div>
+        )}
+
+        {conf.kind === "create_task" && (
+          <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1.5">
+            <dt className="text-muted-foreground">{isId ? "Judul Tugas:" : "Task Title:"}</dt>
+            <dd className="font-bold text-foreground">{conf.title}</dd>
+            {conf.projectName && (
+              <>
+                <dt className="text-muted-foreground">{isId ? "Proyek:" : "Project:"}</dt>
+                <dd className="font-semibold text-primary">{conf.projectName}</dd>
+              </>
+            )}
+            {conf.priority && (
+              <>
+                <dt className="text-muted-foreground">{isId ? "Prioritas:" : "Priority:"}</dt>
+                <dd className="font-medium capitalize text-foreground">{conf.priority}</dd>
+              </>
+            )}
+            {conf.dueDate && (
+              <>
+                <dt className="text-muted-foreground">{isId ? "Tenggat:" : "Due Date:"}</dt>
+                <dd className="font-medium text-foreground">{conf.dueDate}</dd>
+              </>
+            )}
+            {conf.description && (
+              <>
+                <dt className="text-muted-foreground">{isId ? "Deskripsi:" : "Description:"}</dt>
+                <dd className="text-muted-foreground italic col-span-2 mt-1">{conf.description}</dd>
+              </>
+            )}
+          </dl>
         )}
 
         {conf.kind === "start_timer" && (

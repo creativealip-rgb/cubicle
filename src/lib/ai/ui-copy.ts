@@ -35,6 +35,11 @@ export function getAssistantCopy(lang: string) { return assistantCopy[lang === "
 
 const toolGroups: Array<[RegExp, string, string]> = [
   [/thinking/i, "Menganalisis pertanyaan…", "Analyzing your question…"],
+  [/create_client/i, "Menyiapkan data klien baru…", "Preparing new client..."],
+  [/create_project/i, "Menyiapkan data proyek baru…", "Preparing new project..."],
+  [/create_invoice/i, "Menyiapkan draft invoice…", "Preparing invoice draft..."],
+  [/create_task/i, "Menyiapkan tugas baru…", "Preparing new task..."],
+  [/start_timer/i, "Menyiapkan pelacak waktu…", "Starting timer..."],
   [/client/i, "Mencari data klien…", "Looking up client data…"],
   [/project/i, "Mencari data proyek…", "Looking up project data…"],
   [/task/i, "Memeriksa tugas…", "Checking tasks…"],
