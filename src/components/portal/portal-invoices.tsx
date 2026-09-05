@@ -175,42 +175,46 @@ function InvoiceRow({
   const pdfUrl = `/api/client-portal/invoices/${inv.id}/pdf?token=${encodeURIComponent(token)}`;
 
   return (
-    <div className="flex flex-col items-stretch gap-3 p-3 sm:flex-row sm:items-center sm:justify-between">
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2">
-          <span className="font-mono text-sm font-medium truncate">
-            {inv.invoiceNumber || "—"}
-          </span>
-          {inv.isNew && (
-            <Badge className="bg-blue-600 text-white text-[10px] shrink-0 hover:bg-blue-600">
-              {t("BARU", "NEW")}
-            </Badge>
-          )}
+    <div className="flex flex-col items-stretch gap-3 p-3.5 transition-colors hover:bg-muted/20 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex items-start gap-3 min-w-0 flex-1">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+          <FileText className="h-4 w-4" />
         </div>
-        <div className="mt-0.5 break-words text-xs text-muted-foreground">
-          {projectName} · {fmtDate(inv.issueDate, portalLocale(lang))}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-sm font-semibold truncate text-foreground">
+              {inv.invoiceNumber || "—"}
+            </span>
+            {inv.isNew && (
+              <Badge className="bg-primary text-primary-foreground text-[10px] font-bold shrink-0">
+                {t("BARU", "NEW")}
+              </Badge>
+            )}
+          </div>
+          <div className="mt-0.5 break-words text-xs text-muted-foreground">
+            {projectName} · {fmtDate(inv.issueDate, portalLocale(lang))}
+          </div>
         </div>
       </div>
-      <div className="flex items-end justify-between gap-3 sm:shrink-0 sm:items-center sm:justify-end">
+      <div className="flex items-center justify-between gap-3 sm:shrink-0 sm:justify-end">
         <div className="text-right">
-          <div className="font-mono text-sm font-semibold">
+          <div className="font-mono text-sm font-bold text-foreground">
             {fmtMoney(Number(inv.total), inv.currency)}
           </div>
-          <Badge
-            variant="outline"
-            className={`mt-0.5 text-[10px] ${meta.className}`}
+          <span
+            className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-bold ${meta.className}`}
           >
             {meta.label}
-          </Badge>
+          </span>
         </div>
         {canDownload && (
           <a
             href={pdfUrl}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex min-h-11 items-center gap-1 rounded-md border px-3 py-2 text-xs text-primary hover:bg-muted"
+            className="inline-flex min-h-11 items-center gap-1.5 rounded-xl border border-border/80 bg-background px-3 text-xs font-semibold text-foreground shadow-xs transition-colors hover:bg-muted"
           >
-            <Download className="h-3 w-3" /> PDF
+            <Download className="h-3.5 w-3.5 text-muted-foreground" /> PDF
           </a>
         )}
       </div>

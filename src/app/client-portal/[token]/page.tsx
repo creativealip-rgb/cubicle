@@ -24,7 +24,17 @@ import { pickReplyTo } from "@/lib/workspace-reply-to";
 import { Suspense } from "react";
 import { PortalTabsFallback } from "@/components/portal/portal-loading";
 import { Card, CardContent } from "@/components/ui/card";
-import { FolderOpen, Globe, LockKeyhole } from "lucide-react";
+import {
+  FolderOpen,
+  Globe,
+  LockKeyhole,
+  DollarSign,
+  Clock,
+  Layers,
+  FileSpreadsheet,
+  Bell,
+  Sparkles,
+} from "lucide-react";
 import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
 import { PortalInvoices } from "@/components/portal/portal-invoices";
@@ -796,115 +806,160 @@ export default async function ClientPortalPage({
       <div className="min-h-screen bg-muted/30">
         <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:space-y-8 sm:py-10">
           {/* Header — client identity with workspace branding */}
-          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-            <div className="flex items-start gap-3 min-w-0">
-              {workspaceContact?.logoUrl ? (
-                <div className="relative h-14 w-14 rounded-lg overflow-hidden bg-white border shrink-0">
-                  <Image
-                    src={workspaceContact.logoUrl}
-                    alt={
-                      workspaceContact.billingName ||
-                      workspaceContact.name ||
-                      "Workspace logo"
-                    }
-                    fill
-                    sizes="56px"
-                    className="object-contain"
-                  />
-                </div>
-              ) : (
-                <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl border bg-primary/10 text-lg font-bold text-primary">
-                  {(
-                    workspaceContact?.billingName ||
-                    workspaceContact?.name ||
-                    client.companyName ||
-                    client.name ||
-                    "C"
-                  )
-                    .trim()
-                    .charAt(0)
-                    .toUpperCase()}
-                </div>
-              )}
-              <div className="min-w-0">
-                <h1 className="text-xl font-bold tracking-tight sm:text-2xl">
-                  {client.companyName || client.name}
-                </h1>
-                <p className="mt-0.5 text-sm text-muted-foreground">
-                  {t("Dikelola oleh", "Managed by")}{" "}
-                  <span className="font-medium text-foreground">
-                    {workspaceContact?.billingName ||
+          <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-r from-card via-card to-primary/5 p-5 sm:p-6 shadow-xs">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between relative z-10">
+              <div className="flex items-start gap-4 min-w-0">
+                {workspaceContact?.logoUrl ? (
+                  <div className="relative h-14 w-14 rounded-2xl overflow-hidden bg-white border border-border/80 shadow-xs shrink-0">
+                    <Image
+                      src={workspaceContact.logoUrl}
+                      alt={
+                        workspaceContact.billingName ||
+                        workspaceContact.name ||
+                        "Workspace logo"
+                      }
+                      fill
+                      sizes="56px"
+                      className="object-contain p-1"
+                    />
+                  </div>
+                ) : (
+                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-xl font-bold text-primary shadow-xs">
+                    {(
+                      workspaceContact?.billingName ||
                       workspaceContact?.name ||
-                      "Cubiqlo"}
-                  </span>
-                </p>
+                      client.companyName ||
+                      client.name ||
+                      "C"
+                    )
+                      .trim()
+                      .charAt(0)
+                      .toUpperCase()}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold text-primary">
+                      <Sparkles className="h-3 w-3" />
+                      {t("Portal Klien Resmi", "Official Client Portal")}
+                    </span>
+                  </div>
+                  <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
+                    {client.companyName || client.name}
+                  </h1>
+                  <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
+                    {t("Dikelola oleh", "Managed by")}{" "}
+                    <span className="font-semibold text-foreground">
+                      {workspaceContact?.billingName ||
+                        workspaceContact?.name ||
+                        "Cubiqlo"}
+                    </span>
+                  </p>
+                </div>
               </div>
-            </div>
-            <div className="flex shrink-0 items-center gap-2 self-start">
-              <PortalLanguageSwitch />
-              <div className="hidden items-center gap-1.5 rounded-full border bg-background px-3 py-1 text-[11px] font-medium text-muted-foreground sm:flex">
-                <LockKeyhole className="h-3 w-3" /> {t("Akses aman", "Secure access")}
+              <div className="flex shrink-0 items-center gap-2 self-start">
+                <PortalLanguageSwitch />
+                <div className="flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3 py-1 text-[11px] font-medium text-muted-foreground shadow-xs backdrop-blur-xs">
+                  <LockKeyhole className="h-3 w-3 text-emerald-600" /> {t("Akses Terenkripsi", "Encrypted Access")}
+                </div>
               </div>
             </div>
           </div>
 
-          {/* ─── 1. Top summary + actions ─────────────────────── */}
+          {/* ─── 1. Top summary + actions (Standard Executive 5-KPI Strip) ─── */}
           <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-2 sm:grid-cols-5 sm:gap-3">
-              <Card className="shadow-none">
-                <CardContent className="p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Fixed Price", "Fixed Price")}
-                  </p>
-                  <p className="mt-1 text-xl font-semibold">{byProjectCount}</p>
-                </CardContent>
-              </Card>
-              <Card className="shadow-none">
-                <CardContent className="p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Hourly", "Hourly")}
-                  </p>
-                  <p className="mt-1 text-xl font-semibold">{byHoursCount}</p>
-                </CardContent>
-              </Card>
-              <Card className="shadow-none">
-                <CardContent className="p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Retainer", "Retainer")}
-                  </p>
-                  <p className="mt-1 text-xl font-semibold">{retainerCount}</p>
-                </CardContent>
-              </Card>
-              <Card className="shadow-none">
-                <CardContent className="p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Invoice", "Invoice")}
-                  </p>
-                  <p className="mt-1 text-xl font-semibold">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+              {/* 1. Fixed Price */}
+              <div className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
+                    <DollarSign className="h-4 w-4" />
+                  </div>
+                  <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400">
+                    {byProjectCount}
+                  </span>
+                </div>
+                <div className="mt-2.5">
+                  <p className="text-xs font-bold text-foreground">{t("Fixed Price", "Fixed Price")}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Proyek tetap", "Fixed scope")}</p>
+                </div>
+              </div>
+
+              {/* 2. Hourly */}
+              <div className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
+                    {byHoursCount}
+                  </span>
+                </div>
+                <div className="mt-2.5">
+                  <p className="text-xs font-bold text-foreground">{t("Hourly", "Hourly")}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Berbasis jam", "Time & material")}</p>
+                </div>
+              </div>
+
+              {/* 3. Retainer */}
+              <div className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                    <Layers className="h-4 w-4" />
+                  </div>
+                  <span className="rounded-full border border-purple-500/30 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-600 dark:text-purple-400">
+                    {retainerCount}
+                  </span>
+                </div>
+                <div className="mt-2.5">
+                  <p className="text-xs font-bold text-foreground">{t("Retainer", "Retainer")}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Langganan aktif", "Active retainer")}</p>
+                </div>
+              </div>
+
+              {/* 4. Invoices */}
+              <div className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                    <FileSpreadsheet className="h-4 w-4" />
+                  </div>
+                  <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
                     {dueInvoiceCount}
-                  </p>
-                </CardContent>
-              </Card>
-              <Card className="shadow-none">
-                <CardContent className="p-3">
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {t("Pengingat", "Reminders")}
-                  </p>
-                  <p className="mt-1 text-xl font-semibold">
+                  </span>
+                </div>
+                <div className="mt-2.5">
+                  <p className="text-xs font-bold text-foreground">{t("Invoice", "Invoice")}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Perlu bayar / aktif", "Open / active")}</p>
+                </div>
+              </div>
+
+              {/* 5. Reminders / Requests */}
+              <div className="col-span-2 sm:col-span-1 rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
+                    <Bell className="h-4 w-4" />
+                  </div>
+                  <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 text-[10px] font-bold text-rose-600 dark:text-rose-400">
                     {pendingReminderCount}
-                  </p>
-                </CardContent>
-              </Card>
+                  </span>
+                </div>
+                <div className="mt-2.5">
+                  <p className="text-xs font-bold text-foreground">{t("Permintaan", "Requests")}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Menunggu respon", "Pending review")}</p>
+                </div>
+              </div>
             </div>
 
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <FolderOpen className="h-4 w-4 text-blue-500" />
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
+              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
+                  <FolderOpen className="h-3.5 w-3.5" />
+                </div>
                 <span>
-                  <span className="font-semibold text-foreground">
+                  <span className="font-bold text-foreground">
                     {activeCount}
                   </span>{" "}
-                  {t("proyek aktif", "active projects")}
+                  {t("proyek aktif berjalan", "active running projects")}
                 </span>
               </div>
               <PortalActionButtons
