@@ -60,6 +60,43 @@ type Confirmation =
       to: string | null;
       subject: string;
       body: string;
+    }
+  | {
+      kind: "create_client";
+      name: string;
+      companyName?: string | null;
+      email?: string | null;
+      phone?: string | null;
+    }
+  | {
+      kind: "create_project";
+      name: string;
+      clientId: string;
+      clientName: string;
+      billingModel?: string;
+      budget?: number;
+      dueDate?: string;
+    }
+  | {
+      kind: "create_invoice";
+      clientId: string;
+      clientName: string;
+      projectId?: string;
+      projectName?: string;
+      dueDate: string;
+      currency: string;
+      items: Array<{ description: string; quantity: number; unitPrice: number }>;
+      total: number;
+    }
+  | {
+      kind: "start_timer";
+      taskId?: string;
+      taskTitle?: string;
+      projectId?: string;
+      projectName?: string;
+      clientId?: string;
+      clientName?: string;
+      description?: string;
     };
 
 type Message = {
@@ -1085,20 +1122,12 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                         )}
 
                         {m.confirmation && m.confirmationStatus === "pending" && (
-                          isFullpage ? (
-                            <AssistantConfirmationCard
-                              conf={m.confirmation}
-                              lang={lang}
-                              onConfirm={() => confirmAction(i)}
-                              onDismiss={() => dismissAction(i)}
-                            />
-                          ) : (
-                            <ConfirmationCard
-                              conf={m.confirmation}
-                              onConfirm={() => confirmAction(i)}
-                              onDismiss={() => dismissAction(i)}
-                            />
-                          )
+                          <AssistantConfirmationCard
+                            conf={m.confirmation}
+                            lang={lang}
+                            onConfirm={() => confirmAction(i)}
+                            onDismiss={() => dismissAction(i)}
+                          />
                         )}
                         {m.confirmation && m.confirmationStatus === "done" && (
                           <div className="mt-2 flex items-center gap-1 text-xs text-emerald-600 font-semibold">
@@ -1537,76 +1566,4 @@ function _WelcomeScreen({
   );
 }
 
-function ConfirmationCard({
-  conf,
-  onConfirm,
-  onDismiss,
-}: {
-  conf: Confirmation;
-  onConfirm: () => void;
-  onDismiss: () => void;
-}) {
-  if (conf.kind === "update_task_status") {
-    return (
-      <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-        <p className="font-semibold">Confirm action</p>
-        <p className="mt-1">
-          Change task <b>{conf.taskTitle}</b> from{" "}
-          <span className="rounded bg-amber-200 px-1.5 py-0.5">
-            {conf.currentStatus}
-          </span>{" "}
-          to{" "}
-          <span className="rounded bg-amber-200 px-1.5 py-0.5">
-            {conf.newStatus}
-          </span>
-        </p>
-        {conf.reason && (
-          <p className="mt-1 text-amber-800">Reason: {conf.reason}</p>
-        )}
-        <div className="mt-2 flex gap-2">
-          <button
-            onClick={onConfirm}
-            className="rounded-md bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700"
-          >
-            Confirm
-          </button>
-          <button
-            onClick={onDismiss}
-            className="rounded-md border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100"
-          >
-            Cancel
-          </button>
-        </div>
-      </div>
-    );
-  }
-  return (
-    <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900">
-      <p className="font-semibold">Confirm action — send payment reminder</p>
-      <p className="mt-1">
-        To: <b>{conf.to ?? "(no email on client)"}</b>
-      </p>
-      <p className="mt-1">
-        Subject: <b>{conf.subject}</b>
-      </p>
-      <pre className="mt-1 max-h-32 overflow-y-auto whitespace-pre-wrap rounded bg-white p-2 text-[11px] text-slate-800 ring-1 ring-amber-200">
-        {conf.body}
-      </pre>
-      <div className="mt-2 flex gap-2">
-        <button
-          onClick={onConfirm}
-          disabled={!conf.to}
-          className="rounded-md bg-amber-600 px-3 py-1 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50"
-        >
-          Send email
-        </button>
-        <button
-          onClick={onDismiss}
-          className="rounded-md border border-amber-300 bg-white px-3 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100"
-        >
-          Cancel
-        </button>
-      </div>
-    </div>
-  );
-}
+

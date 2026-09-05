@@ -70,6 +70,10 @@ TOOLS (read — always safe)
 TOOLS (action — require user confirmation)
 - update_task_status(taskId, newStatus, reason?) — change a task's status
 - draft_invoice_reminder(invoiceId) — draft a payment reminder email
+- create_client(name, companyName?, email?, phone?) — create a new client
+- create_project(name, clientId?, clientName?, billingModel?, budget?, dueDate?) — create a project
+- create_invoice(clientId?, clientName?, projectId?, projectName?, dueDate?, currency?, items: [{description, quantity, unitPrice}]) — create invoice draft
+- start_timer(taskId?, taskTitle?, projectId?, projectName?, clientId?, clientName?, description?) — start live time tracking timer
 
 RULES
 - Always call a tool before answering questions about specific workspace data (clients, projects, tasks, invoices).

@@ -721,6 +721,219 @@ async function draftInvoiceReminder(args: { invoiceId: string }) {
   };
 }
 
+async function createClientAction(args: {
+  name: string;
+  companyName?: string;
+  email?: string;
+  phone?: string;
+}) {
+  if (!args.name?.trim()) return { error: "Client name is required" };
+  return {
+    confirmation: {
+      kind: "create_client" as const,
+      name: args.name.trim(),
+      companyName: args.companyName?.trim() || null,
+      email: args.email?.trim() || null,
+      phone: args.phone?.trim() || null,
+    },
+  };
+}
+
+async function createProjectAction(args: {
+  name: string;
+  clientId?: string;
+  clientName?: string;
+  billingModel?: string;
+  budget?: number;
+  dueDate?: string;
+}) {
+  const ws = await getWorkspace();
+  if (!args.name?.trim()) return { error: "Project name is required" };
+
+  let resolvedClientId = args.clientId;
+  let resolvedClientName = args.clientName ?? "Client";
+
+  if (!resolvedClientId && args.clientName) {
+    const [found] = await db
+      .select({ id: clients.id, name: clients.name })
+      .from(clients)
+      .where(and(eq(clients.workspaceId, ws.id), sql`lower(${clients.name}) = ${args.clientName.toLowerCase().trim()}`))
+      .limit(1);
+    if (found) {
+      resolvedClientId = found.id;
+      resolvedClientName = found.name;
+    }
+  }
+
+  if (!resolvedClientId) {
+    const [firstClient] = await db
+      .select({ id: clients.id, name: clients.name })
+      .from(clients)
+      .where(eq(clients.workspaceId, ws.id))
+      .limit(1);
+    if (firstClient) {
+      resolvedClientId = firstClient.id;
+      resolvedClientName = firstClient.name;
+    } else {
+      return { error: "No clients found. Please create a client first." };
+    }
+  }
+
+  return {
+    confirmation: {
+      kind: "create_project" as const,
+      name: args.name.trim(),
+      clientId: resolvedClientId,
+      clientName: resolvedClientName,
+      billingModel: args.billingModel || "fixed_price",
+      budget: args.budget,
+      dueDate: args.dueDate,
+    },
+  };
+}
+
+async function createInvoiceAction(args: {
+  clientId?: string;
+  clientName?: string;
+  projectId?: string;
+  projectName?: string;
+  dueDate?: string;
+  currency?: string;
+  items: Array<{ description: string; quantity: number; unitPrice: number }>;
+}) {
+  const ws = await getWorkspace();
+  if (!args.items || args.items.length === 0) {
+    return { error: "Invoice items are required" };
+  }
+
+  let resolvedClientId = args.clientId;
+  let resolvedClientName = args.clientName ?? "Client";
+
+  if (!resolvedClientId && args.clientName) {
+    const [found] = await db
+      .select({ id: clients.id, name: clients.name })
+      .from(clients)
+      .where(and(eq(clients.workspaceId, ws.id), sql`lower(${clients.name}) = ${args.clientName.toLowerCase().trim()}`))
+      .limit(1);
+    if (found) {
+      resolvedClientId = found.id;
+      resolvedClientName = found.name;
+    }
+  }
+
+  if (!resolvedClientId) {
+    const [firstClient] = await db
+      .select({ id: clients.id, name: clients.name })
+      .from(clients)
+      .where(eq(clients.workspaceId, ws.id))
+      .limit(1);
+    if (firstClient) {
+      resolvedClientId = firstClient.id;
+      resolvedClientName = firstClient.name;
+    } else {
+      return { error: "No client found. Please provide a client name or create one first." };
+    }
+  }
+
+  let resolvedProjectId = args.projectId;
+  let resolvedProjectName = args.projectName;
+
+  if (!resolvedProjectId && args.projectName) {
+    const [foundProj] = await db
+      .select({ id: projects.id, name: projects.name })
+      .from(projects)
+      .where(and(eq(projects.workspaceId, ws.id), sql`lower(${projects.name}) = ${args.projectName.toLowerCase().trim()}`))
+      .limit(1);
+    if (foundProj) {
+      resolvedProjectId = foundProj.id;
+      resolvedProjectName = foundProj.name;
+    }
+  }
+
+  const items = args.items.map((it) => ({
+    description: it.description,
+    quantity: Number(it.quantity) || 1,
+    unitPrice: Number(it.unitPrice) || 0,
+  }));
+  const total = items.reduce((sum, it) => sum + it.quantity * it.unitPrice, 0);
+  const dueDate = args.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+  return {
+    confirmation: {
+      kind: "create_invoice" as const,
+      clientId: resolvedClientId,
+      clientName: resolvedClientName,
+      projectId: resolvedProjectId,
+      projectName: resolvedProjectName,
+      dueDate,
+      currency: args.currency || "IDR",
+      items,
+      total,
+    },
+  };
+}
+
+async function startTimerAction(args: {
+  taskId?: string;
+  taskTitle?: string;
+  projectId?: string;
+  projectName?: string;
+  clientId?: string;
+  clientName?: string;
+  description?: string;
+}) {
+  const ws = await getWorkspace();
+  let resolvedTaskId = args.taskId;
+  let resolvedTaskTitle = args.taskTitle;
+  let resolvedProjectId = args.projectId;
+  let resolvedProjectName = args.projectName;
+  let resolvedClientId = args.clientId;
+  const resolvedClientName = args.clientName;
+
+  if (!resolvedTaskId && args.taskTitle) {
+    const [foundTask] = await db
+      .select({ id: tasks.id, title: tasks.title, projectId: tasks.projectId })
+      .from(tasks)
+      .where(and(eq(tasks.workspaceId, ws.id), sql`lower(${tasks.title}) = ${args.taskTitle.toLowerCase().trim()}`))
+      .limit(1);
+    if (foundTask) {
+      resolvedTaskId = foundTask.id;
+      resolvedTaskTitle = foundTask.title;
+      if (!resolvedProjectId && foundTask.projectId) {
+        resolvedProjectId = foundTask.projectId;
+      }
+    }
+  }
+
+  if (!resolvedProjectId && args.projectName) {
+    const [foundProj] = await db
+      .select({ id: projects.id, name: projects.name, clientId: projects.clientId })
+      .from(projects)
+      .where(and(eq(projects.workspaceId, ws.id), sql`lower(${projects.name}) = ${args.projectName.toLowerCase().trim()}`))
+      .limit(1);
+    if (foundProj) {
+      resolvedProjectId = foundProj.id;
+      resolvedProjectName = foundProj.name;
+      if (!resolvedClientId && foundProj.clientId) {
+        resolvedClientId = foundProj.clientId;
+      }
+    }
+  }
+
+  return {
+    confirmation: {
+      kind: "start_timer" as const,
+      taskId: resolvedTaskId,
+      taskTitle: resolvedTaskTitle,
+      projectId: resolvedProjectId,
+      projectName: resolvedProjectName,
+      clientId: resolvedClientId,
+      clientName: resolvedClientName,
+      description: args.description || (resolvedTaskTitle ? `Bekerja pada: ${resolvedTaskTitle}` : "Pelacakan waktu tugas"),
+    },
+  };
+}
+
 // ─── Read: finance (Sprint H) ─────────────────────────────────────
 
 async function listExpenses(args: { categoryId?: string; projectId?: string; limit?: number; fromDate?: string; toDate?: string }) {
@@ -1778,6 +1991,97 @@ export const TOOL_DEFS: ToolDefinition[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "create_client",
+      description:
+        "Create a new client in the workspace. Returns a confirmation card for the user to review and confirm.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Full client name or primary contact name" },
+          companyName: { type: "string", description: "Company or business name" },
+          email: { type: "string", description: "Contact email" },
+          phone: { type: "string", description: "Contact phone number" },
+        },
+        required: ["name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_project",
+      description:
+        "Create a new project in the workspace. Returns a confirmation card for user approval.",
+      parameters: {
+        type: "object",
+        properties: {
+          name: { type: "string", description: "Project name" },
+          clientId: { type: "string", description: "Existing client UUID (optional if clientName is provided)" },
+          clientName: { type: "string", description: "Client name to match or associate with" },
+          billingModel: { type: "string", enum: ["fixed_price", "hourly", "retainer"], description: "Billing model" },
+          budget: { type: "number", description: "Project budget or estimated total amount" },
+          dueDate: { type: "string", description: "Due date in YYYY-MM-DD format" },
+        },
+        required: ["name"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "create_invoice",
+      description:
+        "Create a new invoice draft with line items. Returns an interactive confirmation card with item details and total.",
+      parameters: {
+        type: "object",
+        properties: {
+          clientId: { type: "string", description: "Client UUID (optional if clientName provided)" },
+          clientName: { type: "string", description: "Client name" },
+          projectId: { type: "string", description: "Project UUID (optional)" },
+          projectName: { type: "string", description: "Project name (optional)" },
+          dueDate: { type: "string", description: "Due date in YYYY-MM-DD" },
+          currency: { type: "string", description: "Currency code (default: IDR)" },
+          items: {
+            type: "array",
+            description: "List of invoice line items",
+            items: {
+              type: "object",
+              properties: {
+                description: { type: "string", description: "Item description" },
+                quantity: { type: "number", description: "Item quantity" },
+                unitPrice: { type: "number", description: "Unit price" },
+              },
+              required: ["description", "quantity", "unitPrice"],
+            },
+          },
+        },
+        required: ["items"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
+      name: "start_timer",
+      description:
+        "Start active time tracking timer for a task or project. Returns a confirmation card for the user.",
+      parameters: {
+        type: "object",
+        properties: {
+          taskId: { type: "string", description: "Task UUID" },
+          taskTitle: { type: "string", description: "Task title" },
+          projectId: { type: "string", description: "Project UUID" },
+          projectName: { type: "string", description: "Project name" },
+          clientId: { type: "string", description: "Client UUID" },
+          clientName: { type: "string", description: "Client name" },
+          description: { type: "string", description: "Work activity description" },
+        },
+      },
+    },
+  },
 ];
 
 export type ToolName =
@@ -1811,11 +2115,19 @@ export type ToolName =
   | "get_task"
   | "get_invoice"
   | "update_task_status"
-  | "draft_invoice_reminder";
+  | "draft_invoice_reminder"
+  | "create_client"
+  | "create_project"
+  | "create_invoice"
+  | "start_timer";
 
 export const ACTION_TOOLS = new Set<string>([
   "update_task_status",
   "draft_invoice_reminder",
+  "create_client",
+  "create_project",
+  "create_invoice",
+  "start_timer",
 ]);
 
 export async function executeTool(
@@ -1888,6 +2200,14 @@ export async function executeTool(
       );
     case "draft_invoice_reminder":
       return draftInvoiceReminder(args as { invoiceId: string });
+    case "create_client":
+      return createClientAction(args as { name: string; companyName?: string; email?: string; phone?: string });
+    case "create_project":
+      return createProjectAction(args as { name: string; clientId?: string; clientName?: string; billingModel?: string; budget?: number; dueDate?: string });
+    case "create_invoice":
+      return createInvoiceAction(args as { clientId?: string; clientName?: string; projectId?: string; projectName?: string; dueDate?: string; currency?: string; items: Array<{ description: string; quantity: number; unitPrice: number }> });
+    case "start_timer":
+      return startTimerAction(args as { taskId?: string; taskTitle?: string; projectId?: string; projectName?: string; clientId?: string; clientName?: string; description?: string });
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

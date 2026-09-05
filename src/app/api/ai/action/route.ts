@@ -1,7 +1,7 @@
 /** Execute a user-confirmed AI Assistant action. */
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { activityLogs, invoices, tasks } from "@/db/schema";
@@ -116,6 +116,188 @@ export async function POST(req: NextRequest) {
         metadata: { recipientAvailable: Boolean(p.to) },
       });
       return NextResponse.json({ ok: true, result: { draft: { invoiceId: p.invoiceId, to: p.to, subject: p.subject, body: p.body } } });
+    }
+
+    if (request.kind === "create_client") {
+      const p = request.payload as { name: string; companyName?: string | null; email?: string | null; phone?: string | null };
+      if (!p?.name?.trim()) return NextResponse.json({ error: "Client name is required" }, { status: 400 });
+      const { getWorkspaceForCurrentUser } = await import("@/lib/workspace");
+      const wsId = await getWorkspaceForCurrentUser();
+      await assertWorkspaceWritable(db, session.user.id, wsId);
+      const { checkEntityLimit } = await import("@/lib/plan");
+      const clientLimit = await checkEntityLimit(wsId, "clients", plan);
+      if (!clientLimit.allowed) {
+        return NextResponse.json({ error: clientLimit.reason ?? "Client limit reached" }, { status: 400 });
+      }
+      const { clients } = await import("@/db/schema");
+      const clientId = crypto.randomUUID();
+      const [created] = await db.insert(clients).values({
+        id: clientId,
+        workspaceId: wsId,
+        name: p.name.trim(),
+        companyName: p.companyName?.trim() || null,
+        email: p.email?.trim() || null,
+        phone: p.phone?.trim() || null,
+        status: "active",
+      }).returning({ id: clients.id, name: clients.name });
+
+      await db.insert(activityLogs).values({
+        workspaceId: wsId,
+        actorId: session.user.id,
+        action: "ai.client_created",
+        entityType: "client",
+        entityId: clientId,
+        metadata: { name: p.name.trim() },
+      });
+      return NextResponse.json({ ok: true, result: { client: created } });
+    }
+
+    if (request.kind === "create_project") {
+      const p = request.payload as { name: string; clientId: string; billingModel?: string; budget?: number; dueDate?: string };
+      if (!p?.name?.trim() || !p?.clientId) return NextResponse.json({ error: "Project name and client are required" }, { status: 400 });
+      const { getWorkspaceForCurrentUser } = await import("@/lib/workspace");
+      const wsId = await getWorkspaceForCurrentUser();
+      await assertWorkspaceWritable(db, session.user.id, wsId);
+      const { checkEntityLimit } = await import("@/lib/plan");
+      const projLimit = await checkEntityLimit(wsId, "projects", plan);
+      if (!projLimit.allowed) {
+        return NextResponse.json({ error: projLimit.reason ?? "Project limit reached" }, { status: 400 });
+      }
+      const { projects } = await import("@/db/schema");
+      const projectId = crypto.randomUUID();
+      const [created] = await db.insert(projects).values({
+        id: projectId,
+        workspaceId: wsId,
+        clientId: p.clientId,
+        name: p.name.trim(),
+        status: "active",
+        billingModel: (p.billingModel as "fixed_price" | "hourly" | "retainer") || "fixed_price",
+        billingType: (p.billingModel as "fixed_price" | "hourly" | "retainer") || "fixed_price",
+        budget: p.budget != null ? String(p.budget) : null,
+        dueDate: p.dueDate || null,
+        currency: "IDR",
+        activityRequired: false,
+        clientVisible: true,
+      }).returning({ id: projects.id, name: projects.name });
+
+      await db.insert(activityLogs).values({
+        workspaceId: wsId,
+        actorId: session.user.id,
+        action: "ai.project_created",
+        entityType: "project",
+        entityId: projectId,
+        metadata: { name: p.name.trim(), clientId: p.clientId },
+      });
+      return NextResponse.json({ ok: true, result: { project: created } });
+    }
+
+    if (request.kind === "create_invoice") {
+      const p = request.payload as {
+        clientId: string;
+        projectId?: string;
+        dueDate?: string;
+        currency?: string;
+        items: Array<{ description: string; quantity: number; unitPrice: number }>;
+        total: number;
+      };
+      if (!p?.clientId || !p?.items || p.items.length === 0) {
+        return NextResponse.json({ error: "Client and invoice items are required" }, { status: 400 });
+      }
+      const { getWorkspaceForCurrentUser } = await import("@/lib/workspace");
+      const wsId = await getWorkspaceForCurrentUser();
+      await assertWorkspaceWritable(db, session.user.id, wsId);
+      const { checkEntityLimit } = await import("@/lib/plan");
+      const invLimit = await checkEntityLimit(wsId, "invoices", plan);
+      if (!invLimit.allowed) {
+        return NextResponse.json({ error: invLimit.reason ?? "Invoice limit reached" }, { status: 400 });
+      }
+
+      const { invoices, invoiceItems, workspaceInvoiceCounters } = await import("@/db/schema");
+      const invoiceId = crypto.randomUUID();
+      const [counter] = await db.insert(workspaceInvoiceCounters)
+        .values({ workspaceId: wsId, nextNumber: 2 })
+        .onConflictDoUpdate({
+          target: workspaceInvoiceCounters.workspaceId,
+          set: {
+            nextNumber: sql`${workspaceInvoiceCounters.nextNumber} + 1`,
+            updatedAt: new Date(),
+          },
+        })
+        .returning({ nextNumber: workspaceInvoiceCounters.nextNumber });
+      const allocatedNumber = counter.nextNumber - 1;
+      const invoiceNumber = `INV-${String(allocatedNumber).padStart(4, "0")}`;
+
+      const totalAmount = p.items.reduce((sum, it) => sum + (it.quantity * it.unitPrice), 0);
+      const issueDate = new Date().toISOString().slice(0, 10);
+      const dueDate = p.dueDate || new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+
+      const [created] = await db.insert(invoices).values({
+        id: invoiceId,
+        workspaceId: wsId,
+        clientId: p.clientId,
+        projectId: p.projectId || null,
+        invoiceNumber,
+        issueDate,
+        dueDate,
+        currency: p.currency || "IDR",
+        subtotal: String(totalAmount),
+        discount: "0",
+        tax: "0.00",
+        total: String(totalAmount),
+        status: "draft",
+        notes: "Dibuat via AI Assistant",
+      }).returning({ id: invoices.id, invoiceNumber: invoices.invoiceNumber });
+
+      for (const it of p.items) {
+        await db.insert(invoiceItems).values({
+          invoiceId,
+          description: it.description,
+          quantity: String(it.quantity),
+          unitPrice: String(it.unitPrice),
+          amount: String(it.quantity * it.unitPrice),
+          sourceType: "manual",
+        });
+      }
+
+      await db.insert(activityLogs).values({
+        workspaceId: wsId,
+        actorId: session.user.id,
+        action: "ai.invoice_created",
+        entityType: "invoice",
+        entityId: invoiceId,
+        metadata: { invoiceNumber, total: totalAmount },
+      });
+      return NextResponse.json({ ok: true, result: { invoice: created } });
+    }
+
+    if (request.kind === "start_timer") {
+      const p = request.payload as { taskId?: string; projectId?: string; clientId?: string; description?: string };
+      const { getWorkspaceForCurrentUser } = await import("@/lib/workspace");
+      const wsId = await getWorkspaceForCurrentUser();
+      await assertWorkspaceWritable(db, session.user.id, wsId);
+      const { timeEntries } = await import("@/db/schema");
+
+      // Stop existing running timer if any
+      await db.update(timeEntries)
+        .set({ endTime: new Date(), updatedAt: new Date() })
+        .where(and(eq(timeEntries.workspaceId, wsId), eq(timeEntries.userId, session.user.id), sql`${timeEntries.endTime} IS NULL`));
+
+      const entryId = crypto.randomUUID();
+      const [created] = await db.insert(timeEntries).values({
+        id: entryId,
+        workspaceId: wsId,
+        userId: session.user.id,
+        taskId: p.taskId || null,
+        projectId: p.projectId || null,
+        clientId: p.clientId || null,
+        description: p.description?.trim() || "Waktu kerja via AI Assistant",
+        startTime: new Date(),
+        workDate: new Date().toISOString().slice(0, 10),
+        billable: true,
+        status: "draft",
+      }).returning({ id: timeEntries.id });
+
+      return NextResponse.json({ ok: true, result: { timer: created } });
     }
 
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
