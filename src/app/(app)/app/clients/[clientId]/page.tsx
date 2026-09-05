@@ -278,13 +278,13 @@ export default async function ClientDetailPage({
   return (
     <div className="space-y-6">
       {/* Unified Executive PageHeader with Integrated Breadcrumb */}
-      <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-r from-card via-card to-primary/[0.04] p-4 sm:p-5 shadow-xs transition-all">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3.5 min-w-0">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-xs">
-              <Users className="h-6 w-6" />
+      <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-r from-card via-card to-primary/[0.04] p-3 sm:p-3.5 shadow-xs transition-all">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary shadow-xs">
+              <Users className="h-4 w-4" />
             </div>
-            <div className="min-w-0 space-y-0.5">
+            <div className="min-w-0">
               {/* Breadcrumb row */}
               <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
                 <Link
@@ -294,16 +294,16 @@ export default async function ClientDetailPage({
                   {t("Klien", "Clients")}
                 </Link>
                 <span>/</span>
-                <span className="text-foreground/80 truncate max-w-[200px]">{client.name}</span>
+                <span className="text-foreground/80 truncate max-w-[180px]">{client.name}</span>
               </div>
 
               <div className="flex flex-wrap items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate leading-tight">
+                <h1 className="text-base sm:text-lg font-bold tracking-tight text-foreground truncate leading-tight">
                   {client.name}
                 </h1>
                 <Badge
                   variant="outline"
-                  className={`text-[10px] font-bold h-5 px-2 rounded-full border ${
+                  className={`text-[10px] font-bold h-4.5 px-2 rounded-full border ${
                     client.status === "active"
                       ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
                       : "border-border/80 bg-muted/60 text-muted-foreground"
@@ -322,18 +322,18 @@ export default async function ClientDetailPage({
                         ? t("Arsip", "Archived")
                         : client.status}
                 </Badge>
+                {client.companyName && (
+                  <span className="text-xs font-medium text-muted-foreground truncate before:content-['·'] before:mr-2">
+                    {client.companyName}
+                  </span>
+                )}
               </div>
-              {client.companyName && (
-                <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
-                  {client.companyName}
-                </p>
-              )}
             </div>
           </div>
 
           {/* Action Group */}
-          <div className="flex flex-wrap items-center gap-2 shrink-0 sm:self-center">
-            <Button size="sm" variant="outline" className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs" asChild>
+          <div className="flex flex-wrap items-center gap-1.5 shrink-0 sm:self-center">
+            <Button size="sm" variant="outline" className="h-8 gap-1.5 rounded-lg px-2.5 text-xs font-semibold shadow-xs" asChild>
               <a href={`/api/clients/${client.id}/export/xlsx`} download>
                 <Download className="h-3.5 w-3.5 text-muted-foreground" /> Excel
               </a>
