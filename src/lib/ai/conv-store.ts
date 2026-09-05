@@ -11,6 +11,7 @@ import { aiConversations, aiMessages } from "@/db/schema";
 export interface ConvSummary {
   id: string;
   title: string;
+  isPinned: boolean;
   updatedAt: string;
   messageCount: number;
 }
@@ -63,6 +64,7 @@ export async function listConversations(
     .select({
       id: aiConversations.id,
       title: aiConversations.title,
+      isPinned: aiConversations.isPinned,
       updatedAt: aiConversations.updatedAt,
       messageCount: sql<number>`count(${aiMessages.id})::int`,
     })
@@ -75,11 +77,12 @@ export async function listConversations(
       ),
     )
     .groupBy(aiConversations.id)
-    .orderBy(desc(aiConversations.updatedAt))
+    .orderBy(desc(aiConversations.isPinned), desc(aiConversations.updatedAt))
     .limit(limit);
-  return rows.map((r: { id: string; title: string; updatedAt: Date; messageCount: number }) => ({
+  return rows.map((r: { id: string; title: string; isPinned: boolean; updatedAt: Date; messageCount: number }) => ({
     id: r.id,
     title: r.title,
+    isPinned: r.isPinned ?? false,
     updatedAt: r.updatedAt.toISOString(),
     messageCount: r.messageCount,
   }));

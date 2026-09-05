@@ -1701,6 +1701,7 @@ export const aiConversations = pgTable("ai_conversations", {
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull().default("New chat"),
+  isPinned: boolean("is_pinned").notNull().default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });

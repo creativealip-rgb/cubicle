@@ -28,6 +28,9 @@ import {
   TrendingUp,
   FileQuestion,
   Crown,
+  Pin,
+  PinOff,
+  Pencil,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -74,6 +77,7 @@ type Message = {
 type Conv = {
   id: string;
   title: string;
+  isPinned?: boolean;
   updatedAt: string;
   messageCount: number;
 };
@@ -337,6 +341,52 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
     setConversationId(null);
     setMessages([]);
     setShowHistoryBelow(true);
+  }
+
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
+
+  async function updateConversationTitle(id: string, newTitle: string) {
+    const trimmed = newTitle.trim();
+    if (!trimmed) {
+      setEditingChatId(null);
+      return;
+    }
+    try {
+      await fetch(`/api/ai/conversations?id=${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ title: trimmed }),
+      });
+      setConversations((prev) =>
+        prev.map((c) => (c.id === id ? { ...c, title: trimmed } : c))
+      );
+    } catch {
+      /* ignore */
+    } finally {
+      setEditingChatId(null);
+    }
+  }
+
+  async function togglePinConversation(id: string, currentPinned: boolean) {
+    try {
+      await fetch(`/api/ai/conversations?id=${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isPinned: !currentPinned }),
+      });
+      setConversations((prev) => {
+        const next = prev.map((c) =>
+          c.id === id ? { ...c, isPinned: !currentPinned } : c
+        );
+        return [...next].sort((a, b) => {
+          if (a.isPinned !== b.isPinned) return a.isPinned ? -1 : 1;
+          return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime();
+        });
+      });
+    } catch {
+      /* ignore */
+    }
   }
 
   async function deleteConversation(id: string) {
@@ -716,31 +766,78 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                     <div
                       key={c.id}
                       className={cn(
-                        "group flex items-center justify-between rounded-xl px-2.5 py-2 text-xs transition-all",
+                        "group flex items-center justify-between rounded-xl px-2.5 py-2 text-xs transition-all gap-1",
                         c.id === conversationId
                           ? "bg-primary/10 text-primary font-bold border border-primary/20"
                           : "text-foreground hover:bg-muted/60"
                       )}
                     >
-                      <button
-                        onClick={() => loadConversation(c.id)}
-                        className="flex min-w-0 flex-1 flex-col items-start text-left truncate"
-                      >
-                        <span className="w-full truncate font-medium">{c.title}</span>
-                        <span className="text-[10px] text-muted-foreground font-normal">
-                          {formatRelativeTime(c.updatedAt)}
-                        </span>
-                      </button>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteConversation(c.id);
-                        }}
-                        className="opacity-0 group-hover:opacity-100 p-1 text-muted-foreground hover:text-destructive transition-opacity"
-                        title={lang === "id" ? "Hapus chat" : "Delete chat"}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      {editingChatId === c.id ? (
+                        <input
+                          type="text"
+                          value={editingTitle}
+                          onChange={(e) => setEditingTitle(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") updateConversationTitle(c.id, editingTitle);
+                            if (e.key === "Escape") setEditingChatId(null);
+                          }}
+                          onBlur={() => updateConversationTitle(c.id, editingTitle)}
+                          autoFocus
+                          className="flex-1 min-w-0 bg-background border border-primary px-1.5 py-0.5 rounded text-xs font-normal text-foreground focus:outline-hidden"
+                        />
+                      ) : (
+                        <button
+                          onClick={() => loadConversation(c.id)}
+                          className="flex min-w-0 flex-1 flex-col items-start text-left truncate"
+                        >
+                          <div className="flex items-center gap-1.5 w-full">
+                            {c.isPinned && (
+                              <Pin className="h-3 w-3 shrink-0 text-primary fill-primary" />
+                            )}
+                            <span className="w-full truncate font-medium">{c.title}</span>
+                          </div>
+                          <span className="text-[10px] text-muted-foreground font-normal">
+                            {formatRelativeTime(c.updatedAt)}
+                          </span>
+                        </button>
+                      )}
+
+                      <div className="flex items-center shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            togglePinConversation(c.id, Boolean(c.isPinned));
+                          }}
+                          className={cn(
+                            "p-1 rounded hover:bg-muted text-muted-foreground transition-colors",
+                            c.isPinned ? "text-primary opacity-100" : "hover:text-primary"
+                          )}
+                          title={c.isPinned ? (lang === "id" ? "Lepas pin" : "Unpin") : (lang === "id" ? "Sematkan chat" : "Pin chat")}
+                        >
+                          {c.isPinned ? <PinOff className="h-3.5 w-3.5" /> : <Pin className="h-3.5 w-3.5" />}
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingChatId(c.id);
+                            setEditingTitle(c.title);
+                          }}
+                          className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+                          title={lang === "id" ? "Ubah nama" : "Rename"}
+                        >
+                          <Pencil className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            deleteConversation(c.id);
+                          }}
+                          className="p-1 rounded hover:bg-muted text-muted-foreground hover:text-destructive transition-colors"
+                          title={lang === "id" ? "Hapus chat" : "Delete chat"}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
                     </div>
                   ))
                 )}
