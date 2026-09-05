@@ -23,10 +23,11 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ClientTabsNav } from "@/components/clients/client-tabs-nav";
 import Link from "next/link";
 import {
-  Globe,
   ArrowLeft,
   Download,
   Wallet,
+  FolderKanban,
+  FileSpreadsheet,
 } from "lucide-react";
 import { PortalTokenSection } from "./portal-section";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
@@ -314,8 +315,16 @@ export default async function ClientDetailPage({
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
                   <h1 className="app-page-title leading-tight">{client.name}</h1>
-                  <Badge variant={client.status === "active" ? "default" : "secondary"}>
-                    {client.status === "active" ? "Aktif" : client.status === "inactive" ? "Tidak aktif" : client.status === "archived" ? "Arsip" : client.status}
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-bold h-5 px-2 rounded-full border ${
+                      client.status === "active"
+                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                        : "border-border/80 bg-muted/60 text-muted-foreground"
+                    }`}
+                  >
+                    <span className={`mr-1 h-1.5 w-1.5 rounded-full ${client.status === "active" ? "bg-emerald-500" : "bg-muted-foreground"}`} />
+                    {client.status === "active" ? t("Aktif", "Active") : client.status === "inactive" ? t("Tidak aktif", "Inactive") : client.status === "archived" ? t("Arsip", "Archived") : client.status}
                   </Badge>
                 </div>
                 {client.companyName && (
@@ -338,24 +347,26 @@ export default async function ClientDetailPage({
               </div>
 
               <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="text-[11px] text-muted-foreground"> {t("Proyek Aktif","Active Projects")}</p>
-                  <p className="mt-1 text-xl font-bold">{activeProjects}</p>
+                <div className="rounded-xl border border-border/80 bg-muted/20 p-3">
+                  <p className="text-[11px] font-medium text-muted-foreground">{t("Proyek Aktif", "Active Projects")}</p>
+                  <p className="mt-1 text-xl font-bold text-foreground">{activeProjects}</p>
                 </div>
-                <div className="rounded-lg border bg-muted/30 p-3">
-                  <p className="text-[11px] text-muted-foreground">{t("Invoice Belum Lunas", "Unpaid Invoices")}</p>
-                  <p className="mt-1 text-xl font-bold">
+                <div className="rounded-xl border border-border/80 bg-muted/20 p-3">
+                  <p className="text-[11px] font-medium text-muted-foreground">{t("Invoice Belum Lunas", "Unpaid Invoices")}</p>
+                  <p className="mt-1 text-xl font-bold text-foreground">
                     {clientInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled").length}
                   </p>
                 </div>
-                <div className="rounded-lg border bg-muted/30 p-3">
+                <div className="rounded-xl border border-border/80 bg-muted/20 p-3">
                   <p className="text-[11px] text-muted-foreground">Portal</p>
                   {portalActive ? (
-                    <p className="mt-1 flex items-center gap-1 text-sm font-semibold text-green-600">
-                      <Globe className="h-4 w-4" /> {t("Aktif","Active")}
+                    <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> {t("Aktif", "Active")}
                     </p>
                   ) : (
-                    <p className="mt-1 text-sm font-semibold text-muted-foreground"> {t("Nonaktif","Inactive")}</p>
+                    <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
+                      <span className="h-2 w-2 rounded-full bg-muted-foreground/40" /> {t("Nonaktif", "Inactive")}
+                    </p>
                   )}
                 </div>
               </div>
@@ -479,45 +490,61 @@ export default async function ClientDetailPage({
                         : "Fixed Price";
 
               return (
-                <Card key={project.id}>
-                  <CardContent className="flex items-center justify-between gap-3 p-4">
-                    <div className="min-w-0 space-y-1">
-                      <Link
-                        href={`/app/projects/${project.id}?from=client`}
-                        className="font-medium hover:underline"
-                      >
-                        {project.name}
-                      </Link>
-                      <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                        <Badge variant="outline" className="text-[10px]">
-                          {projectStatusLabels[project.status] ?? project.status}
-                        </Badge>
-                        <Badge variant="secondary" className="gap-1 text-[10px] font-normal">
-                          <Wallet className="h-3 w-3" />
-                          {billingTypeLabel(billingDisplayType, lang)}
-                        </Badge>
-                        <span>{progressLabel}</span>
-                        {project.dueDate && (
-                          <span>
-                            {t("Tenggat", "Due")}: {project.dueDate}
-                          </span>
-                        )}
+                <Card
+                  key={project.id}
+                  className="overflow-hidden rounded-2xl border border-border/80 transition-all duration-200 hover:border-primary/40 hover:shadow-sm"
+                >
+                  <CardContent className="flex flex-col gap-3 p-3.5 sm:p-4 sm:flex-row sm:items-center sm:justify-between">
+                    <div className="flex items-start gap-3 min-w-0 flex-1">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+                        <FolderKanban className="h-4 w-4" />
                       </div>
-                      <p className="text-[11px] text-muted-foreground">{billingMeta}</p>
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <Link
+                          href={`/app/projects/${project.id}?from=client`}
+                          className="font-bold text-sm text-foreground hover:text-primary hover:underline truncate block"
+                        >
+                          {project.name}
+                        </Link>
+                        <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                          <Badge
+                            variant="outline"
+                            className={`text-[10px] font-bold h-5 px-2 rounded-full border ${
+                              project.status === "active"
+                                ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400"
+                                : "border-border/80 bg-muted/60 text-muted-foreground"
+                            }`}
+                          >
+                            <span className={`mr-1 h-1.5 w-1.5 rounded-full ${project.status === "active" ? "bg-blue-600" : "bg-muted-foreground"}`} />
+                            {projectStatusLabels[project.status] ?? project.status}
+                          </Badge>
+                          <Badge variant="secondary" className="gap-1 text-[10px] font-semibold h-5 px-2 rounded-full border border-border/80 bg-muted/60 text-muted-foreground">
+                            <Wallet className="h-3 w-3 text-muted-foreground" />
+                            {billingTypeLabel(billingDisplayType, lang)}
+                          </Badge>
+                          <span className="text-[11px]">{progressLabel}</span>
+                          {project.dueDate && (
+                            <span className="text-[11px]">
+                              · {t("Tenggat", "Due")}: {project.dueDate}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">{billingMeta}</p>
+                      </div>
                     </div>
                     {progressPercent != null && (
-                      <div className="flex shrink-0 flex-col items-end gap-1">
-                        <span className="text-[10px] tabular-nums text-muted-foreground">
+                      <div className="flex shrink-0 flex-col items-end gap-1 sm:self-center">
+                        <span className="text-[10px] font-mono font-bold text-muted-foreground">
                           {progressPercent}%
                         </span>
-                        <div className="h-2 w-24 overflow-hidden rounded-full bg-muted">
+                        <div className="h-1.5 w-24 overflow-hidden rounded-full bg-muted">
                           <div
-                            className={`h-full rounded-full ${
+                            className={`h-full rounded-full transition-all ${
                               progressPercent >= 100
-                                ? "bg-amber-500"
+                                ? "bg-emerald-500"
                                 : progressPercent >= 80
-                                  ? "bg-orange-500"
-                                  : "bg-emerald-500"
+                                  ? "bg-amber-500"
+                                  : "bg-primary"
                             }`}
                             style={{ width: `${progressPercent}%` }}
                           />
@@ -568,32 +595,51 @@ export default async function ClientDetailPage({
               </p>
             )}
             {clientInvoices.map((inv) => (
-              <Card key={inv.id}>
+              <Card
+                key={inv.id}
+                className="overflow-hidden rounded-2xl border border-border/80 transition-all duration-200 hover:border-primary/40 hover:shadow-sm"
+              >
                 <CardContent className="p-0">
                   <Link
                     href={buildInvoiceDetailUrl(inv.id, { type: "client", resourceId: clientId })}
-                    className="flex items-center justify-between p-4 transition-colors hover:bg-muted/50"
+                    className="flex items-center justify-between p-3.5 sm:p-4 transition-colors hover:bg-muted/20"
                   >
-                    <div>
-                      <p className="text-sm font-medium hover:underline">{inv.invoiceNumber}</p>
-                      <p className="text-xs text-muted-foreground">
-                        {inv.issueDate} · {t("Tenggat", "Due")}: {inv.dueDate ?? "—"}
-                      </p>
+                    <div className="flex items-center gap-3 min-w-0 flex-1">
+                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+                        <FileSpreadsheet className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0 flex-1 space-y-0.5">
+                        <p className="text-sm font-bold text-foreground hover:text-primary truncate">
+                          {inv.invoiceNumber}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {inv.issueDate} · {t("Tenggat", "Due")}: {inv.dueDate ?? "—"}
+                        </p>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-3 shrink-0">
                       <Badge
-                        variant={
+                        variant="outline"
+                        className={`text-[10px] font-bold h-5 px-2 rounded-full border ${
                           inv.status === "overdue"
-                            ? "destructive"
+                            ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400"
                             : inv.status === "paid"
-                              ? "default"
-                              : "secondary"
-                        }
-                        className="text-[10px]"
+                              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                              : "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400"
+                        }`}
                       >
+                        <span
+                          className={`mr-1 h-1.5 w-1.5 rounded-full ${
+                            inv.status === "overdue"
+                              ? "bg-rose-600"
+                              : inv.status === "paid"
+                                ? "bg-emerald-600"
+                                : "bg-blue-600"
+                          }`}
+                        />
                         {invoiceStatusLabel[inv.status] ?? inv.status}
                       </Badge>
-                      <span className="text-sm font-semibold">
+                      <span className="font-mono text-sm font-bold text-foreground">
                         {formatMoney(inv.total, inv.currency)}
                       </span>
                     </div>
