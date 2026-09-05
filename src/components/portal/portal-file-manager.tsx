@@ -250,19 +250,24 @@ export function PortalFileManager({
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-        <div>
-          <h2 className="text-xl font-semibold">{t("File", "Files")}</h2>
-          <p className="text-sm text-muted-foreground">
-            {t(
-              "Kelola file yang dibagikan. Total",
-              "Manage shared files. Total",
-            )}{" "}
-            {totalFiles} file.
-          </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+            <FolderOpen className="h-3.5 w-3.5" />
+          </div>
+          <div>
+            <h2 className="text-base sm:text-lg font-bold text-foreground leading-tight">{t("File & Dokumen", "Files & Documents")}</h2>
+            <p className="text-xs text-muted-foreground">
+              {t(
+                "Kelola dan unduh file proyek yang dibagikan. Total",
+                "Manage and download shared project files. Total",
+              )}{" "}
+              {totalFiles} file.
+            </p>
+          </div>
         </div>
         {canUpload && (
-          <div className="flex flex-col items-stretch gap-1 sm:items-end">
+          <div className="flex items-center gap-2">
             <input
               ref={inputRef}
               type="file"
@@ -277,36 +282,29 @@ export function PortalFileManager({
               size="sm"
               disabled={uploading}
               onClick={() => inputRef.current?.click()}
-              className="min-h-11 gap-1.5"
+              className="h-8.5 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs"
             >
               {uploading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
               ) : (
-                <Upload className="h-4 w-4" />
+                <Upload className="h-3.5 w-3.5" />
               )}
               {uploading
                 ? t("Mengunggah…", "Uploading…")
                 : t("Unggah file", "Upload file")}
             </Button>
-            <p className="text-[11px] text-muted-foreground">
-              {t("Unggah ke", "Upload to")}:{" "}
-              {folderChain.at(-1)?.name ||
-                activeProject?.name ||
-                t("Folder utama", "Root folder")}{" "}
-              · {t("Maks.", "Max.")} 25MB
-            </p>
           </div>
         )}
       </div>
 
-      {/* Breadcrumb */}
-      <nav className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+      {/* Breadcrumb Navigation Pill */}
+      <nav className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border/80 bg-muted/20 px-3 py-1.5 text-xs text-muted-foreground">
         <button
           type="button"
           onClick={() => navigate({ projectId: null, folderId: null })}
           className={cn(
-            "inline-flex min-h-11 items-center gap-1 rounded-md px-2 py-1 hover:bg-muted hover:text-foreground",
-            !projectId && !folderId && "font-medium text-foreground",
+            "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-medium transition-colors hover:bg-muted hover:text-foreground",
+            !projectId && !folderId && "bg-background text-foreground shadow-2xs font-semibold",
           )}
         >
           <Home className="h-3.5 w-3.5" />
@@ -314,15 +312,15 @@ export function PortalFileManager({
         </button>
         {activeProject && (
           <>
-            <ChevronRight className="h-3.5 w-3.5 opacity-50" />
+            <ChevronRight className="h-3 w-3 opacity-40" />
             <button
               type="button"
               onClick={() =>
                 navigate({ projectId: activeProject.id, folderId: null })
               }
               className={cn(
-                "min-h-11 rounded-md px-2 py-1 hover:bg-muted hover:text-foreground",
-                !folderId && "font-medium text-foreground",
+                "rounded-lg px-2 py-1 font-medium transition-colors hover:bg-muted hover:text-foreground",
+                !folderId && "bg-background text-foreground shadow-2xs font-semibold",
               )}
             >
               {activeProject.name}
@@ -330,8 +328,8 @@ export function PortalFileManager({
           </>
         )}
         {folderChain.map((node, idx) => (
-          <span key={node.id} className="inline-flex items-center gap-1">
-            <ChevronRight className="h-3.5 w-3.5 opacity-50" />
+          <span key={node.id} className="inline-flex items-center gap-1.5">
+            <ChevronRight className="h-3 w-3 opacity-40" />
             <button
               type="button"
               onClick={() =>
@@ -341,8 +339,8 @@ export function PortalFileManager({
                 })
               }
               className={cn(
-                "min-h-11 rounded-md px-2 py-1 hover:bg-muted hover:text-foreground",
-                idx === folderChain.length - 1 && "font-medium text-foreground",
+                "rounded-lg px-2 py-1 font-medium transition-colors hover:bg-muted hover:text-foreground",
+                idx === folderChain.length - 1 && "bg-background text-foreground shadow-2xs font-semibold",
               )}
             >
               {node.name}
@@ -419,20 +417,21 @@ export function PortalFileManager({
                   onClick={() =>
                     navigate({ projectId: project.id, folderId: null })
                   }
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+                  className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-muted/40 group"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-50 text-blue-600 dark:bg-blue-950/40">
-                    <Folder className="h-5 w-5 fill-blue-100 dark:fill-blue-900" />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+                    <Folder className="h-4.5 w-4.5 fill-primary/20 text-primary" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="break-words text-sm font-medium">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="truncate text-sm font-bold text-foreground group-hover:text-primary transition-colors">
                         {project.name}
-                      </p>
+                      </span>
                       <Badge
-                        variant="secondary"
-                        className="text-[10px] capitalize"
+                        variant="outline"
+                        className="text-[10px] font-bold h-5 px-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400 capitalize"
                       >
+                        <span className="mr-1 h-1.5 w-1.5 rounded-full bg-blue-600" />
                         {project.status === "active"
                           ? portalStatusLabel("active", lang)
                           : project.status === "completed"
@@ -440,11 +439,11 @@ export function PortalFileManager({
                             : project.status}
                       </Badge>
                     </div>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mt-0.5">
                       {folderCount} folder · {fileCount} file
                     </p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                 </button>
               ))}
 
@@ -455,18 +454,18 @@ export function PortalFileManager({
                   onClick={() =>
                     navigate({ projectId: null, folderId: folder.id })
                   }
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+                  className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-muted/40 group"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40">
-                    <Folder className="h-5 w-5 fill-amber-100 dark:fill-amber-900" />
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                    <Folder className="h-4.5 w-4.5 fill-amber-500/20" />
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="break-words text-sm font-medium">
+                    <p className="truncate text-sm font-bold text-foreground group-hover:text-amber-600 transition-colors">
                       {folder.name}
                     </p>
-                    <p className="text-xs text-muted-foreground">{t("Folder", "Folder")}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{t("Folder", "Folder")}</p>
                   </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
                 </button>
               ))}
 
