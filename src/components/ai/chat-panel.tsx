@@ -629,46 +629,45 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
             ) : (
               <>{/* Header */}
                   {isFullpage ? (
-                    <div className="flex items-center justify-between gap-2 border-b border-slate-200 bg-white px-6 py-3">
+                    <div className="flex items-center justify-between gap-2 border-b border-border/80 bg-card/80 backdrop-blur-md px-6 py-3.5 shadow-2xs">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-[var(--cu-purple)] to-[var(--cu-purple-hover)] text-white">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 shadow-xs">
                           <Sparkles className="h-4 w-4" />
                         </div>
                         <div>
-                          <p className="text-sm font-semibold text-slate-900">{assistantText.title}</p>
-                          <p className="text-[11px] text-slate-400">{assistantText.subtitle}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-sm font-bold text-foreground">{assistantText.title}</p>
+                            <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-500/10 px-1.5 py-0.5 rounded-full">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                              Ready
+                            </span>
+                          </div>
+                          <p className="text-xs text-muted-foreground">{assistantText.subtitle}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <button
+                      <div className="flex items-center gap-1.5">
+                        <Button
+                          variant="outline"
+                          size="sm"
                           onClick={startNewChat}
-                          className="rounded-lg px-3 py-1.5 text-xs font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                          className="h-8 rounded-xl px-3 text-xs font-semibold gap-1.5 shadow-xs"
                           aria-label="New chat"
                           title="New chat"
                         >
-                          <span className="flex items-center gap-1.5">
-                            <MessageSquarePlus className="h-3.5 w-3.5" />
-                            New chat
-                          </span>
-                        </button>
-                        {messages.length > 0 && (
-                          <button
-                            onClick={() => isFullpage ? setHistoryOpen(true) : setShowHistoryBelow((v) => !v)}
-                            className={cn(
-                              "rounded-lg px-3 py-1.5 text-xs font-medium transition",
-                              showHistoryBelow
-                                ? "bg-purple-50 text-[var(--cu-purple)]"
-                                : "text-slate-500 hover:bg-slate-100 hover:text-slate-900",
-                            )}
-                            aria-label="Toggle history"
-                            title="History"
-                          >
-                            <span className="flex items-center gap-1.5">
-                              <History className="h-3.5 w-3.5" />
-                              History
-                            </span>
-                          </button>
-                        )}
+                          <MessageSquarePlus className="h-3.5 w-3.5 text-muted-foreground" />
+                          {lang === "id" ? "Obrolan Baru" : "New Chat"}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setHistoryOpen(true)}
+                          className="h-8 rounded-xl px-3 text-xs font-semibold gap-1.5 text-muted-foreground hover:text-foreground"
+                          aria-label="Toggle history"
+                          title="History"
+                        >
+                          <History className="h-3.5 w-3.5" />
+                          {lang === "id" ? "Riwayat" : "History"}
+                        </Button>
                       </div>
                     </div>
                   ) : (
@@ -721,7 +720,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                   className={cn(
                     "flex-1 space-y-4 overflow-y-auto",
                     isFullpage
-                      ? "bg-white px-6 py-6"
+                      ? "bg-transparent px-4 sm:px-6 py-6"
                       : "space-y-3 bg-slate-50 px-3 py-4",
                   )}
                 >
@@ -755,26 +754,26 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                     >
                       <div
                         className={cn(
-                          "rounded-2xl px-4 py-3 text-sm shadow-sm",
-                          isFullpage ? "max-w-[75%]" : "max-w-[85%]",
+                          "rounded-2xl px-4 py-3 text-sm shadow-xs transition-all leading-relaxed",
+                          isFullpage ? "max-w-[85%] md:max-w-[75%]" : "max-w-[85%]",
                           m.role === "user"
-                            ? "bg-[var(--cu-purple)] text-white"
+                            ? "bg-primary text-primary-foreground font-medium rounded-tr-xs"
                             : isFullpage
-                              ? "bg-slate-50 text-slate-900 ring-1 ring-slate-100"
+                              ? "bg-card text-foreground border border-border/80 rounded-tl-xs shadow-xs"
                               : "bg-white text-slate-900 ring-1 ring-slate-200",
-                          m.error && "bg-red-50 ring-red-200 text-red-900",
+                          m.error && "bg-destructive/10 border-destructive/30 text-destructive",
                         )}
                       >
                         {m.pending ? (
-                          <div className="flex flex-col gap-1.5 text-slate-500">
+                          <div className="flex flex-col gap-1.5 text-muted-foreground">
                             <div className="flex items-center gap-2">
-                              <Loader2 className="h-3 w-3 animate-spin" />
+                              <Loader2 className="h-3 w-3 animate-spin text-primary" />
                               <span aria-live="polite">{isFullpage ? humanizeToolStatus(m.status, lang) : (m.status || "Thinking…")}</span>
                             </div>
                             {m.content && (
-                              <div className="text-slate-900">
+                              <div className="text-foreground">
                                 {m.content}
-                                <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-slate-400 align-middle" />
+                                <span className="ml-0.5 inline-block h-3 w-1.5 animate-pulse bg-primary align-middle" />
                               </div>
                             )}
                             {m.toolEvents && m.toolEvents.length > 0 && (
@@ -782,9 +781,9 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                                 {m.toolEvents.map((te, j) => (
                                   <span
                                     key={j}
-                                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200"
+                                    className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground border border-border/60"
                                   >
-                                    <Sparkles className="h-2.5 w-2.5" />
+                                    <Sparkles className="h-2.5 w-2.5 text-primary" />
                                     {isFullpage ? humanizeToolStatus(te.name, lang) : te.name}
                                   </span>
                                 ))}
@@ -814,22 +813,22 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                                 {m.toolEvents.map((te, j) => (
                                   <span
                                     key={j}
-                                    className="inline-flex items-center gap-1 rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600 ring-1 ring-slate-200"
+                                    className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground border border-border/60"
                                   >
-                                    <Sparkles className="h-2.5 w-2.5" />
+                                    <Sparkles className="h-2.5 w-2.5 text-primary" />
                                     {isFullpage ? humanizeToolStatus(te.name, lang) : te.name}
                                   </span>
                                 ))}
                               </div>
                             )}
                             {m.content && (
-                              <div className="prose prose-sm max-w-none break-words prose-headings:my-2 prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5">
+                              <div className="prose prose-sm max-w-none break-words dark:prose-invert prose-headings:my-2 prose-headings:font-bold prose-headings:text-foreground prose-p:my-2 prose-p:text-foreground prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5">
                                 <ReactMarkdown>{normalizeAssistantMarkdown(m.content)}</ReactMarkdown>
                               </div>
                             )}
                             {!m.content && m.confirmation && (
-                              <p className="text-xs text-slate-600">
-                                I have a proposal — please confirm below.
+                              <p className="text-xs text-muted-foreground">
+                                {lang === "id" ? "Saya memiliki usulan tindakan — silakan konfirmasi di bawah:" : "I have a proposal — please confirm below."}
                               </p>
                             )}
                           </>
@@ -852,20 +851,20 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                           )
                         )}
                         {m.confirmation && m.confirmationStatus === "done" && (
-                          <div className="mt-2 flex items-center gap-1 text-xs text-green-700">
+                          <div className="mt-2 flex items-center gap-1 text-xs text-emerald-600 font-semibold">
                             <Check className="h-3 w-3" />
                             <span>Done</span>
                           </div>
                         )}
                         {m.confirmation && m.confirmationStatus === "failed" && (
-                          <div className="mt-2 flex items-center gap-1 text-xs text-red-700">
+                          <div className="mt-2 flex items-center gap-1 text-xs text-destructive font-semibold">
                             <XCircle className="h-3 w-3" />
                             <span>Action failed</span>
                           </div>
                         )}
 
                         {m.meta && !m.error && !m.pending && !m.confirmation && (
-                          <div className="mt-1 text-[10px] text-slate-400">
+                          <div className="mt-1 text-[10px] text-muted-foreground/60">
                             {m.meta}
                           </div>
                         )}
@@ -874,14 +873,14 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                   ))}
                 </div>
 
-                {/* Input — always visible above history */}
-                <div className={cn("border-t", isFullpage ? "sticky bottom-0 z-20 border-slate-200 bg-white px-6 py-4 shadow-[0_-12px_24px_rgba(15,23,42,0.06)]" : "bg-white p-2")}>
+                {/* Input — Sticky GPT-like Bottom Bar */}
+                <div className={cn("border-t border-border/80 bg-card/90 backdrop-blur-md", isFullpage ? "sticky bottom-0 z-20 px-4 sm:px-6 py-3.5 shadow-lg" : "bg-white p-2")}>
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
                       send(input);
                     }}
-                    className={cn("flex items-end gap-2", isFullpage && "max-w-4xl")}
+                    className={cn("flex items-end gap-2", isFullpage && "max-w-4xl mx-auto")}
                   >
                     <textarea
                       ref={inputRef}
@@ -892,11 +891,10 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       rows={1}
                       disabled={busy}
                       className={cn(
-                        "flex-1 resize-none border px-3 py-2.5 text-sm",
-                        "focus:outline-none focus:ring-1",
-                        "max-h-24 disabled:opacity-50",
+                        "flex-1 resize-none border px-3.5 py-2.5 text-sm outline-none transition-all",
+                        "max-h-32 min-h-11 disabled:opacity-50",
                         isFullpage
-                          ? "rounded-xl border-slate-200 bg-white focus:border-[var(--cu-purple)] focus:ring-[var(--cu-purple)]"
+                          ? "rounded-xl border-border/80 bg-background text-foreground shadow-2xs focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/60"
                           : "rounded-lg border-slate-200 bg-slate-50 focus:border-[var(--cu-purple)] focus:ring-[var(--cu-purple)]",
                       )}
                     />
@@ -907,8 +905,8 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       onClick={toggleVoice}
                       disabled={!voiceSupported}
                       className={cn(
-                        "h-9 w-9 shrink-0",
-                        listening && "bg-red-50 text-red-600 hover:bg-red-100",
+                        "h-11 w-11 shrink-0 rounded-xl",
+                        listening && "bg-destructive/10 text-destructive hover:bg-destructive/20",
                       )}
                       aria-label={listening ? "Stop listening" : "Voice input"}
                       title={
@@ -920,9 +918,9 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       }
                     >
                       {listening ? (
-                        <MicOff className="h-4 w-4 animate-pulse" />
+                        <MicOff className="h-4 w-4 animate-pulse text-destructive" />
                       ) : (
-                        <Mic className="h-4 w-4" />
+                        <Mic className="h-4 w-4 text-muted-foreground" />
                       )}
                     </Button>
                     <Button
@@ -931,11 +929,10 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       disabled={!busy && !input.trim()}
                       onClick={busy ? stopStream : undefined}
                       className={cn(
-                        "h-10 w-10 shrink-0",
-                        isFullpage && "rounded-xl",
+                        "h-11 w-11 shrink-0 rounded-xl font-semibold shadow-xs",
                         busy
-                          ? "bg-red-500 hover:bg-red-600"
-                          : "bg-[var(--cu-purple)] hover:bg-[var(--cu-purple-hover)] text-white",
+                          ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          : "bg-primary text-primary-foreground hover:bg-primary/90",
                       )}
                       aria-label={busy ? "Stop" : "Send"}
                       title={busy ? "Stop" : "Send"}
@@ -947,8 +944,8 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       )}
                     </Button>
                   </form>
-                  <div className="flex items-center justify-between px-1 pt-1 text-[10px] text-slate-400">
-                    <span>{isFullpage ? assistantText.hint : "Press Enter to send · Shift+Enter for newline"}</span>
+                  <div className="flex items-center justify-between px-1 pt-1.5 text-[11px] text-muted-foreground">
+                    <span>{isFullpage ? (lang === "id" ? "Tekan Enter untuk kirim · Shift+Enter untuk baris baru" : assistantText.hint) : "Press Enter to send · Shift+Enter for newline"}</span>
                     {!isFullpage && lastUsage && (
                       <span title={`prompt: ${lastUsage.prompt_tokens} · completion: ${lastUsage.completion_tokens}`}>
                         {lastUsage.total_tokens.toLocaleString()} tokens
