@@ -817,14 +817,17 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                           "rounded-2xl px-4 py-3 text-sm shadow-xs transition-all leading-relaxed",
                           isFullpage ? "max-w-[85%] md:max-w-[75%]" : "max-w-[85%]",
                           m.role === "user"
-                            ? "bg-[#6647F0] text-white font-medium rounded-tr-xs"
+                            ? "!bg-[#6647F0] !text-white font-semibold rounded-tr-xs shadow-md"
                             : isFullpage
                               ? "bg-card text-foreground border border-border/80 rounded-tl-xs shadow-xs"
                               : "bg-white text-slate-900 ring-1 ring-slate-200",
                           m.error && "bg-amber-50 border-amber-200 text-amber-950 font-medium",
                         )}
+                        style={m.role === "user" ? { backgroundColor: "#6647F0", color: "#ffffff" } : undefined}
                       >
-                        {m.pending ? (
+                        {m.role === "user" ? (
+                          <div className="text-white font-medium whitespace-pre-wrap">{m.content}</div>
+                        ) : m.pending ? (
                           <div className="flex flex-col gap-1.5 text-muted-foreground">
                             <div className="flex items-center gap-2">
                               <Loader2 className="h-3 w-3 animate-spin text-primary" />
