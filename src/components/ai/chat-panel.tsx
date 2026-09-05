@@ -362,11 +362,26 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
           role: Role;
           content: string;
           toolName: string | null;
-        }) => ({
-          role: m.role === "tool" ? "assistant" : m.role,
-          content: m.content,
-          meta: m.toolName ?? undefined,
-        }),
+        }) => {
+          let confirmation: Confirmation | undefined;
+          if (m.role === "tool" && m.content) {
+            try {
+              const parsed = JSON.parse(m.content);
+              if (parsed?.confirmation) {
+                confirmation = parsed.confirmation;
+              }
+            } catch {
+              // ignore
+            }
+          }
+          return {
+            role: m.role === "tool" ? "assistant" : m.role,
+            content: m.role === "tool" && confirmation ? "" : m.content,
+            confirmation,
+            confirmationStatus: confirmation ? "done" : undefined,
+            meta: m.toolName ?? undefined,
+          };
+        },
       );
       setMessages(loaded);
     } catch {
@@ -1121,7 +1136,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                           </>
                         )}
 
-                        {m.confirmation && m.confirmationStatus === "pending" && (
+                        {m.confirmation && (m.confirmationStatus === "pending" || !m.confirmationStatus) && (
                           <AssistantConfirmationCard
                             conf={m.confirmation}
                             lang={lang}
