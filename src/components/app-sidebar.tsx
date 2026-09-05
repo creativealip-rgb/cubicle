@@ -48,23 +48,31 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts, workspaceRole }: 
   useEffect(() => { setMobileOpen(false); }, [pathname, setMobileOpen]);
 
   return <aside className={cn(
-    "fixed inset-y-0 left-0 z-50 flex w-[min(280px,85vw)] -translate-x-full flex-col border-r border-slate-200/80 bg-sidebar-background transition-all duration-200 lg:translate-x-0",
+    "fixed inset-y-0 left-0 z-50 flex w-[min(280px,85vw)] -translate-x-full flex-col border-r border-border/80 bg-sidebar-background transition-all duration-200 lg:translate-x-0",
     collapsed ? "lg:w-[68px]" : "lg:w-[260px]",
     mobileOpen && "translate-x-0",
   )}>
-    <div className={cn("flex h-14 items-center border-b border-sidebar-border px-3", collapsed ? "lg:justify-center" : "justify-between")}>
-      {!collapsed && <Link href="/app/dashboard" className="flex min-w-0 items-center gap-2 font-semibold text-sidebar-foreground"><Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-8 w-auto object-contain sm:h-9" /></Link>}
-      {collapsed && <Link href="/app/dashboard" className="hidden lg:flex"><Image src="/logo-icon.png" alt="Cubiqlo" width={36} height={36} className="h-9 w-9 rounded-md object-cover" /></Link>}
+    <div className={cn("flex h-14 items-center border-b border-border/80 px-3", collapsed ? "lg:justify-center" : "justify-between")}>
+      {!collapsed && (
+        <Link href="/app/dashboard" className="flex min-w-0 items-center gap-2 font-semibold text-sidebar-foreground">
+          <Image src="/logo-cubiqlo.svg" alt="Cubiqlo" width={150} height={38} priority className="h-8 w-auto object-contain" />
+        </Link>
+      )}
+      {collapsed && (
+        <Link href="/app/dashboard" className="hidden lg:flex">
+          <Image src="/logo-icon.svg" alt="Cubiqlo" width={36} height={36} priority className="h-8.5 w-8.5 rounded-lg object-contain shadow-2xs" />
+        </Link>
+      )}
       <Button variant="ghost" size="icon" className="h-11 w-11 text-sidebar-foreground hover:bg-sidebar-accent lg:hidden" onClick={() => setMobileOpen(false)} aria-label={t("Tutup menu", "Close menu")}><X className="h-4 w-4" /></Button>
-      {!collapsed && <Button variant="ghost" size="icon" className="absolute -right-3 top-4 hidden h-6 w-6 rounded-full border bg-background text-sidebar-foreground shadow-sm hover:bg-sidebar-accent lg:flex" onClick={onToggle} aria-label={t("Ciutkan sidebar", "Collapse sidebar")}><ChevronLeft className="h-3.5 w-3.5" /></Button>}
-      {collapsed && <Button variant="ghost" size="icon" className="absolute -right-3 top-4 hidden h-6 w-6 rounded-full border bg-background text-sidebar-foreground shadow-sm hover:bg-sidebar-accent lg:flex" onClick={onToggle} aria-label={t("Bentangkan sidebar", "Expand sidebar")}><ChevronRight className="h-3.5 w-3.5" /></Button>}
+      {!collapsed && <Button variant="ghost" size="icon" className="absolute -right-3 top-4 hidden h-6 w-6 rounded-full border border-border/80 bg-background text-sidebar-foreground shadow-xs hover:bg-sidebar-accent lg:flex" onClick={onToggle} aria-label={t("Ciutkan sidebar", "Collapse sidebar")}><ChevronLeft className="h-3.5 w-3.5" /></Button>}
+      {collapsed && <Button variant="ghost" size="icon" className="absolute -right-3 top-4 hidden h-6 w-6 rounded-full border border-border/80 bg-background text-sidebar-foreground shadow-xs hover:bg-sidebar-accent lg:flex" onClick={onToggle} aria-label={t("Bentangkan sidebar", "Expand sidebar")}><ChevronRight className="h-3.5 w-3.5" /></Button>}
     </div>
 
-    <nav className="flex-1 overflow-y-auto px-2 py-3">
+    <nav className="flex-1 overflow-y-auto px-2.5 py-3">
       <SidebarNavigation collapsed={collapsed} badgeCounts={badgeCounts} workspaceRole={workspaceRole} onNavigate={() => setMobileOpen(false)} />
     </nav>
 
-    <div className="space-y-2 border-t border-sidebar-border p-3">
+    <div className="space-y-2 border-t border-border/80 p-3">
       <TooltipProvider delayDuration={300}><Tooltip><TooltipTrigger asChild><Link href="/app/whats-new" className={cn("relative flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors", pathname === "/app/whats-new" ? "bg-sidebar-primary text-sidebar-primary-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent", collapsed && "justify-center px-2")}><span className="relative inline-flex"><Megaphone className="h-4 w-4 shrink-0" />{hasUnreadUpdate && collapsed && <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-violet-600 ring-2 ring-white" aria-label="New product update" />}</span>{!collapsed && <span className="flex-1">What’s New</span>}{hasUnreadUpdate && !collapsed && <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white">New</span>}</Link></TooltipTrigger>{collapsed && <TooltipContent side="right">What’s New{hasUnreadUpdate ? " · New" : ""}</TooltipContent>}</Tooltip></TooltipProvider>
       {collapsed ? <button type="button" onClick={() => setLang(lang === "id" ? "en" : "id")} disabled={pending} aria-label={t("Ganti ke Bahasa Inggris", "Switch to Indonesian")} className="mx-auto flex min-h-11 min-w-11 w-full items-center justify-center rounded-md border bg-white text-[10px] font-semibold text-muted-foreground hover:text-foreground disabled:opacity-50">{lang === "id" ? "ID" : "EN"}</button> : <div className="flex items-center justify-between gap-2"><p className="text-xs text-muted-foreground">Cubiqlo v{process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"}</p><div className={cn("flex items-center rounded-md border bg-white p-0.5 text-[11px]", pending && "opacity-50")}>{(["id", "en"] as const).map((code) => <button key={code} type="button" onClick={() => setLang(code)} disabled={pending} aria-label={code === "id" ? "Bahasa Indonesia" : "English"} className={cn("h-7 min-w-7 rounded px-1.5 text-[10px] font-semibold uppercase", lang === code ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground")}>{code}</button>)}</div></div>}
     </div>

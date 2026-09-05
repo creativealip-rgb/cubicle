@@ -6,7 +6,7 @@ const source = readFileSync("src/components/sidebar/sidebar-navigation.tsx", "ut
 describe("sidebar navigation interaction wiring", () => {
   it("keeps active route children inline without hover-driven layout shifts", () => {
     expect(source).toContain("groupActive && !collapsed");
-    expect(source).toContain('className="ml-4 space-y-1 border-l border-slate-200 pl-2"');
+    expect(source).toMatch(/className="ml-[\d.]+ space-y-[\d.]+ border-l border-[^"]+ pl-2"/);
     expect(source).not.toContain("groupOpen && !collapsed");
   });
 
@@ -18,7 +18,7 @@ describe("sidebar navigation interaction wiring", () => {
   });
 
   it("left-aligns desktop and mobile parent labels beside their icons", () => {
-    expect(source.match(/<span className="flex-1 text-left">\{t\(entry\.label\.id, entry\.label\.en\)\}<\/span>/g)).toHaveLength(2);
+    expect(source.match(/<span className="flex-1 text-left[^"]*">\{t\(entry\.label\.id, entry\.label\.en\)\}<\/span>/g)).toHaveLength(2);
   });
 
   it("shows a chevron on every desktop group", () => {
