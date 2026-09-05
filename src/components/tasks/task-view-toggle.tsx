@@ -4,15 +4,15 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useTransition } from "react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
-import { List, LayoutGrid } from "lucide-react";
+import { List, LayoutGrid, CalendarRange } from "lucide-react";
 
-export function TaskViewToggle({ current }: { current: "list" | "board" }) {
+export function TaskViewToggle({ current }: { current: "list" | "board" | "weekly" }) {
   const { t } = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [, startTransition] = useTransition();
 
-  function setView(view: "list" | "board") {
+  function setView(view: "list" | "board" | "weekly") {
     const params = new URLSearchParams(searchParams.toString());
     if (view === "list") {
       params.delete("view");
@@ -24,7 +24,7 @@ export function TaskViewToggle({ current }: { current: "list" | "board" }) {
     });
   }
 
-  const base = "flex items-center gap-1.5 h-8 px-3 text-xs font-medium rounded-md transition-colors";
+  const base = "flex items-center gap-1.5 h-8 px-2.5 text-xs font-medium rounded-md transition-colors";
   return (
     <div className="inline-flex items-center gap-1 rounded-lg border bg-muted/40 p-0.5">
       <button
@@ -37,9 +37,16 @@ export function TaskViewToggle({ current }: { current: "list" | "board" }) {
       <button
         type="button"
         onClick={() => setView("board")}
-        className={cn(base, current === "board" ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground")}
+        className={cn(base, current === "board" ? "border border-primary/20 bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground")}
       >
         <LayoutGrid className="h-3.5 w-3.5" /> {t("Papan", "Board")}
+      </button>
+      <button
+        type="button"
+        onClick={() => setView("weekly")}
+        className={cn(base, current === "weekly" ? "border border-primary/20 bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground")}
+      >
+        <CalendarRange className="h-3.5 w-3.5" /> {t("Mingguan", "Weekly")}
       </button>
     </div>
   );

@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/access";
 import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
 import { TasksBoardView } from "@/components/tasks/tasks-board-view";
 import { TasksListTable } from "@/components/tasks/tasks-list-table";
+import { TasksWeeklyTracker } from "@/components/tasks/tasks-weekly-tracker";
 import { TaskPageTabs } from "@/components/tasks/task-page-tabs";
 import { TaskViewToggle } from "@/components/tasks/task-view-toggle";
 import { TaskTemplateWorkspace } from "@/components/tasks/task-template-workspace";
@@ -36,7 +37,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const workspaceId = await getWorkspaceForCurrentUser();
   const params = await searchParams;
   const tab = params.tab === "templates" ? "templates" : "tasks";
-  const view = params.view === "board" ? "board" : "list";
+  const view = params.view === "board" ? "board" : params.view === "weekly" ? "weekly" : "list";
   const requestedPage = Math.max(1, Number(params.page) || 1);
   const whereClauses = [eq(tasks.workspaceId, workspaceId)];
   if (params.mode === "workflow" || params.mode === "reusable") whereClauses.push(eq(tasks.mode, params.mode));
@@ -50,7 +51,26 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const [{ filteredTaskCount }] = await db.select({ filteredTaskCount: sql<number>`count(${tasks.id})::int` }).from(tasks).where(and(...whereClauses));
   const totalPages = Math.max(1, Math.ceil(filteredTaskCount / PAGE_SIZE));
   const page = Math.min(requestedPage, totalPages);
-  const taskList = await db.select({ id: tasks.id, title: tasks.title, description: tasks.description, status: tasks.status, priority: tasks.priority, dueDate: tasks.dueDate, position: tasks.position, clientVisible: tasks.clientVisible, projectId: tasks.projectId, projectName: projects.name, timeTrackingMode: projects.timeTrackingMode, clientName: clients.name, assigneeId: tasks.assigneeId, assigneeName: users.name, sourceNoteId: tasks.sourceNoteId, behavior: tasks.behavior, mode: tasks.mode, lifecycle: tasks.lifecycle }).from(tasks).leftJoin(projects, eq(projects.id, tasks.projectId)).leftJoin(clients, eq(clients.id, projects.clientId)).leftJoin(users, eq(users.id, tasks.assigneeId)).where(and(...whereClauses)).orderBy(desc(tasks.createdAt)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
+  const taskList = await db.select({
+    id: tasks.id,
+    title: tasks.title,
+    description: tasks.description,
+    status: tasks.status,
+    priority: tasks.priority,
+    dueDate: tasks.dueDate,
+    position: tasks.position,
+    clientVisible: tasks.clientVisible,
+    projectId: tasks.projectId,
+    projectName: projects.name,
+    timeTrackingMode: projects.timeTrackingMode,
+    clientName: clients.name,
+    assigneeId: tasks.assigneeId,
+    assigneeName: users.name,
+    sourceNoteId: tasks.sourceNoteId,
+    behavior: tasks.behavior,
+    mode: tasks.mode,
+    lifecycle: tasks.lifecycle,
+  }).from(tasks).leftJoin(projects, eq(projects.id, tasks.projectId)).leftJoin(clients, eq(clients.id, projects.clientId)).leftJoin(users, eq(users.id, tasks.assigneeId)).where(and(...whereClauses)).orderBy(desc(tasks.createdAt)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
   const projectRows = await db.select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType }).from(projects).where(eq(projects.workspaceId, workspaceId));
   const writableProjectRows = projectRows.filter((project) => resolveBillingModel(project) !== "legacy_package");
   const taskProjects = writableProjectRows.map((project) => ({ id: project.id, name: project.name, defaultBehavior: defaultTaskWorkMode(resolveBillingModel(project)) === "workflow" ? "one_time" as const : "recurring" as const }));
@@ -76,7 +96,13 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
     <TaskPageTabs current={tab} />
     {tab === "templates" ? <TaskTemplateWorkspace templates={templates} projects={taskProjects} /> : <>
       <ActiveFilterSummary basePath="/app/tasks" filters={[{ key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name }, { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee }, { key: "priority", label: t("Prioritas", "Priority"), value: params.priority }, { key: "status", label: "Status", value: params.status }]} />
-      {view === "board" ? <TasksBoardView tasks={taskList.map((task) => ({ ...task, projectId: task.projectId ?? undefined }))} members={members} /> : <TasksListTable tasks={taskList} members={members} projects={taskProjects} currentUserId={user.id} currentFilters={{ status: params.status, priority: params.priority, projectId: params.projectId, assignee: params.assignee }} focusId={params.focus ?? null} />}
+      {view === "weekly" ? (
+        <TasksWeeklyTracker tasks={taskList} />
+      ) : view === "board" ? (
+        <TasksBoardView tasks={taskList.map((task) => ({ ...task, projectId: task.projectId ?? undefined }))} members={members} />
+      ) : (
+        <TasksListTable tasks={taskList} members={members} projects={taskProjects} currentUserId={user.id} currentFilters={{ status: params.status, priority: params.priority, projectId: params.projectId, assignee: params.assignee }} focusId={params.focus ?? null} />
+      )}
       {totalPages > 1 && <nav className="flex flex-wrap items-center justify-between gap-3" aria-label={t("Paginasi tugas", "Task pagination")}><span className="text-sm text-muted-foreground">{t("Halaman", "Page")} {page} {t("dari", "of")} {totalPages}</span><div className="flex gap-2"><Link className={`rounded border px-3 py-2 text-sm ${page===1?"pointer-events-none opacity-50":""}`} href={buildTaskPageHref(params,page-1)}>{t("Sebelumnya", "Previous")}</Link><Link className={`rounded border px-3 py-2 text-sm ${page===totalPages?"pointer-events-none opacity-50":""}`} href={buildTaskPageHref(params,page+1)}>{t("Berikutnya", "Next")}</Link></div></nav>}
     </>}
   </div>;
