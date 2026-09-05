@@ -18,6 +18,64 @@ export interface ProductUpdate {
 
 export const productUpdates: ProductUpdate[] = [
   {
+    id: "2026-09-05-ai-and-workspace-evolution",
+    date: "2026-09-05",
+    title: "AI Assistant 2.0 & Modernisasi Antarmuka Workspace",
+    summary: "Perombakan total AI Assistant dengan dual-pane full viewport, manajemen sesi chat (pin & rename), draggable floating widget, interactive weekly task tracker, dan adaptive mobile cards universal.",
+    items: [
+      {
+        type: "new",
+        title: "AI Assistant Hub 2.0 (Dual-Pane Full-Viewport)",
+        description: "Pengalaman AI split 2-kolom ala ChatGPT/Claude tanpa double scroll, composer sticky di bagian bawah, dukungan multi-turn chat bersambung, dan knowledge base lengkap seluruh fitur Cubiqlo.",
+        href: "/app/brain",
+        cta: "Buka AI Assistant",
+      },
+      {
+        type: "new",
+        title: "Pin & Rename Sesi Chat AI",
+        description: "Sematkan percakapan AI penting ke urutan paling atas dan ubah judul sesi chat secara instan langsung dari sidebar riwayat.",
+        href: "/app/brain",
+        cta: "Coba Sesi AI",
+      },
+      {
+        type: "new",
+        title: "Draggable Floating AI Widget",
+        description: "Pop-up AI widget di pojok kanan bawah kini dapat digeser dan dipindahkan bebas menggunakan kursor mouse ke area layar mana pun.",
+        href: "/app/dashboard",
+        cta: "Lihat Widget",
+      },
+      {
+        type: "new",
+        title: "Interactive Weekly Task Tracker",
+        description: "Matriks pelacakan tugas mingguan interaktif (Senin–Minggu) dengan donut chart ringkas dan toggle centang cepat.",
+        href: "/app/tasks",
+        cta: "Buka Tasks",
+      },
+      {
+        type: "improvement",
+        title: "Service Catalog & Packages Modernization",
+        description: "3-KPI summary strip, segmented category filter pills, dan modal kategori terpadu pada modul Service.",
+        href: "/app/services",
+        cta: "Lihat Services",
+      },
+      {
+        type: "improvement",
+        title: "Universal Adaptive Mobile Cards (100% Modul)",
+        description: "Tampilan data tabel di smartphone otomatis beralih ke format kartu adaptif yang compact, elegan, dan nyaman disentuh.",
+      },
+      {
+        type: "improvement",
+        title: "Halaman Booking Publik Lebih Premium",
+        description: "Desain visual halaman booking publik (/booking/[slug]) dipercantik dengan backdrop ambient, gradient avatar, dan auto slot fetcher.",
+      },
+      {
+        type: "fix",
+        title: "Kontras Teks & Penegasan Divider Tabel Desktop",
+        description: "Perbaikan kontras teks bubble user pada chat AI dan penegasan garis pemisah tabel di seluruh rute aplikasi.",
+      },
+    ],
+  },
+  {
     id: "2026-07-25-settings-and-access",
     date: "2026-07-25",
     title: "Pengaturan lebih aman, akses lebih rapi",
