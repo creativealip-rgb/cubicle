@@ -27,7 +27,7 @@ describe("client and project detail UX", () => {
   });
 
   it("shows fixed-rate wording with i18n and keeps retired service/activity tabs absent", () => {
-    expect(projectDetail).toContain('t("Fixed rate", "Fixed rate")');
+    expect(projectDetail).toContain('billingTypeLabel(billingDisplayType, lang)');
     expect(projectDetail).not.toContain('t("Nominal", "Amount")');
     expect(projectDetail).not.toContain('<TabsTrigger value="services"');
     expect(projectDetail).not.toContain('<TabsContent value="services"');

@@ -11,7 +11,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { getProjectProgress } from "@/lib/actions/projects";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
-import { billingTypeHint, billingTypeLabel } from "@/lib/feature-access";
+import { billingTypeLabel } from "@/lib/feature-access";
 import { ProjectTaskWorkspace } from "@/components/tasks/project-task-workspace";
 import { WorkflowTaskWorkspace } from "@/components/tasks/workflow-task-workspace";
 import { ProjectBillingTab } from "@/components/projects/project-billing-tab";
@@ -26,10 +26,15 @@ import { ProjectEditDialog } from "@/components/projects/project-edit-dialog";
 import { Timesheet } from "@/components/time/timesheet";
 import Link from "next/link";
 import {
-  ArrowLeft,
   Clock,
   FileText,
+  FolderKanban,
+  CheckCircle2,
 } from "lucide-react";
+import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
+import { UploadButton } from "@/components/files/upload-button";
+import { ProjectInvoiceCreateDialog } from "@/components/invoices/project-invoice-create-dialog";
+import { RetainerProjectInvoiceActions } from "@/components/invoices/retainer-project-invoice-actions";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -50,7 +55,7 @@ export default async function ProjectDetailPage({
   const workspaceId = await getWorkspaceId();
   const proposedInvoiceNumber = await getProposedInvoiceNumber();
   const { projectId } = await params;
-  const { from, tab: tabParam } = await searchParams;
+  const { from: _from, tab: tabParam } = await searchParams;
   const allowedTabs = new Set(["work", "files", "time", "billing"]);
   const initialTab = tabParam && allowedTabs.has(tabParam) ? tabParam : "work";
 
@@ -214,16 +219,6 @@ export default async function ProjectDetailPage({
     archived: "bg-slate-500",
   };
 
-  const backFromClient = from === "client" && !!project.clientId;
-  const backHref = backFromClient
-    ? `/app/clients/${project.clientId}?tab=projects`
-    : "/app/projects";
-  const backLabel = backFromClient
-    ? t(
-        `Kembali ke ${project.clientName || "Klien"}`,
-        `Back to ${project.clientName || "Client"}`,
-      )
-    : t("Kembali ke Proyek", "Back to Projects");
   const showTimeTab = project.timeTrackingMode !== "off" || projectTimeEntries.length > 0;
   const billingModel = resolveBillingModel(project);
   const legacyPackageReadOnly = billingModel === "legacy_package";
@@ -244,87 +239,117 @@ export default async function ProjectDetailPage({
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0 space-y-2">
-          <Link
-            href={backHref}
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-3 w-3" /> {backLabel}
-          </Link>
-          <div className="flex min-w-0 items-center gap-3">
-            <h1 className="min-w-0 truncate app-page-title">{project.name}</h1>
-            <Badge variant={projectStatusVariant(project.status, lang).variant}>{projectStatusVariant(project.status, lang).label}</Badge>
-          </div>
-          {project.clientName && (
-            <p className="text-sm text-muted-foreground">
-              {t("Klien", "Client")}:{" "}
-              <Link href={`/app/clients/${project.clientId}`} className="hover:underline">
-                {project.clientName}
-              </Link>
-            </p>
-          )}
-          <div className="flex flex-wrap items-center gap-2 pt-1">
-            <Badge variant="outline" className="gap-1 font-normal">
-              {billingTypeLabel(billingDisplayType, lang)}
-            </Badge>
-            {project.billingType === "hours" && project.rate && (
-              <span className="text-xs text-muted-foreground">
-                {t("Rate", "Rate")}: {project.currency} {Number(project.rate).toLocaleString(locale)}
-                /{t("jam", "hr")}
-              </span>
-            )}
-            {billingDisplayType === "fixed_price" && project.budget && (
-              <span className="text-xs text-muted-foreground">
-                {t("Fixed rate", "Fixed rate")}: {project.currency}{" "}
-                {Number(project.budget).toLocaleString(locale)}
-              </span>
-            )}
-            {billingDisplayType === "package" && (
-              <span className="text-xs text-muted-foreground">
-                {t("Billing paket", "Package billing")}
-                {project.selectedPackageId ? "" : ` · ${t("paket belum dipilih", "no package selected")}`}
-              </span>
-            )}
-          </div>
-          <p className="max-w-xl text-xs text-muted-foreground">
-            {billingTypeHint(billingDisplayType, lang)}
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <ProjectEditDialog project={project} activeProjectServiceIds={activeProjectServiceIds} />
-          <PermanentDeleteButton entityType="project" entityId={project.id} entityName={project.name} redirectTo={`/app/clients/${project.clientId}?tab=projects`} />
-        </div>
-      </div>
+      {/* Unified Executive PageHeader with Client/Project Breadcrumb */}
+        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-r from-card via-card to-primary/5 p-4 sm:p-5 shadow-xs">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+                <FolderKanban className="h-4.5 w-4.5" />
+              </div>
+              <div className="min-w-0 flex-1">
+                {/* Integrated Hierarchical Breadcrumb */}
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Link
+                    href="/app/projects"
+                    className="hover:text-foreground transition-colors"
+                  >
+                    {t("Proyek", "Projects")}
+                  </Link>
+                  {project.clientName && project.clientId ? (
+                    <>
+                      <span className="text-muted-foreground/40">/</span>
+                      <Link
+                        href={`/app/clients/${project.clientId}`}
+                        className="font-medium text-foreground hover:underline"
+                      >
+                        {project.clientName}
+                      </Link>
+                    </>
+                  ) : null}
+                  <span className="text-muted-foreground/40">/</span>
+                  <span className="truncate font-semibold text-foreground">
+                    {project.name}
+                  </span>
+                </div>
 
-      {/* Progress bar */}
-      <Card>
-        <CardContent className="p-3">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-sm font-medium">{t("Progres", "Progress")}</span>
-            <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                {/* Title & Badges */}
+                <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                  <h1 className="text-base sm:text-lg font-bold text-foreground leading-tight">
+                    {project.name}
+                  </h1>
+                  <Badge
+                    variant="outline"
+                    className="text-[10px] font-bold h-5 px-2 rounded-full border border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                  >
+                    <span className="mr-1 h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                    {projectStatusVariant(project.status, lang).label}
+                  </Badge>
+                  <Badge
+                    variant="secondary"
+                    className="text-[10px] font-semibold h-5 px-2 rounded-full border border-border/80 bg-muted/60 text-muted-foreground"
+                  >
+                    {billingTypeLabel(billingDisplayType, lang)}
+                  </Badge>
+                  {billingDisplayType === "fixed_price" && project.budget && (
+                    <span className="text-xs font-mono font-semibold text-foreground">
+                      {project.currency} {Number(project.budget).toLocaleString(locale)}
+                    </span>
+                  )}
+                  {project.billingType === "hours" && project.rate && (
+                    <span className="text-xs font-mono font-semibold text-foreground">
+                      {project.currency} {Number(project.rate).toLocaleString(locale)}/{t("jam", "hr")}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Action Group */}
+            <div className="flex items-center gap-2 self-start sm:self-center">
+              <ProjectEditDialog
+                project={project}
+                activeProjectServiceIds={activeProjectServiceIds}
+              />
+              <PermanentDeleteButton
+                entityType="project"
+                entityId={project.id}
+                entityName={project.name}
+                redirectTo={`/app/clients/${project.clientId}?tab=projects`}
+              />
+            </div>
+          </div>
+
+          {/* Integrated Progress Bar in Header Footer */}
+          <div className="mt-3 pt-3 border-t border-border/60 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
+            <div className="flex items-center gap-2">
+              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
               <span>
-                {billingModel === "retainer" && retainerPeriod
-                  ? `${(retainerPeriod.approvedMinutes / 60).toFixed(0)}/${(retainerPeriod.includedMinutesSnapshot / 60).toFixed(0)} ${t("jam", "hr")} · ${retainerPeriod.includedMinutesSnapshot > 0 ? Math.round((retainerPeriod.approvedMinutes / retainerPeriod.includedMinutesSnapshot) * 100) : 0}%`
-                  : `${progress.done}/${progress.total} ${t("tugas", "tasks")} · ${progress.percent}%`}
+                {t("Progres", "Progress")}:{" "}
+                <strong className="text-foreground">
+                  {billingModel === "retainer" && retainerPeriod
+                    ? `${(retainerPeriod.approvedMinutes / 60).toFixed(0)}/${(retainerPeriod.includedMinutesSnapshot / 60).toFixed(0)} ${t("jam", "hr")} · ${retainerPeriod.includedMinutesSnapshot > 0 ? Math.round((retainerPeriod.approvedMinutes / retainerPeriod.includedMinutesSnapshot) * 100) : 0}%`
+                    : `${progress.done}/${progress.total} ${t("tugas", "tasks")} · ${progress.percent}%`}
+                </strong>
               </span>
+            </div>
+            <div className="flex items-center gap-3">
               {project.dueDate && (
                 <span className="flex items-center gap-1">
                   <Clock className="h-3 w-3" />
                   {t("Jatuh tempo", "Due")}: {new Date(project.dueDate).toLocaleDateString(locale)}
                 </span>
               )}
+              <div className="w-28 h-1.5 bg-muted rounded-full overflow-hidden">
+                <div
+                  className={`h-full rounded-full transition-all ${statusColors[project.status] ?? "bg-slate-400"}`}
+                  style={{
+                    width: `${billingModel === "retainer" && retainerPeriod && retainerPeriod.includedMinutesSnapshot > 0 ? Math.min(100, Math.round((retainerPeriod.approvedMinutes / retainerPeriod.includedMinutesSnapshot) * 100)) : progress.percent}%`,
+                  }}
+                />
+              </div>
             </div>
           </div>
-          <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all ${statusColors[project.status] ?? "bg-slate-400"}`}
-              style={{ width: `${billingModel === "retainer" && retainerPeriod && retainerPeriod.includedMinutesSnapshot > 0 ? Math.min(100, Math.round((retainerPeriod.approvedMinutes / retainerPeriod.includedMinutesSnapshot) * 100)) : progress.percent}%` }}
-            />
-          </div>
-        </CardContent>
-      </Card>
+        </div>
 
       {/* Tabs */}
       <ProjectTabsNav
@@ -334,6 +359,77 @@ export default async function ProjectDetailPage({
         timeCount={projectTimeEntries.length}
         invoicesCount={projectInvoices.length}
         showTimeTab={showTimeTab}
+        tasksAction={
+          <TaskCreateDialog
+            projectId={projectId}
+            members={projectMembers}
+            projects={projectOptions}
+          />
+        }
+        filesAction={
+          <UploadButton
+            workspaceId={workspaceId}
+            projectId={projectId}
+            clientId={project.clientId ?? undefined}
+          />
+        }
+        billingAction={
+          project.clientId ? (
+            project.billingType === "retainer" ? (
+              <RetainerProjectInvoiceActions
+                projectId={project.id}
+                period={retainerPeriod}
+                proposedInvoiceNumber={proposedInvoiceNumber}
+              />
+            ) : (
+              <ProjectInvoiceCreateDialog
+                project={{
+                  id: project.id,
+                  name: project.name,
+                  clientId: project.clientId,
+                  billingType: project.billingModel ?? project.billingType,
+                  currency: project.currency,
+                  budget:
+                    project.billingModel === "retainer"
+                      ? project.retainerFee
+                      : project.budget,
+                  rate: project.rate,
+                  packagePrice: selectedPackage?.price ?? null,
+                  packageCustomPrice: selectedPackage?.customPrice ?? null,
+                  agreedAmount: resolveProjectAmount({
+                    billingType: project.billingType,
+                    budget:
+                      project.billingModel === "retainer" && project.retainerFee
+                        ? Number(project.retainerFee)
+                        : project.budget
+                          ? Number(project.budget)
+                          : null,
+                    rate: project.rate ? Number(project.rate) : null,
+                    packagePrice:
+                      Number(
+                        selectedPackage?.customPrice ??
+                          selectedPackage?.price ??
+                          0,
+                      ) || null,
+                  }),
+                  priorActiveFixedBilledAmount:
+                    sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ??
+                    0,
+                  eligibleTimeEntries:
+                    sourceOptions.get(project.id)?.eligibleTimeEntries ?? [],
+                }}
+                client={{
+                  id: project.clientId,
+                  name: project.clientName ?? "Klien",
+                  companyName: null,
+                }}
+                baseCurrency={workspace?.defaultCurrency ?? "IDR"}
+                proposedInvoiceNumber={proposedInvoiceNumber}
+                currencyRates={currencyRates}
+              />
+            )
+          ) : null
+        }
         tasksContent={
           legacyPackageReadOnly ? (
             <div className="space-y-3">
@@ -377,27 +473,48 @@ export default async function ProjectDetailPage({
         }
         filesContent={
           <div className="space-y-3">
-            {projectFiles.length === 0 && (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                {t("Belum ada berkas", "No files yet")}
-              </p>
-            )}
-            {projectFiles.map(
-              (file: { id: string; name: string; mimeType: string | null; visibility: string }) => (
-                <Card key={file.id}>
-                  <CardContent className="flex items-center justify-between p-4">
-                    <div className="flex items-center gap-3">
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                      <div>
-                        <p className="text-sm font-medium">{file.name}</p>
-                        <p className="text-xs text-muted-foreground">{file.mimeType}</p>
+            {projectFiles.length === 0 ? (
+              <div className="rounded-2xl border border-dashed border-border/80 bg-muted/10 p-8 text-center">
+                <div className="flex h-10 w-10 mx-auto items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary mb-3">
+                  <FileText className="h-5 w-5" />
+                </div>
+                <p className="text-sm font-semibold text-foreground">
+                  {t("Belum ada berkas proyek", "No project files yet")}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
+                  {t(
+                    "Unggah dokumen, brief, atau aset deliverables untuk dibagikan ke tim dan klien.",
+                    "Upload documents, briefs, or deliverable assets to share with team and client.",
+                  )}
+                </p>
+                <div className="mt-4 flex justify-center">
+                  <UploadButton
+                    workspaceId={workspaceId}
+                    projectId={projectId}
+                    clientId={project.clientId ?? undefined}
+                  />
+                </div>
+              </div>
+            ) : (
+              projectFiles.map(
+                (file: { id: string; name: string; mimeType: string | null; visibility: string }) => (
+                  <Card key={file.id} className="rounded-xl border border-border/80 shadow-xs hover:border-primary/30 transition-colors">
+                    <CardContent className="flex items-center justify-between p-3.5">
+                      <div className="flex items-center gap-3">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+                          <FileText className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-foreground">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">{file.mimeType || "File"}</p>
+                        </div>
                       </div>
-                    </div>
-                    <Badge variant="outline" className="text-[10px]">
-                      {file.visibility}
-                    </Badge>
-                  </CardContent>
-                </Card>
+                      <Badge variant="outline" className="text-[10px] font-semibold h-5 px-2 rounded-full border border-border/80 bg-muted/60 text-muted-foreground capitalize">
+                        {file.visibility}
+                      </Badge>
+                    </CardContent>
+                  </Card>
+                )
               )
             )}
           </div>
