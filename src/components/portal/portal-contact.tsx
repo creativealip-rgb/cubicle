@@ -27,6 +27,7 @@ export function PortalContactButtons({
   clientName,
   projectName,
   compact = false,
+  inline = false,
 }: {
   phone?: string | null;
   email?: string | null;
@@ -34,6 +35,7 @@ export function PortalContactButtons({
   clientName?: string | null;
   projectName?: string | null;
   compact?: boolean;
+  inline?: boolean;
 }) {
   const { lang, t } = useT();
   const who = ownerName?.trim() || t("tim", "team");
@@ -61,12 +63,44 @@ export function PortalContactButtons({
 
   if (!waUrl && !mailUrl) {
     return (
-      <p className="text-sm text-muted-foreground">
+      <p className="text-xs text-muted-foreground">
         {t(
-          "Kontak resmi belum tersedia. Hubungi pengelola workspace untuk memperbarui email atau nomor telepon.",
-          "Official contact details are not available yet. Ask the workspace manager to update the email or phone number.",
+          "Kontak resmi belum tersedia.",
+          "Official contact details not available yet.",
         )}
       </p>
+    );
+  }
+
+  if (inline) {
+    return (
+      <div className="flex items-center gap-2">
+        {waUrl && (
+          <Button
+            asChild
+            size="sm"
+            className="h-7 gap-1.5 rounded-lg bg-emerald-600 px-2.5 text-xs font-semibold text-white shadow-xs hover:bg-emerald-700"
+          >
+            <a href={waUrl} target="_blank" rel="noreferrer">
+              <MessageCircle className="h-3.5 w-3.5" />
+              WhatsApp
+            </a>
+          </Button>
+        )}
+        {mailUrl && (
+          <Button
+            asChild
+            variant="outline"
+            size="sm"
+            className="h-7 gap-1.5 rounded-lg px-2.5 text-xs font-semibold shadow-xs"
+          >
+            <a href={mailUrl}>
+              <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+              Email
+            </a>
+          </Button>
+        )}
+      </div>
     );
   }
 

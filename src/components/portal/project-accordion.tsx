@@ -763,20 +763,18 @@ function ProjectExpandedContent({
         </details>
       )}
 
-      {/* Contact team — WA / email only */}
-      <div className="rounded-xl border border-border/70 bg-muted/20 p-3">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-          <span className="text-xs font-semibold text-muted-foreground">
-            {t("Ada pertanyaan tentang proyek ini?", "Have questions about this project?")}
-          </span>
-          <PortalContactButtons
-            phone={ownerWhatsAppPhone}
-            email={ownerEmail}
-            ownerName={ownerName}
-            projectName={project.name}
-            compact
-          />
-        </div>
+      {/* Contact team — inline compact action */}
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/80 bg-muted/20 px-3 py-2">
+        <span className="text-xs font-semibold text-muted-foreground">
+          {t("Diskusi proyek bersama tim:", "Discuss this project with the team:")}
+        </span>
+        <PortalContactButtons
+          phone={ownerWhatsAppPhone}
+          email={ownerEmail}
+          ownerName={ownerName}
+          projectName={project.name}
+          inline
+        />
       </div>
     </CardContent>
   );
