@@ -2065,6 +2065,26 @@ export const TOOL_DEFS: ToolDefinition[] = [
   {
     type: "function",
     function: {
+      name: "create_task",
+      description:
+        "Create a new task under a project or general workspace task. Returns a confirmation card for the user.",
+      parameters: {
+        type: "object",
+        properties: {
+          title: { type: "string", description: "Task title" },
+          description: { type: "string", description: "Detailed task description" },
+          projectId: { type: "string", description: "Project UUID (optional)" },
+          projectName: { type: "string", description: "Project name to link with" },
+          priority: { type: "string", enum: ["low", "medium", "high", "urgent"], description: "Task priority" },
+          dueDate: { type: "string", description: "Due date in YYYY-MM-DD format" },
+        },
+        required: ["title"],
+      },
+    },
+  },
+  {
+    type: "function",
+    function: {
       name: "start_timer",
       description:
         "Start active time tracking timer for a task or project. Returns a confirmation card for the user.",

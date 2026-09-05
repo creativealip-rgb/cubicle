@@ -25,6 +25,13 @@ export const productUpdates: ProductUpdate[] = [
     items: [
       {
         type: "new",
+        title: "AI Interactive Action Suite (Client, Project, Invoice, Task, Timer)",
+        description: "AI Assistant kini mampu mengeksekusi aksi pembuatan data nyata secara langsung: daftarkan Klien, buat Proyek, terbitkan draf Invoice lengkap dengan kalkulasi item, tambah Tugas, dan nyalakan Timer pelacakan waktu kerja.",
+        href: "/app/brain",
+        cta: "Coba Aksi AI",
+      },
+      {
+        type: "new",
         title: "AI Assistant Hub 2.0 (Dual-Pane Full-Viewport)",
         description: "Pengalaman AI split 2-kolom ala ChatGPT/Claude tanpa double scroll, composer sticky di bagian bawah, dukungan multi-turn chat bersambung, dan knowledge base lengkap seluruh fitur Cubiqlo.",
         href: "/app/brain",
