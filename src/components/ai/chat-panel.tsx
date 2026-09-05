@@ -556,6 +556,9 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
               break;
             }
             case "done": {
+              if (payload.conversationId && typeof payload.conversationId === "string") {
+                setConversationId(payload.conversationId);
+              }
               loadConversations();
               const toolCalls = Number(payload.toolCalls ?? 0);
               const usage = payload.usage as

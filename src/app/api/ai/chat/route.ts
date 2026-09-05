@@ -227,6 +227,7 @@ export async function POST(req: NextRequest) {
     send,
     close,
     workspaceId: wsId,
+    conversationId,
     persistAssistant: async (final, toolRecords, lastToolName, totalUsage) => {
       // Persist tool messages first
       for (const tm of toolRecords) {
@@ -276,6 +277,7 @@ async function runAgentLoop(opts: {
   send: (event: string, data: unknown) => void;
   close: () => void;
   workspaceId: string;
+  conversationId: string;
   persistAssistant: (
     finalContent: string,
     toolRecords: Array<{ name: string; result: unknown }>,
@@ -287,7 +289,7 @@ async function runAgentLoop(opts: {
     },
   ) => Promise<void>;
 }) {
-  const { messages, send, close, workspaceId, persistAssistant } = opts;
+  const { messages, send, close, workspaceId, conversationId, persistAssistant } = opts;
 
   let rounds = 0;
   let totalUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
@@ -418,6 +420,7 @@ async function runAgentLoop(opts: {
     );
 
     send("done", {
+      conversationId: conversationId,
       usage: totalUsage,
       toolCalls: toolCallCount,
     });
