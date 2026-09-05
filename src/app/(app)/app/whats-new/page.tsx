@@ -34,11 +34,13 @@ const typeMeta: Record<
 };
 
 function formatDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
   return new Intl.DateTimeFormat("id-ID", {
     day: "numeric",
     month: "long",
     year: "numeric",
-  }).format(new Date(`${value}T00:00:00+07:00`));
+    timeZone: "Asia/Jakarta",
+  }).format(new Date(Date.UTC(year, (month || 1) - 1, day || 1, 12, 0, 0)));
 }
 
 export default function WhatsNewPage() {
