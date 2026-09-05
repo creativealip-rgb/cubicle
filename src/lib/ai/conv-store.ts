@@ -22,6 +22,7 @@ export interface PersistedMessage {
   content: string;
   toolCalls: unknown[];
   toolName: string | null;
+  confirmationStatus?: "pending" | "done" | "failed" | "cancelled" | null;
   tokens: number;
   createdAt: string;
 }
@@ -101,6 +102,7 @@ export async function listMessages(
       content: aiMessages.content,
       toolCalls: aiMessages.toolCalls,
       toolName: aiMessages.toolName,
+      confirmationStatus: aiMessages.confirmationStatus,
       tokens: aiMessages.tokens,
       createdAt: aiMessages.createdAt,
     })
@@ -122,6 +124,7 @@ export async function listMessages(
     content: string;
     toolCalls: unknown;
     toolName: string | null;
+    confirmationStatus: "pending" | "done" | "failed" | "cancelled" | null;
     tokens: number;
     createdAt: Date;
   }) => ({
@@ -130,6 +133,7 @@ export async function listMessages(
     content: r.content,
     toolCalls: (r.toolCalls as unknown[]) ?? [],
     toolName: r.toolName,
+    confirmationStatus: r.confirmationStatus,
     tokens: r.tokens,
     createdAt: r.createdAt.toISOString(),
   }));
@@ -142,24 +146,35 @@ export async function appendMessage(
     content: string;
     toolCalls?: unknown[];
     toolName?: string | null;
+    confirmationStatus?: "pending" | "done" | "failed" | "cancelled" | null;
     tokens?: number;
   },
-): Promise<void> {
-  await db.insert(aiMessages).values({
+): Promise<string> {
+  const [inserted] = await db.insert(aiMessages).values({
     conversationId,
     role: msg.role,
     content: msg.content,
     toolCalls: (msg.toolCalls ?? []) as unknown[],
     toolName: msg.toolName ?? null,
+    confirmationStatus: msg.confirmationStatus ?? null,
     tokens: msg.tokens ?? 0,
-  });
+  }).returning({ id: aiMessages.id });
   await db
     .update(aiConversations)
     .set({ updatedAt: new Date() })
     .where(eq(aiConversations.id, conversationId));
+  return inserted?.id ?? "";
 }
 
-/** Auto-title: first user message → first 50 chars. */
+export async function updateMessageConfirmationStatus(
+  messageId: string,
+  status: "pending" | "done" | "failed" | "cancelled",
+): Promise<void> {
+  await db
+    .update(aiMessages)
+    .set({ confirmationStatus: status })
+    .where(eq(aiMessages.id, messageId));
+}
 export async function maybeAutoTitle(
   conversationId: string,
   userMessage: string,

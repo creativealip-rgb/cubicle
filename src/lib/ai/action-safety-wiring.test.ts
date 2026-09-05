@@ -30,4 +30,18 @@ describe("AI action safety wiring", () => {
     const panel = read("src/components/ai/chat-panel.tsx");
     expect(panel).toContain('confirmationStatus: "cancelled"');
   });
+
+  it("persists and reads message confirmation lifecycle statuses", () => {
+    const schema = read("src/db/schema.ts");
+    const store = read("src/lib/ai/conv-store.ts");
+    const action = read("src/app/api/ai/action/route.ts");
+    const convRoute = read("src/app/api/ai/conversations/route.ts");
+    const chatPanel = read("src/components/ai/chat-panel.tsx");
+
+    expect(schema).toContain('confirmationStatus: text("confirmation_status"');
+    expect(store).toContain("updateMessageConfirmationStatus");
+    expect(action).toContain("updateMessageConfirmationStatus");
+    expect(convRoute).toContain("confirmationStatus");
+    expect(chatPanel).toContain('m.confirmationStatus ?? "pending"');
+  });
 });

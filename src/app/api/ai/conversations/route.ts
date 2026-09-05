@@ -9,10 +9,10 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 
 import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
-import { eq, and } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import { aiConversations } from "@/db/schema";
+import { aiConversations, aiMessages } from "@/db/schema";
 import { listConversations, listMessages, getOrCreateConv } from "@/lib/ai/conv-store";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 import { enforcePlanApiRateLimit } from "@/lib/plan-api-rate-limit";
@@ -101,7 +101,22 @@ export async function PATCH(req: NextRequest) {
   const body = (await req.json().catch(() => ({}))) as {
     title?: string;
     isPinned?: boolean;
+    messageId?: string;
+    confirmationStatus?: "pending" | "done" | "failed" | "cancelled";
   };
+
+  if (body.messageId && body.confirmationStatus) {
+    await db
+      .update(aiMessages)
+      .set({ confirmationStatus: body.confirmationStatus })
+      .where(
+        and(
+          eq(aiMessages.id, body.messageId),
+          eq(aiMessages.conversationId, id),
+        ),
+      );
+    return NextResponse.json({ ok: true });
+  }
 
   const updateData: { title?: string; isPinned?: boolean; updatedAt: Date } = {
     updatedAt: new Date(),

@@ -37,9 +37,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: entitlementFailure.error }, { status: entitlementFailure.status });
   }
 
-  let request: { kind: string; payload: unknown };
+  let request: { kind: string; payload: unknown; messageId?: string };
   try {
-    request = (await req.json()) as { kind: string; payload: unknown };
+    request = (await req.json()) as { kind: string; payload: unknown; messageId?: string };
   } catch {
     return NextResponse.json({ error: "Invalid request" }, { status: 400 });
   }
@@ -51,6 +51,16 @@ export async function POST(req: NextRequest) {
   let quotaWorkspaceId: string | null = null;
 
   try {
+    const markDone = async () => {
+      if (request.messageId) {
+        try {
+          const { updateMessageConfirmationStatus } = await import("@/lib/ai/conv-store");
+          await updateMessageConfirmationStatus(request.messageId, "done");
+        } catch {
+          // ignore
+        }
+      }
+    };
     if (request.kind === "update_task_status") {
       const p = request.payload as UpdateTaskPayload;
       if (!p?.taskId || !taskStatuses.has(p.newStatus)) {
@@ -85,6 +95,7 @@ export async function POST(req: NextRequest) {
           metadata: { previousStatus: task.status, newStatus: p.newStatus },
         });
       }
+      await markDone();
       return NextResponse.json({ ok: true, result: { task: updated ?? { id: task.id, status: task.status }, replayed: !updated } });
     }
 
@@ -115,6 +126,7 @@ export async function POST(req: NextRequest) {
         entityId: invoice.id,
         metadata: { recipientAvailable: Boolean(p.to) },
       });
+      await markDone();
       return NextResponse.json({ ok: true, result: { draft: { invoiceId: p.invoiceId, to: p.to, subject: p.subject, body: p.body } } });
     }
 
@@ -149,6 +161,7 @@ export async function POST(req: NextRequest) {
         entityId: clientId,
         metadata: { name: p.name.trim() },
       });
+      await markDone();
       return NextResponse.json({ ok: true, result: { client: created } });
     }
 
@@ -189,6 +202,7 @@ export async function POST(req: NextRequest) {
         entityId: projectId,
         metadata: { name: p.name.trim(), clientId: p.clientId },
       });
+      await markDone();
       return NextResponse.json({ ok: true, result: { project: created } });
     }
 
@@ -273,6 +287,7 @@ export async function POST(req: NextRequest) {
         entityId: invoiceId,
         metadata: { invoiceNumber, total: totalAmount },
       });
+      await markDone();
       return NextResponse.json({ ok: true, result: { invoice: created } });
     }
 
@@ -332,6 +347,7 @@ export async function POST(req: NextRequest) {
         entityId: taskId,
         metadata: { title: p.title.trim(), projectId: resolvedProjectId },
       });
+      await markDone();
       return NextResponse.json({ ok: true, result: { task: created } });
     }
 
@@ -365,6 +381,7 @@ export async function POST(req: NextRequest) {
         status: "draft",
       }).returning({ id: timeEntries.id });
 
+      await markDone();
       return NextResponse.json({ ok: true, result: { timer: created } });
     }
 

@@ -228,13 +228,14 @@ export async function POST(req: NextRequest) {
     close,
     workspaceId: wsId,
     conversationId,
-    persistAssistant: async (final, toolRecords, lastToolName, totalUsage) => {
+    persistAssistant: async (final, toolRecords, lastToolName, totalUsage, isConfirmationPending) => {
       // Persist tool messages first
       for (const tm of toolRecords) {
         await appendMessage(conversationId, {
           role: "tool",
           content: JSON.stringify(tm.result),
           toolName: tm.name,
+          confirmationStatus: isConfirmationPending && ACTION_TOOLS.has(tm.name) ? "pending" : null,
         });
       }
       // Persist the assistant final answer
@@ -243,6 +244,7 @@ export async function POST(req: NextRequest) {
         content: final,
         toolCalls: toolRecords.map((t) => ({ name: t.name })),
         toolName: lastToolName ?? undefined,
+        confirmationStatus: isConfirmationPending ? "pending" : null,
         tokens: totalUsage.completion_tokens,
       });
     },
@@ -282,11 +284,8 @@ async function runAgentLoop(opts: {
     finalContent: string,
     toolRecords: Array<{ name: string; result: unknown }>,
     lastToolName: string | null,
-    totalUsage: {
-      prompt_tokens: number;
-      completion_tokens: number;
-      total_tokens: number;
-    },
+    totalUsage: { prompt_tokens: number; completion_tokens: number; total_tokens: number },
+    isConfirmationPending?: boolean,
   ) => Promise<void>;
 }) {
   const { messages, send, close, workspaceId, conversationId, persistAssistant } = opts;
@@ -392,6 +391,7 @@ async function runAgentLoop(opts: {
               persistedToolMessages,
               lastToolName,
               totalUsage,
+              true,
             );
             send("confirm", { tool: tc.function.name, confirmation: r.confirmation });
             send("done", {

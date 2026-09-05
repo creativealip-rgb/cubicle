@@ -1713,6 +1713,7 @@ export const aiMessages = pgTable("ai_messages", {
   content: text("content").notNull().default(""),
   toolCalls: jsonb("tool_calls").notNull().default(sql`'[]'::jsonb`),
   toolName: text("tool_name"),
+  confirmationStatus: text("confirmation_status", { enum: ["pending", "done", "failed", "cancelled"] }),
   tokens: integer("tokens").notNull().default(0),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });

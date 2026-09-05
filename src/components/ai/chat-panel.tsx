@@ -100,6 +100,7 @@ type Confirmation =
     };
 
 type Message = {
+  id?: string;
   role: Role;
   content: string;
   pending?: boolean;
@@ -359,9 +360,11 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
       const data = await r.json();
       const loaded: Message[] = (data.messages ?? []).map(
         (m: {
+          id: string;
           role: Role;
           content: string;
           toolName: string | null;
+          confirmationStatus?: "pending" | "done" | "failed" | "cancelled" | null;
         }) => {
           let confirmation: Confirmation | undefined;
           if (m.role === "tool" && m.content) {
@@ -375,10 +378,11 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
             }
           }
           return {
+            id: m.id,
             role: m.role === "tool" ? "assistant" : m.role,
             content: m.role === "tool" && confirmation ? "" : m.content,
             confirmation,
-            confirmationStatus: confirmation ? "done" : undefined,
+            confirmationStatus: confirmation ? (m.confirmationStatus ?? "pending") : undefined,
             meta: m.toolName ?? undefined,
           };
         },
@@ -723,6 +727,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
         body: JSON.stringify({
           kind: msg.confirmation.kind,
           payload: msg.confirmation,
+          messageId: msg.id,
         }),
       });
       const data = await r.json();
@@ -757,6 +762,17 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
   }
 
   function dismissAction(idx: number) {
+    const msg = messages[idx];
+    if (msg?.id && conversationId) {
+      fetch(`/api/ai/conversations?id=${conversationId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messageId: msg.id,
+          confirmationStatus: "cancelled",
+        }),
+      }).catch(() => {});
+    }
     setMessages((prev) => {
       const copy = [...prev];
       copy[idx] = { ...copy[idx], confirmationStatus: "cancelled" };
