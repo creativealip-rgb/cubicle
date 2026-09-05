@@ -1,6 +1,9 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
+import { updateTask } from "@/lib/actions/tasks";
+import { useTransition } from "react";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { EmptyState } from "@/components/empty-state";
@@ -82,6 +85,23 @@ export function TasksListTable({
   focusId?: string | null;
 }) {
   const { t, lang, locale } = useT();
+  const [taskList, setTaskList] = useState(tasks);
+  const [, startTransition] = useTransition();
+
+  function handleFastToggle(taskId: string, currentStatus: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    const newStatus = currentStatus === "done" ? "todo" : "done";
+    setTaskList((prev) =>
+      prev.map((item) => (item.id === taskId ? { ...item, status: newStatus } : item))
+    );
+    startTransition(async () => {
+      try {
+        await updateTask(taskId, { status: newStatus });
+      } catch (err) {
+        toast.error("Gagal mengubah status tugas");
+      }
+    });
+  }
 
   const getters = useMemo(
     () => ({
@@ -104,7 +124,7 @@ export function TasksListTable({
   );
 
   const { sorted, toggle, dirFor } = useTableSort<TasksListItem, SortKey>(
-    tasks,
+    taskList,
     getters,
     orders,
   );
@@ -192,11 +212,16 @@ export function TasksListTable({
               >
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${task.status === "done" ? "bg-emerald-500/10 text-emerald-600" : "bg-primary/10 text-primary"}`}>
-                      <CheckSquare2 className="h-3 w-3" />
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => handleFastToggle(task.id, task.status, e)}
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors ${task.status === "done" ? "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30" : "bg-primary/10 text-primary hover:bg-primary/20"}`}
+                      title={task.status === "done" ? "Tandai belum selesai" : "Tandai selesai"}
+                    >
+                      <CheckSquare2 className="h-3.5 w-3.5" />
+                    </button>
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-foreground hover:text-primary transition-colors truncate">{task.title}</p>
+                      <p className={`text-sm font-semibold transition-colors truncate ${task.status === "done" ? "line-through text-muted-foreground font-normal" : "text-foreground hover:text-primary"}`}>{task.title}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
                         {task.mode === "reusable" ? (
                           <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">Reusable</span>
@@ -259,12 +284,17 @@ export function TasksListTable({
               >
                 <div className="flex items-center gap-3">
                   <div className="min-w-0 flex-1 flex items-center gap-2">
-                    <div className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md ${task.status === "done" ? "bg-emerald-500/10 text-emerald-600" : "bg-primary/10 text-primary"}`}>
-                      <CheckSquare2 className="h-3 w-3" />
-                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => handleFastToggle(task.id, task.status, e)}
+                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors ${task.status === "done" ? "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30" : "bg-primary/10 text-primary hover:bg-primary/20"}`}
+                      title={task.status === "done" ? "Tandai belum selesai" : "Tandai selesai"}
+                    >
+                      <CheckSquare2 className="h-3.5 w-3.5" />
+                    </button>
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className="truncate text-sm font-semibold text-foreground hover:text-primary transition-colors">{task.title}</p>
+                        <p className={`truncate text-sm font-semibold transition-colors ${task.status === "done" ? "line-through text-muted-foreground font-normal" : "text-foreground hover:text-primary"}`}>{task.title}</p>
                         {task.mode === "reusable" ? (
                           <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">Reusable</span>
                         ) : (
