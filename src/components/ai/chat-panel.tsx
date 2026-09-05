@@ -94,15 +94,26 @@ function formatRelativeTime(iso: string): string {
   return new Date(iso).toLocaleDateString(undefined, { month: "short", day: "numeric" });
 }
 
-const SUGGESTIONS = [
-  "How's the business?",
-  "Any overdue invoices?",
-  "What's pending for Kopi Senja?",
-  "List active clients",
-  "Show me open tasks",
-  "Mark the overdue task as done",
-  "Draft a reminder for INV-0001",
-];
+const SUGGESTIONS = (lang: AssistantLang) =>
+  lang === "id"
+    ? [
+        "Bagaimana kondisi bisnis bulan ini?",
+        "Cek invoice yang jatuh tempo",
+        "Apa tugas tertunda untuk Kopi Senja?",
+        "Tampilkan daftar klien aktif",
+        "Tampilkan tugas yang masih terbuka",
+        "Tandai tugas yang overdue jadi selesai",
+        "Buatkan draf pengingat untuk invoice",
+      ]
+    : [
+        "How's the business?",
+        "Any overdue invoices?",
+        "What's pending for Kopi Senja?",
+        "List active clients",
+        "Show me open tasks",
+        "Mark the overdue task as done",
+        "Draft a reminder for INV-0001",
+      ];
 
 // Full-page welcome — bigger, more specific (matches AI workspace hub feel)
 const SUGGESTED_CARDS = [
@@ -731,41 +742,47 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       </div>
                     </div>
                   ) : (
-                    <div className="flex items-center justify-between gap-2 border-b bg-gradient-to-r from-[var(--cu-purple)] to-[var(--cu-purple-hover)] px-4 py-3 text-white">
-                      <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4" />
+                    <div className="flex items-center justify-between gap-2 border-b bg-gradient-to-r from-primary to-[#5333DD] px-4 py-3 text-white shadow-xs">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white/20 text-white backdrop-blur-xs">
+                          <Sparkles className="h-4 w-4" />
+                        </div>
                         <div>
-                          <p className="text-sm font-semibold leading-none">Cubiqlo AI</p>
-                          <p className="text-[10px] text-purple-100">
-                            Workspace assistant · gemini-3-flash
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs font-bold leading-none">{lang === "id" ? "Asisten Cubiqlo" : "Cubiqlo AI"}</p>
+                            <span className="flex items-center gap-1 text-[9px] font-semibold text-emerald-300 bg-emerald-500/20 px-1.5 py-0.2 rounded-full">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                              Ready
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-white/80 mt-0.5">
+                            {lang === "id" ? "Asisten Cerdas Workspace" : "Workspace Intelligent Assistant"}
                           </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1">
                         <button
                           onClick={startNewChat}
-                          className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
-                          aria-label="New chat"
-                          title="New chat"
+                          className="rounded-lg p-1.5 text-white/80 hover:bg-white/20 hover:text-white transition"
+                          aria-label={lang === "id" ? "Obrolan baru" : "New chat"}
+                          title={lang === "id" ? "Obrolan baru" : "New chat"}
                         >
                           <MessageSquarePlus className="h-4 w-4" />
                         </button>
-                        {messages.length > 0 && (
-                          <button
-                            onClick={() => isFullpage ? setHistoryOpen(true) : setShowHistoryBelow((v) => !v)}
-                            className={cn(
-                              "rounded-md p-1 hover:bg-white/10",
-                              showHistoryBelow ? "bg-white/15 text-white" : "text-white/80 hover:text-white",
-                            )}
-                            aria-label="Toggle history"
-                            title="History"
-                          >
-                            <History className="h-4 w-4" />
-                          </button>
-                        )}
+                        <button
+                          onClick={() => setHistoryOpen(true)}
+                          className={cn(
+                            "rounded-lg p-1.5 transition text-white/80 hover:bg-white/20 hover:text-white",
+                            historyOpen && "bg-white/20 text-white",
+                          )}
+                          aria-label={lang === "id" ? "Riwayat" : "History"}
+                          title={lang === "id" ? "Riwayat" : "History"}
+                        >
+                          <History className="h-4 w-4" />
+                        </button>
                         <button
                           onClick={() => setOpen(false)}
-                          className="rounded-md p-1 text-white/80 hover:bg-white/10 hover:text-white"
+                          className="rounded-lg p-1.5 text-white/80 hover:bg-white/20 hover:text-white transition"
                           aria-label="Close"
                         >
                           <X className="h-4 w-4" />
@@ -786,17 +803,17 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                 >
                   {messages.length === 0 && !isFullpage && (
                     <div className="space-y-3">
-                      <div className="rounded-lg bg-white p-3 text-xs text-slate-600 ring-1 ring-slate-200">
-                        Hi! I can look up clients, projects, tasks, and invoices.
-                        I can also mark tasks done or draft invoice reminders.
-                        Try one of these:
+                      <div className="rounded-xl bg-card p-3 text-xs text-muted-foreground border border-border/80 shadow-2xs leading-relaxed">
+                        {lang === "id"
+                          ? "Halo! Saya bisa membantu cek klien, proyek, tugas, serta buat draf invoice dan pengingat. Coba opsi berikut:"
+                          : "Hi! I can look up clients, projects, tasks, and invoices. I can also mark tasks done or draft invoice reminders. Try one of these:"}
                       </div>
-                      <div className="flex flex-wrap gap-2">
-                        {SUGGESTIONS.map((s) => (
+                      <div className="flex flex-wrap gap-1.5">
+                        {SUGGESTIONS(lang).map((s) => (
                           <button
                             key={s}
                             onClick={() => send(s)}
-                            className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:border-[var(--cu-purple)] hover:bg-purple-50 hover:text-[var(--cu-purple)]"
+                            className="rounded-full border border-border/80 bg-background px-3 py-1.5 text-xs font-medium text-foreground transition hover:border-primary hover:bg-primary/5 hover:text-primary text-left"
                           >
                             {s}
                           </button>
@@ -937,7 +954,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                 </div>
 
                 {/* Input — Sticky GPT-like Bottom Bar */}
-                <div className={cn("border-t border-border/80 bg-card/95 backdrop-blur-md shrink-0", isFullpage ? "sticky bottom-0 z-20 px-4 sm:px-8 py-3.5 shadow-lg w-full" : "bg-white p-2")}>
+                <div className={cn("border-t border-border/80 bg-card/95 backdrop-blur-md shrink-0", isFullpage ? "sticky bottom-0 z-20 px-4 sm:px-8 py-3.5 shadow-lg w-full" : "p-3 bg-card border-t border-border/80")}>
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
@@ -950,15 +967,15 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       value={input}
                       onChange={(e) => setInput(e.target.value)}
                       onKeyDown={onKeyDown}
-                      placeholder={isFullpage ? assistantText.placeholder : "Ask about clients, projects, tasks, invoices…"}
+                      placeholder={isFullpage ? assistantText.placeholder : (lang === "id" ? "Ketik pertanyaan atau instruksi..." : "Ask about clients, projects, tasks...")}
                       rows={1}
                       disabled={busy}
                       className={cn(
                         "flex-1 resize-none border px-3.5 py-2.5 text-sm outline-none transition-all",
-                        "max-h-32 min-h-11 disabled:opacity-50",
+                        "max-h-28 min-h-[42px] disabled:opacity-50",
                         isFullpage
                           ? "rounded-xl border-border/80 bg-background text-foreground shadow-2xs focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/60"
-                          : "rounded-lg border-slate-200 bg-slate-50 focus:border-[var(--cu-purple)] focus:ring-[var(--cu-purple)]",
+                          : "rounded-xl border-border/80 bg-background text-foreground shadow-2xs focus:border-primary focus:ring-2 focus:ring-primary/20 placeholder:text-muted-foreground/60",
                       )}
                     />
                     <Button
@@ -968,7 +985,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       onClick={toggleVoice}
                       disabled={!voiceSupported}
                       className={cn(
-                        "h-11 w-11 shrink-0 rounded-xl",
+                        "h-10 w-10 shrink-0 rounded-xl",
                         listening && "bg-destructive/10 text-destructive hover:bg-destructive/20",
                       )}
                       aria-label={listening ? "Stop listening" : "Voice input"}
@@ -992,7 +1009,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       disabled={!busy && !input.trim()}
                       onClick={busy ? stopStream : undefined}
                       className={cn(
-                        "h-11 w-11 shrink-0 rounded-xl font-semibold shadow-xs",
+                        "h-10 w-10 shrink-0 rounded-xl font-semibold shadow-xs",
                         busy
                           ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
                           : "bg-primary text-primary-foreground hover:bg-primary/90",
@@ -1007,8 +1024,8 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       )}
                     </Button>
                   </form>
-                  <div className="flex items-center justify-between px-1 pt-1.5 text-[11px] text-muted-foreground">
-                    <span>{isFullpage ? (lang === "id" ? "Tekan Enter untuk kirim · Shift+Enter untuk baris baru" : assistantText.hint) : "Press Enter to send · Shift+Enter for newline"}</span>
+                  <div className="flex items-center justify-between px-1 pt-1.5 text-[10px] text-muted-foreground">
+                    <span>{isFullpage ? (lang === "id" ? "Tekan Enter untuk kirim · Shift+Enter untuk baris baru" : assistantText.hint) : (lang === "id" ? "Enter untuk kirim · Shift+Enter untuk baris baru" : "Press Enter to send · Shift+Enter for newline")}</span>
                     {!isFullpage && lastUsage && (
                       <span title={`prompt: ${lastUsage.prompt_tokens} · completion: ${lastUsage.completion_tokens}`}>
                         {lastUsage.total_tokens.toLocaleString()} tokens
