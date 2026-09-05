@@ -20,12 +20,14 @@ export function buildProjectsHref(filters: {
   status: ProjectStatusTab;
   clientId?: string;
   billingType?: ProjectBillingType;
+  search?: string;
   page?: number;
 }): string {
   const params = new URLSearchParams();
   if (filters.status !== "active") params.set("status", filters.status);
   if (filters.clientId) params.set("clientId", filters.clientId);
   if (filters.billingType) params.set("billingType", filters.billingType);
+  if (filters.search) params.set("search", filters.search);
   if (filters.page && filters.page > 1) params.set("page", String(filters.page));
   const query = params.toString();
   return query ? `/app/projects?${query}` : "/app/projects";

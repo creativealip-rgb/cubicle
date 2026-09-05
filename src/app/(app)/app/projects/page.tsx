@@ -9,9 +9,10 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PageHeader } from "@/components/ui/page-header";
-import { Briefcase, ChevronLeft, ChevronRight } from "lucide-react";
+import { Briefcase, ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
 import { ProjectsListTable } from "@/components/projects/projects-list-table";
+import { Input } from "@/components/ui/input";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { getPlanYearlyLabel } from "@/lib/billing-pricing";
 import { BILLING_PLANS } from "@/lib/billing-plans";
@@ -52,6 +53,7 @@ export default async function ProjectsPage({
     clientId?: string;
     status?: string;
     billingType?: string;
+    search?: string;
     page?: string;
   }>;
 }) {
@@ -79,6 +81,7 @@ export default async function ProjectsPage({
   const statusTab = parseStatusTab(params.status);
   const clientId = isUuid(params.clientId) ? params.clientId : undefined;
   const billingType = parseBillingType(params.billingType);
+  const search = params.search?.trim() || "";
   const rawPage = Number.parseInt(params.page ?? "1", 10);
   const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
   const PAGE_SIZE = 10;
@@ -123,6 +126,11 @@ export default async function ProjectsPage({
   if (clientId) whereClauses.push(eq(projects.clientId, clientId));
   if (billingType === "package") whereClauses.push(eq(projects.billingType, "package"));
   else if (billingType) whereClauses.push(eq(projects.billingModel, billingType));
+  if (search) {
+    whereClauses.push(
+      sql`(${projects.name} ILIKE ${`%${search}%`} OR ${clients.name} ILIKE ${`%${search}%`})`
+    );
+  }
 
   // Count total filtered projects for pagination
   const [{ totalFiltered }] = await db
@@ -166,9 +174,10 @@ export default async function ProjectsPage({
     status: statusTab,
     clientId,
     billingType,
+    search: search || undefined,
   };
 
-  const hasExtraFilters = Boolean(clientId || billingType);
+  const hasExtraFilters = Boolean(clientId || billingType || search);
   const selectedClient = clientId
     ? clientOptions.find((c) => c.id === clientId)
     : undefined;
@@ -199,17 +208,33 @@ export default async function ProjectsPage({
         }
       />
 
-      <StatusFilterTabs
-        activeValue={statusTab}
-        hideEmpty={false}
-        tabs={PROJECT_STATUS_TABS.map((tab) => ({
-          value: tab,
-          label: tabLabel(tab),
-          href: buildProjectsHref({ ...filtersForHref, status: tab }),
-          count: statusCounts[tab] ?? 0,
-          alwaysShow: true,
-        }))}
-      />
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <StatusFilterTabs
+          activeValue={statusTab}
+          hideEmpty={false}
+          tabs={PROJECT_STATUS_TABS.map((tab) => ({
+            value: tab,
+            label: tabLabel(tab),
+            href: buildProjectsHref({ ...filtersForHref, status: tab, search: search || undefined }),
+            count: statusCounts[tab] ?? 0,
+            alwaysShow: true,
+          }))}
+        />
+
+        <form className="relative w-full sm:w-64">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            name="search"
+            aria-label={t("Cari proyek atau klien", "Search projects or clients")}
+            defaultValue={search}
+            placeholder={t("Cari proyek...", "Search projects...")}
+            className="pl-8"
+          />
+          {statusTab !== "active" && <input type="hidden" name="status" value={statusTab} />}
+          {clientId && <input type="hidden" name="clientId" value={clientId} />}
+          {billingType && <input type="hidden" name="billingType" value={billingType} />}
+        </form>
+      </div>
 
       {isAtLimit && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
@@ -235,6 +260,7 @@ export default async function ProjectsPage({
       )}
 
       <ActiveFilterSummary basePath="/app/projects" filters={[
+        { key: "search", label: t("Pencarian", "Search"), value: search },
         { key: "clientId", label: t("Klien", "Client"), value: selectedClient?.name },
         { key: "billingType", label: t("Model", "Model"), value: billingType === "fixed_price" ? "Fixed Price" : billingType === "hourly" ? t("Per Jam", "Hourly") : billingType === "retainer" ? "Retainer" : billingType === "package" ? t("Paket", "Package") : undefined },
       ]} />

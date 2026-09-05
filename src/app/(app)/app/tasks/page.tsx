@@ -17,7 +17,8 @@ import { resolveBillingModel } from "@/lib/billing-model";
 import { defaultTaskWorkMode } from "@/lib/task-work-mode";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { PageHeader } from "@/components/ui/page-header";
-import { CheckSquare } from "lucide-react";
+import { CheckSquare, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import Link from "next/link";
 
 export const PAGE_SIZE = 10;
@@ -29,7 +30,22 @@ function buildTaskPageHref(params: Record<string, string | undefined>, page: num
   return `/app/tasks?${next.toString()}`;
 }
 
-export default async function TasksPage({ searchParams }: { searchParams: Promise<{ tab?: string; status?: string; priority?: string; projectId?: string; assignee?: string; view?: string; focus?: string; mode?: string; page?: string }> }) {
+export default async function TasksPage({
+  searchParams,
+}: {
+  searchParams: Promise<{
+    tab?: string;
+    status?: string;
+    priority?: string;
+    projectId?: string;
+    assignee?: string;
+    view?: string;
+    focus?: string;
+    mode?: string;
+    search?: string;
+    page?: string;
+  }>;
+}) {
   const lang = await getCurrentLang();
   const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
@@ -38,6 +54,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   const params = await searchParams;
   const tab = params.tab === "templates" ? "templates" : "tasks";
   const view = params.view === "board" ? "board" : params.view === "weekly" ? "weekly" : "list";
+  const search = params.search?.trim() || "";
   const requestedPage = Math.max(1, Number(params.page) || 1);
   const whereClauses = [eq(tasks.workspaceId, workspaceId)];
   if (params.mode === "workflow" || params.mode === "reusable") whereClauses.push(eq(tasks.mode, params.mode));
@@ -47,6 +64,11 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
   if (params.assignee === "me") whereClauses.push(eq(tasks.assigneeId, user.id));
   else if (params.assignee === "unassigned") whereClauses.push(sql`${tasks.assigneeId} IS NULL`);
   else if (params.assignee && params.assignee !== "all") whereClauses.push(eq(tasks.assigneeId, params.assignee));
+  if (search) {
+    whereClauses.push(
+      sql`(${tasks.title} ILIKE ${`%${search}%`} OR ${tasks.description} ILIKE ${`%${search}%`})`
+    );
+  }
 
   const [{ filteredTaskCount }] = await db.select({ filteredTaskCount: sql<number>`count(${tasks.id})::int` }).from(tasks).where(and(...whereClauses));
   const totalPages = Math.max(1, Math.ceil(filteredTaskCount / PAGE_SIZE));
@@ -94,8 +116,38 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
       }
     />
     <TaskPageTabs current={tab} />
-    {tab === "templates" ? <TaskTemplateWorkspace templates={templates} projects={taskProjects} /> : <>
-      <ActiveFilterSummary basePath="/app/tasks" filters={[{ key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name }, { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee }, { key: "priority", label: t("Prioritas", "Priority"), value: params.priority }, { key: "status", label: "Status", value: params.status }]} />
+    {tab === "templates" ? (
+      <TaskTemplateWorkspace templates={templates} projects={taskProjects} />
+    ) : (
+      <>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <ActiveFilterSummary
+            basePath="/app/tasks"
+            filters={[
+              { key: "search", label: t("Pencarian", "Search"), value: search },
+              { key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name },
+              { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee },
+              { key: "priority", label: t("Prioritas", "Priority"), value: params.priority },
+              { key: "status", label: "Status", value: params.status },
+            ]}
+          />
+
+          <form className="relative w-full sm:w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              name="search"
+              aria-label={t("Cari tugas", "Search tasks")}
+              defaultValue={search}
+              placeholder={t("Cari tugas...", "Search tasks...")}
+              className="pl-8"
+            />
+            {params.status && <input type="hidden" name="status" value={params.status} />}
+            {params.priority && <input type="hidden" name="priority" value={params.priority} />}
+            {params.projectId && <input type="hidden" name="projectId" value={params.projectId} />}
+            {params.assignee && <input type="hidden" name="assignee" value={params.assignee} />}
+            {params.view && <input type="hidden" name="view" value={params.view} />}
+          </form>
+        </div>
       {view === "weekly" ? (
         <TasksWeeklyTracker tasks={taskList} />
       ) : view === "board" ? (
@@ -104,6 +156,7 @@ export default async function TasksPage({ searchParams }: { searchParams: Promis
         <TasksListTable tasks={taskList} members={members} projects={taskProjects} currentUserId={user.id} currentFilters={{ status: params.status, priority: params.priority, projectId: params.projectId, assignee: params.assignee }} focusId={params.focus ?? null} />
       )}
       {totalPages > 1 && <nav className="flex flex-wrap items-center justify-between gap-3" aria-label={t("Paginasi tugas", "Task pagination")}><span className="text-sm text-muted-foreground">{t("Halaman", "Page")} {page} {t("dari", "of")} {totalPages}</span><div className="flex gap-2"><Link className={`rounded border px-3 py-2 text-sm ${page===1?"pointer-events-none opacity-50":""}`} href={buildTaskPageHref(params,page-1)}>{t("Sebelumnya", "Previous")}</Link><Link className={`rounded border px-3 py-2 text-sm ${page===totalPages?"pointer-events-none opacity-50":""}`} href={buildTaskPageHref(params,page+1)}>{t("Berikutnya", "Next")}</Link></div></nav>}
-    </>}
+      </>
+    )}
   </div>;
 }
