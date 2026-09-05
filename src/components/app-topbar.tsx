@@ -139,9 +139,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
     try {
       const result = await switchWorkspace(wsId);
       if (result.ok) {
-        refresh();
-        await new Promise((r) => setTimeout(r, 300));
-        await loadWorkspaces();
+        window.location.reload();
       }
     } finally {
       setSwitching(null);

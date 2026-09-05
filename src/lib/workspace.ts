@@ -40,6 +40,29 @@ export async function findWorkspaceFullForCurrentUser(): Promise<WorkspaceRow | 
   const userId = session?.user?.id;
   if (!userId) throw new Error("Not authenticated");
 
+  const cookieStore = await cookies();
+  const cookieWsId = cookieStore.get(COOKIE_NAME)?.value;
+
+  if (cookieWsId) {
+    const [membership] = await db
+      .select({ workspaceId: workspaceMembers.workspaceId })
+      .from(workspaceMembers)
+      .where(and(
+        eq(workspaceMembers.userId, userId),
+        eq(workspaceMembers.workspaceId, cookieWsId),
+      ))
+      .limit(1);
+
+    if (membership) {
+      const [workspace] = await db
+        .select()
+        .from(workspaces)
+        .where(eq(workspaces.id, membership.workspaceId))
+        .limit(1);
+      if (workspace) return workspace;
+    }
+  }
+
   const [membership] = await db.select({ workspaceId: workspaceMembers.workspaceId }).from(workspaceMembers).where(eq(workspaceMembers.userId, userId)).limit(1);
   if (!membership) return null;
   const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, membership.workspaceId)).limit(1);
