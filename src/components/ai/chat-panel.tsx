@@ -817,11 +817,11 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                           "rounded-2xl px-4 py-3 text-sm shadow-xs transition-all leading-relaxed",
                           isFullpage ? "max-w-[85%] md:max-w-[75%]" : "max-w-[85%]",
                           m.role === "user"
-                            ? "bg-primary text-primary-foreground font-medium rounded-tr-xs"
+                            ? "bg-[#6647F0] text-white font-medium rounded-tr-xs"
                             : isFullpage
                               ? "bg-card text-foreground border border-border/80 rounded-tl-xs shadow-xs"
                               : "bg-white text-slate-900 ring-1 ring-slate-200",
-                          m.error && "bg-destructive/10 border-destructive/30 text-destructive",
+                          m.error && "bg-amber-50 border-amber-200 text-amber-950 font-medium",
                         )}
                       >
                         {m.pending ? (
