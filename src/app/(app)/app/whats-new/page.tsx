@@ -47,32 +47,33 @@ export default function WhatsNewPage() {
   const latestRelease = productUpdates[0];
 
   return (
-    <div className="mx-auto w-full max-w-[1040px] pb-10">
+    <div className="mx-auto w-full max-w-[960px] pb-10">
       <WhatsNewSeenMarker releaseId={latestProductUpdateId} />
 
-      <header className="relative isolate overflow-hidden rounded-[28px] bg-[#171429] px-6 py-8 text-white shadow-[0_24px_70px_-35px_rgba(50,35,110,0.7)] sm:px-9 sm:py-10">
-        <div className="absolute -right-16 -top-28 h-72 w-72 rounded-full bg-violet-500/25 blur-3xl" />
-        <div className="absolute -bottom-28 left-1/3 h-56 w-56 rounded-full bg-blue-500/15 blur-3xl" />
-        <div className="absolute right-8 top-8 hidden h-28 w-28 rotate-12 items-center justify-center rounded-[32px] border border-white/10 bg-white/[0.07] shadow-2xl backdrop-blur sm:flex">
-          <Megaphone className="h-11 w-11 -rotate-12 text-violet-200" strokeWidth={1.6} />
+      {/* Hero Header - Sleek & Compact */}
+      <header className="relative isolate overflow-hidden rounded-2xl bg-[#171429] px-5 py-6 text-white shadow-[0_16px_50px_-25px_rgba(50,35,110,0.6)] sm:px-8 sm:py-7">
+        <div className="absolute -right-16 -top-28 h-56 w-56 rounded-full bg-violet-500/25 blur-3xl" />
+        <div className="absolute -bottom-28 left-1/3 h-48 w-48 rounded-full bg-blue-500/15 blur-3xl" />
+        <div className="absolute right-6 top-6 hidden h-20 w-20 rotate-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.07] shadow-xl backdrop-blur sm:flex">
+          <Megaphone className="h-8 w-8 -rotate-12 text-violet-200" strokeWidth={1.6} />
         </div>
 
-        <div className="relative max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/[0.07] px-3 py-1.5 text-xs font-semibold text-violet-100 backdrop-blur">
-            <Sparkles className="h-3.5 w-3.5" />
+        <div className="relative max-w-xl">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.07] px-2.5 py-1 text-[11px] font-semibold text-violet-100 backdrop-blur">
+            <Sparkles className="h-3 w-3" />
             {t("Pembaruan Produk", "Product Updates")}
           </div>
-          <h1 className="mt-5 text-3xl font-bold tracking-[-0.035em] sm:text-[2.65rem] sm:leading-[1.08]">
+          <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
             {t("Cubiqlo terus jadi lebih baik.", "Cubiqlo keeps getting better.")}
           </h1>
-          <p className="mt-4 max-w-xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
+          <p className="mt-2 text-xs leading-5 text-slate-300 sm:text-sm sm:leading-6">
             {t(
               "Semua fitur baru, peningkatan, dan perbaikan penting—dirangkum singkat di satu tempat.",
               "All new features, improvements, and fixes—curated in one place."
             )}
           </p>
           {latestRelease && (
-            <div className="mt-7 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-slate-400">
+            <div className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-400">
               <span className="font-semibold text-white">{t("Update terbaru", "Latest update")}</span>
               <span className="hidden h-1 w-1 rounded-full bg-slate-600 sm:block" />
               <span>{formatDate(latestRelease.date, lang)}</span>
@@ -85,44 +86,46 @@ export default function WhatsNewPage() {
         </div>
       </header>
 
-      <section className="relative mt-10 space-y-12 sm:mt-14" aria-label={t("Pembaruan produk", "Product updates")}>
+      {/* Timeline Section */}
+      <section className="relative mt-8 space-y-8 sm:mt-10" aria-label={t("Pembaruan produk", "Product updates")}>
         <div
-          className="absolute bottom-10 left-[17px] top-3 w-px bg-gradient-to-b from-violet-300 via-slate-200 to-transparent sm:left-[23px] dark:from-violet-800 dark:via-slate-800"
+          className="absolute bottom-6 left-[15px] top-2.5 w-px bg-gradient-to-b from-violet-300 via-slate-200 to-transparent sm:left-[19px] dark:from-violet-800 dark:via-slate-800"
           aria-hidden="true"
         />
 
         {productUpdates.map((release, releaseIndex) => (
           <article
             key={release.id}
-            className="relative grid grid-cols-[36px_minmax(0,1fr)] gap-3 sm:grid-cols-[48px_minmax(0,1fr)] sm:gap-5"
+            className="relative grid grid-cols-[32px_minmax(0,1fr)] gap-2.5 sm:grid-cols-[40px_minmax(0,1fr)] sm:gap-4"
           >
-            <div className="relative z-10 flex h-9 w-9 items-center justify-center rounded-full border-[5px] border-background bg-violet-600 shadow-[0_0_0_1px_rgb(221_214_254)] sm:h-12 sm:w-12 sm:border-[7px]">
-              <span className="h-2 w-2 rounded-full bg-white sm:h-2.5 sm:w-2.5" />
+            <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-[4px] border-background bg-violet-600 shadow-[0_0_0_1px_rgb(221_214_254)] sm:h-10 sm:w-10 sm:border-[5px]">
+              <span className="h-1.5 w-1.5 rounded-full bg-white sm:h-2 sm:w-2" />
             </div>
 
             <div className="min-w-0 pb-1">
-              <div className="mb-4 flex flex-wrap items-center gap-2.5">
-                <time dateTime={release.date} className="text-sm font-semibold text-slate-500 dark:text-slate-400">
+              <div className="mb-2.5 flex flex-wrap items-center gap-2">
+                <time dateTime={release.date} className="text-xs font-semibold text-slate-500 dark:text-slate-400">
                   {formatDate(release.date, lang)}
                 </time>
                 {releaseIndex === 0 && (
-                  <span className="rounded-full bg-violet-600 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-white shadow-sm">
+                  <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-xs">
                     {t("TERBARU", "LATEST")}
                   </span>
                 )}
               </div>
 
-              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-[0_12px_35px_-24px_rgba(15,23,42,0.45)]">
-                <div className="border-b border-border bg-gradient-to-r from-muted/40 to-card px-5 py-5 sm:px-7 sm:py-6">
-                  <h2 className="text-xl font-bold tracking-[-0.02em] text-card-foreground sm:text-2xl">
+              {/* Release Container Card */}
+              <div className="overflow-hidden rounded-xl border border-border bg-card shadow-xs">
+                <div className="border-b border-border bg-gradient-to-r from-muted/30 to-card px-4 py-3 sm:px-5 sm:py-3.5">
+                  <h2 className="text-base font-bold tracking-tight text-card-foreground sm:text-lg">
                     {isId ? release.title.id : release.title.en}
                   </h2>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                  <p className="mt-1 max-w-3xl text-xs leading-5 text-muted-foreground">
                     {isId ? release.summary.id : release.summary.en}
                   </p>
                 </div>
 
-                <div className="divide-y divide-border px-5 sm:px-7">
+                <div className="divide-y divide-border/80 px-4 sm:px-5">
                   {release.items.map((item, itemIdx) => {
                     const meta = typeMeta[item.type];
                     const Icon = meta.icon;
@@ -134,32 +137,32 @@ export default function WhatsNewPage() {
                     return (
                       <div
                         key={`${release.id}-${itemIdx}`}
-                        className="grid gap-3 py-5 sm:grid-cols-[40px_minmax(0,1fr)] sm:gap-4 sm:py-6"
+                        className="grid gap-2.5 py-3 sm:grid-cols-[32px_minmax(0,1fr)] sm:gap-3 sm:py-3.5"
                       >
-                        <div className={`flex h-9 w-9 items-center justify-center rounded-xl ${meta.iconBox}`}>
-                          <Icon className="h-4 w-4" strokeWidth={2} />
+                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${meta.iconBox}`}>
+                          <Icon className="h-3.5 w-3.5" strokeWidth={2} />
                         </div>
 
                         <div className="min-w-0">
-                          <div className="flex flex-wrap items-center gap-2.5">
-                            <h3 className="text-base font-semibold text-card-foreground sm:text-lg">{itemTitle}</h3>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-sm font-semibold text-card-foreground">{itemTitle}</h3>
                             <span
-                              className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[11px] font-bold ring-1 ring-inset ${meta.badge}`}
+                              className={`inline-flex items-center gap-1 rounded-full px-2 py-0.2 text-[10px] font-bold ring-1 ring-inset ${meta.badge}`}
                             >
                               {itemLabel}
                             </span>
                           </div>
 
-                          <p className="mt-2 text-sm leading-6 text-muted-foreground sm:leading-7">{itemDesc}</p>
+                          <p className="mt-1 text-xs leading-5 text-muted-foreground">{itemDesc}</p>
 
                           {item.href && itemCta && (
-                            <div className="mt-3.5">
+                            <div className="mt-2">
                               <Link
                                 href={item.href}
-                                className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition-colors hover:text-primary/80"
+                                className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary transition-colors hover:text-primary/80"
                               >
                                 {itemCta}
-                                <ArrowUpRight className="h-3.5 w-3.5" />
+                                <ArrowUpRight className="h-3 w-3" />
                               </Link>
                             </div>
                           )}
