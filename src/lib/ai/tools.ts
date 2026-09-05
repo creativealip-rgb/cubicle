@@ -1563,13 +1563,12 @@ export const TOOL_DEFS: ToolDefinition[] = [
     type: "function",
     function: {
       name: "list_clients",
-      description:
-        "List workspace clients. Returns name, company, email, status, tags.",
+      description: "List clients in the workspace, ordered by most recently updated. Use for 'cek client terbaru', 'lihat daftar klien', 'siapa saja klien', 'list clients'.",
       parameters: {
         type: "object",
         properties: {
           status: { type: "string", enum: ["active", "inactive", "archived"] },
-          limit: { type: "number" },
+          limit: { type: "number", description: "Number of clients to return (default: 20)" },
         },
       },
     },
@@ -1578,7 +1577,7 @@ export const TOOL_DEFS: ToolDefinition[] = [
     type: "function",
     function: {
       name: "list_projects",
-      description: "List workspace projects. Use for project-level questions.",
+      description: "List workspace projects. Use for 'cek project', 'daftar proyek', 'show projects', and project-level queries.",
       parameters: {
         type: "object",
         properties: {
