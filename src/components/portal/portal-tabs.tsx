@@ -27,6 +27,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n-client";
+import { PortalActionButtons } from "./portal-action-buttons";
 
 export type PortalTabKey = "projects" | "files" | "invoices" | "requests";
 
@@ -47,7 +48,8 @@ function normalizeTab(tab?: string | null): PortalTabKey {
 
 type PortalTabsProps = {
   initialTab?: string | null;
-
+  token?: string;
+  projectOptions?: Array<{ id: string; name: string }>;
   projects: ReactNode;
   files: ReactNode;
   invoices: ReactNode;
@@ -69,7 +71,8 @@ type PortalTabsProps = {
  */
 export function PortalTabs({
   initialTab,
-
+  token,
+  projectOptions,
   projects,
   files,
   invoices,
@@ -158,8 +161,8 @@ export function PortalTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={changeTab} className="space-y-5">
-      <div className="relative w-full after:pointer-events-none after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-background after:to-transparent">
-        <div className="w-full overflow-x-auto pb-1 pr-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative w-full sm:w-auto overflow-x-auto">
           <TabsList className="h-auto min-w-max justify-start gap-1 bg-muted/60 p-1">
             {tabs.map((tab) => (
               <TabsTrigger
@@ -168,12 +171,12 @@ export function PortalTabs({
                   tabRefs.current[tab.key] = node;
                 }}
                 value={tab.key}
-                className="min-h-11 gap-1.5 px-3 py-2 text-xs transition-all sm:text-sm data-[state=active]:shadow-sm"
+                className="min-h-9 gap-1.5 px-3 py-1.5 text-xs font-semibold transition-all data-[state=active]:shadow-sm"
               >
                 {tab.icon}
                 <span>{tab.label}</span>
                 {typeof tab.badge === "number" && tab.badge > 0 ? (
-                  <span className="rounded-full bg-background px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                  <span className="rounded-full bg-background px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">
                     {tab.badge}
                   </span>
                 ) : null}
@@ -184,7 +187,7 @@ export function PortalTabs({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="min-h-11 gap-1.5 px-3 py-2 text-xs font-medium sm:text-sm"
+                  className="min-h-9 gap-1.5 px-3 py-1.5 text-xs font-semibold"
                 >
                   <MessageCircle className="h-3.5 w-3.5" />
                   {t("Kontak", "Contact")}
@@ -205,8 +208,16 @@ export function PortalTabs({
             </Dialog>
           </TabsList>
         </div>
-      </div>
 
+        {token && (
+          <div className="flex shrink-0 items-center justify-end">
+            <PortalActionButtons
+              token={token}
+              projects={projectOptions ?? []}
+            />
+          </div>
+        )}
+      </div>
 
       <TabsContent value="projects" className={panelClass}>
         {projects}

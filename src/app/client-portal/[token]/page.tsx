@@ -38,7 +38,6 @@ import {
 import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
 import { PortalInvoices } from "@/components/portal/portal-invoices";
-import { PortalActionButtons } from "@/components/portal/portal-action-buttons";
 import { PortalRequestList } from "@/components/portal/portal-request-list";
 
 import { PortalTabs } from "@/components/portal/portal-tabs";
@@ -763,7 +762,7 @@ export default async function ClientPortalPage({
     )
     .limit(100);
 
-  const activeCount = clientProjects.filter(
+  const _activeCount = clientProjects.filter(
     (p) => p.status === "active",
   ).length;
   const billingModels = clientProjects.map((p) => resolveBillingModel(p));
@@ -949,32 +948,16 @@ export default async function ClientPortalPage({
                 </div>
               </div>
             </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3 pt-1">
-              <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg bg-blue-500/10 text-blue-600">
-                  <FolderOpen className="h-3.5 w-3.5" />
-                </div>
-                <span>
-                  <span className="font-bold text-foreground">
-                    {activeCount}
-                  </span>{" "}
-                  {t("proyek aktif berjalan", "active running projects")}
-                </span>
-              </div>
-              <PortalActionButtons
-                token={portalCredential}
-                projects={clientProjects.map((p) => ({
-                  id: p.id,
-                  name: p.name,
-                }))}
-              />
-            </div>
           </div>
 
           <Suspense fallback={<PortalTabsFallback />}>
             <PortalTabs
               initialTab={initialTab}
+              token={portalCredential}
+              projectOptions={clientProjects.map((p) => ({
+                id: p.id,
+                name: p.name,
+              }))}
               counts={{
                 projects: clientProjects.length,
                 files: portalFilesList.length,

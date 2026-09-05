@@ -101,22 +101,22 @@ export function PortalActionButtons({
 
   return (
     <>
-      <div className="flex flex-wrap gap-3">
+      <div className="flex items-center gap-2">
         <Button
           type="button"
           variant="outline"
-          className="min-h-11 gap-2 rounded-lg px-4"
+          className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs"
           onClick={() => setKind("report")}
         >
-          <BarChart3 className="h-4 w-4" />
+          <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
           {t("Minta Laporan", "Request Report")}
         </Button>
         <Button
           type="button"
-          className="min-h-11 gap-2 rounded-lg px-4"
+          className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs"
           onClick={() => setKind("meeting")}
         >
-          <Calendar className="h-4 w-4" />
+          <Calendar className="h-3.5 w-3.5" />
           {t("Ajukan Pertemuan", "Schedule Meeting")}
         </Button>
       </div>
