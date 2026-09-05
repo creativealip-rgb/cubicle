@@ -37,7 +37,7 @@ describe("client-scoped Project creation", () => {
   it("hides Project creation from read-only workspace roles", () => {
     expect(clientPageSource).toContain("workspaceMembers.role");
     expect(clientPageSource).toMatch(/const canWrite\s*=\s*[^;]*"owner"[^;]*"member"/);
-    expect(clientPageSource).toMatch(/\{canWrite\s*&&\s*\([\s\S]*<ProjectCreateDialog/);
+    expect(clientPageSource).toMatch(/projectsAction=\{\s*canWrite\s*\?\s*\([\s\S]*<ProjectCreateDialog/);
   });
 
   it("keeps plan-limit state and explanation on Client detail", () => {

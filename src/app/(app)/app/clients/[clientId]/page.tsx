@@ -28,6 +28,7 @@ import {
   Wallet,
   FolderKanban,
   FileSpreadsheet,
+  Users,
 } from "lucide-react";
 import { PortalTokenSection } from "./portal-section";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
@@ -277,17 +278,63 @@ export default async function ClientDetailPage({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-[360px_minmax(0,1fr)] xl:grid-cols-[400px_minmax(0,1fr)]">
-        {/* Client profile */}
-        <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <Link href="/app/clients" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
-              <ArrowLeft className="h-3 w-3" /> {t("Kembali ke Klien", "Back to Clients")}
-            </Link>
-            <div className="flex flex-wrap gap-2">
-              <Button size="sm" variant="outline" className="gap-1" asChild>
+      {/* Top Navigation & Unified Executive PageHeader */}
+      <div className="space-y-2">
+        <div className="flex items-center">
+          <Link
+            href="/app/clients"
+            className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> {t("Kembali ke Klien", "Back to Clients")}
+          </Link>
+        </div>
+
+        <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-r from-card via-card to-primary/[0.04] p-4 sm:p-5 shadow-xs transition-all">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary shadow-xs">
+                <Users className="h-5 w-5" />
+              </div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate leading-tight">
+                    {client.name}
+                  </h1>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-bold h-5 px-2 rounded-full border ${
+                      client.status === "active"
+                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                        : "border-border/80 bg-muted/60 text-muted-foreground"
+                    }`}
+                  >
+                    <span
+                      className={`mr-1 h-1.5 w-1.5 rounded-full ${
+                        client.status === "active" ? "bg-emerald-500" : "bg-muted-foreground"
+                      }`}
+                    />
+                    {client.status === "active"
+                      ? t("Aktif", "Active")
+                      : client.status === "inactive"
+                        ? t("Tidak aktif", "Inactive")
+                        : client.status === "archived"
+                          ? t("Arsip", "Archived")
+                          : client.status}
+                  </Badge>
+                </div>
+                {client.companyName && (
+                  <p className="text-xs sm:text-sm font-medium text-muted-foreground truncate mt-0.5">
+                    {client.companyName}
+                  </p>
+                )}
+              </div>
+            </div>
+
+            {/* Action Group */}
+            <div className="flex flex-wrap items-center gap-2 shrink-0">
+              <Button size="sm" variant="outline" className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs" asChild>
                 <a href={`/api/clients/${client.id}/export/xlsx`} download>
-                  <Download className="h-3 w-3" /> Excel
+                  <Download className="h-3.5 w-3.5 text-muted-foreground" /> Excel
                 </a>
               </Button>
               <ClientEditDialog
@@ -306,39 +353,35 @@ export default async function ClientDetailPage({
                   portalSlugEnabled: client.portalSlugEnabled ?? true,
                 }}
               />
-              <PermanentDeleteButton entityType="client" entityId={client.id} entityName={client.name} redirectTo="/app/clients" />
+              <PermanentDeleteButton
+                entityType="client"
+                entityId={client.id}
+                entityName={client.name}
+                redirectTo="/app/clients"
+              />
             </div>
           </div>
+        </div>
+      </div>
 
-          <Card>
+      <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)]">
+        {/* Client profile */}
+        <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+          <Card className="rounded-2xl border border-border/80 shadow-xs">
             <CardContent className="space-y-4 p-4">
               <div className="space-y-2">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h1 className="app-page-title leading-tight">{client.name}</h1>
-                  <Badge
-                    variant="outline"
-                    className={`text-[10px] font-bold h-5 px-2 rounded-full border ${
-                      client.status === "active"
-                        ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                        : "border-border/80 bg-muted/60 text-muted-foreground"
-                    }`}
-                  >
-                    <span className={`mr-1 h-1.5 w-1.5 rounded-full ${client.status === "active" ? "bg-emerald-500" : "bg-muted-foreground"}`} />
-                    {client.status === "active" ? t("Aktif", "Active") : client.status === "inactive" ? t("Tidak aktif", "Inactive") : client.status === "archived" ? t("Arsip", "Archived") : client.status}
-                  </Badge>
-                </div>
-                {client.companyName && (
-                  <p className="text-sm text-muted-foreground">{client.companyName}</p>
-                )}
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("Ringkasan Klien", "Client Summary")}
+                </p>
                 {(client.email || client.phone) && (
-                  <div className="space-y-1 text-sm text-muted-foreground">
+                  <div className="space-y-1 text-xs text-muted-foreground">
                     {client.email && (
-                      <a href={`mailto:${client.email}`} className="block break-all hover:text-foreground hover:underline">
+                      <a href={`mailto:${client.email}`} className="block break-all hover:text-primary hover:underline">
                         {client.email}
                       </a>
                     )}
                     {client.phone && (
-                      <a href={`tel:${client.phone}`} className="block hover:text-foreground hover:underline">
+                      <a href={`tel:${client.phone}`} className="block hover:text-primary hover:underline">
                         {client.phone}
                       </a>
                     )}
@@ -372,34 +415,39 @@ export default async function ClientDetailPage({
               </div>
 
               {(client.website || client.address || (client.tags && client.tags.length > 0) || client.internalNotes) && (
-                <div className="space-y-3 border-t pt-3 text-sm">
+                <div className="space-y-3 border-t pt-3 text-xs">
                   {client.website && (
                     <div>
-                      <p className="text-xs text-muted-foreground">Website</p>
-                      <a href={client.website} target="_blank" rel="noopener noreferrer" className="break-all text-blue-600 hover:underline">
+                      <p className="font-semibold text-muted-foreground">Website</p>
+                      <a href={client.website} target="_blank" rel="noopener noreferrer" className="break-all text-primary hover:underline">
                         {client.website}
                       </a>
                     </div>
                   )}
                   {client.address && (
                     <div>
-                      <p className="text-xs text-muted-foreground"> {t("Alamat","Address")}</p>
-                      <p className="mt-1 break-words">{client.address}</p>
+                      <p className="font-semibold text-muted-foreground">{t("Alamat", "Address")}</p>
+                      <p className="mt-0.5 break-words text-foreground">{client.address}</p>
                     </div>
                   )}
                   {client.tags && client.tags.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {client.tags.map((tag) => (
-                        <Badge key={tag} variant="outline" className="text-[10px]">
-                          {tag}
-                        </Badge>
-                      ))}
+                    <div>
+                      <p className="font-semibold text-muted-foreground mb-1">{t("Tag", "Tags")}</p>
+                      <div className="flex flex-wrap gap-1">
+                        {client.tags.map((tag) => (
+                          <Badge key={tag} variant="outline" className="text-[10px] rounded-md font-medium">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
                     </div>
                   )}
                   {client.internalNotes && (
                     <div>
-                      <p className="text-xs text-muted-foreground">{t("Catatan Internal", "Internal notes")}</p>
-                      <p className="mt-1 leading-relaxed">{client.internalNotes}</p>
+                      <p className="font-semibold text-muted-foreground">{t("Catatan Internal", "Internal notes")}</p>
+                      <p className="mt-0.5 leading-relaxed text-foreground bg-muted/30 p-2.5 rounded-xl border border-border/50">
+                        {client.internalNotes}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -410,11 +458,51 @@ export default async function ClientDetailPage({
 
         {/* Work tabs */}
         <section className="min-w-0">
-      {/* Tabs — Ringkasan di-hide, Portal tetap; wrap di mobile */}
       <ClientTabsNav
         initialTab={initialTab}
         projectsCount={clientProjects.length}
         invoicesCount={clientInvoices.length}
+        projectsAction={
+          canWrite ? (
+            <ProjectCreateDialog
+              clients={[]}
+              clientId={clientId}
+              isAtLimit={!projectLimitState.allowed}
+              projectCount={projectLimitState.current}
+              projectLimit={projectLimitState.limit}
+            />
+          ) : null
+        }
+        invoicesAction={
+          canWrite ? (
+            <ClientInvoiceCreateDialog
+              client={{ id: client.id, name: client.name, companyName: client.companyName }}
+              proposedInvoiceNumber={proposedInvoiceNumber}
+              projects={clientProjects.map((project) => ({
+                id: project.id,
+                name: project.name,
+                clientId: client.id,
+                billingType: project.billingModel ?? project.billingType,
+                currency: project.currency,
+                budget: project.budget,
+                rate: project.rate,
+                packagePrice: project.packagePrice,
+                packageCustomPrice: null,
+                agreedAmount: resolveProjectAmount({
+                  billingType: project.billingModel ?? project.billingType,
+                  budget: project.budget ? Number(project.budget) : null,
+                  rate: project.rate ? Number(project.rate) : null,
+                  packagePrice: Number(project.packagePrice ?? 0) || null,
+                }),
+                priorActiveFixedBilledAmount:
+                  sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0,
+                eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [],
+              }))}
+              baseCurrency={workspace?.defaultCurrency ?? "IDR"}
+              currencyRates={currencyRates}
+            />
+          ) : null
+        }
         portalContent={
           <PortalTokenSection
             client={{ ...client, portalPasswordCiphertext: client.portalPasswordCiphertext }}
@@ -423,17 +511,6 @@ export default async function ClientDetailPage({
         }
         projectsContent={
           <div className="space-y-4">
-            {canWrite && (
-              <div className="flex justify-end">
-                <ProjectCreateDialog
-                  clients={[]}
-                  clientId={clientId}
-                  isAtLimit={!projectLimitState.allowed}
-                  projectCount={projectLimitState.current}
-                  projectLimit={projectLimitState.limit}
-                />
-              </div>
-            )}
             {clientProjects.length === 0 && (
               <p className="py-8 text-center text-sm text-muted-foreground">
                 {t("Belum ada proyek", "No projects yet")}
@@ -559,36 +636,6 @@ export default async function ClientDetailPage({
         }
         invoicesContent={
           <div className="space-y-4">
-            {canWrite && (
-              <div className="flex justify-end">
-                <ClientInvoiceCreateDialog
-                  client={{ id: client.id, name: client.name, companyName: client.companyName }}
-                  proposedInvoiceNumber={proposedInvoiceNumber}
-                  projects={clientProjects.map((project) => ({
-                    id: project.id,
-                    name: project.name,
-                    clientId: client.id,
-                    billingType: project.billingModel ?? project.billingType,
-                    currency: project.currency,
-                    budget: project.budget,
-                    rate: project.rate,
-                    packagePrice: project.packagePrice,
-                    packageCustomPrice: null,
-                    agreedAmount: resolveProjectAmount({
-                      billingType: project.billingModel ?? project.billingType,
-                      budget: project.budget ? Number(project.budget) : null,
-                      rate: project.rate ? Number(project.rate) : null,
-                      packagePrice: Number(project.packagePrice ?? 0) || null,
-                    }),
-                    priorActiveFixedBilledAmount:
-                      sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0,
-                    eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [],
-                  }))}
-                  baseCurrency={workspace?.defaultCurrency ?? "IDR"}
-                  currencyRates={currencyRates}
-                />
-              </div>
-            )}
             {clientInvoices.length === 0 && (
               <p className="py-8 text-center text-sm text-muted-foreground">
                 {t("Belum ada invoice", "No invoices yet")}
