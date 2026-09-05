@@ -778,28 +778,27 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                           <p className="text-xs text-muted-foreground">{assistantText.subtitle}</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 md:hidden">
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={startNewChat}
-                          className="h-8 rounded-xl px-3 text-xs font-semibold gap-1.5 shadow-xs"
+                          className="h-8 rounded-xl px-2.5 text-xs font-semibold gap-1.5 shadow-xs"
                           aria-label="New chat"
                           title="New chat"
                         >
                           <MessageSquarePlus className="h-3.5 w-3.5 text-muted-foreground" />
-                          {lang === "id" ? "Obrolan Baru" : "New Chat"}
+                          <span className="hidden sm:inline">{lang === "id" ? "Baru" : "New"}</span>
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => setHistoryOpen(true)}
-                          className="h-8 rounded-xl px-3 text-xs font-semibold gap-1.5 text-muted-foreground hover:text-foreground"
+                          className="h-8 rounded-xl px-2.5 text-xs font-semibold gap-1.5 text-muted-foreground hover:text-foreground"
                           aria-label="Toggle history"
                           title="History"
                         >
                           <History className="h-3.5 w-3.5" />
-                          {lang === "id" ? "Riwayat" : "History"}
                         </Button>
                       </div>
                     </div>
