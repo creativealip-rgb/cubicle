@@ -176,16 +176,20 @@ export async function POST(req: NextRequest) {
       body.conversationId,
     );
 
-    // Cap history to last N user/assistant messages
+    // Cap history to last N user/assistant messages, ignoring empty stub messages from uncompleted actions
     const userMsgs = body.messages
-      .filter((m) => m.role === "user" || m.role === "assistant")
+      .filter((m) => (m.role === "user" || m.role === "assistant") && Boolean(m.content && m.content.trim()))
       .slice(-MAX_HISTORY);
     const last = userMsgs[userMsgs.length - 1];
     if (!last || last.role !== "user") {
-      return new Response(
-        JSON.stringify({ error: "last message must be from user" }),
-        { status: 400, headers: { "Content-Type": "application/json" } },
-      );
+      // If the very last message in body is user with text, take that
+      const fallbackUser = [...body.messages].reverse().find((m) => m.role === "user" && Boolean(m.content && m.content.trim()));
+      if (!fallbackUser) {
+        return new Response(
+          JSON.stringify({ error: "last message must be from user" }),
+          { status: 400, headers: { "Content-Type": "application/json" } },
+        );
+      }
     }
 
     await appendMessage(conversationId, { role: "user", content: last.content });
@@ -207,7 +211,7 @@ export async function POST(req: NextRequest) {
   }
 
   const userMsgs = body.messages
-    .filter((m) => m.role === "user" || m.role === "assistant")
+    .filter((m) => (m.role === "user" || m.role === "assistant") && Boolean(m.content && m.content.trim()))
     .slice(-MAX_HISTORY);
 
   // Build LLM message list: system + history
