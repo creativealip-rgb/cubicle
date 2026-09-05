@@ -3,27 +3,43 @@ import { getCurrentLang, getLocale, createT } from "@/lib/i18n";
 import { db } from "@/db";
 import {
   workspaceCurrencyRates,
+  tasks,
 } from "@/db/schema";
-import { eq, sql } from "drizzle-orm";
+import { eq, sql, and } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
-import { ArrowUpRight, BookOpen, TrendingUp } from "lucide-react";
+import {
+  ArrowUpRight,
+  BookOpen,
+  TrendingUp,
+  LayoutDashboard,
+  FolderKanban,
+  CheckSquare2,
+  Bell,
+  Receipt,
+  FileCheck,
+  FileText,
+  Clock,
+  Sparkles,
+  Layers,
+  ChevronRight,
+} from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatMoneyCompact } from "@/lib/utils";
 import Link from "next/link";
 import { findWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { FirstWorkspaceModal } from "@/components/first-workspace-modal";
-import { DashboardGreeting } from "@/components/dashboard-greeting";
 import { DashboardOnboarding } from "@/components/dashboard-onboarding";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   aggregateToBase,
   buildRateMap,
   convertToBase,
   groupSumToBase,
 } from "@/lib/currency-base";
+import { cn } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const lang = await getCurrentLang();
@@ -188,7 +204,7 @@ export default async function DashboardPage() {
     name: g.key,
     total: g.total,
   }));
-  const missingFxAll = Array.from(
+  const _missingFxAll = Array.from(
     new Set([...missingFx, ...clientPieGrouped.missingCurrencies]),
   ).sort();
 
@@ -199,7 +215,7 @@ export default async function DashboardPage() {
     LEFT JOIN users u ON u.id = al.actor_id
     WHERE al.workspace_id = ${workspaceId}
     ORDER BY al.created_at DESC
-    LIMIT 8`,
+    LIMIT 6`,
   );
   const activityRows = recentActivity.rows as Array<{
     id: string;
@@ -208,6 +224,18 @@ export default async function DashboardPage() {
     createdAt: Date | string;
     actorName: string | null;
   }>;
+
+  // Quick Today Tasks Preview
+  const todayTasks = await db
+    .select({
+      id: tasks.id,
+      title: tasks.title,
+      status: tasks.status,
+      priority: tasks.priority,
+    })
+    .from(tasks)
+    .where(and(eq(tasks.workspaceId, workspaceId), eq(tasks.lifecycle, "active")))
+    .limit(4);
 
   const renderNowMs = now.getTime();
 
@@ -226,6 +254,22 @@ export default async function DashboardPage() {
     return action.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
+  function getActivityIcon(entityType: string) {
+    switch (entityType?.toLowerCase()) {
+      case "invoice":
+      case "payment":
+        return Receipt;
+      case "task":
+        return CheckSquare2;
+      case "project":
+        return FolderKanban;
+      case "proposal":
+      case "contract":
+        return FileText;
+      default:
+        return Layers;
+    }
+  }
 
   const firstName = (session?.user?.name || "User").split(" ")[0];
 
@@ -244,83 +288,113 @@ export default async function DashboardPage() {
       : "";
   const sparkTotal = sparkline.reduce((s, d) => s + d.amt, 0);
 
-  const pieColors = ["#2563eb", "#0ea5e9", "#10b981", "#f59e0b", "#ef4444"];
+  const pieColors = ["#6647F0", "#8b5cf6", "#10b981", "#f59e0b", "#ec4899"];
 
-  type ReminderTone = "rose" | "amber" | "blue" | "purple" | "slate";
-  type ReminderGroupKey = "urgent" | "action" | "scheduled";
+  type ReminderTone = "rose" | "amber" | "blue" | "purple" | "emerald";
   type ReminderItem = {
     key: string;
     label: string;
     href: string;
     tone: ReminderTone;
-    group: ReminderGroupKey;
-    count?: number;
-    meta?: string;
+    icon: typeof FolderKanban;
+    count: number;
+    meta: string;
   };
 
-  // Fixed 5 reminder cards (always visible), matching meeting brief.
   const reminderItems: ReminderItem[] = [
     {
       key: "active-projects",
       label: t("Proyek Aktif", "Active Projects"),
       href: "/app/projects?status=active",
       tone: "blue",
-      group: "action",
+      icon: FolderKanban,
       count: activeProjects,
-      meta: t("Proyek sedang berjalan", "Running projects"),
+      meta: t("Sedang berjalan", "In progress"),
     },
     {
       key: "tasks-due",
-      label: t("Task", "Tasks"),
-      href: "/app/tasks?filter=today",
+      label: t("Tugas Due", "Tasks Due"),
+      href: "/app/tasks?view=weekly",
       tone: "amber",
-      group: "urgent",
+      icon: CheckSquare2,
       count: Number(att.tasksDueSoon) || 0,
-      meta: t("Task mau jatuh tempo", "Tasks due soon"),
+      meta: t("7 hari ke depan", "Next 7 days"),
     },
     {
       key: "note-reminders",
       label: t("Reminder", "Reminders"),
       href: "/app/personal",
-      tone: "blue",
-      group: "scheduled",
+      tone: "emerald",
+      icon: Bell,
       count: Number(att.noteReminders) || 0,
-      meta: t("Reminder dari note", "Note reminders"),
+      meta: t("Catatan & alert", "Notes & alerts"),
     },
     {
       key: "invoice-due",
       label: t("Invoice Due", "Invoice Due"),
       href: "/app/invoices?status=overdue",
       tone: "rose",
-      group: "urgent",
+      icon: Receipt,
       count: Number(att.invoiceDueSoon) || 0,
-      meta: t("Invoice mau jatuh tempo", "Invoices due soon"),
+      meta: t("Belum terbayar", "Unpaid & due"),
     },
     {
       key: "approval",
       label: t("Approval", "Approval"),
       href: "/app/tasks?status=review",
       tone: "purple",
-      group: "action",
+      icon: FileCheck,
       count: approvalTotal,
-      meta: t("Approval klien tertunda", "Pending client approvals"),
+      meta: t("Perlu ditinjau", "Needs review"),
     },
   ];
 
-  const reminderToneBorder: Record<ReminderTone, string> = {
-    rose: "border-l-rose-500",
-    amber: "border-l-amber-500",
-    blue: "border-l-blue-500",
-    purple: "border-l-purple-500",
-    slate: "border-l-slate-400",
+  const toneConfig: Record<ReminderTone, { bg: string; text: string; ring: string; dot: string }> = {
+    blue: {
+      bg: "bg-blue-500/10 text-blue-600 dark:text-blue-400",
+      text: "text-blue-600 dark:text-blue-400",
+      ring: "group-hover:border-blue-500/40",
+      dot: "bg-blue-600",
+    },
+    amber: {
+      bg: "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+      text: "text-amber-600 dark:text-amber-400",
+      ring: "group-hover:border-amber-500/40",
+      dot: "bg-amber-600",
+    },
+    emerald: {
+      bg: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400",
+      text: "text-emerald-600 dark:text-emerald-400",
+      ring: "group-hover:border-emerald-500/40",
+      dot: "bg-emerald-600",
+    },
+    rose: {
+      bg: "bg-rose-500/10 text-rose-600 dark:text-rose-400",
+      text: "text-rose-600 dark:text-rose-400",
+      ring: "group-hover:border-rose-500/40",
+      dot: "bg-rose-600",
+    },
+    purple: {
+      bg: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
+      text: "text-purple-600 dark:text-purple-400",
+      ring: "group-hover:border-purple-500/40",
+      dot: "bg-purple-600",
+    },
   };
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <div className="flex flex-col gap-4 sm:gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <DashboardGreeting firstName={firstName} lang={lang} />
-      </div>
+    <div className="space-y-6">
+      {/* 1. Universal Standard PageHeader matching other pages */}
+      <PageHeader
+        icon={LayoutDashboard}
+        title={`${t("Selamat datang,", "Welcome back,")} ${firstName}`}
+        description={t(
+          `Ringkasan performa operasional, proyek, keuangan, dan tugas di ${workspace.name}.`,
+          `Operational performance, projects, finance, and task summary in ${workspace.name}.`
+        )}
+      />
 
+      {/* Onboarding Checklist if new */}
       <DashboardOnboarding
         lang={lang}
         steps={[
@@ -334,191 +408,287 @@ export default async function DashboardPage() {
         ]}
       />
 
-
-      <section className="space-y-3">
+      {/* 2. Executive 5-KPI Strip with Squircle Visual Anchors */}
+      <section className="space-y-2.5">
         <div className="flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">Reminder</h2>
-          <Badge variant="secondary">{reminderItems.length}</Badge>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary" />
+            {t("Ringkasan Tindakan & Pengingat", "Action & Reminder Pulse")}
+          </h2>
+          <span className="text-xs text-muted-foreground font-mono">
+            {now.toLocaleDateString(locale, { weekday: "short", day: "numeric", month: "short" })}
+          </span>
         </div>
+
         <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
-          {[...reminderItems].sort((a, b) => Number(b.group === "urgent") - Number(a.group === "urgent")).map((item) => item.key === "approval" ? (
-            <Popover key={item.key}>
-              <PopoverTrigger asChild>
-                <button type="button" className="group text-left">
-                  <Card className={`h-full border-l-4 ${reminderToneBorder[item.tone]} transition hover:shadow-md`}>
-                    <CardContent className="flex min-h-24 items-start justify-between gap-3 p-4">
-                      <div className="min-w-0"><p className="truncate text-sm font-semibold">{item.label}</p><p className="mt-2 text-xs text-muted-foreground">{item.meta}</p></div>
-                      <Badge variant={approvalTotal > 0 ? "default" : "secondary"}>{approvalTotal}</Badge>
-                    </CardContent>
-                  </Card>
-                </button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-72 p-2">
-                <p className="px-2 py-1.5 text-sm font-semibold">{t("Approval klien tertunda", "Pending client approvals")}</p>
-                {approvalTotal === 0 ? <p className="px-2 py-4 text-sm text-muted-foreground">{t("Tidak ada approval tertunda", "No pending approvals")}</p> : <div className="space-y-1">
-                  {approvalCounts.tasks > 0 && <Link href="/app/tasks?status=review" className="flex items-center justify-between rounded-md px-2 py-2 text-sm hover:bg-muted"><span>{t("Task", "Tasks")}</span><Badge variant="secondary">{approvalCounts.tasks}</Badge></Link>}
-                  {approvalCounts.proposals > 0 && <Link href="/app/proposals?status=sent" className="flex items-center justify-between rounded-md px-2 py-2 text-sm hover:bg-muted"><span>{t("Proposal", "Proposals")}</span><Badge variant="secondary">{approvalCounts.proposals}</Badge></Link>}
-                  {approvalCounts.contracts > 0 && <Link href="/app/contracts?status=sent" className="flex items-center justify-between rounded-md px-2 py-2 text-sm hover:bg-muted"><span>{t("Kontrak", "Contracts")}</span><Badge variant="secondary">{approvalCounts.contracts}</Badge></Link>}
-                </div>}
-              </PopoverContent>
-            </Popover>
-          ) : (
-            <Link key={item.key} href={item.href} className="group">
-              <Card className={`h-full border-l-4 ${reminderToneBorder[item.tone]} ${item.group === "urgent" ? "bg-amber-50/40" : ""} transition hover:shadow-md`}>
-                <CardContent className="flex min-h-24 items-start justify-between gap-3 p-4">
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{item.label}</p>
-                    <p className="mt-2 text-xs text-muted-foreground">{item.meta || t("Perlu ditangani", "Needs attention")}</p>
+          {reminderItems.map((item) => {
+            const Icon = item.icon;
+            const cfg = toneConfig[item.tone];
+
+            if (item.key === "approval") {
+              return (
+                <Popover key={item.key}>
+                  <PopoverTrigger asChild>
+                    <button type="button" className="group text-left h-full">
+                      <div className={cn("h-full rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:shadow-sm hover:border-primary/40 flex flex-col justify-between space-y-2.5", cfg.ring)}>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", cfg.bg)}>
+                            <Icon className="h-4 w-4" />
+                          </div>
+                          <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-bold rounded-full border", approvalTotal > 0 ? "border-purple-500/30 bg-purple-500/10 text-purple-600" : "border-border text-muted-foreground")}>
+                            <span className={cn("h-1 w-1 rounded-full mr-1", cfg.dot)} />
+                            {approvalTotal}
+                          </Badge>
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-foreground">{item.label}</p>
+                          <p className="text-[11px] text-muted-foreground mt-0.5">{item.meta}</p>
+                        </div>
+                      </div>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-72 p-2 rounded-2xl">
+                    <p className="px-2 py-1.5 text-xs font-bold text-foreground">{t("Approval klien tertunda", "Pending client approvals")}</p>
+                    {approvalTotal === 0 ? (
+                      <p className="px-2 py-4 text-xs text-muted-foreground text-center">{t("Tidak ada approval tertunda", "No pending approvals")}</p>
+                    ) : (
+                      <div className="space-y-1">
+                        {approvalCounts.tasks > 0 && (
+                          <Link href="/app/tasks?status=review" className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium hover:bg-muted transition-colors">
+                            <span className="flex items-center gap-1.5"><CheckSquare2 className="h-3.5 w-3.5 text-primary" /> {t("Task Review", "Task Review")}</span>
+                            <Badge variant="secondary" className="h-5 text-[10px]">{approvalCounts.tasks}</Badge>
+                          </Link>
+                        )}
+                        {approvalCounts.proposals > 0 && (
+                          <Link href="/app/proposals?status=sent" className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium hover:bg-muted transition-colors">
+                            <span className="flex items-center gap-1.5"><FileText className="h-3.5 w-3.5 text-primary" /> {t("Proposal", "Proposals")}</span>
+                            <Badge variant="secondary" className="h-5 text-[10px]">{approvalCounts.proposals}</Badge>
+                          </Link>
+                        )}
+                        {approvalCounts.contracts > 0 && (
+                          <Link href="/app/contracts?status=sent" className="flex items-center justify-between rounded-xl px-2.5 py-2 text-xs font-medium hover:bg-muted transition-colors">
+                            <span className="flex items-center gap-1.5"><FileCheck className="h-3.5 w-3.5 text-primary" /> {t("Kontrak", "Contracts")}</span>
+                            <Badge variant="secondary" className="h-5 text-[10px]">{approvalCounts.contracts}</Badge>
+                          </Link>
+                        )}
+                      </div>
+                    )}
+                  </PopoverContent>
+                </Popover>
+              );
+            }
+
+            return (
+              <Link key={item.key} href={item.href} className="group">
+                <div className={cn("h-full rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:shadow-sm hover:border-primary/40 flex flex-col justify-between space-y-2.5", cfg.ring)}>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", cfg.bg)}>
+                      <Icon className="h-4 w-4" />
+                    </div>
+                    <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-bold rounded-full border", item.count > 0 ? "border-primary/30 bg-primary/10 text-primary" : "border-border text-muted-foreground")}>
+                      <span className={cn("h-1 w-1 rounded-full mr-1", cfg.dot)} />
+                      {item.count}
+                    </Badge>
                   </div>
-                  <Badge variant={item.count && item.count > 0 ? "default" : "secondary"}>{item.count ?? 0}</Badge>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+                  <div>
+                    <p className="text-xs font-bold text-foreground">{item.label}</p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">{item.meta}</p>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       </section>
 
-      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_400px]">
-        <div className="h-full">
-          <Card className="h-full flex flex-col">
-            <CardHeader className="flex flex-row items-center justify-between pb-3">
-              <CardTitle className="text-base font-semibold">
-                {t("Aktivitas Terbaru", "Recent Activity")}
-              </CardTitle>
-              <Button variant="ghost" size="sm" className="gap-1 text-xs" asChild>
+      {/* 3. Main Dashboard Grid (Recent Activity & Finance Pulse) */}
+      <div className="grid grid-cols-1 items-start gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+        {/* Left Column: Recent Activity & Quick Tasks Matrix */}
+        <div className="space-y-6">
+          <Card className="rounded-2xl border border-border/80 bg-card shadow-xs">
+            <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border/60 px-4 pt-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary/10 text-primary">
+                  <Clock className="h-3.5 w-3.5" />
+                </div>
+                <CardTitle className="text-sm font-bold text-foreground">
+                  {t("Aktivitas Terbaru", "Recent Activity")}
+                </CardTitle>
+              </div>
+              <Button variant="ghost" size="sm" className="h-7 px-2.5 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg gap-1" asChild>
                 <Link href="/app/tasks">
-                  {t("Lihat tugas", "View tasks")}
-                  <ArrowUpRight className="h-3 w-3" />
+                  {t("Semua Tugas", "All Tasks")}
+                  <ArrowUpRight className="h-3.5 w-3.5" />
                 </Link>
               </Button>
             </CardHeader>
-            <CardContent className="space-y-3.5 flex-1">
-              {activityRows.length === 0 && (
-                <p className="text-sm text-muted-foreground py-8 text-center">
-                  {t("Belum ada aktivitas", "No activity yet")}
+            <CardContent className="p-0 divide-y divide-border/60">
+              {activityRows.length === 0 ? (
+                <p className="text-xs text-muted-foreground py-10 text-center">
+                  {t("Belum ada riwayat aktivitas di workspace ini.", "No activity recorded yet in this workspace.")}
                 </p>
-              )}
-              {activityRows.slice(0, 6).map((item, i) => (
-                <div key={item.id}>
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="min-w-0 space-y-0.5">
-                      <p className="truncate text-sm font-medium">{formatAction(item.action)}</p>
-                      <p className="truncate text-xs text-muted-foreground">
-                        {item.entityType}
-                        {item.actorName && ` ${t("oleh", "by")} ${item.actorName}`}
-                      </p>
+              ) : (
+                activityRows.map((item) => {
+                  const ActivityIcon = getActivityIcon(item.entityType);
+                  return (
+                    <div key={item.id} className="flex items-center justify-between gap-3 p-3.5 transition-colors hover:bg-muted/30">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
+                          <ActivityIcon className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-foreground">{formatAction(item.action)}</p>
+                          <p className="truncate text-[11px] text-muted-foreground mt-0.5">
+                            <span className="capitalize">{item.entityType}</span>
+                            {item.actorName && ` · ${t("oleh", "by")} ${item.actorName}`}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+                        {formatRelative(item.createdAt)}
+                      </span>
                     </div>
-                    <span className="shrink-0 text-xs text-muted-foreground whitespace-nowrap">
-                      {formatRelative(item.createdAt)}
-                    </span>
-                  </div>
-                  {i < Math.min(activityRows.length, 6) - 1 && <Separator className="mt-2.5" />}
-                </div>
-              ))}
+                  );
+                })
+              )}
             </CardContent>
           </Card>
+
+          {/* Quick Focus Task Tray */}
+          {todayTasks.length > 0 && (
+            <Card className="rounded-2xl border border-border/80 bg-card shadow-xs">
+              <CardHeader className="flex flex-row items-center justify-between pb-3 border-b border-border/60 px-4 pt-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
+                    <CheckSquare2 className="h-3.5 w-3.5" />
+                  </div>
+                  <CardTitle className="text-sm font-bold text-foreground">
+                    {t("Tugas Fokus Hari Ini", "Today's Focus Tasks")}
+                  </CardTitle>
+                </div>
+                <Link href="/app/tasks?view=weekly" className="text-xs font-semibold text-primary hover:underline flex items-center gap-1">
+                  {t("Weekly Tracker", "Weekly Tracker")} <ChevronRight className="h-3 w-3" />
+                </Link>
+              </CardHeader>
+              <CardContent className="p-3.5 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {todayTasks.map((tItem) => (
+                  <Link key={tItem.id} href="/app/tasks" className="flex items-center justify-between gap-2 p-2.5 rounded-xl border border-border/60 bg-muted/20 hover:border-primary/40 hover:bg-card transition-all">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className={cn("h-2 w-2 rounded-full shrink-0", tItem.status === "done" ? "bg-emerald-500" : "bg-primary")} />
+                      <span className={cn("text-xs font-semibold truncate", tItem.status === "done" && "line-through text-muted-foreground font-normal")}>
+                        {tItem.title}
+                      </span>
+                    </div>
+                    <Badge variant="outline" className="text-[9px] h-4.5 px-1.5 uppercase font-bold shrink-0">
+                      {tItem.priority}
+                    </Badge>
+                  </Link>
+                ))}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
+        {/* Right Column: Financial Pulse & Docs Hub */}
         <div className="space-y-4">
-          {/* Finance sidebar: 30d revenue only */}
-          <Card className="border-primary/15 bg-primary/[0.03]">
-            <CardHeader className="pb-1">
-              <CardTitle className="flex items-center justify-between text-sm font-semibold">
-                <span className="flex items-center gap-2">
-                  <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-                  {t("Keuangan", "Finance")}
-                </span>
-                <Link href="/app/reports" className="text-xs font-normal text-muted-foreground hover:text-slate-950">
-                  {t("Detail →", "Details →")}
-                </Link>
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2.5">
-              <div>
-                <p className="text-xs text-muted-foreground">
-                  {t(
-                    `Pendapatan 30 hari (setara ${workspaceCurrency})`,
-                    `Revenue last 30 days (equiv. ${workspaceCurrency})`,
-                  )}
-                </p>
-                <p className="text-xl font-bold tracking-tight">
-                  {formatMoneyCompact(sparkTotal || rev30, workspaceCurrency)}
-                </p>
-                {missingFxAll.length > 0 && (
-                  <p className="text-xs text-amber-600 mt-1">
-                    {t(
-                      `Kurs belum di-set: ${missingFxAll.join(", ")}. `,
-                      `Missing FX rates: ${missingFxAll.join(", ")}. `,
-                    )}
-                    <Link href="/app/settings?tab=workspace" className="underline underline-offset-2">
-                      {t("Atur di Settings", "Set in Settings")}
-                    </Link>
-                  </p>
-                )}
+          {/* Finance card with Brand #6647F0 Glow & Sparkline */}
+          <Card className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-border/60">
+              <div className="flex items-center gap-2">
+                <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-600">
+                  <TrendingUp className="h-3.5 w-3.5" />
+                </div>
+                <h3 className="text-sm font-bold text-foreground">{t("Arus Kas 30 Hari", "30-Day Cash Flow")}</h3>
               </div>
+              <Button variant="ghost" size="sm" className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground" asChild>
+                <Link href="/app/reports">{t("Laporan →", "Reports →")}</Link>
+              </Button>
+            </div>
+
+            <div className="space-y-1">
+              <span className="text-xs text-muted-foreground">
+                {t(
+                  `Penerimaan Pembayaran (${workspaceCurrency})`,
+                  `Payment Collections (${workspaceCurrency})`
+                )}
+              </span>
+              <p className="text-2xl font-black tracking-tight text-foreground">
+                {formatMoneyCompact(sparkTotal || rev30, workspaceCurrency)}
+              </p>
+            </div>
+
+            {/* Brand Purple Sparkline */}
+            <div className="rounded-xl border border-border/60 bg-muted/20 p-2.5">
               <svg
                 viewBox={`0 0 ${sparkW} ${sparkH}`}
-                className="h-9 w-full"
+                className="h-10 w-full"
                 preserveAspectRatio="none"
                 aria-label="Revenue trend last 30 days"
               >
                 <defs>
-                  <linearGradient id="sparkFill30" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#2563eb" stopOpacity="0.25" />
-                    <stop offset="100%" stopColor="#2563eb" stopOpacity="0" />
+                  <linearGradient id="brandPurpleSparkFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="#6647F0" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#6647F0" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
-                <path d={sparkArea} fill="url(#sparkFill30)" />
+                <path d={sparkArea} fill="url(#brandPurpleSparkFill)" />
                 <path
                   d={sparkPath}
                   fill="none"
-                  stroke="#2563eb"
-                  strokeWidth="2"
+                  stroke="#6647F0"
+                  strokeWidth="2.5"
                   strokeLinejoin="round"
                   strokeLinecap="round"
                 />
               </svg>
+            </div>
 
-              <div>
-                <p className="mb-1 text-[11px] font-medium text-muted-foreground">
-                  {t("Pendapatan per klien", "Revenue by client")}
+            {/* Top Clients Breakdown */}
+            <div className="space-y-2 pt-1">
+              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                {t("Top Klien (30 Hari)", "Top Clients (30d)")}
+              </p>
+              {clientPie.length === 0 ? (
+                <p className="text-xs text-muted-foreground italic py-1">
+                  {t("Belum ada data pembayaran.", "No payment records.")}
                 </p>
-                {clientPie.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    {t("Belum ada pembayaran 30 hari", "No payments in 30 days")}
-                  </p>
-                ) : (
-                  <div className="space-y-1">
-                    {clientPie.slice(0, 2).map((c, i) => (
-                      <div key={c.name} className="flex items-center justify-between gap-3 text-[11px]">
-                        <span className="min-w-0 flex items-center gap-2">
-                          <span
-                            className="h-2 w-2 shrink-0 rounded-full"
-                            style={{ background: pieColors[i % pieColors.length] }}
-                          />
-                          <span className="truncate">{c.name}</span>
-                        </span>
-                        <span className="shrink-0 font-medium text-slate-700">
-                          {formatMoneyCompact(c.total, workspaceCurrency)}
-                        </span>
+              ) : (
+                <div className="space-y-2">
+                  {clientPie.slice(0, 3).map((c, i) => (
+                    <div key={c.name} className="flex items-center justify-between text-xs">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="h-2 w-2 shrink-0 rounded-full"
+                          style={{ background: pieColors[i % pieColors.length] }}
+                        />
+                        <span className="truncate font-medium text-foreground">{c.name}</span>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </CardContent>
+                      <span className="font-mono font-semibold text-foreground shrink-0">
+                        {formatMoneyCompact(c.total, workspaceCurrency)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </Card>
 
+          {/* Knowledge & AI Hub Banner */}
           <Link
             href="/app/docs"
-            className="mt-4 flex items-center gap-3 rounded-lg border bg-gradient-to-r from-blue-50 to-violet-50 p-4 transition-all hover:shadow-md"
+            className="group flex items-center gap-3.5 rounded-2xl border border-border/80 bg-gradient-to-br from-primary/[0.06] via-violet-500/[0.03] to-transparent p-4 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-xs ring-1 ring-primary/20 group-hover:scale-105 transition-transform">
               <BookOpen className="h-5 w-5" />
             </div>
-            <div className="min-w-0">
-              <p className="text-sm font-semibold">{t("Dokumentasi Cubiqlo", "Cubiqlo Documentation")}</p>
-              <p className="text-xs text-muted-foreground">{t("Panduan lengkap semua fitur: landing page, invoice, time tracking, proyek, client portal.", "Complete guides: landing page, invoice, time tracking, projects, client portal.")}</p>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-1.5">
+                <p className="text-xs font-bold text-foreground">{t("Pusat Dokumentasi", "Documentation Hub")}</p>
+                <Sparkles className="h-3 w-3 text-primary animate-pulse" />
+              </div>
+              <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
+                {t("19 Panduan modul lengkap: Invoice, Client Portal, 2FA, & Calendar.", "19 Guides: Invoices, Client Portal, 2FA, & Calendar.")}
+              </p>
             </div>
           </Link>
         </div>
