@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Files, Folder, FolderOpen, Users } from "lucide-react";
+import { ChevronRight, Folder, FolderOpen, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
 import { FolderRowActions } from "@/components/files/folder-actions";
@@ -130,23 +130,9 @@ export function FolderTree({ clients, projects, folders, canWrite = false }: Fol
 
   return (
     <nav className="space-y-4" aria-label={t("Direktori berkas", "File directory")}>
-      <Button
-        variant="ghost"
-        size="sm"
-        className={cn(
-          "w-full justify-start gap-2 text-sm",
-          !currentClientId && !currentProjectId && !currentFolderId && "bg-muted/70 font-medium",
-        )}
-        asChild
-      >
-        <Link href="/app/files" prefetch scroll={false}>
-          <Files className="h-3.5 w-3.5 text-muted-foreground" /> {t("Semua Berkas", "All Files")}
-        </Link>
-      </Button>
-
       <section className="space-y-1">
-        <p className="px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-          {t("Folder Workspace", "Workspace Folders")}
+        <p className="px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+          {t("Workspace", "Workspace")}
         </p>
         {renderFolderNodes(workspaceFolders, null, 0, {}) ?? (
           <p className="px-3 py-1 text-xs text-muted-foreground">{t("Belum ada folder", "No folders yet")}</p>
@@ -154,7 +140,7 @@ export function FolderTree({ clients, projects, folders, canWrite = false }: Fol
       </section>
 
       <section className="space-y-1">
-        <p className="flex items-center gap-1.5 px-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <p className="flex items-center gap-1.5 px-3 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
           <Users className="h-3 w-3" /> {t("Klien", "Clients")}
         </p>
         {clients.map((client) => {
