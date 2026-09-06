@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import {
   useCallback,
   useEffect,
@@ -9,15 +8,15 @@ import {
   useTransition,
 } from "react";
 import {
-  Archive,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
-  ExternalLink,
-  ListTodo,
   Loader2,
   Pin,
-  RotateCcw,
+  LayoutGrid,
+  List as ListIcon,
+  Search,
+  Clock,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -165,6 +164,8 @@ export function NotesListClient({
   const [loadingMore, setLoadingMore] = useState(false);
   const [pending, startTransition] = useTransition();
   const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [localSearch, setLocalSearch] = useState("");
 
   useEffect(() => {
     setNotes(initialNotes);
@@ -172,6 +173,16 @@ export function NotesListClient({
     setHasMore(initialNotes.length < total);
     setExpandedIds(new Set());
   }, [initialNotes, total, tab, query]);
+
+  const filteredNotes = useMemo(() => {
+    if (!localSearch.trim()) return notes;
+    const q = localSearch.toLowerCase();
+    return notes.filter(
+      (n) =>
+        n.title.toLowerCase().includes(q) ||
+        (n.body && n.body.toLowerCase().includes(q)),
+    );
+  }, [notes, localSearch]);
 
   function toggleExpanded(id: string) {
     setExpandedIds((prev) => {
@@ -207,416 +218,303 @@ export function NotesListClient({
   }, [hasMore, loadingMore, offset, pageSize, query, tab, total]);
 
   const shownLabel = useMemo(() => {
-    if (notes.length === 0) return t("0 tampil", "0 shown");
+    if (filteredNotes.length === 0) return t("0 tampil", "0 shown");
     return t(
-      `1–${notes.length} dari ${total}`,
-      `1–${notes.length} of ${total}`,
+      `1–${filteredNotes.length} dari ${total}`,
+      `1–${filteredNotes.length} of ${total}`,
     );
-  }, [notes.length, t, total]);
-
-  if (notes.length === 0) {
-    return (
-      <div className="space-y-3">
-        <p className="text-sm text-muted-foreground">{shownLabel}</p>
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          {query
-            ? t("Tidak ada catatan yang cocok.", "No matching notes.")
-            : tab === "archived"
-              ? t("Belum ada arsip.", "No archived notes yet.")
-              : t("Belum ada catatan di tab ini.", "No notes in this tab.")}
-        </p>
-      </div>
-    );
-  }
+  }, [filteredNotes.length, t, total]);
 
   return (
-    <div className="space-y-2" data-ui="todoist-note-list">
-      <p className="px-1 pb-1 text-xs text-muted-foreground">{shownLabel}</p>
-      {notes.map((note) => {
-        const relDue = formatRelativeDue(note.dueDate, lang, t);
-        const overdue = note.status === "open" && relDue?.isOverdue;
-        const dueSoon = note.status === "open" && relDue?.isDueSoon;
-        const rule = note.recurrenceRule || "none";
-        const expanded = expandedIds.has(note.id);
-        const bodyPreview =
-          note.body && note.body.length > 160
-            ? `${note.body.slice(0, 160).trimEnd()}…`
-            : note.body;
+    <div className="space-y-4" data-ui="todoist-note-list">
+      {/* Interactive Toolbar */}
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <div className="relative flex-1">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+          <Input
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
+            placeholder={t("Filter cepat judul atau isi catatan...", "Quick filter by title or body...")}
+            className="h-9 rounded-xl pl-9 text-sm"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-xs font-semibold text-muted-foreground px-1">{shownLabel}</span>
+          <div className="flex items-center rounded-xl border border-border/80 bg-muted/30 p-0.5">
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-8 w-8 rounded-lg"
+              onClick={() => setViewMode("grid")}
+              title={t("Tampilan Kartu Grid", "Grid view")}
+            >
+              <LayoutGrid className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-8 w-8 rounded-lg"
+              onClick={() => setViewMode("list")}
+              title={t("Tampilan List", "List view")}
+            >
+              <ListIcon className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
 
-        return (
-          <div
-            key={note.id}
-            className={cn(
-              "group relative rounded-2xl border border-transparent px-3 py-3 transition hover:border-border hover:bg-muted/30 sm:px-4",
-              note.pinned && "border-amber-200/70 bg-amber-50/40 dark:border-amber-900/40 dark:bg-amber-950/20",
-              overdue && "border-red-200/70 bg-red-50/40 dark:border-red-900/40 dark:bg-red-950/20",
-            )}
-          >
-            <div className="flex items-start gap-3">
-              {/* Checkbox Complete */}
-              <form action={actions.setStatus} className="pt-0.5">
-                <input type="hidden" name="noteId" value={note.id} />
-                <input type="hidden" name="tab" value={tab} />
-                <input type="hidden" name="q" value={query} />
-                <input
-                  type="hidden"
-                  name="status"
-                  value={note.status === "done" ? "open" : "done"}
-                />
-                <button
-                  type="submit"
-                  className={cn(
-                    "flex h-5 w-5 items-center justify-center rounded-full border transition-colors",
-                    note.status === "done"
-                      ? "border-emerald-600 bg-emerald-600 text-white"
-                      : "border-muted-foreground/50 hover:border-violet-600",
-                  )}
-                  aria-label={
-                    note.status === "done"
-                      ? t("Buka lagi", "Reopen")
-                      : t("Tandai selesai", "Mark done")
-                  }
-                >
-                  {note.status === "done" ? (
-                    <CheckCircle2 className="h-3.5 w-3.5" />
-                  ) : null}
-                </button>
-              </form>
+      {filteredNotes.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border/80 bg-muted/10 p-12 text-center shadow-2xs">
+          <p className="text-sm font-semibold text-foreground">
+            {localSearch || query
+              ? t("Tidak ada catatan yang cocok.", "No matching notes.")
+              : tab === "archived"
+                ? t("Belum ada arsip catatan.", "No archived notes yet.")
+                : t("Belum ada catatan di tab ini.", "No notes in this tab.")}
+          </p>
+        </div>
+      ) : viewMode === "grid" ? (
+        /* Grid Sticky-Note Cards Layout */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+          {filteredNotes.map((note) => {
+            const relDue = formatRelativeDue(note.dueDate, lang, t);
+            const overdue = note.status === "open" && relDue?.isOverdue;
+            const dueSoon = note.status === "open" && relDue?.isDueSoon;
+            const expanded = expandedIds.has(note.id);
+            const rule = note.recurrenceRule || "none";
 
-              {/* Title & Meta Header */}
+            return (
               <div
-                className="min-w-0 flex-1 cursor-pointer space-y-1"
-                onClick={() => toggleExpanded(note.id)}
-                role="button"
-                tabIndex={0}
-                aria-expanded={expanded}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.preventDefault();
-                    toggleExpanded(note.id);
-                  }
-                }}
+                key={note.id}
+                className={cn(
+                  "group relative flex flex-col justify-between rounded-2xl border border-border/80 bg-card p-4 shadow-2xs transition-all hover:border-primary/40 hover:shadow-xs",
+                  note.pinned && "border-amber-400/60 bg-amber-500/[0.03] ring-1 ring-amber-400/30",
+                  overdue && "border-rose-400/60 bg-rose-500/[0.03]",
+                  note.status === "done" && "opacity-75 bg-muted/20",
+                )}
               >
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className={cn("text-sm font-semibold tracking-tight text-foreground", note.status === "done" && "line-through opacity-70")}>
-                    {note.title}
-                  </h3>
-                  {overdue ? (
-                    <Badge variant="destructive" className="text-[10px] px-1.5 py-0">
-                      {relDue?.text || t("Terlambat", "Overdue")}
-                    </Badge>
-                  ) : dueSoon ? (
-                    <Badge variant="outline" className="border-amber-500/50 bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 text-[10px] px-1.5 py-0">
-                      {relDue?.text}
-                    </Badge>
-                  ) : null}
-                  {note.pinned && (
-                    <Badge variant="secondary" className="border border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200 text-[10px] px-1.5 py-0">
-                      {t("Pinned", "Pinned")}
-                    </Badge>
-                  )}
-                  {expanded && note.status === "done" ? (
-                    <Badge className="bg-emerald-600 text-[10px] px-1.5 py-0">{t("Selesai", "Done")}</Badge>
-                  ) : null}
-                  {expanded && note.status === "archived" ? (
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">{t("Arsip", "Archived")}</Badge>
-                  ) : null}
-                  {expanded && rule !== "none" ? (
-                    <Badge variant="outline" className="text-[10px] px-1.5 py-0">{recurrenceLabel(rule, t)}</Badge>
-                  ) : null}
-                  {expanded && note.convertedTaskId ? (
-                    <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
-                      {t("Jadi task", "Converted")}
-                    </Badge>
+                <div>
+                  {/* Top Bar on Card: Checkbox + Title + Pin */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                      <form action={actions.setStatus} className="pt-0.5 shrink-0">
+                        <input type="hidden" name="noteId" value={note.id} />
+                        <input type="hidden" name="tab" value={tab} />
+                        <input type="hidden" name="q" value={query} />
+                        <input
+                          type="hidden"
+                          name="status"
+                          value={note.status === "done" ? "open" : "done"}
+                        />
+                        <button
+                          type="submit"
+                          className={cn(
+                            "flex h-5 w-5 items-center justify-center rounded-full border transition-colors",
+                            note.status === "done"
+                              ? "border-emerald-600 bg-emerald-600 text-white"
+                              : "border-muted-foreground/50 hover:border-primary",
+                          )}
+                          aria-label={note.status === "done" ? t("Buka lagi", "Reopen") : t("Tandai selesai", "Mark done")}
+                        >
+                          {note.status === "done" ? <CheckCircle2 className="h-3.5 w-3.5" /> : null}
+                        </button>
+                      </form>
+
+                      <div className="min-w-0 flex-1">
+                        <h3 className={cn("text-sm font-bold tracking-tight text-foreground leading-snug break-words", note.status === "done" && "line-through text-muted-foreground")}>
+                          {note.title}
+                        </h3>
+                        {overdue ? (
+                          <Badge variant="destructive" className="text-[10px] px-1.5 py-0 mt-1 font-bold">
+                            {relDue?.text || t("Terlambat", "Overdue")}
+                          </Badge>
+                        ) : dueSoon ? (
+                          <Badge variant="outline" className="border-amber-500/50 bg-amber-50 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300 text-[10px] px-1.5 py-0 mt-1 font-bold">
+                            {relDue?.text}
+                          </Badge>
+                        ) : null}
+                      </div>
+                    </div>
+
+                    <form action={actions.togglePinned} className="shrink-0">
+                      <input type="hidden" name="noteId" value={note.id} />
+                      <input type="hidden" name="tab" value={tab} />
+                      <input type="hidden" name="q" value={query} />
+                      <button
+                        type="submit"
+                        className={cn(
+                          "rounded-lg p-1 text-muted-foreground hover:bg-muted transition-colors",
+                          note.pinned && "text-amber-600 dark:text-amber-400",
+                        )}
+                        title={note.pinned ? t("Lepas pin", "Unpin") : t("Sematkan", "Pin")}
+                      >
+                        <Pin className={cn("h-4 w-4", note.pinned && "fill-amber-500")} />
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Body preview */}
+                  {note.body ? (
+                    <div className="mt-3 text-xs text-muted-foreground whitespace-pre-wrap line-clamp-4 leading-relaxed">
+                      {note.body}
+                    </div>
                   ) : null}
                 </div>
 
-                {!expanded && bodyPreview ? (
-                  <p className="line-clamp-1 text-xs text-muted-foreground">
-                    {bodyPreview}
-                  </p>
-                ) : null}
+                {/* Card Footer: Metadata + Quick Action Buttons */}
+                <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between gap-2 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-2 truncate">
+                    {note.dueDate && (
+                      <span className="flex items-center gap-1 font-mono text-[11px]">
+                        <Clock className="h-3 w-3" />
+                        {formatDate(note.dueDate, lang).split(",")[0]}
+                      </span>
+                    )}
+                    {note.convertedTaskId && (
+                      <Badge variant="secondary" className="text-[9px] px-1.5 h-4 font-bold">
+                        {t("Terkait Proyek", "Linked Task")}
+                      </Badge>
+                    )}
+                  </div>
 
-                {!expanded && note.dueDate && !overdue && !dueSoon ? (
-                  <p className="text-[11px] text-muted-foreground">
-                    {t("Tenggat:", "Due:")} {formatDate(note.dueDate, lang)}
-                  </p>
-                ) : null}
+                  <div className="flex items-center gap-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 px-2 text-[11px] rounded-lg font-semibold"
+                      onClick={() => toggleExpanded(note.id)}
+                    >
+                      {expanded ? t("Tutup", "Close") : t("Edit / Aksi", "Edit / Action")}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Inline Expand Editor for full controls */}
+                {expanded && (
+                  <div className="mt-3 pt-3 border-t border-border/80 space-y-3 bg-muted/20 p-3 rounded-xl">
+                    <form action={actions.updateNote} className="space-y-2.5">
+                      <input type="hidden" name="noteId" value={note.id} />
+                      <input type="hidden" name="tab" value={tab} />
+                      <input type="hidden" name="q" value={query} />
+                      <Input
+                        name="title"
+                        defaultValue={note.title}
+                        required
+                        className="h-8 text-xs font-semibold rounded-lg"
+                      />
+                      <Textarea
+                        name="body"
+                        defaultValue={note.body || ""}
+                        rows={3}
+                        className="text-xs rounded-lg"
+                        placeholder={t("Isi catatan...", "Note content...")}
+                      />
+                      <div className="flex items-center justify-between gap-2 pt-1">
+                        <Button type="submit" size="sm" className="h-7 text-xs rounded-lg font-semibold bg-primary text-white">
+                          {t("Simpan", "Save")}
+                        </Button>
+                        <ConfirmDeleteNoteButton
+                          noteId={note.id}
+                          tab={tab}
+                          action={actions.removeNote}
+                          label={t("Hapus", "Delete")}
+                          confirmMessage={t(
+                            "Hapus catatan ini permanen?",
+                            "Delete this note permanently?",
+                          )}
+                        />
+                      </div>
+                    </form>
+                  </div>
+                )}
               </div>
+            );
+          })}
+        </div>
+      ) : (
+        /* Traditional List / Table View */
+        <div className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs">
+          {filteredNotes.map((note) => {
+            const relDue = formatRelativeDue(note.dueDate, lang, t);
+            const overdue = note.status === "open" && relDue?.isOverdue;
+            const dueSoon = note.status === "open" && relDue?.isDueSoon;
+            const expanded = expandedIds.has(note.id);
 
-              {/* Quick Actions Buttons on Right */}
-              <div className="flex shrink-0 items-center gap-1">
-                <form action={actions.togglePinned}>
+            return (
+              <div
+                key={note.id}
+                className={cn(
+                  "group relative px-4 py-3 transition hover:bg-muted/30 flex items-start gap-3",
+                  note.pinned && "bg-amber-500/[0.02]",
+                )}
+              >
+                <form action={actions.setStatus} className="pt-0.5">
                   <input type="hidden" name="noteId" value={note.id} />
                   <input type="hidden" name="tab" value={tab} />
                   <input type="hidden" name="q" value={query} />
                   <input
                     type="hidden"
-                    name="pinned"
-                    value={note.pinned ? "false" : "true"}
+                    name="status"
+                    value={note.status === "done" ? "open" : "done"}
                   />
-                  <Button
-                    size="sm"
-                    variant="ghost"
+                  <button
+                    type="submit"
                     className={cn(
-                      "h-8 w-8 p-0 rounded-lg text-muted-foreground transition hover:text-foreground",
-                      note.pinned && "text-amber-600 dark:text-amber-400"
+                      "flex h-5 w-5 items-center justify-center rounded-full border transition-colors",
+                      note.status === "done"
+                        ? "border-emerald-600 bg-emerald-600 text-white"
+                        : "border-muted-foreground/50 hover:border-primary",
                     )}
-                    title={note.pinned ? t("Lepas sematan", "Unpin note") : t("Sematkan catatan", "Pin note")}
                   >
-                    <Pin className="h-3.5 w-3.5" />
-                  </Button>
+                    {note.status === "done" ? <CheckCircle2 className="h-3.5 w-3.5" /> : null}
+                  </button>
                 </form>
 
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  className="h-8 w-8 p-0 rounded-lg text-muted-foreground transition hover:text-foreground"
-                  onClick={() => toggleExpanded(note.id)}
-                  title={expanded ? t("Tutup", "Collapse") : t("Buka detail", "Expand")}
-                >
-                  {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-                </Button>
-              </div>
-            </div>
-
-            {/* Expanded Content Details */}
-            {expanded ? (
-              <div className="mt-3 space-y-3 border-t pt-3 pl-8">
-                {note.body && (
-                  <p className="whitespace-pre-wrap text-xs text-foreground/90 leading-relaxed">
-                    {note.body}
-                  </p>
-                )}
-
-                <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-                  <p>
-                    {t("Diperbarui", "Updated")}: {formatDate(note.updatedAt, lang)}
-                  </p>
-                  {(note.notify7d || note.notify3d || note.notify1d) && (
-                    <p>
-                      • {t("Ingatkan", "Remind")}:{" "}
-                      {[
-                        note.notify7d && "7d",
-                        note.notify3d && "3d",
-                        note.notify1d && "1d",
-                      ]
-                        .filter(Boolean)
-                        .join(" / ")}{" "}
-                      {t("sebelum tenggat", "before due")}
-                    </p>
-                  )}
-                  {note.convertedTaskId ? (
-                    <p>
-                      •{" "}
-                      <Link
-                        href={`/app/tasks?focus=${note.convertedTaskId}`}
-                        className="inline-flex items-center gap-1 text-primary hover:underline"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                        {t("Buka task terkait", "Open linked task")}
-                      </Link>
-                    </p>
-                  ) : null}
-                </div>
-
-                {/* Convert to Task Form */}
-                {!note.convertedTaskId &&
-                note.status !== "archived" &&
-                projects.length > 0 ? (
-                  <form
-                    action={actions.convertToTask}
-                    className="flex flex-wrap items-end gap-2 rounded-2xl border border-dashed p-3"
-                  >
-                    <input type="hidden" name="noteId" value={note.id} />
-                    <div className="min-w-[140px] flex-1 space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        {t("Jadikan task di project", "Convert to project task")}
-                      </label>
-                      <select
-                        name="projectId"
-                        required
-                        defaultValue=""
-                        className="flex h-9 w-full rounded-xl border border-input bg-background px-2 text-xs"
-                      >
-                        <option value="" disabled>
-                          {t("Pilih project…", "Select project…")}
-                        </option>
-                        {projects.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="w-[120px] space-y-1">
-                      <label className="text-xs font-medium text-muted-foreground">
-                        {t("Prioritas", "Priority")}
-                      </label>
-                      <select
-                        name="priority"
-                        defaultValue="medium"
-                        className="flex h-9 w-full rounded-xl border border-input bg-background px-2 text-xs"
-                      >
-                        {PRIORITIES.map((p) => (
-                          <option key={p} value={p}>
-                            {priorityLabel(p, t)}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <Button type="submit" size="sm" variant="secondary" className="rounded-xl text-xs">
-                      <ListTodo className="h-3.5 w-3.5 mr-1" />
-                      {t("Convert", "Convert")}
-                    </Button>
-                  </form>
-                ) : null}
-
-                {/* Edit Form Disclosure */}
-                <details className="w-full">
-                  <summary className="cursor-pointer text-xs font-semibold text-primary hover:underline">
-                    {t("Ubah / Edit Catatan", "Edit Note")}
-                  </summary>
-                  <form
-                    action={actions.updateNote}
-                    className="mt-2 space-y-3 rounded-2xl border bg-muted/20 p-4"
-                  >
-                    <input type="hidden" name="noteId" value={note.id} />
-                    <input type="hidden" name="tab" value={tab} />
-                    <input type="hidden" name="q" value={query} />
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium">{t("Judul", "Title")}</label>
-                      <Input
-                        name="title"
-                        defaultValue={note.title}
-                        required
-                        className="rounded-xl text-xs"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <label className="text-xs font-medium">{t("Isi Catatan", "Content")}</label>
-                      <Textarea
-                        name="body"
-                        defaultValue={note.body || ""}
-                        rows={4}
-                        className="rounded-xl text-xs"
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium">{t("Tenggat Waktu", "Due Date")}</label>
-                        <Input
-                          name="dueDate"
-                          type="datetime-local"
-                          defaultValue={formatDateTimeLocal(note.dueDate)}
-                          className="rounded-xl text-xs"
-                        />
-                      </div>
-                      <div className="space-y-1">
-                        <label className="text-xs font-medium">{t("Perulangan", "Recurrence")}</label>
-                        <select
-                          name="recurrenceRule"
-                          defaultValue={note.recurrenceRule || "none"}
-                          className="flex h-9 w-full rounded-xl border border-input bg-background px-3 py-1 text-xs"
-                        >
-                          {RECURRENCE_OPTIONS.map((r) => (
-                            <option key={r} value={r}>
-                              {recurrenceLabel(r, t)}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                    <div className="flex justify-end gap-2 pt-1">
-                      <Button size="sm" className="rounded-xl bg-violet-600 text-white hover:bg-violet-700">
-                        {t("Simpan", "Save")}
-                      </Button>
-                    </div>
-                  </form>
-                </details>
-
-                {/* Action Bar */}
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  {note.status !== "done" ? (
-                    <form action={actions.setStatus}>
-                      <input type="hidden" name="noteId" value={note.id} />
-                      <input type="hidden" name="tab" value={tab} />
-                      <input type="hidden" name="q" value={query} />
-                      <input type="hidden" name="status" value="done" />
-                      <Button type="submit" size="sm" variant="outline" className="h-8 gap-1 text-xs rounded-xl">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-emerald-600" />
-                        {t("Tandai Selesai", "Mark Done")}
-                      </Button>
-                    </form>
-                  ) : (
-                    <form action={actions.setStatus}>
-                      <input type="hidden" name="noteId" value={note.id} />
-                      <input type="hidden" name="tab" value={tab} />
-                      <input type="hidden" name="q" value={query} />
-                      <input type="hidden" name="status" value="open" />
-                      <Button type="submit" size="sm" variant="outline" className="h-8 gap-1 text-xs rounded-xl">
-                        <RotateCcw className="h-3.5 w-3.5" />
-                        {t("Buka Lagi", "Reopen")}
-                      </Button>
-                    </form>
-                  )}
-
-                  {note.status !== "archived" ? (
-                    <form action={actions.setStatus}>
-                      <input type="hidden" name="noteId" value={note.id} />
-                      <input type="hidden" name="tab" value={tab} />
-                      <input type="hidden" name="q" value={query} />
-                      <input type="hidden" name="status" value="archived" />
-                      <Button type="submit" size="sm" variant="ghost" className="h-8 gap-1 text-xs rounded-xl text-muted-foreground hover:text-foreground">
-                        <Archive className="h-3.5 w-3.5" />
-                        {t("Arsipkan", "Archive")}
-                      </Button>
-                    </form>
-                  ) : null}
-
-                  <ConfirmDeleteNoteButton
-                    noteId={note.id}
-                    tab={tab}
-                    action={actions.removeNote}
-                    label={t("Hapus", "Delete")}
-                    confirmMessage={t(
-                      "Hapus catatan ini permanen?",
-                      "Delete this note permanently?",
+                <div className="min-w-0 flex-1 cursor-pointer" onClick={() => toggleExpanded(note.id)}>
+                  <div className="flex items-center gap-2">
+                    <h3 className={cn("text-sm font-semibold text-foreground", note.status === "done" && "line-through text-muted-foreground")}>
+                      {note.title}
+                    </h3>
+                    {note.pinned && <Pin className="h-3.5 w-3.5 fill-amber-500 text-amber-500" />}
+                    {overdue && (
+                      <Badge variant="destructive" className="text-[10px] px-1.5 py-0 font-bold">
+                        {relDue?.text || t("Terlambat", "Overdue")}
+                      </Badge>
                     )}
-                  />
+                  </div>
+                  {note.body && <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">{note.body}</p>}
+                </div>
+
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs rounded-lg"
+                    onClick={() => toggleExpanded(note.id)}
+                  >
+                    {expanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                  </Button>
                 </div>
               </div>
-            ) : null}
-          </div>
-        );
-      })}
+            );
+          })}
+        </div>
+      )}
 
-      {hasMore ? (
-        <div className="flex justify-center border-t pt-3">
+      {hasMore && (
+        <div className="text-center pt-2">
           <Button
-            type="button"
-            size="sm"
             variant="outline"
+            size="sm"
             onClick={() => startTransition(() => void loadMore())}
             disabled={loadingMore || pending}
             className="rounded-xl"
           >
-            {loadingMore ? (
-              <>
-                <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-                {t("Memuat…", "Loading…")}
-              </>
-            ) : (
-              t("Muat lebih banyak", "Load more")
-            )}
+            {loadingMore ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : null}
+            {t("Muat Lebih Banyak", "Load More")}
           </Button>
         </div>
-      ) : notes.length > 0 ? (
-        <p className="border-t pt-3 text-center text-xs text-muted-foreground">
-          {t("Semua catatan dimuat", "All notes loaded")}
-        </p>
-      ) : null}
+      )}
     </div>
   );
 }

@@ -110,7 +110,7 @@ export function JournalList({
     });
   }, [entries, search, selectedTag, selectedMood]);
 
-  const handleExport = () => {
+  const handleExportMd = () => {
     const text = filtered
       .map((e) => {
         const date = new Date(e.createdAt).toLocaleDateString(
@@ -119,17 +119,17 @@ export function JournalList({
             dateStyle: "full",
           },
         );
-        const tags = e.tags.length > 0 ? `Tags: ${e.tags.join(", ")}` : "";
-        const mood = e.mood ? `Mood: ${e.mood} ${moodLabel(e.mood, isId)}` : "";
-        return `${date} — ${e.title}\n${[mood, tags].filter(Boolean).join(" | ")}\n\n${e.content}\n\n---\n`;
+        const tags = e.tags.length > 0 ? e.tags.map((t) => `#${t}`).join(" ") : "";
+        const mood = e.mood ? `${e.mood} **${moodLabel(e.mood, isId)}**` : "";
+        return `# ${e.title}\n\n*${date}* | ${[mood, tags].filter(Boolean).join(" | ")}\n\n${e.content}\n\n---\n`;
       })
       .join("\n");
 
-    const blob = new Blob([text], { type: "text/plain;charset=utf-8" });
+    const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `journal-export-${new Date().toISOString().split("T")[0]}.txt`;
+    a.download = `journal-export-${new Date().toISOString().split("T")[0]}.md`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -152,12 +152,12 @@ export function JournalList({
         <Button
           variant="outline"
           size="sm"
-          onClick={handleExport}
-          className="gap-1.5"
+          onClick={handleExportMd}
+          className="gap-1.5 rounded-xl"
           disabled={filtered.length === 0}
         >
           <Download className="h-3.5 w-3.5" />
-          {isId ? "Ekspor TXT" : "Export TXT"}
+          {isId ? "Ekspor .MD" : "Export .MD"}
         </Button>
       </div>
 
