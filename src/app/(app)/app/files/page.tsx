@@ -78,6 +78,8 @@ export default async function FilesPage({
       id: foldersTable.id,
       name: foldersTable.name,
       parentId: foldersTable.parentId,
+      clientId: foldersTable.clientId,
+      projectId: foldersTable.projectId,
     })
     .from(foldersTable)
     .where(eq(foldersTable.workspaceId, workspaceId));
@@ -115,6 +117,77 @@ export default async function FilesPage({
     }
   }
 
+  // Build root folder cards for Google Drive experience when at root or inside client/project
+  let folderGridItems: { id: string; name: string; type: "workspace_folder" | "client" | "project"; href: string }[] = [];
+  if (!clientId && !projectId && !folderId) {
+    // 1. Workspace root folders
+    const rootWorkspaceFolders = folderList
+      .filter((f) => !f.parentId && !f.clientId && !f.projectId)
+      .map((f) => ({
+        id: f.id,
+        name: f.name,
+        type: "workspace_folder" as const,
+        href: `/app/files?folderId=${f.id}`,
+      }));
+
+    // 2. Client folders
+    const allClients = await db
+      .select({ id: clients.id, name: clients.name })
+      .from(clients)
+      .where(and(eq(clients.workspaceId, workspaceId), eq(clients.status, "active")))
+      .orderBy(clients.name);
+
+    const clientFolders = allClients.map((c) => ({
+      id: c.id,
+      name: c.name,
+      type: "client" as const,
+      href: `/app/files?clientId=${c.id}`,
+    }));
+
+    folderGridItems = [...rootWorkspaceFolders, ...clientFolders];
+  } else if (clientId && !projectId && !folderId) {
+    // Inside client: show their project folders + custom client folders
+    const clientProjects = await db
+      .select({ id: projects.id, name: projects.name })
+      .from(projects)
+      .where(and(eq(projects.workspaceId, workspaceId), eq(projects.clientId, clientId)))
+      .orderBy(projects.name);
+
+    const projFolders = clientProjects.map((p) => ({
+      id: p.id,
+      name: p.name,
+      type: "project" as const,
+      href: `/app/files?clientId=${clientId}&projectId=${p.id}`,
+    }));
+
+    const clientSubFolders = folderList
+      .filter((f) => f.clientId === clientId && !f.projectId && !f.parentId)
+      .map((f) => ({
+        id: f.id,
+        name: f.name,
+        type: "workspace_folder" as const,
+        href: `/app/files?clientId=${clientId}&folderId=${f.id}`,
+      }));
+
+    folderGridItems = [...projFolders, ...clientSubFolders];
+  } else if (folderId) {
+    // Sub-folders of current folder
+    folderGridItems = folderList
+      .filter((f) => f.parentId === folderId)
+      .map((f) => {
+        const base = new URLSearchParams();
+        if (clientId) base.set("clientId", clientId);
+        if (projectId) base.set("projectId", projectId);
+        base.set("folderId", f.id);
+        return {
+          id: f.id,
+          name: f.name,
+          type: "workspace_folder" as const,
+          href: `/app/files?${base.toString()}`,
+        };
+      });
+  }
+
   return (
     <>
       <nav aria-label={t("Breadcrumb berkas", "File breadcrumb")} className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
@@ -136,7 +209,12 @@ export default async function FilesPage({
         scope={{ workspaceId, clientId, projectId, folderId }}
         canWrite={canWrite}
       >
-        <FileList files={finalFiles} canWrite={canWrite} lang={lang} />
+        <FileList
+          files={finalFiles}
+          folders={folderGridItems}
+          canWrite={canWrite}
+          lang={lang}
+        />
       </FileDropZone>
     </>
   );

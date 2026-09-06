@@ -43,6 +43,9 @@ import {
   Trash2,
   LayoutGrid,
   List as ListIcon,
+  Folder,
+  Users,
+  FolderKanban,
 } from "lucide-react";
 
 interface FileItem {
@@ -57,8 +60,17 @@ interface FileItem {
   createdAt: Date | string;
 }
 
+export interface FolderGridItem {
+  id: string;
+  name: string;
+  type: "workspace_folder" | "client" | "project";
+  href: string;
+  itemCount?: number;
+}
+
 interface FileListProps {
   files: FileItem[];
+  folders?: FolderGridItem[];
   canWrite: boolean;
   lang: "id" | "en";
 }
@@ -84,7 +96,7 @@ function formatBytes(bytes: number | null, unknownLabel: string): string {
 
 const PAGE_SIZE = 10;
 
-export function FileList({ files, canWrite, lang }: FileListProps) {
+export function FileList({ files, folders = [], canWrite, lang }: FileListProps) {
   const { refresh } = useAppTransition();
   const { t } = useT();
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
@@ -93,6 +105,12 @@ export function FileList({ files, canWrite, lang }: FileListProps) {
   const [page, setPage] = useState(1);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
+
+  const filteredFolders = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return folders;
+    return folders.filter((f) => f.name.toLowerCase().includes(q));
+  }, [folders, query]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -229,173 +247,222 @@ export function FileList({ files, canWrite, lang }: FileListProps) {
         {t("Internal hanya untuk tim. Berkas klien dan hasil kerja tampil di portal.", "Internal files are team-only. Client files and deliverables appear in the portal.")}
       </p>
 
-      {filtered.length === 0 ? (
+      {filtered.length === 0 && filteredFolders.length === 0 ? (
         <EmptyState
           icon={Search}
           title={t("Tidak ada berkas yang cocok", "No matching files")}
           description={t("Coba ubah kata kunci atau filter.", "Try a different keyword or filter.")}
         />
       ) : (
-        <div className="space-y-4">
-          {viewMode === "grid" ? (
-            /* Google Drive Style Grid View */
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-              {paginated.map((file) => {
-                const busy = busyId === file.id;
-                return (
-                  <div
-                    key={file.id}
-                    className="group relative flex flex-col justify-between rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm"
-                  >
-                    {/* Card Top Preview / Icon */}
-                    <div className="flex items-start justify-between gap-2 mb-2.5">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted/60 text-muted-foreground">
-                        {getFileIcon(file.mimeType)}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        {file.fileType === "deliverable" && (
-                          <Badge variant="warning" className="text-[10px] h-5 px-1.5 font-bold">
-                            {t("Hasil kerja", "Deliverable")}
-                          </Badge>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
-                          onClick={() => window.open(`/api/files/${file.id}/download`, "_blank")}
-                          disabled={busy}
-                          title={t("Buka / Download", "Open / Download")}
-                        >
-                          <Download className="h-4 w-4" />
-                        </Button>
-                        {canWrite && (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-lg"
-                            onClick={() => setDeleteTarget(file)}
-                            disabled={busy}
-                            title={t(`Hapus ${file.name}`, `Delete ${file.name}`)}
-                          >
-                            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* File Name & Preview Card Area */}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-foreground" title={file.name}>
-                        {file.name}
-                      </p>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                        <span className="font-mono tabular-nums">{formatBytes(file.sizeBytes, t("Tidak diketahui", "Unknown"))}</span>
-                        <span>·</span>
-                        <span>{formatFileDate(file.createdAt, lang)}</span>
-                      </div>
-                      {file.uploaderName && (
-                        <p className="truncate text-[11px] text-muted-foreground/80 mt-0.5">
-                          {t("oleh", "by")} {file.uploaderName}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Granular Visibility & Type Controls */}
-                    {canWrite && (
-                      <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between gap-1.5">
-                        <Select
-                          value={file.visibility}
-                          onValueChange={(value) => handleVisibility(file.id, value as "internal" | "client")}
-                          disabled={busy}
-                        >
-                          <SelectTrigger className="h-7 text-[11px] px-2 rounded-lg border-border/70">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="internal">
-                              <span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" /> {t("Internal", "Internal")}</span>
-                            </SelectItem>
-                            <SelectItem value="client">
-                              <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> {t("Klien", "Client")}</span>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        <Select
-                          value={file.fileType}
-                          onValueChange={(value) => handleFileType(file.id, value as "working_file" | "deliverable")}
-                          disabled={busy}
-                        >
-                          <SelectTrigger className="h-7 text-[11px] px-2 rounded-lg border-border/70">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="working_file">{t("Berkas kerja", "Working")}</SelectItem>
-                            <SelectItem value="deliverable">
-                              <span className="inline-flex items-center gap-1"><Package className="h-3 w-3" /> {t("Hasil kerja", "Deliverable")}</span>
-                            </SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            /* Traditional Linear Table / List View */
-            <div className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs">
-              {paginated.map((file) => {
-                const busy = busyId === file.id;
-                return (
-                  <div key={file.id} className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between transition-colors hover:bg-muted/20">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-muted/60" aria-hidden>
-                        {getFileIcon(file.mimeType)}
-                      </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-foreground" title={file.name}>{file.name}</p>
-                        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                          <span className="font-mono tabular-nums">{formatBytes(file.sizeBytes, t("Tidak diketahui", "Unknown"))}</span>
-                          <span aria-hidden>·</span>
-                          <span className="truncate">{file.uploaderName || t("Tidak diketahui", "Unknown")}</span>
-                          <span aria-hidden>·</span>
-                          <span>{formatFileDate(file.createdAt, lang)}</span>
+        <div className="space-y-6">
+          {/* 1. Folders Section (Google Drive Folder Pills / Cards) */}
+          {filteredFolders.length > 0 && (
+            <div className="space-y-2.5">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <Folder className="h-3.5 w-3.5 text-amber-500" />
+                {t("Folder", "Folders")} ({filteredFolders.length})
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {filteredFolders.map((folder) => {
+                  const Icon = folder.type === "client" ? Users : folder.type === "project" ? FolderKanban : Folder;
+                  const iconColor = folder.type === "client" ? "text-blue-500" : folder.type === "project" ? "text-purple-500" : "text-amber-500";
+                  return (
+                    <a
+                      key={folder.id}
+                      href={folder.href}
+                      className="group flex items-center justify-between gap-2.5 rounded-2xl border border-border/80 bg-card p-3 shadow-2xs transition-all hover:border-primary/40 hover:bg-muted/30 hover:shadow-xs"
+                    >
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-muted/60">
+                          <Icon className={cn("h-4.5 w-4.5", iconColor)} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors" title={folder.name}>
+                            {folder.name}
+                          </p>
+                          <p className="text-[11px] text-muted-foreground capitalize">
+                            {folder.type === "client" ? t("Klien", "Client") : folder.type === "project" ? t("Proyek", "Project") : t("Folder", "Folder")}
+                          </p>
                         </div>
                       </div>
-                    </div>
-                    <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
-                      {canWrite && (
-                        <>
-                          <Select value={file.visibility} onValueChange={(value) => handleVisibility(file.id, value as "internal" | "client")} disabled={busy}>
-                            <SelectTrigger className="h-8.5 w-[124px] text-xs font-medium rounded-xl border-border/70" aria-label={t("Visibilitas berkas", "File visibility")}><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="internal"><span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" /> {t("Internal", "Internal")}</span></SelectItem>
-                              <SelectItem value="client"><span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> {t("Klien", "Client")}</span></SelectItem>
-                            </SelectContent>
-                          </Select>
-                          <Select value={file.fileType} onValueChange={(value) => handleFileType(file.id, value as "working_file" | "deliverable")} disabled={busy}>
-                            <SelectTrigger className="h-8.5 w-[140px] text-xs font-medium rounded-xl border-border/70" aria-label={t("Tipe berkas", "File type")}><SelectValue /></SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="working_file">{t("Berkas kerja", "Working file")}</SelectItem>
-                              <SelectItem value="deliverable"><span className="inline-flex items-center gap-1"><Package className="h-3 w-3" /> {t("Hasil kerja", "Deliverable")}</span></SelectItem>
-                            </SelectContent>
-                          </Select>
-                        </>
-                      )}
-                      {file.fileType === "deliverable" && <Badge variant="warning" className="text-[10px] h-5">{t("Hasil kerja", "Deliverable")}</Badge>}
-                      <Button variant="outline" size="sm" className="h-8.5 gap-1 rounded-xl font-medium border-border/70" onClick={() => window.open(`/api/files/${file.id}/download`, "_blank")} disabled={busy}>
-                        <Download className="h-3.5 w-3.5" /> {t("Buka", "Open")}
-                      </Button>
-                      {canWrite && (
-                        <Button variant="ghost" size="icon" className="h-8.5 w-8.5 text-muted-foreground hover:text-destructive rounded-xl" onClick={() => setDeleteTarget(file)} aria-label={t(`Hapus ${file.name}`, `Delete ${file.name}`)} disabled={busy}>
-                          {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-40 group-hover:opacity-100 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    </a>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* 2. Files Section */}
+          {filtered.length > 0 && (
+            <div className="space-y-2.5">
+              {filteredFolders.length > 0 && (
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <FileText className="h-3.5 w-3.5 text-primary" />
+                  {t("Berkas", "Files")} ({filtered.length})
+                </p>
+              )}
+              {viewMode === "grid" ? (
+                /* Google Drive Style Grid View */
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {paginated.map((file) => {
+                    const busy = busyId === file.id;
+                    return (
+                      <div
+                        key={file.id}
+                        className="group relative flex flex-col justify-between rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm"
+                      >
+                        {/* Card Top Preview / Icon */}
+                        <div className="flex items-start justify-between gap-2 mb-2.5">
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted/60 text-muted-foreground">
+                            {getFileIcon(file.mimeType)}
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {file.fileType === "deliverable" && (
+                              <Badge variant="warning" className="text-[10px] h-5 px-1.5 font-bold">
+                                {t("Hasil kerja", "Deliverable")}
+                              </Badge>
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-muted-foreground hover:text-foreground rounded-lg"
+                              onClick={() => window.open(`/api/files/${file.id}/download`, "_blank")}
+                              disabled={busy}
+                              title={t("Buka / Download", "Open / Download")}
+                            >
+                              <Download className="h-4 w-4" />
+                            </Button>
+                            {canWrite && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-lg"
+                                onClick={() => setDeleteTarget(file)}
+                                disabled={busy}
+                                title={t(`Hapus ${file.name}`, `Delete ${file.name}`)}
+                              >
+                                {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* File Name & Preview Card Area */}
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-foreground" title={file.name}>
+                            {file.name}
+                          </p>
+                          <div className="mt-1 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                            <span className="font-mono tabular-nums">{formatBytes(file.sizeBytes, t("Tidak diketahui", "Unknown"))}</span>
+                            <span>·</span>
+                            <span>{formatFileDate(file.createdAt, lang)}</span>
+                          </div>
+                          {file.uploaderName && (
+                            <p className="truncate text-[11px] text-muted-foreground/80 mt-0.5">
+                              {t("oleh", "by")} {file.uploaderName}
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Granular Visibility & Type Controls */}
+                        {canWrite && (
+                          <div className="mt-3 pt-3 border-t border-border/60 flex items-center justify-between gap-1.5">
+                            <Select
+                              value={file.visibility}
+                              onValueChange={(value) => handleVisibility(file.id, value as "internal" | "client")}
+                              disabled={busy}
+                            >
+                              <SelectTrigger className="h-7 text-[11px] px-2 rounded-lg border-border/70">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="internal">
+                                  <span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" /> {t("Internal", "Internal")}</span>
+                                </SelectItem>
+                                <SelectItem value="client">
+                                  <span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> {t("Klien", "Client")}</span>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+
+                            <Select
+                              value={file.fileType}
+                              onValueChange={(value) => handleFileType(file.id, value as "working_file" | "deliverable")}
+                              disabled={busy}
+                            >
+                              <SelectTrigger className="h-7 text-[11px] px-2 rounded-lg border-border/70">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="working_file">{t("Berkas kerja", "Working")}</SelectItem>
+                                <SelectItem value="deliverable">
+                                  <span className="inline-flex items-center gap-1"><Package className="h-3 w-3" /> {t("Hasil kerja", "Deliverable")}</span>
+                                </SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                /* Traditional Linear Table / List View */
+                <div className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs">
+                  {paginated.map((file) => {
+                    const busy = busyId === file.id;
+                    return (
+                      <div key={file.id} className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between transition-colors hover:bg-muted/20">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-muted/60" aria-hidden>
+                            {getFileIcon(file.mimeType)}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="truncate text-sm font-semibold text-foreground" title={file.name}>{file.name}</p>
+                            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
+                              <span className="font-mono tabular-nums">{formatBytes(file.sizeBytes, t("Tidak diketahui", "Unknown"))}</span>
+                              <span aria-hidden>·</span>
+                              <span className="truncate">{file.uploaderName || t("Tidak diketahui", "Unknown")}</span>
+                              <span aria-hidden>·</span>
+                              <span>{formatFileDate(file.createdAt, lang)}</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+                          {canWrite && (
+                            <>
+                              <Select value={file.visibility} onValueChange={(value) => handleVisibility(file.id, value as "internal" | "client")} disabled={busy}>
+                                <SelectTrigger className="h-8.5 w-[124px] text-xs font-medium rounded-xl border-border/70" aria-label={t("Visibilitas berkas", "File visibility")}><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="internal"><span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" /> {t("Internal", "Internal")}</span></SelectItem>
+                                  <SelectItem value="client"><span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> {t("Klien", "Client")}</span></SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <Select value={file.fileType} onValueChange={(value) => handleFileType(file.id, value as "working_file" | "deliverable")} disabled={busy}>
+                                <SelectTrigger className="h-8.5 w-[140px] text-xs font-medium rounded-xl border-border/70" aria-label={t("Tipe berkas", "File type")}><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="working_file">{t("Berkas kerja", "Working file")}</SelectItem>
+                                  <SelectItem value="deliverable"><span className="inline-flex items-center gap-1"><Package className="h-3 w-3" /> {t("Hasil kerja", "Deliverable")}</span></SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </>
+                          )}
+                          {file.fileType === "deliverable" && <Badge variant="warning" className="text-[10px] h-5">{t("Hasil kerja", "Deliverable")}</Badge>}
+                          <Button variant="outline" size="sm" className="h-8.5 gap-1 rounded-xl font-medium border-border/70" onClick={() => window.open(`/api/files/${file.id}/download`, "_blank")} disabled={busy}>
+                            <Download className="h-3.5 w-3.5" /> {t("Buka", "Open")}
+                          </Button>
+                          {canWrite && (
+                            <Button variant="ghost" size="icon" className="h-8.5 w-8.5 text-muted-foreground hover:text-destructive rounded-xl" onClick={() => setDeleteTarget(file)} aria-label={t(`Hapus ${file.name}`, `Delete ${file.name}`)} disabled={busy}>
+                              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           )}
 
