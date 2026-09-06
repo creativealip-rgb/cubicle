@@ -27,6 +27,7 @@ import {
 } from "@/components/notes/notes-list-client";
 import { NoteEditorDialog } from "@/components/notes/note-editor-dialog";
 import { NotesSummaryStrip } from "@/components/notes/notes-summary-strip";
+import { QuickNoteCapture } from "@/components/notes/quick-note-capture";
 import { calculateNotesSummary } from "@/lib/personal-notes-dashboard";
 import { PageHeader } from "@/components/ui/page-header";
 import { NotebookPen } from "lucide-react";
@@ -274,6 +275,9 @@ export default async function PersonalPage({
         done={summary.done}
         t={t}
       />
+
+      {/* Quick Idea / Note Capture Bar */}
+      <QuickNoteCapture action={createNote} />
 
       {/* Main Content: Notes List Workspace */}
       <Card className="rounded-3xl border bg-card shadow-sm">

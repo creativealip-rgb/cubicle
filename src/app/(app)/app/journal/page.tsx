@@ -16,6 +16,8 @@ import { BookOpen } from "lucide-react";
 import { JournalList } from "@/components/journal/journal-list";
 import { JournalComposerDialog } from "@/components/journal/journal-composer-dialog";
 import { JournalSummaryStrip } from "@/components/journal/journal-summary-strip";
+import { JournalHeatmap } from "@/components/journal/journal-heatmap";
+import { JournalInspirationBanner } from "@/components/journal/journal-inspiration-banner";
 import { calculateJournalSummary } from "@/lib/journal-dashboard";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import {
@@ -196,6 +198,9 @@ export default async function JournalPage({
         ))}
       </nav>
 
+      {/* Daily Reflection Inspiration Banner */}
+      <JournalInspirationBanner t={t} lang={lang} />
+
       {/* Summary KPI Strip */}
       <JournalSummaryStrip
         thisWeek={summary.thisWeek}
@@ -205,6 +210,9 @@ export default async function JournalPage({
         moodCounts={summary.moodCounts}
         t={t}
       />
+
+      {/* 28-Day Reflection Heatmap (Like Habit Heatmap in Productivity) */}
+      <JournalHeatmap entries={entries} t={t} />
 
       {/* Main Content: Chronological Timeline Area */}
       <Card className="rounded-3xl border bg-card shadow-sm">
