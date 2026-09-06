@@ -189,6 +189,68 @@ export function FileList({ files, folders = [], canWrite, lang }: FileListProps)
     );
   }
 
+  // Pure Folders View (at root / All Files)
+  if (files.length === 0 && folders.length > 0) {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              placeholder={t("Cari folder...", "Search folders...")}
+              className="pl-9 h-9 text-sm rounded-xl border-border/80 bg-background"
+            />
+          </div>
+        </div>
+
+        {filteredFolders.length === 0 ? (
+          <EmptyState
+            icon={Search}
+            title={t("Tidak ada folder yang cocok", "No matching folders")}
+            description={t("Coba ubah kata kunci pencarian.", "Try a different keyword.")}
+          />
+        ) : (
+          <div className="space-y-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Folder className="h-3.5 w-3.5 text-amber-500" />
+              {t("Folder", "Folders")} ({filteredFolders.length})
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+              {filteredFolders.map((folder) => {
+                const Icon = folder.type === "client" ? Users : folder.type === "project" ? FolderKanban : Folder;
+                const iconColor = folder.type === "client" ? "text-blue-500" : folder.type === "project" ? "text-purple-500" : "text-amber-500";
+                return (
+                  <a
+                    key={folder.id}
+                    href={folder.href}
+                    className="group flex items-center justify-between gap-3 rounded-2xl border border-border/80 bg-card p-4 shadow-2xs transition-all hover:border-primary/40 hover:bg-muted/30 hover:shadow-xs"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted/60">
+                        <Icon className={cn("h-5 w-5", iconColor)} />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors" title={folder.name}>
+                          {folder.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground capitalize">
+                          {folder.type === "client" ? t("Klien", "Client") : folder.type === "project" ? t("Proyek", "Project") : t("Folder", "Folder")}
+                        </p>
+                      </div>
+                    </div>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-40 group-hover:opacity-100 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                  </a>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-3.5">
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
