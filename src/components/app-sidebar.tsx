@@ -7,6 +7,7 @@ import { ChevronLeft, ChevronRight, Megaphone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { SidebarNavigation } from "@/components/sidebar/sidebar-navigation";
+import { CubiqloLogoHeader, CubiqloLogoIcon } from "@/components/brand/cubiqlo-logo";
 import { useSidebar } from "@/components/app-shell";
 import { useT } from "@/lib/i18n-client";
 import { latestProductUpdateId, WHATS_NEW_STORAGE_KEY } from "@/lib/product-updates";
@@ -54,14 +55,12 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts, workspaceRole }: 
     <div className={cn("flex h-14 items-center border-b border-border/80 px-3", collapsed ? "lg:justify-center" : "justify-between")}>
       {!collapsed && (
         <Link href="/app/dashboard" className="flex min-w-0 items-center gap-2 font-semibold text-sidebar-foreground">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-cubiqlo.svg" alt="Cubiqlo" width={150} height={38} className="h-8 w-auto object-contain" />
+          <CubiqloLogoHeader className="h-8 w-auto" />
         </Link>
       )}
       {collapsed && (
         <Link href="/app/dashboard" className="hidden lg:flex">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-icon.svg" alt="Cubiqlo" width={36} height={36} className="h-8.5 w-8.5 rounded-lg object-contain shadow-2xs" />
+          <CubiqloLogoIcon className="h-8.5 w-8.5 rounded-lg shadow-2xs" />
         </Link>
       )}
       <Button variant="ghost" size="icon" className="h-11 w-11 text-sidebar-foreground hover:bg-sidebar-accent lg:hidden" onClick={() => setMobileOpen(false)} aria-label={t("Tutup menu", "Close menu")}><X className="h-4 w-4" /></Button>
