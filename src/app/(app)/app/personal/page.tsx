@@ -237,35 +237,37 @@ export default async function PersonalPage({
       />
 
       {/* Modern Status Tabs Track (Matching Productivity style) */}
-      <nav
-        className="flex gap-1 overflow-x-auto rounded-2xl bg-muted/60 p-1"
-        aria-label={t("Navigasi status catatan", "Notes status navigation")}
-      >
-        {tabs.map((tabItem) => (
-          <Button
-            key={tabItem.id}
-            size="sm"
-            variant="ghost"
-            className={`shrink-0 rounded-xl px-4 ${
-              tab === tabItem.id
-                ? "bg-background text-foreground shadow-sm hover:bg-background"
-                : "text-muted-foreground"
-            }`}
-            asChild
-          >
-            <Link
-              href={`/app/personal?tab=${tabItem.id}${
-                query ? `&q=${encodeURIComponent(query)}` : ""
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <nav
+          className="flex gap-1 overflow-x-auto rounded-2xl bg-muted/60 p-1"
+          aria-label={t("Navigasi status catatan", "Notes status navigation")}
+        >
+          {tabs.map((tabItem) => (
+            <Button
+              key={tabItem.id}
+              size="sm"
+              variant="ghost"
+              className={`shrink-0 rounded-xl px-4 text-xs font-semibold ${
+                tab === tabItem.id
+                  ? "bg-background text-foreground shadow-sm hover:bg-background"
+                  : "text-muted-foreground"
               }`}
+              asChild
             >
-              <span>{tabItem.label}</span>
-              <span className="ml-1.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-semibold">
-                {tabItem.count}
-              </span>
-            </Link>
-          </Button>
-        ))}
-      </nav>
+              <Link
+                href={`/app/personal?tab=${tabItem.id}${
+                  query ? `&q=${encodeURIComponent(query)}` : ""
+                }`}
+              >
+                <span>{tabItem.label}</span>
+                <span className="ml-1.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-bold">
+                  {tabItem.count}
+                </span>
+              </Link>
+            </Button>
+          ))}
+        </nav>
+      </div>
 
       {/* Summary KPI Strip */}
       <NotesSummaryStrip
