@@ -177,7 +177,7 @@ export function FileList({ files, folders = [], canWrite, lang }: FileListProps)
     }
   }
 
-  if (files.length === 0) {
+  if (files.length === 0 && folders.length === 0) {
     return (
       <EmptyState
         icon={FileText}
