@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, clients, tasks, files, timeEntries, workspaceMembers, users, projectServices, invoices, workspaces, workspaceCurrencyRates, packages, retainerPeriods } from "@/db/schema";
+import { projects, clients, tasks, files, folders, timeEntries, workspaceMembers, users, projectServices, invoices, workspaces, workspaceCurrencyRates, packages, retainerPeriods } from "@/db/schema";
 import { and, eq, desc, inArray } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
@@ -144,13 +144,24 @@ export default async function ProjectDetailPage({
 
 
 
-  // Files
+  // Files & Folders
+  const projectFolders = await db
+    .select({
+      id: folders.id,
+      name: folders.name,
+      parentId: folders.parentId,
+      createdAt: folders.createdAt,
+    })
+    .from(folders)
+    .where(and(eq(folders.projectId, projectId), eq(folders.workspaceId, workspaceId)))
+    .orderBy(folders.name);
+
   const projectFiles = await db
     .select()
     .from(files)
     .where(eq(files.projectId, projectId))
     .orderBy(desc(files.createdAt))
-    .limit(20);
+    .limit(50);
 
   // Time entries
   const projectTimeEntries = await db
@@ -482,6 +493,13 @@ export default async function ProjectDetailPage({
               canWrite={true}
             >
               <FileList
+                folders={projectFolders.map((f) => ({
+                  id: f.id,
+                  name: f.name,
+                  type: "workspace_folder" as const,
+                  href: `/app/files?clientId=${project.clientId ?? ""}&projectId=${projectId}&folderId=${f.id}`,
+                  createdAt: f.createdAt,
+                }))}
                 files={projectFiles.map((file: any) => ({
                   id: file.id,
                   name: file.name,
