@@ -7,7 +7,6 @@ import { and, eq, desc, inArray } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
 import { getProjectProgress } from "@/lib/actions/projects";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
@@ -27,12 +26,13 @@ import { Timesheet } from "@/components/time/timesheet";
 import Link from "next/link";
 import {
   Clock,
-  FileText,
   FolderKanban,
   CheckCircle2,
 } from "lucide-react";
 import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
 import { UploadButton } from "@/components/files/upload-button";
+import { FileList } from "@/components/files/file-list";
+import { FileDropZone } from "@/components/files/file-drop-zone";
 import { ProjectInvoiceCreateDialog } from "@/components/invoices/project-invoice-create-dialog";
 import { RetainerProjectInvoiceActions } from "@/components/invoices/retainer-project-invoice-actions";
 
@@ -472,51 +472,31 @@ export default async function ProjectDetailPage({
           )
         }
         filesContent={
-          <div className="space-y-3">
-            {projectFiles.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-border/80 bg-muted/10 p-8 text-center">
-                <div className="flex h-10 w-10 mx-auto items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary mb-3">
-                  <FileText className="h-5 w-5" />
-                </div>
-                <p className="text-sm font-semibold text-foreground">
-                  {t("Belum ada berkas proyek", "No project files yet")}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1 max-w-sm mx-auto">
-                  {t(
-                    "Unggah dokumen, brief, atau aset deliverables untuk dibagikan ke tim dan klien.",
-                    "Upload documents, briefs, or deliverable assets to share with team and client.",
-                  )}
-                </p>
-                <div className="mt-4 flex justify-center">
-                  <UploadButton
-                    workspaceId={workspaceId}
-                    projectId={projectId}
-                    clientId={project.clientId ?? undefined}
-                  />
-                </div>
-              </div>
-            ) : (
-              projectFiles.map(
-                (file: { id: string; name: string; mimeType: string | null; visibility: string }) => (
-                  <Card key={file.id} className="rounded-xl border border-border/80 shadow-xs hover:border-primary/30 transition-colors">
-                    <CardContent className="flex items-center justify-between p-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
-                          <FileText className="h-4 w-4" />
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-foreground">{file.name}</p>
-                          <p className="text-xs text-muted-foreground">{file.mimeType || "File"}</p>
-                        </div>
-                      </div>
-                      <Badge variant="outline" className="text-[10px] font-semibold h-5 px-2 rounded-full border border-border/80 bg-muted/60 text-muted-foreground capitalize">
-                        {file.visibility}
-                      </Badge>
-                    </CardContent>
-                  </Card>
-                )
-              )
-            )}
+          <div className="space-y-4">
+            <FileDropZone
+              scope={{
+                workspaceId,
+                clientId: project.clientId ?? undefined,
+                projectId,
+              }}
+              canWrite={true}
+            >
+              <FileList
+                files={projectFiles.map((file: any) => ({
+                  id: file.id,
+                  name: file.name,
+                  mimeType: file.mimeType ?? null,
+                  sizeBytes: file.sizeBytes ?? file.size ?? null,
+                  visibility: file.visibility ?? "internal",
+                  fileType: file.fileType ?? "working_file",
+                  uploadedBy: file.uploadedBy ?? null,
+                  uploaderName: file.uploaderName ?? null,
+                  createdAt: file.createdAt ?? new Date(),
+                }))}
+                canWrite={true}
+                lang={lang}
+              />
+            </FileDropZone>
           </div>
         }
         billingContent={

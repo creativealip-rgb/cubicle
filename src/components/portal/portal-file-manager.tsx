@@ -14,10 +14,20 @@ import {
   Image as ImageIcon,
   Loader2,
   Upload,
+  LayoutGrid,
+  List as ListIcon,
+  ArrowUpDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
 import { quotaBlockMessage } from "@/lib/upload-quota-messages";
@@ -90,6 +100,9 @@ export function PortalFileManager({
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [dragOver, setDragOver] = useState(false);
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [sortBy, setSortBy] = useState<"name" | "date" | "size">("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   // Local scope so folder switches don't hard-remount the portal page.
   const [projectId, setProjectId] = useState<string | null>(
@@ -298,56 +311,108 @@ export function PortalFileManager({
       </div>
 
       {/* Breadcrumb Navigation Pill */}
-      <nav className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border/80 bg-muted/20 px-3 py-1.5 text-xs text-muted-foreground">
-        <button
-          type="button"
-          onClick={() => navigate({ projectId: null, folderId: null })}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-medium transition-colors hover:bg-muted hover:text-foreground",
-            !projectId && !folderId && "bg-background text-foreground shadow-2xs font-semibold",
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+        <nav className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border/80 bg-muted/20 px-3 py-1.5 text-xs text-muted-foreground">
+          <button
+            type="button"
+            onClick={() => navigate({ projectId: null, folderId: null })}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-lg px-2 py-1 font-medium transition-colors hover:bg-muted hover:text-foreground",
+              !projectId && !folderId && "bg-background text-foreground shadow-2xs font-semibold",
+            )}
+          >
+            <Home className="h-3.5 w-3.5" />
+            {t("Semua", "All")}
+          </button>
+          {activeProject && (
+            <>
+              <ChevronRight className="h-3 w-3 opacity-40" />
+              <button
+                type="button"
+                onClick={() =>
+                  navigate({ projectId: activeProject.id, folderId: null })
+                }
+                className={cn(
+                  "rounded-lg px-2 py-1 font-medium transition-colors hover:bg-muted hover:text-foreground",
+                  !folderId && "bg-background text-foreground shadow-2xs font-semibold",
+                )}
+              >
+                {activeProject.name}
+              </button>
+            </>
           )}
-        >
-          <Home className="h-3.5 w-3.5" />
-          {t("Semua", "All")}
-        </button>
-        {activeProject && (
-          <>
-            <ChevronRight className="h-3 w-3 opacity-40" />
-            <button
+          {folderChain.map((node, idx) => (
+            <span key={node.id} className="inline-flex items-center gap-1.5">
+              <ChevronRight className="h-3 w-3 opacity-40" />
+              <button
+                type="button"
+                onClick={() =>
+                  navigate({
+                    projectId: node.projectId ?? projectId,
+                    folderId: node.id,
+                  })
+                }
+                className={cn(
+                  "rounded-lg px-2 py-1 font-medium transition-colors hover:bg-muted hover:text-foreground",
+                  idx === folderChain.length - 1 && "bg-background text-foreground shadow-2xs font-semibold",
+                )}
+              >
+                {node.name}
+              </button>
+            </span>
+          ))}
+        </nav>
+
+        {/* Drive Control Toolbar */}
+        <div className="flex items-center gap-2">
+          {/* Sort Dropdown */}
+          <Select
+            value={`${sortBy}-${sortOrder}`}
+            onValueChange={(val) => {
+              const [sb, so] = val.split("-") as ["name" | "date" | "size", "asc" | "desc"];
+              setSortBy(sb);
+              setSortOrder(so);
+            }}
+          >
+            <SelectTrigger className="h-8.5 w-[140px] text-xs font-semibold rounded-xl border-border/80 bg-background">
+              <ArrowUpDown className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name-asc">{t("Nama (A-Z)", "Name (A-Z)")}</SelectItem>
+              <SelectItem value="name-desc">{t("Nama (Z-A)", "Name (Z-A)")}</SelectItem>
+              <SelectItem value="date-desc">{t("Terbaru", "Newest first")}</SelectItem>
+              <SelectItem value="date-asc">{t("Terlama", "Oldest first")}</SelectItem>
+              <SelectItem value="size-desc">{t("Ukuran terbesar", "Largest size")}</SelectItem>
+              <SelectItem value="size-asc">{t("Ukuran terkecil", "Smallest size")}</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* View Mode Switcher (Grid / List) */}
+          <div className="flex items-center rounded-xl border border-border/80 bg-muted/40 p-0.5 shadow-2xs">
+            <Button
               type="button"
-              onClick={() =>
-                navigate({ projectId: activeProject.id, folderId: null })
-              }
-              className={cn(
-                "rounded-lg px-2 py-1 font-medium transition-colors hover:bg-muted hover:text-foreground",
-                !folderId && "bg-background text-foreground shadow-2xs font-semibold",
-              )}
+              variant="ghost"
+              size="icon"
+              className={cn("h-7.5 w-7.5 rounded-lg", viewMode === "grid" ? "bg-background text-primary shadow-2xs" : "text-muted-foreground hover:text-foreground")}
+              onClick={() => setViewMode("grid")}
+              aria-label={t("Tampilan Grid", "Grid view")}
             >
-              {activeProject.name}
-            </button>
-          </>
-        )}
-        {folderChain.map((node, idx) => (
-          <span key={node.id} className="inline-flex items-center gap-1.5">
-            <ChevronRight className="h-3 w-3 opacity-40" />
-            <button
+              <LayoutGrid className="h-3.5 w-3.5" />
+            </Button>
+            <Button
               type="button"
-              onClick={() =>
-                navigate({
-                  projectId: node.projectId ?? projectId,
-                  folderId: node.id,
-                })
-              }
-              className={cn(
-                "rounded-lg px-2 py-1 font-medium transition-colors hover:bg-muted hover:text-foreground",
-                idx === folderChain.length - 1 && "bg-background text-foreground shadow-2xs font-semibold",
-              )}
+              variant="ghost"
+              size="icon"
+              className={cn("h-7.5 w-7.5 rounded-lg", viewMode === "list" ? "bg-background text-primary shadow-2xs" : "text-muted-foreground hover:text-foreground")}
+              onClick={() => setViewMode("list")}
+              aria-label={t("Tampilan List", "List view")}
             >
-              {node.name}
-            </button>
-          </span>
-        ))}
-      </nav>
+              <ListIcon className="h-3.5 w-3.5" />
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {uploadError && (
         <p className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
@@ -389,7 +454,7 @@ export function PortalFileManager({
 
           {/* Root project grid */}
           {showRootProjects && (
-            <div className="divide-y">
+            <div>
               {rootProjectCards.length === 0 &&
                 clientRootFolders.length === 0 &&
                 clientRootFiles.length === 0 && (
@@ -410,74 +475,145 @@ export function PortalFileManager({
                   </div>
                 )}
 
-              {rootProjectCards.map(({ project, folderCount, fileCount }) => (
-                <button
-                  key={project.id}
-                  type="button"
-                  onClick={() =>
-                    navigate({ projectId: project.id, folderId: null })
-                  }
-                  className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-muted/40 group"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
-                    <Folder className="h-4.5 w-4.5 fill-primary/20 text-primary" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="truncate text-sm font-bold text-foreground group-hover:text-primary transition-colors">
-                        {project.name}
-                      </span>
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] font-bold h-5 px-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400 capitalize"
-                      >
-                        <span className="mr-1 h-1.5 w-1.5 rounded-full bg-blue-600" />
-                        {project.status === "active"
-                          ? portalStatusLabel("active", lang)
-                          : project.status === "completed"
-                            ? portalStatusLabel("completed", lang)
-                            : project.status}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      {folderCount} folder · {fileCount} file
-                    </p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </button>
-              ))}
+              {viewMode === "grid" ? (
+                /* Google Drive Grid Cards for Client Portal */
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {rootProjectCards.map(({ project, folderCount, fileCount }) => (
+                    <button
+                      key={project.id}
+                      type="button"
+                      onClick={() =>
+                        navigate({ projectId: project.id, folderId: null })
+                      }
+                      className="group flex flex-col justify-between rounded-2xl border border-border/80 bg-card p-3.5 text-left shadow-2xs transition-all hover:border-primary/40 hover:bg-muted/30 hover:shadow-xs"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2.5">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+                          <Folder className="h-5 w-5 fill-primary/20" />
+                        </div>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] font-bold h-5 px-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400 capitalize"
+                        >
+                          <span className="mr-1 h-1.5 w-1.5 rounded-full bg-blue-600" />
+                          {project.status === "active"
+                            ? portalStatusLabel("active", lang)
+                            : project.status === "completed"
+                              ? portalStatusLabel("completed", lang)
+                              : project.status}
+                        </Badge>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors" title={project.name}>
+                          {project.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {folderCount} folder · {fileCount} file
+                        </p>
+                      </div>
+                    </button>
+                  ))}
 
-              {clientRootFolders.map((folder) => (
-                <button
-                  key={folder.id}
-                  type="button"
-                  onClick={() =>
-                    navigate({ projectId: null, folderId: folder.id })
-                  }
-                  className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-muted/40 group"
-                >
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                    <Folder className="h-4.5 w-4.5 fill-amber-500/20" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold text-foreground group-hover:text-amber-600 transition-colors">
-                      {folder.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-0.5">{t("Folder", "Folder")}</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
-                </button>
-              ))}
+                  {clientRootFolders.map((folder) => (
+                    <button
+                      key={folder.id}
+                      type="button"
+                      onClick={() =>
+                        navigate({ projectId: null, folderId: folder.id })
+                      }
+                      className="group flex flex-col justify-between rounded-2xl border border-border/80 bg-card p-3.5 text-left shadow-2xs transition-all hover:border-amber-500/40 hover:bg-muted/30 hover:shadow-xs"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2.5">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                          <Folder className="h-5 w-5 fill-amber-500/20" />
+                        </div>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground group-hover:text-amber-600 transition-colors" title={folder.name}>
+                          {folder.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t("Folder", "Folder")}</p>
+                      </div>
+                    </button>
+                  ))}
 
-              {clientRootFiles.map((file) => (
-                <FileRow key={file.id} file={file} token={token} />
-              ))}
+                  {clientRootFiles.map((file) => (
+                    <FileGridCard key={file.id} file={file} token={token} />
+                  ))}
+                </div>
+              ) : (
+                /* Google Drive Listical Table View for Client Portal */
+                <div className="divide-y divide-border/60">
+                  {rootProjectCards.map(({ project, folderCount, fileCount }) => (
+                    <button
+                      key={project.id}
+                      type="button"
+                      onClick={() =>
+                        navigate({ projectId: project.id, folderId: null })
+                      }
+                      className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-muted/40 group"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-primary">
+                        <Folder className="h-4.5 w-4.5 fill-primary/20 text-primary" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="truncate text-sm font-bold text-foreground group-hover:text-primary transition-colors">
+                            {project.name}
+                          </span>
+                          <Badge
+                            variant="outline"
+                            className="text-[10px] font-bold h-5 px-2 rounded-full border border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400 capitalize"
+                          >
+                            <span className="mr-1 h-1.5 w-1.5 rounded-full bg-blue-600" />
+                            {project.status === "active"
+                              ? portalStatusLabel("active", lang)
+                              : project.status === "completed"
+                                ? portalStatusLabel("completed", lang)
+                                : project.status}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {folderCount} folder · {fileCount} file
+                        </p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </button>
+                  ))}
+
+                  {clientRootFolders.map((folder) => (
+                    <button
+                      key={folder.id}
+                      type="button"
+                      onClick={() =>
+                        navigate({ projectId: null, folderId: folder.id })
+                      }
+                      className="flex w-full items-center gap-3 px-3.5 py-3 text-left transition-colors hover:bg-muted/40 group"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        <Folder className="h-4.5 w-4.5 fill-amber-500/20" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-foreground group-hover:text-amber-600 transition-colors">
+                          {folder.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t("Folder", "Folder")}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </button>
+                  ))}
+
+                  {clientRootFiles.map((file) => (
+                    <FileRow key={file.id} file={file} token={token} />
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
           {/* Inside project / folder */}
           {!showRootProjects && (
-            <div className="divide-y">
+            <div>
               {currentFolders.length === 0 && currentFiles.length === 0 && (
                 <div className="px-4 py-12 text-center text-muted-foreground">
                   <FolderOpen className="mx-auto mb-3 h-12 w-12 opacity-30" />
@@ -487,44 +623,120 @@ export function PortalFileManager({
                   <p className="mt-1 text-xs">
                     {t(
                       "Lepaskan atau unggah file untuk dibagikan.",
-                      "Drop or upload files to share them.",
+                      "Drop or upload files to share.",
                     )}
                   </p>
                 </div>
               )}
 
-              {currentFolders.map((folder) => (
-                <button
-                  key={folder.id}
-                  type="button"
-                  onClick={() =>
-                    navigate({
-                      projectId: folder.projectId ?? projectId,
-                      folderId: folder.id,
-                    })
-                  }
-                  className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
-                >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-50 text-amber-600 dark:bg-amber-950/40">
-                    <Folder className="h-5 w-5 fill-amber-100 dark:fill-amber-900" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="break-words text-sm font-medium">
-                      {folder.name}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{t("Folder", "Folder")}</p>
-                  </div>
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                </button>
-              ))}
+              {viewMode === "grid" ? (
+                /* Google Drive Grid Cards Inside Subfolder */
+                <div className="p-3.5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                  {currentFolders.map((folder) => (
+                    <button
+                      key={folder.id}
+                      type="button"
+                      onClick={() =>
+                        navigate({
+                          projectId: folder.projectId ?? projectId,
+                          folderId: folder.id,
+                        })
+                      }
+                      className="group flex flex-col justify-between rounded-2xl border border-border/80 bg-card p-3.5 text-left shadow-2xs transition-all hover:border-amber-500/40 hover:bg-muted/30 hover:shadow-xs"
+                    >
+                      <div className="flex items-start justify-between gap-2 mb-2.5">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                          <Folder className="h-5 w-5 fill-amber-500/20" />
+                        </div>
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-foreground group-hover:text-amber-600 transition-colors" title={folder.name}>
+                          {folder.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{t("Folder", "Folder")}</p>
+                      </div>
+                    </button>
+                  ))}
 
-              {currentFiles.map((file) => (
-                <FileRow key={file.id} file={file} token={token} />
-              ))}
+                  {currentFiles.map((file) => (
+                    <FileGridCard key={file.id} file={file} token={token} />
+                  ))}
+                </div>
+              ) : (
+                /* Google Drive Listical Table View Inside Subfolder */
+                <div className="divide-y divide-border/60">
+                  {currentFolders.map((folder) => (
+                    <button
+                      key={folder.id}
+                      type="button"
+                      onClick={() =>
+                        navigate({
+                          projectId: folder.projectId ?? projectId,
+                          folderId: folder.id,
+                        })
+                      }
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50 group"
+                    >
+                      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400">
+                        <Folder className="h-4.5 w-4.5 fill-amber-500/20" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-bold text-foreground group-hover:text-amber-600 transition-colors">
+                          {folder.name}
+                        </p>
+                        <p className="text-xs text-muted-foreground">{t("Folder", "Folder")}</p>
+                      </div>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" />
+                    </button>
+                  ))}
+
+                  {currentFiles.map((file) => (
+                    <FileRow key={file.id} file={file} token={token} />
+                  ))}
+                </div>
+              )}
             </div>
           )}
         </CardContent>
       </Card>
+    </div>
+  );
+}
+
+function FileGridCard({ file, token }: { file: PortalFmFile; token: string }) {
+  const { lang, t } = useT();
+  return (
+    <div className="group relative flex flex-col justify-between rounded-2xl border border-border/80 bg-card p-3.5 shadow-2xs transition-all hover:border-primary/40 hover:shadow-xs">
+      <div className="flex items-start justify-between gap-2 mb-2.5">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted/60">
+          {fileIcon(file.mimeType)}
+        </div>
+        <div className="flex items-center gap-1">
+          {file.fileType === "deliverable" && (
+            <Badge variant="warning" className="text-[10px] h-5 px-1.5 font-bold">
+              {t("Hasil kerja", "Deliverable")}
+            </Badge>
+          )}
+          <a
+            href={`/api/files/${file.id}/download?token=${encodeURIComponent(token)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={`${t("Unduh", "Download")} ${file.name}`}
+            title={`${t("Unduh", "Download")} ${file.name}`}
+            className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          >
+            <Download className="h-4 w-4" aria-hidden="true" />
+          </a>
+        </div>
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-semibold text-foreground" title={file.name}>
+          {file.name}
+        </p>
+        <p className="mt-1 text-xs text-muted-foreground font-mono tabular-nums">
+          {formatSize(file.sizeBytes)} · {new Date(file.createdAt).toLocaleDateString(portalLocale(lang))}
+        </p>
+      </div>
     </div>
   );
 }
