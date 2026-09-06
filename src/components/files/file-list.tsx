@@ -233,16 +233,73 @@ export function FileList({ files, folders = [], canWrite, lang }: FileListProps)
 
   if (files.length === 0 && folders.length === 0) {
     return (
-      <EmptyState
-        icon={FileText}
-        title={t("Belum ada berkas", "No files yet")}
-        description={canWrite
-          ? t("Gunakan tombol Unggah atau tarik berkas ke area ini.", "Use Upload or drag files into this area.")
-          : t("Berkas akan tampil di sini.", "Files will appear here.")}
-      />
+      <div className="space-y-4">
+        {/* Drive Control Toolbar on Empty State */}
+        <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/70" />
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder={t("Cari berkas...", "Search files...")}
+              className="h-9 rounded-xl pl-9 text-sm"
+              disabled
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <Select value={`${sortBy}-${sortOrder}`} disabled>
+              <SelectTrigger className="h-9 w-[150px] rounded-xl text-xs font-semibold">
+                <div className="flex items-center gap-1.5 truncate">
+                  <ArrowUpDown className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <SelectValue />
+                </div>
+              </SelectTrigger>
+              <SelectContent align="end" className="rounded-xl">
+                <SelectItem value="name-asc" className="text-xs">{t("Nama (A-Z)", "Name (A-Z)")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <div className="flex items-center rounded-xl border border-border/80 bg-muted/30 p-0.5">
+              <Button
+                variant={viewMode === "grid" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-8 w-8 rounded-lg"
+                onClick={() => setViewMode("grid")}
+                title={t("Tampilan Grid", "Grid view")}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-8 w-8 rounded-lg"
+                onClick={() => setViewMode("list")}
+                title={t("Tampilan List", "List view")}
+              >
+                <ListIcon className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        <div className="rounded-2xl border border-dashed border-border/80 bg-muted/10 p-12 text-center shadow-2xs">
+          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary">
+            <FileText className="h-6 w-6" />
+          </div>
+          <h3 className="mt-3.5 text-sm font-bold text-foreground">
+            {t("Belum ada berkas", "No files yet")}
+          </h3>
+          <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">
+            {canWrite
+              ? t(
+                  "Gunakan tombol Unggah File atau drag & drop file ke area ini.",
+                  "Use Upload File or drag and drop files into this area.",
+                )
+              : t("Belum ada berkas di dalam direktori ini.", "No files in this directory.")}
+          </p>
+        </div>
+      </div>
     );
   }
-
   // Pure Folders View (at root / All Files)
   if (files.length === 0 && folders.length > 0) {
     return (
