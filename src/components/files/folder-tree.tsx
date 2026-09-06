@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, Folder, FolderOpen, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
 import { FolderRowActions } from "@/components/files/folder-actions";
-import { addExpandedClient, toggleExpandedClient } from "@/lib/file-manager-rules";
+import { toggleExpandedClient } from "@/lib/file-manager-rules";
 
 interface FolderItem {
   id: string;
@@ -40,37 +40,9 @@ export function FolderTree({ clients, projects, folders, canWrite = false }: Fol
   const currentClientId = sp.get("clientId") || undefined;
   const currentProjectId = sp.get("projectId") || undefined;
   const currentFolderId = sp.get("folderId") || undefined;
-  const [expandedClients, setExpandedClients] = useState<Set<string>>(
-    () => addExpandedClient(new Set(), currentClientId),
-  );
-  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(
-    () => addExpandedClient(new Set(), currentProjectId),
-  );
-  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => {
-    const ancestors = new Set<string>();
-    let id = currentFolderId;
-    while (id) {
-      ancestors.add(id);
-      id = folders.find((folder) => folder.id === id)?.parentId ?? undefined;
-    }
-    return ancestors;
-  });
-
-  useEffect(() => {
-    if (currentClientId) setExpandedClients((current) => addExpandedClient(current, currentClientId));
-    if (currentProjectId) setExpandedProjects((current) => addExpandedClient(current, currentProjectId));
-    if (currentFolderId) {
-      setExpandedFolders((current) => {
-        let next = addExpandedClient(current, currentFolderId);
-        let parentId = folders.find((folder) => folder.id === currentFolderId)?.parentId ?? undefined;
-        while (parentId) {
-          next = addExpandedClient(next, parentId);
-          parentId = folders.find((folder) => folder.id === parentId)?.parentId ?? undefined;
-        }
-        return next;
-      });
-    }
-  }, [currentClientId, currentProjectId, currentFolderId, folders]);
+  const [expandedClients, setExpandedClients] = useState<Set<string>>(() => new Set());
+  const [expandedProjects, setExpandedProjects] = useState<Set<string>>(() => new Set());
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(() => new Set());
 
   function renderFolderNodes(
     scopeFolders: FolderItem[],
