@@ -9,8 +9,6 @@ import {
 } from "react";
 import {
   CheckCircle2,
-  ChevronDown,
-  ChevronUp,
   Loader2,
   Pin,
   LayoutGrid,
@@ -24,6 +22,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useT } from "@/lib/i18n-client";
 import { ConfirmDeleteNoteButton } from "@/components/notes/confirm-delete-note-button";
+import { NoteEditModal } from "@/components/notes/note-edit-modal";
 
 type Tab = "open" | "done" | "archived" | "all";
 
@@ -144,7 +143,6 @@ export function NotesListClient({
   const [notes, setNotes] = useState<NoteItem[]>(initialNotes);
   const [localSearch, setLocalSearch] = useState("");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
   const [pending, startTransition] = useTransition();
   const [loadingMore, setLoadingMore] = useState(false);
   const [page, setPage] = useState(1);
@@ -153,15 +151,6 @@ export function NotesListClient({
     setNotes(initialNotes);
     setPage(1);
   }, [initialNotes]);
-
-  const toggleExpand = (id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  };
 
   const filteredNotes = useMemo(() => {
     if (!localSearch.trim()) return notes;
@@ -204,7 +193,6 @@ export function NotesListClient({
     const relDue = formatRelativeDue(note.dueDate, lang, t);
     const overdue = note.status === "open" && relDue?.isOverdue;
     const dueSoon = note.status === "open" && relDue?.isDueSoon;
-    const expanded = expandedIds.has(note.id);
     const accentClass = getNoteAccent(note.id);
 
     return (
@@ -306,76 +294,15 @@ export function NotesListClient({
           </div>
 
           <div className="flex items-center gap-1 shrink-0">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 px-2 text-[11px] font-semibold rounded-lg hover:bg-background"
-              onClick={() => toggleExpand(note.id)}
-            >
-              {expanded ? (
-                <>
-                  <ChevronUp className="h-3 w-3 mr-1" />
-                  {t("Tutup", "Close")}
-                </>
-              ) : (
-                <>
-                  <ChevronDown className="h-3 w-3 mr-1" />
-                  {t("Edit", "Edit")}
-                </>
-              )}
-            </Button>
+            <NoteEditModal
+              note={note}
+              tab={tab}
+              query={query}
+              lang={lang}
+              action={actions.updateNote}
+            />
           </div>
         </div>
-
-        {/* Inline Edit Expansion Form */}
-        {expanded && (
-          <div className="mt-3 pt-3 border-t border-border/60 space-y-3 animate-in fade-in-50">
-            <form
-              action={async (formData) => {
-                await actions.updateNote(formData);
-                toggleExpand(note.id);
-              }}
-              className="space-y-2.5"
-            >
-              <input type="hidden" name="noteId" value={note.id} />
-              <input type="hidden" name="tab" value={tab} />
-              <input type="hidden" name="q" value={query} />
-              <Input
-                name="title"
-                defaultValue={note.title}
-                placeholder={t("Judul", "Title")}
-                className="h-8 rounded-lg text-xs"
-                required
-              />
-              <textarea
-                name="body"
-                defaultValue={note.body || ""}
-                rows={3}
-                placeholder={t("Isi catatan...", "Note details...")}
-                className="w-full rounded-lg border border-input bg-background p-2 text-xs shadow-xs focus-visible:ring-1 focus-visible:ring-primary"
-              />
-              <div className="flex items-center justify-between gap-2">
-                <div className="flex items-center gap-1.5">
-                  <ConfirmDeleteNoteButton
-                    noteId={note.id}
-                    tab={tab}
-                    action={actions.removeNote}
-                    label={t("Hapus", "Delete")}
-                    confirmMessage={t("Hapus catatan ini?", "Delete this note?")}
-                  />
-                </div>
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={pending}
-                  className="h-7 rounded-lg bg-primary px-3 text-xs font-semibold text-white shadow-2xs"
-                >
-                  {t("Simpan", "Save")}
-                </Button>
-              </div>
-            </form>
-          </div>
-        )}
       </div>
     );
   };
