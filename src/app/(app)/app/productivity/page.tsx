@@ -207,7 +207,10 @@ export default async function ProductivityPage({
                   goals={activeGoals.map((g) => ({
                     id: g.id,
                     title: g.title,
-                    progress: g.manualProgress,
+                    progress: calculateGoalProgress(
+                      g.steps.map((step) => step.isCompleted),
+                      g.manualProgress,
+                    ),
                     nextStep: g.steps.find((step) => !step.isCompleted)
                       ? {
                           id: g.steps.find((step) => !step.isCompleted)!.id,

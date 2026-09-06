@@ -17,4 +17,14 @@ describe("productivity next goal step UX", () => {
     expect(source).toContain('aria-label={t("Pilih tujuan", "Select goal")}');
     expect(source).toContain('t("Selesaikan Langkah", "Complete Step")');
   });
+
+  it("shows computed milestone progress instead of stale manual progress", () => {
+    const page = readFileSync(
+      resolve(process.cwd(), "src/app/(app)/app/productivity/page.tsx"),
+      "utf8",
+    );
+    expect(page).toMatch(
+      /progress:\s*calculateGoalProgress\(\s*g\.steps\.map\(\(step\) => step\.isCompleted\),\s*g\.manualProgress,?\s*\)/,
+    );
+  });
 });
