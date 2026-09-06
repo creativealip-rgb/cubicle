@@ -170,6 +170,22 @@ export default async function FilesPage({
       }));
 
     folderGridItems = [...projFolders, ...clientSubFolders];
+  } else if (projectId && !folderId) {
+    // Inside project: show sub-folders created inside this project
+    folderGridItems = folderList
+      .filter((f) => f.projectId === projectId && !f.parentId)
+      .map((f) => {
+        const base = new URLSearchParams();
+        if (clientId) base.set("clientId", clientId);
+        base.set("projectId", projectId);
+        base.set("folderId", f.id);
+        return {
+          id: f.id,
+          name: f.name,
+          type: "workspace_folder" as const,
+          href: `/app/files?${base.toString()}`,
+        };
+      });
   } else if (folderId) {
     // Sub-folders of current folder
     folderGridItems = folderList
