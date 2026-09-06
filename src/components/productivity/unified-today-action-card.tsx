@@ -133,9 +133,17 @@ export function UnifiedTodayActionCard({
         {/* Clean Goal Stepper Action */}
         {goals.length > 0 && (
           <div className="space-y-2 border-t pt-3">
-            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-              {t("Langkah Tujuan Berikutnya", "Next Goal Step")}
-            </span>
+            <div>
+              <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                {t("Langkah Tujuan Berikutnya", "Next Goal Step")}
+              </span>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                {t(
+                  "Pilih tujuan untuk melihat dan menyelesaikan langkah berikutnya.",
+                  "Select a goal to view and complete its next step.",
+                )}
+              </p>
+            </div>
 
             <div className="rounded-2xl border bg-white p-3 shadow-sm dark:bg-card">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
@@ -145,6 +153,7 @@ export function UnifiedTodayActionCard({
                   </div>
                   <div className="min-w-0 flex-1">
                     <select
+                      aria-label={t("Pilih tujuan", "Select goal")}
                       value={selectedGoalId}
                       onChange={(e) => setSelectedGoalId(e.target.value)}
                       className="w-full truncate bg-transparent text-xs font-bold text-slate-800 outline-none hover:text-violet-600 dark:text-slate-100 cursor-pointer"
@@ -186,7 +195,7 @@ export function UnifiedTodayActionCard({
                       className="h-7 gap-1 rounded-lg bg-emerald-600 px-2.5 text-xs font-semibold text-white shadow-sm hover:bg-emerald-700"
                     >
                       <Check className="size-3" />
-                      <span>{t("Tandai Selesai", "Done Step")}</span>
+                      <span>{t("Selesaikan Langkah", "Complete Step")}</span>
                     </Button>
                   </form>
                 )}
