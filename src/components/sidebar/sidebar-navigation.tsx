@@ -97,9 +97,9 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
         aria-current={isActive && (desktopViewport ? !mobile : mobile) ? "page" : undefined}
         title={compact ? t(item.label.id, item.label.en) : undefined}
         className={cn(
-          "relative flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-xs font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+          "relative flex h-9 items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
           isActive
-            ? "bg-primary text-primary-foreground shadow-2xs font-bold"
+            ? "bg-primary text-primary-foreground shadow-2xs font-semibold"
             : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-foreground",
           compact && "justify-center px-0 w-9 mx-auto",
         )}
@@ -141,8 +141,8 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
                 aria-controls={`sidebar-desktop-${entry.id}`}
                 onClick={() => toggleDesktopGroup(entry.id)}
                 className={cn(
-                  "relative flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-xs font-semibold transition-all duration-150 hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
-                  groupActive ? "bg-primary/10 text-primary font-bold" : "text-sidebar-foreground",
+                  "relative flex h-9 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm font-medium transition-all duration-150 hover:bg-sidebar-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40",
+                  groupActive ? "bg-primary/10 text-primary font-semibold" : "text-sidebar-foreground",
                   collapsed && "justify-center px-0 w-9 mx-auto",
                 )}
                 title={collapsed ? t(entry.label.id, entry.label.en) : undefined}

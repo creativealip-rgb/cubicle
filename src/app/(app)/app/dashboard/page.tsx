@@ -523,14 +523,14 @@ export default async function DashboardPage() {
                           <ActivityIcon className="h-3.5 w-3.5" />
                         </div>
                         <div className="min-w-0">
-                          <p className="truncate text-xs font-semibold text-foreground">{formatAction(item.action)}</p>
-                          <p className="truncate text-[11px] text-muted-foreground mt-0.5">
+                          <p className="truncate text-sm font-semibold text-foreground">{formatAction(item.action)}</p>
+                          <p className="truncate text-xs text-muted-foreground mt-0.5">
                             <span className="capitalize">{item.entityType}</span>
                             {item.actorName && ` · ${t("oleh", "by")} ${item.actorName}`}
                           </p>
                         </div>
                       </div>
-                      <span className="shrink-0 font-mono text-[11px] text-muted-foreground">
+                      <span className="shrink-0 font-mono text-xs text-muted-foreground">
                         {formatRelative(item.createdAt)}
                       </span>
                     </div>
