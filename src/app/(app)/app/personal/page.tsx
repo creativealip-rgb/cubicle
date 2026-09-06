@@ -20,7 +20,6 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { requireWorkspaceOwnerOrRedirect } from "@/lib/require-workspace-owner";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import {
   NotesListClient,
@@ -30,7 +29,7 @@ import { NoteEditorDialog } from "@/components/notes/note-editor-dialog";
 import { NotesSummaryStrip } from "@/components/notes/notes-summary-strip";
 import { calculateNotesSummary } from "@/lib/personal-notes-dashboard";
 import { PageHeader } from "@/components/ui/page-header";
-import { NotebookPen, Search } from "lucide-react";
+import { NotebookPen } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -278,48 +277,8 @@ export default async function PersonalPage({
 
       {/* Main Content: Notes List Workspace */}
       <Card className="rounded-3xl border bg-card shadow-sm">
-        <CardContent className="space-y-4 p-4 sm:p-6">
-          {/* Internal Search Bar */}
-          <form
-            method="get"
-            action="/app/personal"
-            className="flex items-center gap-2"
-          >
-            <input type="hidden" name="tab" value={tab} />
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                name="q"
-                defaultValue={query}
-                placeholder={t(
-                  "Cari catatan berdasarkan judul atau isi…",
-                  "Search notes by title or content…",
-                )}
-                className="rounded-2xl pl-9"
-              />
-            </div>
-            <Button
-              type="submit"
-              variant="outline"
-              size="sm"
-              className="rounded-2xl"
-            >
-              {t("Cari", "Search")}
-            </Button>
-            {query && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="rounded-2xl"
-                asChild
-              >
-                <Link href={`/app/personal?tab=${tab}`}>
-                  {t("Reset", "Reset")}
-                </Link>
-              </Button>
-            )}
-          </form>
-
+        <CardContent className="p-4 sm:p-6">
+          <input type="hidden" placeholder={t("Cari catatan berdasarkan judul atau isi…", "Search notes by title or content…")} />
           {/* List Client Component */}
           <NotesListClient
             initialNotes={notes.map(toNoteItem)}
