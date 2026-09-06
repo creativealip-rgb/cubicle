@@ -98,7 +98,7 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
         accept="*/*"
       />
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-10 gap-1 sm:h-8" disabled={uploading}>
+        <Button variant="default" size="sm" className="h-10 gap-1.5 sm:h-8.5 rounded-xl font-semibold shadow-xs" disabled={uploading}>
           {uploading ? (
             <>
               <Loader2 className="h-4 w-4 animate-spin" />
@@ -106,7 +106,7 @@ export function UploadButton({ workspaceId, clientId, projectId, folderId }: Upl
             </>
           ) : (
             <>
-              <Upload className="h-4 w-4" /> {t("Unggah", "Upload")}
+              <Upload className="h-4 w-4" /> {t("Unggah Berkas", "Upload File")}
             </>
           )}
         </Button>

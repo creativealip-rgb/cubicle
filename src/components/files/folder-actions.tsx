@@ -68,8 +68,8 @@ export function NewFolderButton({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="h-10 gap-1 sm:h-8">
-          <FolderPlus className="h-4 w-4" /> {t("Folder Baru", "New Folder")}
+        <Button variant="outline" size="sm" className="h-10 gap-1.5 sm:h-8.5 rounded-xl font-medium border-border/80 hover:bg-muted/50">
+          <FolderPlus className="h-4 w-4 text-primary" /> {t("Folder Baru", "New Folder")}
         </Button>
       </DialogTrigger>
       <DialogContent>

@@ -108,14 +108,14 @@ export function FolderTree({ clients, projects, folders, canWrite = false }: Fol
                 )}
               />
             </Button>
-            <Button variant="ghost" size="sm" className="min-w-0 flex-1 justify-start gap-2 px-1 text-sm" asChild>
+            <Button variant="ghost" size="sm" className="min-w-0 flex-1 justify-start gap-2.5 px-2 text-sm rounded-xl font-medium" asChild>
               <Link href={scopeHref({ ...scope, folderId: folder.id })} prefetch scroll={false}>
                 {active ? (
-                  <FolderOpen className="h-3.5 w-3.5 shrink-0 text-primary" />
+                  <FolderOpen className="h-4 w-4 shrink-0 text-primary" />
                 ) : (
-                  <Folder className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                  <Folder className="h-4 w-4 shrink-0 text-amber-500" />
                 )}
-                <span className={cn("truncate", active ? "font-medium text-foreground" : "text-muted-foreground")} title={folder.name}>{folder.name}</span>
+                <span className={cn("truncate", active ? "font-semibold text-primary" : "text-foreground")} title={folder.name}>{folder.name}</span>
               </Link>
             </Button>
             {canWrite && <FolderRowActions folderId={folder.id} currentName={folder.name} />}
