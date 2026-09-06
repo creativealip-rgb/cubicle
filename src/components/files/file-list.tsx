@@ -46,6 +46,9 @@ import {
   Folder,
   Users,
   FolderKanban,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 
 interface FileItem {
@@ -65,7 +68,10 @@ export interface FolderGridItem {
   name: string;
   type: "workspace_folder" | "client" | "project";
   href: string;
+  createdAt?: Date | string | null;
+  updatedAt?: Date | string | null;
   itemCount?: number;
+  sizeBytes?: number | null;
 }
 
 interface FileListProps {
@@ -102,19 +108,40 @@ export function FileList({ files, folders = [], canWrite, lang }: FileListProps)
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "internal" | "client" | "deliverable">("all");
+  const [sortBy, setSortBy] = useState<"name" | "date" | "size">("name");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [page, setPage] = useState(1);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
 
   const filteredFolders = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return folders;
-    return folders.filter((f) => f.name.toLowerCase().includes(q));
-  }, [folders, query]);
+    let result = folders;
+    if (q) {
+      result = result.filter((f) => f.name.toLowerCase().includes(q));
+    }
+    return [...result].sort((a, b) => {
+      if (sortBy === "name") {
+        const cmp = a.name.localeCompare(b.name);
+        return sortOrder === "asc" ? cmp : -cmp;
+      }
+      if (sortBy === "date") {
+        const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
+      }
+      if (sortBy === "size") {
+        const sizeA = a.sizeBytes ?? 0;
+        const sizeB = b.sizeBytes ?? 0;
+        return sortOrder === "asc" ? sizeA - sizeB : sizeB - sizeA;
+      }
+      return 0;
+    });
+  }, [folders, query, sortBy, sortOrder]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return files.filter((file) => {
+    const result = files.filter((file) => {
       if (filter === "internal" && file.visibility !== "internal") return false;
       if (filter === "client" && file.visibility !== "client") return false;
       if (filter === "deliverable" && file.fileType !== "deliverable") return false;
@@ -123,7 +150,34 @@ export function FileList({ files, folders = [], canWrite, lang }: FileListProps)
         (file.mimeType?.toLowerCase().includes(q) ?? false) ||
         (file.uploaderName?.toLowerCase().includes(q) ?? false);
     });
-  }, [files, query, filter]);
+
+    return [...result].sort((a, b) => {
+      if (sortBy === "name") {
+        const cmp = a.name.localeCompare(b.name);
+        return sortOrder === "asc" ? cmp : -cmp;
+      }
+      if (sortBy === "date") {
+        const timeA = new Date(a.createdAt).getTime();
+        const timeB = new Date(b.createdAt).getTime();
+        return sortOrder === "asc" ? timeA - timeB : timeB - timeA;
+      }
+      if (sortBy === "size") {
+        const sizeA = a.sizeBytes ?? 0;
+        const sizeB = b.sizeBytes ?? 0;
+        return sortOrder === "asc" ? sizeA - sizeB : sizeB - sizeA;
+      }
+      return 0;
+    });
+  }, [files, query, filter, sortBy, sortOrder]);
+
+  function toggleSort(key: "name" | "date" | "size") {
+    if (sortBy === key) {
+      setSortOrder((prev) => (prev === "asc" ? "desc" : "asc"));
+    } else {
+      setSortBy(key);
+      setSortOrder(key === "name" ? "asc" : "desc");
+    }
+  }
 
   useEffect(() => {
     setPage(1);
@@ -193,6 +247,7 @@ export function FileList({ files, folders = [], canWrite, lang }: FileListProps)
   if (files.length === 0 && folders.length > 0) {
     return (
       <div className="space-y-4">
+        {/* Drive Control Toolbar */}
         <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -202,6 +257,53 @@ export function FileList({ files, folders = [], canWrite, lang }: FileListProps)
               placeholder={t("Cari folder...", "Search folders...")}
               className="pl-9 h-9 text-sm rounded-xl border-border/80 bg-background"
             />
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Sort Dropdown */}
+            <Select
+              value={`${sortBy}-${sortOrder}`}
+              onValueChange={(val) => {
+                const [sb, so] = val.split("-") as ["name" | "date" | "size", "asc" | "desc"];
+                setSortBy(sb);
+                setSortOrder(so);
+              }}
+            >
+              <SelectTrigger className="h-9 w-[150px] text-xs font-semibold rounded-xl border-border/80">
+                <ArrowUpDown className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name-asc">{t("Nama (A-Z)", "Name (A-Z)")}</SelectItem>
+                <SelectItem value="name-desc">{t("Nama (Z-A)", "Name (Z-A)")}</SelectItem>
+                <SelectItem value="date-desc">{t("Terbaru", "Newest first")}</SelectItem>
+                <SelectItem value="date-asc">{t("Terlama", "Oldest first")}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* View Mode Switcher (Grid / List) */}
+            <div className="flex items-center rounded-xl border border-border/80 bg-muted/40 p-0.5 shadow-2xs">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={cn("h-8 w-8 rounded-lg", viewMode === "grid" ? "bg-background text-primary shadow-2xs" : "text-muted-foreground hover:text-foreground")}
+                onClick={() => setViewMode("grid")}
+                aria-label={t("Tampilan Grid", "Grid view")}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className={cn("h-8 w-8 rounded-lg", viewMode === "list" ? "bg-background text-primary shadow-2xs" : "text-muted-foreground hover:text-foreground")}
+                onClick={() => setViewMode("list")}
+                aria-label={t("Tampilan List", "List view")}
+              >
+                <ListIcon className="h-4 w-4" />
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -217,34 +319,88 @@ export function FileList({ files, folders = [], canWrite, lang }: FileListProps)
               <Folder className="h-3.5 w-3.5 text-amber-500" />
               {t("Folder", "Folders")} ({filteredFolders.length})
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-              {filteredFolders.map((folder) => {
-                const Icon = folder.type === "client" ? Users : folder.type === "project" ? FolderKanban : Folder;
-                const iconColor = folder.type === "client" ? "text-blue-500" : folder.type === "project" ? "text-purple-500" : "text-amber-500";
-                return (
-                  <a
-                    key={folder.id}
-                    href={folder.href}
-                    className="group flex items-center justify-between gap-3 rounded-2xl border border-border/80 bg-card p-4 shadow-2xs transition-all hover:border-primary/40 hover:bg-muted/30 hover:shadow-xs"
-                  >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted/60">
-                        <Icon className={cn("h-5 w-5", iconColor)} />
+
+            {viewMode === "grid" ? (
+              /* Google Drive Grid View for Folders */
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
+                {filteredFolders.map((folder) => {
+                  const Icon = folder.type === "client" ? Users : folder.type === "project" ? FolderKanban : Folder;
+                  const iconColor = folder.type === "client" ? "text-blue-500" : folder.type === "project" ? "text-purple-500" : "text-amber-500";
+                  return (
+                    <a
+                      key={folder.id}
+                      href={folder.href}
+                      className="group flex items-center justify-between gap-3 rounded-2xl border border-border/80 bg-card p-4 shadow-2xs transition-all hover:border-primary/40 hover:bg-muted/30 hover:shadow-xs"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted/60">
+                          <Icon className={cn("h-5 w-5", iconColor)} />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors" title={folder.name}>
+                            {folder.name}
+                          </p>
+                          <p className="text-xs text-muted-foreground capitalize">
+                            {folder.type === "client" ? t("Klien", "Client") : folder.type === "project" ? t("Proyek", "Project") : t("Folder", "Folder")}
+                          </p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-foreground group-hover:text-primary transition-colors" title={folder.name}>
-                          {folder.name}
-                        </p>
-                        <p className="text-xs text-muted-foreground capitalize">
-                          {folder.type === "client" ? t("Klien", "Client") : folder.type === "project" ? t("Proyek", "Project") : t("Folder", "Folder")}
-                        </p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-40 group-hover:opacity-100 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
-                  </a>
-                );
-              })}
-            </div>
+                      <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground opacity-40 group-hover:opacity-100 group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    </a>
+                  );
+                })}
+              </div>
+            ) : (
+              /* Google Drive Listical Table View for Folders */
+              <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-border/80 bg-muted/40 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                      <th className="py-2.5 px-4 cursor-pointer select-none hover:text-foreground" onClick={() => toggleSort("name")}>
+                        <div className="flex items-center gap-1.5">
+                          <span>{t("Nama", "Name")}</span>
+                          {sortBy === "name" && (sortOrder === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />)}
+                        </div>
+                      </th>
+                      <th className="py-2.5 px-4 hidden sm:table-cell">{t("Tipe", "Type")}</th>
+                      <th className="py-2.5 px-4 text-right">{t("Aksi", "Action")}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {filteredFolders.map((folder) => {
+                      const Icon = folder.type === "client" ? Users : folder.type === "project" ? FolderKanban : Folder;
+                      const iconColor = folder.type === "client" ? "text-blue-500" : folder.type === "project" ? "text-purple-500" : "text-amber-500";
+                      return (
+                        <tr key={folder.id} className="group transition-colors hover:bg-muted/30">
+                          <td className="py-3 px-4">
+                            <a href={folder.href} className="flex items-center gap-3 min-w-0">
+                              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/60">
+                                <Icon className={cn("h-4 w-4", iconColor)} />
+                              </div>
+                              <span className="truncate font-semibold text-foreground group-hover:text-primary transition-colors" title={folder.name}>
+                                {folder.name}
+                              </span>
+                            </a>
+                          </td>
+                          <td className="py-3 px-4 hidden sm:table-cell text-xs text-muted-foreground capitalize">
+                            {folder.type === "client" ? t("Klien", "Client") : folder.type === "project" ? t("Proyek", "Project") : t("Folder Workspace", "Workspace Folder")}
+                          </td>
+                          <td className="py-3 px-4 text-right">
+                            <a
+                              href={folder.href}
+                              className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline px-2.5 py-1 rounded-lg hover:bg-primary/10 transition-colors"
+                            >
+                              <span>{t("Buka", "Open")}</span>
+                              <ChevronRight className="h-3.5 w-3.5" />
+                            </a>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -264,6 +420,30 @@ export function FileList({ files, folders = [], canWrite, lang }: FileListProps)
           />
         </div>
         <div className="flex items-center gap-2">
+          {/* Drive Sort Dropdown (Name, Date, Size) */}
+          <Select
+            value={`${sortBy}-${sortOrder}`}
+            onValueChange={(val) => {
+              const [sb, so] = val.split("-") as ["name" | "date" | "size", "asc" | "desc"];
+              setSortBy(sb);
+              setSortOrder(so);
+            }}
+          >
+            <SelectTrigger className="h-9 w-[150px] text-xs font-semibold rounded-xl border-border/80">
+              <ArrowUpDown className="h-3.5 w-3.5 mr-1 text-muted-foreground" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="name-asc">{t("Nama (A-Z)", "Name (A-Z)")}</SelectItem>
+              <SelectItem value="name-desc">{t("Nama (Z-A)", "Name (Z-A)")}</SelectItem>
+              <SelectItem value="date-desc">{t("Terbaru", "Newest first")}</SelectItem>
+              <SelectItem value="date-asc">{t("Terlama", "Oldest first")}</SelectItem>
+              <SelectItem value="size-desc">{t("Ukuran terbesar", "Largest size")}</SelectItem>
+              <SelectItem value="size-asc">{t("Ukuran terkecil", "Smallest size")}</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {/* Visibility & Type Filter Dropdown */}
           <Select
             value={filter}
             onValueChange={(value) => setFilter(value as typeof filter)}
@@ -470,59 +650,99 @@ export function FileList({ files, folders = [], canWrite, lang }: FileListProps)
                   })}
                 </div>
               ) : (
-                /* Traditional Linear Table / List View */
-                <div className="divide-y divide-border/70 overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs">
-                  {paginated.map((file) => {
-                    const busy = busyId === file.id;
-                    return (
-                      <div key={file.id} className="flex flex-col gap-3 p-3.5 sm:flex-row sm:items-center sm:justify-between transition-colors hover:bg-muted/20">
-                        <div className="flex min-w-0 items-center gap-3">
-                          <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-xl bg-muted/60" aria-hidden>
-                            {getFileIcon(file.mimeType)}
+                /* Traditional Linear Table / Listical View with Column Sorting */
+                <div className="overflow-hidden rounded-2xl border border-border/80 bg-card shadow-xs">
+                  <table className="w-full text-left text-sm">
+                    <thead>
+                      <tr className="border-b border-border/80 bg-muted/40 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        <th className="py-2.5 px-4 cursor-pointer select-none hover:text-foreground" onClick={() => toggleSort("name")}>
+                          <div className="flex items-center gap-1.5">
+                            <span>{t("Nama Berkas", "File Name")}</span>
+                            {sortBy === "name" && (sortOrder === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />)}
                           </div>
-                          <div className="min-w-0">
-                            <p className="truncate text-sm font-semibold text-foreground" title={file.name}>{file.name}</p>
-                            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
-                              <span className="font-mono tabular-nums">{formatBytes(file.sizeBytes, t("Tidak diketahui", "Unknown"))}</span>
-                              <span aria-hidden>·</span>
-                              <span className="truncate">{file.uploaderName || t("Tidak diketahui", "Unknown")}</span>
-                              <span aria-hidden>·</span>
-                              <span>{formatFileDate(file.createdAt, lang)}</span>
-                            </div>
+                        </th>
+                        <th className="py-2.5 px-3 cursor-pointer select-none hover:text-foreground hidden md:table-cell" onClick={() => toggleSort("size")}>
+                          <div className="flex items-center gap-1.5">
+                            <span>{t("Ukuran", "Size")}</span>
+                            {sortBy === "size" && (sortOrder === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />)}
                           </div>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
-                          {canWrite && (
-                            <>
-                              <Select value={file.visibility} onValueChange={(value) => handleVisibility(file.id, value as "internal" | "client")} disabled={busy}>
-                                <SelectTrigger className="h-8.5 w-[124px] text-xs font-medium rounded-xl border-border/70" aria-label={t("Visibilitas berkas", "File visibility")}><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="internal"><span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" /> {t("Internal", "Internal")}</span></SelectItem>
-                                  <SelectItem value="client"><span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> {t("Klien", "Client")}</span></SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <Select value={file.fileType} onValueChange={(value) => handleFileType(file.id, value as "working_file" | "deliverable")} disabled={busy}>
-                                <SelectTrigger className="h-8.5 w-[140px] text-xs font-medium rounded-xl border-border/70" aria-label={t("Tipe berkas", "File type")}><SelectValue /></SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="working_file">{t("Berkas kerja", "Working file")}</SelectItem>
-                                  <SelectItem value="deliverable"><span className="inline-flex items-center gap-1"><Package className="h-3 w-3" /> {t("Hasil kerja", "Deliverable")}</span></SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </>
-                          )}
-                          {file.fileType === "deliverable" && <Badge variant="warning" className="text-[10px] h-5">{t("Hasil kerja", "Deliverable")}</Badge>}
-                          <Button variant="outline" size="sm" className="h-8.5 gap-1 rounded-xl font-medium border-border/70" onClick={() => window.open(`/api/files/${file.id}/download`, "_blank")} disabled={busy}>
-                            <Download className="h-3.5 w-3.5" /> {t("Buka", "Open")}
-                          </Button>
-                          {canWrite && (
-                            <Button variant="ghost" size="icon" className="h-8.5 w-8.5 text-muted-foreground hover:text-destructive rounded-xl" onClick={() => setDeleteTarget(file)} aria-label={t(`Hapus ${file.name}`, `Delete ${file.name}`)} disabled={busy}>
-                              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                        </th>
+                        <th className="py-2.5 px-3 cursor-pointer select-none hover:text-foreground hidden lg:table-cell" onClick={() => toggleSort("date")}>
+                          <div className="flex items-center gap-1.5">
+                            <span>{t("Tanggal", "Date")}</span>
+                            {sortBy === "date" && (sortOrder === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />)}
+                          </div>
+                        </th>
+                        <th className="py-2.5 px-3">{t("Pengaturan", "Controls")}</th>
+                        <th className="py-2.5 px-4 text-right">{t("Aksi", "Action")}</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {paginated.map((file) => {
+                        const busy = busyId === file.id;
+                        return (
+                          <tr key={file.id} className="group transition-colors hover:bg-muted/20">
+                            <td className="py-3 px-4">
+                              <div className="flex items-center gap-3 min-w-0">
+                                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-muted/60" aria-hidden>
+                                  {getFileIcon(file.mimeType)}
+                                </div>
+                                <div className="min-w-0">
+                                  <p className="truncate font-semibold text-foreground" title={file.name}>{file.name}</p>
+                                  <div className="md:hidden mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                                    <span className="font-mono">{formatBytes(file.sizeBytes, t("Tidak diketahui", "Unknown"))}</span>
+                                    <span>·</span>
+                                    <span>{formatFileDate(file.createdAt, lang)}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="py-3 px-3 hidden md:table-cell font-mono text-xs text-muted-foreground whitespace-nowrap">
+                              {formatBytes(file.sizeBytes, t("Tidak diketahui", "Unknown"))}
+                            </td>
+                            <td className="py-3 px-3 hidden lg:table-cell text-xs text-muted-foreground whitespace-nowrap">
+                              {formatFileDate(file.createdAt, lang)}
+                            </td>
+                            <td className="py-3 px-3">
+                              <div className="flex items-center gap-1.5 flex-wrap sm:flex-nowrap">
+                                {canWrite && (
+                                  <>
+                                    <Select value={file.visibility} onValueChange={(value) => handleVisibility(file.id, value as "internal" | "client")} disabled={busy}>
+                                      <SelectTrigger className="h-7 w-[105px] text-[11px] font-medium rounded-lg border-border/70" aria-label={t("Visibilitas berkas", "File visibility")}><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="internal"><span className="inline-flex items-center gap-1"><Lock className="h-3 w-3" /> {t("Internal", "Internal")}</span></SelectItem>
+                                        <SelectItem value="client"><span className="inline-flex items-center gap-1"><Eye className="h-3 w-3" /> {t("Klien", "Client")}</span></SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                    <Select value={file.fileType} onValueChange={(value) => handleFileType(file.id, value as "working_file" | "deliverable")} disabled={busy}>
+                                      <SelectTrigger className="h-7 w-[115px] text-[11px] font-medium rounded-lg border-border/70" aria-label={t("Tipe berkas", "File type")}><SelectValue /></SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="working_file">{t("Berkas kerja", "Working")}</SelectItem>
+                                        <SelectItem value="deliverable"><span className="inline-flex items-center gap-1"><Package className="h-3 w-3" /> {t("Hasil kerja", "Deliverable")}</span></SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  </>
+                                )}
+                                {file.fileType === "deliverable" && <Badge variant="warning" className="text-[10px] h-5">{t("Hasil kerja", "Deliverable")}</Badge>}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4 text-right whitespace-nowrap">
+                              <div className="inline-flex items-center justify-end gap-1">
+                                <Button variant="outline" size="sm" className="h-8 gap-1 rounded-lg text-xs font-medium border-border/70" onClick={() => window.open(`/api/files/${file.id}/download`, "_blank")} disabled={busy}>
+                                  <Download className="h-3.5 w-3.5" /> {t("Buka", "Open")}
+                                </Button>
+                                {canWrite && (
+                                  <Button variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-lg" onClick={() => setDeleteTarget(file)} aria-label={t(`Hapus ${file.name}`, `Delete ${file.name}`)} disabled={busy}>
+                                    {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                                  </Button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
