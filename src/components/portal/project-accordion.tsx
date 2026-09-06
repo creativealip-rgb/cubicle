@@ -378,7 +378,7 @@ function ProjectExpandedContent({
   ownerEmail?: string | null;
   ownerName?: string | null;
 }) {
-  const { t } = useT();
+  const { lang, t } = useT();
   const isByHours = project.billingType === "hours";
   const isByPackage = project.billingType === "package";
   const assignedPackage = selectedPkg
@@ -396,22 +396,46 @@ function ProjectExpandedContent({
         <p className="text-sm text-muted-foreground">{project.description}</p>
       )}
       {(project.startDate || project.finishDate) && (
-        <p className="text-xs text-muted-foreground">
-          {project.startDate &&
-            `Mulai: ${new Date(project.startDate).toLocaleDateString("id-ID")}`}
-          {project.startDate && project.finishDate && " · "}
-          {project.finishDate &&
-            `Selesai: ${new Date(project.finishDate).toLocaleDateString("id-ID")}`}
-        </p>
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+          {project.startDate && (
+            <span>
+              {t("Mulai", "Start")}:{" "}
+              <strong className="text-foreground">
+                {new Date(project.startDate).toLocaleDateString(portalLocale(lang), {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </strong>
+            </span>
+          )}
+          {project.startDate && project.finishDate && (
+            <span className="text-muted-foreground/40">·</span>
+          )}
+          {project.finishDate && (
+            <span>
+              {t("Target selesai", "Target finish")}:{" "}
+              <strong className="text-foreground">
+                {new Date(project.finishDate).toLocaleDateString(portalLocale(lang), {
+                  day: "numeric",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </strong>
+            </span>
+          )}
+        </div>
       )}
       {isByHours && project.rate && (
         <p className="text-xs text-muted-foreground">
-          Tarif:{" "}
-          {new Intl.NumberFormat("en-US", {
-            style: "currency",
-            currency: project.currency || "IDR",
-          }).format(Number(project.rate))}
-          /jam
+          {t("Tarif", "Rate")}:{" "}
+          <strong className="font-mono text-foreground">
+            {new Intl.NumberFormat(portalLocale(lang), {
+              style: "currency",
+              currency: project.currency || "IDR",
+            }).format(Number(project.rate))}
+          </strong>
+          /{t("jam", "hr")}
         </p>
       )}
       {isByPackage && selectedPkg && (
@@ -419,16 +443,19 @@ function ProjectExpandedContent({
           <div>
             <p className="text-sm font-semibold">
               {selectedPkg.name}
-              {selectedPkg.hours && ` — ${selectedPkg.hours} JAM`}
+              {selectedPkg.hours && ` — ${selectedPkg.hours} ${t("JAM", "HOURS")}`}
             </p>
             <p className="text-xs text-muted-foreground">
-              Tarif:{" "}
-              {formatCurrency(
-                selectedPkg.price,
-                selectedPkg.currency || project.currency || "IDR",
-              )}
-              /bulan
-              {remainingHours != null && ` · ${remainingHours.toFixed(1)} jam tersisa`}
+              {t("Tarif", "Rate")}:{" "}
+              <strong className="font-mono text-foreground">
+                {formatCurrency(
+                  selectedPkg.price,
+                  selectedPkg.currency || project.currency || "IDR",
+                )}
+              </strong>
+              /{t("bulan", "mo")}
+              {remainingHours != null &&
+                ` · ${remainingHours.toFixed(1)} ${t("jam tersisa", "hours remaining")}`}
             </p>
           </div>
           {includedServices.length > 0 ? (
@@ -484,7 +511,7 @@ function ProjectExpandedContent({
                         {formatMinutes(packageTotalMinutes!)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Total paket
+                        {t("Total paket", "Package total")}
                       </p>
                     </div>
                     <div>
@@ -519,7 +546,7 @@ function ProjectExpandedContent({
                         {formatMinutes(hoursSummary.totalMinutes)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Total tercatat
+                        {t("Total tercatat", "Total logged")}
                       </p>
                     </div>
                     <div>
@@ -527,7 +554,7 @@ function ProjectExpandedContent({
                         {formatMinutes(hoursSummary.billableMinutes)}
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Dapat ditagih
+                        {t("Dapat ditagih", "Billable")}
                       </p>
                     </div>
                     <div>
@@ -544,8 +571,8 @@ function ProjectExpandedContent({
               {usagePercent != null && (
                 <div className="mt-3 space-y-1">
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{usagePercent}% terpakai</span>
-                    <span>{formatMinutes(remainingMinutes!)} tersisa</span>
+                    <span>{usagePercent}% {t("terpakai", "used")}</span>
+                    <span>{formatMinutes(remainingMinutes!)} {t("tersisa", "remaining")}</span>
                   </div>
                   <div className="h-2.5 w-full rounded-full bg-slate-200">
                     <div
@@ -563,7 +590,10 @@ function ProjectExpandedContent({
       {isByPackage && !project.selectedPackageId && (
         <div className="rounded-lg border bg-muted/30 p-6 text-center">
           <p className="text-sm text-muted-foreground">
-            Paket belum ditentukan. Tim akan menentukan paket untuk proyek ini.
+            {t(
+              "Paket belum ditentukan. Tim akan menentukan paket untuk proyek ini.",
+              "Package not set yet. The team will assign a package for this project.",
+            )}
           </p>
         </div>
       )}

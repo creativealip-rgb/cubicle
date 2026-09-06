@@ -356,15 +356,15 @@ export function PortalInvoices({
           <button
             type="button"
             onClick={() => setShowPaid((v) => !v)}
-            className="flex w-full items-center gap-2 rounded-lg border border-dashed p-3 text-sm text-muted-foreground transition-colors hover:bg-muted/30"
+            className="flex w-full items-center gap-2 rounded-xl border border-dashed border-border/80 p-3 text-xs font-semibold text-muted-foreground transition-colors hover:bg-muted/30"
           >
             {showPaid ? (
               <ChevronDown className="h-4 w-4" />
             ) : (
               <ChevronRight className="h-4 w-4" />
             )}
-            <span className="font-medium">
-              Riwayat Pembayaran ({paid.length})
+            <span>
+              {t("Riwayat Pembayaran", "Payment History")} ({paid.length})
             </span>
           </button>
           {showPaid && (
