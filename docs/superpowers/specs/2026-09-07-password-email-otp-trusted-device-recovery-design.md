@@ -17,7 +17,9 @@ Replace mandatory passkey/TOTP challenges during normal Cubiqlo login with passw
 
 Normal login never redirects to `/two-factor` and never asks for passkey or TOTP.
 
-The existing Better Auth `emailOTP` plugin in version 1.7.2 may supply OTP generation/delivery primitives, but implementation must prove that its sign-in endpoint does not create a usable session before OTP verification. If it cannot enforce that boundary, use Cubiqlo-owned challenge endpoints and the existing credential password verifier. Do not accept a flow that creates then exposes a session before OTP success.
+Do not use Better Auth 1.7.2 `signIn.emailOtp` for this flow: it is a passwordless sign-in endpoint and creates a session after OTP without proving the password step. Use Cubiqlo-owned password-login challenge endpoints, `@better-auth/utils/password` for credential verification, and Better Auth's internal/session API only after successful OTP verification. Do not call the normal `signIn.email` endpoint first because it can issue a session or trigger the legacy two-factor flow before email OTP succeeds.
+
+Google OAuth remains a separate federated login method. A successful Google callback is accepted without Cubiqlo email OTP because Google already authenticates the mailbox account; it must not create a trusted-device record for password login. If product policy later requires step-up after OAuth, that is a separate rollout.
 
 ## Trusted device
 
@@ -106,12 +108,15 @@ Email change after this recovery verifies ownership through the new email addres
 
 Manual admin recovery follows its current approval/cooling controls, then creates the same scoped recovery state and redirect.
 
+An administrator cannot create a cookie-bound session in the user's browser. After approval/execution, manual recovery therefore creates a random, hashed, single-use handoff token with a short expiry and sends/shows only the redeem link through an authorized support channel. User opens the link in their own browser; redemption atomically consumes it, creates the scoped recovery session, trusts that browser, and redirects to Account Settings. Never store or log the raw token.
+
 ## Existing MFA policy migration
 
 - Stop `users.two_factor_enabled` from triggering `/two-factor` after password login.
 - Stop the protected app layout from forcing `/mfa/setup`.
 - Preserve `passkey`, `two_factor`, backup-code, and MFA recovery data.
 - Keep `/two-factor` and `/mfa/setup` unavailable from normal login navigation; retain internal rollback compatibility until the new login is proven in production.
+- Change current manual recovery execution, which deletes `passkeys` and `twoFactors`, so it preserves both. Recovery revokes sessions/devices/challenges, not recovery credentials. Provide a separate explicit credential-revocation action for a confirmed compromised passkey.
 - Settings reframes passkeys and backup codes as recovery methods. TOTP is hidden, not deleted.
 
 No bulk mutation of existing user MFA flags or credential records is required.
@@ -154,6 +159,17 @@ Add additive tables:
 
 Recovery advisory may be encoded as a short-lived signed/scoped session claim or dedicated recovery-session table. Prefer dedicated table if Better Auth session extension cannot prove revocation and one-time semantics cleanly.
 
+### `auth_recovery_handoffs`
+
+- `id uuid primary key default gen_random_uuid()`
+- `user_id text not null references users(id) on delete cascade`
+- `token_hash text not null unique`
+- `method text not null check method in ('passkey','backup_code','manual_admin')`
+- `expires_at`, `consumed_at`, `created_at`
+- optional `recovery_request_id` for audited manual-admin linkage
+
+All three recovery methods converge on one atomic redemption/session-creation service. Passkey and backup-code verification may redeem immediately in the same browser; manual admin uses the handoff link.
+
 ## Failure handling
 
 - Wrong password: existing generic invalid-credentials message.
@@ -174,6 +190,9 @@ Recovery advisory may be encoded as a short-lived signed/scoped session claim or
 - Password change and manual recovery revoke all auth state.
 - Normal login never routes to `/two-factor` or `/mfa/setup`.
 - Existing passkey and backup code recovery create scoped recovery sessions and consume backup codes exactly once.
+- Google OAuth remains usable and does not mint a password-login trusted-device credential.
+- Manual admin approval creates only a hashed single-use handoff; browser redemption creates the session.
+- Manual recovery preserves passkey and TOTP rows.
 - Email-loss recovery allows new-email verification only with scoped fresh claim.
 - TOTP data remains untouched and hidden.
 
