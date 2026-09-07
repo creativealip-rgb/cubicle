@@ -105,7 +105,7 @@ export const authTrustedDevices = pgTable("auth_trusted_devices", {
   id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   tokenHash: text("token_hash").notNull().unique(), deviceLabel: text("device_label"), lastSeenIp: text("last_seen_ip"), lastSeenUserAgent: text("last_seen_user_agent"),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), lastUsedAt: timestamp("last_used_at", { withTimezone: true }), revokedAt: timestamp("revoked_at", { withTimezone: true }),
-}, (table) => [index("auth_trusted_devices_user_active_idx").on(table.userId, table.expiresAt)]);
+}, (table) => [index("auth_trusted_devices_user_active_idx").on(table.userId, table.expiresAt).where(sql`${table.revokedAt} is null`)]);
 
 export const authRecoveryHandoffs = pgTable("auth_recovery_handoffs", {
   id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),

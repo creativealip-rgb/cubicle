@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { advanceLogin, type LoginState } from "@/lib/auth-login/state-machine";
+import { OTP_EXPIRY_MS } from "@/lib/auth-login/crypto";
 
 describe("password email OTP login state machine", () => {
   it("keeps password pending until OTP succeeds", () => {
@@ -18,5 +19,9 @@ describe("password email OTP login state machine", () => {
   it("does not enforce legacy twoFactorEnabled", () => {
     const state: LoginState = { status: "password_pending", userId: "u1" };
     expect(advanceLogin(state, { type: "password_verified", trusted: false, twoFactorEnabled: true }, new Date("2026-01-01T00:00:00Z")).status).toBe("otp_pending");
+  });
+  it("uses shared OTP expiry contract", () => {
+    const now = new Date("2026-01-01T00:00:00Z");
+    expect(advanceLogin({ status: "password_pending", userId: "u1" }, { type: "password_verified", trusted: false }, now)).toMatchObject({ expiresAt: new Date(now.getTime() + OTP_EXPIRY_MS).toISOString() });
   });
 });
