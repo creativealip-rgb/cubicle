@@ -27,6 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
 import { getPasskeyErrorCode } from "@/lib/auth-login/passkey-error";
+import { useConfirm } from "@/lib/hooks/use-confirm";
 import {
   Dialog,
   DialogContent,
@@ -91,6 +92,7 @@ export function AccountSecuritySettings({
   currentTrustedDeviceId: string | null;
 }) {
   const { t } = useT();
+  const { confirm, dialog } = useConfirm();
   const [adding, setAdding] = useState(false);
   const [pending, startTransition] = useTransition();
 
@@ -132,6 +134,26 @@ export function AccountSecuritySettings({
     } finally {
       setAdding(false);
     }
+  }
+
+  async function removePasskey(id: string) {
+    const ok = await confirm({
+      title: t("Hapus passkey?", "Remove passkey?"),
+      description: t(
+        "Passkey ini tidak dapat dipakai lagi untuk pemulihan akun.",
+        "This passkey can no longer be used for account recovery.",
+      ),
+      confirmLabel: t("Hapus", "Remove"),
+      destructive: true,
+    });
+    if (!ok) return;
+    const result = await authClient.passkey.deletePasskey({ id });
+    if (result.error)
+      return toast.error(
+        t("Passkey gagal dihapus", "Could not remove passkey"),
+      );
+    toast.success(t("Passkey dihapus", "Passkey removed"));
+    window.location.reload();
   }
 
   async function handleGenerateBackupCodes(e: React.FormEvent) {
@@ -221,6 +243,7 @@ export function AccountSecuritySettings({
 
   return (
     <>
+      {dialog}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -236,7 +259,10 @@ export function AccountSecuritySettings({
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Recovery Backup Codes Card Section */}
-          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border p-3">
+          <div
+            data-testid="recovery-method-row"
+            className="recovery-method-row flex flex-col gap-3 rounded-xl border bg-muted/20 p-3 sm:flex-row sm:items-center sm:justify-between"
+          >
             <div>
               <div className="flex items-center gap-1.5">
                 <KeyRound className="h-3.5 w-3.5 text-primary" />
@@ -262,7 +288,11 @@ export function AccountSecuritySettings({
               }}
             >
               <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="h-7 text-xs">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-8 w-full text-xs sm:w-auto"
+                >
                   {t("Generate Kode", "Generate Codes")}
                 </Button>
               </DialogTrigger>
@@ -392,8 +422,11 @@ export function AccountSecuritySettings({
           </div>
 
           {/* Passkeys List */}
-          <div>
-            <div className="mb-2 flex flex-col justify-between gap-2 sm:flex-row sm:items-center">
+          <div
+            data-testid="recovery-method-row"
+            className="recovery-method-row rounded-xl border bg-muted/20 p-3"
+          >
+            <div className="mb-2 flex flex-col justify-between gap-3 sm:flex-row sm:items-center">
               <div>
                 <p className="font-medium text-xs">Passkeys</p>
                 <p className="text-[11px] text-muted-foreground">
@@ -409,7 +442,7 @@ export function AccountSecuritySettings({
                 variant="outline"
                 onClick={addPasskey}
                 disabled={adding}
-                className="h-7 text-xs"
+                className="h-8 w-full text-xs sm:w-auto"
               >
                 {adding
                   ? t("Menambahkan…", "Adding…")
@@ -424,17 +457,29 @@ export function AccountSecuritySettings({
                     className="flex items-center gap-2.5 rounded-lg border p-2.5"
                   >
                     <KeyRound className="h-4 w-4 text-muted-foreground" />
-                    <div>
+                    <div className="min-w-0 flex-1">
                       <p className="text-xs font-medium">
                         {item.name || "Passkey"}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
-                        {item.deviceType} ·{" "}
+                        {item.deviceType === "multiDevice"
+                          ? t("Passkey tersinkron", "Synced passkey")
+                          : t("Passkey perangkat", "Device passkey")}{" "}
+                        ·{" "}
                         {item.createdAt
                           ? new Date(item.createdAt).toLocaleDateString()
                           : t("Tanggal tidak tersedia", "Date unavailable")}
                       </p>
                     </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-7 text-xs text-destructive"
+                      onClick={() => removePasskey(item.id)}
+                    >
+                      {t("Hapus", "Remove")}
+                    </Button>
                   </div>
                 ))
               ) : (
@@ -449,7 +494,10 @@ export function AccountSecuritySettings({
           </div>
 
           {/* Manual Account Recovery Link */}
-          <div className="flex flex-col justify-between gap-2 border-t pt-3 sm:flex-row sm:items-center">
+          <div
+            data-testid="recovery-method-row"
+            className="recovery-method-row flex flex-col justify-between gap-3 rounded-xl border bg-muted/20 p-3 sm:flex-row sm:items-center"
+          >
             <div>
               <p className="font-medium text-xs">
                 {t("Pemulihan akun manual", "Manual account recovery")}
@@ -457,12 +505,14 @@ export function AccountSecuritySettings({
               <p className="text-[11px] text-muted-foreground">
                 {t(
                   "Pemulihan butuh 72 jam & approval 2 admin.",
-                  "Recovery requires 72 hours & 2 admin approvals.",
+                  "Last resort · Recovery requires 72 hours & 2 admin approvals.",
                 )}
               </p>
             </div>
             <Button asChild size="sm" variant="outline" className="h-7 text-xs">
-              <Link href="/mfa/recovery">{t("Buka", "Open")}</Link>
+              <Link href="/mfa/recovery">
+                {t("Mulai pemulihan", "Start recovery")}
+              </Link>
             </Button>
           </div>
 

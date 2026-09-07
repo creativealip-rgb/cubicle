@@ -20,4 +20,11 @@ describe("recovery settings contract", () => {
     expect(component).toContain("revokeTrustedDevice");
     expect(component).toContain("logoutAllDevices");
   });
+  it("uses consistent recovery rows and supports passkey removal", () => {
+    expect(component).toContain("recovery-method-row");
+    expect(component).toContain("Synced passkey");
+    expect(component).toContain("Last resort");
+    expect(component).toContain("authClient.passkey.deletePasskey");
+    expect(component).toContain("useConfirm");
+  });
 });
