@@ -243,6 +243,29 @@ export async function startTimer(input: z.infer<typeof startTimerSchema>) {
  * Resolves client+project from task. Task title remains context only.
  * Stop remains instant — no form required.
  */
+export async function copyTimeEntry(entryId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const [source] = await db.select().from(timeEntries).where(and(eq(timeEntries.id, entryId), eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.userId, user.id))).limit(1);
+  if (!source) throw new Error("Entri waktu tidak ditemukan");
+  await assertHistoricalTimeEntryMutable(db, workspaceId, source.projectId);
+  const [copy] = await db.insert(timeEntries).values({ workspaceId, userId: user.id, clientId: source.clientId, projectId: source.projectId, activityId: source.activityId, taskId: source.taskId, description: source.description, tags: source.tags, workDate: source.workDate, manualMinutes: source.durationMinutes ?? source.manualMinutes, billable: source.billable, hourlyRate: source.hourlyRate, status: "draft" }).returning();
+  await writeActivityLog(workspaceId, user.id, "copied_time_entry", "time_entry", copy.id);
+  return copy;
+}
+
+export async function restartTimeEntry(entryId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const [entry] = await db.select({ clientId: timeEntries.clientId, projectId: timeEntries.projectId, activityId: timeEntries.activityId, taskId: timeEntries.taskId, description: timeEntries.description, tags: timeEntries.tags, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).where(and(eq(timeEntries.id, entryId), eq(timeEntries.workspaceId, workspaceId), eq(timeEntries.userId, user.id))).limit(1);
+  if (!entry) throw new Error("Entri waktu tidak ditemukan");
+  return startTimer({ workspaceId, ...entry, hourlyRate: entry.hourlyRate == null ? undefined : Number(entry.hourlyRate) });
+}
+
 export async function startTimerFromTask(taskId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);

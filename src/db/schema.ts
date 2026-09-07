@@ -714,7 +714,7 @@ export const clients = pgTable("clients", {
 export const projects = pgTable("projects", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  clientId: uuid("client_id").notNull().references(() => clients.id, { onDelete: "cascade" }),
+  clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
   name: text("name").notNull(),
   description: text("description"),
   status: text("status", { enum: ["draft", "active", "on_hold", "completed", "cancelled", "archived"] }).notNull().default("active"),

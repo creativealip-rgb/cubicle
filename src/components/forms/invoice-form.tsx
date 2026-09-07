@@ -33,7 +33,7 @@ interface ClientOption {
 interface ProjectOption {
   id: string;
   name: string;
-  clientId: string;
+  clientId: string | null;
   billingType: string;
   currency: string;
   budget: string | null;

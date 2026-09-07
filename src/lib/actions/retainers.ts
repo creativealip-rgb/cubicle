@@ -107,7 +107,7 @@ export async function generateRetainerInvoice(input: z.infer<typeof invoiceInput
     const [existing] = await tx.select().from(invoices).where(and(eq(invoices.retainerPeriodId, period.id), eq(invoices.workspaceId, workspaceId), ne(invoices.status, "cancelled"))).for("update").limit(1);
     if (existing) return existing;
     const [project] = await tx.select({ clientId: projects.clientId }).from(projects).where(and(eq(projects.id, period.projectId), eq(projects.workspaceId, workspaceId))).limit(1);
-    if (!project) throw new Error("Project Retainer tidak ditemukan");
+    if (!project?.clientId) throw new Error("Pilih klien pada project sebelum membuat invoice Retainer");
 
     const invoiceNumber = normalizeInvoiceNumber(parsed.invoiceNumber) ?? await nextInvoiceNumber(tx, workspaceId);
     const lines = buildRetainerInvoiceLines({ fee: Number(period.feeSnapshot), currency: period.currencySnapshot, periodStart: period.periodStart, periodEnd: period.periodEnd, overagePolicy: period.overagePolicySnapshot, overageMinutes: period.overageMinutes, overageRate: period.overageRateSnapshot == null ? null : Number(period.overageRateSnapshot) });

@@ -519,11 +519,13 @@ async function getProject(args: { id?: string; name?: string }) {
     .where(and(...conditions))
     .limit(1);
   if (!row) return { found: false };
-  const [client] = await db
-    .select({ name: clients.name, email: clients.email })
-    .from(clients)
-    .where(eq(clients.id, row.clientId))
-    .limit(1);
+  const [client] = row.clientId
+    ? await db
+        .select({ name: clients.name, email: clients.email })
+        .from(clients)
+        .where(eq(clients.id, row.clientId))
+        .limit(1)
+    : [];
   const projectTasks = await db
     .select({
       id: tasks.id,

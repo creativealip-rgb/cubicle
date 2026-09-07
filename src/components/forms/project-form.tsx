@@ -114,6 +114,7 @@ export function ProjectForm({
     try {
       const data = {
         ...form,
+        clientId: form.clientId || undefined,
         billingModel: form.billingModel as BillingModel,
         rate: form.rate ? Number(form.rate) : undefined,
         budget: form.budget ? Number(form.budget) : undefined,
@@ -185,7 +186,7 @@ export function ProjectForm({
 
           {!clientId && (
             <div className="space-y-1.5">
-              <Label className="text-xs font-medium">{t("Klien *", "Client *")}</Label>
+              <Label className="text-xs font-medium">{t("Klien (Opsional)", "Client (Optional)")}</Label>
               <div ref={clientContainerRef} className="relative">
                 <Input
                   placeholder={t("Cari klien...", "Search client...")}
@@ -229,12 +230,12 @@ export function ProjectForm({
             </div>
           )}
 
-          <div className="grid gap-3 grid-cols-2">
+          {mode === "edit" && <div className="grid gap-3 grid-cols-2">
             {field(t("Tanggal Mulai", "Start Date"), "startDate", "date")}
             {field(t("Target Selesai", "Target Finish Date"), "finishDate", "date")}
-          </div>
+          </div>}
 
-          <div className="space-y-1.5">
+          {mode === "edit" && <div className="space-y-1.5">
             <Label className="text-xs font-medium">{t("Deskripsi", "Description")}</Label>
             <textarea
               className="flex min-h-[80px] w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
@@ -242,7 +243,7 @@ export function ProjectForm({
               onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
               rows={3}
             />
-          </div>
+          </div>}
 
           <label className="flex items-start gap-2.5 rounded-lg border p-3 cursor-pointer bg-muted/10 hover:bg-muted/20 transition-colors">
             <input
@@ -263,7 +264,7 @@ export function ProjectForm({
         </div>
 
         {/* Right Column: Billing & Financials */}
-        <div className="space-y-4">
+        {mode === "edit" && <div className="space-y-4">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {t("Pengaturan Tagihan", "Billing Settings")}
           </h3>
@@ -351,7 +352,7 @@ export function ProjectForm({
               )}
             </div>
           )}
-        </div>
+        </div>}
       </div>
 
       <div className="flex items-center justify-end gap-2 border-t pt-4">

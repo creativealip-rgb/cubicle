@@ -659,7 +659,7 @@ export default async function InvoicesPage({
           lines: rule.lines.map((line) => ({ ...line, quantity: Number(line.quantity), unitPrice: Number(line.unitPrice) })),
         }))}
         clients={clientOptions.map((client) => ({ id: client.id, name: client.companyName || client.name }))}
-        projects={projectOptions}
+        projects={projectOptions.filter((project): project is typeof project & { clientId: string } => project.clientId !== null)}
         canWrite={canWrite}
         defaultCurrency={baseCurrency}
       />

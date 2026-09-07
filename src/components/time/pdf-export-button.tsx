@@ -17,7 +17,7 @@ import {
 type ReportType = "detailed" | "dashboard" | "full";
 
 type ClientOpt = { id: string; name: string | null };
-type ProjectOpt = { id: string; name: string | null; clientId: string };
+type ProjectOpt = { id: string; name: string | null; clientId: string | null };
 
 const REPORT_OPTIONS: { value: ReportType; label: string; labelEn: string; desc: string; descEn: string }[] = [
   {

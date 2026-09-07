@@ -28,7 +28,7 @@ async function assertWorkspaceCurrency(workspaceId: string, currency: string) {
 const projectInputSchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional(),
-  clientId: z.string().uuid("Valid client required"),
+  clientId: z.string().uuid().optional().nullable(),
   status: z.enum(["draft", "active", "on_hold", "completed", "cancelled", "archived"]),
   billingType: z.enum(["fixed_price", "hourly", "retainer", "package", "project", "hours"]).default("fixed_price"),
   billingModel: z.enum(["fixed_price", "hourly", "retainer"]).default("fixed_price"),
@@ -120,7 +120,7 @@ export async function createProject(input: z.input<typeof projectCreateSchema>) 
       error: error instanceof Error ? error.message : "Currency is not configured",
     };
   }
-  await assertClientInWorkspace(db, user.id, workspaceId, parsed.clientId);
+  if (parsed.clientId) await assertClientInWorkspace(db, user.id, workspaceId, parsed.clientId);
   const timeTrackingMode = parsed.timeTrackingMode ?? (parsed.billingModel === "fixed_price" ? "off" : "billable");
 
   const [project] = await db.insert(projects).values({
@@ -160,7 +160,7 @@ export async function createProject(input: z.input<typeof projectCreateSchema>) 
   // Keep client detail and projects lists fresh after create (client detail
   // renders the linked-projects list from the DB; router.refresh alone cannot
   // re-render other routes' server components).
-  revalidatePath(`/app/clients/${parsed.clientId}`);
+  if (parsed.clientId) revalidatePath(`/app/clients/${parsed.clientId}`);
   revalidatePath("/app/projects");
   revalidatePath("/app/dashboard");
   return { ok: true as const, project };

@@ -656,8 +656,8 @@ export function TimerWidget({
               ) : isEmptyTimer ? (
                 <p className="text-sm text-muted-foreground">
                   {t(
-                    "Timer kosong — pilih klien dan Project saat menghentikan.",
-                    "Empty timer — choose client and Project when stopping.",
+                    "Timer kosong — tambahkan project, task, dan detail kapan saja.",
+                    "Empty timer — add project, task, and details anytime.",
                   )}
                 </p>
               ) : (

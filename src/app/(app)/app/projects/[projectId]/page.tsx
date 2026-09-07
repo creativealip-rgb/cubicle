@@ -326,7 +326,7 @@ export default async function ProjectDetailPage({
                 entityType="project"
                 entityId={project.id}
                 entityName={project.name}
-                redirectTo={`/app/clients/${project.clientId}?tab=projects`}
+                redirectTo={project.clientId ? `/app/clients/${project.clientId}?tab=projects` : "/app/projects"}
               />
             </div>
           </div>

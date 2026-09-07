@@ -19,7 +19,7 @@ type ProjectEditDialogProps = {
     id: string;
     name: string;
     description: string | null;
-    clientId: string;
+    clientId: string | null;
     status: string;
     billingType: string;
     billingModel?: string | null;
@@ -66,13 +66,13 @@ export function ProjectEditDialog({
         <div className="flex-1 overflow-y-auto p-6">
         <ProjectForm
           mode="edit"
-          clientId={project.clientId}
+          clientId={project.clientId ?? undefined}
           clients={[]}
           defaultValues={{
             id: project.id,
             name: project.name,
             description: project.description ?? "",
-            clientId: project.clientId,
+            clientId: project.clientId ?? undefined,
             status: project.status,
             billingType: project.billingType,
             billingModel: (project.billingModel ?? undefined) as any,
