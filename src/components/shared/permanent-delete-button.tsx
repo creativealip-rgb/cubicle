@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import { Trash2 } from "lucide-react";
@@ -16,12 +16,13 @@ import { useT } from "@/lib/i18n-client";
 
 type EntityType = "client" | "project" | "task";
 
-export function PermanentDeleteButton({ entityType, entityId, entityName, redirectTo, size = "sm" }: {
+export function PermanentDeleteButton({ entityType, entityId, entityName, redirectTo, size = "sm", trigger }: {
   entityType: EntityType;
   entityId: string;
   entityName: string;
   redirectTo?: string;
   size?: "sm" | "default";
+  trigger?: ReactNode;
 }) {
   const router = useRouter();
   const { refresh } = useAppTransition();
@@ -50,9 +51,9 @@ export function PermanentDeleteButton({ entityType, entityId, entityName, redire
 
   return <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) setConfirmation(""); }}>
     <DialogTrigger asChild>
-      <Button type="button" variant="outline" size={size} className="gap-1 text-destructive hover:text-destructive">
+      {trigger ?? <Button type="button" variant="outline" size={size} className="gap-1 text-destructive hover:text-destructive">
         <Trash2 className="h-3.5 w-3.5" /> {t("Hapus Permanen", "Delete Permanently")}
-      </Button>
+      </Button>}
     </DialogTrigger>
     <DialogContent className="sm:max-w-md">
       <DialogHeader>

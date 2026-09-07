@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import { Plus } from "lucide-react";
@@ -11,19 +11,20 @@ import { useT } from "@/lib/i18n-client";
 
 type InvoiceFormProps = Parameters<typeof InvoiceForm>[0];
 
-export function ClientInvoiceCreateDialog({ client, projects, baseCurrency, proposedInvoiceNumber, currencyRates = [] }: {
+export function ClientInvoiceCreateDialog({ client, projects, baseCurrency, proposedInvoiceNumber, currencyRates = [], trigger }: {
   client: InvoiceFormProps["clients"][number];
   projects: NonNullable<InvoiceFormProps["projects"]>;
   baseCurrency: string;
   proposedInvoiceNumber: string;
   currencyRates?: NonNullable<InvoiceFormProps["currencyRates"]>;
+  trigger?: ReactNode;
 }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
   const router = useRouter();
   return <Dialog open={open} onOpenChange={setOpen}>
-    <DialogTrigger asChild><Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> {t("Buat Invoice", "Create Invoice")}</Button></DialogTrigger>
+    <DialogTrigger asChild>{trigger ?? <Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> {t("Buat Invoice", "Create Invoice")}</Button>}</DialogTrigger>
     <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto p-4 sm:max-w-3xl sm:p-6">
       <DialogHeader><DialogTitle>{t("Buat Invoice Klien", "Create Client Invoice")}</DialogTitle></DialogHeader>
       <InvoiceForm mode="create" scopedClientId={client.id} defaultValues={{ clientId: client.id, currency: baseCurrency, invoiceNumber: proposedInvoiceNumber }} clients={[client]} projects={projects} baseCurrency={baseCurrency} currencyRates={currencyRates} onSuccess={(invoiceId) => { setOpen(false); if (invoiceId) router.push(`/app/invoices/${invoiceId}`); else refresh(); }} />

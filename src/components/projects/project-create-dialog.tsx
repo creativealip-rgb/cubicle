@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,12 +21,14 @@ export function ProjectCreateDialog({
   isAtLimit = false,
   projectCount = 0,
   projectLimit = 5,
+  trigger,
 }: {
   clients: Array<{ id: string; name: string }>;
   clientId?: string;
   isAtLimit?: boolean;
   projectCount?: number;
   projectLimit?: number;
+  trigger?: ReactNode;
 }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
@@ -51,12 +53,12 @@ export function ProjectCreateDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1 w-full sm:w-auto">
+        {trigger ?? <Button size="sm" className="gap-1 w-full sm:w-auto">
           <Plus className="h-4 w-4" />
           {clientId
             ? t("Tambah Proyek", "Add Project")
             : t("Proyek Baru", "New Project")}
-        </Button>
+        </Button>}
       </DialogTrigger>
       <DialogContent className="flex max-h-[min(90dvh,640px)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-md">
         <DialogHeader className="border-b px-6 py-4">

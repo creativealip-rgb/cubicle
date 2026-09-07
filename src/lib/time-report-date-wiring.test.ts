@@ -27,7 +27,7 @@ describe("requested UI cleanup", () => {
     const client = read("src/app/(app)/app/clients/[clientId]/page.tsx");
     expect(client).not.toContain('value="notes"');
     expect(client).not.toContain("?tab=notes");
-    expect(client).toContain("Catatan Internal");
+    expect(readFileSync("src/components/clients/client-overview.tsx", "utf8")).toContain("Catatan Internal");
   });
 
   it("removes tasks and timer separation banner", () => {

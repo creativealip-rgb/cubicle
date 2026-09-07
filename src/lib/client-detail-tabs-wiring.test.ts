@@ -15,11 +15,12 @@ describe("client detail tabs", () => {
     // Nav derives current tab from the query string, defaulting to initialTab
     expect(nav).toContain('const currentTab = searchParams.get("tab") || initialTab;');
     expect(nav).toContain('router.replace(`${pathname}?${params.toString()}`, { scroll: false });');
-    // All four tab triggers present, portal first
-    for (const tab of ["portal", "projects", "invoices", "calendar"]) {
+    // All five tab triggers present, overview first and portal last
+    for (const tab of ["overview", "projects", "invoices", "calendar", "portal"]) {
       expect(nav).toContain(`value="${tab}"`);
     }
-    expect(nav.indexOf('value="portal"')).toBeLessThan(nav.indexOf('value="projects"'));
+    expect(nav.indexOf('value="overview"')).toBeLessThan(nav.indexOf('value="projects"'));
+    expect(nav.indexOf('value="portal"')).toBeGreaterThan(nav.indexOf('value="calendar"'));
     expect(nav).not.toContain("?tab=notes");
     expect(page).not.toContain("?tab=notes");
   });

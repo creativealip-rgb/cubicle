@@ -14,9 +14,8 @@ describe("client and project detail UX", () => {
     expect(billingTypeLabel("retainer", "id")).toBe("Retainer");
   });
 
-  it("keeps client summary at three columns (with portal status stat) and tabs in shared ClientTabsNav", () => {
-    expect(clientDetail).toContain('className="grid grid-cols-3 gap-2"');
-    expect(clientDetail).toContain('<p className="text-[11px] text-muted-foreground">Portal</p>');
+  it("keeps overview KPI strip and tabs in shared ClientTabsNav", () => {
+    expect(clientDetail).toContain("<ClientOverview");
     expect(clientDetail).toContain("<ClientTabsNav");
   });
 

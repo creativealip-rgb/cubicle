@@ -28,11 +28,10 @@ describe("shared billing-aware project task workspace", () => {
     expect(source).not.toContain('t("Jatuh Tempo", "Due Date")');
   });
 
-  it("wires create edit archive restore and max ten global rows", () => {
+  it("wires edit archive restore and max ten global rows without duplicate create", () => {
     const source = read("src/components/tasks/project-task-workspace.tsx");
-    expect(source).toContain("TaskForm");
-    expect(source).toContain("DialogTrigger");
-    expect(source).toContain('t("Buat Tugas", "Create Task")');
+    expect(source).not.toContain("TaskForm");
+    expect(source).not.toContain("DialogTrigger");
     expect(source).not.toContain('<TaskForm mode="create" projectId={projectId} members={members} projects={projects} taskMode={mode} />');
     expect(source).toContain("archiveTask");
     expect(source).toContain("restoreTask");

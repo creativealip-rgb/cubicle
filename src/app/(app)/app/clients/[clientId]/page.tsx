@@ -22,13 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ClientTabsNav } from "@/components/clients/client-tabs-nav";
 import Link from "next/link";
-import {
-  Download,
-  Wallet,
-  FolderKanban,
-  FileSpreadsheet,
-  Users,
-} from "lucide-react";
+import { Wallet, FolderKanban, FileSpreadsheet, Users } from "lucide-react";
 import { PortalTokenSection } from "./portal-section";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
 import { ClientGoogleCalendarPanel } from "@/components/clients/client-google-calendar-panel";
@@ -49,6 +43,9 @@ import { PermanentDeleteButton } from "@/components/shared/permanent-delete-butt
 import { ClientInvoiceCreateDialog } from "@/components/invoices/client-invoice-create-dialog";
 import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
 import { resolveProjectAmount } from "@/lib/invoice-project-items";
+import { ClientOverview } from "@/components/clients/client-overview";
+import { ClientHeaderActions } from "@/components/clients/client-header-actions";
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 async function _getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -74,21 +71,19 @@ export default async function ClientDetailPage({
   const { clientId } = await params;
   const { tab: tabParam } = await searchParams;
   const allowedTabs = new Set([
+    "overview",
     "projects",
     "invoices",
     "calendar",
     "portal",
   ]);
   // Legacy deep-link ?tab=appointments → Calendar
-  // Ringkasan (overview) di-hide; deep-link lama fallback ke projects
   const initialTab =
     tabParam === "appointments"
       ? "calendar"
-      : tabParam === "overview"
-        ? "projects"
-        : tabParam && allowedTabs.has(tabParam)
-          ? tabParam
-          : "portal";
+      : tabParam && allowedTabs.has(tabParam)
+        ? tabParam
+        : "overview";
 
   try {
     await assertClientInWorkspace(db, user.id, workspaceId, clientId);
@@ -265,6 +260,15 @@ export default async function ClientDetailPage({
   // Active projects count
   const activeProjects = clientProjects.filter((p) => p.status === "active").length;
   const portalActive = resolveClientPortalActive(client);
+  const trackedMinutes = clientProjects.reduce((sum, project) => sum + Number(project.trackedMinutes || 0), 0);
+  const baseCurrency = workspace?.defaultCurrency ?? "IDR";
+  const convertToBase = (amount: string, currency: string) => {
+    if (currency === baseCurrency) return Number(amount);
+    const direct = currencyRates.find((rate) => rate.fromCurrency === currency);
+    return direct ? Number(amount) * Number(direct.rate) : 0;
+  };
+  const invoicedTotal = clientInvoices.filter((invoice) => invoice.status !== "cancelled").reduce((sum, invoice) => sum + convertToBase(invoice.total, invoice.currency), 0);
+  const outstandingTotal = clientInvoices.filter((invoice) => !["paid", "cancelled", "archived"].includes(invoice.status)).reduce((sum, invoice) => sum + convertToBase(invoice.total, invoice.currency), 0);
   const projectStatusLabels: Record<string, string> = {
     draft: "Draf",
     active: "Aktif",
@@ -274,6 +278,9 @@ export default async function ClientDetailPage({
     cancelled: "Dibatalkan",
     archived: "Diarsipkan",
   };
+
+  const clientDefaults = { id: client.id, clientNumber: client.clientNumber, name: client.name, companyName: client.companyName ?? "", email: client.email ?? "", phone: client.phone ?? "", website: client.website ?? "", address: client.address ?? "", tags: client.tags ?? [], internalNotes: client.internalNotes ?? "", portalSlug: client.portalSlug ?? "", portalSlugEnabled: client.portalSlugEnabled ?? true };
+  const invoiceProjects = clientProjects.map((project) => ({ id: project.id, name: project.name, clientId: client.id, billingType: project.billingModel ?? project.billingType, currency: project.currency, budget: project.budget, rate: project.rate, packagePrice: project.packagePrice, packageCustomPrice: null, agreedAmount: resolveProjectAmount({ billingType: project.billingModel ?? project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packagePrice ?? 0) || null }), priorActiveFixedBilledAmount: sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0, eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [] }));
 
   return (
     <div className="space-y-6">
@@ -331,131 +338,17 @@ export default async function ClientDetailPage({
             </div>
           </div>
 
-          {/* Action Group */}
-          <div className="flex flex-wrap items-center gap-1.5 shrink-0 sm:self-center">
-            <Button size="sm" variant="outline" className="h-8 gap-1.5 rounded-lg px-2.5 text-xs font-semibold shadow-xs" asChild>
-              <a href={`/api/clients/${client.id}/export/xlsx`} download>
-                <Download className="h-3.5 w-3.5 text-muted-foreground" /> Excel
-              </a>
-            </Button>
-            <ClientEditDialog
-              defaultValues={{
-                id: client.id,
-                clientNumber: client.clientNumber,
-                name: client.name,
-                companyName: client.companyName ?? "",
-                email: client.email ?? "",
-                phone: client.phone ?? "",
-                website: client.website ?? "",
-                address: client.address ?? "",
-                tags: client.tags ?? [],
-                internalNotes: client.internalNotes ?? "",
-                portalSlug: client.portalSlug ?? "",
-                portalSlugEnabled: client.portalSlugEnabled ?? true,
-              }}
-            />
-            <PermanentDeleteButton
-              entityType="client"
-              entityId={client.id}
-              entityName={client.name}
-              redirectTo="/app/clients"
-            />
-          </div>
+          <ClientHeaderActions
+            exportHref={`/api/clients/${client.id}/export/xlsx`}
+            projectAction={canWrite ? <ProjectCreateDialog clients={[]} clientId={clientId} isAtLimit={!projectLimitState.allowed} projectCount={projectLimitState.current} projectLimit={projectLimitState.limit} trigger={<DropdownMenuItem>{t("Project Baru", "New Project")}</DropdownMenuItem>} /> : undefined}
+            invoiceAction={canWrite ? <ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} proposedInvoiceNumber={proposedInvoiceNumber} projects={invoiceProjects} baseCurrency={baseCurrency} currencyRates={currencyRates} trigger={<DropdownMenuItem>{t("Invoice Baru", "New Invoice")}</DropdownMenuItem>} /> : undefined}
+            editAction={<ClientEditDialog trigger={<DropdownMenuItem>{t("Ubah klien", "Edit client")}</DropdownMenuItem>} defaultValues={clientDefaults} />}
+            deleteAction={<PermanentDeleteButton trigger={<DropdownMenuItem className="text-destructive focus:text-destructive">{t("Hapus klien", "Delete client")}</DropdownMenuItem>} entityType="client" entityId={client.id} entityName={client.name} redirectTo="/app/clients" />}
+          />
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)] xl:grid-cols-[380px_minmax(0,1fr)]">
-        {/* Client profile */}
-        <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-          <Card className="rounded-2xl border border-border/80 shadow-xs">
-            <CardContent className="space-y-4 p-4">
-              <div className="space-y-2">
-                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  {t("Ringkasan Klien", "Client Summary")}
-                </p>
-                {(client.email || client.phone) && (
-                  <div className="space-y-1 text-xs text-muted-foreground">
-                    {client.email && (
-                      <a href={`mailto:${client.email}`} className="block break-all hover:text-primary hover:underline">
-                        {client.email}
-                      </a>
-                    )}
-                    {client.phone && (
-                      <a href={`tel:${client.phone}`} className="block hover:text-primary hover:underline">
-                        {client.phone}
-                      </a>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-xl border border-border/80 bg-muted/20 p-3">
-                  <p className="text-[11px] font-medium text-muted-foreground">{t("Proyek Aktif", "Active Projects")}</p>
-                  <p className="mt-1 text-xl font-bold text-foreground">{activeProjects}</p>
-                </div>
-                <div className="rounded-xl border border-border/80 bg-muted/20 p-3">
-                  <p className="text-[11px] font-medium text-muted-foreground">{t("Invoice Belum Lunas", "Unpaid Invoices")}</p>
-                  <p className="mt-1 text-xl font-bold text-foreground">
-                    {clientInvoices.filter((i) => i.status !== "paid" && i.status !== "cancelled").length}
-                  </p>
-                </div>
-                <div className="rounded-xl border border-border/80 bg-muted/20 p-3">
-                  <p className="text-[11px] text-muted-foreground">Portal</p>
-                  {portalActive ? (
-                    <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-                      <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" /> {t("Aktif", "Active")}
-                    </p>
-                  ) : (
-                    <p className="mt-1 flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
-                      <span className="h-2 w-2 rounded-full bg-muted-foreground/40" /> {t("Nonaktif", "Inactive")}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {(client.website || client.address || (client.tags && client.tags.length > 0) || client.internalNotes) && (
-                <div className="space-y-3 border-t pt-3 text-xs">
-                  {client.website && (
-                    <div>
-                      <p className="font-semibold text-muted-foreground">Website</p>
-                      <a href={client.website} target="_blank" rel="noopener noreferrer" className="break-all text-primary hover:underline">
-                        {client.website}
-                      </a>
-                    </div>
-                  )}
-                  {client.address && (
-                    <div>
-                      <p className="font-semibold text-muted-foreground">{t("Alamat", "Address")}</p>
-                      <p className="mt-0.5 break-words text-foreground">{client.address}</p>
-                    </div>
-                  )}
-                  {client.tags && client.tags.length > 0 && (
-                    <div>
-                      <p className="font-semibold text-muted-foreground mb-1">{t("Tag", "Tags")}</p>
-                      <div className="flex flex-wrap gap-1">
-                        {client.tags.map((tag) => (
-                          <Badge key={tag} variant="outline" className="text-[10px] rounded-md font-medium">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                  {client.internalNotes && (
-                    <div>
-                      <p className="font-semibold text-muted-foreground">{t("Catatan Internal", "Internal notes")}</p>
-                      <p className="mt-0.5 leading-relaxed text-foreground bg-muted/30 p-2.5 rounded-xl border border-border/50">
-                        {client.internalNotes}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </aside>
-
+      <div>
         {/* Work tabs */}
         <section className="min-w-0">
       <ClientTabsNav
@@ -503,6 +396,7 @@ export default async function ClientDetailPage({
             />
           ) : null
         }
+        overviewContent={<ClientOverview client={{ id: client.id, clientNumber: client.clientNumber, email: client.email, phone: client.phone, website: client.website, address: client.address, tags: client.tags, internalNotes: client.internalNotes }} projects={clientProjects} invoices={clientInvoices} currency={baseCurrency} trackedMinutes={trackedMinutes} outstanding={outstandingTotal} invoiced={invoicedTotal} editAction={<ClientEditDialog trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Ubah detail", "Edit details")}</Button>} defaultValues={clientDefaults} />} projectAction={canWrite ? <ProjectCreateDialog clients={[]} clientId={clientId} isAtLimit={!projectLimitState.allowed} projectCount={projectLimitState.current} projectLimit={projectLimitState.limit} /> : undefined} invoiceAction={canWrite ? <ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} proposedInvoiceNumber={proposedInvoiceNumber} projects={invoiceProjects} baseCurrency={baseCurrency} currencyRates={currencyRates} /> : undefined} t={t} />}
         portalContent={
           <PortalTokenSection
             client={{ ...client, portalPasswordCiphertext: client.portalPasswordCiphertext }}
