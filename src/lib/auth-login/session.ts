@@ -13,7 +13,8 @@ export async function createBetterAuthSession(userId: string, secret: string) {
     value: `${session.token}.${signature}`,
     attributes: {
       ...cookie.attributes,
-      sameSite: String(cookie.attributes.sameSite).toLowerCase() as "lax" | "strict" | "none",
+      sameSite: String(cookie.attributes.sameSite).toLowerCase() as
+        "lax" | "strict" | "none",
     },
   };
 }

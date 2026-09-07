@@ -1,6 +1,12 @@
 import { sendNotification } from "@/lib/notifications";
 
-export async function sendLoginOtpEmail({ email, code }: { email: string; code: string }) {
+export async function sendLoginOtpEmail({
+  email,
+  code,
+}: {
+  email: string;
+  code: string;
+}) {
   const result = await sendNotification({
     to: email,
     subject: "Kode login Cubiqlo",
