@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,8 @@ export function ProjectInvoiceCreateDialog({ project, client, baseCurrency, prop
   const { refresh } = useAppTransition();
   const { t } = useT();
   const [open, setOpen] = useState(false);
-  const handleSuccess = () => { setOpen(false); refresh(); };
+  const router = useRouter();
+  const handleSuccess = (invoiceId?: string) => { setOpen(false); if (invoiceId) router.push(`/app/invoices/${invoiceId}`); else refresh(); };
 
   return <Dialog open={open} onOpenChange={setOpen}>
     <DialogTrigger asChild><Button size="sm" variant="default" className="gap-1"><Plus className="h-4 w-4" /> {triggerLabel ?? t("Buat Invoice", "Create Invoice")}</Button></DialogTrigger>

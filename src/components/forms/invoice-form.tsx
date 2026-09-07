@@ -76,7 +76,7 @@ interface InvoiceFormProps {
   baseCurrency?: string;
   currencyRates?: Array<{ fromCurrency: string; rate: string }>;
   initialItems?: Array<{ description: string; quantity: number; unitPrice: number; sourceId?: string }>;
-  onSuccess?: () => void;
+  onSuccess?: (id?: string) => void;
   scopedClientId?: string;
   scopedProjectId?: string;
 }
@@ -212,7 +212,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         }
         toast.success(t("Invoice dibuat", "Invoice created"));
         setLoading(false);
-        if (onSuccess) onSuccess();
+        if (onSuccess) onSuccess(invoice.id);
         else window.location.assign(buildInvoiceDetailUrl(invoice.id, { type: "global" }));
         return;
       }

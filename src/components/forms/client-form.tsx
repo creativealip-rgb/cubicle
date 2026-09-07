@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient, generateUniquePortalSlug, updateClient } from "@/lib/actions/clients";
 import { isStaleServerActionError } from "@/lib/client-errors";
@@ -28,7 +29,7 @@ interface ClientFormProps {
     portalSlug?: string;
     portalEnabled?: boolean;
   };
-  onSuccess?: () => void;
+  onSuccess?: (id?: string) => void;
   redirectTo?: string;
 }
 
@@ -43,6 +44,7 @@ function slugify(value: string) {
 
 export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: ClientFormProps) {
   const { t } = useT();
+  const router = useRouter();
   const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
   const [generatingSlug, setGeneratingSlug] = useState(false);
@@ -89,6 +91,9 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
           return;
         }
         toast.success(t("Klien dibuat", "Client created"));
+        onSuccess?.(result.client.id);
+        router.push(`/app/clients/${result.client.id}`);
+        return;
       } else if (defaultValues?.id) {
         await updateClient(defaultValues.id, data);
         toast.success(t("Klien diperbarui", "Client updated"));

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createProject, updateProject } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
@@ -51,9 +52,10 @@ export function ProjectForm({
   clients?: Array<{ id: string; name: string }>;
   defaultValues?: Defaults;
   billingModelLocked?: boolean;
-  onSuccess?: () => void;
+  onSuccess?: (id?: string) => void;
 }) {
   const { t } = useT();
+  const router = useRouter();
   const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
 
@@ -133,6 +135,10 @@ export function ProjectForm({
               : (result as { error?: string }).error ?? t("Gagal menyimpan", "Failed to save"),
           );
         }
+        toast.success(t("Project dibuat", "Project created"));
+        onSuccess?.(result.project.id);
+        router.push(`/app/projects/${result.project.id}`);
+        return;
       } else if (defaultValues?.id) {
         const result = await updateProject(defaultValues.id, data);
         if (!result.ok) {
@@ -144,11 +150,7 @@ export function ProjectForm({
         }
       }
 
-      toast.success(
-        mode === "create"
-          ? t("Project dibuat", "Project created")
-          : t("Project diperbarui", "Project updated")
-      );
+      toast.success(t("Project diperbarui", "Project updated"));
       if (onSuccess) onSuccess();
       else refresh();
     } catch (e) {
