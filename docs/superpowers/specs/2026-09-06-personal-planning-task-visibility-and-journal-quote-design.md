@@ -69,7 +69,7 @@ ID: Model tagihan tidak bisa diubah karena proyek sudah memiliki catatan waktu a
 EN: Billing model cannot be changed because this project already has time entries or invoices. Other changes can still be saved.
 ```
 
-The UI must distinguish blocked deletion, stale input, authorization failure, and unexpected failure. Unexpected failures retain a generic localized message and server logging; raw stack traces, digests, SQL/schema names, and database terms never appear in UI. `PermanentDeleteButton` must consume typed results and show returned human copy.
+Actions use a discriminated result contract: `{ ok: true, ... } | { ok: false, code, error }`. Stable expected codes are `BILLING_MODEL_LOCKED`, `PROTECTED_DEPENDENCIES`, `NOT_FOUND`, and `FORBIDDEN`; `error` contains localized-safe UI copy. The UI must distinguish blocked deletion, stale input, authorization failure, and unexpected failure. Unexpected failures retain a generic localized message and server logging; raw stack traces, digests, SQL/schema names, and database terms never appear in UI. `ProjectForm` and `PermanentDeleteButton` consume typed results and show returned human copy. No expected domain rejection throws across the Server Action boundary, and no partial mutation occurs.
 
 ## 3. Personal > Planning
 
@@ -103,7 +103,7 @@ Legacy links redirect server-side:
 - `/app/expenses?scope=personal` and `/app/expenses?tab=personal` → `/app/planning?tab=budget`;
 - `/app/reports?scope=personal` → `/app/planning?tab=report`.
 
-Preserve valid `month` and personal pagination/filter keys only. Remove Personal scope-switch controls and personal imports/render branches from Finance pages. Update docs/catalog copy and any internal links that still point to the old personal scopes.
+Redirect mapping preserves `month`; Expense also preserves valid `page`, `categoryId`, and `q`; Report preserves valid `preset`, `from`, and `to`. Drop business-only or unknown query keys. Redirect runs at the top of each Server Component before business data loaders execute. Remove Personal scope-switch controls and personal imports/render branches from Finance pages. Update docs/catalog copy and any internal links that still point to the old personal scopes.
 
 Planning follows existing PageHeader, compact URL-backed tabs, bilingual labels, owner authorization, and responsive layout conventions. No duplicate personal surfaces remain under Finance after cutover.
 
@@ -111,7 +111,7 @@ Planning follows existing PageHeader, compact URL-backed tabs, bilingual labels,
 
 ### Placement and UX
 
-Place Quote of the Day directly above Today's Reflection Prompt on `/app/journal`.
+Place Quote of the Day directly above the existing `JournalInspirationBanner` on `/app/journal`; keep that banner as Today's Reflection Prompt. Render order is tabs → Quote of the Day → Reflection Prompt → summary strip → journal content.
 
 Card shows:
 
@@ -123,7 +123,7 @@ Card shows:
 
 ### Daily stability
 
-One quote is selected per user per local calendar date. Reloading during the same date returns the same quote. The quote changes when the user's timezone-local date changes.
+One quote is selected globally per user per local calendar date, shared across that user's owner workspaces. It is not workspace-scoped and contains no workspace data. Journal remains owner-only. Reloading or switching owner workspaces during the same local date returns the same quote. Resolve `users.timezone` as a valid IANA timezone with fallback `Asia/Jakarta`; the quote changes only when that timezone-local date changes, including DST boundaries.
 
 ### Generation flow
 
@@ -142,16 +142,16 @@ Generation must not reserve or charge user-facing AI quota and must not write AI
 
 New table `personal_daily_quotes`:
 
-- `id uuid primary key`;
-- `user_id text not null` FK users cascade;
+- `id uuid primary key default gen_random_uuid()`;
+- `user_id text not null` FK `users.id` on delete cascade;
 - `local_date date not null`;
 - `quote text not null`;
 - `attribution text nullable`;
-- `source text enum(ai, fallback)`;
-- `created_at timestamptz not null`;
-- unique `(user_id, local_date)`.
+- `source text not null` with check constraint `source IN ('ai','fallback')` (Drizzle text enum plus SQL check, not a native PostgreSQL enum);
+- `created_at timestamptz not null default now()`;
+- named unique index `personal_daily_quotes_user_date_unique` on `(user_id, local_date)`.
 
-No cron required. Lazy generation on first Journal visit minimizes cost.
+Add the next numbered Drizzle SQL migration and journal entry. Migration must apply and replay safely against a disposable PostgreSQL database before production. No RLS assumption: every action/query scopes by authenticated `user_id`. No cron required. Lazy generation on first Journal visit minimizes cost.
 
 ## Error handling
 
@@ -177,9 +177,11 @@ These failures were reproduced while reviewing this batch and are included becau
 
 ### Unit/wiring
 
-- Task create defaults to visible when omitted and preserves explicit false.
-- Manual form checkbox remains default-on.
-- Template, AI execution, and note conversion insert paths write visible true.
+- Direct `createTask` persists visible true when omitted and preserves explicit false.
+- All manual create surfaces (global dialog, project Tasks tab, board/list entry points) render the same default-on checkbox.
+- Template import persists visible true.
+- Notes conversion persists visible true despite its direct insert path.
+- AI `create_task` confirmation carries the visibility default and its final confirmation handler persists visible true.
 - Add Habit daily sends no weekdays; Specific Days sends a non-empty deduplicated selection; failures render localized form feedback.
 - Locked billing model cannot be changed by edit UI; unrelated fields remain submitted and persist.
 - Project/client expected failures map to typed localized human messages; unexpected errors stay generic.
@@ -187,8 +189,9 @@ These failures were reproduced while reviewing this batch and are included becau
 - Legacy personal Finance URLs redirect while business URLs do not.
 - Finance pages omit personal controls, imports, render branches, and unnecessary personal queries.
 - Docs/catalog links and labels point to Planning.
-- Quote selection is stable per user/timezone-local date, validates AI output, times out, and falls back deterministically.
-- Quote query is user-scoped and unique per local date; conflict path reads the winning row.
+- Quote selection is stable per user/timezone-local date, including midnight and DST boundaries; invalid timezone falls back to `Asia/Jakarta`.
+- AI output rejects HTML, control characters, whitespace-only, multiline contamination, oversized quote, and oversized attribution; provider timeout falls back deterministically.
+- Quote query is user-scoped and unique per local date; concurrent same-user/date calls return the same winning row.
 - Quote generation does not consume user AI quota or write chat history.
 
 ### Runtime
