@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026-09-07 — Personal Planning, task visibility, human errors, and daily quote
+
+- New tasks now default to Client Visible across manual/server action, Personal Notes conversion, task template import, and AI confirmation execution; explicit private tasks remain supported.
+- Fixed Daily Add Habit weekday payload and moved expected validation feedback into the dialog.
+- Locked Billing Model for projects with time/invoice history while keeping non-billing fields editable and replacing raw Server Action/digest errors with human-readable messages.
+- Added owner-only `/app/planning` with 50/30/20 Planning and Personal Report; removed duplicate personal surfaces from Finance and added legacy redirects.
+- Reordered Personal navigation to Notes, Productivity, Planning, Journal.
+- Added persisted AI Quote of the Day above Today's Reflection Prompt with per-user local-date uniqueness, timeout/output validation, and deterministic fallback.
+- Verification: 359 Vitest files / 1,685 tests, ESLint, Next.js production build, production migration replay, internal/public health, and port/proxy collision checks passed.
+- Production commit: `cfe37f482621c675ddeae1714ae1c50e11151643`; image `cubiqlo-prod:sha-cfe37f4`.
+- Evidence: `docs/operations/evidence/personal-planning-daily-quote-release-2026-09-07.md`.
+
 ## 2026-09-01 — Personal productivity and 50/30/20 budget
 
 - Added user-scoped Goals with lifecycle status, manual/step progress, linked habits, and exact-title deletion.
