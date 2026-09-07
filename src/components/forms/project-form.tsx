@@ -105,7 +105,7 @@ export function ProjectForm({
     startDate: defaultValues?.startDate ?? "",
     finishDate: defaultValues?.finishDate ?? "",
     dueDate: defaultValues?.dueDate ?? "",
-    clientVisible: defaultValues?.clientVisible ?? Boolean(clientId),
+    clientVisible: defaultValues?.clientVisible ?? (mode === "create" ? true : Boolean(clientId)),
   });
 
   async function submit(e: React.FormEvent) {

@@ -19,11 +19,15 @@ export function WorkflowTaskWorkspace({ title, tasks, members, projects, current
   const [view, setView] = useState<"list" | "board">("list");
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-end gap-2">
-        <h3 className="mr-auto font-semibold">{title}</h3>
-        <Button size="sm" variant={view === "list" ? "default" : "outline"} onClick={() => setView("list")}>List</Button>
-        <Button size="sm" variant={view === "board" ? "default" : "outline"} onClick={() => setView("board")}>Board</Button>
-        {addTask}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h3 className="font-semibold">{title}</h3>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex rounded-md border bg-muted/40 p-0.5">
+            <Button size="sm" variant={view === "list" ? "default" : "ghost"} onClick={() => setView("list")}>List</Button>
+            <Button size="sm" variant={view === "board" ? "default" : "ghost"} onClick={() => setView("board")}>Board</Button>
+          </div>
+          {addTask}
+        </div>
       </div>
       {view === "list" ? (
         <TasksListTable tasks={tasks} members={members} projects={projects} currentUserId={currentUserId} currentFilters={{}} />

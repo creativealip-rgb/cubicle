@@ -9,7 +9,7 @@ describe("project portal visibility", () => {
   it("renders portal visibility control and defaults client-scoped create on", () => {
     expect(form).toContain("Tampilkan di Portal Klien");
     expect(form).toContain("Klien dapat melihat proyek dan progresnya.");
-    expect(form).toContain("defaultValues?.clientVisible ?? Boolean(clientId)");
+    expect(form).toContain('defaultValues?.clientVisible ?? (mode === "create" ? true : Boolean(clientId))');
   });
 
   it("keeps client selector hidden for client-scoped forms", () => {
