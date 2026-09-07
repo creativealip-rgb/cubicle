@@ -56,6 +56,7 @@ export type AssistantConfirmation =
       projectName?: string | null;
       priority?: "low" | "medium" | "high" | "urgent";
       dueDate?: string | null;
+      clientVisible?: boolean;
     }
   | {
       kind: "start_timer";

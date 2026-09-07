@@ -39,6 +39,7 @@ export function HabitDialog({
   const [open, setOpen] = useState(false);
   const [frequency, setFrequency] = useState<"daily" | "specific_weekdays">("daily");
   const [selectedWeekdays, setSelectedWeekdays] = useState<number[]>([1, 2, 3, 4, 5]);
+  const [error, setError] = useState("");
 
   function toggleWeekday(val: number) {
     setSelectedWeekdays((prev) =>
@@ -62,9 +63,22 @@ export function HabitDialog({
         </DialogHeader>
         <form
           action={async (fd) => {
-            selectedWeekdays.forEach((d) => fd.append("weekdays", String(d)));
-            await createHabitAction(fd);
-            setOpen(false);
+            setError("");
+            if (frequency === "specific_weekdays") {
+              if (selectedWeekdays.length === 0) {
+                setError(isEn ? "Select at least one day." : "Pilih minimal satu hari.");
+                return;
+              }
+              selectedWeekdays.forEach((d) => fd.append("weekdays", String(d)));
+            }
+            try {
+              await createHabitAction(fd);
+              setOpen(false);
+            } catch (cause) {
+              setError(cause instanceof Error && !cause.message.includes("digest")
+                ? cause.message
+                : isEn ? "Habit could not be saved. Check the form and try again." : "Kebiasaan belum bisa disimpan. Periksa form lalu coba lagi.");
+            }
           }}
           className="mt-2 space-y-3"
         >
@@ -158,6 +172,8 @@ export function HabitDialog({
               </select>
             </div>
           )}
+
+          {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
 
           <div className="pt-2 flex items-center justify-end gap-2">
             <Button

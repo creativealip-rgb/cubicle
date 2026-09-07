@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Sparkles, Calendar, Tag } from "lucide-react";
+import { Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n-client";
@@ -13,7 +13,7 @@ export function QuickNoteCapture({
 }) {
   const { t } = useT();
   const [title, setTitle] = useState("");
-  const [focused, setFocused] = useState(false);
+
 
   return (
     <form
@@ -36,7 +36,6 @@ export function QuickNoteCapture({
             "Type a quick note or idea here (press Enter to save)..."
           )}
           className="h-8 border-none bg-transparent px-2 text-sm shadow-none focus-visible:ring-0"
-          onFocus={() => setFocused(true)}
           required
         />
         <input type="hidden" name="body" value="" />

@@ -1,5 +1,4 @@
-import { CalendarDays, Flame, Sparkles } from "lucide-react";
-import { MOODS } from "@/components/journal/journal-list";
+import { Flame, Sparkles } from "lucide-react";
 
 interface JournalHeatmapProps {
   entries: Array<{ createdAt: string | Date; mood?: string | null }>;

@@ -320,6 +320,7 @@ export default async function ProjectDetailPage({
               <ProjectEditDialog
                 project={project}
                 activeProjectServiceIds={activeProjectServiceIds}
+                billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0}
               />
               <PermanentDeleteButton
                 entityType="project"

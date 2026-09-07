@@ -240,6 +240,23 @@ export const personalHabitCheckins = pgTable(
   ],
 );
 
+export const personalDailyQuotes = pgTable(
+  "personal_daily_quotes",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+    localDate: date("local_date").notNull(),
+    quote: text("quote").notNull(),
+    attribution: text("attribution"),
+    source: text("source", { enum: ["ai", "fallback"] }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    uniqueIndex("personal_daily_quotes_user_date_unique").on(t.userId, t.localDate),
+    check("personal_daily_quotes_source_ck", sql`${t.source} in ('ai','fallback')`),
+  ],
+);
+
 export const personalTransactionCategories = pgTable(
   "personal_transaction_categories",
   {

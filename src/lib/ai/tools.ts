@@ -894,6 +894,7 @@ async function createTaskAction(args: {
       projectName: resolvedProjectName || null,
       priority: args.priority || "medium",
       dueDate: args.dueDate || null,
+      clientVisible: true,
     },
   };
 }

@@ -364,7 +364,7 @@ export async function importTaskTemplates(inputValue: unknown) {
       return {
         workspaceId, projectId: input.projectId, title: source.title, description: source.description,
         assigneeId: source.defaultAssigneeId, mode: context.mode, lifecycle: "active" as const,
-        status: "todo" as const, priority: "medium" as const, position: Number(maxPosition) + 1 + index,
+        status: "todo" as const, priority: "medium" as const, clientVisible: true, position: Number(maxPosition) + 1 + index,
         templateItemSourceId: source.id, createdBy: user.id,
         behavior: context.mode === "workflow" ? "one_time" as const : "recurring" as const,
       };

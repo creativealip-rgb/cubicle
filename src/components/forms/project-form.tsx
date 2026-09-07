@@ -43,12 +43,14 @@ export function ProjectForm({
   clientId,
   clients = [],
   defaultValues,
+  billingModelLocked = false,
   onSuccess,
 }: {
   mode: "create" | "edit";
   clientId?: string;
   clients?: Array<{ id: string; name: string }>;
   defaultValues?: Defaults;
+  billingModelLocked?: boolean;
   onSuccess?: () => void;
 }) {
   const { t } = useT();
@@ -270,6 +272,7 @@ export function ProjectForm({
               <Select
                 value={form.billingModel}
                 onValueChange={(v) => setForm((p) => ({ ...p, billingModel: v as BillingModel }))}
+                disabled={billingModelLocked}
               >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
@@ -280,6 +283,11 @@ export function ProjectForm({
                   <SelectItem value="retainer">Retainer</SelectItem>
                 </SelectContent>
               </Select>
+              {billingModelLocked && (
+                <p className="text-[11px] text-muted-foreground">
+                  {t("Model tagihan dikunci karena proyek sudah memiliki waktu atau invoice.", "Billing model is locked because this project already has time entries or invoices.")}
+                </p>
+              )}
             </div>
 
             <div className="space-y-1.5">

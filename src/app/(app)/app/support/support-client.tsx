@@ -87,8 +87,7 @@ const PRIORITY_BADGE_STYLES: Record<string, { bg: string; icon: React.ReactNode 
 };
 
 export function SupportPageClient({ tickets, counts, clients, projects, members, createAction }: Props) {
-  const { t, locale, lang } = useT();
-  const isId = lang === "id";
+  const { t, locale } = useT();
   const { refresh } = useAppTransition();
   const [showCreate, setShowCreate] = useState(false);
   const [statusFilter, setStatusFilter] = useState<string>("all");

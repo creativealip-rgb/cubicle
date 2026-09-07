@@ -20,16 +20,15 @@ const PROMPTS = {
 export function JournalInspirationBanner({
   t,
   lang,
+  localDate,
 }: {
   t: (id: string, en: string) => string;
   lang: string;
+  localDate: string;
 }) {
   const isId = lang !== "en";
   const promptList = isId ? PROMPTS.id : PROMPTS.en;
-  // Pick prompt based on today's date
-  const dayOfYear = Math.floor(
-    (Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 1000 / 60 / 60 / 24
-  );
+  const dayOfYear = localDate.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0);
   const selectedPrompt = promptList[dayOfYear % promptList.length];
 
   return (

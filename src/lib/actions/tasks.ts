@@ -147,7 +147,7 @@ export async function createTask(input: z.infer<typeof taskSchema>) {
     priority: parsed.priority ?? "medium",
     assigneeId: parsed.assigneeId || null,
     dueDate: parsed.dueDate || null,
-    clientVisible: parsed.clientVisible ?? false,
+    clientVisible: parsed.clientVisible ?? true,
     position: (maxPos?.max ?? -1) + 1,
     createdBy: user.id,
   }).returning();

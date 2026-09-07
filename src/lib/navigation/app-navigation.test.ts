@@ -41,13 +41,14 @@ describe("app navigation registry", () => {
     }
   });
 
-  it("shows Productivity, Notes, and Journal in Personal for owner", () => {
+  it("shows Notes, Productivity, Planning, and Journal in Personal for owner", () => {
     const personal = getVisibleNavigation("owner").find((entry) => entry.id === "personal");
     expect(personal?.kind).toBe("group");
     if (personal?.kind === "group")
       expect(personal.children.map((item) => item.href)).toEqual([
-        "/app/productivity",
         "/app/personal",
+        "/app/productivity",
+        "/app/planning",
         "/app/journal",
       ]);
   });

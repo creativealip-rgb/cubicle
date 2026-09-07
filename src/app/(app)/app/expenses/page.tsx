@@ -39,7 +39,7 @@ import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { PageHeader } from "@/components/ui/page-header";
 import { Wallet } from "lucide-react";
 import { Suspense } from "react";
-import { PersonalExpensesSection } from "@/components/expenses/personal-expenses-section";
+import { redirect } from "next/navigation";
 import {
   aggregateToBase,
   buildRateMap,
@@ -75,6 +75,14 @@ export default async function ExpensesPage({
     cursor?: string;
   }>;
 }) {
+  const params = await searchParams;
+  if (params.scope === "personal" || params.tab === "personal") {
+    const sp = new URLSearchParams({ tab: "budget" });
+    if (params.month && /^\d{4}-\d{2}$/.test(params.month))
+      sp.set("month", params.month);
+    if (params.page && /^\d+$/.test(params.page)) sp.set("page", params.page);
+    redirect(`/app/planning?${sp.toString()}`);
+  }
   const lang = await getCurrentLang();
   const t = createT(lang);
   const session = await auth.api.getSession({ headers: await headers() });
@@ -82,9 +90,6 @@ export default async function ExpensesPage({
   const ws = await getWorkspaceFullForCurrentUser();
   const member = await assertWorkspaceMember(db, user.id, ws.id);
   const canWrite = member.role === "owner" || member.role === "member";
-
-  const params = await searchParams;
-  const scope = params.scope === "personal" || params.tab === "personal" ? "personal" : "business";
   const month =
     params.month && /^\d{4}-\d{2}$/.test(params.month)
       ? params.month
@@ -93,11 +98,9 @@ export default async function ExpensesPage({
   const q = (params.q ?? "").trim();
   const page = Math.max(1, parseInt(params.page ?? "1", 10) || 1);
   const tab =
-    scope === "personal"
-      ? "personal"
-      : params.tab === "categories" || params.tab === "recurring"
-        ? params.tab
-        : "list";
+    params.tab === "categories" || params.tab === "recurring"
+      ? params.tab
+      : "list";
   const { start: monthStart, end: monthEnd } = monthBounds(month);
 
   // Categories
@@ -316,11 +319,7 @@ export default async function ExpensesPage({
     sp.set("month", month);
     if (categoryId) sp.set("categoryId", categoryId);
     if (q) sp.set("q", q);
-    if (scope === "personal") {
-      sp.set("scope", "personal");
-    } else if (tab !== "list") {
-      sp.set("tab", tab);
-    }
+    if (tab !== "list") sp.set("tab", tab);
     if (p > 1) sp.set("page", String(p));
     return `/app/expenses?${sp.toString()}`;
   }
@@ -330,20 +329,7 @@ export default async function ExpensesPage({
     sp.set("month", month);
     if (categoryId) sp.set("categoryId", categoryId);
     if (q) sp.set("q", q);
-    if (scope === "personal") {
-      sp.set("scope", "personal");
-    } else if (next !== "list") {
-      sp.set("tab", next);
-    }
-    return `/app/expenses?${sp.toString()}`;
-  }
-
-  function scopeHref(nextScope: "business" | "personal") {
-    const sp = new URLSearchParams();
-    sp.set("month", month);
-    if (nextScope === "personal") {
-      sp.set("scope", "personal");
-    }
+    if (next !== "list") sp.set("tab", next);
     return `/app/expenses?${sp.toString()}`;
   }
 
@@ -354,76 +340,33 @@ export default async function ExpensesPage({
     <div className="space-y-4 sm:space-y-6">
       <PageHeader
         icon={Wallet}
-        title={scope === "personal"
-          ? t("Keuangan Pribadi", "Personal Finance")
-          : t("Pengeluaran Bisnis", "Business Expenses")}
-        description={scope === "personal"
-          ? t(
-              "Pantau alokasi anggaran 50/30/20 dan transaksi belanja harian Anda.",
-              "Track your 50/30/20 budget allocation and daily personal transactions.",
-            )
-          : t(
-              "Catat dan kelola biaya operasional serta pengeluaran workspace.",
-              "Record and manage business and workspace expenses.",
-            )}
+        title={t("Pengeluaran Bisnis", "Business Expenses")}
+        description={t(
+          "Catat dan kelola biaya operasional serta pengeluaran workspace.",
+          "Record and manage business and workspace expenses.",
+        )}
         actions={
-          scope === "business" ? (
-            <div className="flex flex-wrap items-center gap-2">
-              {canWrite && (
-                <AddExpenseButton
-                  workspaceId={ws.id}
-                  defaultCurrency={ws.defaultCurrency}
-                  categories={categories}
-                  projects={projectOpts}
-                  clients={clientOpts}
-                  triggerClassName="h-8 text-xs font-semibold rounded-lg gap-1"
-                />
-              )}
-              <ExpenseExcelExportButton
-                month={month}
-                categoryId={categoryId || undefined}
-                q={q || undefined}
+          <div className="flex flex-wrap items-center gap-2">
+            {canWrite && (
+              <AddExpenseButton
+                workspaceId={ws.id}
+                defaultCurrency={ws.defaultCurrency}
+                categories={categories}
+                projects={projectOpts}
+                clients={clientOpts}
+                triggerClassName="h-8 text-xs font-semibold rounded-lg gap-1"
               />
-            </div>
-          ) : null
+            )}
+            <ExpenseExcelExportButton
+              month={month}
+              categoryId={categoryId || undefined}
+              q={q || undefined}
+            />
+          </div>
         }
       />
 
-      {/* Scope Switcher: Segmented Control Bar di Bawah Deskripsi Header */}
-      <div className="flex items-center">
-        <div className="inline-flex rounded-xl bg-muted/70 p-1 border shadow-xs">
-          <Button
-            asChild
-            size="sm"
-            variant="ghost"
-            className={`h-8 rounded-lg px-3.5 text-xs font-semibold transition-all ${
-              scope === "business"
-                ? "bg-background text-foreground shadow-sm hover:bg-background"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Link href={scopeHref("business")}>
-              {t("🏢 Bisnis / Tim", "🏢 Business / Team")}
-            </Link>
-          </Button>
-          <Button
-            asChild
-            size="sm"
-            variant="ghost"
-            className={`h-8 rounded-lg px-3.5 text-xs font-semibold transition-all ${
-              scope === "personal"
-                ? "bg-background text-foreground shadow-sm hover:bg-background"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            <Link href={scopeHref("personal")}>
-              {t("👤 Pribadi (50/30/20)", "👤 Personal (50/30/20)")}
-            </Link>
-          </Button>
-        </div>
-      </div>
-
-      {scope === "business" && missingFxList.length > 0 && (
+      {missingFxList.length > 0 && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
           {t(
             `Kurs belum di-set: ${missingFxList.join(", ")}. Angka currency itu di-skip di ringkasan. `,
@@ -438,77 +381,86 @@ export default async function ExpensesPage({
         </div>
       )}
 
-      {/* Operational summary - Compact & Engaging (Only in Business Mode) */}
-      {scope === "business" && (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <Card className="rounded-xl border shadow-none bg-card">
-            <CardContent className="p-3.5 flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                  {t("Pengeluaran Bulan Ini", "This Month Spent")}
-                </p>
-                <p className="mt-0.5 text-xl font-bold tabular-nums tracking-tight text-foreground truncate">
-                  {formatMoney(spentTotal, baseCurrency)}
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {t("Bulan terpilih", "Selected month")} · {baseCurrency}
-                </p>
-              </div>
-              <div className="h-9 w-9 rounded-lg bg-red-500/10 text-red-600 flex items-center justify-center shrink-0">
-                <TrendingDown className="h-4 w-4" />
-              </div>
-            </CardContent>
-          </Card>
+      {/* Operational summary - Compact & Engaging */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <Card className="rounded-xl border shadow-none bg-card">
+          <CardContent className="p-3.5 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                {t("Pengeluaran Bulan Ini", "This Month Spent")}
+              </p>
+              <p className="mt-0.5 text-xl font-bold tabular-nums tracking-tight text-foreground truncate">
+                {formatMoney(spentTotal, baseCurrency)}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {t("Bulan terpilih", "Selected month")} · {baseCurrency}
+              </p>
+            </div>
+            <div className="h-9 w-9 rounded-lg bg-red-500/10 text-red-600 flex items-center justify-center shrink-0">
+              <TrendingDown className="h-4 w-4" />
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card className="rounded-xl border shadow-none bg-card">
-            <CardContent className="p-3.5 flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                  {t("Kategori Terbesar", "Top Category")}
-                </p>
-                <p className="mt-0.5 text-xl font-bold tracking-tight text-foreground truncate">
-                  {categoryBreakdown[0]?.name || "—"}
-                </p>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {categoryBreakdown[0]
-                    ? `${formatMoney(categoryBreakdown[0].primary, baseCurrency)} (${((categoryBreakdown[0].primary / (barTotal || 1)) * 100).toFixed(0)}%)`
-                    : t("Belum ada pengeluaran", "No expenses yet")}
-                </p>
-              </div>
-              <div className="h-9 w-9 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
-                <Tag className="h-4 w-4" />
-              </div>
-            </CardContent>
-          </Card>
+        <Card className="rounded-xl border shadow-none bg-card">
+          <CardContent className="p-3.5 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                {t("Kategori Terbesar", "Top Category")}
+              </p>
+              <p className="mt-0.5 text-xl font-bold tracking-tight text-foreground truncate">
+                {categoryBreakdown[0]?.name || "—"}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {categoryBreakdown[0]
+                  ? `${formatMoney(categoryBreakdown[0].primary, baseCurrency)} (${((categoryBreakdown[0].primary / (barTotal || 1)) * 100).toFixed(0)}%)`
+                  : t("Belum ada pengeluaran", "No expenses yet")}
+              </p>
+            </div>
+            <div className="h-9 w-9 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
+              <Tag className="h-4 w-4" />
+            </div>
+          </CardContent>
+        </Card>
 
-          <Card className="rounded-xl border shadow-none bg-card sm:col-span-2 lg:col-span-1">
-            <CardContent className="p-3.5 flex items-center justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
-                  {t("Analisis & Laporan", "Analytics & Reports")}
-                </p>
-                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
-                  {t("Lihat tren arus kas, laba bersih, dan piutang.", "View cash flow trends, net profit & receivables.")}
-                </p>
-              </div>
-              <Button asChild variant="outline" size="sm" className="h-8 shrink-0 rounded-lg text-xs gap-1">
-                <Link href="/app/reports">
-                  <BarChart3 className="h-3.5 w-3.5 text-primary" />
-                  {t("Buka", "View")}
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+        <Card className="rounded-xl border shadow-none bg-card sm:col-span-2 lg:col-span-1">
+          <CardContent className="p-3.5 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider">
+                {t("Analisis & Laporan", "Analytics & Reports")}
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">
+                {t(
+                  "Lihat tren arus kas, laba bersih, dan piutang.",
+                  "View cash flow trends, net profit & receivables.",
+                )}
+              </p>
+            </div>
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="h-8 shrink-0 rounded-lg text-xs gap-1"
+            >
+              <Link href="/app/reports">
+                <BarChart3 className="h-3.5 w-3.5 text-primary" />
+                {t("Buka", "View")}
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
 
-      {/* Category breakdown (Business only) */}
-      {scope === "business" && categoryBreakdown.length > 0 && (
+      {/* Category breakdown */}
+      {categoryBreakdown.length > 0 && (
         <Card className="rounded-xl border shadow-none bg-card">
           <CardHeader className="pb-3 border-b">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
               <Tag className="h-4 w-4 text-purple-600" />
-              {t("Distribusi Biaya Operasional per Kategori", "Operational Expenses by Category")}
+              {t(
+                "Distribusi Biaya Operasional per Kategori",
+                "Operational Expenses by Category",
+              )}
               <span className="text-xs font-normal text-muted-foreground">
                 ({baseCurrency})
               </span>
@@ -519,14 +471,19 @@ export default async function ExpensesPage({
               {categoryBreakdown.map((c) => {
                 const pct = barTotal > 0 ? (c.primary / barTotal) * 100 : 0;
                 return (
-                  <div key={c.name} className="space-y-1.5 rounded-lg bg-muted/20 border border-border/50 p-2.5">
+                  <div
+                    key={c.name}
+                    className="space-y-1.5 rounded-lg bg-muted/20 border border-border/50 p-2.5"
+                  >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex min-w-0 items-center gap-2">
                         <span
                           className="h-2.5 w-2.5 rounded-full shrink-0 shadow-xs"
                           style={{ backgroundColor: c.color }}
                         />
-                        <span className="text-xs font-semibold text-foreground truncate">{c.name}</span>
+                        <span className="text-xs font-semibold text-foreground truncate">
+                          {c.name}
+                        </span>
                       </div>
                       <div className="flex shrink-0 items-center gap-2">
                         <span className="text-xs font-bold text-foreground tabular-nums">
@@ -555,166 +512,162 @@ export default async function ExpensesPage({
       )}
 
       {/* Main Content Area */}
-      {scope === "personal" ? (
-        <PersonalExpensesSection month={month} t={t} page={page} />
-      ) : (
-        <Card className="rounded-xl border shadow-none bg-card">
-          <CardHeader className="space-y-4 pb-3 border-b">
-            <StatusFilterTabs
-              activeValue={tab}
-              hideEmpty={false}
-              tabs={[
-                {
-                  value: "list",
-                  label: t("Daftar", "List"),
-                  href: tabHref("list"),
-                  alwaysShow: true,
-                },
-                {
-                  value: "recurring",
-                  label: t("Rutin", "Recurring"),
-                  href: tabHref("recurring"),
-                  alwaysShow: true,
-                },
-                {
-                  value: "categories",
-                  label: t("Kategori", "Categories"),
-                  href: tabHref("categories"),
-                  alwaysShow: true,
-                },
-              ]}
-            />
-            {tab === "list" && (
-              <Suspense fallback={null}>
-                <ExpenseFilters
-                  month={month}
-                  categoryId={categoryId}
-                  q={q}
-                  categories={categories}
-                />
-              </Suspense>
-            )}
-          </CardHeader>
-          <CardContent className="pt-4">
-            {tab === "categories" && (
-              <CategoryManager
-                workspaceId={ws.id}
-                categories={categoryRows.map((c) => ({
-                  id: c.id,
-                  name: c.name,
-                  color: c.color,
-                  icon: c.icon,
-                  isDefault: c.isDefault,
-                }))}
-                canWrite={canWrite}
-              />
-            )}
-
-            {tab === "recurring" && (
-              <RecurringManager
-                workspaceId={ws.id}
-                rows={recurringRows}
+      <Card className="rounded-xl border shadow-none bg-card">
+        <CardHeader className="space-y-4 pb-3 border-b">
+          <StatusFilterTabs
+            activeValue={tab}
+            hideEmpty={false}
+            tabs={[
+              {
+                value: "list",
+                label: t("Daftar", "List"),
+                href: tabHref("list"),
+                alwaysShow: true,
+              },
+              {
+                value: "recurring",
+                label: t("Rutin", "Recurring"),
+                href: tabHref("recurring"),
+                alwaysShow: true,
+              },
+              {
+                value: "categories",
+                label: t("Kategori", "Categories"),
+                href: tabHref("categories"),
+                alwaysShow: true,
+              },
+            ]}
+          />
+          {tab === "list" && (
+            <Suspense fallback={null}>
+              <ExpenseFilters
+                month={month}
+                categoryId={categoryId}
+                q={q}
                 categories={categories}
-                projects={projectOpts}
-                canWrite={canWrite}
-                defaultCurrency={ws.defaultCurrency}
-                baseCurrency={baseCurrency}
               />
-            )}
+            </Suspense>
+          )}
+        </CardHeader>
+        <CardContent className="pt-4">
+          {tab === "categories" && (
+            <CategoryManager
+              workspaceId={ws.id}
+              categories={categoryRows.map((c) => ({
+                id: c.id,
+                name: c.name,
+                color: c.color,
+                icon: c.icon,
+                isDefault: c.isDefault,
+              }))}
+              canWrite={canWrite}
+            />
+          )}
 
-            {tab === "list" && (
-              <>
-                {expenseRows.length === 0 ? (
-                  <div className="py-8 text-center space-y-3">
-                    <p className="text-sm text-muted-foreground">
-                      {q || categoryId
-                        ? t(
-                            "Tidak ada pengeluaran cocok filter.",
-                            "No expenses match filters.",
-                          )
-                        : t(
-                            "Belum ada pengeluaran bulan ini.",
-                            "No expenses this month.",
-                          )}
-                    </p>
-                    {canWrite && !q && !categoryId && (
-                      <AddExpenseButton
-                        workspaceId={ws.id}
-                        defaultCurrency={ws.defaultCurrency}
-                        categories={categories}
-                        projects={projectOpts}
-                        clients={clientOpts}
-                        variant="outline"
-                      />
-                    )}
-                  </div>
-                ) : (
-                  <>
-                    <ExpensesListTable
-                      rows={expenseRows}
-                      canWrite={canWrite}
+          {tab === "recurring" && (
+            <RecurringManager
+              workspaceId={ws.id}
+              rows={recurringRows}
+              categories={categories}
+              projects={projectOpts}
+              canWrite={canWrite}
+              defaultCurrency={ws.defaultCurrency}
+              baseCurrency={baseCurrency}
+            />
+          )}
+
+          {tab === "list" && (
+            <>
+              {expenseRows.length === 0 ? (
+                <div className="py-8 text-center space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    {q || categoryId
+                      ? t(
+                          "Tidak ada pengeluaran cocok filter.",
+                          "No expenses match filters.",
+                        )
+                      : t(
+                          "Belum ada pengeluaran bulan ini.",
+                          "No expenses this month.",
+                        )}
+                  </p>
+                  {canWrite && !q && !categoryId && (
+                    <AddExpenseButton
                       workspaceId={ws.id}
                       defaultCurrency={ws.defaultCurrency}
-                      baseCurrency={baseCurrency}
                       categories={categories}
                       projects={projectOpts}
                       clients={clientOpts}
+                      variant="outline"
                     />
+                  )}
+                </div>
+              ) : (
+                <>
+                  <ExpensesListTable
+                    rows={expenseRows}
+                    canWrite={canWrite}
+                    workspaceId={ws.id}
+                    defaultCurrency={ws.defaultCurrency}
+                    baseCurrency={baseCurrency}
+                    categories={categories}
+                    projects={projectOpts}
+                    clients={clientOpts}
+                  />
 
-                    {totalPages > 1 && (
-                      <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-                        <span className="text-xs sm:text-sm">
-                          {t(
-                            `Menampilkan ${rangeStart}–${rangeEnd} dari ${totalCount}`,
-                            `Showing ${rangeStart}–${rangeEnd} of ${totalCount}`,
+                  {totalPages > 1 && (
+                    <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
+                      <span className="text-xs sm:text-sm">
+                        {t(
+                          `Menampilkan ${rangeStart}–${rangeEnd} dari ${totalCount}`,
+                          `Showing ${rangeStart}–${rangeEnd} of ${totalCount}`,
+                        )}
+                      </span>
+                      <div className="flex items-center gap-1 self-end sm:self-auto">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={safePage <= 1}
+                          asChild={safePage > 1}
+                        >
+                          {safePage > 1 ? (
+                            <Link href={pageHref(safePage - 1)}>
+                              <ChevronLeft className="h-4 w-4" />
+                            </Link>
+                          ) : (
+                            <span>
+                              <ChevronLeft className="h-4 w-4" />
+                            </span>
                           )}
+                        </Button>
+                        <span className="px-2 text-xs">
+                          {safePage} / {totalPages}
                         </span>
-                        <div className="flex items-center gap-1 self-end sm:self-auto">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={safePage <= 1}
-                            asChild={safePage > 1}
-                          >
-                            {safePage > 1 ? (
-                              <Link href={pageHref(safePage - 1)}>
-                                <ChevronLeft className="h-4 w-4" />
-                              </Link>
-                            ) : (
-                              <span>
-                                <ChevronLeft className="h-4 w-4" />
-                              </span>
-                            )}
-                          </Button>
-                          <span className="px-2 text-xs">
-                            {safePage} / {totalPages}
-                          </span>
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            disabled={safePage >= totalPages}
-                            asChild={safePage < totalPages}
-                          >
-                            {safePage < totalPages ? (
-                              <Link href={pageHref(safePage + 1)}>
-                                <ChevronRight className="h-4 w-4" />
-                              </Link>
-                            ) : (
-                              <span>
-                                <ChevronRight className="h-4 w-4" />
-                              </span>
-                            )}
-                          </Button>
-                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          disabled={safePage >= totalPages}
+                          asChild={safePage < totalPages}
+                        >
+                          {safePage < totalPages ? (
+                            <Link href={pageHref(safePage + 1)}>
+                              <ChevronRight className="h-4 w-4" />
+                            </Link>
+                          ) : (
+                            <span>
+                              <ChevronRight className="h-4 w-4" />
+                            </span>
+                          )}
+                        </Button>
                       </div>
-                    )}
-                  </>
-                )}
-              </>
-            )}
-          </CardContent>
-        </Card>
-      )}
+                    </div>
+                  )}
+                </>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

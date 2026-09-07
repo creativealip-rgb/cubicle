@@ -18,6 +18,8 @@ import { JournalComposerDialog } from "@/components/journal/journal-composer-dia
 import { JournalSummaryStrip } from "@/components/journal/journal-summary-strip";
 import { JournalHeatmap } from "@/components/journal/journal-heatmap";
 import { JournalInspirationBanner } from "@/components/journal/journal-inspiration-banner";
+import { DailyQuoteCard } from "@/components/journal/daily-quote-card";
+import { getDailyQuote } from "@/lib/actions/daily-quote";
 import { calculateJournalSummary } from "@/lib/journal-dashboard";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import {
@@ -51,13 +53,14 @@ export default async function JournalPage({
     status: (tab === "archived" ? "archived" : "active") as
       "archived" | "active",
   };
-  const [totalEntries, rawNotes] = await Promise.all([
+  const [totalEntries, rawNotes, dailyQuote] = await Promise.all([
     countPersonalNotes(undefined, queryOpts),
     listPersonalNotes(undefined, {
       ...queryOpts,
       limit: pageSize,
       offset: (page - 1) * pageSize,
     }),
+    getDailyQuote(lang),
   ]);
   const totalPages = Math.max(1, Math.ceil(totalEntries / pageSize));
 
@@ -198,8 +201,10 @@ export default async function JournalPage({
         ))}
       </nav>
 
+      <DailyQuoteCard quote={dailyQuote.quote} attribution={dailyQuote.attribution} ai={dailyQuote.source === "ai"} t={t} />
+
       {/* Daily Reflection Inspiration Banner */}
-      <JournalInspirationBanner t={t} lang={lang} />
+      <JournalInspirationBanner t={t} lang={lang} localDate={dailyQuote.localDate} />
 
       {/* Summary KPI Strip */}
       <JournalSummaryStrip

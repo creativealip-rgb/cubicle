@@ -174,7 +174,17 @@ export async function updateProject(projectId: string, input: z.input<typeof pro
   await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
 
   const parsed = projectUpdateSchema.parse(input);
-  if (parsed.billingModel) await assertBillingModelTransitionAllowed(projectId, parsed.billingModel);
+  if (parsed.billingModel) {
+    try {
+      await assertBillingModelTransitionAllowed(projectId, parsed.billingModel);
+    } catch {
+      return {
+        ok: false as const,
+        code: "BILLING_MODEL_LOCKED" as const,
+        error: "Model tagihan dikunci karena proyek sudah memiliki catatan waktu atau invoice. Perubahan lain tetap dapat disimpan.",
+      };
+    }
+  }
   validateRetainerConfiguration(parsed);
   if (parsed.currency !== undefined) {
     try {

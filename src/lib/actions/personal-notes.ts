@@ -454,7 +454,7 @@ export async function convertPersonalNoteToTask(
         priority,
         assigneeId: user.id,
         dueDate: dueDateStr,
-        clientVisible: false,
+        clientVisible: true,
         position: (maxPos?.max ?? -1) + 1,
         createdBy: user.id,
         sourceNoteId: note.id,

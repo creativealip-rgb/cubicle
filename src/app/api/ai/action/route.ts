@@ -298,6 +298,7 @@ export async function POST(req: NextRequest) {
         projectId?: string | null;
         priority?: "low" | "medium" | "high" | "urgent";
         dueDate?: string | null;
+        clientVisible?: boolean;
       };
       if (!p?.title?.trim()) return NextResponse.json({ error: "Task title is required" }, { status: 400 });
       const { getWorkspaceForCurrentUser } = await import("@/lib/workspace");
@@ -336,6 +337,7 @@ export async function POST(req: NextRequest) {
         mode: "workflow",
         lifecycle: "active",
         behavior: "one_time",
+        clientVisible: p.clientVisible ?? true,
         position: 0,
       }).returning({ id: tasks.id, title: tasks.title });
 

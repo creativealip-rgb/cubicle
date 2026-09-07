@@ -40,11 +40,13 @@ type ProjectEditDialogProps = {
     retainerOverageRate: string | null;
   };
   activeProjectServiceIds: string[];
+  billingModelLocked: boolean;
 };
 
 export function ProjectEditDialog({
   project,
   activeProjectServiceIds,
+  billingModelLocked,
 }: ProjectEditDialogProps) {
   const { t } = useT();
   const { refresh } = useAppTransition();
@@ -91,6 +93,7 @@ export function ProjectEditDialog({
             retainerOverageRate: project.retainerOverageRate ?? "",
             serviceIds: activeProjectServiceIds,
           }}
+          billingModelLocked={billingModelLocked}
           onSuccess={() => {
             setOpen(false);
             refresh();
