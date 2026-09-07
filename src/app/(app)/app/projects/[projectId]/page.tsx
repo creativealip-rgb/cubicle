@@ -322,7 +322,7 @@ export default async function ProjectDetailPage({
             <div className="flex items-center gap-2 self-start sm:self-center">
               {project.clientPortalEnabled && project.clientPortalSlug ? (
                 <Button variant="outline" size="sm" asChild>
-                  <Link href={`/client-portal/s/${project.clientPortalSlug}`} target="_blank">{t("Buka Portal Klien", "Open Client Portal")}</Link>
+                  <Link href={`/client-portal/${project.clientPortalSlug}`} target="_blank">{t("Buka Portal Klien", "Open Client Portal")}</Link>
                 </Button>
               ) : null}
               <ProjectEditDialog
