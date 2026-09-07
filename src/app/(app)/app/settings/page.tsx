@@ -2,12 +2,35 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { accounts, passkeys, sessions, twoFactors, workspaces, workspaceMembers, users, workspaceCurrencyRates } from "@/db/schema";
+import {
+  accounts,
+  passkeys,
+  sessions,
+  twoFactors,
+  workspaces,
+  workspaceMembers,
+  users,
+  workspaceCurrencyRates,
+} from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Settings, Users, Receipt, Calendar, CheckCircle2, Circle, Sliders } from "lucide-react";
+import {
+  Settings,
+  Users,
+  Receipt,
+  Calendar,
+  CheckCircle2,
+  Circle,
+  Sliders,
+} from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { TeamManager } from "@/components/settings/team-manager";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
@@ -51,19 +74,61 @@ export default async function SettingsPage({
   const canManageTeam = currentMember.role === "owner";
   const canEditWorkspace = currentMember.role === "owner";
 
-  const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const [workspace] = await db
+    .select()
+    .from(workspaces)
+    .where(eq(workspaces.id, workspaceId))
+    .limit(1);
   const [currentUser] = await db
-    .select({ name: users.name, email: users.email, emailVerified: users.emailVerified, twoFactorEnabled: users.twoFactorEnabled })
+    .select({
+      name: users.name,
+      email: users.email,
+      emailVerified: users.emailVerified,
+      twoFactorEnabled: users.twoFactorEnabled,
+    })
     .from(users)
     .where(eq(users.id, user.id))
     .limit(1);
 
-  const [credentialPassword, passkeyRows, twoFactorRows, sessionRows] = await Promise.all([
-    db.select({ id: accounts.id }).from(accounts).where(and(eq(accounts.userId, user.id), eq(accounts.providerId, "credential"))).limit(1),
-    db.select({ id: passkeys.id, name: passkeys.name, deviceType: passkeys.deviceType, createdAt: passkeys.createdAt }).from(passkeys).where(eq(passkeys.userId, user.id)).orderBy(passkeys.createdAt),
-    db.select({ id: twoFactors.id }).from(twoFactors).where(eq(twoFactors.userId, user.id)).limit(1),
-    db.select({ id: sessions.id, updatedAt: sessions.updatedAt, ipAddress: sessions.ipAddress, userAgent: sessions.userAgent }).from(sessions).where(eq(sessions.userId, user.id)).orderBy(desc(sessions.updatedAt)).limit(5),
-  ]);
+  const [credentialPassword, passkeyRows, twoFactorRows, sessionRows] =
+    await Promise.all([
+      db
+        .select({ id: accounts.id })
+        .from(accounts)
+        .where(
+          and(
+            eq(accounts.userId, user.id),
+            eq(accounts.providerId, "credential"),
+          ),
+        )
+        .limit(1),
+      db
+        .select({
+          id: passkeys.id,
+          name: passkeys.name,
+          deviceType: passkeys.deviceType,
+          createdAt: passkeys.createdAt,
+        })
+        .from(passkeys)
+        .where(eq(passkeys.userId, user.id))
+        .orderBy(passkeys.createdAt),
+      db
+        .select({ id: twoFactors.id })
+        .from(twoFactors)
+        .where(eq(twoFactors.userId, user.id))
+        .limit(1),
+      db
+        .select({
+          id: sessions.id,
+          updatedAt: sessions.updatedAt,
+          ipAddress: sessions.ipAddress,
+          userAgent: sessions.userAgent,
+        })
+        .from(sessions)
+        .where(eq(sessions.userId, user.id))
+        .orderBy(desc(sessions.updatedAt))
+        .limit(5),
+    ]);
 
   const members = await db
     .select({
@@ -103,7 +168,6 @@ export default async function SettingsPage({
       label: t("Alamat atau telepon bisnis", "Business address or phone"),
       done: Boolean(workspace.billingAddress || workspace.billingPhone),
     },
-
   ];
   const invoiceSetupItems = [
     {
@@ -112,7 +176,9 @@ export default async function SettingsPage({
     },
     {
       label: t("Pajak atau rate default", "Tax or default rate"),
-      done: Boolean(Number(workspace.defaultTaxRate) > 0 || workspace.defaultHourlyRate),
+      done: Boolean(
+        Number(workspace.defaultTaxRate) > 0 || workspace.defaultHourlyRate,
+      ),
     },
     {
       label: t("Terms pembayaran", "Payment terms"),
@@ -123,12 +189,15 @@ export default async function SettingsPage({
       done: Boolean(workspace.replyToEmail),
     },
   ];
-  const workspaceSetupDone = workspaceSetupItems.filter((item) => item.done).length;
+  const workspaceSetupDone = workspaceSetupItems.filter(
+    (item) => item.done,
+  ).length;
   const invoiceSetupDone = invoiceSetupItems.filter((item) => item.done).length;
 
   const sp = searchParams ? await searchParams : undefined;
   const rawTab = sp?.tab;
   const initialTab = Array.isArray(rawTab) ? rawTab[0] : rawTab;
+  const recovered = sp?.recovered === "1";
 
   return (
     <div className="space-y-6">
@@ -141,7 +210,14 @@ export default async function SettingsPage({
         )}
       />
 
-      <Suspense fallback={<div className="space-y-3"><Skeleton className="h-24 w-full" /><Skeleton className="h-48 w-full" /></div>}>
+      <Suspense
+        fallback={
+          <div className="space-y-3">
+            <Skeleton className="h-24 w-full" />
+            <Skeleton className="h-48 w-full" />
+          </div>
+        }
+      >
         <SettingsTabs
           initialTab={initialTab}
           workspace={
@@ -151,7 +227,10 @@ export default async function SettingsPage({
                   <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="text-sm font-semibold text-blue-950">
-                        {t("Lengkapi profil workspace", "Complete workspace profile")}
+                        {t(
+                          "Lengkapi profil workspace",
+                          "Complete workspace profile",
+                        )}
                       </p>
                       <p className="mt-1 text-sm text-blue-900/70">
                         {t(
@@ -161,7 +240,8 @@ export default async function SettingsPage({
                       </p>
                     </div>
                     <Badge className="w-fit bg-blue-600 text-white hover:bg-blue-600">
-                      {workspaceSetupDone}/{workspaceSetupItems.length} {t("selesai", "done")}
+                      {workspaceSetupDone}/{workspaceSetupItems.length}{" "}
+                      {t("selesai", "done")}
                     </Badge>
                   </CardContent>
                 </Card>
@@ -179,30 +259,86 @@ export default async function SettingsPage({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">
-                  <WorkspaceNameForm defaultName={workspace.name} canEdit={canEditWorkspace} />
+                  <WorkspaceNameForm
+                    defaultName={workspace.name}
+                    canEdit={canEditWorkspace}
+                  />
                   <div className="border-t pt-3">
-                    <h3 className="mb-3 text-sm font-semibold">{t("Profil workspace & Branding", "Workspace profile & Branding")}</h3>
-                    <WorkspaceBrandingForm section="workspace" canEdit={canEditWorkspace} defaults={{ billingName: workspace.billingName, billingEmail: workspace.billingEmail, billingPhone: workspace.billingPhone, billingAddress: workspace.billingAddress, taxId: workspace.taxId, logoUrl: workspace.logoUrl, defaultCurrency: workspace.defaultCurrency, defaultTaxRate: workspace.defaultTaxRate, defaultHourlyRate: workspace.defaultHourlyRate, defaultInvoiceTerms: workspace.defaultInvoiceTerms, replyToEmail: workspace.replyToEmail }} />
+                    <h3 className="mb-3 text-sm font-semibold">
+                      {t(
+                        "Profil workspace & Branding",
+                        "Workspace profile & Branding",
+                      )}
+                    </h3>
+                    <WorkspaceBrandingForm
+                      section="workspace"
+                      canEdit={canEditWorkspace}
+                      defaults={{
+                        billingName: workspace.billingName,
+                        billingEmail: workspace.billingEmail,
+                        billingPhone: workspace.billingPhone,
+                        billingAddress: workspace.billingAddress,
+                        taxId: workspace.taxId,
+                        logoUrl: workspace.logoUrl,
+                        defaultCurrency: workspace.defaultCurrency,
+                        defaultTaxRate: workspace.defaultTaxRate,
+                        defaultHourlyRate: workspace.defaultHourlyRate,
+                        defaultInvoiceTerms: workspace.defaultInvoiceTerms,
+                        replyToEmail: workspace.replyToEmail,
+                      }}
+                    />
                   </div>
 
                   <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
                     {workspaceSetupItems.map((item) => {
                       const Icon = item.done ? CheckCircle2 : Circle;
                       return (
-                        <div key={item.label} className="flex items-center gap-2 text-xs">
-                          <Icon className={item.done ? "h-4 w-4 text-emerald-600" : "h-4 w-4 text-muted-foreground"} />
-                          <span className={item.done ? "text-slate-700" : "text-muted-foreground"}>{item.label}</span>
+                        <div
+                          key={item.label}
+                          className="flex items-center gap-2 text-xs"
+                        >
+                          <Icon
+                            className={
+                              item.done
+                                ? "h-4 w-4 text-emerald-600"
+                                : "h-4 w-4 text-muted-foreground"
+                            }
+                          />
+                          <span
+                            className={
+                              item.done
+                                ? "text-slate-700"
+                                : "text-muted-foreground"
+                            }
+                          >
+                            {item.label}
+                          </span>
                         </div>
                       );
                     })}
                   </div>
                 </CardContent>
               </Card>
-
             </>
           }
           account={
             <div className="grid gap-4 lg:grid-cols-2">
+              {recovered && (
+                <div
+                  role="status"
+                  className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-950 lg:col-span-2"
+                >
+                  <p className="font-semibold">
+                    {t("Akses akun dipulihkan", "Account access recovered")}
+                  </p>
+                  <p className="mt-1">
+                    {t(
+                      "Sebaiknya ganti email dan password sekarang. Dashboard tetap dapat digunakan.",
+                      "We recommend changing your email and password now. Your dashboard remains available.",
+                    )}
+                  </p>
+                </div>
+              )}
               <div className="space-y-4">
                 <Card>
                   <CardHeader>
@@ -219,6 +355,7 @@ export default async function SettingsPage({
                       name={currentUser?.name ?? ""}
                       email={currentUser?.email ?? user.email ?? ""}
                       emailVerified={Boolean(currentUser?.emailVerified)}
+                      recovered={recovered}
                     />
                   </CardContent>
                 </Card>
@@ -247,7 +384,10 @@ export default async function SettingsPage({
                         "Kelola anggota, peran, dan undangan workspace.",
                         "Manage members, roles, and workspace invitations.",
                       )
-                    : t("Lihat anggota tim workspace.", "View workspace team members.")}
+                    : t(
+                        "Lihat anggota tim workspace.",
+                        "View workspace team members.",
+                      )}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -265,8 +405,12 @@ export default async function SettingsPage({
                         className="flex items-center justify-between rounded-lg border p-3 text-sm"
                       >
                         <div>
-                          <p className="font-medium">{member.name || member.email}</p>
-                          <p className="text-xs text-muted-foreground">{member.email}</p>
+                          <p className="font-medium">
+                            {member.name || member.email}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {member.email}
+                          </p>
                         </div>
                         <Badge variant="secondary">{member.role}</Badge>
                       </div>
@@ -283,7 +427,10 @@ export default async function SettingsPage({
                   <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
                     <div>
                       <p className="text-sm font-semibold text-amber-950">
-                        {t("Atur invoice sebelum kirim ke client", "Set invoice defaults before sending to clients")}
+                        {t(
+                          "Atur invoice sebelum kirim ke client",
+                          "Set invoice defaults before sending to clients",
+                        )}
                       </p>
                       <p className="mt-1 text-sm text-amber-900/70">
                         {t(
@@ -293,7 +440,8 @@ export default async function SettingsPage({
                       </p>
                     </div>
                     <Badge className="w-fit bg-amber-600 text-white hover:bg-amber-600">
-                      {invoiceSetupDone}/{invoiceSetupItems.length} {t("selesai", "done")}
+                      {invoiceSetupDone}/{invoiceSetupItems.length}{" "}
+                      {t("selesai", "done")}
                     </Badge>
                   </CardContent>
                 </Card>
@@ -301,7 +449,8 @@ export default async function SettingsPage({
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
-                    <Receipt className="h-5 w-5" /> {t("Default Invoice", "Invoice Defaults")}
+                    <Receipt className="h-5 w-5" />{" "}
+                    {t("Default Invoice", "Invoice Defaults")}
                   </CardTitle>
                   <CardDescription>
                     {t(
@@ -311,20 +460,63 @@ export default async function SettingsPage({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <WorkspaceBrandingForm section="invoice" canEdit={canEditWorkspace} defaults={{ billingName: workspace.billingName, billingEmail: workspace.billingEmail, billingPhone: workspace.billingPhone, billingAddress: workspace.billingAddress, taxId: workspace.taxId, logoUrl: workspace.logoUrl, defaultCurrency: workspace.defaultCurrency, defaultTaxRate: workspace.defaultTaxRate, defaultHourlyRate: workspace.defaultHourlyRate, defaultInvoiceTerms: workspace.defaultInvoiceTerms, replyToEmail: workspace.replyToEmail }} />
-                  <CurrencyRatesForm baseCurrency={workspace.defaultCurrency || "IDR"} rates={currencyRateRows.map((r) => ({ id: r.id, fromCurrency: r.fromCurrency, rate: Number(r.rate) }))} canEdit={canEditWorkspace} showBaseCurrencyApprox={workspace.showBaseCurrencyApprox !== false} />
+                  <WorkspaceBrandingForm
+                    section="invoice"
+                    canEdit={canEditWorkspace}
+                    defaults={{
+                      billingName: workspace.billingName,
+                      billingEmail: workspace.billingEmail,
+                      billingPhone: workspace.billingPhone,
+                      billingAddress: workspace.billingAddress,
+                      taxId: workspace.taxId,
+                      logoUrl: workspace.logoUrl,
+                      defaultCurrency: workspace.defaultCurrency,
+                      defaultTaxRate: workspace.defaultTaxRate,
+                      defaultHourlyRate: workspace.defaultHourlyRate,
+                      defaultInvoiceTerms: workspace.defaultInvoiceTerms,
+                      replyToEmail: workspace.replyToEmail,
+                    }}
+                  />
+                  <CurrencyRatesForm
+                    baseCurrency={workspace.defaultCurrency || "IDR"}
+                    rates={currencyRateRows.map((r) => ({
+                      id: r.id,
+                      fromCurrency: r.fromCurrency,
+                      rate: Number(r.rate),
+                    }))}
+                    canEdit={canEditWorkspace}
+                    showBaseCurrencyApprox={
+                      workspace.showBaseCurrencyApprox !== false
+                    }
+                  />
                   <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
                     {invoiceSetupItems.map((item) => {
                       const Icon = item.done ? CheckCircle2 : Circle;
                       return (
-                        <div key={item.label} className="flex items-center gap-2 text-xs">
-                          <Icon className={item.done ? "h-4 w-4 text-emerald-600" : "h-4 w-4 text-muted-foreground"} />
-                          <span className={item.done ? "text-slate-700" : "text-muted-foreground"}>{item.label}</span>
+                        <div
+                          key={item.label}
+                          className="flex items-center gap-2 text-xs"
+                        >
+                          <Icon
+                            className={
+                              item.done
+                                ? "h-4 w-4 text-emerald-600"
+                                : "h-4 w-4 text-muted-foreground"
+                            }
+                          />
+                          <span
+                            className={
+                              item.done
+                                ? "text-slate-700"
+                                : "text-muted-foreground"
+                            }
+                          >
+                            {item.label}
+                          </span>
                         </div>
                       );
                     })}
                   </div>
-
                 </CardContent>
               </Card>
             </>
@@ -357,7 +549,12 @@ export default async function SettingsPage({
               </CardContent>
             </Card>
           }
-          billing={<BillingPage searchParams={Promise.resolve({})} showHeader={false} />}
+          billing={
+            <BillingPage
+              searchParams={Promise.resolve({})}
+              showHeader={false}
+            />
+          }
         />
       </Suspense>
     </div>

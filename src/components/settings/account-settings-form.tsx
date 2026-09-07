@@ -4,7 +4,11 @@ import { useState, useTransition } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { Eye, EyeOff, Mail, CheckCircle2 } from "lucide-react";
-import { updateAccountName, updateAccountPassword, requestAccountEmailChange } from "@/lib/actions/account";
+import {
+  updateAccountName,
+  updateAccountPassword,
+  requestAccountEmailChange,
+} from "@/lib/actions/account";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,9 +27,15 @@ type AccountSettingsFormProps = {
   name: string;
   email: string;
   emailVerified: boolean;
+  recovered?: boolean;
 };
 
-export function AccountSettingsForm({ name, email, emailVerified }: AccountSettingsFormProps) {
+export function AccountSettingsForm({
+  name,
+  email,
+  emailVerified,
+  recovered = false,
+}: AccountSettingsFormProps) {
   const { refresh } = useAppTransition();
   const { t } = useT();
   const [displayName, setDisplayName] = useState(name);
@@ -47,7 +57,9 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
     startNameTransition(async () => {
       const res = await updateAccountName(displayName);
       if (!res.ok) {
-        toast.error(res.error ?? t("Gagal menyimpan nama", "Failed to save name"));
+        toast.error(
+          res.error ?? t("Gagal menyimpan nama", "Failed to save name"),
+        );
         return;
       }
       toast.success(t("Nama akun diperbarui", "Account name updated"));
@@ -60,7 +72,13 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
     startEmailTransition(async () => {
       const res = await requestAccountEmailChange(newEmail, emailPassword);
       if (!res.ok) {
-        toast.error(res.error ?? t("Gagal mengirim email konfirmasi", "Failed to send confirmation email"));
+        toast.error(
+          res.error ??
+            t(
+              "Gagal mengirim email konfirmasi",
+              "Failed to send confirmation email",
+            ),
+        );
         return;
       }
       setEmailSentSuccess(true);
@@ -71,18 +89,31 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
   function savePassword() {
     startPasswordTransition(async () => {
       if (newPassword !== confirmPassword) {
-        toast.error(t("Konfirmasi password tidak cocok", "Password confirmation does not match"));
+        toast.error(
+          t(
+            "Konfirmasi password tidak cocok",
+            "Password confirmation does not match",
+          ),
+        );
         return;
       }
       const res = await updateAccountPassword(currentPassword, newPassword);
       if (!res.ok) {
-        toast.error(res.error ?? t("Gagal mengganti password", "Failed to change password"));
+        toast.error(
+          res.error ??
+            t("Gagal mengganti password", "Failed to change password"),
+        );
         return;
       }
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
-      toast.success(t("Password diperbarui. Sesi perangkat lain sudah dikeluarkan.", "Password updated. Other device sessions were signed out."));
+      toast.success(
+        t(
+          "Password diperbarui. Sesi perangkat lain sudah dikeluarkan.",
+          "Password updated. Other device sessions were signed out.",
+        ),
+      );
     });
   }
 
@@ -90,7 +121,9 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
     <div className="space-y-6">
       <div className="grid gap-3 sm:grid-cols-1">
         <div className="space-y-1.5">
-          <Label htmlFor="account-name">{t("Nama / username", "Name / username")}</Label>
+          <Label htmlFor="account-name">
+            {t("Nama / username", "Name / username")}
+          </Label>
           <Input
             id="account-name"
             value={displayName}
@@ -100,15 +133,20 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
         </div>
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="account-email">{t("Email login", "Login email")}</Label>
-            <Dialog open={emailDialogOpen} onOpenChange={(open) => {
-              setEmailDialogOpen(open);
-              if (!open) {
-                setEmailSentSuccess(false);
-                setNewEmail("");
-                setEmailPassword("");
-              }
-            }}>
+            <Label htmlFor="account-email">
+              {t("Email login", "Login email")}
+            </Label>
+            <Dialog
+              open={emailDialogOpen}
+              onOpenChange={(open) => {
+                setEmailDialogOpen(open);
+                if (!open) {
+                  setEmailSentSuccess(false);
+                  setNewEmail("");
+                  setEmailPassword("");
+                }
+              }}
+            >
               <DialogTrigger asChild>
                 <button
                   type="button"
@@ -125,8 +163,12 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
                   </DialogTitle>
                   <DialogDescription className="text-xs">
                     {t(
-                      "Masukkan alamat email baru dan password akunmu. Link konfirmasi akan dikirim ke email baru.",
-                      "Enter your new email address and account password. A confirmation link will be sent to the new email.",
+                      recovered
+                        ? "Masukkan alamat email baru. Link konfirmasi dikirim hanya ke email baru."
+                        : "Masukkan alamat email baru dan password akunmu. Link konfirmasi akan dikirim ke email baru.",
+                      recovered
+                        ? "Enter your new email address. Confirmation is sent only to the new email."
+                        : "Enter your new email address and account password. A confirmation link will be sent to the new email.",
                     )}
                   </DialogDescription>
                 </DialogHeader>
@@ -136,7 +178,12 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
                     <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600">
                       <CheckCircle2 className="h-5 w-5" />
                     </div>
-                    <p className="text-sm font-semibold">{t("Link Konfirmasi Terkirim!", "Confirmation Link Sent!")}</p>
+                    <p className="text-sm font-semibold">
+                      {t(
+                        "Link Konfirmasi Terkirim!",
+                        "Confirmation Link Sent!",
+                      )}
+                    </p>
                     <p className="text-xs text-muted-foreground">
                       {t(
                         `Kami telah mengirim link verifikasi ke ${newEmail}. Buka email tersebut untuk menyelesaikan pergantian.`,
@@ -154,13 +201,25 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
                     </Button>
                   </div>
                 ) : (
-                  <form onSubmit={handleEmailChange} className="space-y-3.5 pt-1">
+                  <form
+                    onSubmit={handleEmailChange}
+                    className="space-y-3.5 pt-1"
+                  >
                     <div className="space-y-1.5">
-                      <Label htmlFor="current-email-val" className="text-xs">{t("Email saat ini", "Current email")}</Label>
-                      <Input id="current-email-val" value={email} disabled className="h-9 text-xs bg-muted/40" />
+                      <Label htmlFor="current-email-val" className="text-xs">
+                        {t("Email saat ini", "Current email")}
+                      </Label>
+                      <Input
+                        id="current-email-val"
+                        value={email}
+                        disabled
+                        className="h-9 text-xs bg-muted/40"
+                      />
                     </div>
                     <div className="space-y-1.5">
-                      <Label htmlFor="new-email-val" className="text-xs">{t("Email baru", "New email")}</Label>
+                      <Label htmlFor="new-email-val" className="text-xs">
+                        {t("Email baru", "New email")}
+                      </Label>
                       <Input
                         id="new-email-val"
                         type="email"
@@ -171,18 +230,22 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
                         className="h-9 text-xs"
                       />
                     </div>
-                    <div className="space-y-1.5">
-                      <Label htmlFor="email-password-val" className="text-xs">{t("Password akun", "Account password")}</Label>
-                      <Input
-                        id="email-password-val"
-                        type="password"
-                        required
-                        value={emailPassword}
-                        onChange={(e) => setEmailPassword(e.target.value)}
-                        placeholder="••••••••"
-                        className="h-9 text-xs"
-                      />
-                    </div>
+                    {!recovered && (
+                      <div className="space-y-1.5">
+                        <Label htmlFor="email-password-val" className="text-xs">
+                          {t("Password akun", "Account password")}
+                        </Label>
+                        <Input
+                          id="email-password-val"
+                          type="password"
+                          required
+                          value={emailPassword}
+                          onChange={(e) => setEmailPassword(e.target.value)}
+                          placeholder="••••••••"
+                          className="h-9 text-xs"
+                        />
+                      </div>
+                    )}
                     <DialogFooter className="pt-2">
                       <Button
                         type="button"
@@ -196,10 +259,16 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
                       <Button
                         type="submit"
                         size="sm"
-                        disabled={pendingEmail || !newEmail || !emailPassword}
+                        disabled={
+                          pendingEmail ||
+                          !newEmail ||
+                          (!recovered && !emailPassword)
+                        }
                         className="text-xs h-8"
                       >
-                        {pendingEmail ? t("Mengirim…", "Sending…") : t("Kirim Konfirmasi", "Send Confirmation")}
+                        {pendingEmail
+                          ? t("Mengirim…", "Sending…")
+                          : t("Kirim Konfirmasi", "Send Confirmation")}
                       </Button>
                     </DialogFooter>
                   </form>
@@ -209,7 +278,9 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
           </div>
           <Input id="account-email" value={email} disabled />
           <p className="text-[11px] text-muted-foreground">
-            {emailVerified ? t("Email terverifikasi.", "Email verified.") : t("Email belum terverifikasi.", "Email unverified.")}
+            {emailVerified
+              ? t("Email terverifikasi.", "Email verified.")
+              : t("Email belum terverifikasi.", "Email unverified.")}
           </p>
         </div>
       </div>
@@ -219,7 +290,9 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
         disabled={pendingName}
         className="w-full sm:w-auto"
       >
-        {pendingName ? t("Menyimpan…", "Saving…") : t("Simpan nama", "Save name")}
+        {pendingName
+          ? t("Menyimpan…", "Saving…")
+          : t("Simpan nama", "Save name")}
       </Button>
 
       <div className="border-t pt-5">
@@ -227,17 +300,32 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
           <div>
             <h3 className="text-sm font-semibold">Password</h3>
             <p className="mt-1 text-sm text-muted-foreground">
-              {t("Ganti password pakai password sekarang. Minimal 8 karakter.", "Use your current password. New password must be at least 8 characters.")}
+              {t(
+                "Ganti password pakai password sekarang. Minimal 8 karakter.",
+                "Use your current password. New password must be at least 8 characters.",
+              )}
             </p>
           </div>
-          <Button type="button" variant="outline" size="sm" className="shrink-0" onClick={() => setShowPasswords((v) => !v)}>
-            {showPasswords ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            onClick={() => setShowPasswords((v) => !v)}
+          >
+            {showPasswords ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
             {showPasswords ? t("Sembunyikan", "Hide") : t("Tampilkan", "Show")}
           </Button>
         </div>
         <div className="grid gap-3 sm:grid-cols-1">
           <div className="space-y-1.5">
-            <Label htmlFor="current-password">{t("Password sekarang", "Current password")}</Label>
+            <Label htmlFor="current-password">
+              {t("Password sekarang", "Current password")}
+            </Label>
             <Input
               id="current-password"
               type={showPasswords ? "text" : "password"}
@@ -248,7 +336,9 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="new-password">{t("Password baru", "New password")}</Label>
+            <Label htmlFor="new-password">
+              {t("Password baru", "New password")}
+            </Label>
             <Input
               id="new-password"
               type={showPasswords ? "text" : "password"}
@@ -260,17 +350,34 @@ export function AccountSettingsForm({ name, email, emailVerified }: AccountSetti
             />
           </div>
           <div className="space-y-1.5">
-            <Label htmlFor="confirm-password">{t("Konfirmasi password", "Confirm password")}</Label>
-            <Input id="confirm-password" type={showPasswords ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" required minLength={8} />
+            <Label htmlFor="confirm-password">
+              {t("Konfirmasi password", "Confirm password")}
+            </Label>
+            <Input
+              id="confirm-password"
+              type={showPasswords ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              autoComplete="new-password"
+              required
+              minLength={8}
+            />
           </div>
         </div>
         <Button
           type="button"
           className="mt-4 w-full sm:w-auto"
           onClick={savePassword}
-          disabled={pendingPassword || !currentPassword || newPassword.length < 8 || newPassword !== confirmPassword}
+          disabled={
+            pendingPassword ||
+            !currentPassword ||
+            newPassword.length < 8 ||
+            newPassword !== confirmPassword
+          }
         >
-          {pendingPassword ? t("Mengganti…", "Updating…") : t("Ganti password", "Change password")}
+          {pendingPassword
+            ? t("Mengganti…", "Updating…")
+            : t("Ganti password", "Change password")}
         </Button>
       </div>
     </div>

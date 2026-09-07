@@ -1,11 +1,17 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq, and } from "drizzle-orm";
+import { eq, and, gt, isNull } from "drizzle-orm";
 import { hashPassword, verifyPassword } from "@better-auth/utils/password";
 import { randomBytes } from "node:crypto";
 import { db } from "@/db";
-import { accounts, sessions, users, verifications } from "@/db/schema";
+import {
+  accounts,
+  authRecoveryAuthorizations,
+  sessions,
+  users,
+  verifications,
+} from "@/db/schema";
 import { requireAppSession } from "@/lib/app-auth";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
@@ -47,6 +53,25 @@ export async function requestAccountEmailChange(
 ): Promise<AccountActionResult> {
   const session = await requireAppSession("/app/settings?tab=account");
   const newEmail = newEmailRaw.trim().toLowerCase();
+  const requestHeaders = await headers();
+  const authSession = await auth.api.getSession({ headers: requestHeaders });
+  const recoveryAuthorization = authSession?.session?.id
+    ? (
+        await db
+          .select({ id: authRecoveryAuthorizations.id })
+          .from(authRecoveryAuthorizations)
+          .where(
+            and(
+              eq(authRecoveryAuthorizations.userId, session.user.id),
+              eq(authRecoveryAuthorizations.sessionId, authSession.session.id),
+              eq(authRecoveryAuthorizations.scope, "account_recovery"),
+              isNull(authRecoveryAuthorizations.consumedAt),
+              gt(authRecoveryAuthorizations.expiresAt, new Date()),
+            ),
+          )
+          .limit(1)
+      )[0]
+    : undefined;
 
   // Basic email validation
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
@@ -69,7 +94,7 @@ export async function requestAccountEmailChange(
     )
     .limit(1);
 
-  if (credential?.password) {
+  if (credential?.password && !recoveryAuthorization) {
     if (!currentPassword) {
       return {
         ok: false,
@@ -99,7 +124,9 @@ export async function requestAccountEmailChange(
   // Generate verification token (expires in 1 hour)
   const token = randomBytes(32).toString("hex");
   const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
-  const identifier = `change_email:${session.user.id}:${newEmail}`;
+  const identifier = recoveryAuthorization
+    ? `change_email_recovery:${session.user.id}:${newEmail}:${recoveryAuthorization.id}`
+    : `change_email:${session.user.id}:${newEmail}`;
 
   // Delete any existing change_email token for this user
   await db

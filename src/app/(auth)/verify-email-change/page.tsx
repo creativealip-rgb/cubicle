@@ -1,8 +1,19 @@
 import Link from "next/link";
 import { db } from "@/db";
-import { verifications, users, accounts } from "@/db/schema";
+import {
+  verifications,
+  users,
+  accounts,
+  authRecoveryAuthorizations,
+} from "@/db/schema";
 import { eq, and, gt } from "drizzle-orm";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -24,7 +35,9 @@ export default async function VerifyEmailChangePage({
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-600 mb-2">
               <XCircle className="h-6 w-6" />
             </div>
-            <CardTitle className="text-lg">{t("Token Tidak Valid", "Invalid Token")}</CardTitle>
+            <CardTitle className="text-lg">
+              {t("Token Tidak Valid", "Invalid Token")}
+            </CardTitle>
             <CardDescription className="text-xs">
               {t(
                 "Link verifikasi ganti email tidak ditemukan atau rusak.",
@@ -34,7 +47,9 @@ export default async function VerifyEmailChangePage({
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full rounded-xl">
-              <Link href="/app/settings?tab=account">{t("Kembali ke Pengaturan", "Back to Settings")}</Link>
+              <Link href="/app/settings?tab=account">
+                {t("Kembali ke Pengaturan", "Back to Settings")}
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -47,10 +62,16 @@ export default async function VerifyEmailChangePage({
   const [record] = await db
     .select()
     .from(verifications)
-    .where(and(eq(verifications.value, token), gt(verifications.expiresAt, now)))
+    .where(
+      and(eq(verifications.value, token), gt(verifications.expiresAt, now)),
+    )
     .limit(1);
 
-  if (!record || !record.identifier.startsWith("change_email:")) {
+  if (
+    !record ||
+    (!record.identifier.startsWith("change_email:") &&
+      !record.identifier.startsWith("change_email_recovery:"))
+  ) {
     return (
       <main className="flex min-h-screen items-center justify-center p-4 bg-muted/20">
         <Card className="w-full max-w-md rounded-2xl border shadow-none text-center">
@@ -58,7 +79,9 @@ export default async function VerifyEmailChangePage({
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-600 mb-2">
               <XCircle className="h-6 w-6" />
             </div>
-            <CardTitle className="text-lg">{t("Link Kedaluwarsa", "Expired Link")}</CardTitle>
+            <CardTitle className="text-lg">
+              {t("Link Kedaluwarsa", "Expired Link")}
+            </CardTitle>
             <CardDescription className="text-xs">
               {t(
                 "Link verifikasi ganti email sudah kedaluwarsa atau sudah pernah digunakan.",
@@ -68,7 +91,9 @@ export default async function VerifyEmailChangePage({
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full rounded-xl">
-              <Link href="/app/settings?tab=account">{t("Kembali ke Pengaturan", "Back to Settings")}</Link>
+              <Link href="/app/settings?tab=account">
+                {t("Kembali ke Pengaturan", "Back to Settings")}
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -79,7 +104,16 @@ export default async function VerifyEmailChangePage({
   // Identifier format: "change_email:userId:newEmail"
   const parts = record.identifier.split(":");
   const userId = parts[1];
-  const newEmail = parts.slice(2).join(":").toLowerCase();
+  const recoveryAuthorizationId = record.identifier.startsWith(
+    "change_email_recovery:",
+  )
+    ? parts.at(-1)
+    : undefined;
+  const newEmail = (
+    recoveryAuthorizationId ? parts.slice(2, -1) : parts.slice(2)
+  )
+    .join(":")
+    .toLowerCase();
 
   // Check if new email is already taken by someone else in the meantime
   const [existingUser] = await db
@@ -97,7 +131,9 @@ export default async function VerifyEmailChangePage({
             <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-rose-500/10 text-rose-600 mb-2">
               <XCircle className="h-6 w-6" />
             </div>
-            <CardTitle className="text-lg">{t("Email Sudah Terdaftar", "Email Already Registered")}</CardTitle>
+            <CardTitle className="text-lg">
+              {t("Email Sudah Terdaftar", "Email Already Registered")}
+            </CardTitle>
             <CardDescription className="text-xs">
               {t(
                 `Alamat email ${newEmail} sudah dipakai oleh akun lain.`,
@@ -107,7 +143,9 @@ export default async function VerifyEmailChangePage({
           </CardHeader>
           <CardContent>
             <Button asChild className="w-full rounded-xl">
-              <Link href="/app/settings?tab=account">{t("Kembali ke Pengaturan", "Back to Settings")}</Link>
+              <Link href="/app/settings?tab=account">
+                {t("Kembali ke Pengaturan", "Back to Settings")}
+              </Link>
             </Button>
           </CardContent>
         </Card>
@@ -132,9 +170,22 @@ export default async function VerifyEmailChangePage({
         accountId: newEmail,
         updatedAt: new Date(),
       })
-      .where(and(eq(accounts.userId, userId), eq(accounts.providerId, "credential")));
+      .where(
+        and(eq(accounts.userId, userId), eq(accounts.providerId, "credential")),
+      );
 
     await tx.delete(verifications).where(eq(verifications.id, record.id));
+    if (recoveryAuthorizationId) {
+      await tx
+        .update(authRecoveryAuthorizations)
+        .set({ consumedAt: new Date() })
+        .where(
+          and(
+            eq(authRecoveryAuthorizations.id, recoveryAuthorizationId),
+            eq(authRecoveryAuthorizations.userId, userId),
+          ),
+        );
+    }
   });
 
   return (
@@ -144,7 +195,9 @@ export default async function VerifyEmailChangePage({
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500/10 text-emerald-600 mb-2">
             <CheckCircle2 className="h-6 w-6" />
           </div>
-          <CardTitle className="text-lg">{t("Email Berhasil Diubah!", "Email Successfully Changed!")}</CardTitle>
+          <CardTitle className="text-lg">
+            {t("Email Berhasil Diubah!", "Email Successfully Changed!")}
+          </CardTitle>
           <CardDescription className="text-xs">
             {t(
               "Alamat email login akun kamu sekarang adalah",
@@ -155,7 +208,9 @@ export default async function VerifyEmailChangePage({
         </CardHeader>
         <CardContent className="space-y-3">
           <Button asChild className="w-full rounded-xl">
-            <Link href="/app/settings?tab=account">{t("Lanjut ke Akun", "Continue to Account")}</Link>
+            <Link href="/app/settings?tab=account">
+              {t("Lanjut ke Akun", "Continue to Account")}
+            </Link>
           </Button>
         </CardContent>
       </Card>

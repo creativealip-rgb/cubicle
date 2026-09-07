@@ -1,13 +1,17 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
-const component = readFileSync("src/components/settings/account-security-settings.tsx", "utf8");
+const component = readFileSync(
+  "src/components/settings/account-security-settings.tsx",
+  "utf8",
+);
 const page = readFileSync("src/app/(app)/app/settings/page.tsx", "utf8");
 
-// Wiring check: security settings must expose existing MFA factors and session controls.
+// Wiring check: Settings exposes recovery factors while legacy TOTP UI stays hidden.
 describe("account security settings", () => {
   it("renders MFA status, passkeys, recovery, and sessions", () => {
-    expect(component).toContain("Two-step verification");
+    expect(component).toContain("Recovery methods");
+    expect(component).not.toContain("Two-step verification");
     expect(component).toContain("authClient.passkey.addPasskey");
     expect(component).toContain("/mfa/recovery");
     expect(component).toContain("signOutOtherSessions");
@@ -23,8 +27,12 @@ describe("account security settings", () => {
   });
 
   it("limits sessions and keeps the bulk action above the list", () => {
-    expect(page).toMatch(/sessionRows[\s\S]*?orderBy\(desc\(sessions\.updatedAt\)\)[\s\S]*?limit\(5\)/);
-    expect(component.indexOf("signOutOtherSessions")).toBeLessThan(component.indexOf("sessions.map"));
+    expect(page).toMatch(
+      /sessionRows[\s\S]*?orderBy\(desc\(sessions\.updatedAt\)\)[\s\S]*?limit\(5\)/,
+    );
+    expect(component.indexOf("signOutOtherSessions")).toBeLessThan(
+      component.indexOf("sessions.map"),
+    );
     expect(component).toContain("friendlyDeviceName");
   });
 });
