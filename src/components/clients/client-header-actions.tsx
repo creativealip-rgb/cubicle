@@ -17,14 +17,14 @@ export function ClientHeaderActions({ projectAction, invoiceAction, editAction, 
   return <div className="flex items-center gap-2">
     <DropdownMenu>
       <DropdownMenuTrigger asChild><Button size="sm" className="gap-1.5"><Plus className="h-4 w-4" />{t("Buat", "Create")}</Button></DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-48">
+      <DropdownMenuContent forceMount align="end" className="w-48">
         <DropdownMenuLabel>{t("Buat baru", "Create new")}</DropdownMenuLabel>
         {projectAction}{invoiceAction}
       </DropdownMenuContent>
     </DropdownMenu>
     <DropdownMenu>
       <DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="h-9 w-9" aria-label={t("Aksi klien", "Client actions")}><MoreHorizontal className="h-4 w-4" /></Button></DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-52">
+      <DropdownMenuContent forceMount align="end" className="w-52">
         {editAction}
         <DropdownMenuItem asChild><a href={exportHref} download><Download className="h-4 w-4" />{t("Ekspor Excel", "Export Excel")}</a></DropdownMenuItem>
         <DropdownMenuSeparator />
