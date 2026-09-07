@@ -94,7 +94,12 @@ export const authRecoveryAuthorizations = pgTable("auth_recovery_authorizations"
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
   consumedAt: timestamp("consumed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [unique().on(table.sessionId, table.scope), check("auth_recovery_authorizations_scope_ck", sql`${table.scope} in ('email-access-lost')`)]);
+}, (table) => [
+  // flow_id is random browser challenge-flow ID stored in HttpOnly cookie; unique (user_id, flow_id) scopes active challenge to that browser flow.
+  unique().on(table.sessionId, table.scope),
+  index("auth_recovery_authorizations_session_idx").on(table.sessionId, table.expiresAt),
+  check("auth_recovery_authorizations_scope_ck", sql`${table.scope} in ('email-access-lost')`),
+]);
 
 export const authTrustedDevices = pgTable("auth_trusted_devices", {
   id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),

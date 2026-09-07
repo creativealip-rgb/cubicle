@@ -1,3 +1,5 @@
+-- flow_id is a random browser challenge-flow ID stored in an HttpOnly challenge cookie.
+-- Unique (user_id, flow_id) scopes active challenge to that browser flow; (user_id, flow_id) is device-flow scoped.
 CREATE TABLE IF NOT EXISTS auth_login_otp_challenges (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   flow_id text NOT NULL, code_hash text NOT NULL, purpose text NOT NULL CHECK (purpose IN ('login')),
