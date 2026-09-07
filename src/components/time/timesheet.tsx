@@ -964,17 +964,19 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                       {t("Hanya baca", "Read only")}
                     </Badge>
                   ) : null}
-                  <Button type="button" size="sm" variant="ghost" className="h-7 gap-1 px-2 text-xs" onClick={(event) => { event.stopPropagation(); void handleReuse(entry, "restart"); }}>
-                    <Play className="h-3.5 w-3.5" /> {t("Mulai lagi", "Start again")}
-                  </Button>
-                  {canEditEntry(entry) ? <>
-                    <Button type="button" size="sm" variant="ghost" className="h-7 gap-1 px-2 text-xs" onClick={(event) => { event.stopPropagation(); void handleReuse(entry, "copy"); }}>
-                      <Copy className="h-3.5 w-3.5" /> {t("Salin", "Copy")}
+                  <div className="ml-auto flex items-center rounded-md border bg-background p-0.5 shadow-sm sm:ml-1">
+                    <Button type="button" size="sm" variant="ghost" aria-label={t("Mulai lagi", "Start again")} className="min-h-9 gap-1.5 px-2 text-xs text-primary sm:px-2.5" onClick={(event) => { event.stopPropagation(); void handleReuse(entry, "restart"); }}>
+                      <Play className="h-3.5 w-3.5" /><span className="sr-only sm:not-sr-only">{t("Mulai lagi", "Start again")}</span>
                     </Button>
-                    <Button type="button" size="sm" variant="ghost" className="h-7 gap-1 px-2 text-xs" onClick={(event) => { event.stopPropagation(); openEdit(entry); }}>
-                      <Pencil className="h-3.5 w-3.5" /> {t("Ubah detail", "Edit details")}
-                    </Button>
-                  </> : null}
+                    {canEditEntry(entry) ? <>
+                      <Button type="button" size="icon" variant="ghost" aria-label={t("Salin", "Copy")} className="min-h-9 min-w-9" onClick={(event) => { event.stopPropagation(); void handleReuse(entry, "copy"); }}>
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                      <Button type="button" size="icon" variant="ghost" aria-label={t("Ubah detail", "Edit details")} className="min-h-9 min-w-9" onClick={(event) => { event.stopPropagation(); openEdit(entry); }}>
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    </> : null}
+                  </div>
                 </div>
               </CardContent>
             </Card>

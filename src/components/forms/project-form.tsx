@@ -174,8 +174,8 @@ export function ProjectForm({
   );
 
   return (
-    <form onSubmit={submit} className="space-y-5">
-      <div className="grid gap-4 sm:grid-cols-2">
+    <form onSubmit={submit} className={mode === "create" ? "space-y-4" : "space-y-5"}>
+      <div className={`grid gap-4 ${mode === "create" ? "grid-cols-1" : "sm:grid-cols-2"}`}>
         {/* Left Column: Basic Info */}
         <div className="space-y-4">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
