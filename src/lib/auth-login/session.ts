@@ -9,6 +9,7 @@ export async function createBetterAuthSession(userId: string, secret: string) {
   const cookie = getCookies(auth.options).sessionToken;
   const signature = await makeSignature(session.token, secret);
   return {
+    sessionId: session.id,
     name: cookie.name,
     value: `${session.token}.${signature}`,
     attributes: {
