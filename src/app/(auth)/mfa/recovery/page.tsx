@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+  CardFooter,
+} from "@/components/ui/card";
 import { MfaRecoveryForm } from "@/components/auth/mfa-recovery-form";
 import { ShieldAlert, ArrowLeft, KeyRound } from "lucide-react";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -20,7 +27,12 @@ export default async function MfaRecoveryPage() {
         <div className="rounded-2xl border border-primary/20 bg-slate-900/80 backdrop-blur-md p-3.5 text-xs text-slate-300 space-y-2">
           <p className="font-semibold text-white flex items-center gap-1.5">
             <KeyRound className="h-4 w-4 text-primary" />
-            <span>{t("Punya Passkey atau Recovery Backup Code?", "Have a Passkey or Recovery Backup Code?")}</span>
+            <span>
+              {t(
+                "Punya Passkey atau Recovery Backup Code?",
+                "Have a Passkey or Recovery Backup Code?",
+              )}
+            </span>
           </p>
           <p className="text-[11px] text-slate-400">
             {t(
@@ -30,10 +42,15 @@ export default async function MfaRecoveryPage() {
           </p>
           <div className="flex gap-2 pt-1">
             <Link
-              href="/two-factor"
+              href="/recover-access"
               className="inline-flex items-center gap-1 text-[11px] font-semibold text-primary hover:underline"
             >
-              <span>{t("← Coba verifikasi dengan Passkey / Backup Code", "← Try verifying with Passkey / Backup Code")}</span>
+              <span>
+                {t(
+                  "← Coba verifikasi dengan Passkey / Backup Code",
+                  "← Try verifying with Passkey / Backup Code",
+                )}
+              </span>
             </Link>
           </div>
         </div>
@@ -69,11 +86,13 @@ export default async function MfaRecoveryPage() {
 
         <CardFooter className="bg-muted/30 border-t p-4 flex justify-center">
           <Link
-            href="/two-factor"
+            href="/recover-access"
             className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground font-medium transition-colors"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            <span>{t("Kembali ke Verifikasi 2FA", "Back to 2FA Verification")}</span>
+            <span>
+              {t("Kembali ke Verifikasi 2FA", "Back to 2FA Verification")}
+            </span>
           </Link>
         </CardFooter>
       </Card>

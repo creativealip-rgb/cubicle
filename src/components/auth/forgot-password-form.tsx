@@ -36,13 +36,18 @@ export function ForgotPasswordForm() {
       });
 
       if (result.error) {
-        setError(result.error.message ?? t("Gagal memproses permintaan", "Failed to process request"));
+        setError(
+          result.error.message ??
+            t("Gagal memproses permintaan", "Failed to process request"),
+        );
         return;
       }
 
       setSent(true);
     } catch {
-      setError(t("Terjadi kesalahan. Coba lagi.", "An error occurred. Try again."));
+      setError(
+        t("Terjadi kesalahan. Coba lagi.", "An error occurred. Try again."),
+      );
     } finally {
       setLoading(false);
     }
@@ -53,9 +58,14 @@ export function ForgotPasswordForm() {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <CheckCircle className="mx-auto h-12 w-12 text-primary" />
-          <CardTitle className="text-2xl">{t("Cek email kamu", "Check your email")}</CardTitle>
+          <CardTitle className="text-2xl">
+            {t("Cek email kamu", "Check your email")}
+          </CardTitle>
           <CardDescription>
-            {t("Kami sudah mengirim link reset password ke", "We sent a password reset link to")}{" "}
+            {t(
+              "Kami sudah mengirim link reset password ke",
+              "We sent a password reset link to",
+            )}{" "}
             <span className="font-medium text-foreground">{email}</span>
           </CardDescription>
         </CardHeader>
@@ -74,10 +84,21 @@ export function ForgotPasswordForm() {
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
-        <Image src="/logo-icon.png" alt="Cubiqlo" width={40} height={40} className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover" />
-        <CardTitle className="text-2xl">{t("Reset password", "Reset password")}</CardTitle>
+        <Image
+          src="/logo-icon.png"
+          alt="Cubiqlo"
+          width={40}
+          height={40}
+          className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover"
+        />
+        <CardTitle className="text-2xl">
+          {t("Reset password", "Reset password")}
+        </CardTitle>
         <CardDescription>
-          {t("Masukkan email kamu dan kami kirim link reset-nya", "Enter your email and we will send you a reset link")}
+          {t(
+            "Masukkan email kamu dan kami kirim link reset-nya",
+            "Enter your email and we will send you a reset link",
+          )}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -115,12 +136,15 @@ export function ForgotPasswordForm() {
         </Link>
         <div className="w-full border-t pt-3 text-center space-y-1">
           <p className="text-[11px] text-muted-foreground">
-            {t("Lupa password atau tidak bisa akses email?", "Forgot password or lost email access?")}{" "}
+            {t(
+              "Lupa password atau tidak bisa akses email?",
+              "Forgot password or lost email access?",
+            )}{" "}
             <Link
-              href="/two-factor"
+              href="/recover-access"
               className="font-medium text-primary hover:underline"
             >
-              {t("Masuk dengan 2FA / Passkey", "Sign in with 2FA / Passkey")}
+              {t("Pulihkan akses akun", "Recover account access")}
             </Link>
           </p>
           <p className="text-[10px] text-muted-foreground">

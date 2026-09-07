@@ -1,7 +1,4 @@
-import { TwoFactorForm } from "@/components/auth/two-factor-form";
-
+import { redirect } from "next/navigation";
 export default function TwoFactorPage() {
-  return <TwoFactorForm />;
+  redirect("/recover-access");
 }
-
-export const dynamic = "force-dynamic";
