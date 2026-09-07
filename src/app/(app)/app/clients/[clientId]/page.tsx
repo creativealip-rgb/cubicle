@@ -43,7 +43,7 @@ import { PermanentDeleteButton } from "@/components/shared/permanent-delete-butt
 import { ClientInvoiceCreateDialog } from "@/components/invoices/client-invoice-create-dialog";
 import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
 import { resolveProjectAmount } from "@/lib/invoice-project-items";
-import { ClientOverview } from "@/components/clients/client-overview";
+import { ClientKpis, ClientOverview } from "@/components/clients/client-overview";
 import { ClientHeaderActions } from "@/components/clients/client-header-actions";
 
 async function _getWorkspaceId(): Promise<string> {
@@ -348,8 +348,9 @@ export default async function ClientDetailPage({
       </div>
 
       <div>
+        <ClientKpis activeProjects={activeProjects} currency={baseCurrency} trackedMinutes={trackedMinutes} outstanding={outstandingTotal} invoiced={invoicedTotal} t={t} />
         {/* Work tabs */}
-        <section className="min-w-0">
+        <section className="mt-4 min-w-0">
       <ClientTabsNav
         initialTab={initialTab}
         projectsCount={clientProjects.length}
@@ -395,7 +396,7 @@ export default async function ClientDetailPage({
             />
           ) : null
         }
-        overviewContent={<ClientOverview client={{ id: client.id, clientNumber: client.clientNumber, email: client.email, phone: client.phone, website: client.website, address: client.address, tags: client.tags, internalNotes: client.internalNotes }} projects={clientProjects} invoices={clientInvoices} currency={baseCurrency} trackedMinutes={trackedMinutes} outstanding={outstandingTotal} invoiced={invoicedTotal} editAction={<ClientEditDialog trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Ubah detail", "Edit details")}</Button>} defaultValues={clientDefaults} />} projectAction={canWrite ? <ProjectCreateDialog clients={[]} clientId={clientId} isAtLimit={!projectLimitState.allowed} projectCount={projectLimitState.current} projectLimit={projectLimitState.limit} /> : undefined} invoiceAction={canWrite ? <ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} proposedInvoiceNumber={proposedInvoiceNumber} projects={invoiceProjects} baseCurrency={baseCurrency} currencyRates={currencyRates} /> : undefined} t={t} />}
+        overviewContent={<ClientOverview client={{ id: client.id, clientNumber: client.clientNumber, email: client.email, phone: client.phone, website: client.website, address: client.address, tags: client.tags, internalNotes: client.internalNotes }} projects={clientProjects} invoices={clientInvoices} editAction={<ClientEditDialog trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Ubah detail", "Edit details")}</Button>} defaultValues={clientDefaults} />} projectAction={canWrite ? <ProjectCreateDialog clients={[]} clientId={clientId} isAtLimit={!projectLimitState.allowed} projectCount={projectLimitState.current} projectLimit={projectLimitState.limit} /> : undefined} invoiceAction={canWrite ? <ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} proposedInvoiceNumber={proposedInvoiceNumber} projects={invoiceProjects} baseCurrency={baseCurrency} currencyRates={currencyRates} /> : undefined} t={t} />}
         portalContent={
           <PortalTokenSection
             client={{ ...client, portalPasswordCiphertext: client.portalPasswordCiphertext }}

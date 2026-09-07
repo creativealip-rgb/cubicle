@@ -6,8 +6,7 @@ const source = readFileSync("src/app/(app)/app/clients/[clientId]/page.tsx", "ut
 describe("client detail overview layout", () => {
   it("keeps overview and full-width work tabs", () => {
     expect(source).toContain("<ClientOverview");
-    expect(source).toContain("<section className=\"min-w-0\">");
-    expect(source).toContain("<section className=\"min-w-0\">");
+    expect(source).toContain("<section className=\"mt-4 min-w-0\">");
     expect(source).toContain("overviewContent=");
   });
 
