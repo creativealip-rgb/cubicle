@@ -1,5 +1,13 @@
 # Changelog
 
+## 2026-09-07 — Password + Email OTP and Account Recovery
+
+- Added password-first login with pre-session email OTP and trusted devices.
+- Added passkey, backup-code, and dual-admin manual account recovery.
+- Added session-bound recovered-account email change with new-email verification.
+- Revoked trusted-device state on logout and password reset/change.
+- Hid mandatory legacy TOTP UI while preserving rollback data.
+
 ## 2026-09-07 — Personal Planning, task visibility, human errors, and daily quote
 
 - New tasks now default to Client Visible across manual/server action, Personal Notes conversion, task template import, and AI confirmation execution; explicit private tasks remain supported.

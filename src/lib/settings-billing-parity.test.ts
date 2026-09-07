@@ -3,8 +3,12 @@ import { readFileSync } from "node:fs";
 
 it("renders Settings Billing from canonical Billing page", () => {
   const settings = readFileSync("src/app/(app)/app/settings/page.tsx", "utf8");
-  expect(settings).toContain('import BillingPage from "@/app/(app)/app/billing/page"');
-  expect(settings).toMatch(/billing={<BillingPage searchParams=\{Promise\.resolve\(\{\}\)\}( showHeader=\{false\})? \/>}/);
+  expect(settings).toContain(
+    'import BillingPage from "@/app/(app)/app/billing/page"',
+  );
+  expect(settings).toMatch(
+    /billing=\{[\s\S]*?<BillingPage[\s\S]*?searchParams=\{Promise\.resolve\(\{\}\)\}[\s\S]*?showHeader=\{false\}[\s\S]*?\/>[\s\S]*?\}/,
+  );
 });
 
 it("canonical Billing page contains plans and add-ons", () => {
