@@ -101,6 +101,11 @@ export const authRecoveryAuthorizations = pgTable("auth_recovery_authorizations"
   check("auth_recovery_authorizations_scope_ck", sql`${table.scope} in ('email-access-lost')`),
 ]);
 
+export const authBackupCodes = pgTable("auth_backup_codes", {
+  id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  codeHash: text("code_hash").notNull().unique(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), consumedAt: timestamp("consumed_at", { withTimezone: true }),
+}, (table) => [index("auth_backup_codes_user_active_idx").on(table.userId).where(sql`${table.consumedAt} is null`)]);
+
 export const authTrustedDevices = pgTable("auth_trusted_devices", {
   id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   tokenHash: text("token_hash").notNull().unique(), deviceLabel: text("device_label"), lastSeenIp: text("last_seen_ip"), lastSeenUserAgent: text("last_seen_user_agent"),

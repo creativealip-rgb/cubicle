@@ -13,7 +13,11 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
-import { logoutAllDevices, revokeTrustedDevice } from "@/lib/actions/account";
+import {
+  generateIndependentBackupCodes,
+  logoutAllDevices,
+  revokeTrustedDevice,
+} from "@/lib/actions/account";
 import {
   Card,
   CardContent,
@@ -160,16 +164,11 @@ export function AccountSecuritySettings({
     e.preventDefault();
     setGenerating(true);
     try {
-      const result = await authClient.twoFactor.generateBackupCodes({
-        password: backupPassword,
-      });
-      if (result.error) {
-        toast.error(
-          result.error.message ??
-            t("Gagal generate backup codes", "Failed to generate backup codes"),
-        );
-      } else if (result.data?.backupCodes) {
-        setBackupCodes(result.data.backupCodes);
+      const result = await generateIndependentBackupCodes(backupPassword);
+      if (!result.ok) {
+        toast.error(result.error);
+      } else {
+        setBackupCodes(result.codes);
         toast.success(
           t(
             "10 Backup codes baru berhasil dibuat",

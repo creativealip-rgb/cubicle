@@ -7,6 +7,7 @@ import { randomBytes } from "node:crypto";
 import { db } from "@/db";
 import {
   accounts,
+  authBackupCodes,
   authRecoveryAuthorizations,
   authTrustedDevices,
   sessions,
@@ -229,6 +230,42 @@ export async function updateAccountPassword(
   await revokeAllUserAuthState(session.user.id);
 
   return { ok: true };
+}
+
+export async function generateIndependentBackupCodes(password: string) {
+  const session = await requireAppSession("/app/settings?tab=account");
+  const [credential] = await db
+    .select({ password: accounts.password })
+    .from(accounts)
+    .where(
+      and(
+        eq(accounts.userId, session.user.id),
+        eq(accounts.providerId, "credential"),
+      ),
+    )
+    .limit(1);
+  if (
+    !credential?.password ||
+    !(await verifyPassword(credential.password, password))
+  )
+    return { ok: false as const, error: "Password salah." };
+  const secret = process.env.BETTER_AUTH_SECRET;
+  if (!secret)
+    return { ok: false as const, error: "Backup codes tidak tersedia." };
+  const { createBackupCodes } =
+    await import("@/lib/auth-recovery/independent-backup-code");
+  const codes = createBackupCodes(secret);
+  await db.transaction(async (tx) => {
+    await tx
+      .delete(authBackupCodes)
+      .where(eq(authBackupCodes.userId, session.user.id));
+    await tx
+      .insert(authBackupCodes)
+      .values(
+        codes.map((item) => ({ userId: session.user.id, codeHash: item.hash })),
+      );
+  });
+  return { ok: true as const, codes: codes.map((item) => item.code) };
 }
 
 export async function revokeAccountSession(

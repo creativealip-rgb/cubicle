@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server";
-import { and, eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { db } from "@/db";
 import {
+  authBackupCodes,
   authRecoveryAuthorizations,
   authTrustedDevices,
-  twoFactors,
   users,
 } from "@/db/schema";
 import { enforceRateLimit } from "@/lib/distributed-rate-limit";
-import { consumeBackupCode } from "@/lib/auth-recovery/backup-code";
+import { verifyBackupCode } from "@/lib/auth-recovery/independent-backup-code";
 import { revokeAllUserAuthState } from "@/lib/auth-login/revoke-db";
 import { createBetterAuthSession } from "@/lib/auth-login/session";
 import { createTrustedDevice } from "@/lib/auth-login/service";
@@ -39,24 +39,26 @@ export async function POST(request: Request) {
       { status: 429 },
     );
   const userId = await db.transaction(async (tx) => {
-    const [row] = await tx
+    const rows = await tx
       .select({
-        id: twoFactors.id,
-        userId: twoFactors.userId,
-        backupCodes: twoFactors.backupCodes,
+        id: authBackupCodes.id,
+        userId: authBackupCodes.userId,
+        codeHash: authBackupCodes.codeHash,
       })
-      .from(twoFactors)
-      .innerJoin(users, eq(users.id, twoFactors.userId))
-      .where(and(eq(users.email, email), eq(twoFactors.verified, true)))
-      .for("update")
-      .limit(1);
+      .from(authBackupCodes)
+      .innerJoin(users, eq(users.id, authBackupCodes.userId))
+      .where(and(eq(users.email, email), isNull(authBackupCodes.consumedAt)))
+      .for("update");
+    const row = rows.find((item) =>
+      verifyBackupCode(item.codeHash, code, secret),
+    );
     if (!row) return null;
-    const result = consumeBackupCode(row.backupCodes, code);
-    if (!result.ok) return null;
     await tx
-      .update(twoFactors)
-      .set({ backupCodes: result.encoded })
-      .where(eq(twoFactors.id, row.id));
+      .update(authBackupCodes)
+      .set({ consumedAt: new Date() })
+      .where(
+        and(eq(authBackupCodes.id, row.id), isNull(authBackupCodes.consumedAt)),
+      );
     return row.userId;
   });
   if (!userId)
@@ -77,14 +79,12 @@ export async function POST(request: Request) {
       lastSeenUserAgent: request.headers.get("user-agent"),
     })
     .returning({ id: authTrustedDevices.id });
-  await db
-    .insert(authRecoveryAuthorizations)
-    .values({
-      userId,
-      sessionId: session.sessionId,
-      scope: "account_recovery",
-      expiresAt: new Date(Date.now() + 30 * 60_000),
-    });
+  await db.insert(authRecoveryAuthorizations).values({
+    userId,
+    sessionId: session.sessionId,
+    scope: "account_recovery",
+    expiresAt: new Date(Date.now() + 30 * 60_000),
+  });
   const response = NextResponse.json({
     status: "recovered",
     redirectTo: "/app/settings?tab=account&recovered=1",
