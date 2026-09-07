@@ -1,18 +1,18 @@
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { db } from "@/db";
 import {
   accounts,
+  authTrustedDevices,
   passkeys,
-  sessions,
   twoFactors,
   workspaces,
   workspaceMembers,
   users,
   workspaceCurrencyRates,
 } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, isNull } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import {
   Card,
@@ -90,7 +90,7 @@ export default async function SettingsPage({
     .where(eq(users.id, user.id))
     .limit(1);
 
-  const [credentialPassword, passkeyRows, twoFactorRows, sessionRows] =
+  const [credentialPassword, passkeyRows, twoFactorRows, trustedDeviceRows] =
     await Promise.all([
       db
         .select({ id: accounts.id })
@@ -119,15 +119,21 @@ export default async function SettingsPage({
         .limit(1),
       db
         .select({
-          id: sessions.id,
-          updatedAt: sessions.updatedAt,
-          ipAddress: sessions.ipAddress,
-          userAgent: sessions.userAgent,
+          id: authTrustedDevices.id,
+          deviceLabel: authTrustedDevices.deviceLabel,
+          userAgent: authTrustedDevices.lastSeenUserAgent,
+          ipAddress: authTrustedDevices.lastSeenIp,
+          lastUsedAt: authTrustedDevices.lastUsedAt,
+          expiresAt: authTrustedDevices.expiresAt,
         })
-        .from(sessions)
-        .where(eq(sessions.userId, user.id))
-        .orderBy(desc(sessions.updatedAt))
-        .limit(5),
+        .from(authTrustedDevices)
+        .where(
+          and(
+            eq(authTrustedDevices.userId, user.id),
+            isNull(authTrustedDevices.revokedAt),
+          ),
+        )
+        .orderBy(desc(authTrustedDevices.lastUsedAt)),
     ]);
 
   const members = await db
@@ -198,6 +204,9 @@ export default async function SettingsPage({
   const rawTab = sp?.tab;
   const initialTab = Array.isArray(rawTab) ? rawTab[0] : rawTab;
   const recovered = sp?.recovered === "1";
+  const currentTrustedDeviceId =
+    (await cookies()).get("cubiqlo.trusted_device")?.value.split(".", 1)[0] ??
+    null;
 
   return (
     <div className="space-y-6">
@@ -367,7 +376,8 @@ export default async function SettingsPage({
                   hasAuthenticator={twoFactorRows.length > 0}
                   hasCredentialPassword={credentialPassword.length > 0}
                   passkeys={passkeyRows}
-                  sessions={sessionRows}
+                  trustedDevices={trustedDeviceRows}
+                  currentTrustedDeviceId={currentTrustedDeviceId}
                 />
               </div>
             </div>

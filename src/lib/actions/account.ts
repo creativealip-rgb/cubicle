@@ -8,13 +8,14 @@ import { db } from "@/db";
 import {
   accounts,
   authRecoveryAuthorizations,
+  authTrustedDevices,
   sessions,
   users,
   verifications,
 } from "@/db/schema";
 import { requireAppSession } from "@/lib/app-auth";
 import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { validatePasswordChange } from "@/lib/settings-validation";
 import { sendNotification } from "@/lib/notifications";
 
@@ -247,5 +248,35 @@ export async function signOutOtherSessions(): Promise<AccountActionResult> {
   await requireAppSession("/app/settings?tab=account");
   await auth.api.revokeOtherSessions({ headers: await headers() });
   revalidatePath("/app/settings");
+  return { ok: true };
+}
+
+export async function revokeTrustedDevice(
+  id: string,
+): Promise<AccountActionResult> {
+  const session = await requireAppSession("/app/settings?tab=account");
+  const changed = await db
+    .update(authTrustedDevices)
+    .set({ revokedAt: new Date() })
+    .where(
+      and(
+        eq(authTrustedDevices.id, id),
+        eq(authTrustedDevices.userId, session.user.id),
+      ),
+    )
+    .returning({ id: authTrustedDevices.id });
+  if (!changed.length)
+    return { ok: false, error: "Perangkat tidak ditemukan." };
+  revalidatePath("/app/settings");
+  return { ok: true };
+}
+
+export async function logoutAllDevices(): Promise<AccountActionResult> {
+  const session = await requireAppSession("/app/settings?tab=account");
+  const { revokeAllUserAuthState } = await import("@/lib/auth-login/revoke-db");
+  await revokeAllUserAuthState(session.user.id);
+  const jar = await cookies();
+  jar.delete("cubiqlo.trusted_device");
+  jar.delete("cubiqlo.login_flow");
   return { ok: true };
 }

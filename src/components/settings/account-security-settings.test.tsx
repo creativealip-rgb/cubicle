@@ -14,8 +14,8 @@ describe("account security settings", () => {
     expect(component).not.toContain("Two-step verification");
     expect(component).toContain("authClient.passkey.addPasskey");
     expect(component).toContain("/mfa/recovery");
-    expect(component).toContain("signOutOtherSessions");
-    expect(component).toContain("revokeAccountSession");
+    expect(component).toContain("logoutAllDevices");
+    expect(component).toContain("revokeTrustedDevice");
   });
 
   it("receives a server-scoped security snapshot from settings page", () => {
@@ -23,15 +23,15 @@ describe("account security settings", () => {
     expect(page).toContain("twoFactorEnabled");
     expect(page).toContain("credentialPassword");
     expect(page).toContain("passkeyRows");
-    expect(page).toContain("sessionRows");
+    expect(page).toContain("trustedDeviceRows");
   });
 
   it("limits sessions and keeps the bulk action above the list", () => {
     expect(page).toMatch(
-      /sessionRows[\s\S]*?orderBy\(desc\(sessions\.updatedAt\)\)[\s\S]*?limit\(5\)/,
+      /trustedDeviceRows[\s\S]*?orderBy\(desc\(authTrustedDevices\.lastUsedAt\)\)/,
     );
-    expect(component.indexOf("signOutOtherSessions")).toBeLessThan(
-      component.indexOf("sessions.map"),
+    expect(component.indexOf("logoutAllDevices")).toBeLessThan(
+      component.indexOf("trustedDevices.map"),
     );
     expect(component).toContain("friendlyDeviceName");
   });

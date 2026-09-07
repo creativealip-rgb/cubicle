@@ -13,10 +13,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
-import {
-  revokeAccountSession,
-  signOutOtherSessions,
-} from "@/lib/actions/account";
+import { logoutAllDevices, revokeTrustedDevice } from "@/lib/actions/account";
 import {
   Card,
   CardContent,
@@ -29,6 +26,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
+import { getPasskeyErrorCode } from "@/lib/auth-login/passkey-error";
 import {
   Dialog,
   DialogContent,
@@ -45,11 +43,13 @@ type PasskeyItem = {
   deviceType: string;
   createdAt: Date | null;
 };
-type SessionItem = {
+type TrustedDeviceItem = {
   id: string;
-  updatedAt: Date;
-  ipAddress: string | null;
+  deviceLabel: string | null;
   userAgent: string | null;
+  ipAddress: string | null;
+  lastUsedAt: Date | null;
+  expiresAt: Date;
 };
 
 function friendlyDeviceName(userAgent: string | null) {
@@ -80,13 +80,15 @@ function friendlyDeviceName(userAgent: string | null) {
 export function AccountSecuritySettings({
   hasCredentialPassword,
   passkeys,
-  sessions,
+  trustedDevices,
+  currentTrustedDeviceId,
 }: {
   twoFactorEnabled: boolean;
   hasAuthenticator: boolean;
   hasCredentialPassword: boolean;
   passkeys: PasskeyItem[];
-  sessions: SessionItem[];
+  trustedDevices: TrustedDeviceItem[];
+  currentTrustedDeviceId: string | null;
 }) {
   const { t } = useT();
   const [adding, setAdding] = useState(false);
@@ -101,18 +103,35 @@ export function AccountSecuritySettings({
 
   async function addPasskey() {
     setAdding(true);
-    const result = await authClient.passkey.addPasskey({
-      name: "Cubiqlo passkey",
-      createSession: false,
-    });
-    setAdding(false);
-    if (result.error)
-      return toast.error(
-        result.error.message ??
-          t("Passkey gagal ditambahkan", "Could not add passkey"),
+    try {
+      const result = await authClient.passkey.addPasskey({
+        name: "Cubiqlo passkey",
+        createSession: false,
+      });
+      if (result.error) throw new Error(result.error.message);
+      toast.success(t("Passkey ditambahkan", "Passkey added"));
+      window.location.reload();
+    } catch (error) {
+      const code = getPasskeyErrorCode(error);
+      toast.error(
+        code === "cancelled"
+          ? t(
+              "Pendaftaran passkey dibatalkan atau waktu habis. Pastikan Windows Hello, Face ID, atau PIN perangkat aktif, lalu coba lagi.",
+              "Passkey setup was cancelled or timed out. Make sure Windows Hello, Face ID, or your device PIN is available, then try again.",
+            )
+          : code === "unsupported"
+            ? t(
+                "Browser atau perangkat ini tidak mendukung passkey. Gunakan browser terbaru atau perangkat lain.",
+                "This browser or device does not support passkeys. Use an updated browser or another device.",
+              )
+            : t(
+                "Passkey belum berhasil ditambahkan. Coba lagi atau gunakan perangkat lain.",
+                "Passkey could not be added. Try again or use another device.",
+              ),
       );
-    toast.success(t("Passkey ditambahkan", "Passkey added"));
-    window.location.reload();
+    } finally {
+      setAdding(false);
+    }
   }
 
   async function handleGenerateBackupCodes(e: React.FormEvent) {
@@ -176,7 +195,7 @@ export function AccountSecuritySettings({
 
   function revoke(id: string) {
     startTransition(async () => {
-      const result = await revokeAccountSession(id);
+      const result = await revokeTrustedDevice(id);
       if (!result.ok) {
         toast.error(result.error);
         return;
@@ -188,15 +207,15 @@ export function AccountSecuritySettings({
 
   function revokeOthers() {
     startTransition(async () => {
-      const result = await signOutOtherSessions();
+      const result = await logoutAllDevices();
       if (!result.ok) {
         toast.error(result.error);
         return;
       }
       toast.success(
-        t("Perangkat lain sudah dikeluarkan", "Other devices signed out"),
+        t("Semua perangkat sudah dikeluarkan", "All devices signed out"),
       );
-      window.location.reload();
+      window.location.assign("/login");
     });
   }
 
@@ -227,8 +246,8 @@ export function AccountSecuritySettings({
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 {t(
-                  "10 kode cadangan sekali pakai jika kehilangan HP/Authenticator.",
-                  "10 single-use codes if you lose phone/authenticator.",
+                  "Buat 10 kode sekali pakai untuk pemulihan saat email tidak dapat diakses.",
+                  "Generate 10 single-use codes for recovery when email access is lost.",
                 )}
               </p>
             </div>
@@ -478,14 +497,14 @@ export function AccountSecuritySettings({
             variant="outline"
             size="sm"
             onClick={revokeOthers}
-            disabled={pending || sessions.length < 1}
+            disabled={pending || trustedDevices.length < 1}
             className="h-7 text-xs shrink-0"
           >
             {t("Keluar dari semua perangkat", "Logout all devices")}
           </Button>
         </CardHeader>
         <CardContent className="space-y-2.5">
-          {sessions.map((item, index) => (
+          {trustedDevices.map((item) => (
             <div
               key={item.id}
               className="flex flex-col justify-between gap-2 rounded-lg border p-2.5 sm:flex-row sm:items-center"
@@ -493,19 +512,25 @@ export function AccountSecuritySettings({
               <div>
                 <p className="text-xs font-medium">
                   {friendlyDeviceName(item.userAgent) ||
+                    item.deviceLabel ||
                     t("Perangkat tidak dikenal", "Unknown device")}{" "}
-                  {index === 0 && (
+                  {item.id === currentTrustedDeviceId && (
                     <Badge
                       variant="secondary"
                       className="ml-1.5 text-[9px] px-1.5 py-0"
                     >
-                      {t("Terbaru", "Latest")}
+                      {t("Saat ini", "Current")}
                     </Badge>
                   )}
                 </p>
                 <p className="text-[10px] text-muted-foreground">
                   {item.ipAddress || t("IP tidak tersedia", "IP unavailable")} ·{" "}
-                  {new Date(item.updatedAt).toLocaleString()}
+                  {t("Terakhir dipakai", "Last used")}:{" "}
+                  {item.lastUsedAt
+                    ? new Date(item.lastUsedAt).toLocaleString()
+                    : "—"}{" "}
+                  · {t("Berakhir", "Expires")}:{" "}
+                  {new Date(item.expiresAt).toLocaleDateString()}
                 </p>
               </div>
               <Button
