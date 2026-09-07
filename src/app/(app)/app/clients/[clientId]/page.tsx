@@ -38,7 +38,7 @@ import {
 import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 import { formatMoney } from "@/lib/utils";
 import { getCurrentLang, createT } from "@/lib/i18n";
-import { resolveClientPortalActive } from "@/lib/client-portal-status";
+
 import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
 import { ClientInvoiceCreateDialog } from "@/components/invoices/client-invoice-create-dialog";
 import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
@@ -258,7 +258,7 @@ export default async function ClientDetailPage({
 
   // Active projects count
   const activeProjects = clientProjects.filter((p) => p.status === "active").length;
-  const portalActive = resolveClientPortalActive(client);
+
   const trackedMinutes = clientProjects.reduce((sum, project) => sum + Number(project.trackedMinutes || 0), 0);
   const baseCurrency = workspace?.defaultCurrency ?? "IDR";
   const convertToBase = (amount: string, currency: string) => {
@@ -338,9 +338,7 @@ export default async function ClientDetailPage({
           </div>
 
           <ClientHeaderActions
-            exportHref={`/api/clients/${client.id}/export/xlsx`}
-            projectAction={canWrite ? <ProjectCreateDialog clients={[]} clientId={clientId} isAtLimit={!projectLimitState.allowed} projectCount={projectLimitState.current} projectLimit={projectLimitState.limit} trigger={<button id="client-new-project" type="button" />} /> : undefined}
-            invoiceAction={canWrite ? <ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} proposedInvoiceNumber={proposedInvoiceNumber} projects={invoiceProjects} baseCurrency={baseCurrency} currencyRates={currencyRates} trigger={<button id="client-new-invoice" type="button" />} /> : undefined}
+            clientId={client.id}
             editAction={<ClientEditDialog trigger={<button id="client-edit" type="button" />} defaultValues={clientDefaults} />}
             deleteAction={<PermanentDeleteButton trigger={<button id="client-delete" type="button" />} entityType="client" entityId={client.id} entityName={client.name} redirectTo="/app/clients" />}
           />

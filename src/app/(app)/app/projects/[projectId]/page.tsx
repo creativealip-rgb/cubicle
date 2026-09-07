@@ -7,6 +7,7 @@ import { and, eq, desc, inArray } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { getProjectProgress } from "@/lib/actions/projects";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
@@ -85,6 +86,8 @@ export default async function ProjectDetailPage({
       clientId: projects.clientId,
       clientName: clients.name,
       clientPhone: clients.phone,
+      clientPortalSlug: clients.portalSlug,
+      clientPortalEnabled: clients.portalSlugEnabled,
       createdAt: projects.createdAt,
       selectedPackageId: projects.selectedPackageId,
       taskModePolicy: projects.taskModePolicy,
@@ -317,6 +320,11 @@ export default async function ProjectDetailPage({
 
             {/* Action Group */}
             <div className="flex items-center gap-2 self-start sm:self-center">
+              {project.clientPortalEnabled && project.clientPortalSlug ? (
+                <Button variant="outline" size="sm" asChild>
+                  <Link href={`/client-portal/s/${project.clientPortalSlug}`} target="_blank">{t("Buka Portal Klien", "Open Client Portal")}</Link>
+                </Button>
+              ) : null}
               <ProjectEditDialog
                 project={project}
                 activeProjectServiceIds={activeProjectServiceIds}

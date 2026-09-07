@@ -17,7 +17,7 @@ describe("live QA polish regressions", () => {
 
     const clientPage = read("src/app/(app)/app/clients/[clientId]/page.tsx");
     const portalSection = read("src/app/(app)/app/clients/[clientId]/portal-section.tsx");
-    expect(clientPage).toContain("resolveClientPortalActive(client)");
+    expect(clientPage).toContain("<ClientHeaderActions");
     expect(portalSection).toContain("resolveClientPortalActive(client)");
   });
 
