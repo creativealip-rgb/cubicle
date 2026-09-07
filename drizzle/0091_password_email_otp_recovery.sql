@@ -1,11 +1,15 @@
 CREATE TABLE IF NOT EXISTS auth_login_otp_challenges (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  code_hash text NOT NULL, purpose text NOT NULL CHECK (purpose IN ('login')),
+  flow_id text NOT NULL, code_hash text NOT NULL, purpose text NOT NULL CHECK (purpose IN ('login')),
   attempts integer NOT NULL DEFAULT 0 CHECK (attempts BETWEEN 0 AND 5), expires_at timestamptz NOT NULL,
   resend_after timestamptz NOT NULL, consumed_at timestamptz, created_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE auth_login_otp_challenges ADD COLUMN IF NOT EXISTS flow_id text;
+UPDATE auth_login_otp_challenges SET flow_id = gen_random_uuid()::text WHERE flow_id IS NULL;
+ALTER TABLE auth_login_otp_challenges ALTER COLUMN flow_id SET NOT NULL;
 CREATE INDEX IF NOT EXISTS auth_login_otp_challenges_user_expiry_idx ON auth_login_otp_challenges(user_id, expires_at);
-CREATE UNIQUE INDEX IF NOT EXISTS auth_login_otp_challenges_active_unique ON auth_login_otp_challenges(user_id) WHERE consumed_at IS NULL;
+DROP INDEX IF EXISTS auth_login_otp_challenges_active_unique;
+CREATE UNIQUE INDEX IF NOT EXISTS auth_login_otp_challenges_active_unique ON auth_login_otp_challenges(user_id, flow_id) WHERE consumed_at IS NULL;
 
 CREATE TABLE IF NOT EXISTS auth_trusted_devices (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(), user_id text NOT NULL REFERENCES users(id) ON DELETE CASCADE,

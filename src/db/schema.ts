@@ -76,6 +76,7 @@ export const mfaRecoveryApprovals = pgTable("mfa_recovery_approvals", {
 export const authLoginOtpChallenges = pgTable("auth_login_otp_challenges", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  flowId: text("flow_id").notNull(),
   codeHash: text("code_hash").notNull(),
   purpose: text("purpose").notNull().default("login"),
   attempts: integer("attempts").notNull().default(0),
@@ -83,7 +84,17 @@ export const authLoginOtpChallenges = pgTable("auth_login_otp_challenges", {
   resendAfter: timestamp("resend_after", { withTimezone: true }).notNull(),
   consumedAt: timestamp("consumed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [index("auth_login_otp_challenges_user_expiry_idx").on(table.userId, table.expiresAt), check("auth_login_otp_challenges_attempts_ck", sql`${table.attempts} between 0 and 5`)]);
+}, (table) => [index("auth_login_otp_challenges_user_expiry_idx").on(table.userId, table.expiresAt), check("auth_login_otp_challenges_attempts_ck", sql`${table.attempts} between 0 and 5`), check("auth_login_otp_challenges_purpose_ck", sql`${table.purpose} in ('login')`), uniqueIndex("auth_login_otp_challenges_active_unique").on(table.userId, table.flowId).where(sql`${table.consumedAt} is null`)]);
+
+export const authRecoveryAuthorizations = pgTable("auth_recovery_authorizations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sessionId: text("session_id").notNull(),
+  scope: text("scope").notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [unique().on(table.sessionId, table.scope), check("auth_recovery_authorizations_scope_ck", sql`${table.scope} in ('email-access-lost')`)]);
 
 export const authTrustedDevices = pgTable("auth_trusted_devices", {
   id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -94,7 +105,7 @@ export const authTrustedDevices = pgTable("auth_trusted_devices", {
 export const authRecoveryHandoffs = pgTable("auth_recovery_handoffs", {
   id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   tokenHash: text("token_hash").notNull().unique(), method: text("method").notNull(), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), consumedAt: timestamp("consumed_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), recoveryRequestId: uuid("recovery_request_id"),
-}, (table) => [index("auth_recovery_handoffs_user_expiry_idx").on(table.userId, table.expiresAt)]);
+}, (table) => [index("auth_recovery_handoffs_user_expiry_idx").on(table.userId, table.expiresAt), check("auth_recovery_handoffs_method_ck", sql`${table.method} in ('passkey','backup_code','manual_admin')`)]);
 
 export const passkeys = pgTable("passkey", {
   id: text("id").primaryKey(),
