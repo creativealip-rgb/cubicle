@@ -73,6 +73,29 @@ export const mfaRecoveryApprovals = pgTable("mfa_recovery_approvals", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [unique().on(table.requestId, table.adminUserId)]);
 
+export const authLoginOtpChallenges = pgTable("auth_login_otp_challenges", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  codeHash: text("code_hash").notNull(),
+  purpose: text("purpose").notNull().default("login"),
+  attempts: integer("attempts").notNull().default(0),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  resendAfter: timestamp("resend_after", { withTimezone: true }).notNull(),
+  consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index("auth_login_otp_challenges_user_expiry_idx").on(table.userId, table.expiresAt), check("auth_login_otp_challenges_attempts_ck", sql`${table.attempts} between 0 and 5`)]);
+
+export const authTrustedDevices = pgTable("auth_trusted_devices", {
+  id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(), deviceLabel: text("device_label"), lastSeenIp: text("last_seen_ip"), lastSeenUserAgent: text("last_seen_user_agent"),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), lastUsedAt: timestamp("last_used_at", { withTimezone: true }), revokedAt: timestamp("revoked_at", { withTimezone: true }),
+}, (table) => [index("auth_trusted_devices_user_active_idx").on(table.userId, table.expiresAt)]);
+
+export const authRecoveryHandoffs = pgTable("auth_recovery_handoffs", {
+  id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  tokenHash: text("token_hash").notNull().unique(), method: text("method").notNull(), expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(), consumedAt: timestamp("consumed_at", { withTimezone: true }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(), recoveryRequestId: uuid("recovery_request_id"),
+}, (table) => [index("auth_recovery_handoffs_user_expiry_idx").on(table.userId, table.expiresAt)]);
+
 export const passkeys = pgTable("passkey", {
   id: text("id").primaryKey(),
   name: text("name"),
