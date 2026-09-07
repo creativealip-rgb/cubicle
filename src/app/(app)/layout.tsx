@@ -4,7 +4,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { and, eq, ne, count, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
-import { shouldRequireMfaSetup } from "@/lib/mfa/enforcement";
+
 import { AppShell } from "@/components/app-shell";
 import { db } from "@/db";
 import {
@@ -28,10 +28,6 @@ export default async function AppLayout({
     redirect("/login");
   }
 
-  if (shouldRequireMfaSetup({ route: "/app/dashboard", enrolled: Boolean(session.user.twoFactorEnabled), isNewUser: false, graceDeadline: session.user.mfaEnrollmentDeadline ? new Date(session.user.mfaEnrollmentDeadline) : null })) {
-    redirect("/mfa/setup");
-  }
-
   const lang = await getCurrentLang("en");
 
   const workspace = await findWorkspaceFullForCurrentUser();
@@ -40,7 +36,12 @@ export default async function AppLayout({
     ? await db
         .select({ role: workspaceMembers.role })
         .from(workspaceMembers)
-        .where(and(eq(workspaceMembers.workspaceId, workspace.id), eq(workspaceMembers.userId, session.user.id)))
+        .where(
+          and(
+            eq(workspaceMembers.workspaceId, workspace.id),
+            eq(workspaceMembers.userId, session.user.id),
+          ),
+        )
         .limit(1)
     : [];
 

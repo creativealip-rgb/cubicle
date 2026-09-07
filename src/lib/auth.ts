@@ -91,14 +91,19 @@ export const auth = betterAuth({
       update: {
         before: async (session) => {
           if (!session.expiresAt) return;
-          const token = typeof session.token === "string" ? session.token : null;
-          const createdAt = session.createdAt ?? (token
-            ? (await db
-                .select({ createdAt: sessions.createdAt })
-                .from(sessions)
-                .where(eq(sessions.token, token))
-                .limit(1))[0]?.createdAt
-            : null);
+          const token =
+            typeof session.token === "string" ? session.token : null;
+          const createdAt =
+            session.createdAt ??
+            (token
+              ? (
+                  await db
+                    .select({ createdAt: sessions.createdAt })
+                    .from(sessions)
+                    .where(eq(sessions.token, token))
+                    .limit(1)
+                )[0]?.createdAt
+              : null);
           if (!createdAt) return;
           return {
             data: {
@@ -164,6 +169,12 @@ export const auth = betterAuth({
       });
     },
     resetPasswordTokenExpiresIn: 60 * 60, // 1 hour
+    revokeSessionsOnPasswordReset: true,
+    onPasswordReset: async ({ user }) => {
+      const { revokeAllUserAuthState } =
+        await import("@/lib/auth-login/revoke-db");
+      await revokeAllUserAuthState(user.id);
+    },
   },
   emailVerification: {
     sendOnSignUp: true,
@@ -174,11 +185,15 @@ export const auth = betterAuth({
       if (url.includes("callbackURL=")) {
         verifyUrl = url.replace(
           /callbackURL=[^&]*/,
-          "callbackURL=" + encodeURIComponent("/verify-email/success")
+          "callbackURL=" + encodeURIComponent("/verify-email/success"),
         );
       } else {
         const sep = url.includes("?") ? "&" : "?";
-        verifyUrl = url + sep + "callbackURL=" + encodeURIComponent("/verify-email/success");
+        verifyUrl =
+          url +
+          sep +
+          "callbackURL=" +
+          encodeURIComponent("/verify-email/success");
       }
       const html = `<!doctype html>
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"></head>
@@ -224,7 +239,10 @@ export const auth = betterAuth({
       });
     },
   },
-  secret: resolveBetterAuthSecret(process.env.BETTER_AUTH_SECRET, process.env.NODE_ENV),
+  secret: resolveBetterAuthSecret(
+    process.env.BETTER_AUTH_SECRET,
+    process.env.NODE_ENV,
+  ),
   baseURL: process.env.BETTER_AUTH_URL,
   trustedOrigins: [
     process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
@@ -249,7 +267,8 @@ export const auth = betterAuth({
   plugins: [
     twoFactor(),
     passkey({
-      rpID: process.env.NODE_ENV === "production" ? "app.cubiqlo.com" : "localhost",
+      rpID:
+        process.env.NODE_ENV === "production" ? "app.cubiqlo.com" : "localhost",
       rpName: "Cubiqlo",
       origin: process.env.BETTER_AUTH_URL ?? "https://app.cubiqlo.com",
     }),

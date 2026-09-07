@@ -17,7 +17,9 @@ export type AccountActionResult = {
   error?: string;
 };
 
-export async function updateAccountName(name: string): Promise<AccountActionResult> {
+export async function updateAccountName(
+  name: string,
+): Promise<AccountActionResult> {
   const session = await requireAppSession("/app/settings?tab=account");
   const nextName = name.trim();
 
@@ -59,12 +61,20 @@ export async function requestAccountEmailChange(
   const [credential] = await db
     .select({ id: accounts.id, password: accounts.password })
     .from(accounts)
-    .where(and(eq(accounts.userId, session.user.id), eq(accounts.providerId, "credential")))
+    .where(
+      and(
+        eq(accounts.userId, session.user.id),
+        eq(accounts.providerId, "credential"),
+      ),
+    )
     .limit(1);
 
   if (credential?.password) {
     if (!currentPassword) {
-      return { ok: false, error: "Password saat ini wajib diisi untuk keamanan." };
+      return {
+        ok: false,
+        error: "Password saat ini wajib diisi untuk keamanan.",
+      };
     }
     const valid = await verifyPassword(credential.password, currentPassword);
     if (!valid) {
@@ -80,7 +90,10 @@ export async function requestAccountEmailChange(
     .limit(1);
 
   if (existingUser && existingUser.id !== session.user.id) {
-    return { ok: false, error: "Email tersebut sudah digunakan oleh akun lain." };
+    return {
+      ok: false,
+      error: "Email tersebut sudah digunakan oleh akun lain.",
+    };
   }
 
   // Generate verification token (expires in 1 hour)
@@ -89,7 +102,9 @@ export async function requestAccountEmailChange(
   const identifier = `change_email:${session.user.id}:${newEmail}`;
 
   // Delete any existing change_email token for this user
-  await db.delete(verifications).where(eq(verifications.identifier, identifier));
+  await db
+    .delete(verifications)
+    .where(eq(verifications.identifier, identifier));
 
   await db.insert(verifications).values({
     id: randomBytes(16).toString("hex"),
@@ -100,7 +115,10 @@ export async function requestAccountEmailChange(
     updatedAt: new Date(),
   });
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.BETTER_AUTH_URL || "https://app.cubiqlo.com";
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.BETTER_AUTH_URL ||
+    "https://app.cubiqlo.com";
   const verifyUrl = `${appUrl.replace(/\/$/, "")}/verify-email-change?token=${token}`;
 
   const html = `<!doctype html>
@@ -156,7 +174,12 @@ export async function updateAccountPassword(
   const [credential] = await db
     .select({ id: accounts.id, password: accounts.password })
     .from(accounts)
-    .where(and(eq(accounts.userId, session.user.id), eq(accounts.providerId, "credential")))
+    .where(
+      and(
+        eq(accounts.userId, session.user.id),
+        eq(accounts.providerId, "credential"),
+      ),
+    )
     .limit(1);
 
   if (!credential?.password) {
@@ -174,14 +197,18 @@ export async function updateAccountPassword(
     .set({ password: hashed, updatedAt: new Date() })
     .where(eq(accounts.id, credential.id));
 
-  await auth.api.revokeOtherSessions({ headers: await headers() });
+  const { revokeAllUserAuthState } = await import("@/lib/auth-login/revoke-db");
+  await revokeAllUserAuthState(session.user.id);
 
   return { ok: true };
 }
 
-export async function revokeAccountSession(id: string): Promise<AccountActionResult> {
+export async function revokeAccountSession(
+  id: string,
+): Promise<AccountActionResult> {
   const session = await requireAppSession("/app/settings?tab=account");
-  const deleted = await db.delete(sessions)
+  const deleted = await db
+    .delete(sessions)
     .where(and(eq(sessions.id, id), eq(sessions.userId, session.user.id)))
     .returning({ id: sessions.id });
   if (!deleted.length) return { ok: false, error: "Sesi tidak ditemukan." };
