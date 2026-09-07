@@ -49,6 +49,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
   const [loading, setLoading] = useState(false);
   const [generatingSlug, setGeneratingSlug] = useState(false);
   const [form, setForm] = useState({
+    clientNumber: defaultValues?.clientNumber ?? "",
     name: defaultValues?.name ?? "",
     companyName: defaultValues?.companyName ?? "",
     email: defaultValues?.email ?? "",
@@ -66,6 +67,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
     setLoading(true);
     try {
       const data = {
+        clientNumber: form.clientNumber || undefined,
         name: form.name,
         companyName: form.companyName || undefined,
         email: form.email || undefined,
@@ -163,6 +165,10 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
               <p className="text-[11px] text-muted-foreground">{t("Nama kontak & perusahaan klien.", "Client contact name & company.")}</p>
             </div>
             <div className="space-y-2">
+              <div className="space-y-1">
+                <Label htmlFor="clientNumber" className="text-xs font-medium">Custom Client ID</Label>
+                <Input id="clientNumber" value={form.clientNumber} onChange={(e) => set("clientNumber", e.target.value)} placeholder={t("Otomatis jika kosong", "Auto-generated if empty")} className="h-9 text-sm" maxLength={50} />
+              </div>
               <div className="space-y-1">
                 <Label htmlFor="name" className="text-xs font-medium">{t("Nama *", "Name *")}</Label>
                 <Input

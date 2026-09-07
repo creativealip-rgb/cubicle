@@ -56,6 +56,7 @@ const slugSchema = z
   .max(60);
 
 const clientSchema = z.object({
+  clientNumber: z.string().trim().min(2).max(50).optional().or(z.literal("")),
   name: z.string().min(1, "Name is required"),
   companyName: z.string().optional(),
   email: z.string().email().optional().or(z.literal("")),
@@ -125,7 +126,7 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
     };
   }
 
-  const clientNumber = await nextClientNumber(workspaceId);
+  const clientNumber = parsed.clientNumber || await nextClientNumber(workspaceId);
 
   try {
     const [client] = await db.insert(clients).values({
@@ -157,6 +158,9 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
     const t = await getT();
     if (typeof err === "object" && err !== null && "code" in err && err.code === "23505") {
       const detail = "detail" in err ? String(err.detail) : "";
+      if (detail.includes("client_number") || ("constraint" in err && err.constraint === "clients_workspace_client_number_unique")) {
+        throw new Error(t("Custom Client ID sudah digunakan.", "Custom Client ID is already in use."));
+      }
       if (detail.includes("portal_slug") || ("constraint" in err && err.constraint === "clients_portal_slug_unique")) {
         const slug = parsed.portalSlug || "";
         throw new Error(
@@ -272,6 +276,7 @@ export async function updateClient(clientId: string, input: Partial<z.infer<type
   }
 
   const updateData: Record<string, unknown> = {};
+  if (parsed.clientNumber !== undefined) updateData.clientNumber = parsed.clientNumber || null;
   if (parsed.name !== undefined) updateData.name = parsed.name;
   if (parsed.companyName !== undefined) updateData.companyName = parsed.companyName;
   if (parsed.email !== undefined) updateData.email = parsed.email;
