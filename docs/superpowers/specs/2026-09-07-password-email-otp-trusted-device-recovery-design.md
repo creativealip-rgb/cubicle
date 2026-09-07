@@ -147,6 +147,7 @@ Add additive tables:
 - `consumed_at timestamptz null`
 - `created_at timestamptz not null default now()`
 - indexes for user/active expiry cleanup
+- database-enforced uniqueness for one unconsumed login challenge per user/device flow (partial unique index or equivalent transactional replacement); application convention alone is insufficient
 
 ### `auth_trusted_devices`
 
@@ -159,6 +160,8 @@ Add additive tables:
 
 Recovery advisory may be encoded as a short-lived signed/scoped session claim or dedicated recovery-session table. Prefer dedicated table if Better Auth session extension cannot prove revocation and one-time semantics cleanly.
 
+Use a dedicated recovery-handoff row as the source of truth. A normal or stale Better Auth session alone never grants `email-access-lost` scope. Redemption creates the Better Auth session and a separate short-lived recovery authorization tied to the new session ID; email change consumes that authorization exactly once.
+
 ### `auth_recovery_handoffs`
 
 - `id uuid primary key default gen_random_uuid()`
@@ -170,6 +173,8 @@ Recovery advisory may be encoded as a short-lived signed/scoped session claim or
 
 All three recovery methods converge on one atomic redemption/session-creation service. Passkey and backup-code verification may redeem immediately in the same browser; manual admin uses the handoff link.
 
+Backup-code recovery locks the user's `two_factor` row, verifies against Better Auth's configured backup-code encoding, removes exactly the matched code, and commits consumption plus handoff creation in one transaction. A concurrent or repeated submission fails. Do not reimplement encryption/verification with plaintext assumptions.
+
 ## Failure handling
 
 - Wrong password: existing generic invalid-credentials message.
@@ -178,6 +183,10 @@ All three recovery methods converge on one atomic redemption/session-creation se
 - Trusted token mismatch: revoke/clear it and require OTP; do not fail password login.
 - Recovery credential failure: generic message; rate-limit attempts.
 - Mail and auth failures are logged without password, OTP, token, backup code, or session contents.
+
+## Password reset completion
+
+Existing Forgot Password request and reset links remain unchanged for users with email access. After a password reset succeeds, a server-side completion hook revokes every prior session, trusted device, active login OTP challenge, and recovery authorization before any subsequent login. Resetting a password does not automatically trust the browser.
 
 ## Verification
 
@@ -188,12 +197,14 @@ All three recovery methods converge on one atomic redemption/session-creation se
 - Trusted-device owner/hash/expiry/revocation validation and 30-day cookie attributes.
 - Logout revokes current device; Logout All revokes every session/device/challenge.
 - Password change and manual recovery revoke all auth state.
+- Forgot Password completion revokes all existing sessions, trusted devices, login challenges, and recovery authorizations.
 - Normal login never routes to `/two-factor` or `/mfa/setup`.
 - Existing passkey and backup code recovery create scoped recovery sessions and consume backup codes exactly once.
 - Google OAuth remains usable and does not mint a password-login trusted-device credential.
 - Manual admin approval creates only a hashed single-use handoff; browser redemption creates the session.
 - Manual recovery preserves passkey and TOTP rows.
 - Email-loss recovery allows new-email verification only with scoped fresh claim.
+- Normal sessions and stale/revoked Better Auth sessions cannot acquire or reuse recovery email-change scope.
 - TOTP data remains untouched and hidden.
 
 ### Integration and browser QA
