@@ -45,7 +45,6 @@ import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
 import { resolveProjectAmount } from "@/lib/invoice-project-items";
 import { ClientOverview } from "@/components/clients/client-overview";
 import { ClientHeaderActions } from "@/components/clients/client-header-actions";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
 
 async function _getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -340,10 +339,10 @@ export default async function ClientDetailPage({
 
           <ClientHeaderActions
             exportHref={`/api/clients/${client.id}/export/xlsx`}
-            projectAction={canWrite ? <ProjectCreateDialog clients={[]} clientId={clientId} isAtLimit={!projectLimitState.allowed} projectCount={projectLimitState.current} projectLimit={projectLimitState.limit} trigger={<DropdownMenuItem>{t("Project Baru", "New Project")}</DropdownMenuItem>} /> : undefined}
-            invoiceAction={canWrite ? <ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} proposedInvoiceNumber={proposedInvoiceNumber} projects={invoiceProjects} baseCurrency={baseCurrency} currencyRates={currencyRates} trigger={<DropdownMenuItem>{t("Invoice Baru", "New Invoice")}</DropdownMenuItem>} /> : undefined}
-            editAction={<ClientEditDialog trigger={<DropdownMenuItem>{t("Ubah klien", "Edit client")}</DropdownMenuItem>} defaultValues={clientDefaults} />}
-            deleteAction={<PermanentDeleteButton trigger={<DropdownMenuItem className="text-destructive focus:text-destructive">{t("Hapus klien", "Delete client")}</DropdownMenuItem>} entityType="client" entityId={client.id} entityName={client.name} redirectTo="/app/clients" />}
+            projectAction={canWrite ? <ProjectCreateDialog clients={[]} clientId={clientId} isAtLimit={!projectLimitState.allowed} projectCount={projectLimitState.current} projectLimit={projectLimitState.limit} trigger={<button id="client-new-project" type="button" />} /> : undefined}
+            invoiceAction={canWrite ? <ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} proposedInvoiceNumber={proposedInvoiceNumber} projects={invoiceProjects} baseCurrency={baseCurrency} currencyRates={currencyRates} trigger={<button id="client-new-invoice" type="button" />} /> : undefined}
+            editAction={<ClientEditDialog trigger={<button id="client-edit" type="button" />} defaultValues={clientDefaults} />}
+            deleteAction={<PermanentDeleteButton trigger={<button id="client-delete" type="button" />} entityType="client" entityId={client.id} entityName={client.name} redirectTo="/app/clients" />}
           />
         </div>
       </div>
