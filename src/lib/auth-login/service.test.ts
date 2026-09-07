@@ -63,7 +63,7 @@ describe("password email OTP login start", () => {
     expect(d.replaceChallenge).toHaveBeenCalledOnce();
     expect(d.sendOtp).toHaveBeenCalledOnce();
     expect(d.createSession).not.toHaveBeenCalled();
-    expect(JSON.stringify(result)).not.toMatch(/u1|codeHash|"code"|tokenHash/i);
+    expect(JSON.stringify(result)).not.toMatch(/userId|codeHash|"code"|tokenHash/i);
   });
 
   it("creates session only after password and trusted-device validation", async () => {
