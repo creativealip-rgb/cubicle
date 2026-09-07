@@ -17,5 +17,10 @@ describe("password OTP recovery migration contract", () => {
   it("keeps auth table user references and recovery authorization uniqueness explicit", () => {
     expect(migration.match(/REFERENCES users\(id\) ON DELETE CASCADE/g)?.length).toBeGreaterThanOrEqual(4);
     expect(migration).toMatch(/UNIQUE \(session_id, scope\)/i);
+    expect(migration).toMatch(/auth_recovery_authorizations_session_idx ON auth_recovery_authorizations\(session_id, expires_at\)/i);
+  });
+  it("documents flow_id as browser challenge-flow scope", () => {
+    expect(migration).toMatch(/flow_id is a random browser challenge-flow ID stored in an HttpOnly challenge cookie/i);
+    expect(migration).toMatch(/\(user_id, flow_id\) is device-flow scoped/i);
   });
 });
