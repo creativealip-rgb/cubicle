@@ -22,6 +22,11 @@ describe("project control center", () => {
     expect(overview).toContain("{editAction}");
     expect(overview).toContain('className="mt-auto border-t pt-3"');
   });
+  it("uses canonical KPI icons and card surfaces across operational tabs", () => {
+    expect(overview).toContain("Clock3");
+    expect(overview).toContain('rounded-lg bg-primary/10 text-primary');
+    expect(tabs).toContain('className="rounded-xl border bg-card p-4 shadow-xs"');
+  });
   it("opens separate focused dialogs for details and billing settings", () => {
     expect(page).toContain('section="general"');
     expect(page).toContain('section="billing"');

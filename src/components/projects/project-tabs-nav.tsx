@@ -99,20 +99,20 @@ export function ProjectTabsNav({
       </TabsContent>
 
       <TabsContent value="work" className="pt-1">
-        {currentTab === "work" ? tasksContent : null}
+        {currentTab === "work" ? <div className="rounded-xl border bg-card p-4 shadow-xs">{tasksContent}</div> : null}
       </TabsContent>
 
       <TabsContent value="files" className="pt-1">
-        {currentTab === "files" ? filesContent : null}
+        {currentTab === "files" ? <div className="rounded-xl border bg-card p-4 shadow-xs">{filesContent}</div> : null}
       </TabsContent>
 
       <TabsContent value="billing" className="pt-1">
-        {currentTab === "billing" ? billingContent : null}
+        {currentTab === "billing" ? <div className="rounded-xl border bg-card p-4 shadow-xs">{billingContent}</div> : null}
       </TabsContent>
 
       {showTimeTab && timeContent ? (
         <TabsContent value="time" className="pt-1">
-          {currentTab === "time" ? timeContent : null}
+          {currentTab === "time" ? <div className="rounded-xl border bg-card p-4 shadow-xs">{timeContent}</div> : null}
         </TabsContent>
       ) : null}
     </Tabs>
