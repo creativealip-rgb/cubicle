@@ -5,6 +5,7 @@ const page = readFileSync("src/app/(app)/app/projects/[projectId]/page.tsx", "ut
 const tabs = readFileSync("src/components/projects/project-tabs-nav.tsx", "utf8");
 const overview = readFileSync("src/components/projects/project-overview.tsx", "utf8");
 const actions = readFileSync("src/components/projects/project-header-actions.tsx", "utf8");
+const editDialog = readFileSync("src/components/projects/project-edit-dialog.tsx", "utf8");
 
 describe("project control center", () => {
   it("defaults to overview and keeps operational tabs", () => {
@@ -20,6 +21,12 @@ describe("project control center", () => {
     expect(page).toContain("editAction={<ProjectEditDialog");
     expect(overview).toContain("{editAction}");
     expect(overview).toContain('className="mt-auto border-t pt-3"');
+  });
+  it("opens separate focused dialogs for details and billing settings", () => {
+    expect(page).toContain('section="general"');
+    expect(page).toContain('section="billing"');
+    expect(editDialog).toContain('section?: "general" | "billing"');
+    expect(editDialog).toContain('section === "billing" ? t("Pengaturan Billing", "Billing Settings")');
   });
   it("keeps progress only in KPI and separates billing settings from invoices", () => {
     expect(page).not.toContain("Integrated Progress Bar in Header Footer");

@@ -49,6 +49,7 @@ export function ProjectForm({
   clients = [],
   defaultValues,
   billingModelLocked = false,
+  section = "all",
   onSuccess,
 }: {
   mode: "create" | "edit";
@@ -56,6 +57,7 @@ export function ProjectForm({
   clients?: Array<{ id: string; name: string }>;
   defaultValues?: Defaults;
   billingModelLocked?: boolean;
+  section?: "all" | "general" | "billing";
   onSuccess?: (id?: string) => void;
 }) {
   const { t } = useT();
@@ -195,9 +197,9 @@ export function ProjectForm({
 
   return (
     <form onSubmit={submit} className={mode === "create" ? "space-y-4" : "space-y-5"}>
-      <div className={`grid gap-4 ${mode === "create" ? "grid-cols-1" : "sm:grid-cols-2"}`}>
+      <div className={`grid gap-4 ${mode === "create" || section !== "all" ? "grid-cols-1" : "sm:grid-cols-2"}`}>
         {/* Left Column: Basic Info */}
-        <div className="space-y-4">
+        {section !== "billing" && <div className="space-y-4">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {t("Informasi Umum", "General Info")}
           </h3>
@@ -295,10 +297,10 @@ export function ProjectForm({
               </span>
             </span>
           </label>
-        </div>
+        </div>}
 
         {/* Right Column: Billing & Financials */}
-        {mode === "edit" && <div className="space-y-4">
+        {mode === "edit" && section !== "general" && <div className="space-y-4">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {t("Pengaturan Tagihan", "Billing Settings")}
           </h3>

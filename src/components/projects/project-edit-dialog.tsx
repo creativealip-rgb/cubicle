@@ -42,6 +42,7 @@ type ProjectEditDialogProps = {
   activeProjectServiceIds: string[];
   billingModelLocked: boolean;
   trigger?: ReactNode;
+  section?: "general" | "billing";
 };
 
 export function ProjectEditDialog({
@@ -49,6 +50,7 @@ export function ProjectEditDialog({
   activeProjectServiceIds,
   billingModelLocked,
   trigger,
+  section = "general",
 }: ProjectEditDialogProps) {
   const { t } = useT();
   const { refresh } = useAppTransition();
@@ -61,9 +63,9 @@ export function ProjectEditDialog({
           <Pencil className="h-3 w-3" /> {t("Ubah", "Edit")}
         </Button>}
       </DialogTrigger>
-      <DialogContent className="flex max-h-[min(90dvh,800px)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
+      <DialogContent className="flex max-h-[min(90dvh,800px)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-lg">
         <DialogHeader className="border-b px-6 py-4">
-          <DialogTitle>{t("Ubah Proyek", "Edit Project")}</DialogTitle>
+          <DialogTitle>{section === "billing" ? t("Pengaturan Billing", "Billing Settings") : t("Ubah Proyek", "Edit Project")}</DialogTitle>
         </DialogHeader>
         <div className="flex-1 overflow-y-auto p-6">
         <ProjectForm
@@ -96,6 +98,7 @@ export function ProjectEditDialog({
             serviceIds: activeProjectServiceIds,
           }}
           billingModelLocked={billingModelLocked}
+          section={section}
           onSuccess={() => {
             setOpen(false);
             refresh();
