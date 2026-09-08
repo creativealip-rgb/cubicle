@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 
 const listTable = readFileSync("src/components/projects/projects-list-table.tsx", "utf8");
 const detailPage = readFileSync("src/app/(app)/app/projects/[projectId]/page.tsx", "utf8");
+const detailOverview = readFileSync("src/components/projects/project-overview.tsx", "utf8");
 const statusBadge = readFileSync("src/lib/status-badge.tsx", "utf8");
 const progressLib = readFileSync("src/lib/project-progress.ts", "utf8");
 
@@ -60,6 +61,6 @@ describe("project detail locale consistency", () => {
     expect(detailPage).toContain("const locale = getLocale(lang)");
     expect(detailPage).toContain("Number(project.rate).toLocaleString(locale)");
     expect(detailPage).toContain("Number(project.budget).toLocaleString(locale)");
-    expect(detailPage).toContain("toLocaleDateString(locale)");
+    expect(detailOverview).toContain("toLocaleDateString(locale)");
   });
 });

@@ -14,12 +14,19 @@ describe("project control center", () => {
   });
   it("shows project health and recent records", () => {
     expect(page).toContain("<ProjectOverview");
-    for (const text of ["Tracked Hours", "Task Progress", "Billable Amount", "Outstanding", "Project Details", "Billing", "Budget", "Recent Time Logs", "Recent Invoices", "Recent Files"]) expect(overview).toContain(text);
+    for (const text of ["Tracked Hours", "Task Progress", "Project Value", "Outstanding", "Project Details", "Billing Settings", "Invoice Progress", "Recent Time Logs", "Recent Invoices", "Recent Files"]) expect(overview).toContain(text);
   });
   it("keeps details and billing actions in aligned card footers", () => {
     expect(page).toContain("editAction={<ProjectEditDialog");
     expect(overview).toContain("{editAction}");
     expect(overview).toContain('className="mt-auto border-t pt-3"');
+  });
+  it("keeps progress only in KPI and separates billing settings from invoices", () => {
+    expect(page).not.toContain("Integrated Progress Bar in Header Footer");
+    expect(overview).toContain('t("Belum ada tugas", "No tasks yet")');
+    expect(overview).toContain('t("Pengaturan Billing", "Billing Settings")');
+    expect(overview).toContain('t("Progres Invoice", "Invoice Progress")');
+    expect(page).toContain('t("Ubah pengaturan billing", "Edit billing settings")');
   });
   it("keeps administrative actions in overflow", () => {
     expect(page).toContain("<ProjectHeaderActions");

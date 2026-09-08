@@ -26,9 +26,7 @@ import { ProjectEditDialog } from "@/components/projects/project-edit-dialog";
 import { Timesheet } from "@/components/time/timesheet";
 import Link from "next/link";
 import {
-  Clock,
   FolderKanban,
-  CheckCircle2,
 } from "lucide-react";
 import { TaskCreateDialog } from "@/components/tasks/task-create-dialog";
 import { UploadButton } from "@/components/files/upload-button";
@@ -234,14 +232,6 @@ export default async function ProjectDetailPage({
   const invoicedAmount = projectInvoices.filter((invoice) => invoice.status !== "cancelled").reduce((sum, invoice) => sum + Number(invoice.total || 0), 0);
   const paidAmount = projectInvoices.filter((invoice) => invoice.status === "paid").reduce((sum, invoice) => sum + Number(invoice.total || 0), 0);
   const outstandingAmount = Math.max(0, invoicedAmount - paidAmount);
-  const statusColors: Record<string, string> = {
-    active: "bg-emerald-500",
-    draft: "bg-slate-400",
-    on_hold: "bg-amber-500",
-    completed: "bg-blue-500",
-    cancelled: "bg-red-400",
-    archived: "bg-slate-500",
-  };
 
   const showTimeTab = project.timeTrackingMode !== "off" || projectTimeEntries.length > 0;
   const billingModel = resolveBillingModel(project);
@@ -338,36 +328,6 @@ export default async function ProjectDetailPage({
             </div>
           </div>
 
-          {/* Integrated Progress Bar in Header Footer */}
-          <div className="mt-3 pt-3 border-t border-border/60 flex flex-col gap-1.5 sm:flex-row sm:items-center sm:justify-between text-xs text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
-              <span>
-                {t("Progres", "Progress")}:{" "}
-                <strong className="text-foreground">
-                  {billingModel === "retainer" && retainerPeriod
-                    ? `${(retainerPeriod.approvedMinutes / 60).toFixed(0)}/${(retainerPeriod.includedMinutesSnapshot / 60).toFixed(0)} ${t("jam", "hr")} · ${retainerPeriod.includedMinutesSnapshot > 0 ? Math.round((retainerPeriod.approvedMinutes / retainerPeriod.includedMinutesSnapshot) * 100) : 0}%`
-                    : `${progress.done}/${progress.total} ${t("tugas", "tasks")} · ${progress.percent}%`}
-                </strong>
-              </span>
-            </div>
-            <div className="flex items-center gap-3">
-              {project.dueDate && (
-                <span className="flex items-center gap-1">
-                  <Clock className="h-3 w-3" />
-                  {t("Jatuh tempo", "Due")}: {new Date(project.dueDate).toLocaleDateString(locale)}
-                </span>
-              )}
-              <div className="w-28 h-1.5 bg-muted rounded-full overflow-hidden">
-                <div
-                  className={`h-full rounded-full transition-all ${statusColors[project.status] ?? "bg-slate-400"}`}
-                  style={{
-                    width: `${billingModel === "retainer" && retainerPeriod && retainerPeriod.includedMinutesSnapshot > 0 ? Math.min(100, Math.round((retainerPeriod.approvedMinutes / retainerPeriod.includedMinutesSnapshot) * 100)) : progress.percent}%`,
-                  }}
-                />
-              </div>
-            </div>
-          </div>
         </div>
 
       {/* Tabs */}
@@ -378,7 +338,7 @@ export default async function ProjectDetailPage({
         timeCount={projectTimeEntries.length}
         invoicesCount={projectInvoices.length}
         showTimeTab={showTimeTab}
-        overviewContent={<ProjectOverview project={project} progress={progress} trackedMinutes={trackedMinutes} billableAmount={billableAmount} invoicedAmount={invoicedAmount} outstandingAmount={outstandingAmount} budgetUsed={invoicedAmount} recentTime={projectTimeEntries.slice(0, 5)} recentInvoices={projectInvoices.slice(0, 5)} recentFiles={projectFiles.slice(0, 5)} editAction={<ProjectEditDialog project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah detail", "Edit details")}</button>} />} locale={locale} t={t} />}
+        overviewContent={<ProjectOverview project={project} progress={progress} trackedMinutes={trackedMinutes} billableAmount={billableAmount} invoicedAmount={invoicedAmount} outstandingAmount={outstandingAmount} retainerPeriod={retainerPeriod} recentTime={projectTimeEntries.slice(0, 5)} recentInvoices={projectInvoices.slice(0, 5)} recentFiles={projectFiles.slice(0, 5)} editAction={<ProjectEditDialog project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah detail", "Edit details")}</button>} />} billingEditAction={<ProjectEditDialog project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah pengaturan billing", "Edit billing settings")}</button>} />} locale={locale} t={t} />}
         tasksAction={
           <TaskCreateDialog
             projectId={projectId}
