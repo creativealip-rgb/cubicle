@@ -7,7 +7,7 @@ const action = readFileSync("src/lib/actions/time.ts", "utf8");
 
 describe("manual time create/edit form parity", () => {
   it("uses edit-entry field order and controls in Catat Waktu", () => {
-    const labels = ["Klien & Proyek", "Tugas", "Deskripsi", "Tag", "Durasi (HH:MM:SS)", "Tanggal", "Tagihan / Billable"];
+    const labels = ["Proyek *", "Tugas", "Deskripsi", "Tag", "Durasi (HH:MM:SS)", "Tanggal", "Tagihan / Billable"];
     let cursor = -1;
     for (const label of labels) {
       const next = create.indexOf(label, cursor + 1);

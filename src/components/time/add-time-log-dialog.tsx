@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { localDateIso } from "@/lib/effective-work-date";
 import { useT } from "@/lib/i18n-client";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 
 type Client = { id: string; name: string };
 type Project = { id: string; name: string; customerRef: string | null; billingType?: string | null; rate?: string | null };
@@ -178,35 +179,30 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
               <Label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{t("Lacak Pada", "Track on")}</Label>
             </div>
 
-            {/* Client & Project Input */}
+            {/* Project Input */}
             <div className="space-y-1.5">
-              <Label className="text-xs">{t("Klien & Proyek *", "Client & Project *")}</Label>
-              <div className="relative">
+              <Label className="text-xs">{t("Proyek *", "Project *")}</Label>
+              <Popover open={projectSearchOpen} onOpenChange={setProjectSearchOpen}>
+                <PopoverAnchor asChild>
                 <div className="relative flex items-center">
                   <Briefcase className="absolute left-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="manual-time-project"
-                    aria-label={t("Cari klien atau proyek...", "Search client or project...")}
-                    placeholder={t("Pilih/buat proyek...", "Select/create a project...")}
+                    aria-label={t("Cari proyek / klien", "Search project / client")}
+                    placeholder={t("Cari proyek / klien", "Search project / client")}
                     value={projectSearch}
                     onChange={(e) => {
                       const val = e.target.value;
                       setProjectSearch(val);
                       setProjectSearchOpen(true);
                     }}
-                    onFocus={() => {
-                      const currentClientName = clients.find((c) => c.id === clientId)?.name || "";
-                      const currentProjectName = projects.find((p) => p.id === projectId)?.name || "";
-                      const selectedLabel = currentClientName && currentProjectName ? `${currentClientName} — ${currentProjectName}` : currentProjectName || currentClientName;
-                      if (projectSearch.trim() !== selectedLabel.trim()) {
-                        setProjectSearchOpen(true);
-                      }
-                    }}
+                    onClick={() => setProjectSearchOpen((current) => !current)}
                     className={`h-10 pl-9 text-sm ${clientError || projectError ? "border-destructive" : ""}`}
                   />
                 </div>
-                {projectSearchOpen && (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                </PopoverAnchor>
+                <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
+                  <div className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain" onWheel={(event) => event.stopPropagation()}>
                     {filteredProjectOptions.length === 0 ? (
                       <p className="p-2 text-xs text-muted-foreground">{t("Klien atau proyek tidak ditemukan", "No client or project found")}</p>
                     ) : (
@@ -214,7 +210,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                         <button
                           key={opt.projectId}
                           type="button"
-                          className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${projectId === opt.projectId ? "bg-accent font-medium" : ""}`}
+                          className={`flex min-h-10 w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${projectId === opt.projectId ? "bg-accent font-medium" : ""}`}
                           onClick={() => {
                             setClientId(opt.clientId);
                             setProjectId(opt.projectId);
@@ -230,15 +226,16 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                       ))
                     )}
                   </div>
-                )}
-              </div>
-              {clientError || projectError ? <p className="text-xs text-destructive">{t("Klien & Proyek wajib dipilih", "Client & Project is required")}</p> : null}
+                </PopoverContent>
+              </Popover>
+              {clientError || projectError ? <p className="text-xs text-destructive">{t("Proyek wajib dipilih", "Project is required")}</p> : null}
             </div>
 
             {/* Task Input */}
             <div className="space-y-1.5">
               <Label className="text-xs">{t("Tugas (Opsional)", "Task (Optional)")}</Label>
-              <div className="relative">
+              <Popover open={taskSearchOpen} onOpenChange={setTaskSearchOpen}>
+                <PopoverAnchor asChild>
                 <div className="relative flex items-center">
                   <CheckSquare className="absolute left-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -250,19 +247,18 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                     onChange={(e) => {
                       const val = e.target.value;
                       setTaskSearch(val);
-                      setTaskSearchOpen(Boolean(val.trim()));
+                      setTaskSearchOpen(true);
                     }}
-                    onFocus={() => {
-                      if (taskSearch.trim() && projectId) setTaskSearchOpen(true);
-                    }}
+                    onClick={() => projectId && setTaskSearchOpen((current) => !current)}
                     className={`h-10 pl-9 text-sm ${taskError ? "border-destructive" : ""}`}
                   />
                 </div>
-                {taskSearchOpen && projectId && (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                </PopoverAnchor>
+                {projectId && <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
+                  <div className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain" onWheel={(event) => event.stopPropagation()}>
                     <button
                       type="button"
-                      className={`w-full rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${taskId === "__none__" ? "bg-accent font-medium" : ""}`}
+                      className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${taskId === "__none__" ? "bg-accent font-medium" : ""}`}
                       onClick={() => {
                         setTaskId("__none__");
                         setTaskSearch("");
@@ -278,7 +274,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                         <button
                           key={tk.id}
                           type="button"
-                          className={`w-full rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${taskId === tk.id ? "bg-accent font-medium" : ""}`}
+                          className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${taskId === tk.id ? "bg-accent font-medium" : ""}`}
                           onClick={() => {
                             setTaskId(tk.id);
                             setTaskSearch(tk.title);
@@ -290,8 +286,8 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                       ))
                     )}
                   </div>
-                )}
-              </div>
+                </PopoverContent>}
+              </Popover>
               {taskError ? <p className="text-xs text-destructive">{t("Tugas wajib dipilih untuk proyek ini", "Task is required for this project")}</p> : null}
             </div>
 

@@ -131,7 +131,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
     .select({ id: clients.id, name: clients.name })
     .from(clients)
     .where(eq(clients.workspaceId, workspaceId))
-    .orderBy(clients.name);
+    .orderBy(desc(clients.createdAt));
 
   const projectList = await db
     .select({
@@ -146,7 +146,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
     })
     .from(projects)
     .where(eq(projects.workspaceId, workspaceId))
-    .orderBy(projects.name);
+    .orderBy(desc(projects.createdAt));
 
   const taskList = await db
     .select({ id: tasks.id, title: tasks.title, projectId: tasks.projectId })

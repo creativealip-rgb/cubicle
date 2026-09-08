@@ -18,7 +18,7 @@ describe("manual time entry visibility and accessibility", () => {
     // Client+project is one combined combobox; task is a separate combobox.
     // Both expose id + aria-label for accessible naming.
     expect(form).toContain('id="manual-time-project"');
-    expect(form).toMatch(/aria-label=\{t\("Cari klien atau proyek\.\.\."/);
+    expect(form).toMatch(/aria-label=\{t\("Cari proyek \/ klien"/);
     expect(form).toContain('id="manual-time-task"');
     expect(form).toMatch(/aria-label=\{projectId \? t\("Cari tugas\.\.\."/);
   });
