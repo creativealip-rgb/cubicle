@@ -16,6 +16,11 @@ describe("project control center", () => {
     expect(page).toContain("<ProjectOverview");
     for (const text of ["Tracked Hours", "Task Progress", "Billable Amount", "Outstanding", "Project Details", "Billing", "Budget", "Recent Time Logs", "Recent Invoices", "Recent Files"]) expect(overview).toContain(text);
   });
+  it("keeps details and billing actions in aligned card footers", () => {
+    expect(page).toContain("editAction={<ProjectEditDialog");
+    expect(overview).toContain("{editAction}");
+    expect(overview).toContain('className="mt-auto border-t pt-3"');
+  });
   it("keeps administrative actions in overflow", () => {
     expect(page).toContain("<ProjectHeaderActions");
     for (const text of ["View Report", "Open Client Portal", "Archive", "Delete Permanently"]) expect(actions).toContain(text);

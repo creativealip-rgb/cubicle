@@ -22,6 +22,7 @@ import { getProposedInvoiceNumber } from "@/lib/actions/invoices";
 import { ProjectTabsNav } from "@/components/projects/project-tabs-nav";
 import { ProjectOverview } from "@/components/projects/project-overview";
 import { ProjectHeaderActions } from "@/components/projects/project-header-actions";
+import { ProjectEditDialog } from "@/components/projects/project-edit-dialog";
 import { Timesheet } from "@/components/time/timesheet";
 import Link from "next/link";
 import {
@@ -377,7 +378,7 @@ export default async function ProjectDetailPage({
         timeCount={projectTimeEntries.length}
         invoicesCount={projectInvoices.length}
         showTimeTab={showTimeTab}
-        overviewContent={<ProjectOverview project={project} progress={progress} trackedMinutes={trackedMinutes} billableAmount={billableAmount} invoicedAmount={invoicedAmount} outstandingAmount={outstandingAmount} budgetUsed={invoicedAmount} recentTime={projectTimeEntries.slice(0, 5)} recentInvoices={projectInvoices.slice(0, 5)} recentFiles={projectFiles.slice(0, 5)} locale={locale} t={t} />}
+        overviewContent={<ProjectOverview project={project} progress={progress} trackedMinutes={trackedMinutes} billableAmount={billableAmount} invoicedAmount={invoicedAmount} outstandingAmount={outstandingAmount} budgetUsed={invoicedAmount} recentTime={projectTimeEntries.slice(0, 5)} recentInvoices={projectInvoices.slice(0, 5)} recentFiles={projectFiles.slice(0, 5)} editAction={<ProjectEditDialog project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah detail", "Edit details")}</button>} />} locale={locale} t={t} />}
         tasksAction={
           <TaskCreateDialog
             projectId={projectId}
