@@ -8,6 +8,8 @@ import type { TasksListItem } from "@/components/tasks/tasks-list-table";
 import { archiveTask, reorderProjectTasks, restoreTask } from "@/lib/actions/tasks";
 
 import { useT } from "@/lib/i18n-client";
+import { EmptyState } from "@/components/empty-state";
+import { ListChecks } from "lucide-react";
 
 export const PAGE_SIZE = 10;
 type Member = { id: string; name: string | null; email: string | null };
@@ -37,6 +39,9 @@ export function ProjectTaskWorkspace({ projectId, mode, workflowTasks, reusableT
     window.location.reload();
   }
   const titleText = mode === "reusable" ? t("Tugas Berulang", "Recurring Tasks") : t("Tugas Workflow", "Workflow Tasks");
+  const isEmpty = mode === "workflow" ? visibleWorkflow.length === 0 : visibleReusable.length === 0;
+
+  if (projectId && isEmpty) return <EmptyState icon={ListChecks} title={t("Belum ada tugas", "No tasks yet")} description={t("Buat tugas pertama untuk mulai mengatur pekerjaan proyek ini.", "Create the first task to start organizing this project.")} />;
 
   return (
     <section className="space-y-4">

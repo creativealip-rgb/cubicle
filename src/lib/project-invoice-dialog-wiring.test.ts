@@ -11,7 +11,8 @@ describe("Project-scoped Invoice dialog", () => {
   it("renames Billing tab to Invoice and removes duplicate commercial summary", () => {
     const nav = read("src/components/projects/project-tabs-nav.tsx");
     expect(nav).toContain('value="billing"');
-    expect(nav).toContain('{t("Invoice", "Invoices")} ({invoicesCount})');
+    expect(nav).toContain('{t("Invoice", "Invoices")} <span className="rounded-full bg-background');
+    expect(nav).toContain("{invoicesCount}</span>");
     expect(tab).not.toContain("ProjectBillingSummary");
     expect(tab).not.toContain("Model billing");
     expect(tab).not.toContain("Nilai proyek");

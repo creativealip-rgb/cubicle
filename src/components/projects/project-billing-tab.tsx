@@ -7,6 +7,7 @@ import { RetainerProjectInvoiceActions, type RetainerPeriodView } from "@/compon
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { FileSpreadsheet } from "lucide-react";
+import { EmptyState } from "@/components/empty-state";
 
 export type ProjectBillingInvoice = { id: string; invoiceNumber: string; issueDate: string; dueDate: string | null; currency: string; total: string; status: string };
 type DialogProject = Parameters<typeof ProjectInvoiceCreateDialog>[0]["project"];
@@ -34,9 +35,7 @@ export async function ProjectBillingTab({
       ) : null}
       <div className="overflow-hidden rounded-2xl border border-border/80 bg-card divide-y divide-border shadow-xs">
         {invoices.length === 0 ? (
-          <p className="p-8 text-center text-sm text-muted-foreground">
-            {t("Belum ada invoice untuk proyek ini.", "No invoices for this project yet.")}
-          </p>
+          <EmptyState icon={FileSpreadsheet} title={t("Belum ada invoice", "No invoices yet")} description={t("Buat invoice pertama untuk mulai menagih proyek ini.", "Create the first invoice to start billing this project.")} />
         ) : (
           invoices.map((invoice) => {
             const statusInfo = invoiceStatusVariant(invoice.status, lang);
