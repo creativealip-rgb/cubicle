@@ -187,7 +187,7 @@ export default async function JournalPage({
             key={tabItem.id}
             size="sm"
             variant="ghost"
-            className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold sm:text-sm ${
+            className={`h-7 shrink-0 rounded-[10px] px-3 py-1 text-xs font-medium sm:text-sm ${
               tab === tabItem.id
                 ? "bg-background text-foreground shadow-sm hover:bg-background"
                 : "text-muted-foreground"
