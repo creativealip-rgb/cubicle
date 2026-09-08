@@ -40,7 +40,7 @@ describe("shared billing-aware project task workspace", () => {
 
   it("shows workflow-only fields only for workflow task forms", () => {
     const source = read("src/components/forms/task-form.tsx");
-    expect(source).toContain('{taskMode === "workflow" && (');
+    expect(source).toContain('{selectedTaskMode === "workflow" && (');
     expect(source).toContain('t("Status", "Status")');
     expect(source).toContain('t("Prioritas", "Priority")');
     expect(source).toContain('t("Jatuh Tempo", "Due Date")');

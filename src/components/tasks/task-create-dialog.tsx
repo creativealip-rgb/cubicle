@@ -17,10 +17,12 @@ export function TaskCreateDialog({
   projectId,
   members,
   projects,
+  defaultTaskMode = "workflow",
 }: {
   projectId?: string;
   members?: Array<{ id: string; name: string | null; email: string | null }>;
   projects?: Array<{ id: string; name: string; defaultBehavior?: "one_time" | "recurring" }>;
+  defaultTaskMode?: "workflow" | "reusable";
 }) {
   const { t } = useT();
   const [open, setOpen] = useState(false);
@@ -42,6 +44,7 @@ export function TaskCreateDialog({
             projectId={projectId}
             members={members}
             projects={projects}
+            taskMode={defaultTaskMode}
             onSuccess={() => setOpen(false)}
           />
         </div>

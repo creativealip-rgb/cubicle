@@ -17,7 +17,7 @@ describe("Task edit form regression", () => {
   it("sends explicit clear values when editing optional fields", () => {
     expect(form).toContain('description: mode === "edit" ? form.description || null : form.description || undefined');
     expect(form).toContain('assigneeId: mode === "edit" ? form.assigneeId || null : form.assigneeId || undefined');
-    expect(form).toContain('dueDate: taskMode === "workflow" ? (mode === "edit" ? form.dueDate || null : form.dueDate || undefined) : undefined');
+    expect(form).toContain('dueDate: selectedTaskMode === "workflow" ? (mode === "edit" ? form.dueDate || null : form.dueDate || undefined) : undefined');
     expect(form).toContain('if (data.description !== undefined) updateData.description = data.description');
     expect(form).toContain('if (data.assigneeId !== undefined) updateData.assigneeId = data.assigneeId');
     expect(form).toContain('if (data.dueDate !== undefined) updateData.dueDate = data.dueDate');

@@ -8,10 +8,9 @@ describe("task behavior views", () => {
   it("filters the task page by canonical mode and renders canonical tabs", () => {
     const page = read("src/app/(app)/app/tasks/page.tsx");
 
-    expect(page).toContain("mode?: string");
     expect(page).toContain("tasks.mode");
-    expect(page).toContain('params.mode === "workflow"');
-    expect(page).toContain('params.mode === "reusable"');
+    expect(page).toContain('params.tab === "reusable"');
+    expect(page).toContain('eq(tasks.mode, tab === "templates" ? "workflow" : tab)');
     expect(page).toContain("TaskPageTabs");
   });
 
@@ -26,7 +25,7 @@ describe("task behavior views", () => {
     }
   });
 
-  it("uses canonical task mode in actions while legacy form copy remains until page replacement", () => {
+  it("uses canonical task mode in actions and the shared form", () => {
     const actions = read("src/lib/actions/tasks.ts");
     const form = read("src/components/forms/task-form.tsx");
 

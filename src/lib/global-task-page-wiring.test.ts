@@ -6,9 +6,10 @@ const tabs = readFileSync("src/components/tasks/task-page-tabs.tsx", "utf8");
 const templates = readFileSync("src/components/tasks/task-template-workspace.tsx", "utf8");
 
 describe("global task page redesign", () => {
-  it("uses canonical task and template tabs", () => {
-    expect(tabs).toContain("Tugas Proyek");
-    expect(tabs).toContain("Template Tugas");
+  it("uses separate one-time, recurring, and template tabs", () => {
+    expect(tabs).toContain("Sekali");
+    expect(tabs).toContain("Berulang");
+    expect(tabs).toContain("Template");
     expect(page).toContain("TaskPageTabs");
     expect(page).not.toContain("TaskBehaviorTabs");
   });

@@ -55,8 +55,9 @@ describe("batch 1 i18n wiring", () => {
 
   it("task page tabs localize tab labels", () => {
     const comp = source("src/components/tasks/task-page-tabs.tsx");
-    expect(comp).toContain('t("Tugas Proyek", "Project Tasks")');
-    expect(comp).toContain('t("Template Tugas", "Task Templates")');
+    expect(comp).toContain('t("Sekali", "One-time")');
+    expect(comp).toContain('t("Berulang", "Recurring")');
+    expect(comp).toContain('t("Template", "Templates")');
   });
 
   it("export timesheet button localizes dialog title", () => {

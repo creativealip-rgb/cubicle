@@ -13,7 +13,7 @@ describe("reusable task editing", () => {
   it("supports description and optional assignee without workflow fields", () => {
     expect(workspace).toContain("description");
     expect(workspace).toContain("assigneeId");
-    expect(form).toContain('taskMode === "workflow"');
+    expect(form).toContain('selectedTaskMode === "workflow"');
   });
   it("keeps lifecycle explicit and server mode immutable", () => {
     expect(form).toContain('t("Arsipkan", "Archive")');

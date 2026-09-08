@@ -39,6 +39,7 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
+  const [selectedTaskMode, setSelectedTaskMode] = useState<"workflow" | "reusable">(taskMode);
 
   const initialSelectedProject = projects.find((p) => p.id === (defaultValues?.projectId ?? projectId ?? ""));
   const [projectSearch, setProjectSearch] = useState(initialSelectedProject?.name ?? "");
@@ -83,10 +84,10 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "
         projectId: form.projectId,
         assigneeId: mode === "edit" ? form.assigneeId || null : form.assigneeId || undefined,
         clientVisible: form.clientVisible,
-        status: taskMode === "workflow" ? (form.status as "todo" | "in_progress" | "review" | "done") : undefined,
-        priority: taskMode === "workflow" ? (form.priority as "low" | "medium" | "high" | "urgent") : undefined,
-        dueDate: taskMode === "workflow" ? (mode === "edit" ? form.dueDate || null : form.dueDate || undefined) : undefined,
-        mode: taskMode,
+        status: selectedTaskMode === "workflow" ? (form.status as "todo" | "in_progress" | "review" | "done") : undefined,
+        priority: selectedTaskMode === "workflow" ? (form.priority as "low" | "medium" | "high" | "urgent") : undefined,
+        dueDate: selectedTaskMode === "workflow" ? (mode === "edit" ? form.dueDate || null : form.dueDate || undefined) : undefined,
+        mode: selectedTaskMode,
       };
 
       if (mode === "create") {
@@ -136,6 +137,18 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {mode === "create" && (
+        <div className="space-y-1.5">
+          <Label className="text-xs font-medium">{t("Jenis Tugas", "Task Type")}</Label>
+          <Select name="taskMode" value={selectedTaskMode} onValueChange={(value) => setSelectedTaskMode(value as "workflow" | "reusable")}>
+            <SelectTrigger><SelectValue /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="workflow">{t("Sekali", "One-time")}</SelectItem>
+              <SelectItem value="reusable">{t("Berulang", "Recurring")}</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
       <div className="grid gap-5 sm:grid-cols-2">
         {/* Left Column: Detail Utama */}
         <div className="space-y-4">
@@ -220,7 +233,7 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "
             {t("Status & Penugasan", "Status & Assignment")}
           </h3>
 
-          {taskMode === "workflow" && (
+          {selectedTaskMode === "workflow" && (
             <>
               <div className="grid gap-3 grid-cols-2">
                 <div className="space-y-1.5">

@@ -12,6 +12,7 @@ import { TasksWeeklyTracker } from "@/components/tasks/tasks-weekly-tracker";
 import { TaskPageTabs } from "@/components/tasks/task-page-tabs";
 import { TaskViewToggle } from "@/components/tasks/task-view-toggle";
 import { TaskTemplateWorkspace } from "@/components/tasks/task-template-workspace";
+import { ReusableTaskWorkspace } from "@/components/tasks/reusable-task-workspace";
 import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
 import { resolveBillingModel } from "@/lib/billing-model";
 import { defaultTaskWorkMode } from "@/lib/task-work-mode";
@@ -52,14 +53,13 @@ export default async function TasksPage({
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
   const params = await searchParams;
-  const tab = params.tab === "templates" ? "templates" : "tasks";
+  const tab = params.tab === "templates" ? "templates" : params.tab === "reusable" ? "reusable" : "workflow";
   const view = params.view === "board" ? "board" : params.view === "weekly" ? "weekly" : "list";
   const search = params.search?.trim() || "";
   const requestedPage = Math.max(1, Number(params.page) || 1);
-  const whereClauses = [eq(tasks.workspaceId, workspaceId)];
-  if (params.mode === "workflow" || params.mode === "reusable") whereClauses.push(eq(tasks.mode, params.mode));
-  if (params.status && params.status !== "all") whereClauses.push(eq(tasks.status, params.status as typeof tasks.status.enumValues[number]));
-  if (params.priority && params.priority !== "all") whereClauses.push(eq(tasks.priority, params.priority as typeof tasks.priority.enumValues[number]));
+  const whereClauses = [eq(tasks.workspaceId, workspaceId), eq(tasks.mode, tab === "templates" ? "workflow" : tab)];
+  if (tab === "workflow" && params.status && params.status !== "all") whereClauses.push(eq(tasks.status, params.status as typeof tasks.status.enumValues[number]));
+  if (tab === "workflow" && params.priority && params.priority !== "all") whereClauses.push(eq(tasks.priority, params.priority as typeof tasks.priority.enumValues[number]));
   if (params.projectId) whereClauses.push(eq(tasks.projectId, params.projectId));
   if (params.assignee === "me") whereClauses.push(eq(tasks.assigneeId, user.id));
   else if (params.assignee === "unassigned") whereClauses.push(sql`${tasks.assigneeId} IS NULL`);
@@ -92,6 +92,8 @@ export default async function TasksPage({
     behavior: tasks.behavior,
     mode: tasks.mode,
     lifecycle: tasks.lifecycle,
+    monthMinutes: sql<number>`coalesce((select sum(te.duration_minutes) from time_entries te where te.task_id = ${tasks.id} and te.work_date >= date_trunc('month', current_date)), 0)::int`,
+    lastUsedAt: sql<string | null>`(select max(te.work_date)::text from time_entries te where te.task_id = ${tasks.id})`,
   }).from(tasks).leftJoin(projects, eq(projects.id, tasks.projectId)).leftJoin(clients, eq(clients.id, projects.clientId)).leftJoin(users, eq(users.id, tasks.assigneeId)).where(and(...whereClauses)).orderBy(desc(tasks.createdAt)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
   const projectRows = await db.select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType }).from(projects).where(eq(projects.workspaceId, workspaceId));
   const writableProjectRows = projectRows.filter((project) => resolveBillingModel(project) !== "legacy_package");
@@ -107,10 +109,10 @@ export default async function TasksPage({
       title={t("Tugas", "Tasks")}
       description={t("Kelola pekerjaan proyek, prioritas, dan template tugas reusable.", "Manage project work, priorities, and reusable task templates.")}
       actions={
-        tab === "tasks" ? (
+        tab !== "templates" ? (
           <div className="flex flex-wrap items-center gap-2">
-            <TaskViewToggle current={view} />
-            <TaskCreateDialog projectId={params.projectId} members={members} projects={taskProjects} />
+            {tab === "workflow" && <TaskViewToggle current={view} />}
+            <TaskCreateDialog projectId={params.projectId} members={members} projects={taskProjects} defaultTaskMode={tab} />
           </div>
         ) : null
       }
@@ -127,7 +129,7 @@ export default async function TasksPage({
           placeholder={t("Cari tugas...", "Search tasks...")}
           className="pl-8"
         />
-        {tab !== "tasks" && <input type="hidden" name="tab" value={tab} />}
+        <input type="hidden" name="tab" value={tab} />
         {params.status && <input type="hidden" name="status" value={params.status} />}
         {params.priority && <input type="hidden" name="priority" value={params.priority} />}
         {params.projectId && <input type="hidden" name="projectId" value={params.projectId} />}
@@ -137,7 +139,9 @@ export default async function TasksPage({
     </div>
 
     {tab === "templates" ? (
-      <TaskTemplateWorkspace templates={templates} projects={taskProjects} />
+     <TaskTemplateWorkspace templates={templates} projects={taskProjects} />
+    ) : tab === "reusable" ? (
+     <ReusableTaskWorkspace tasks={taskList.map((task) => ({ id: task.id, projectId: task.projectId ?? undefined, title: task.title, description: task.description, assigneeId: task.assigneeId, projectName: task.projectName, clientName: task.clientName, assigneeName: task.assigneeName, monthMinutes: task.monthMinutes, lastUsedAt: task.lastUsedAt, lifecycle: task.lifecycle }))} members={members} projects={taskProjects} />
     ) : (
       <>
         <ActiveFilterSummary
