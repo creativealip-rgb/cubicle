@@ -196,12 +196,9 @@ export function ProjectForm({
                     setClientSearch(val);
                     setClientSearchOpen(true);
                   }}
-                  onFocus={() => {
-                    const currentClient = clients.find((c) => c.id === form.clientId);
-                    if (clientSearch.trim() !== currentClient?.name.trim()) {
-                      setClientSearchOpen(true);
-                    }
-                  }}
+                  onClick={() => setClientSearchOpen((open) => !open)}
+                  aria-expanded={clientSearchOpen}
+                  aria-haspopup="listbox"
                   className="h-9 text-sm"
                 />
                 {clientSearchOpen && (

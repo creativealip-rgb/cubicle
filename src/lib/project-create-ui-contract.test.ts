@@ -6,6 +6,10 @@ describe("project create UI defaults", () => {
   it("defaults client portal visibility on for new projects", () => {
     expect(form).toContain('defaultValues?.clientVisible ?? (mode === "create" ? true : Boolean(clientId))');
   });
+  it("toggles the client list from the field", () => {
+    expect(form).toContain("onClick={() => setClientSearchOpen((open) => !open)}");
+    expect(form).toContain('aria-haspopup="listbox"');
+  });
   it("removes duplicate task CTA from workspace", () => {
     expect(workspace).not.toContain("-mt-16");
     expect(workspace).not.toContain("createButton");
