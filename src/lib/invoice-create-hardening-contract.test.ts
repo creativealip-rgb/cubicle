@@ -15,6 +15,8 @@ describe("invoice create hardening", () => {
     expect(action).toContain("taxRate: z.number()");
     expect(action).toContain("discount: z.number()");
     expect(form).toContain('id="taxRate"');
+    expect(form).toContain('<SelectItem value="admin">');
+    expect(form).toContain('<SelectItem value="none">');
     expect(form).toContain('id="discount"');
     expect(form).toContain('t("Total", "Total")');
   });

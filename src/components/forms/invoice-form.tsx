@@ -24,6 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+import { ChevronDown } from "lucide-react";
 
 interface ClientOption {
   id: string;
@@ -88,6 +90,8 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
   const { refresh } = useAppTransition();
   const { t, lang } = useT();
   const [loading, setLoading] = useState(false);
+  const [clientSearchOpen, setClientSearchOpen] = useState(false);
+  const [clientSearch, setClientSearch] = useState("");
   const startsSourceBacked = Boolean(scopedProjectId || defaultValues?.projectId || initialItems.some((item) => item.sourceId));
   const [items, setItems] = useState(initialItems.length ? initialItems : startsSourceBacked ? [] : [{ description: "", quantity: 1, unitPrice: 0 }]);
   const [projectSources, setProjectSources] = useState<Record<string, InvoiceSourceDraft>>({});
@@ -104,11 +108,16 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     notes: defaultValues?.notes ?? "",
     terms: defaultValues?.terms ?? "",
     taxRate: defaultValues?.taxRate ?? 0,
+    chargeType: defaultValues?.taxRate ? "tax" : "none",
     discount: defaultValues?.discount ?? 0,
   });
 
   // Filter projects by selected client.
   const clientProjects = projects?.filter(p => p.clientId === form.clientId) ?? [];
+  const selectedClient = clients.find((client) => client.id === form.clientId);
+  const filteredClients = clients
+    .filter((client) => `${client.companyName ?? ""} ${client.name}`.toLowerCase().includes(clientSearch.trim().toLowerCase()))
+    .sort((a, b) => (a.companyName || a.name).localeCompare(b.companyName || b.name));
   const rateMap = buildRateMap(currencyRates);
   const selectedProjects = clientProjects.filter((project) => selectedProjectIds.includes(project.id));
   const incompleteTimesheetPeriods = selectedProjects.some((project) => {
@@ -201,7 +210,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         currency: form.currency,
         notes: form.notes || undefined,
         terms: form.terms || undefined,
-        taxRate: Number(form.taxRate),
+        taxRate: form.chargeType === "none" ? 0 : Number(form.taxRate),
         discount: Number(form.discount),
         scopedProjectId,
         items: mode === "create" ? validItems : undefined,
@@ -261,6 +270,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       ...prev,
       currency: tpl.defaultCurrency || prev.currency,
       taxRate: Number(tpl.defaultTaxRate ?? prev.taxRate),
+      chargeType: Number(tpl.defaultTaxRate) > 0 ? "tax" : prev.chargeType,
       notes: tpl.notes || prev.notes,
       terms: tpl.terms || prev.terms,
     }));
@@ -290,23 +300,43 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
 
       {!scopedClientId && <div className="space-y-2">
         <Label htmlFor="clientId">{t("Klien", "Client")} *</Label>
-        <Select
-          value={form.clientId}
-          onValueChange={(v) => { setSelectedProjectIds([]); setProjectSources({}); setForm((prev) => ({ ...prev, clientId: v, projectId: "" })); }}
-          disabled={mode === "edit"}
-          required
-        >
-          <SelectTrigger>
-            <SelectValue placeholder={t("Pilih klien", "Select client")} />
-          </SelectTrigger>
-          <SelectContent>
-            {clients.map((c) => (
-              <SelectItem key={c.id} value={c.id}>
-                {c.companyName || c.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Popover open={clientSearchOpen} onOpenChange={setClientSearchOpen}>
+          <PopoverAnchor asChild>
+            <div className="relative">
+              <Input
+                id="clientId"
+                role="combobox"
+                aria-expanded={clientSearchOpen}
+                autoComplete="off"
+                disabled={mode === "edit"}
+                value={clientSearchOpen ? clientSearch : selectedClient?.companyName || selectedClient?.name || ""}
+                placeholder={t("Cari klien", "Search client")}
+                onClick={() => setClientSearchOpen(true)}
+                onFocus={() => setClientSearchOpen(true)}
+                onChange={(event) => { setClientSearch(event.target.value); setClientSearchOpen(true); }}
+                className="pr-9 text-sm"
+              />
+              <button type="button" disabled={mode === "edit"} aria-label={t("Buka daftar klien", "Open client list")} onClick={() => setClientSearchOpen((open) => !open)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground disabled:opacity-50">
+                <ChevronDown className={`h-4 w-4 transition-transform ${clientSearchOpen ? "rotate-180" : ""}`} />
+              </button>
+            </div>
+          </PopoverAnchor>
+          <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-1" onOpenAutoFocus={(event) => event.preventDefault()}>
+            <div className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain">
+              {filteredClients.length ? filteredClients.map((client) => (
+                <button key={client.id} type="button" className="flex min-h-10 w-full items-center rounded-md px-3 text-left text-sm hover:bg-muted" onClick={() => {
+                  setSelectedProjectIds([]);
+                  setProjectSources({});
+                  setForm((prev) => ({ ...prev, clientId: client.id, projectId: "" }));
+                  setClientSearch("");
+                  setClientSearchOpen(false);
+                }}>
+                  <span className="truncate">{client.companyName || client.name}</span>
+                </button>
+              )) : <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t("Klien tidak ditemukan", "No clients found")}</p>}
+            </div>
+          </PopoverContent>
+        </Popover>
       </div>}
 
       {!scopedProjectId && clientProjects.length > 0 && mode === "create" && (
@@ -508,13 +538,13 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           {(() => {
             const subtotal = calculateDraftItemsSubtotal([...projectItems, ...items]);
             const discount = Math.min(Number(form.discount) || 0, subtotal);
-            const tax = (subtotal - discount) * (Number(form.taxRate) || 0) / 100;
+            const tax = form.chargeType === "none" ? 0 : (subtotal - discount) * (Number(form.taxRate) || 0) / 100;
             const money = (value: number) => new Intl.NumberFormat(lang === "en" ? "en-US" : "id-ID", { style: "currency", currency: form.currency, maximumFractionDigits: form.currency === "IDR" ? 0 : 2 }).format(value);
             return <div className="space-y-3 border-t pt-3 text-sm">
               <div className="flex justify-between"><span>Subtotal</span><span>{money(subtotal)}</span></div>
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div className="space-y-1.5"><Label htmlFor="discount">{t("Diskon", "Discount")}</Label><Input id="discount" type="number" min="0" value={form.discount} onChange={(e) => set("discount", e.target.value)} /></div>
-                <div className="space-y-1.5"><Label htmlFor="taxRate">{t("Pajak (%)", "Tax (%)")}</Label><Input id="taxRate" type="number" min="0" max="100" value={form.taxRate} onChange={(e) => set("taxRate", e.target.value)} /></div>
+                <div className="space-y-1.5"><Label>{t("Tambahan", "Charge")}</Label><Select value={form.chargeType} onValueChange={(value) => set("chargeType", value)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="none">{t("Tidak ada", "None")}</SelectItem><SelectItem value="tax">{t("Pajak", "Tax")}</SelectItem><SelectItem value="admin">{t("Biaya admin", "Admin fee")}</SelectItem></SelectContent></Select>{form.chargeType !== "none" && <Input id="taxRate" aria-label={form.chargeType === "admin" ? t("Biaya admin (%)", "Admin fee (%)") : t("Pajak (%)", "Tax (%)")} type="number" min="0" max="100" value={form.taxRate} onChange={(e) => set("taxRate", e.target.value)} />}</div>
               </div>
               <div className="flex justify-between border-t pt-3 font-bold"><span>{t("Total", "Total")}</span><span>{money(subtotal - discount + tax)}</span></div>
             </div>;
