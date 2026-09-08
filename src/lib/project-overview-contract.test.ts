@@ -27,7 +27,8 @@ describe("project control center", () => {
     expect(overview).toContain('rounded-lg bg-primary/10 text-primary');
     expect(tabs).toContain('className="rounded-xl border bg-card p-4 shadow-xs"');
     expect(tabs).not.toMatch(/text-(?:blue|amber|emerald)-500/);
-    expect(tabs).toContain('text-xs font-semibold sm:text-sm');
+    expect(tabs).not.toContain("lucide-react");
+    expect(tabs).toContain('text-xs font-medium sm:text-sm');
   });
   it("opens separate focused dialogs for details and billing settings", () => {
     expect(page).toContain('section="general"');

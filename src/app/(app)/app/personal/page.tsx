@@ -260,7 +260,7 @@ export default async function PersonalPage({
                 }`}
               >
                 <span>{tabItem.label}</span>
-                <span className="ml-1.5 rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-bold">
+                <span className="ml-1.5 rounded-full bg-background/80 px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground">
                   {tabItem.count}
                 </span>
               </Link>

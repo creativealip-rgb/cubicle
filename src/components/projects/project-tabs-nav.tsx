@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { LayoutDashboard, CheckSquare, FileText, Clock, Wallet } from "lucide-react";
+
 import { useT } from "@/lib/i18n-client";
 
 type ProjectTabsNavProps = {
@@ -68,22 +68,22 @@ export function ProjectTabsNav({
     <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <TabsList className="h-auto min-h-9 w-auto inline-flex max-w-full justify-start gap-1 overflow-x-auto bg-muted/60 p-1">
-          <TabsTrigger value="overview" className="gap-1.5 px-3 py-1.5 text-xs font-semibold sm:text-sm data-[state=active]:shadow-sm">
-            <LayoutDashboard className="h-3.5 w-3.5 shrink-0" /> Overview
+          <TabsTrigger value="overview" className="gap-1.5 px-3 py-1 text-xs font-medium sm:text-sm data-[state=active]:shadow-sm">
+            Overview
           </TabsTrigger>
-          <TabsTrigger value="work" className="gap-1.5 px-3 py-1.5 text-xs font-semibold sm:text-sm data-[state=active]:shadow-sm">
-            <CheckSquare className="h-3.5 w-3.5 shrink-0" /> {t("Tugas", "Tasks")} <span className="rounded-full bg-background px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">{tasksCount}</span>
+          <TabsTrigger value="work" className="gap-1.5 px-3 py-1 text-xs font-medium sm:text-sm data-[state=active]:shadow-sm">
+            {t("Tugas", "Tasks")} <span className="rounded-full bg-background px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground">{tasksCount}</span>
           </TabsTrigger>
-          <TabsTrigger value="files" className="gap-1.5 px-3 py-1.5 text-xs font-semibold sm:text-sm data-[state=active]:shadow-sm">
-            <FileText className="h-3.5 w-3.5 shrink-0" /> {t("Berkas", "Files")} <span className="rounded-full bg-background px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">{filesCount}</span>
+          <TabsTrigger value="files" className="gap-1.5 px-3 py-1 text-xs font-medium sm:text-sm data-[state=active]:shadow-sm">
+            {t("Berkas", "Files")} <span className="rounded-full bg-background px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground">{filesCount}</span>
           </TabsTrigger>
           {showTimeTab ? (
-            <TabsTrigger value="time" className="gap-1.5 px-3 py-1.5 text-xs font-semibold sm:text-sm data-[state=active]:shadow-sm">
-              <Clock className="h-3.5 w-3.5 shrink-0" /> {t("Waktu", "Time")} <span className="rounded-full bg-background px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">{timeCount}</span>
+            <TabsTrigger value="time" className="gap-1.5 px-3 py-1 text-xs font-medium sm:text-sm data-[state=active]:shadow-sm">
+              {t("Waktu", "Time")} <span className="rounded-full bg-background px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground">{timeCount}</span>
             </TabsTrigger>
           ) : null}
-          <TabsTrigger value="billing" className="gap-1.5 px-3 py-1.5 text-xs font-semibold sm:text-sm data-[state=active]:shadow-sm">
-            <Wallet className="h-3.5 w-3.5 shrink-0" /> {t("Invoice", "Invoices")} <span className="rounded-full bg-background px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">{invoicesCount}</span>
+          <TabsTrigger value="billing" className="gap-1.5 px-3 py-1 text-xs font-medium sm:text-sm data-[state=active]:shadow-sm">
+            {t("Invoice", "Invoices")} <span className="rounded-full bg-background px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground">{invoicesCount}</span>
           </TabsTrigger>
         </TabsList>
 
