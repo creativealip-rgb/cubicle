@@ -282,7 +282,7 @@ export default async function PersonalPage({
       <QuickNoteCapture action={createNote} />
 
       {/* Main Content: Notes List Workspace */}
-      <Card className="rounded-3xl border bg-card shadow-sm">
+      <Card className="rounded-xl border border-border/80 bg-card shadow-xs">
         <CardContent className="p-4 sm:p-6">
           <input type="hidden" placeholder={t("Cari catatan berdasarkan judul atau isi…", "Search notes by title or content…")} />
           {/* List Client Component */}
