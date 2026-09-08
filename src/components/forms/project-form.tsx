@@ -4,6 +4,7 @@ import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createProject, updateProject } from "@/lib/actions/projects";
+import { createClient } from "@/lib/actions/clients";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { DialogClose } from "@/components/ui/dialog";
@@ -14,7 +15,7 @@ import { useT } from "@/lib/i18n-client";
 import { useAppTransition } from "@/lib/transition-provider";
 import { ChevronDown, Plus } from "lucide-react";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
-import { ClientCreateDialog } from "@/components/clients/client-create-dialog";
+
 
 type BillingModel = "fixed_price" | "hourly" | "retainer";
 type Defaults = {
@@ -68,12 +69,38 @@ export function ProjectForm({
   });
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
   const [availableClients, setAvailableClients] = useState(clients);
+  const [quickClientMode, setQuickClientMode] = useState(false);
+  const [quickClientName, setQuickClientName] = useState("");
+  const [quickClientLoading, setQuickClientLoading] = useState(false);
 
   const filteredClients = useMemo(() => {
     const term = clientSearch.toLowerCase().trim();
     if (!term) return availableClients;
     return availableClients.filter((c) => c.name.toLowerCase().includes(term));
   }, [availableClients, clientSearch]);
+
+  async function createQuickClient() {
+    const name = quickClientName.trim();
+    if (!name || quickClientLoading) return;
+    setQuickClientLoading(true);
+    try {
+      const result = await createClient({ name, tags: [] });
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
+      const next = { id: result.client.id, name: result.client.name };
+      setAvailableClients((current) => [...current, next]);
+      setForm((current) => ({ ...current, clientId: next.id }));
+      setClientSearch(next.name);
+      setQuickClientName("");
+      setQuickClientMode(false);
+      setClientSearchOpen(false);
+      toast.success(t("Klien dibuat dan dipilih", "Client created and selected"));
+    } finally {
+      setQuickClientLoading(false);
+    }
+  }
 
   const fallback: BillingModel =
     defaultValues?.billingModel ??
@@ -202,7 +229,7 @@ export function ProjectForm({
                 </div>
                 </PopoverAnchor>
                 <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
-                  <div className="max-h-52 overflow-y-auto">
+                  <div className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain" onWheel={(event) => event.stopPropagation()}>
                     {filteredClients.length === 0 ? (
                       <p className="p-2 text-xs text-muted-foreground">{t("Klien tidak ditemukan", "No client found")}</p>
                     ) : (
@@ -210,7 +237,7 @@ export function ProjectForm({
                         <button
                           key={c.id}
                           type="button"
-                          className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${form.clientId === c.id ? "bg-accent font-medium" : ""}`}
+                          className={`flex min-h-10 w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${form.clientId === c.id ? "bg-accent font-medium" : ""}`}
                           onClick={() => {
                             setForm((p) => ({ ...p, clientId: c.id }));
                             setClientSearch(c.name);
@@ -223,7 +250,14 @@ export function ProjectForm({
                     )}
                   </div>
                   <div className="border-t p-1 pt-2">
-                    <ClientCreateDialog trigger={<Button type="button" variant="ghost" size="sm" className="w-full justify-start gap-2"><Plus className="h-4 w-4" />{t("Buat klien baru", "Create new client")}</Button>} onCreated={(id, name) => { setAvailableClients((current) => [...current, { id, name }]); setForm((current) => ({ ...current, clientId: id })); setClientSearch(name); setClientSearchOpen(false); }} />
+                    {quickClientMode ? (
+                      <div className="flex gap-2">
+                        <Input autoFocus value={quickClientName} onChange={(event) => setQuickClientName(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") { event.preventDefault(); void createQuickClient(); } if (event.key === "Escape") setQuickClientMode(false); }} placeholder={t("Nama klien", "Client name")} className="h-9 text-sm" />
+                        <Button type="button" size="sm" className="h-9 shrink-0" disabled={!quickClientName.trim() || quickClientLoading} onClick={() => void createQuickClient()}>{quickClientLoading ? t("Menyimpan...", "Saving...") : t("Buat", "Create")}</Button>
+                      </div>
+                    ) : (
+                      <Button type="button" variant="ghost" size="sm" className="min-h-10 w-full justify-start gap-2 text-sm" onClick={() => setQuickClientMode(true)}><Plus className="h-4 w-4" />{t("Buat klien baru", "Create new client")}</Button>
+                    )}
                   </div>
                 </PopoverContent>
               </Popover>
