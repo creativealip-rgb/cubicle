@@ -14,18 +14,18 @@ export function ClientOverview({ client, projects, invoices, editAction, project
 }) {
   return <div className="space-y-4">
     <div className="grid gap-4 xl:grid-cols-[minmax(0,.8fr)_minmax(0,1fr)_minmax(0,1fr)]">
-      <Card className="rounded-xl"><CardContent className="space-y-3 p-4">
+      <Card className="h-full rounded-xl"><CardContent className="flex h-full flex-col p-4">
         <h2 className="text-sm font-semibold">{t("Detail Klien", "Client Details")}</h2>
-        <dl className="space-y-2 text-sm">
+        <dl className="mt-3 space-y-2 text-sm">
           {client.clientNumber && <Detail label={t("ID Klien", "Client ID")} value={client.clientNumber} />}
           {client.email && <Detail label="Email" value={client.email} />}
           {client.phone && <Detail label={t("Telepon", "Phone")} value={client.phone} />}
           {client.website && <Detail label="Website" value={client.website} />}
           {client.address && <Detail label={t("Alamat", "Address")} value={client.address} />}
         </dl>
-        {client.tags?.length ? <div className="flex flex-wrap gap-1">{client.tags.map((tag) => <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>)}</div> : null}
-        {client.internalNotes && <div className="border-t pt-3"><p className="text-[11px] font-semibold uppercase text-muted-foreground">{t("Catatan Internal", "Internal Notes")}</p><p className="mt-1 line-clamp-3 text-xs leading-relaxed">{client.internalNotes}</p></div>}
-        <div className="flex flex-wrap gap-x-4 gap-y-2 border-t pt-3">{editAction}{client.portalSlugEnabled && client.portalSlug ? <Button variant="link" size="sm" className="h-auto p-0" asChild><Link href={`/client-portal/${client.portalSlug}`} target="_blank">{t("Buka Portal Klien", "Open Client Portal")}</Link></Button> : null}</div>
+        {client.tags?.length ? <div className="mt-3 flex flex-wrap gap-1">{client.tags.map((tag) => <Badge key={tag} variant="secondary" className="text-[10px]">{tag}</Badge>)}</div> : null}
+        {client.internalNotes && <div className="mt-3 border-t pt-3"><p className="text-[11px] font-semibold uppercase text-muted-foreground">{t("Catatan Internal", "Internal Notes")}</p><p className="mt-1 line-clamp-3 text-xs leading-relaxed">{client.internalNotes}</p></div>}
+        <div className="mt-auto flex flex-wrap gap-x-4 gap-y-2 border-t pt-3">{editAction}{client.portalSlugEnabled && client.portalSlug ? <Button variant="link" size="sm" className="h-auto p-0" asChild><Link href={`/client-portal/${client.portalSlug}`} target="_blank">{t("Buka Portal Klien", "Open Client Portal")}</Link></Button> : null}</div>
       </CardContent></Card>
       <OverviewList title={t("Project Terbaru", "Recent Projects")} href={`?tab=projects`} empty={t("Belum ada project", "No projects yet")} action={projectAction} t={t}>
         {projects.slice(0, 5).map((p) => <Link key={p.id} href={`/app/projects/${p.id}?from=client`} className="flex items-center justify-between gap-3 border-b py-3 last:border-0 hover:text-primary"><div className="min-w-0"><p className="truncate text-sm font-semibold">{p.name}</p><p className="text-xs text-muted-foreground">{p.doneCount}/{p.taskCount} {t("task", "tasks")} · {(p.trackedMinutes / 60).toFixed(1)}h</p></div><Badge variant="outline" className="text-[10px]">{p.status}</Badge></Link>)}

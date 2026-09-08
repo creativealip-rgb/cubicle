@@ -22,7 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ClientTabsNav } from "@/components/clients/client-tabs-nav";
 import Link from "next/link";
-import { Wallet, FolderKanban, FileSpreadsheet, Users } from "lucide-react";
+import { Wallet, FolderKanban, FileSpreadsheet, Receipt, Users } from "lucide-react";
 import { PortalTokenSection } from "./portal-section";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
 import { ClientGoogleCalendarPanel } from "@/components/clients/client-google-calendar-panel";
@@ -45,6 +45,7 @@ import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
 import { resolveProjectAmount } from "@/lib/invoice-project-items";
 import { ClientKpis, ClientOverview } from "@/components/clients/client-overview";
 import { ClientHeaderActions } from "@/components/clients/client-header-actions";
+import { EmptyState } from "@/components/empty-state";
 
 async function _getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -404,9 +405,12 @@ export default async function ClientDetailPage({
         projectsContent={
           <div className="space-y-4">
             {clientProjects.length === 0 && (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                {t("Belum ada proyek", "No projects yet")}
-              </p>
+              <EmptyState
+                icon={FolderKanban}
+                title={t("Belum ada project", "No projects yet")}
+                description={t("Buat project pertama untuk mulai mengatur pekerjaan klien ini.", "Create the first project to organize this client's work.")}
+                embedded
+              />
             )}
             {clientProjects.map((project) => {
               const usedHours = project.usedMinutes / 60;
@@ -529,9 +533,12 @@ export default async function ClientDetailPage({
         invoicesContent={
           <div className="space-y-4">
             {clientInvoices.length === 0 && (
-              <p className="py-8 text-center text-sm text-muted-foreground">
-                {t("Belum ada invoice", "No invoices yet")}
-              </p>
+              <EmptyState
+                icon={Receipt}
+                title={t("Belum ada invoice", "No invoices yet")}
+                description={t("Buat invoice pertama saat pekerjaan klien ini siap ditagihkan.", "Create the first invoice when this client's work is ready to bill.")}
+                embedded
+              />
             )}
             {clientInvoices.map((inv) => (
               <Card
