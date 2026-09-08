@@ -15,6 +15,7 @@ type DraftInvoiceInput = {
   notes?: string | null;
   terms?: string | null;
   taxRate?: number;
+  discount?: number;
   items?: Array<{
     description: string;
     quantity: number;
@@ -27,7 +28,8 @@ type DraftInvoiceInput = {
 export async function insertDraftInvoice(tx: Tx, input: DraftInvoiceInput) {
   const items = input.items ?? [];
   const subtotal = items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
-  const tax = subtotal * (input.taxRate ?? 0) / 100;
+  const discount = Math.min(Math.max(input.discount ?? 0, 0), subtotal);
+  const tax = (subtotal - discount) * (input.taxRate ?? 0) / 100;
   const [invoice] = await tx.insert(invoices).values({
     workspaceId: input.workspaceId,
     clientId: input.clientId,
@@ -38,9 +40,9 @@ export async function insertDraftInvoice(tx: Tx, input: DraftInvoiceInput) {
     dueDate: input.dueDate ?? null,
     currency: input.currency,
     subtotal: subtotal.toFixed(2),
-    discount: "0",
+    discount: discount.toFixed(2),
     tax: tax.toFixed(2),
-    total: (subtotal + tax).toFixed(2),
+    total: (subtotal - discount + tax).toFixed(2),
     status: "draft",
     notes: input.notes ?? null,
     terms: input.terms ?? null,

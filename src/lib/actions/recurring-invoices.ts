@@ -18,6 +18,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { nextRecurringInvoiceDate, renderRecurringInvoiceNumber, validateRecurringInvoiceNumberPattern } from "@/lib/recurring-invoice-number";
 import { insertDraftInvoice } from "@/lib/invoice-creation";
 import { invoiceNumberTakenMessage, isInvoiceNumberUniqueConstraint } from "@/lib/invoice-number";
+const SUPPORTED_CURRENCIES = ["IDR", "USD", "EUR", "GBP", "SGD"] as const;
 
 const lineSchema = z.object({
   description: z.string().trim().min(1).max(500),
@@ -32,7 +33,11 @@ const ruleSchema = z.object({
   startDate: z.string().date(),
   endDate: z.string().date().nullable().optional(),
   nextRunDate: z.string().date().optional(),
-  currency: z.string().trim().length(3).transform((value) => value.toUpperCase()),
+  currency: z.enum(SUPPORTED_CURRENCIES),
+  discount: z.number().nonnegative().default(0),
+  chargeType: z.enum(["none", "tax", "admin"]).default("none"),
+  chargeRate: z.number().min(0).max(100).default(0),
+  dueDays: z.number().int().min(0).max(365).default(14),
   terms: z.string().max(5000).nullable().optional(),
   notes: z.string().max(5000).nullable().optional(),
   lines: z.array(lineSchema).min(1),
@@ -83,6 +88,7 @@ export async function createRecurringInvoiceRule(input: z.input<typeof ruleSchem
     endDate: parsed.endDate ?? null,
     nextRunDate,
     currency: parsed.currency,
+    discount: String(parsed.discount), chargeType: parsed.chargeType, chargeRate: String(parsed.chargeRate), dueDays: parsed.dueDays,
     terms: parsed.terms ?? null,
     notes: parsed.notes ?? null,
     lines: parsed.lines,
@@ -100,10 +106,16 @@ export async function updateRecurringInvoiceRule(ruleId: string, input: z.input<
   if (!current) throw new Error("Aturan tidak ditemukan / Rule not found");
   const clientId = parsed.clientId ?? current.clientId;
   const projectId = parsed.projectId === undefined ? current.projectId : parsed.projectId;
+  const mergedNextRunDate = parsed.nextRunDate ?? current.nextRunDate;
+  const mergedEndDate = parsed.endDate === undefined ? current.endDate : parsed.endDate;
+  if (mergedEndDate && mergedEndDate < mergedNextRunDate) throw new Error("Tanggal selesai harus setelah jadwal berikutnya / End date must be after next run date");
   await assertRuleRelations(workspaceId, clientId, projectId);
   const values = {
     ...parsed,
+    discount: parsed.discount === undefined ? undefined : String(parsed.discount),
+    chargeRate: parsed.chargeRate === undefined ? undefined : String(parsed.chargeRate),
     projectId: parsed.projectId === undefined ? undefined : parsed.projectId ?? null,
+    startDate: parsed.nextRunDate ?? parsed.startDate,
     numberPattern: parsed.numberPattern === undefined ? undefined : validateRecurringInvoiceNumberPattern(parsed.numberPattern),
     terms: parsed.terms === undefined ? undefined : parsed.terms ?? null,
     notes: parsed.notes === undefined ? undefined : parsed.notes ?? null,
@@ -148,6 +160,7 @@ async function generateRule(ruleId: string, now: Date, workspaceId?: string) {
     const sequence = rule.lastSequence + 1;
     const invoiceNumber = renderRecurringInvoiceNumber(rule.numberPattern, Number(rule.nextRunDate.slice(0, 4)), sequence);
     const lines = rule.lines as RecurringInvoiceLine[];
+    const dueDate = new Date(`${rule.nextRunDate}T00:00:00Z`); dueDate.setUTCDate(dueDate.getUTCDate() + rule.dueDays);
     let invoice;
     try {
       invoice = await insertDraftInvoice(tx, {
@@ -156,10 +169,13 @@ async function generateRule(ruleId: string, now: Date, workspaceId?: string) {
         projectId: rule.projectId,
         invoiceNumber,
         issueDate: rule.nextRunDate,
+        dueDate: dueDate.toISOString().slice(0, 10),
         currency: rule.currency,
         notes: rule.notes,
         terms: rule.terms,
         items: lines,
+        discount: Number(rule.discount),
+        taxRate: rule.chargeType === "none" ? 0 : Number(rule.chargeRate),
       });
     } catch (error) {
       if (isInvoiceNumberUniqueConstraint(error)) throw new Error(invoiceNumberTakenMessage(invoiceNumber));

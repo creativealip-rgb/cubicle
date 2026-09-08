@@ -1452,6 +1452,10 @@ export const recurringInvoiceRules = pgTable("recurring_invoice_rules", {
   nextRunDate: date("next_run_date").notNull(),
   isActive: boolean("is_active").notNull().default(true),
   currency: text("currency").notNull().default("IDR"),
+  discount: numeric("discount", { precision: 12, scale: 2 }).notNull().default("0"),
+  chargeType: text("charge_type", { enum: ["none", "tax", "admin"] }).notNull().default("none"),
+  chargeRate: numeric("charge_rate", { precision: 6, scale: 2 }).notNull().default("0"),
+  dueDays: integer("due_days").notNull().default(14),
   terms: text("terms"),
   notes: text("notes"),
   lines: jsonb("lines").$type<RecurringInvoiceLine[]>().notNull().default(sql`'[]'::jsonb`),
@@ -1464,6 +1468,10 @@ export const recurringInvoiceRules = pgTable("recurring_invoice_rules", {
   index("recurring_invoice_rules_due_idx").on(table.workspaceId, table.isActive, table.nextRunDate),
   unique("recurring_invoice_rules_id_workspace_unique").on(table.id, table.workspaceId),
   check("recurring_invoice_rules_last_sequence_check", sql`${table.lastSequence} >= 0`),
+  check("recurring_invoice_rules_discount_check", sql`${table.discount} >= 0`),
+  check("recurring_invoice_rules_charge_type_check", sql`${table.chargeType} in ('none','tax','admin')`),
+  check("recurring_invoice_rules_charge_rate_check", sql`${table.chargeRate} between 0 and 100`),
+  check("recurring_invoice_rules_due_days_check", sql`${table.dueDays} between 0 and 365`),
 ]);
 
 export const recurringInvoiceGenerations = pgTable("recurring_invoice_generations", {
