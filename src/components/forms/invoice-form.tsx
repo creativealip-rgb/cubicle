@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { useT } from "@/lib/i18n-client";
+import { isStaleServerActionError, staleServerActionMessage } from "@/lib/client-errors";
 import { toast } from "sonner";
 import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
 import { createInvoice, updateInvoice } from "@/lib/actions/invoices";
@@ -68,6 +69,8 @@ interface InvoiceFormProps {
     currency?: string;
     notes?: string;
     terms?: string;
+    taxRate?: number;
+    discount?: number;
   };
   clients: ClientOption[];
   projects?: ProjectOption[];
@@ -100,6 +103,8 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     currency: defaultValues?.currency ?? baseCurrency,
     notes: defaultValues?.notes ?? "",
     terms: defaultValues?.terms ?? "",
+    taxRate: defaultValues?.taxRate ?? 0,
+    discount: defaultValues?.discount ?? 0,
   });
 
   // Filter projects by selected client.
@@ -196,6 +201,8 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         currency: form.currency,
         notes: form.notes || undefined,
         terms: form.terms || undefined,
+        taxRate: Number(form.taxRate),
+        discount: Number(form.discount),
         scopedProjectId,
         items: mode === "create" ? validItems : undefined,
       };
@@ -224,6 +231,11 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         refresh();
       }
     } catch (err: unknown) {
+      if (isStaleServerActionError(err)) {
+        toast.info(staleServerActionMessage(lang));
+        window.location.reload();
+        return;
+      }
       const msg =
         err instanceof Error
           ? err.message
@@ -248,6 +260,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     setForm((prev) => ({
       ...prev,
       currency: tpl.defaultCurrency || prev.currency,
+      taxRate: Number(tpl.defaultTaxRate ?? prev.taxRate),
       notes: tpl.notes || prev.notes,
       terms: tpl.terms || prev.terms,
     }));
@@ -256,6 +269,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Tagihkan Kepada", "Bill to")}</h3>
       {templates && templates.length > 0 && mode === "create" && (
         <div className="space-y-2">
           <Label>Apply Template (opsional)</Label>
@@ -422,7 +436,8 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         </div>;
       })}
 
-      <div className="grid grid-cols-2 gap-4">
+      <h3 className="pt-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Detail Invoice", "Invoice details")}</h3>
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <Label htmlFor="issueDate">{t("Tanggal Terbit *", "Issue Date *")}</Label>
           <Input
@@ -490,10 +505,26 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
               <Button type="button" variant="ghost" size="icon" disabled={items.length === 1} onClick={() => setItems((prev) => prev.filter((_, i) => i !== index))}>×</Button>
             </div>
           ))}
-          <div className="flex justify-between border-t pt-3 text-sm font-semibold"><span>Subtotal</span><span>{new Intl.NumberFormat("id-ID", { style: "currency", currency: form.currency, maximumFractionDigits: form.currency === "IDR" ? 0 : 2 }).format(calculateDraftItemsSubtotal([...projectItems, ...items]))}</span></div>
+          {(() => {
+            const subtotal = calculateDraftItemsSubtotal([...projectItems, ...items]);
+            const discount = Math.min(Number(form.discount) || 0, subtotal);
+            const tax = (subtotal - discount) * (Number(form.taxRate) || 0) / 100;
+            const money = (value: number) => new Intl.NumberFormat(lang === "en" ? "en-US" : "id-ID", { style: "currency", currency: form.currency, maximumFractionDigits: form.currency === "IDR" ? 0 : 2 }).format(value);
+            return <div className="space-y-3 border-t pt-3 text-sm">
+              <div className="flex justify-between"><span>Subtotal</span><span>{money(subtotal)}</span></div>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <div className="space-y-1.5"><Label htmlFor="discount">{t("Diskon", "Discount")}</Label><Input id="discount" type="number" min="0" value={form.discount} onChange={(e) => set("discount", e.target.value)} /></div>
+                <div className="space-y-1.5"><Label htmlFor="taxRate">{t("Pajak (%)", "Tax (%)")}</Label><Input id="taxRate" type="number" min="0" max="100" value={form.taxRate} onChange={(e) => set("taxRate", e.target.value)} /></div>
+              </div>
+              <div className="flex justify-between border-t pt-3 font-bold"><span>{t("Total", "Total")}</span><span>{money(subtotal - discount + tax)}</span></div>
+            </div>;
+          })()}
         </div>
       )}
 
+      <details className="rounded-lg border p-3">
+        <summary className="cursor-pointer text-sm font-medium">{t("Detail lainnya", "More details")}</summary>
+        <div className="mt-4 space-y-4">
       <div className="space-y-2">
         <Label htmlFor="notes">{t("Catatan", "Notes")}</Label>
         <Textarea
@@ -514,6 +545,8 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           placeholder={t("contoh: Net 30, jatuh tempo dalam 14 hari...", "e.g. Net 30, due within 14 days...")}
         />
       </div>
+        </div>
+      </details>
 
       <Button type="submit" disabled={loading || incompleteTimesheetPeriods} className="w-full">
         {loading

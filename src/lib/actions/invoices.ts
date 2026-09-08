@@ -66,6 +66,8 @@ const createInvoiceSchema = z.object({
   notes: z.string().optional(),
   terms: z.string().optional(),
   invoiceNumber: z.string().optional(),
+  taxRate: z.number().min(0).max(100).default(0),
+  discount: z.number().min(0).default(0),
   items: z.array(z.object({
     description: z.string().min(1),
     quantity: z.number().positive(),
@@ -146,7 +148,6 @@ async function assertInvoiceInWorkspace(invoiceId: string, workspaceId: string) 
 // ─── CRUD ───
 
 export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) {
-  console.log("--> SERVER ACTION RECEIVED INPUT:", input);
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -410,12 +411,13 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
           if (transitioned.length !== sourceIds.length) throw new Error("Time Entry berubah saat invoice dibuat. Muat ulang dan coba lagi");
         }
         const subtotal = values.reduce((sum, item) => sum + Number(item.amount), 0);
-        const taxRate = Number(ws?.defaultTaxRate ?? 0) || 0;
-        const tax = (subtotal * taxRate) / 100;
+        const discount = Math.min(parsed.discount, subtotal);
+        const tax = ((subtotal - discount) * parsed.taxRate) / 100;
         const [refreshed] = await tx.update(invoices).set({
           subtotal: String(subtotal),
+          discount: String(discount),
           tax: String(tax),
-          total: String(subtotal + tax),
+          total: String(subtotal - discount + tax),
           updatedAt: new Date(),
         }).where(eq(invoices.id, inv.id)).returning();
         return refreshed ?? inv;
@@ -480,13 +482,14 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
           });
 
           // inv.tax on insert holds default tax RATE % (same as recalculateInvoice)
-          const taxRate = Number(ws?.defaultTaxRate ?? inv.tax ?? 0) || 0;
-          const taxAmount = (unitPrice * taxRate) / 100;
-          const total = unitPrice + taxAmount;
+          const discount = Math.min(parsed.discount, unitPrice);
+          const taxAmount = ((unitPrice - discount) * parsed.taxRate) / 100;
+          const total = unitPrice - discount + taxAmount;
           await tx
             .update(invoices)
             .set({
               subtotal: amount,
+              discount: String(discount),
               tax: String(taxAmount),
               total: String(total),
               currency: parsed.currency || proj.currency || inv.currency,
