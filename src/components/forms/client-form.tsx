@@ -29,8 +29,9 @@ interface ClientFormProps {
     portalSlug?: string;
     portalEnabled?: boolean;
   };
-  onSuccess?: (id?: string) => void;
+  onSuccess?: (id?: string, name?: string) => void;
   redirectTo?: string;
+  stayOnPage?: boolean;
 }
 
 function slugify(value: string) {
@@ -42,7 +43,7 @@ function slugify(value: string) {
     .slice(0, 48);
 }
 
-export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: ClientFormProps) {
+export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnPage = false }: ClientFormProps) {
   const { t } = useT();
   const router = useRouter();
   const { refresh } = useAppTransition();
@@ -93,8 +94,8 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo }: Clien
           return;
         }
         toast.success(t("Klien dibuat", "Client created"));
-        onSuccess?.(result.client.id);
-        router.push(`/app/clients/${result.client.id}`);
+        onSuccess?.(result.client.id, result.client.name);
+        if (!stayOnPage) router.push(`/app/clients/${result.client.id}`);
         return;
       } else if (defaultValues?.id) {
         await updateClient(defaultValues.id, data);

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useRef, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createProject, updateProject } from "@/lib/actions/projects";
@@ -12,6 +12,9 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useT } from "@/lib/i18n-client";
 import { useAppTransition } from "@/lib/transition-provider";
+import { ChevronDown, Plus } from "lucide-react";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+import { ClientCreateDialog } from "@/components/clients/client-create-dialog";
 
 type BillingModel = "fixed_price" | "hourly" | "retainer";
 type Defaults = {
@@ -64,23 +67,13 @@ export function ProjectForm({
     return selected?.name ?? "";
   });
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
-  const clientContainerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (clientContainerRef.current && !clientContainerRef.current.contains(e.target as Node)) {
-        setClientSearchOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
+  const [availableClients, setAvailableClients] = useState(clients);
 
   const filteredClients = useMemo(() => {
     const term = clientSearch.toLowerCase().trim();
-    if (!term) return clients;
-    return clients.filter((c) => c.name.toLowerCase().includes(term));
-  }, [clients, clientSearch]);
+    if (!term) return availableClients;
+    return availableClients.filter((c) => c.name.toLowerCase().includes(term));
+  }, [availableClients, clientSearch]);
 
   const fallback: BillingModel =
     defaultValues?.billingModel ??
@@ -187,7 +180,9 @@ export function ProjectForm({
           {!clientId && (
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">{t("Klien (Opsional)", "Client (Optional)")}</Label>
-              <div ref={clientContainerRef} className="relative">
+              <Popover open={clientSearchOpen} onOpenChange={setClientSearchOpen}>
+                <PopoverAnchor asChild>
+                <div className="relative">
                 <Input
                   placeholder={t("Cari klien...", "Search client...")}
                   value={clientSearch}
@@ -199,10 +194,15 @@ export function ProjectForm({
                   onClick={() => setClientSearchOpen((open) => !open)}
                   aria-expanded={clientSearchOpen}
                   aria-haspopup="listbox"
-                  className="h-9 text-sm"
+                  className="h-9 pr-9 text-sm"
                 />
-                {clientSearchOpen && (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
+                <button type="button" aria-label={t("Buka daftar klien", "Toggle client list")} onClick={() => setClientSearchOpen((open) => !open)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground">
+                  <ChevronDown className={`h-4 w-4 transition-transform ${clientSearchOpen ? "rotate-180" : ""}`} />
+                </button>
+                </div>
+                </PopoverAnchor>
+                <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
+                  <div className="max-h-52 overflow-y-auto">
                     {filteredClients.length === 0 ? (
                       <p className="p-2 text-xs text-muted-foreground">{t("Klien tidak ditemukan", "No client found")}</p>
                     ) : (
@@ -222,8 +222,11 @@ export function ProjectForm({
                       ))
                     )}
                   </div>
-                )}
-              </div>
+                  <div className="border-t p-1 pt-2">
+                    <ClientCreateDialog trigger={<Button type="button" variant="ghost" size="sm" className="w-full justify-start gap-2"><Plus className="h-4 w-4" />{t("Buat klien baru", "Create new client")}</Button>} onCreated={(id, name) => { setAvailableClients((current) => [...current, { id, name }]); setForm((current) => ({ ...current, clientId: id })); setClientSearch(name); setClientSearchOpen(false); }} />
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           )}
 
