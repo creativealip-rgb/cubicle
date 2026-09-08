@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
 import { Textarea } from "@/components/ui/textarea";
+import { ChevronDown } from "lucide-react";
 
 interface ClientFormProps {
   mode: "create" | "edit";
@@ -32,6 +33,7 @@ interface ClientFormProps {
   onSuccess?: (id?: string, name?: string) => void;
   redirectTo?: string;
   stayOnPage?: boolean;
+  onCancel?: () => void;
 }
 
 function slugify(value: string) {
@@ -43,12 +45,13 @@ function slugify(value: string) {
     .slice(0, 48);
 }
 
-export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnPage = false }: ClientFormProps) {
+export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnPage = false, onCancel }: ClientFormProps) {
   const { t } = useT();
   const router = useRouter();
   const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
   const [generatingSlug, setGeneratingSlug] = useState(false);
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
   const [form, setForm] = useState({
     clientNumber: defaultValues?.clientNumber ?? "",
     name: defaultValues?.name ?? "",
@@ -60,16 +63,21 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
     tags: defaultValues?.tags?.join(", ") ?? "",
     internalNotes: defaultValues?.internalNotes ?? "",
     portalSlug: defaultValues?.portalSlug ?? "",
-    portalEnabled: defaultValues?.portalEnabled ?? mode === "create",
+    portalEnabled: defaultValues?.portalEnabled ?? false,
   });
 
   async function handleSave() {
     if (loading) return;
+    const name = form.name.trim();
+    if (!name) {
+      toast.error(t("Nama klien wajib diisi", "Client name is required"));
+      return;
+    }
     setLoading(true);
     try {
       const data = {
         clientNumber: form.clientNumber || undefined,
-        name: form.name,
+        name,
         companyName: form.companyName || undefined,
         email: form.email || undefined,
         phone: form.phone || undefined,
@@ -153,6 +161,29 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
     } finally {
       setGeneratingSlug(false);
     }
+  }
+
+  if (mode === "create") {
+    return (
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-3">
+          <div className="space-y-1"><Label htmlFor="name" className="text-sm font-medium">{t("Nama klien *", "Client name *")}</Label><Input id="name" autoFocus required value={form.name} onChange={(e) => set("name", e.target.value)} placeholder={t("Nama klien", "Client name")} className="h-10 text-sm" /></div>
+          <div className="space-y-1"><Label htmlFor="companyName" className="text-sm font-medium">{t("Perusahaan", "Company")}</Label><Input id="companyName" value={form.companyName} onChange={(e) => set("companyName", e.target.value)} placeholder={t("Nama perusahaan", "Company name")} className="h-10 text-sm" /></div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="space-y-1"><Label htmlFor="email" className="text-sm font-medium">Email</Label><Input id="email" type="email" value={form.email} onChange={(e) => set("email", e.target.value)} placeholder="client@example.com" className="h-10 text-sm" /></div>
+            <div className="space-y-1"><Label htmlFor="phone" className="text-sm font-medium">{t("Telepon", "Phone")}</Label><Input id="phone" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+62..." className="h-10 text-sm" /></div>
+          </div>
+        </div>
+        <button type="button" aria-expanded={showMoreDetails} onClick={() => setShowMoreDetails((open) => !open)} className="flex w-full items-center justify-between border-t py-3 text-sm font-medium text-primary">{t("Detail lainnya", "More details")}<ChevronDown className={`h-4 w-4 transition-transform ${showMoreDetails ? "rotate-180" : ""}`} /></button>
+        {showMoreDetails && <div className="space-y-3 rounded-lg bg-muted/30 p-3">
+          <div className="space-y-1"><Label htmlFor="clientNumber" className="text-xs font-medium">Custom Client ID</Label><Input id="clientNumber" value={form.clientNumber} onChange={(e) => set("clientNumber", e.target.value)} placeholder={t("Otomatis jika kosong", "Auto-generated if empty")} className="h-9 text-sm" maxLength={50} /><p className="text-[11px] text-muted-foreground">{t("Kosongkan untuk membuat ID otomatis.", "Leave empty to generate automatically.")}</p></div>
+          <div className="grid gap-3 sm:grid-cols-2"><div className="space-y-1"><Label htmlFor="website" className="text-xs font-medium">Website</Label><Input id="website" value={form.website} onChange={(e) => set("website", e.target.value)} placeholder="https://..." className="h-9 text-sm" /></div><div className="space-y-1"><Label htmlFor="tags" className="text-xs font-medium">{t("Tag", "Tags")}</Label><Input id="tags" value={form.tags} onChange={(e) => set("tags", e.target.value)} placeholder="web, branding" className="h-9 text-sm" /></div></div>
+          <div className="space-y-1"><Label htmlFor="address" className="text-xs font-medium">{t("Alamat", "Address")}</Label><Textarea id="address" value={form.address} onChange={(e) => set("address", e.target.value)} placeholder={t("Alamat lengkap", "Full address")} rows={2} className="min-h-16 resize-y text-sm" /></div>
+          <div className="space-y-1"><Label htmlFor="internalNotes" className="text-xs font-medium">{t("Catatan internal", "Internal notes")}</Label><Textarea id="internalNotes" value={form.internalNotes} onChange={(e) => set("internalNotes", e.target.value)} placeholder={t("Preferensi klien, jadwal report, dll.", "Client preferences, reporting schedule, etc.")} rows={3} className="min-h-20 resize-y text-sm" /></div>
+        </div>}
+        <div className="sticky bottom-0 -mx-1 flex justify-end gap-2 border-t bg-background/95 px-1 pt-3 backdrop-blur"><Button type="button" variant="outline" size="sm" onClick={onCancel}>{t("Batal", "Cancel")}</Button><LoadingButton type="submit" loading={loading} loadingText={t("Menyimpan...", "Saving...")} className="min-w-36" size="sm">{t("Buat Klien", "Create Client")}</LoadingButton></div>
+      </form>
+    );
   }
 
   return (
@@ -299,24 +330,14 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
                 </Button>
               </div>
             </div>
-            {mode === "create" && (
-              <label className="flex items-center gap-2 text-xs font-medium pt-1 cursor-pointer">
-                <input
-                  type="checkbox"
-                  className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
-                  checked={form.portalEnabled}
-                  onChange={(e) => set("portalEnabled", e.target.checked)}
-                />
-                {t("Aktifkan portal sekarang", "Enable portal now")}
-              </label>
-            )}
+
           </div>
         </div>
       </div>
 
       <div className="sticky bottom-0 -mx-1 flex justify-end gap-2 border-t bg-background/95 px-1 pt-3 backdrop-blur supports-[backdrop-filter]:bg-background/80">
         <LoadingButton type="submit" loading={loading} loadingText={t("Menyimpan...", "Saving...")} className="w-full sm:w-auto sm:min-w-36" size="sm">
-          {mode === "create" ? t("Buat Klien", "Create Client") : t("Simpan Perubahan", "Save Changes")}
+          {t("Simpan Perubahan", "Save Changes")}
         </LoadingButton>
       </div>
     </form>
