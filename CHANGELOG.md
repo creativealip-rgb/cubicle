@@ -21,6 +21,16 @@
 
 # Changelog
 
+## 2026-09-08 — Invoice, Recurring Invoice, and Weekly Time UX
+
+- Added searchable Client selection, discount, Tax/Admin fee options, live totals, safer logs, and stale-action recovery to Invoice creation.
+- Upgraded Recurring Invoice with searchable dependent Client/Project pickers, multiple line items, currency allowlist, discount/charge/due-day persistence, schedule validation, and compact actions.
+- Added additive migration `0094_recurring_invoice_financials.sql`; existing recurring rules retain safe defaults.
+- Kept Weekly Time usable when empty with five draft rows and grouped Project/Task pickers.
+- Matched My Hours desktop proportions: Project 280px, Task 220px, day columns 72px, Total 80px.
+- Release evidence: `docs/operations/evidence/invoice-recurring-weekly-ux-release-2026-09-08.md`.
+
+
 ## 2026-09-07 — Password + Email OTP and Account Recovery
 
 - Added password-first login with pre-session email OTP and trusted devices.
