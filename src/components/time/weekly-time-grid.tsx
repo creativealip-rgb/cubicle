@@ -7,15 +7,47 @@ import { setWeeklyTimeCell } from "@/lib/actions/time";
 import { buildWeeklyGrid, formatDurationInput, getWeekDates, parseDurationInput, type WeeklyGridEntry } from "@/lib/weekly-time-grid";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Plus, Copy, Pencil, Clock } from "lucide-react";
-import { EmptyState } from "@/components/empty-state";
+import { Plus, Copy, Pencil, ChevronDown } from "lucide-react";
 import { Timesheet } from "@/components/time/timesheet";
 import { localDateIso, weekStartDate } from "@/lib/effective-work-date";
 import { useT } from "@/lib/i18n-client";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 
 type _ProjectOption = { id: string; name: string };
 type _TaskOption = { id: string; title: string; projectId: string };
 type AddedRow = { projectId: string; taskId: string };
+type ProjectOption = { id: string; name: string; customerRef?: string | null };
+type TaskOption = { id: string; title: string; projectId: string | null; projectRef?: string | null };
+const MIN_WEEKLY_ROWS = 5;
+
+function WeeklyDraftRow({ index, dates, projects, tasks, clients, canWrite, onSaved }: { index: number; dates: Date[]; projects: ProjectOption[]; tasks: TaskOption[]; clients: Array<{ id: string; name: string }>; canWrite: boolean; onSaved: () => void }) {
+  const { t } = useT();
+  const [projectId, setProjectId] = useState("");
+  const [taskId, setTaskId] = useState("");
+  const [projectSearch, setProjectSearch] = useState("");
+  const [taskSearch, setTaskSearch] = useState("");
+  const [projectOpen, setProjectOpen] = useState(false);
+  const [taskOpen, setTaskOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const groupedProjects = useMemo(() => {
+    const term = projectSearch.toLocaleLowerCase().trim();
+    const map = new Map<string, { id: string; name: string; projects: ProjectOption[] }>();
+    for (const project of projects) {
+      const client = clients.find((item) => item.id === project.customerRef);
+      const clientName = client?.name ?? t("Tanpa Klien", "No client");
+      if (term && !project.name.toLocaleLowerCase().includes(term) && !clientName.toLocaleLowerCase().includes(term)) continue;
+      const id = project.customerRef ?? "";
+      const group = map.get(id) ?? { id, name: clientName, projects: [] };
+      group.projects.push(project); map.set(id, group);
+    }
+    return [...map.values()].sort((a, b) => !a.id ? -1 : !b.id ? 1 : a.name.localeCompare(b.name)).map((group) => ({ ...group, projects: group.projects.sort((a, b) => a.name.localeCompare(b.name)) }));
+  }, [clients, projectSearch, projects, t]);
+  const availableTasks = tasks.filter((task) => (task.projectId ?? task.projectRef) === projectId).filter((task) => task.title.toLocaleLowerCase().includes(taskSearch.toLocaleLowerCase().trim())).sort((a, b) => a.title.localeCompare(b.title));
+  const projectPicker = <Popover open={projectOpen} onOpenChange={setProjectOpen}><PopoverAnchor asChild><div className="relative"><Input aria-label={`${t("Proyek", "Project")} ${index + 1}`} value={projectSearch} placeholder={t("Cari proyek / klien", "Search project / client")} onChange={(event) => { setProjectSearch(event.target.value); setProjectOpen(true); }} onClick={() => setProjectOpen((open) => !open)} className="h-9 pr-9 text-sm"/><button type="button" aria-label={t("Buka daftar proyek", "Toggle project list")} onClick={() => setProjectOpen((open) => !open)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"><ChevronDown className={`h-4 w-4 transition-transform ${projectOpen ? "rotate-180" : ""}`}/></button></div></PopoverAnchor><PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-1"><div className="max-h-60 overflow-y-auto">{groupedProjects.map((group) => <div key={group.id || "none"} className="py-1"><p className="px-3 py-1 text-xs font-semibold">{group.name}</p>{group.projects.map((project) => <button key={project.id} type="button" className="min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => { setProjectId(project.id); setProjectSearch(project.name); setTaskId(""); setTaskSearch(""); setProjectOpen(false); }}>{project.name}</button>)}</div>)}</div></PopoverContent></Popover>;
+  const taskPicker = <Popover open={taskOpen} onOpenChange={setTaskOpen}><PopoverAnchor asChild><div className="relative"><Input aria-label={`${t("Tugas", "Task")} ${index + 1}`} value={taskSearch} placeholder={projectId ? t("Cari tugas", "Search task") : t("Pilih proyek dulu", "Select project first")} onChange={(event) => { setTaskSearch(event.target.value); setTaskOpen(true); }} onClick={() => setTaskOpen((open) => !open)} className="h-9 pr-9 text-sm"/><button type="button" aria-label={t("Buka daftar tugas", "Toggle task list")} onClick={() => setTaskOpen((open) => !open)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"><ChevronDown className={`h-4 w-4 transition-transform ${taskOpen ? "rotate-180" : ""}`}/></button></div></PopoverAnchor><PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-1">{!projectId ? <p className="p-3 text-sm text-muted-foreground">{t("Pilih proyek terlebih dahulu", "Please select a project first")}</p> : availableTasks.length ? availableTasks.map((task) => <button key={task.id} type="button" className="min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => { setTaskId(task.id); setTaskSearch(task.title); setTaskOpen(false); }}>{task.title}</button>) : <p className="p-3 text-sm text-muted-foreground">{t("Tugas tidak ditemukan", "No tasks found")}</p>}</PopoverContent></Popover>;
+  const save = (date: Date, raw: string) => { if (!projectId || !taskId || !raw.trim()) return; let totalMinutes: number; try { totalMinutes = parseDurationInput(raw); } catch { toast.error(t("Durasi tidak valid", "Invalid duration")); return; } if (!totalMinutes) return; startTransition(async () => { try { await setWeeklyTimeCell({ projectId, taskId, date: date.toISOString().slice(0, 10), totalMinutes }); onSaved(); } catch (error) { toast.error(error instanceof Error ? error.message : t("Gagal menyimpan waktu", "Failed to save time")); } }); };
+  return <><div className="hidden grid-cols-[minmax(150px,1fr)_minmax(150px,1fr)_repeat(7,minmax(76px,.65fr))_70px] items-center gap-1 border-b py-2 lg:grid">{projectPicker}{taskPicker}{dates.map((date) => <Input key={date.toISOString()} placeholder="HH:MM" disabled={!canWrite || pending || !projectId || !taskId} className="h-9 text-center text-xs" onBlur={(event) => save(date, event.target.value)}/>)}<strong className="text-center text-sm">00:00</strong></div><div className="space-y-3 rounded-lg border p-3 lg:hidden"><div className="grid gap-2 sm:grid-cols-2">{projectPicker}{taskPicker}</div><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{dates.map((date) => <label key={date.toISOString()} className="text-xs text-muted-foreground"><span className="mb-1 block">{date.toLocaleDateString(undefined,{weekday:"short",day:"numeric",timeZone:"UTC"})}</span><Input placeholder="HH:MM" disabled={!canWrite || pending || !projectId || !taskId} className="h-9 text-center text-xs" onBlur={(event) => save(date,event.target.value)}/></label>)}</div></div></>;
+}
 
 function key(projectId: string, taskId: string | null) {
   return `${projectId}:${taskId ?? "task"}`;
@@ -171,14 +203,19 @@ export function WeeklyTimeGrid({
     <section className="rounded-lg border bg-card">
       <div className="p-3">
         {!rows.length ? (
-          <EmptyState
-            icon={Clock}
-            title={t("Belum ada baris minggu ini", "No rows for this week yet")}
-            description={t(
-              "Tambah Project/Task baru di atas atau salin struktur baris dari minggu lalu untuk mulai mengisi jam kerja mingguan.",
-              "Add a Project/Task above or copy last week's row structure to start logging weekly hours.",
-            )}
-          />
+          <>
+            <div className="hidden overflow-x-auto lg:block">
+              <div className="min-w-[1060px]">
+                <div className="grid grid-cols-[minmax(150px,1fr)_minmax(150px,1fr)_repeat(7,minmax(76px,.65fr))_70px] gap-1 border-b pb-2 text-center text-xs font-medium text-muted-foreground">
+                  <span className="text-left">{t("Proyek", "Project")}</span><span className="text-left">{t("Tugas", "Task")}</span>
+                  {dates.map((date) => <span key={date.toISOString()}>{date.toLocaleDateString(locale, { weekday: "short", day: "numeric", timeZone: "UTC" })}</span>)}<span>{t("Total", "Total")}</span>
+                </div>
+                {Array.from({ length: MIN_WEEKLY_ROWS }, (_, index) => <WeeklyDraftRow key={index} index={index} dates={dates} projects={projects} tasks={tasks} clients={clients} canWrite={canWrite} onSaved={refresh} />)}
+                <div className="grid grid-cols-[minmax(300px,2fr)_repeat(7,minmax(76px,.65fr))_70px] items-center gap-1 bg-muted/30 py-2.5 text-xs font-semibold"><span>{t("Total Harian", "Daily Total")}</span>{dates.map((date) => <span key={date.toISOString()} className="text-center">-</span>)}<span className="text-center">00:00</span></div>
+              </div>
+            </div>
+            <div className="space-y-3 lg:hidden">{Array.from({ length: MIN_WEEKLY_ROWS }, (_, index) => <WeeklyDraftRow key={index} index={index} dates={dates} projects={projects} tasks={tasks} clients={clients} canWrite={canWrite} onSaved={refresh} />)}</div>
+          </>
         ) : (
           <>
             <div className="hidden overflow-x-auto lg:block">

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
-import { Plus, Loader2, Briefcase, CheckSquare, Tag as TagIcon, Clock, Calendar as CalendarIcon, Hourglass } from "lucide-react";
+import { Plus, Loader2, Briefcase, CheckSquare, Tag as TagIcon, Clock, Calendar as CalendarIcon, Hourglass, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { createManualEntry } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
@@ -210,8 +210,11 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                       setProjectSearchOpen(true);
                     }}
                     onClick={() => setProjectSearchOpen((current) => !current)}
-                    className={`h-10 pl-9 text-sm ${clientError || projectError ? "border-destructive" : ""}`}
+                    className={`h-10 pl-9 pr-9 text-sm ${clientError || projectError ? "border-destructive" : ""}`}
                   />
+                  <button type="button" aria-label={t("Buka daftar proyek", "Toggle project list")} onClick={() => setProjectSearchOpen((current) => !current)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground">
+                    <ChevronDown className={`h-4 w-4 transition-transform ${projectSearchOpen ? "rotate-180" : ""}`} />
+                  </button>
                 </div>
                 </PopoverAnchor>
                 <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
@@ -260,19 +263,23 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                     aria-label={projectId ? t("Cari tugas...", "Search task...") : t("Pilih klien & proyek dulu", "Select client & project first")}
                     placeholder={projectId ? t("Pilih/buat tugas...", "Select/create a task...") : t("Pilih klien & proyek dulu", "Select client & project first")}
                     value={taskSearch}
-                    disabled={!projectId}
+
                     onChange={(e) => {
                       const val = e.target.value;
                       setTaskSearch(val);
                       setTaskSearchOpen(true);
                     }}
                     onClick={() => projectId && setTaskSearchOpen((current) => !current)}
-                    className={`h-10 pl-9 text-sm ${taskError ? "border-destructive" : ""}`}
+                    className={`h-10 pl-9 pr-9 text-sm ${taskError ? "border-destructive" : ""}`}
                   />
+                  <button type="button" aria-label={t("Buka daftar tugas", "Toggle task list")} onClick={() => setTaskSearchOpen((current) => !current)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground">
+                    <ChevronDown className={`h-4 w-4 transition-transform ${taskSearchOpen ? "rotate-180" : ""}`} />
+                  </button>
                 </div>
                 </PopoverAnchor>
-                {projectId && <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
+                <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
                   <div className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain" onWheel={(event) => event.stopPropagation()}>
+                    {!projectId ? <p className="p-3 text-sm text-muted-foreground">{t("Pilih proyek terlebih dahulu", "Please select a project first")}</p> : <>
                     <button
                       type="button"
                       className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${taskId === "__none__" ? "bg-accent font-medium" : ""}`}
@@ -301,9 +308,9 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                           {tk.title}
                         </button>
                       ))
-                    )}
+                    )}</>}
                   </div>
-                </PopoverContent>}
+                </PopoverContent>
               </Popover>
               {taskError ? <p className="text-xs text-destructive">{t("Tugas wajib dipilih untuk proyek ini", "Task is required for this project")}</p> : null}
             </div>
