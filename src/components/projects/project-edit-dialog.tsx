@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { Button } from "@/components/ui/button";
 import { Pencil } from "lucide-react";
 import {
@@ -41,12 +41,14 @@ type ProjectEditDialogProps = {
   };
   activeProjectServiceIds: string[];
   billingModelLocked: boolean;
+  trigger?: ReactNode;
 };
 
 export function ProjectEditDialog({
   project,
   activeProjectServiceIds,
   billingModelLocked,
+  trigger,
 }: ProjectEditDialogProps) {
   const { t } = useT();
   const { refresh } = useAppTransition();
@@ -55,9 +57,9 @@ export function ProjectEditDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-1">
+        {trigger ?? <Button variant="outline" size="sm" className="gap-1">
           <Pencil className="h-3 w-3" /> {t("Ubah", "Edit")}
-        </Button>
+        </Button>}
       </DialogTrigger>
       <DialogContent className="flex max-h-[min(90dvh,800px)] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-2xl">
         <DialogHeader className="border-b px-6 py-4">

@@ -2,7 +2,7 @@
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { CheckSquare, FileText, Clock, Wallet } from "lucide-react";
+import { LayoutDashboard, CheckSquare, FileText, Clock, Wallet } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
 
 type ProjectTabsNavProps = {
@@ -12,6 +12,7 @@ type ProjectTabsNavProps = {
   timeCount: number;
   invoicesCount: number;
   showTimeTab: boolean;
+  overviewContent: React.ReactNode;
   tasksAction?: React.ReactNode;
   filesAction?: React.ReactNode;
   billingAction?: React.ReactNode;
@@ -29,6 +30,7 @@ export function ProjectTabsNav({
   timeCount,
   invoicesCount,
   showTimeTab,
+  overviewContent,
   tasksAction,
   filesAction,
   billingAction,
@@ -66,6 +68,9 @@ export function ProjectTabsNav({
     <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <TabsList className="w-auto inline-flex max-w-full justify-start overflow-x-auto rounded-xl border border-border/80 bg-muted/40 p-1">
+          <TabsTrigger value="overview" className="gap-1.5 rounded-lg text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-2xs">
+            <LayoutDashboard className="h-3.5 w-3.5 text-primary" /> Overview
+          </TabsTrigger>
           <TabsTrigger value="work" className="gap-1.5 rounded-lg text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-2xs">
             <CheckSquare className="h-3.5 w-3.5 text-primary" /> {t("Tugas", "Tasks")} ({tasksCount})
           </TabsTrigger>
@@ -78,7 +83,7 @@ export function ProjectTabsNav({
             </TabsTrigger>
           ) : null}
           <TabsTrigger value="billing" className="gap-1.5 rounded-lg text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-2xs">
-            <Wallet className="h-3.5 w-3.5 text-emerald-500" /> Invoice ({invoicesCount})
+            <Wallet className="h-3.5 w-3.5 text-emerald-500" /> {t("Invoice", "Invoices")} ({invoicesCount})
           </TabsTrigger>
         </TabsList>
 
@@ -88,6 +93,10 @@ export function ProjectTabsNav({
           </div>
         )}
       </div>
+
+      <TabsContent value="overview" className="pt-1">
+        {currentTab === "overview" ? overviewContent : null}
+      </TabsContent>
 
       <TabsContent value="work" className="pt-1">
         {currentTab === "work" ? tasksContent : null}

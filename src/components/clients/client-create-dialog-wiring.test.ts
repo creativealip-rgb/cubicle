@@ -11,7 +11,8 @@ const dialog = readFileSync("src/components/clients/client-create-dialog.tsx", "
   });
 
   it("uses the shared client form and closes after success", () => {
-    expect(dialog).toContain('<ClientForm mode="create" onSuccess={() => setOpen(false)} />');
+    expect(dialog).toContain('<ClientForm mode="create" stayOnPage={Boolean(onCreated)}');
+    expect(dialog).toContain("setOpen(false)");
     expect(dialog).toContain("DialogContent");
     expect(dialog).toContain("Tambah Klien");
   });

@@ -7,7 +7,6 @@ import { and, eq, desc, inArray } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { getProjectProgress } from "@/lib/actions/projects";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { projectStatusVariant } from "@/lib/status-badge";
@@ -20,9 +19,9 @@ import { resolveProjectTaskMode } from "@/lib/task-work-mode";
 import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
 import { resolveProjectAmount } from "@/lib/invoice-project-items";
 import { getProposedInvoiceNumber } from "@/lib/actions/invoices";
-import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
 import { ProjectTabsNav } from "@/components/projects/project-tabs-nav";
-import { ProjectEditDialog } from "@/components/projects/project-edit-dialog";
+import { ProjectOverview } from "@/components/projects/project-overview";
+import { ProjectHeaderActions } from "@/components/projects/project-header-actions";
 import { Timesheet } from "@/components/time/timesheet";
 import Link from "next/link";
 import {
@@ -57,8 +56,8 @@ export default async function ProjectDetailPage({
   const proposedInvoiceNumber = await getProposedInvoiceNumber();
   const { projectId } = await params;
   const { from: _from, tab: tabParam } = await searchParams;
-  const allowedTabs = new Set(["work", "files", "time", "billing"]);
-  const initialTab = tabParam && allowedTabs.has(tabParam) ? tabParam : "work";
+  const allowedTabs = new Set(["overview", "work", "files", "time", "billing"]);
+  const initialTab = tabParam && allowedTabs.has(tabParam) ? tabParam : "overview";
 
   try {
     await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
@@ -224,6 +223,11 @@ export default async function ProjectDetailPage({
   const activeProjectServiceIds = projectServiceRows
     .map((row) => row.serviceId)
     .filter((id): id is string => Boolean(id));
+  const trackedMinutes = projectTimeEntries.reduce((sum, entry) => sum + Number(entry.durationMinutes ?? entry.manualMinutes ?? 0), 0);
+  const billableAmount = projectTimeEntries.reduce((sum, entry) => sum + (entry.billable ? Number(entry.durationMinutes ?? entry.manualMinutes ?? 0) / 60 * Number(entry.hourlyRate ?? project.rate ?? 0) : 0), 0);
+  const invoicedAmount = projectInvoices.filter((invoice) => invoice.status !== "cancelled").reduce((sum, invoice) => sum + Number(invoice.total || 0), 0);
+  const paidAmount = projectInvoices.filter((invoice) => invoice.status === "paid").reduce((sum, invoice) => sum + Number(invoice.total || 0), 0);
+  const outstandingAmount = Math.max(0, invoicedAmount - paidAmount);
   const statusColors: Record<string, string> = {
     active: "bg-emerald-500",
     draft: "bg-slate-400",
@@ -320,21 +324,10 @@ export default async function ProjectDetailPage({
 
             {/* Action Group */}
             <div className="flex items-center gap-2 self-start sm:self-center">
-              {project.clientPortalEnabled && project.clientPortalSlug ? (
-                <Button variant="outline" size="sm" asChild>
-                  <Link href={`/client-portal/${project.clientPortalSlug}`} target="_blank">{t("Buka Portal Klien", "Open Client Portal")}</Link>
-                </Button>
-              ) : null}
-              <ProjectEditDialog
+              <ProjectHeaderActions
                 project={project}
                 activeProjectServiceIds={activeProjectServiceIds}
                 billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0}
-              />
-              <PermanentDeleteButton
-                entityType="project"
-                entityId={project.id}
-                entityName={project.name}
-                redirectTo={project.clientId ? `/app/clients/${project.clientId}?tab=projects` : "/app/projects"}
               />
             </div>
           </div>
@@ -379,6 +372,7 @@ export default async function ProjectDetailPage({
         timeCount={projectTimeEntries.length}
         invoicesCount={projectInvoices.length}
         showTimeTab={showTimeTab}
+        overviewContent={<ProjectOverview project={project} progress={progress} trackedMinutes={trackedMinutes} billableAmount={billableAmount} invoicedAmount={invoicedAmount} outstandingAmount={outstandingAmount} budgetUsed={invoicedAmount} recentTime={projectTimeEntries.slice(0, 5)} recentInvoices={projectInvoices.slice(0, 5)} recentFiles={projectFiles.slice(0, 5)} locale={locale} t={t} />}
         tasksAction={
           <TaskCreateDialog
             projectId={projectId}

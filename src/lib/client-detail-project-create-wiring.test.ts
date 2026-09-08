@@ -29,8 +29,8 @@ describe("client-scoped Project creation", () => {
     expect(dialogSource).toMatch(/setOpen\(false\)[\s\S]*refresh\(\)/);
     expect(dialogSource).not.toMatch(/router\.(?:push|replace)\(/);
     // Back link from project detail returns to the client's Projects tab
-    const projectPage = read("src/app/(app)/app/projects/[projectId]/page.tsx");
-    expect(projectPage).toContain('`/app/clients/${project.clientId}?tab=projects`');
+    const projectActions = read("src/components/projects/project-header-actions.tsx");
+    expect(projectActions).toContain('`/app/clients/${project.clientId}?tab=projects`');
     expect(clientPageSource).not.toContain('href={`?tab=projects`}');
   });
 

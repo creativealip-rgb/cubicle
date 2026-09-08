@@ -9,8 +9,7 @@ describe("detail fixture mobile surfaces", () => {
     const source = read("src/app/(app)/app/projects/[projectId]/page.tsx");
     const nav = read("src/components/projects/project-tabs-nav.tsx");
     expect(source).toContain("FolderKanban");
-    expect(source).toContain("ProjectEditDialog");
-    expect(source).toContain("PermanentDeleteButton");
+    expect(source).toContain("ProjectHeaderActions");
     expect(nav).toContain("overflow-x-auto");
   });
 
