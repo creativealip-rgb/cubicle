@@ -17,13 +17,12 @@ describe("invoice detail actions", () => {
     expect(create).not.toContain("Invoice Preview");
   });
 
-  it("wires draft-only invoice number editing", () => {
+  it("wires invoice number editing through full editor", () => {
     const page = read("src/app/(app)/app/invoices/[invoiceId]/page.tsx");
-    const form = read("src/components/invoices/invoice-meta-form.tsx");
+    const form = read("src/components/invoices/invoice-full-editor.tsx");
 
     expect(page).toContain("invoiceNumber: inv.invoiceNumber");
     expect(form).toContain('t("Nomor Invoice", "Invoice Number")');
-    expect(form).toContain('disabled={defaults.status !== "draft"}');
     expect(form).toContain("invoiceNumber: form.invoiceNumber");
   });
 
@@ -36,12 +35,12 @@ describe("invoice detail actions", () => {
     expect(share).toContain('target="_blank"');
   });
 
-  it("hides financial item mutation controls for final invoices", () => {
-    const page = read("src/app/(app)/app/invoices/[invoiceId]/page.tsx");
+  it("allows full editing across payment statuses while locking void records", () => {
+    const editor = read("src/components/invoices/invoice-full-editor.tsx");
 
-    expect(page).toContain("isInvoiceFinancialsMutable(inv.status)");
-    expect(page).toContain("Invoice final. Rincian item tidak dapat diubah.");
-    expect(page).toContain("financialsMutable ? <DeleteItemButton");
+    expect(editor).toContain('["cancelled", "archived"].includes(invoice.status)');
+    expect(editor).not.toContain('invoice.status === "paid"');
+    expect(editor).toContain("disabled={locked}");
   });
 
   it("persists an encrypted share token across refresh", () => {

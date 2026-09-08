@@ -47,6 +47,7 @@ import { assertBillingModelAllowsTimeInvoice, resolveBillingModel } from "@/lib/
 import { invoiceNumberTakenMessage, isInvoiceNumberUniqueConstraint, normalizeInvoiceNumber } from "@/lib/invoice-number";
 import { encryptSecret } from "@/lib/google-calendar";
 import { ProjectInvoiceSourceSchema, billingDateInTimezone, isFixedInvoiceBillingModel, resolveFixedSourceAmount } from "@/lib/project-invoice-sources";
+import { reconcileInvoicePaymentState } from "@/lib/invoice-payment-reconciliation";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -74,6 +75,24 @@ const createInvoiceSchema = z.object({
     unitPrice: z.number().min(0),
     sourceId: z.string().optional(),
   })).default([]),
+});
+
+const saveInvoiceEditorSchema = z.object({
+  clientId: z.string().uuid(),
+  projectId: z.string().uuid().nullable(),
+  invoiceNumber: z.string().min(1).max(100),
+  issueDate: z.string().min(1),
+  dueDate: z.string().nullable(),
+  currency: z.string().min(3).max(3),
+  discount: z.number().min(0),
+  tax: z.number().min(0),
+  notes: z.string(),
+  terms: z.string(),
+  items: z.array(z.object({
+    description: z.string().trim().min(1),
+    quantity: z.number().positive(),
+    unitPrice: z.number().min(0),
+  })),
 });
 
 const updateInvoiceSchema = z.object({
@@ -146,6 +165,70 @@ async function assertInvoiceInWorkspace(invoiceId: string, workspaceId: string) 
 }
 
 // ─── CRUD ───
+
+const createEmptyInvoiceDraftSchema = z.object({
+  clientId: z.string().uuid(),
+  invoiceNumber: z.string().optional(),
+});
+
+export async function createEmptyInvoiceDraft(input: z.infer<typeof createEmptyInvoiceDraftSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const parsed = createEmptyInvoiceDraftSchema.parse(input);
+  const t = await getT();
+
+  const { getUserPlan, checkEntityLimit } = await import("@/lib/plan");
+  const limit = await checkEntityLimit(workspaceId, "invoices", await getUserPlan(user.id));
+  if (!limit.allowed) throw new Error(limit.reason!);
+
+  const [validClient] = await db.select({ id: clients.id }).from(clients).where(and(
+    eq(clients.id, parsed.clientId),
+    eq(clients.workspaceId, workspaceId),
+  )).limit(1);
+  if (!validClient) throw new Error(t("Klien tidak ditemukan", "Client not found"));
+
+  const result = await db.transaction(async (tx) => {
+    const [workspace] = await tx.select({
+      defaultCurrency: workspaces.defaultCurrency,
+      defaultInvoiceTerms: workspaces.defaultInvoiceTerms,
+    }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+    const [counter] = await tx.select().from(workspaceInvoiceCounters)
+      .where(eq(workspaceInvoiceCounters.workspaceId, workspaceId)).for("update").limit(1);
+    const [maxRow] = await tx.select({
+      maxNum: sql<number>`COALESCE(MAX(CAST(SUBSTRING(${invoices.invoiceNumber} FROM 'INV-([0-9]+)$') AS INTEGER)), 0)`,
+    }).from(invoices).where(eq(invoices.workspaceId, workspaceId));
+    const nextNum = Math.max(counter?.nextNumber ?? 1, Number(maxRow?.maxNum ?? 0) + 1);
+    const invoiceNumber = normalizeInvoiceNumber(parsed.invoiceNumber) ?? `INV-${String(nextNum).padStart(4, "0")}`;
+
+    if (counter) await tx.update(workspaceInvoiceCounters).set({ nextNumber: nextNum + 1, updatedAt: new Date() }).where(eq(workspaceInvoiceCounters.workspaceId, workspaceId));
+    else await tx.insert(workspaceInvoiceCounters).values({ workspaceId, nextNumber: nextNum + 1 });
+
+    try {
+      const [invoice] = await tx.insert(invoices).values({
+        workspaceId,
+        clientId: parsed.clientId,
+        invoiceNumber,
+        issueDate: new Date().toISOString().slice(0, 10),
+        currency: workspace?.defaultCurrency || "IDR",
+        subtotal: "0",
+        discount: "0",
+        tax: "0",
+        total: "0",
+        status: "draft",
+        terms: workspace?.defaultInvoiceTerms || null,
+      }).returning();
+      return invoice;
+    } catch (error) {
+      if (isInvoiceNumberUniqueConstraint(error)) throw new Error(invoiceNumberTakenMessage(invoiceNumber));
+      throw error;
+    }
+  });
+
+  await writeActivityLog(workspaceId, user.id, "created_invoice", "invoice", result.id);
+  return result;
+}
 
 export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -522,6 +605,76 @@ export async function createInvoice(input: z.infer<typeof createInvoiceSchema>) 
   if ("error" in invoice) return invoice;
   await writeActivityLog(workspaceId, user.id, "created_invoice", "invoice", invoice.id);
   return invoice;
+}
+
+export async function saveInvoiceEditor(invoiceId: string, input: z.infer<typeof saveInvoiceEditorSchema>) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const parsed = saveInvoiceEditorSchema.parse(input);
+  const invoiceNumber = normalizeInvoiceNumber(parsed.invoiceNumber);
+  if (!invoiceNumber) throw new Error("Nomor invoice wajib diisi / Invoice number is required");
+
+  const [validClient] = await db.select({ id: clients.id }).from(clients).where(and(eq(clients.id, parsed.clientId), eq(clients.workspaceId, workspaceId))).limit(1);
+  if (!validClient) throw new Error("Klien tidak ditemukan / Client not found");
+  if (parsed.projectId) {
+    const [validProject] = await db.select({ id: projects.id }).from(projects).where(and(eq(projects.id, parsed.projectId), eq(projects.workspaceId, workspaceId), eq(projects.clientId, parsed.clientId))).limit(1);
+    if (!validProject) throw new Error("Proyek tidak sesuai dengan klien / Project does not belong to client");
+  }
+
+  const subtotal = parsed.items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  const totals = calculateInvoiceTotals(subtotal, parsed.discount, parsed.tax);
+  let updated;
+  try {
+    updated = await db.transaction(async (tx) => {
+      const [locked] = await tx.select().from(invoices).where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId))).for("update").limit(1);
+      if (!locked) throw new Error("Invoice tidak ditemukan / Invoice not found");
+      if (["cancelled", "archived"].includes(locked.status)) throw new Error("Invoice yang dibatalkan atau diarsipkan tidak dapat diedit / Cancelled or archived invoice cannot be edited");
+
+      const [sourceItem] = await tx.select({ id: invoiceItems.id }).from(invoiceItems).where(and(eq(invoiceItems.invoiceId, invoiceId), or(eq(invoiceItems.sourceType, "time_entry"), eq(invoiceItems.sourceType, "project")))).limit(1);
+      if (sourceItem && parsed.items.length) {
+        const currentItems = await tx.select({ description: invoiceItems.description, quantity: invoiceItems.quantity, unitPrice: invoiceItems.unitPrice }).from(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
+        const unchanged = currentItems.length === parsed.items.length && currentItems.every((item, index) => item.description === parsed.items[index]?.description && Number(item.quantity) === parsed.items[index]?.quantity && Number(item.unitPrice) === parsed.items[index]?.unitPrice);
+        if (!unchanged) throw new Error("Item dari proyek atau time entry harus dikelola melalui sumber tagihan / Project or time-entry items must be managed from billing source");
+      }
+
+      const [paidResult] = await tx.select({ total: sql<string>`coalesce(sum(${payments.amount}), '0')` }).from(payments).where(eq(payments.invoiceId, invoiceId));
+      const payment = reconcileInvoicePaymentState({ total: totals.total, paid: Number(paidResult?.total ?? 0), workflowStatus: locked.status });
+
+      if (!sourceItem) await tx.delete(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
+      if (!sourceItem && parsed.items.length) await tx.insert(invoiceItems).values(parsed.items.map((item) => ({
+        invoiceId,
+        description: item.description,
+        quantity: String(item.quantity),
+        unitPrice: String(item.unitPrice),
+        amount: String(item.quantity * item.unitPrice),
+        sourceType: "manual" as const,
+      })));
+      [updated] = await tx.update(invoices).set({
+        clientId: parsed.clientId,
+        projectId: parsed.projectId,
+        invoiceNumber,
+        issueDate: parsed.issueDate,
+        dueDate: parsed.dueDate || null,
+        currency: parsed.currency.toUpperCase(),
+        subtotal: String(totals.subtotal),
+        discount: String(totals.discount),
+        tax: String(totals.tax),
+        total: String(totals.total),
+        notes: parsed.notes || null,
+        terms: parsed.terms || null,
+        status: payment.status,
+        updatedAt: new Date(),
+      }).where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId))).returning();
+      return updated;
+    });
+  } catch (error) {
+    if (isInvoiceNumberUniqueConstraint(error)) throw new Error(invoiceNumberTakenMessage(invoiceNumber));
+    throw error;
+  }
+  await writeActivityLog(workspaceId, user.id, "updated_invoice", "invoice", invoiceId);
+  return updated;
 }
 
 export async function updateInvoice(invoiceId: string, input: z.infer<typeof updateInvoiceSchema>) {
@@ -1029,6 +1182,37 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
 
 // ─── Payments ───
 
+export async function markInvoiceAsPaid(invoiceId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertInvoiceInWorkspace(invoiceId, workspaceId);
+
+  const payment = await db.transaction(async (tx) => {
+    const [inv] = await tx.select().from(invoices).where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId))).for("update").limit(1);
+    if (!inv) throw new Error("Invoice tidak ditemukan / Invoice not found");
+    if (["cancelled", "archived"].includes(inv.status)) throw new Error("Invoice tidak dapat ditandai lunas / Invoice cannot be marked paid");
+    const [paidResult] = await tx.select({ total: sql<string>`coalesce(sum(${payments.amount}), '0')` }).from(payments).where(eq(payments.invoiceId, invoiceId));
+    const remaining = Number(inv.total) - Number(paidResult?.total ?? 0);
+    if (remaining < -0.005) throw new Error("Pembayaran melebihi total invoice / Payments exceed invoice total");
+    let created = null;
+    if (remaining > 0.005) {
+      [created] = await tx.insert(payments).values({
+        invoiceId,
+        amount: String(remaining),
+        paidAt: new Date().toISOString().slice(0, 10),
+        method: "manual",
+        notes: "Penandaan lunas otomatis / Automatic mark as paid",
+      }).returning();
+    }
+    await tx.update(invoices).set({ status: "paid", updatedAt: new Date() }).where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)));
+    return created;
+  });
+  await writeActivityLog(workspaceId, user.id, "marked_invoice_paid", "invoice", invoiceId, payment ? { paymentId: payment.id } : undefined);
+  return { success: true };
+}
+
 export async function recordPayment(input: z.infer<typeof recordPaymentSchema>) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
@@ -1044,6 +1228,8 @@ export async function recordPayment(input: z.infer<typeof recordPaymentSchema>) 
     const [paidResult] = await tx.select({ total: sql<string>`coalesce(sum(${payments.amount}), '0')` }).from(payments).where(eq(payments.invoiceId, parsed.invoiceId));
     assertPaymentWithinRemaining(parsed.amount, Number(inv.total), Number(paidResult?.total ?? 0));
     const [created] = await tx.insert(payments).values({ invoiceId: parsed.invoiceId, amount: String(parsed.amount), paidAt: parsed.paidAt, method: parsed.method || null, notes: parsed.notes || null }).returning();
+    const payment = reconcileInvoicePaymentState({ total: Number(inv.total), paid: Number(paidResult?.total ?? 0) + parsed.amount, workflowStatus: inv.status });
+    await tx.update(invoices).set({ status: payment.status, updatedAt: new Date() }).where(and(eq(invoices.id, parsed.invoiceId), eq(invoices.workspaceId, workspaceId)));
     return created;
   });
 

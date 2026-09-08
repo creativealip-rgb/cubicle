@@ -436,8 +436,6 @@ export default async function InvoicesPage({
           canWrite ? (
             <InvoiceCreateDialog
               clients={clientOptions}
-              projects={projectOptions.map((project) => ({ ...project, agreedAmount: 0, priorActiveFixedBilledAmount: 0, eligibleTimeEntries: [] }))}
-              baseCurrency={baseCurrency}
               proposedInvoiceNumber={await getProposedInvoiceNumber()}
             />
           ) : null

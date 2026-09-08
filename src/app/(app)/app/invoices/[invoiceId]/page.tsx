@@ -17,10 +17,10 @@ import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+
 import { ArrowLeft, Eye, Share2 } from "lucide-react";
 import { InvoiceItemManager } from "./add-item-button";
-import { DeleteItemButton } from "./delete-item-button";
+
 import { PaymentSection } from "./payment-section";
 import { ShareTokenSection } from "./share-token-section";
 import { SendInvoiceButton } from "./send-invoice-button";
@@ -28,7 +28,7 @@ import { SendReminderButton } from "./send-reminder-button";
 import { DeleteInvoiceButton } from "./delete-invoice-button";
 import { VoidInvoiceButton } from "./void-invoice-button";
 
-import { InvoiceMetaForm } from "@/components/invoices/invoice-meta-form";
+import { InvoiceFullEditor } from "@/components/invoices/invoice-full-editor";
 import { formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -36,7 +36,7 @@ import { billingTypeLabel } from "@/lib/feature-access";
 import { buildDefaultInvoiceMessage } from "@/lib/invoice-message";
 import { decryptSecret } from "@/lib/google-calendar";
 import { resolveFixedPriceInvoiceAmount } from "@/lib/invoice-project-items";
-import { isInvoiceFinancialsMutable } from "@/lib/invoice-finance-rules";
+
 import {
   buildInvoiceBackUrl,
   parseInvoiceOrigin,
@@ -123,6 +123,8 @@ export default async function InvoiceDetailPage({
     .where(eq(clients.id, inv.clientId))
     .limit(1);
 
+  const allClients = await db.select({ id: clients.id, name: clients.name }).from(clients).where(eq(clients.workspaceId, workspaceId));
+  const allProjects = await db.select({ id: projects.id, name: projects.name, clientId: projects.clientId }).from(projects).where(and(eq(projects.workspaceId, workspaceId), ne(projects.status, "cancelled"), ne(projects.status, "archived")));
   const sameClientProjects = await db.select({ id: projects.id, name: projects.name, billingType: projects.billingType, billingModel: projects.billingModel, budget: projects.budget, currency: projects.currency })
     .from(projects)
     .where(and(eq(projects.workspaceId, workspaceId), eq(projects.clientId, inv.clientId), ne(projects.status, "cancelled"), ne(projects.status, "archived")));
@@ -177,7 +179,7 @@ export default async function InvoiceDetailPage({
   }
 
   const totalPaid = pays.reduce((sum, p) => sum + Number(p.amount), 0);
-  const financialsMutable = isInvoiceFinancialsMutable(inv.status);
+
 
   const hasShareToken = inv.sharedTokenHash && !inv.sharedTokenRevokedAt;
   const shareExpired = inv.sharedTokenExpiresAt
@@ -289,195 +291,42 @@ export default async function InvoiceDetailPage({
         </div>
       </div>
 
-      {/* Info Cards */}
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+      <InvoiceFullEditor
+        invoice={{
+          id: inv.id,
+          clientId: inv.clientId,
+          projectId: inv.projectId,
+          invoiceNumber: inv.invoiceNumber,
+          issueDate: String(inv.issueDate),
+          dueDate: inv.dueDate ? String(inv.dueDate) : null,
+          currency: inv.currency,
+          discount: Number(inv.discount),
+          tax: Number(inv.tax),
+          notes: inv.notes ?? "",
+          terms: inv.terms ?? "",
+          status: inv.status,
+        }}
+        initialItems={items.map((item) => ({
+          description: item.description,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+          sourceType: item.sourceType,
+        }))}
+        clients={allClients}
+        projects={allProjects}
+        sourceActions={<InvoiceItemManager invoiceId={invoiceId} projectOptions={eligibleProjectItems} />}
+      >
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase text-muted-foreground">
-              {t("Tanggal Terbit", "Issue Date")}
-            </CardTitle>
-          </CardHeader>
+          <CardHeader><CardTitle>{t("Pembayaran", "Payments")}</CardTitle></CardHeader>
           <CardContent>
-            <p className="text-sm font-medium">
-              {formatDate(inv.issueDate)}
-            </p>
+            <PaymentSection invoiceId={invoiceId} payments={pays.map((p) => ({ ...p, paidAt: p.paidAt ? String(p.paidAt) : null, createdAt: String(p.createdAt) }))} total={Number(inv.total)} currency={inv.currency} />
           </CardContent>
         </Card>
         <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase text-muted-foreground">
-              {t("Jatuh Tempo", "Due Date")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm font-medium">
-              {formatDate(inv.dueDate)}
-            </p>
-          </CardContent>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Share2 className="h-4 w-4" /> {t("Link Berbagi Invoice", "Invoice Share Link")}</CardTitle></CardHeader>
+          <CardContent><ShareTokenSection invoiceId={invoiceId} hasToken={!!hasShareToken} isExpired={shareExpired} initialToken={existingShareToken} /></CardContent>
         </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase text-muted-foreground">
-              {t("Mata Uang", "Currency")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm font-medium">{inv.currency}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-xs uppercase text-muted-foreground">
-              {t("Total", "Total")}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-lg font-bold font-mono">
-              {formatMoney(inv.total, inv.currency)}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Items */}
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{t("Rincian Item", "Line Items")}</CardTitle>
-          {financialsMutable ? (
-            <InvoiceItemManager invoiceId={invoiceId} projectOptions={eligibleProjectItems} />
-          ) : (
-            <span className="text-xs font-normal text-muted-foreground">
-              {t("Invoice final. Rincian item tidak dapat diubah.", "Final invoice. Line items cannot be changed.")}
-            </span>
-          )}
-        </CardHeader>
-        <CardContent>
-          {items.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-6 text-center">
-              {t("Belum ada item. Tambahkan item ke invoice ini.", "No items yet. Add items to this invoice.")}
-            </p>
-          ) : (
-            <div className="space-y-0">
-              <div className="flex items-center gap-2 py-2 text-xs uppercase text-muted-foreground border-b sm:gap-4">
-                <div className="min-w-0 flex-1">{t("Deskripsi", "Description")}</div>
-                <div className="w-14 text-right sm:w-20">{t("Qty", "Qty")}</div>
-                <div className="w-24 text-right sm:w-32">{t("Tarif", "Rate")}</div>
-                <div className="w-24 text-right sm:w-32">{t("Jumlah", "Amount")}</div>
-                <div className="w-6 sm:w-10" />
-              </div>
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="flex items-center gap-2 py-2 border-b last:border-0 text-sm sm:gap-4"
-                >
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate">{item.description}</p>
-                    {item.sourceType === "time_entry" && (
-                      <span className="text-xs text-muted-foreground">
-                        {t("(dari catatan waktu)", "(from time entry)")}
-                      </span>
-                    )}
-                  </div>
-                  <div className="w-14 text-right sm:w-20">
-                    {Number(item.quantity).toFixed(2)}
-                  </div>
-                  <div className="w-24 text-right font-mono whitespace-nowrap sm:w-32">
-                    {formatMoney(item.unitPrice, inv.currency)}
-                  </div>
-                  <div className="w-24 text-right font-mono font-medium whitespace-nowrap sm:w-32">
-                    {formatMoney(item.amount, inv.currency)}
-                  </div>
-                  <div className="w-6 text-right sm:w-10">
-                    {financialsMutable ? <DeleteItemButton itemId={item.id} /> : null}
-                  </div>
-                </div>
-              ))}
-
-              <Separator className="my-2" />
-              <div className="space-y-1 pt-2">
-                <div className="flex justify-end gap-8 text-sm">
-                  <span className="text-muted-foreground">{t("Subtotal", "Subtotal")}</span>
-                  <span className="font-mono w-32 text-right whitespace-nowrap">
-                    {formatMoney(inv.subtotal, inv.currency)}
-                  </span>
-                </div>
-                <div className="flex justify-end gap-8 text-sm">
-                  <span className="text-muted-foreground">{t("Pajak", "Tax")}</span>
-                  <span className="font-mono w-32 text-right whitespace-nowrap">
-                    {formatMoney(inv.tax, inv.currency)}
-                  </span>
-                </div>
-                <div className="flex justify-end gap-8 text-base font-bold pt-1">
-                  <span>{t("Total", "Total")}</span>
-                  <span className="font-mono w-32 text-right whitespace-nowrap">
-                    {formatMoney(inv.total, inv.currency)}
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-        </CardContent>
-      </Card>
-
-      {/* Edit meta */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("Edit Invoice", "Edit Invoice")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <InvoiceMetaForm
-            invoiceId={invoiceId}
-            defaults={{
-              invoiceNumber: inv.invoiceNumber,
-              status: inv.status,
-              issueDate: String(inv.issueDate),
-              dueDate: inv.dueDate ? String(inv.dueDate) : null,
-              currency: inv.currency,
-              tax: inv.tax,
-              discount: inv.discount,
-              notes: inv.notes,
-              terms: inv.terms,
-            }}
-            project={invoiceProject}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Pembayaran */}
-      <Card>
-        <CardHeader>
-          <CardTitle>{t("Pembayaran", "Payments")}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <PaymentSection
-            invoiceId={invoiceId}
-            payments={pays.map((p) => ({
-              ...p,
-              paidAt: p.paidAt ? String(p.paidAt) : null,
-              createdAt: String(p.createdAt),
-            }))}
-            total={Number(inv.total)}
-            currency={inv.currency}
-          />
-        </CardContent>
-      </Card>
-
-      {/* Share Token */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Share2 className="h-4 w-4" /> {t("Link Berbagi Invoice", "Invoice Share Link")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <ShareTokenSection
-            invoiceId={invoiceId}
-            hasToken={!!hasShareToken}
-            isExpired={shareExpired}
-            initialToken={existingShareToken}
-          />
-        </CardContent>
-      </Card>
+      </InvoiceFullEditor>
     </div>
   );
 }

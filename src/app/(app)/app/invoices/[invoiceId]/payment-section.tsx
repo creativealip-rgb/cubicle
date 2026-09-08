@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { toast } from "sonner";
 import { useAppTransition } from "@/lib/transition-provider";
-import { recordPayment } from "@/lib/actions/invoices";
+import { markInvoiceAsPaid, recordPayment } from "@/lib/actions/invoices";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
@@ -52,6 +52,7 @@ export function PaymentSection({
   const { t, locale } = useT();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [markingPaid, setMarkingPaid] = useState(false);
   const [form, setForm] = useState({
     amount: "",
     paidAt: new Date().toISOString().split("T")[0],
@@ -90,7 +91,18 @@ export function PaymentSection({
     }
   }
 
-
+  async function handleMarkPaid() {
+    setMarkingPaid(true);
+    try {
+      await markInvoiceAsPaid(invoiceId);
+      toast.success(t("Invoice ditandai lunas", "Invoice marked as paid"));
+      refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal", "Failed"));
+    } finally {
+      setMarkingPaid(false);
+    }
+  }
 
   return (
     <div className="space-y-4">
@@ -126,10 +138,14 @@ export function PaymentSection({
         </div>
       )}
 
+      <div className="flex flex-wrap gap-2">
+        <LoadingButton size="sm" onClick={handleMarkPaid} loading={markingPaid} disabled={fullyPaid || total <= 0}>
+          {t("Tandai Lunas", "Mark as Paid")}
+        </LoadingButton>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogTrigger asChild>
           <Button variant="outline" size="sm" className="gap-1" disabled={fullyPaid}>
-            <Plus className="h-3.5 w-3.5" /> {t("Catat Pembayaran", "Record Payment")}
+            <Plus className="h-3.5 w-3.5" /> {t("Catat Pembayaran Sebagian", "Record Partial Payment")}
           </Button>
         </DialogTrigger>
         <DialogContent>
@@ -200,9 +216,10 @@ export function PaymentSection({
           </form>
         </DialogContent>
       </Dialog>
+      </div>
       {fullyPaid && (
         <p className="text-xs text-amber-700">
-          {t("Pembayaran sudah penuh. Ubah status invoice menjadi Lunas secara manual jika diperlukan.", "Payment is complete. Mark the invoice as Paid manually if needed.")}
+          {t("Pembayaran sudah lunas.", "Payment is complete.")}
         </p>
       )}
     </div>
