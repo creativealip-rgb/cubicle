@@ -176,7 +176,7 @@ export default async function JournalPage({
 
       {/* Modern Status Tabs Track (Matching Productivity / Notes style) */}
       <nav
-        className="flex gap-1 overflow-x-auto rounded-2xl bg-muted/60 p-1"
+        className="flex h-auto min-h-9 gap-1 overflow-x-auto rounded-xl bg-muted/60 p-1"
         aria-label={t("Navigasi status jurnal", "Journal status navigation")}
       >
         {[
@@ -187,7 +187,7 @@ export default async function JournalPage({
             key={tabItem.id}
             size="sm"
             variant="ghost"
-            className={`shrink-0 rounded-xl px-4 ${
+            className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold sm:text-sm ${
               tab === tabItem.id
                 ? "bg-background text-foreground shadow-sm hover:bg-background"
                 : "text-muted-foreground"

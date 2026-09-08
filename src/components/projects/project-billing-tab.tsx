@@ -35,7 +35,7 @@ export async function ProjectBillingTab({
       ) : null}
       <div className="overflow-hidden rounded-2xl border border-border/80 bg-card divide-y divide-border shadow-xs">
         {invoices.length === 0 ? (
-          <EmptyState icon={FileSpreadsheet} title={t("Belum ada invoice", "No invoices yet")} description={t("Buat invoice pertama untuk mulai menagih proyek ini.", "Create the first invoice to start billing this project.")} />
+          <EmptyState embedded icon={FileSpreadsheet} title={t("Belum ada invoice", "No invoices yet")} description={t("Buat invoice pertama untuk mulai menagih proyek ini.", "Create the first invoice to start billing this project.")} />
         ) : (
           invoices.map((invoice) => {
             const statusInfo = invoiceStatusVariant(invoice.status, lang);

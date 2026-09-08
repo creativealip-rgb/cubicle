@@ -14,11 +14,12 @@ interface EmptyStateProps {
   };
   /** Custom action node (e.g. a dialog trigger) rendered in place of the link button. */
   actionNode?: ReactNode;
+  embedded?: boolean;
 }
 
-export function EmptyState({ icon: Icon, title, description, action, actionNode }: EmptyStateProps) {
+export function EmptyState({ icon: Icon, title, description, action, actionNode, embedded = false }: EmptyStateProps) {
   return (
-    <div className="flex min-h-56 flex-col items-center justify-center rounded-xl border border-border/70 bg-card p-6 py-12 text-center shadow-xs">
+    <div className={`flex min-h-56 flex-col items-center justify-center p-6 py-12 text-center ${embedded ? "" : "rounded-xl border border-border/70 bg-card shadow-xs"}`}>
       <div className="mb-3.5 flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
         <Icon className="h-6 w-6" />
       </div>

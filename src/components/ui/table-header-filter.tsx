@@ -24,7 +24,7 @@ export function TableHeaderFilter({ label, queryKey, value, options, basePath, c
     router.push(`${basePath}${params.size ? `?${params}` : ""}`);
   }
   return <DropdownMenu>
-    <DropdownMenuTrigger className={cn("flex items-center gap-1 rounded-sm font-medium hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", current !== "all" && "text-violet-700", className)}>
+    <DropdownMenuTrigger className={cn("flex items-center gap-1 rounded-sm font-semibold hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring", current !== "all" && "text-violet-700", className)}>
       {label}<ChevronDown className="h-3 w-3" />
       {current !== "all" && <span className="h-1.5 w-1.5 rounded-full bg-violet-600" />}
     </DropdownMenuTrigger>

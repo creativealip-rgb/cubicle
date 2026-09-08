@@ -41,7 +41,7 @@ export function ProjectTaskWorkspace({ projectId, mode, workflowTasks, reusableT
   const titleText = mode === "reusable" ? t("Tugas Berulang", "Recurring Tasks") : t("Tugas Workflow", "Workflow Tasks");
   const isEmpty = mode === "workflow" ? visibleWorkflow.length === 0 : visibleReusable.length === 0;
 
-  if (projectId && isEmpty) return <EmptyState icon={ListChecks} title={t("Belum ada tugas", "No tasks yet")} description={t("Buat tugas pertama untuk mulai mengatur pekerjaan proyek ini.", "Create the first task to start organizing this project.")} />;
+  if (projectId && isEmpty) return <EmptyState embedded icon={ListChecks} title={t("Belum ada tugas", "No tasks yet")} description={t("Buat tugas pertama untuk mulai mengatur pekerjaan proyek ini.", "Create the first task to start organizing this project.")} />;
 
   return (
     <section className="space-y-4">

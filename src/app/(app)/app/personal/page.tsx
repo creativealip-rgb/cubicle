@@ -239,7 +239,7 @@ export default async function PersonalPage({
       {/* Modern Status Tabs Track (Matching Productivity style) */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <nav
-          className="flex gap-1 overflow-x-auto rounded-2xl bg-muted/60 p-1"
+          className="flex h-auto min-h-9 gap-1 overflow-x-auto rounded-xl bg-muted/60 p-1"
           aria-label={t("Navigasi status catatan", "Notes status navigation")}
         >
           {tabs.map((tabItem) => (
@@ -247,7 +247,7 @@ export default async function PersonalPage({
               key={tabItem.id}
               size="sm"
               variant="ghost"
-              className={`shrink-0 rounded-xl px-4 text-xs font-semibold ${
+              className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold sm:text-sm ${
                 tab === tabItem.id
                   ? "bg-background text-foreground shadow-sm hover:bg-background"
                   : "text-muted-foreground"
