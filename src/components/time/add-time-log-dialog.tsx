@@ -209,7 +209,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                       setProjectSearch(val);
                       setProjectSearchOpen(true);
                     }}
-                    onClick={() => setProjectSearchOpen((current) => !current)}
+                    onClick={() => setProjectSearchOpen(true)}
                     className={`h-10 pl-9 pr-9 text-sm ${clientError || projectError ? "border-destructive" : ""}`}
                   />
                   <button type="button" aria-label={t("Buka daftar proyek", "Toggle project list")} onClick={() => setProjectSearchOpen((current) => !current)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground">
@@ -269,7 +269,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                       setTaskSearch(val);
                       setTaskSearchOpen(true);
                     }}
-                    onClick={() => projectId && setTaskSearchOpen((current) => !current)}
+                    onClick={() => setTaskSearchOpen(true)}
                     className={`h-10 pl-9 pr-9 text-sm ${taskError ? "border-destructive" : ""}`}
                   />
                   <button type="button" aria-label={t("Buka daftar tugas", "Toggle task list")} onClick={() => setTaskSearchOpen((current) => !current)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground">
