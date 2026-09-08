@@ -8,9 +8,10 @@ describe("time entry reuse", () => {
     expect(action).toContain("export async function copyTimeEntry");
     expect(action).not.toContain("manualMinutes: source.durationMinutes ?? source.manualMinutes, durationMinutes:");
   });
-  it("shows restart, copy, and edit detail actions", () => {
-    expect(ui).toContain('t("Mulai lagi", "Start again")');
-    expect(ui).toContain('t("Salin", "Copy")');
-    expect(ui).toContain('t("Ubah detail", "Edit details")');
+  it("keeps timesheet rows free of redundant action buttons", () => {
+    expect(ui).not.toContain("handleReuse(entry");
+    expect(ui).not.toContain('aria-label={t("Mulai lagi", "Start again")}');
+    expect(ui).not.toContain('aria-label={t("Salin", "Copy")}');
+    expect(ui).not.toContain('aria-label={t("Ubah detail", "Edit details")}');
   });
 });

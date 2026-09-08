@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { effectiveWorkDate } from "@/lib/effective-work-date";
-import { copyTimeEntry, deleteTimeEntry, restartTimeEntry, updateTimeEntry } from "@/lib/actions/time";
+import { deleteTimeEntry, updateTimeEntry } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,9 +32,6 @@ import {
   Tag as TagIcon,
   Calendar as CalendarIcon,
   Hourglass,
-  Copy,
-  Pencil,
-  Play,
 } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
 import { allowsTimeTrackingProject } from "@/lib/billing-model";
@@ -316,16 +313,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     }
   }
 
-  async function handleReuse(entry: TimeEntry, mode: "restart" | "copy") {
-    try {
-      if (mode === "restart") await restartTimeEntry(entry.id);
-      else await copyTimeEntry(entry.id);
-      toast.success(mode === "restart" ? t("Timer dimulai lagi", "Timer started again") : t("Entri disalin", "Entry copied"));
-      refresh();
-    } catch (error) {
-      toast.error(error instanceof Error ? error.message : t("Aksi gagal", "Action failed"));
-    }
-  }
 
   function canEditEntry(entry: TimeEntry) {
     if (entry.status === "invoiced") return false;
@@ -964,19 +951,6 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                       {t("Hanya baca", "Read only")}
                     </Badge>
                   ) : null}
-                  <div className="ml-auto flex items-center rounded-md border bg-background p-0.5 shadow-sm sm:ml-1">
-                    <Button type="button" size="sm" variant="ghost" aria-label={t("Mulai lagi", "Start again")} className="min-h-9 gap-1.5 px-2 text-xs text-primary sm:px-2.5" onClick={(event) => { event.stopPropagation(); void handleReuse(entry, "restart"); }}>
-                      <Play className="h-3.5 w-3.5" /><span className="sr-only sm:not-sr-only">{t("Mulai lagi", "Start again")}</span>
-                    </Button>
-                    {canEditEntry(entry) ? <>
-                      <Button type="button" size="icon" variant="ghost" aria-label={t("Salin", "Copy")} className="min-h-9 min-w-9" onClick={(event) => { event.stopPropagation(); void handleReuse(entry, "copy"); }}>
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button type="button" size="icon" variant="ghost" aria-label={t("Ubah detail", "Edit details")} className="min-h-9 min-w-9" onClick={(event) => { event.stopPropagation(); openEdit(entry); }}>
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                    </> : null}
-                  </div>
                 </div>
               </CardContent>
             </Card>

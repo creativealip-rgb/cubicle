@@ -8,9 +8,8 @@ describe("My Hours UI polish", () => {
     expect(dialog).toContain("sm:max-w-md");
     expect(form).toContain('mode === "create" ? "grid-cols-1"');
   });
-  it("keeps time actions compact and touch friendly", () => {
-    expect(time).toContain("min-h-9");
-    expect(time).toContain("sr-only sm:not-sr-only");
-    expect(time).toContain("aria-label={t(\"Mulai lagi\", \"Start again\")}");
+  it("keeps row editing direct without redundant action toolbar", () => {
+    expect(time).toContain("onClick={() => canEditEntry(entry) && openEdit(entry)}");
+    expect(time).not.toContain("aria-label={t(\"Mulai lagi\", \"Start again\")}");
   });
 });
