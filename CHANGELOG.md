@@ -1,3 +1,15 @@
+## 2026-09-08 — Project Control Center and progressive Client creation
+
+- Added Project Overview as default detail tab with model-aware KPI, Project Details, Billing Settings, Invoice Progress or Retainer Usage, and recent records.
+- Removed duplicate header progress; empty task progress now reads `No tasks yet`.
+- Split Edit Project into focused General Info and Billing Settings dialogs while retaining one shared form, validation contract, and update action.
+- Aligned Project KPI, tab typography/icons/count badges, and operational-tab card surfaces with Client Detail conventions.
+- Added Tasks and Invoices empty states without duplicate CTAs and added Restore Project for archived records.
+- Simplified Add Client with Name-first autofocus, four default fields, optional More Details, explicit Cancel, trimmed-name validation, and portal configuration deferred to edit.
+- Verification: 385 Vitest files / 1,764 tests, ESLint, production build, health/DB, and proxy checks passed.
+- Production commits: `c2f5d9b`, `ac3bc88`, `d2565df`, `a120d11`, `3793565`, `2f4a741`, `19ba5b2`, `13312d4`; current image `cubiqlo-prod:sha-13312d4`.
+- Evidence: `docs/operations/evidence/project-control-center-release-2026-09-08.md`.
+
 ## 2026-09-08 — Client, Project, and Time UX Release
 
 - Client detail: KPI strip above tabs, business Overview, aligned recent-item footer actions, streamlined header actions, and canonical Client Portal links.
