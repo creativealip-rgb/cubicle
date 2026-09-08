@@ -1,3 +1,12 @@
+## 2026-09-08 — Client, Project, and Time UX Release
+
+- Client detail: KPI strip above tabs, business Overview, aligned recent-item footer actions, streamlined header actions, and canonical Client Portal links.
+- Client records: optional unique custom Client ID on create/edit; automatic numbering remains the empty-field fallback.
+- Time tracking: removed redundant Start again, Copy, and row Edit controls; editable rows retain direct click-to-edit behavior.
+- New Project: portaled and scrollable Client picker with toggle chevron, readable 14px options, and My Hours-style inline name-only Client creation with automatic selection.
+- Production commit `0a9ce94`; image `cubiqlo-prod:sha-0a9ce94`; 382 test files / 1,750 tests, ESLint, build, browser QA, health/DB, and proxy checks passed.
+- Release evidence: `docs/operations/evidence/client-project-time-ux-release-2026-09-08.md`.
+
 # Changelog
 
 ## 2026-09-07 — Password + Email OTP and Account Recovery
