@@ -53,7 +53,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
         projectId: p.id,
         projectName: p.name,
         clientId: p.customerRef || "",
-        clientName: client?.name || t("Tanpa Klien", "No Client"),
+        clientName: client?.name || t("Tanpa Klien", "No client"),
       };
     });
   }, [projects, clients, t]);
@@ -65,6 +65,19 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
       (opt) => opt.projectName.toLowerCase().includes(term) || opt.clientName.toLowerCase().includes(term),
     );
   }, [allProjectOptions, projectSearch]);
+
+  const groupedProjectOptions = useMemo(() => {
+    const groups = new Map<string, { clientId: string; clientName: string; options: typeof filteredProjectOptions }>();
+    for (const option of filteredProjectOptions) {
+      const key = option.clientId || "__no_client__";
+      const group = groups.get(key) ?? { clientId: option.clientId, clientName: option.clientName, options: [] };
+      group.options.push(option);
+      groups.set(key, group);
+    }
+    return [...groups.values()]
+      .sort((a, b) => a.clientId === "" ? -1 : b.clientId === "" ? 1 : a.clientName.localeCompare(b.clientName))
+      .map((group) => ({ ...group, options: group.options.sort((a, b) => a.projectName.localeCompare(b.projectName)) }));
+  }, [filteredProjectOptions]);
 
   const projectTasks = useMemo(() => tasks.filter((task) => task.projectRef === projectId), [projectId, tasks]);
 
@@ -203,26 +216,30 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                 </PopoverAnchor>
                 <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
                   <div className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain" onWheel={(event) => event.stopPropagation()}>
-                    {filteredProjectOptions.length === 0 ? (
+                    {groupedProjectOptions.length === 0 ? (
                       <p className="p-2 text-xs text-muted-foreground">{t("Klien atau proyek tidak ditemukan", "No client or project found")}</p>
                     ) : (
-                      filteredProjectOptions.map((opt) => (
-                        <button
-                          key={opt.projectId}
-                          type="button"
-                          className={`flex min-h-10 w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${projectId === opt.projectId ? "bg-accent font-medium" : ""}`}
-                          onClick={() => {
-                            setClientId(opt.clientId);
-                            setProjectId(opt.projectId);
-                            setProjectSearch(`${opt.clientName} — ${opt.projectName}`);
-                            setProjectSearchOpen(false);
-                            setTaskId("__none__");
-                            setTaskSearch("");
-                          }}
-                        >
-                          <span>{opt.projectName}</span>
-                          <span className="text-[10px] text-muted-foreground">{opt.clientName}</span>
-                        </button>
+                      groupedProjectOptions.map((group) => (
+                        <div key={group.clientId || "__no_client__"} className="py-1 first:pt-0">
+                          <p className="px-3 py-1.5 text-xs font-semibold text-foreground">{group.clientName}</p>
+                          {group.options.map((opt) => (
+                            <button
+                              key={opt.projectId}
+                              type="button"
+                              className={`flex min-h-10 w-full items-center rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${projectId === opt.projectId ? "bg-accent font-medium" : ""}`}
+                              onClick={() => {
+                                setClientId(opt.clientId);
+                                setProjectId(opt.projectId);
+                                setProjectSearch(`${opt.clientName} — ${opt.projectName}`);
+                                setProjectSearchOpen(false);
+                                setTaskId("__none__");
+                                setTaskSearch("");
+                              }}
+                            >
+                              {opt.projectName}
+                            </button>
+                          ))}
+                        </div>
                       ))
                     )}
                   </div>

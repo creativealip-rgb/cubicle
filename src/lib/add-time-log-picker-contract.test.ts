@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 
 const dialog = readFileSync("src/components/time/add-time-log-dialog.tsx", "utf8");
-const route = readFileSync("src/components/time/time-route-content.tsx", "utf8");
+
 
 describe("add time log pickers", () => {
   it("uses click-open portaled project and task pickers", () => {
@@ -19,8 +19,10 @@ describe("add time log pickers", () => {
     expect(dialog).toContain("text-sm");
   });
 
-  it("orders projects and clients newest first", () => {
-    expect(route).toContain(".orderBy(desc(clients.createdAt))");
-    expect(route).toContain(".orderBy(desc(projects.createdAt))");
+  it("groups no-client projects first, then clients and projects alphabetically", () => {
+    expect(dialog).toContain("groupedProjectOptions");
+    expect(dialog).toContain('clientId === "" ? -1');
+    expect(dialog).toContain("localeCompare");
+    expect(dialog).toContain('t("Tanpa Klien", "No client")');
   });
 });
