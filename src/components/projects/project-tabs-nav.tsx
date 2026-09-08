@@ -67,23 +67,23 @@ export function ProjectTabsNav({
   return (
     <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <TabsList className="w-auto inline-flex max-w-full justify-start overflow-x-auto rounded-xl border border-border/80 bg-muted/40 p-1">
-          <TabsTrigger value="overview" className="gap-1.5 rounded-lg text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-2xs">
-            <LayoutDashboard className="h-3.5 w-3.5 text-primary" /> Overview
+        <TabsList className="h-auto min-h-9 w-auto inline-flex max-w-full justify-start gap-1 overflow-x-auto bg-muted/60 p-1">
+          <TabsTrigger value="overview" className="gap-1.5 px-3 py-1.5 text-xs font-semibold sm:text-sm data-[state=active]:shadow-sm">
+            <LayoutDashboard className="h-3.5 w-3.5 shrink-0" /> Overview
           </TabsTrigger>
-          <TabsTrigger value="work" className="gap-1.5 rounded-lg text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-2xs">
-            <CheckSquare className="h-3.5 w-3.5 text-primary" /> {t("Tugas", "Tasks")} ({tasksCount})
+          <TabsTrigger value="work" className="gap-1.5 px-3 py-1.5 text-xs font-semibold sm:text-sm data-[state=active]:shadow-sm">
+            <CheckSquare className="h-3.5 w-3.5 shrink-0" /> {t("Tugas", "Tasks")} <span className="rounded-full bg-background px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">{tasksCount}</span>
           </TabsTrigger>
-          <TabsTrigger value="files" className="gap-1.5 rounded-lg text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-2xs">
-            <FileText className="h-3.5 w-3.5 text-blue-500" /> {t("Berkas", "Files")} ({filesCount})
+          <TabsTrigger value="files" className="gap-1.5 px-3 py-1.5 text-xs font-semibold sm:text-sm data-[state=active]:shadow-sm">
+            <FileText className="h-3.5 w-3.5 shrink-0" /> {t("Berkas", "Files")} <span className="rounded-full bg-background px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">{filesCount}</span>
           </TabsTrigger>
           {showTimeTab ? (
-            <TabsTrigger value="time" className="gap-1.5 rounded-lg text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-2xs">
-              <Clock className="h-3.5 w-3.5 text-amber-500" /> {t("Waktu", "Time")} ({timeCount})
+            <TabsTrigger value="time" className="gap-1.5 px-3 py-1.5 text-xs font-semibold sm:text-sm data-[state=active]:shadow-sm">
+              <Clock className="h-3.5 w-3.5 shrink-0" /> {t("Waktu", "Time")} <span className="rounded-full bg-background px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">{timeCount}</span>
             </TabsTrigger>
           ) : null}
-          <TabsTrigger value="billing" className="gap-1.5 rounded-lg text-xs font-semibold data-[state=active]:bg-background data-[state=active]:shadow-2xs">
-            <Wallet className="h-3.5 w-3.5 text-emerald-500" /> {t("Invoice", "Invoices")} ({invoicesCount})
+          <TabsTrigger value="billing" className="gap-1.5 px-3 py-1.5 text-xs font-semibold sm:text-sm data-[state=active]:shadow-sm">
+            <Wallet className="h-3.5 w-3.5 shrink-0" /> {t("Invoice", "Invoices")} <span className="rounded-full bg-background px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">{invoicesCount}</span>
           </TabsTrigger>
         </TabsList>
 
