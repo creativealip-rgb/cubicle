@@ -224,7 +224,12 @@ export default async function ProjectDetailPage({
     .map((row) => row.serviceId)
     .filter((id): id is string => Boolean(id));
   const trackedMinutes = projectTimeEntries.reduce((sum, entry) => sum + Number(entry.durationMinutes ?? entry.manualMinutes ?? 0), 0);
-  const billableAmount = projectTimeEntries.reduce((sum, entry) => sum + (entry.billable ? Number(entry.durationMinutes ?? entry.manualMinutes ?? 0) / 60 * Number(entry.hourlyRate ?? project.rate ?? 0) : 0), 0);
+  const hourlyBillableAmount = projectTimeEntries.reduce((sum, entry) => sum + (entry.billable ? Number(entry.durationMinutes ?? entry.manualMinutes ?? 0) / 60 * Number(entry.hourlyRate ?? project.rate ?? 0) : 0), 0);
+  const billableAmount = project.billingModel === "retainer"
+    ? Number(project.retainerFee || 0)
+    : project.billingModel === "hourly" || project.billingType === "hours"
+      ? hourlyBillableAmount
+      : Number(project.budget || 0);
   const invoicedAmount = projectInvoices.filter((invoice) => invoice.status !== "cancelled").reduce((sum, invoice) => sum + Number(invoice.total || 0), 0);
   const paidAmount = projectInvoices.filter((invoice) => invoice.status === "paid").reduce((sum, invoice) => sum + Number(invoice.total || 0), 0);
   const outstandingAmount = Math.max(0, invoicedAmount - paidAmount);
