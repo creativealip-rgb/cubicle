@@ -61,7 +61,7 @@ export function InvoiceCreateDialog({ clients, proposedInvoiceNumber }: Props) {
               <button type="button" aria-label={t("Buka daftar klien", "Open client list")} onClick={() => setClientSearchOpen((value) => !value)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"><ChevronDown className="h-4 w-4" /></button>
             </div></PopoverAnchor>
             <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-1" onOpenAutoFocus={(event) => event.preventDefault()}>
-              <div className="max-h-60 overflow-y-auto">{filteredClients.length ? filteredClients.map((client) => <button key={client.id} type="button" className="flex min-h-10 w-full items-center rounded-md px-3 text-left text-sm hover:bg-muted" onClick={() => { setClientId(client.id); setClientSearch(""); setClientSearchOpen(false); }}>{client.companyName || client.name}</button>) : <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t("Klien tidak ditemukan", "No clients found")}</p>}</div>
+              <div className="max-h-60 overflow-y-auto">{filteredClients.length ? filteredClients.map((client) => <button key={client.id} type="button" role="option" aria-selected={client.id === clientId} className="flex min-h-10 w-full items-center rounded-md px-3 text-left text-sm hover:bg-muted" onClick={() => { setClientId(client.id); setClientSearch(""); setClientSearchOpen(false); }}>{client.companyName || client.name}</button>) : <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t("Klien tidak ditemukan", "No clients found")}</p>}</div>
             </PopoverContent>
           </Popover>
         </div>
