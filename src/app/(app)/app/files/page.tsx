@@ -228,7 +228,7 @@ export default async function FilesPage({
         canWrite={canWrite}
       >
         <FileList
-          files={(!clientId && !projectId && !folderId) ? [] : finalFiles}
+          files={finalFiles}
           folders={folderGridItems}
           canWrite={canWrite}
           lang={lang}
