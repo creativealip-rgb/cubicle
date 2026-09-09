@@ -11,8 +11,9 @@ import {
   clients,
   projects,
   packages,
+  timeEntries,
 } from "@/db/schema";
-import { eq, and, ne, sql } from "drizzle-orm";
+import { eq, and, ne, sql, notExists } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -137,6 +138,24 @@ export default async function InvoiceDetailPage({
     const amount = resolveFixedPriceInvoiceAmount(Number(project.budget ?? 0), Number(prior?.amount ?? 0));
     if (amount > 0 && !items.some((item) => item.sourceType === "project" && item.sourceId === project.id)) eligibleProjectItems.push({ id: project.id, name: project.name, amount, currency: project.currency });
   }
+  const eligibleTimeEntries = await db.select({
+    id: timeEntries.id,
+    description: timeEntries.description,
+    durationMinutes: timeEntries.durationMinutes,
+    hourlyRate: timeEntries.hourlyRate,
+    startTime: timeEntries.startTime,
+    status: timeEntries.status,
+    effectiveRate: sql<number>`coalesce(nullif(${timeEntries.hourlyRate}, 0), nullif(${projects.rate}, 0), 0)`,
+    projectName: projects.name,
+  }).from(timeEntries).innerJoin(projects, eq(projects.id, timeEntries.projectId)).where(and(
+    eq(timeEntries.workspaceId, workspaceId),
+    eq(timeEntries.clientId, inv.clientId),
+    ...(inv.projectId ? [eq(timeEntries.projectId, inv.projectId)] : []),
+    eq(timeEntries.status, "approved"),
+    eq(timeEntries.billable, true),
+    sql`coalesce(${timeEntries.durationMinutes}, ${timeEntries.manualMinutes}, 0) > 0`,
+    notExists(db.select({ id: invoiceItems.id }).from(invoiceItems).where(and(eq(invoiceItems.sourceType, "time_entry"), eq(invoiceItems.sourceId, timeEntries.id)))),
+  ));
 
   // Project + package context (invoice created with a project)
   let invoiceProject: {
@@ -315,7 +334,7 @@ export default async function InvoiceDetailPage({
         }))}
         clients={allClients}
         projects={allProjects}
-        sourceActions={<InvoiceItemManager invoiceId={invoiceId} projectOptions={eligibleProjectItems} />}
+        sourceActions={<InvoiceItemManager invoiceId={invoiceId} projectOptions={eligibleProjectItems} timeEntries={eligibleTimeEntries} currency={inv.currency} />}
       >
         <Card>
           <CardHeader><CardTitle>{t("Pembayaran", "Payments")}</CardTitle></CardHeader>

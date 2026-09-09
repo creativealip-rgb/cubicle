@@ -10,7 +10,7 @@ import { formatMoney } from "@/lib/utils";
 import { timeEntryStatusVariant } from "@/lib/status-badge";
 import { useT } from "@/lib/i18n-client";
 
-interface TimeEntry {
+export interface TimeEntry {
   id: string;
   description: string | null;
   durationMinutes: number | null;

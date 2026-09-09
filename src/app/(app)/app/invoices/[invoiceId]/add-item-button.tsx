@@ -12,15 +12,16 @@ import { Label } from "@/components/ui/label";
 import { Plus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useT } from "@/lib/i18n-client";
+import { ImportTimeSection, type TimeEntry } from "./import-time-section";
 
 export type ProjectInvoiceItemOption = { id: string; name: string; amount: number; currency: string };
 
-export function InvoiceItemManager({ invoiceId, projectOptions }: { invoiceId: string; projectOptions: ProjectInvoiceItemOption[] }) {
+export function InvoiceItemManager({ invoiceId, projectOptions, timeEntries, currency }: { invoiceId: string; projectOptions: ProjectInvoiceItemOption[]; timeEntries: TimeEntry[]; currency: string }) {
   const { refresh } = useAppTransition();
   const { t, locale } = useT();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [source, setSource] = useState<"manual" | "project">("manual");
+  const [source, setSource] = useState<"manual" | "project" | "timesheet">("manual");
   const [projectId, setProjectId] = useState("");
   const [form, setForm] = useState({ description: "", quantity: "1", unitPrice: "0" });
 
@@ -53,11 +54,12 @@ export function InvoiceItemManager({ invoiceId, projectOptions }: { invoiceId: s
       <DialogContent className="max-h-[90dvh] w-[calc(100%-1rem)] overflow-y-auto sm:max-w-lg">
         <DialogHeader><DialogTitle>{t("Tambah Rincian Item", "Add Line Item")}</DialogTitle></DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="grid grid-cols-2 gap-2 rounded-lg bg-muted p-1">
+          <div className="grid grid-cols-3 gap-2 rounded-lg bg-muted p-1">
             <Button type="button" variant={source === "manual" ? "default" : "ghost"} onClick={() => setSource("manual")}>Manual</Button>
             <Button type="button" variant={source === "project" ? "default" : "ghost"} onClick={() => setSource("project")}>{t("Dari Proyek Klien", "From Client Project")}</Button>
+            <Button type="button" variant={source === "timesheet" ? "default" : "ghost"} onClick={() => setSource("timesheet")}>{t("Entri Waktu", "Time Entries (Timesheet)")}</Button>
           </div>
-          {source === "project" ? (
+          {source === "timesheet" ? <ImportTimeSection invoiceId={invoiceId} timeEntries={timeEntries} currency={currency} /> : source === "project" ? (
             <div className="space-y-2">
               <Label htmlFor="project-item">{t("Proyek Fixed Price", "Fixed Price Project")}</Label>
               <Select value={projectId} onValueChange={setProjectId} required>
@@ -74,7 +76,7 @@ export function InvoiceItemManager({ invoiceId, projectOptions }: { invoiceId: s
               <div className="grid grid-cols-2 gap-3"><div className="space-y-2"><Label htmlFor="quantity">Qty</Label><Input id="quantity" type="number" step="0.01" min="0.01" value={form.quantity} onChange={(e) => setForm((p) => ({ ...p, quantity: e.target.value }))} /></div><div className="space-y-2"><Label htmlFor="unitPrice">{t("Harga Satuan", "Unit Price")}</Label><Input id="unitPrice" type="number" step="0.01" min="0" value={form.unitPrice} onChange={(e) => setForm((p) => ({ ...p, unitPrice: e.target.value }))} /></div></div>
             </>
           )}
-          <LoadingButton type="submit" loading={loading} loadingText={t("Menambahkan...", "Adding...")} disabled={source === "project" && !projectId} className="w-full">{t("Tambah Item", "Add Item")}</LoadingButton>
+          {source !== "timesheet" ? <LoadingButton type="submit" loading={loading} loadingText={t("Menambahkan...", "Adding...")} disabled={source === "project" && !projectId} className="w-full">{t("Tambah Item", "Add Item")}</LoadingButton> : null}
         </form>
       </DialogContent>
     </Dialog>
