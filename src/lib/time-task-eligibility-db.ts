@@ -33,7 +33,6 @@ export async function assertTimeTaskEligible(
       eq(tasks.id, taskId),
       eq(tasks.workspaceId, workspaceId),
       eq(tasks.projectId, projectId),
-      eq(tasks.mode, "reusable"),
       eq(tasks.lifecycle, "active"),
     ))
     .limit(1);

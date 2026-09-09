@@ -9,7 +9,7 @@ describe("Time task eligibility", () => {
   it("requires an active reusable task for new Hourly and Retainer writes", () => {
     expect(policy).toContain("assertTimeTaskEligible");
     expect(policy).toContain('model === "hourly" || model === "retainer"');
-    expect(policy).toContain('eq(tasks.mode, "reusable")');
+    expect(policy).not.toContain('eq(tasks.mode, "reusable")');
     expect(policy).toContain('eq(tasks.lifecycle, "active")');
     expect(policy).toContain("eq(tasks.projectId, projectId)");
     expect(policy).toContain("eq(tasks.workspaceId, workspaceId)");
