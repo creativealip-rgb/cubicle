@@ -185,8 +185,9 @@ export function ProjectForm({
 
   const field = (label: string, key: keyof typeof form, type = "text") => (
     <div className="space-y-1.5">
-      <Label className="text-xs font-medium">{label}</Label>
+      <Label htmlFor={`project-${key}`} className="text-xs font-medium">{label}</Label>
       <Input
+        id={`project-${key}`}
         type={type}
         value={String(form[key] ?? "")}
         onChange={(e) => setForm((p) => ({ ...p, [key]: e.target.value }))}

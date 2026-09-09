@@ -145,7 +145,7 @@ export async function createTask(input: z.infer<typeof taskSchema>) {
     description: parsed.description || null,
     status: parsed.status ?? "todo",
     priority: parsed.priority ?? "medium",
-    assigneeId: parsed.assigneeId || null,
+    assigneeId: parsed.assigneeId || user.id,
     dueDate: parsed.dueDate || null,
     clientVisible: parsed.clientVisible ?? true,
     position: (maxPos?.max ?? -1) + 1,
@@ -164,6 +164,7 @@ export async function createTask(input: z.infer<typeof taskSchema>) {
   );
 
   revalidatePath("/app/tasks");
+  revalidatePath(`/app/projects/${parsed.projectId}`);
   return task;
 }
 
