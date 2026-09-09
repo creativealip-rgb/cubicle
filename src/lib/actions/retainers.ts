@@ -7,7 +7,7 @@ import { auth } from "@/lib/auth";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { buildRetainerInvoiceLines, calculateRetainerUsage, getRetainerPeriodRange } from "@/lib/retainer-period";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
-import { and, eq, inArray, isNotNull, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, isNotNull, ne, or, sql } from "drizzle-orm";
 import { headers } from "next/headers";
 import { z } from "zod";
 import { normalizeInvoiceNumber } from "@/lib/invoice-number";
@@ -85,7 +85,7 @@ export async function lockRetainerPeriod(retainerPeriodId: string) {
       eq(timeEntries.retainerPeriodId, period.id),
       eq(timeEntries.status, "approved"),
       eq(timeEntries.billable, true),
-      isNotNull(timeEntries.endTime),
+      or(isNotNull(timeEntries.endTime), isNotNull(timeEntries.manualMinutes)),
       sql`${timeEntries.durationMinutes} > 0`,
     )).for("update");
     const usage = calculateRetainerUsage({ approvedMinutes: entries.map((entry) => Number(entry.durationMinutes)), includedMinutes: period.includedMinutesSnapshot });
