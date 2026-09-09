@@ -42,15 +42,15 @@ export function HabitHeatmap({ cells, weeklyTrends, t, habitId, toggleDateAction
       <div className="space-y-3 pt-0.5">
         {/* Full-width 35-day grid */}
         <div className="space-y-1.5">
-          <div className="grid grid-cols-7 gap-2 sm:gap-3">
+          <div className="mx-auto grid max-w-md grid-cols-7 gap-1.5 sm:gap-2">
             {cells.map((cell) => {
               const label = `${new Date(`${cell.date}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })}: ${cell.completedCount}/${cell.totalScheduled} ${t("selesai", "completed")}`;
-              const dot = <button type="submit" title={label} aria-label={label} disabled={!toggleDateAction || !habitId || cell.totalScheduled === 0} className={`mx-auto flex size-8 items-center justify-center rounded-full text-[10px] font-bold text-white/90 transition sm:size-9 ${INTENSITY_COLORS[cell.intensity]} enabled:cursor-pointer enabled:hover:scale-110 enabled:hover:ring-2 enabled:hover:ring-emerald-400 enabled:hover:ring-offset-2 disabled:cursor-default`}>{cell.completedCount > 0 ? "✓" : ""}</button>;
+              const dot = <button type="submit" title={label} aria-label={label} disabled={!toggleDateAction || !habitId || cell.totalScheduled === 0} className={`mx-auto flex size-6 items-center justify-center rounded-full text-[9px] font-bold text-white/90 transition sm:size-7 ${INTENSITY_COLORS[cell.intensity]} enabled:cursor-pointer enabled:hover:scale-110 enabled:hover:ring-2 enabled:hover:ring-emerald-400 enabled:hover:ring-offset-2 disabled:cursor-default`}>{cell.completedCount > 0 ? "✓" : ""}</button>;
               return toggleDateAction && habitId ? <form action={toggleDateAction} key={cell.date}><input type="hidden" name="habitId" value={habitId} /><input type="hidden" name="date" value={cell.date} />{dot}</form> : <div key={cell.date}>{dot}</div>;
             })}
           </div>
 
-          <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-0.5">
+          <div className="mx-auto flex max-w-md items-center justify-between pt-0.5 text-[10px] text-muted-foreground">
             <span>{cells[0]?.date ? new Date(`${cells[0].date}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" }) : ""}</span>
             <div className="flex items-center gap-1">
               <span>{t("Sedikit", "Less")}</span>

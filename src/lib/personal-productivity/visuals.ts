@@ -17,6 +17,7 @@ export interface HabitItemLike {
   name?: string;
   frequency: string;
   weekdays: number[];
+  startDate?: string;
   status: string;
   checkins: { localDate: string }[];
 }
@@ -82,7 +83,7 @@ export function calculateHabitHeatmap(
     let completed = 0;
 
     for (const h of activeHabits) {
-      if (isHabitScheduled(h.frequency as "daily" | "specific_weekdays", h.weekdays, dateStr)) {
+      if ((!h.startDate || dateStr >= h.startDate) && isHabitScheduled(h.frequency as "daily" | "specific_weekdays", h.weekdays, dateStr)) {
         scheduled++;
         if (h.checkins.some((c) => c.localDate === dateStr)) {
           completed++;
