@@ -61,7 +61,7 @@ async function cleanup(page: Page, ids: { invoices: string[]; project?: string; 
   }
 }
 
-async function configureBilling(page: Page, model: "fixed_price" | "retainer", values: string[]) {
+async function configureBilling(page: Page, model: "fixed_price" | "hourly" | "retainer", values: string[]) {
   await page.getByRole("button", { name: /Edit billing settings|Ubah pengaturan tagihan/i }).click();
   const dialog = page.getByRole("dialog");
   await dialog.locator("select").first().selectOption(model);
@@ -187,6 +187,58 @@ test("retainer manual time overage, delete restoration, and regeneration", async
     await page.locator("main input").fill(`QA-RET-C-${stamp}`);
     await page.getByRole("button", { name: /Create Invoice|Buat Invoice/i }).click();
     await expect(page.getByText(/already invoiced|sudah ditagihkan/i)).toBeVisible();
+  } finally {
+    await cleanup(page, ids, names);
+  }
+});
+
+test("hourly manual time can be reimported after draft delete", async ({ page }) => {
+  test.setTimeout(300_000);
+  page.setDefaultTimeout(15_000);
+  const stamp = Date.now();
+  const names = { client: `QA-BILL-HOUR-${stamp} Client`, project: `QA-BILL-HOUR-${stamp} Hourly` };
+  const ids: { client?: string; project?: string; invoices: string[] } = { invoices: [] };
+  try {
+    ids.client = await createClient(page, names.client);
+    ids.project = await createProject(page, names.client, names.project);
+    await configureBilling(page, "hourly", ["120000"]);
+    await page.goto(`/app/projects/${ids.project}`);
+    await page.getByRole("tab", { name: /Tasks|Tugas/i }).click();
+    await page.getByRole("button", { name: /New Task|Tugas Baru/i }).click();
+    let dialog = page.getByRole("dialog");
+    await dialog.locator("input").first().fill(`${names.project} Task`);
+    await dialog.getByRole("button", { name: /Create Task|Buat Tugas/i }).click();
+    await page.goto("/app/time");
+    await page.getByRole("button", { name: /Log Time|Catat Waktu/i }).click();
+    dialog = page.getByRole("dialog");
+    await dialog.getByPlaceholder(/Search project|Cari proyek/i).fill(names.project);
+    await page.getByText(names.project, { exact: true }).click();
+    await dialog.locator("input").nth(1).fill(names.project);
+    await page.getByText(`${names.project} Task`, { exact: true }).click();
+    await dialog.locator("textarea").fill(`${names.project} Work`);
+    await dialog.getByPlaceholder("00:00:00").fill("00:40:00");
+    await dialog.getByRole("button", { name: /Add time log|Tambah catatan waktu/i }).click();
+
+    const create = async (number: string) => {
+      await page.goto(`/app/projects/${ids.project}?tab=billing`);
+      await page.getByRole("button", { name: /Create Invoice|Buat Invoice/i }).click();
+      const invoiceDialog = page.getByRole("dialog");
+      await invoiceDialog.getByLabel(/Invoice Number|Nomor Invoice/i).fill(number);
+      const dates = invoiceDialog.locator('input[type="date"]');
+      await dates.nth(0).fill("2026-09-01");
+      await dates.nth(1).fill("2026-10-01");
+      await invoiceDialog.getByRole("button", { name: /Create Invoice|Buat Invoice/i }).click();
+      await page.goto(`/app/projects/${ids.project}?tab=billing`);
+      await expect(page.locator("main")).toContainText(/Rp\s*80\.000/);
+      const href = await page.locator('a[href*="/app/invoices/"]:visible', { hasText: number }).getAttribute("href");
+      if (!href) throw new Error("Hourly invoice link missing");
+      return idFromUrl(href);
+    };
+    const first = await create(`QA-HOUR-A-${stamp}`);
+    ids.invoices.push(first);
+    await deleteInvoice(page, first);
+    ids.invoices = [];
+    ids.invoices.push(await create(`QA-HOUR-B-${stamp}`));
   } finally {
     await cleanup(page, ids, names);
   }

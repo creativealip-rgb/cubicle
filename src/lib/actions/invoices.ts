@@ -1106,7 +1106,7 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
           eq(timeEntries.clientId, inv.clientId),
           eq(timeEntries.status, "approved"),
           eq(timeEntries.billable, true),
-          isNotNull(timeEntries.endTime),
+          or(isNotNull(timeEntries.endTime), isNotNull(timeEntries.manualMinutes)),
           sql`${timeEntries.durationMinutes} > 0`,
           inv.projectId ? eq(timeEntries.projectId, inv.projectId) : sql`true`,
         ),
