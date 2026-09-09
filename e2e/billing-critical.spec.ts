@@ -224,6 +224,8 @@ test("hourly manual time can be reimported after draft delete", async ({ page })
       await page.getByRole("button", { name: /Create Invoice|Buat Invoice/i }).click();
       const invoiceDialog = page.getByRole("dialog");
       await invoiceDialog.getByLabel(/Invoice Number|Nomor Invoice/i).fill(number);
+      await invoiceDialog.getByRole("combobox").first().click();
+      await page.getByRole("option", { name: /Timesheet/i }).click();
       const dates = invoiceDialog.locator('input[type="date"]');
       await dates.nth(0).fill("2026-09-01");
       await dates.nth(1).fill("2026-10-01");
