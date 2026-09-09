@@ -48,6 +48,11 @@ export async function HabitsSection({
     await togglePersonalHabitCheckin(String(fd.get("habitId")));
   }
 
+  async function toggleDate(fd: FormData) {
+    "use server";
+    await togglePersonalHabitCheckin(String(fd.get("habitId")), String(fd.get("date")));
+  }
+
   async function archive(fd: FormData) {
     "use server";
     const h = habits.find((x) => x.id === String(fd.get("habitId")));
@@ -240,6 +245,8 @@ export async function HabitsSection({
                       cells={calculateHabitHeatmap([h], today)}
                       weeklyTrends={calculateWeeklyConsistency([h], today)}
                       t={t}
+                      habitId={h.id}
+                      toggleDateAction={toggleDate}
                     />
 
                     <div className="rounded-xl border bg-slate-50/50 p-3 space-y-2.5">

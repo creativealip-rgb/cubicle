@@ -5,6 +5,8 @@ interface HabitHeatmapProps {
   cells: HeatmapCell[];
   weeklyTrends: WeeklyConsistency[];
   t: (id: string, en: string) => string;
+  habitId?: string;
+  toggleDateAction?: (formData: FormData) => Promise<void>;
 }
 
 const INTENSITY_COLORS = [
@@ -15,7 +17,7 @@ const INTENSITY_COLORS = [
   "bg-emerald-600 dark:bg-emerald-500", // 4
 ];
 
-export function HabitHeatmap({ cells, weeklyTrends, t }: HabitHeatmapProps) {
+export function HabitHeatmap({ cells, weeklyTrends, t, habitId, toggleDateAction }: HabitHeatmapProps) {
   // Total checkins count
   const totalCheckins = cells.reduce((acc, c) => acc + c.completedCount, 0);
 
@@ -37,21 +39,15 @@ export function HabitHeatmap({ cells, weeklyTrends, t }: HabitHeatmapProps) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-0.5">
-        {/* Left: 35-Day Grid (Mini size dots) */}
+      <div className="space-y-3 pt-0.5">
+        {/* Full-width 35-day grid */}
         <div className="space-y-1.5">
-          <div className="grid grid-flow-col grid-rows-7 gap-1 overflow-x-auto pb-0.5 max-w-fit">
-            {cells.map((cell) => (
-              <div
-                key={cell.date}
-                title={`${cell.date}: ${cell.completedCount}/${cell.totalScheduled} ${t("selesai", "completed")}`}
-                className={`size-3.5 sm:size-4 rounded-sm transition-all ${
-                  INTENSITY_COLORS[cell.intensity]
-                } flex items-center justify-center text-[7px] font-bold text-white/90`}
-              >
-                {cell.intensity === 4 ? "✓" : ""}
-              </div>
-            ))}
+          <div className="grid grid-cols-7 gap-2 sm:gap-3">
+            {cells.map((cell) => {
+              const label = `${new Date(`${cell.date}T12:00:00`).toLocaleDateString(undefined, { month: "short", day: "numeric" })}: ${cell.completedCount}/${cell.totalScheduled} ${t("selesai", "completed")}`;
+              const dot = <button type="submit" title={label} aria-label={label} disabled={!toggleDateAction || !habitId || cell.totalScheduled === 0} className={`mx-auto flex size-8 items-center justify-center rounded-full text-[10px] font-bold text-white/90 transition sm:size-9 ${INTENSITY_COLORS[cell.intensity]} enabled:cursor-pointer enabled:hover:scale-110 enabled:hover:ring-2 enabled:hover:ring-emerald-400 enabled:hover:ring-offset-2 disabled:cursor-default`}>{cell.completedCount > 0 ? "✓" : ""}</button>;
+              return toggleDateAction && habitId ? <form action={toggleDateAction} key={cell.date}><input type="hidden" name="habitId" value={habitId} /><input type="hidden" name="date" value={cell.date} />{dot}</form> : <div key={cell.date}>{dot}</div>;
+            })}
           </div>
 
           <div className="flex items-center justify-between text-[10px] text-muted-foreground pt-0.5">
@@ -70,8 +66,8 @@ export function HabitHeatmap({ cells, weeklyTrends, t }: HabitHeatmapProps) {
           </div>
         </div>
 
-        {/* Right: Weekly Consistency Progress Bar mini chart */}
-        <div className="space-y-1.5 border-t md:border-t-0 md:border-l md:pl-3 pt-2 md:pt-0">
+        {/* Weekly Consistency Progress Bar mini chart */}
+        <div className="space-y-1.5 border-t pt-3">
           <div className="flex items-center justify-between text-[10px] font-semibold text-muted-foreground">
             <span>{t("Tren 5 Minggu", "Weekly Trend (5 Weeks)")}</span>
             <span>{t("Penyelesaian", "Rate")}</span>
