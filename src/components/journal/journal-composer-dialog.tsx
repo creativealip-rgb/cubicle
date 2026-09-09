@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Plus, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,6 +37,17 @@ export function JournalComposerDialog({
   const [pending, setPending] = useState(false);
   const [selectedMood, setSelectedMood] = useState<string>("😊");
   const [showDetails, setShowDetails] = useState(false);
+  const [body, setBody] = useState("");
+
+  useEffect(() => {
+    const openReflection = (event: Event) => {
+      const prompt = (event as CustomEvent<string>).detail;
+      setBody(`${prompt}\n\n`);
+      setOpen(true);
+    };
+    window.addEventListener("journal:write-reflection", openReflection);
+    return () => window.removeEventListener("journal:write-reflection", openReflection);
+  }, []);
 
   const isEn = lang === "en";
 
@@ -108,6 +119,8 @@ export function JournalComposerDialog({
               name="body"
               required
               rows={6}
+              value={body}
+              onChange={(event) => setBody(event.target.value)}
               placeholder={
                 isEn
                   ? "What went well? Any obstacles, lessons, or next steps for tomorrow?"

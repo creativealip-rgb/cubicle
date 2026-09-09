@@ -201,10 +201,10 @@ export default async function JournalPage({
         ))}
       </nav>
 
-      <DailyQuoteCard quote={dailyQuote.quote} attribution={dailyQuote.attribution} ai={dailyQuote.source === "ai"} t={t} />
+      <DailyQuoteCard quote={dailyQuote.quote} attribution={dailyQuote.attribution} t={t} />
 
       {/* Daily Reflection Inspiration Banner */}
-      <JournalInspirationBanner t={t} lang={lang} localDate={dailyQuote.localDate} />
+      <JournalInspirationBanner lang={lang} localDate={dailyQuote.localDate} />
 
       {/* Summary KPI Strip */}
       <JournalSummaryStrip
