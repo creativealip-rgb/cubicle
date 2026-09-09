@@ -7,13 +7,18 @@ import { Badge } from "@/components/ui/badge";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
-import { ClientStatusEditDialog } from "@/components/clients/client-status-edit-dialog";
+import { ClientRowActions } from "@/components/clients/client-row-actions";
 
 export type ClientListItem = {
   id: string;
   clientNumber: string | null;
   name: string;
   companyName: string | null;
+  email: string | null;
+  phone: string | null;
+  website: string | null;
+  address: string | null;
+  internalNotes: string | null;
   status: string;
   tags: string[] | null;
   portalEnabled: boolean | null;
@@ -202,7 +207,7 @@ export function ClientsListTable({
                 {statusLabel(client.status)}
               </Badge>
             </div>
-            <div className="col-span-1 flex justify-end">{canWrite ? <ClientStatusEditDialog clientId={client.id} clientName={client.name} currentStatus={client.status} /> : null}</div>
+            <div className="col-span-1 flex justify-end">{canWrite ? <ClientRowActions client={client} /> : null}</div>
           </div>
         ))}
       </div>
@@ -281,7 +286,7 @@ export function ClientsListTable({
                   </Badge>
                 ) : null}
               </div>
-              {canWrite ? <ClientStatusEditDialog clientId={client.id} clientName={client.name} currentStatus={client.status} /> : null}
+              {canWrite ? <ClientRowActions client={client} /> : null}
             </div>
           </div>
         ))}
