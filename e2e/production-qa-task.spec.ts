@@ -13,11 +13,13 @@ test("production task create reload edit reload archive", async ({ page }) => {
 
   try {
     await page.goto("/app/clients");
+    await page.getByRole("button", { name: "Bahasa Indonesia" }).click();
+    await page.waitForLoadState("networkidle");
     await page.getByRole("button", { name: /Tambah Klien|Add Client/i }).click();
     let dialog = page.getByRole("dialog", { name: /Tambah Klien|Add Client/i });
     await dialog.getByRole("textbox", { name: /Nama \*|Name \*/i }).fill(client);
     await dialog.getByRole("button", { name: /Buat Klien|Create Client/i }).click();
-    await expect(page.getByRole("link", { name: client, exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { name: client, exact: true })).toBeVisible();
 
     await page.goto("/app/projects");
     await page.getByRole("button", { name: "Proyek Baru" }).click();

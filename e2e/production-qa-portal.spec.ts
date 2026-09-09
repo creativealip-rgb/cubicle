@@ -13,10 +13,9 @@ test("production client portal set password unlock and slug", async ({ page }) =
   const create = page.getByRole("dialog", { name: /Tambah Klien|Add Client/i });
   await create.getByRole("textbox", { name: /Nama \*|Name \*/i }).fill(clientName);
   await create.getByRole("button", { name: /Buat Klien|Create Client/i }).click();
-  await expect(page.getByRole("link", { name: clientName, exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: clientName, exact: true })).toBeVisible();
 
   try {
-    await page.getByRole("link", { name: clientName, exact: true }).click();
     await page.getByRole("tab", { name: /Portal/i }).click();
     await expect(page.getByLabel("Atur password")).toBeVisible();
     await page.getByLabel("Atur password").fill(portalPassword);
@@ -41,9 +40,10 @@ test("production client portal set password unlock and slug", async ({ page }) =
   } finally {
     await page.goto("/app/clients");
     await page.getByRole("link", { name: clientName, exact: true }).click();
-    await page.getByRole("button", { name: "Hapus Permanen" }).click();
+    await page.getByRole("button", { name: /Aksi klien|Client actions/i }).click();
+    await page.getByRole("menuitem", { name: /^Hapus$|^Delete$/i }).click();
     const confirm = page.getByRole("dialog");
-    await confirm.getByRole("textbox", { name: "Ketik nama untuk konfirmasi" }).fill(clientName);
-    await confirm.getByRole("button", { name: "Hapus Permanen" }).click();
+    await confirm.getByRole("textbox", { name: /Ketik nama untuk konfirmasi|Type name to confirm/i }).fill(clientName);
+    await confirm.getByRole("button", { name: /Hapus Permanen|Delete Permanently/i }).click();
   }
 });
