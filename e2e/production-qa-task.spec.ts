@@ -1,8 +1,5 @@
 import { test, expect } from "@playwright/test";
 
-const email = process.env.E2E_EMAIL!;
-const password = process.env.E2E_PASSWORD!;
-
 test.use({ storageState: ".auth/user.json" });
 
 test("production task create reload edit reload archive", async ({ page }) => {
@@ -13,18 +10,13 @@ test("production task create reload edit reload archive", async ({ page }) => {
   const task = `QA-E2E Task ${stamp}`;
   const edited = `${task} Edited`;
 
-  await page.goto("/login");
-  await page.getByRole("textbox", { name: "Email" }).fill(email);
-  await page.getByRole("textbox", { name: "Password" }).fill(password);
-  await page.getByRole("button", { name: "Masuk" }).click();
-  await expect(page).toHaveURL(/\/app\/dashboard/, { timeout: 20_000 });
 
   try {
     await page.goto("/app/clients");
-    await page.getByRole("button", { name: "Tambah Klien" }).click();
-    let dialog = page.getByRole("dialog", { name: "Tambah Klien" });
-    await dialog.getByRole("textbox", { name: "Nama *" }).fill(client);
-    await dialog.getByRole("button", { name: "Buat Klien" }).click();
+    await page.getByRole("button", { name: /Tambah Klien|Add Client/i }).click();
+    let dialog = page.getByRole("dialog", { name: /Tambah Klien|Add Client/i });
+    await dialog.getByRole("textbox", { name: /Nama \*|Name \*/i }).fill(client);
+    await dialog.getByRole("button", { name: /Buat Klien|Create Client/i }).click();
     await expect(page.getByRole("link", { name: client, exact: true })).toBeVisible();
 
     await page.goto("/app/projects");

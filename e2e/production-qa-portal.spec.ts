@@ -9,10 +9,10 @@ test("production client portal set password unlock and slug", async ({ page }) =
   const portalPassword = "PortalQA2026!";
 
   await page.goto("/app/clients");
-  await page.getByRole("button", { name: "Tambah Klien" }).click();
-  const create = page.getByRole("dialog", { name: "Tambah Klien" });
-  await create.getByRole("textbox", { name: "Nama *" }).fill(clientName);
-  await create.getByRole("button", { name: "Buat Klien" }).click();
+  await page.getByRole("button", { name: /Tambah Klien|Add Client/i }).click();
+  const create = page.getByRole("dialog", { name: /Tambah Klien|Add Client/i });
+  await create.getByRole("textbox", { name: /Nama \*|Name \*/i }).fill(clientName);
+  await create.getByRole("button", { name: /Buat Klien|Create Client/i }).click();
   await expect(page.getByRole("link", { name: clientName, exact: true })).toBeVisible();
 
   try {
