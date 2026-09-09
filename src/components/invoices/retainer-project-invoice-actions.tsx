@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { createOrGetRetainerPeriod, generateRetainerInvoice, lockRetainerPeriod } from "@/lib/actions/retainers";
+import { createOrGetRetainerPeriod, generateRetainerInvoice, linkRetainerTimeEntries, lockRetainerPeriod } from "@/lib/actions/retainers";
 import { getRetainerPeriodUsageSummary } from "@/lib/retainer-period";
 import { formatMoney } from "@/lib/utils";
 import { Plus } from "lucide-react";
@@ -44,7 +44,10 @@ export function RetainerProjectInvoiceActions({ projectId, period, proposedInvoi
         toast.info(t("Periode Retainer ini sudah ditagihkan", "This retainer period is already invoiced"));
         return;
       }
-      if (current.status === "open") current = await lockRetainerPeriod(current.id);
+      if (current.status === "open") {
+        await linkRetainerTimeEntries({ projectId, workDate: new Date().toISOString().slice(0, 10) });
+        current = await lockRetainerPeriod(current.id);
+      }
       if (current.status === "locked") await generateRetainerInvoice({ retainerPeriodId: current.id, issueDate: new Date().toISOString().slice(0, 10), invoiceNumber: requestedNumber });
       toast.success(t("Invoice Retainer dibuat", "Retainer invoice created"));
       refresh();
