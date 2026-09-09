@@ -1,18 +1,8 @@
 import { expect, test } from "@playwright/test";
 
-const email = process.env.E2E_EMAIL;
-const password = process.env.E2E_PASSWORD;
-if (!email || !password) throw new Error("E2E_EMAIL and E2E_PASSWORD are required");
 
 test.use({ storageState: ".auth/user.json" });
 
-async function login(page: import("@playwright/test").Page) {
-  await page.goto("/login");
-  await page.getByRole("textbox", { name: "Email" }).fill(email!);
-  await page.getByRole("textbox", { name: "Password" }).fill(password!);
-  await page.getByRole("button", { name: "Masuk" }).click();
-  await expect(page).toHaveURL(/\/app\/dashboard/, { timeout: 15000 });
-}
 
 async function createProject(page: import("@playwright/test").Page, name: string, model: "Hourly" | "Harga Tetap" | "Retainer", amount: string) {
   await page.goto("/app/projects");
@@ -46,7 +36,7 @@ test("production project billing models create and persist", async ({ page }) =>
   test.setTimeout(120_000);
   const stamp = Date.now();
   const client = `QA-Coder Parent Client ${stamp}`;
-  await login(page);
+
   await page.goto("/app/clients");
   await page.getByRole("button", { name: "Tambah Klien" }).click();
   const createDialog = page.getByRole("dialog", { name: "Tambah Klien" });

@@ -1,8 +1,5 @@
 import { expect, test } from "@playwright/test";
 
-const email = process.env.E2E_EMAIL;
-const password = process.env.E2E_PASSWORD;
-if (!email || !password) throw new Error("E2E_EMAIL and E2E_PASSWORD are required");
 test.use({ storageState: ".auth/user.json" });
 
 test("production fixed-price invoice DP then remaining final", async ({ page }) => {
