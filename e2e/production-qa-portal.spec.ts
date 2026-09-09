@@ -17,24 +17,24 @@ test("production client portal set password unlock and slug", async ({ page }) =
 
   try {
     await page.getByRole("tab", { name: /Portal/i }).click();
-    await expect(page.getByLabel("Atur password")).toBeVisible();
-    await page.getByLabel("Atur password").fill(portalPassword);
-    await page.getByRole("button", { name: "Simpan & aktifkan" }).click();
+    await expect(page.getByLabel(/Atur password|Set password/i)).toBeVisible();
+    await page.getByLabel(/Atur password|Set password/i).fill(portalPassword);
+    await page.getByRole("button", { name: /Simpan & aktifkan|Save & activate/i }).click();
     await page.waitForLoadState("networkidle");
     await page.reload({ waitUntil: "networkidle" });
     await page.getByRole("tab", { name: /Portal/i }).click();
-    await expect(page.getByLabel("Buka portal klien")).toBeVisible({ timeout: 15000 });
+    await expect(page.getByLabel(/Buka portal klien|Open client portal/i)).toBeVisible({ timeout: 15000 });
 
-    const portalLink = page.getByLabel("Buka portal klien");
+    const portalLink = page.getByLabel(/Buka portal klien|Open client portal/i);
     const href = await portalLink.getAttribute("href");
     expect(href).toMatch(/\/client-portal\/[^/?]+$/);
     await page.goto(href!);
-    await expect(page.getByRole("heading", { name: "Portal Klien" })).toBeVisible();
-    await page.getByPlaceholder("Password portal").fill(portalPassword);
-    await page.getByRole("button", { name: "Buka portal" }).click();
+    await expect(page.getByRole("heading", { name: /Portal Klien|Client Portal/i })).toBeVisible();
+    await page.getByPlaceholder(/Password portal|Portal password/i).fill(portalPassword);
+    await page.getByRole("button", { name: /Buka portal|Open portal/i }).click();
     await expect(page.getByText(clientName, { exact: true })).toBeVisible({ timeout: 15000 });
-    await page.getByRole("tab", { name: "File" }).click();
-    await expect(page.getByRole("heading", { name: "File" })).toBeVisible();
+    await page.getByRole("tab", { name: /File|Files/i }).click();
+    await expect(page.getByRole("heading", { name: /File|Files/i })).toBeVisible();
     await page.locator('input[type="file"]').setInputFiles({ name: "qa-portal.txt", mimeType: "text/plain", buffer: Buffer.from("portal file fixture") });
     await expect(page.getByText("qa-portal.txt", { exact: true })).toBeVisible({ timeout: 15000 });
   } finally {
