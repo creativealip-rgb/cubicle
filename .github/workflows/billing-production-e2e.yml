@@ -1,0 +1,36 @@
+name: Billing production E2E
+
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: billing-production-e2e
+  cancel-in-progress: false
+
+jobs:
+  billing:
+    runs-on: ubuntu-latest
+    environment: production
+    timeout-minutes: 20
+    env:
+      ALLOW_BILLING_E2E: "1"
+      BASE_URL: https://app.cubiqlo.com
+      E2E_EMAIL: ${{ secrets.E2E_EMAIL }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - run: npm run e2e:billing-critical
+      - if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: billing-e2e-evidence
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
