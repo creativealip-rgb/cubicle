@@ -40,6 +40,10 @@ export function RetainerProjectInvoiceActions({ projectId, period, proposedInvoi
     try {
       const requestedNumber = invoiceNumber.trim() || proposedInvoiceNumber;
       let current = period ?? await createOrGetRetainerPeriod({ projectId, workDate: new Date().toISOString().slice(0, 10) });
+      if (current.status === "invoiced") {
+        toast.info(t("Periode Retainer ini sudah ditagihkan", "This retainer period is already invoiced"));
+        return;
+      }
       if (current.status === "open") current = await lockRetainerPeriod(current.id);
       if (current.status === "locked") await generateRetainerInvoice({ retainerPeriodId: current.id, issueDate: new Date().toISOString().slice(0, 10), invoiceNumber: requestedNumber });
       toast.success(t("Invoice Retainer dibuat", "Retainer invoice created"));

@@ -157,6 +157,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
     const converted = convertCurrency(numericPreview, project.currency, form.currency, baseCurrency, rateMap);
     return { description: project.name, quantity: 1, unitPrice: converted?.amount ?? 0, projectId: project.id, originalAmount: numericPreview, originalCurrency: project.currency, conversionRate: converted?.rate ?? null };
   });
+  const invoiceTotal = calculateDraftItemsSubtotal([...projectItems, ...items]);
   const missingRateProjects = projectItems.filter((item) => item.conversionRate === null);
 
 
@@ -578,7 +579,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
         </div>
       </details>
 
-      <Button type="submit" disabled={loading || incompleteTimesheetPeriods} className="w-full">
+      <Button type="submit" disabled={loading || incompleteTimesheetPeriods || invoiceTotal <= 0} className="w-full">
         {loading
           ? mode === "create"
             ? t("Membuat invoice…", "Creating invoice…")
