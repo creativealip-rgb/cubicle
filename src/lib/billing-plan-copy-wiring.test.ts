@@ -10,9 +10,21 @@ describe("billing copy package limits", () => {
     expect(billing).not.toContain("5 pengguna");
   });
 
-  it("mentions key Free/Solo/Team limits", () => {
-    for (const text of ["3 klien", "5 proyek", "10 invoice", "10 AI", "100 AI", "1,000 AI", "Up to 5 members/workspace", "25 MB", "50 MB"]) {
-      expect(`${landing}\n${billing}`).toContain(text);
+  it("mentions key Free/Solo/Team benefits without per-file limits", () => {
+    const copy = `${landing}\n${billing}`;
+    for (const text of ["3 klien", "5 proyek", "10 invoice", "10 AI", "100 AI", "1,000 AI", "Up to 5 members/workspace"]) {
+      expect(copy).toContain(text);
+    }
+    expect(copy).not.toMatch(/\b(?:5|25|50) MB\/file\b/i);
+    for (const benefit of [
+      "Penyimpanan file aman",
+      "Secure file storage",
+      "Kelola dan bagikan file klien",
+      "Manage and share client files",
+      "Penyimpanan bersama untuk tim",
+      "Shared storage for your team",
+    ]) {
+      expect(copy).toContain(benefit);
     }
   });
 });
