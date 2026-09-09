@@ -12,6 +12,8 @@ import Link from "next/link";
 
 import { getCurrentLang, createT } from "@/lib/i18n";
 
+export const dynamic = "force-dynamic";
+
 /** File list + breadcrumb only — tree lives in layout (no full-page flash). */
 export default async function FilesPage({
   searchParams,
