@@ -325,7 +325,7 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
           <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-1" onOpenAutoFocus={(event) => event.preventDefault()}>
             <div className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain">
               {filteredClients.length ? filteredClients.map((client) => (
-                <button key={client.id} type="button" className="flex min-h-10 w-full items-center rounded-md px-3 text-left text-sm hover:bg-muted" onClick={() => {
+                <button key={client.id} type="button" role="option" aria-selected={form.clientId === client.id} className="flex min-h-10 w-full items-center rounded-md px-3 text-left text-sm hover:bg-muted" onClick={() => {
                   setSelectedProjectIds([]);
                   setProjectSources({});
                   setForm((prev) => ({ ...prev, clientId: client.id, projectId: "" }));
