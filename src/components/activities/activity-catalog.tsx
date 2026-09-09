@@ -28,7 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, Plus, Archive, Pencil } from "lucide-react";
+import { Loader2, Plus, Archive, Pencil, MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useT } from "@/lib/i18n-client";
 
 export type CatalogActivity = {
@@ -280,30 +281,7 @@ export function ActivityCatalog({ activities }: ActivityCatalogProps) {
                       : ""}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="gap-1"
-                    onClick={() => openEdit(row)}
-                    disabled={loading || row.status !== "active"}
-                  >
-                    <Pencil className="h-3 w-3" />
-                    {t("Ubah", "Edit")}
-                  </Button>
-                  {row.status === "active" ? (
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1"
-                      onClick={() => handleArchive(row)}
-                      disabled={loading}
-                    >
-                      <Archive className="h-3 w-3" />
-                      {t("Arsip", "Archive")}
-                    </Button>
-                  ) : null}
-                </div>
+                <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-7" aria-label={t("Aksi activity", "Activity actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => openEdit(row)} disabled={loading || row.status !== "active"}><Pencil className="size-3.5" />{t("Ubah", "Edit")}</DropdownMenuItem>{row.status === "active" ? <DropdownMenuItem onSelect={() => void handleArchive(row)} disabled={loading}><Archive className="size-3.5" />{t("Arsip", "Archive")}</DropdownMenuItem> : null}</DropdownMenuContent></DropdownMenu>
               </CardContent>
             </Card>
           ))

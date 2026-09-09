@@ -3,8 +3,10 @@
 import { useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
-import { Plus, Package, Pencil, Trash2, Clock, Loader2, Wrench } from "lucide-react";
+import { Plus, Package, MoreHorizontal,
+  Pencil, Trash2, Clock, Loader2, Wrench } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
@@ -275,26 +277,7 @@ export function PackageCatalog({
                         <p className="text-xs text-muted-foreground">{pkg.description}</p>
                       )}
                     </div>
-                    <div className="flex gap-1">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => openEdit(pkg)}
-                        aria-label={t("Ubah", "Edit")}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-destructive hover:text-destructive"
-                        onClick={() => setDeleteTarget(pkg)}
-                        aria-label={t("Hapus", "Delete")}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                    <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-7" aria-label={t("Aksi paket", "Package actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => openEdit(pkg)}><Pencil className="size-3.5" />{t("Ubah", "Edit")}</DropdownMenuItem><DropdownMenuItem className="text-destructive" onSelect={() => setDeleteTarget(pkg)}><Trash2 className="size-3.5" />{t("Hapus", "Delete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
                   </div>
                   <div className="flex items-baseline gap-2 flex-wrap">
                     <span className="text-lg font-bold">{formatMoney(pkg.price, pkg.currency)}</span>

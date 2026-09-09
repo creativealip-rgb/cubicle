@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import {
   BriefcaseBusiness,
   Loader2,
+  MoreHorizontal,
   Pencil,
   Plus,
   Trash2,
@@ -17,6 +18,7 @@ import {
 import { PageHeader } from "@/components/ui/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -406,26 +408,7 @@ export function ServiceCatalog({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-0.5">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
-                        onClick={() => openEdit(service)}
-                        aria-label={t("Ubah", "Edit")}
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 rounded-lg text-destructive/70 hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => setDeleteTarget(service)}
-                        aria-label={t("Arsip", "Archive")}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
+                    <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-7" aria-label={t("Aksi layanan", "Service actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => openEdit(service)}><Pencil className="size-3.5" />{t("Ubah", "Edit")}</DropdownMenuItem><DropdownMenuItem className="text-destructive" onSelect={() => setDeleteTarget(service)}><Trash2 className="size-3.5" />{t("Arsip", "Archive")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
                   </div>
 
                   {/* Description */}

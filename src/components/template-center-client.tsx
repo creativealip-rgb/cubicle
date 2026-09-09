@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -21,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import {
   Plus,
+  MoreHorizontal,
   Pencil,
   Trash2,
   FileSignature,
@@ -687,42 +689,25 @@ function TemplateCard({
         <p className="text-xs text-muted-foreground/60 italic">{t("Tanpa preview", "No preview")}</p>
       )}
 
-      <div className="flex flex-wrap gap-1 pt-1 border-t">
-        <Button variant="ghost" size="sm" className="h-7 px-2 text-xs" onClick={onEdit}>
-          <Pencil className="h-3.5 w-3.5" />
-          {t("Edit", "Edit")}
-        </Button>
+      <div className="flex justify-end pt-1 border-t">
+        <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-7" aria-label={t("Aksi template", "Template actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={onEdit}><Pencil className="size-3.5" />{t("Edit", "Edit")}</DropdownMenuItem>
         {onDuplicate ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs"
-            onClick={onDuplicate}
-          >
+          <DropdownMenuItem onSelect={onDuplicate}>
             <Copy className="h-3.5 w-3.5" />
             {t("Duplikat", "Duplicate")}
-          </Button>
+          </DropdownMenuItem>
         ) : null}
         {onSetDefault ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 px-2 text-xs"
-            onClick={onSetDefault}
-          >
+          <DropdownMenuItem onSelect={onSetDefault}>
             <Star className="h-3.5 w-3.5" />
             {t("Default", "Default")}
-          </Button>
+          </DropdownMenuItem>
         ) : null}
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 px-2 text-xs text-destructive hover:text-destructive"
-          onClick={onDelete}
-        >
+        <DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={onDelete}>
           <Trash2 className="h-3.5 w-3.5" />
           {t("Hapus", "Delete")}
-        </Button>
+        </DropdownMenuItem>
+        </DropdownMenuContent></DropdownMenu>
       </div>
     </div>
   );

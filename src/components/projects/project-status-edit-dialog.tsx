@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
-import { Pencil } from "lucide-react";
+import { MoreHorizontal, Pencil } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import { updateProjectListStatus } from "@/lib/actions/projects";
 import { Button } from "@/components/ui/button";
@@ -26,7 +27,7 @@ export function ProjectStatusEditDialog({ projectId, projectName, currentStatus 
     finally { setLoading(false); }
   }
   return <Dialog open={open} onOpenChange={setOpen}>
-    <DialogTrigger asChild><Button variant="outline" size="sm" className="h-6.5 px-2 text-[11px] gap-1 rounded-md"><Pencil className="h-2.5 w-2.5" />{t("Ubah", "Edit")}</Button></DialogTrigger>
+    <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-7 rounded-md" aria-label={t("Aksi proyek", "Project actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DialogTrigger asChild><DropdownMenuItem onSelect={(event) => event.preventDefault()}><Pencil className="size-3.5" />{t("Ubah status", "Edit status")}</DropdownMenuItem></DialogTrigger></DropdownMenuContent></DropdownMenu>
     <DialogContent className="sm:max-w-sm"><DialogHeader><DialogTitle>{t("Edit status proyek", "Edit project status")}</DialogTitle></DialogHeader>
       <p className="text-sm text-muted-foreground">{projectName}</p>
       <div className="space-y-2"><Label>{t("Status", "Status")}</Label><Select value={status} onValueChange={(value) => setStatus(value as typeof status)}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent><SelectItem value="active">{t("Aktif", "Active")}</SelectItem><SelectItem value="on_hold">{t("Ditunda", "On Hold")}</SelectItem><SelectItem value="completed">{t("Selesai", "Completed")}</SelectItem></SelectContent></Select></div>

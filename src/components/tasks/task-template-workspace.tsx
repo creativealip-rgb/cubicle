@@ -32,7 +32,9 @@ import {
   Trash2,
   Edit2,
   Layers,
+  MoreHorizontal,
 } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 export type TemplateItem = {
@@ -73,28 +75,14 @@ function TemplateFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button
-          size="sm"
-          variant={template ? "outline" : "default"}
-          className={cn(
-            "rounded-xl font-semibold gap-1.5 shadow-xs",
-            !template && "bg-primary text-primary-foreground"
-          )}
-        >
-          {template ? (
-            <>
-              <Edit2 className="h-3.5 w-3.5" />
-              {t("Ubah", "Edit")}
-            </>
-          ) : (
-            <>
-              <Plus className="h-4 w-4" />
-              {t("Buat Template Baru", "New Template")}
-            </>
-          )}
-        </Button>
-      </DialogTrigger>
+      {template ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-7" aria-label={t("Aksi template", "Template actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger>
+          <DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => setOpen(true)}><Edit2 className="size-3.5" />{t("Ubah", "Edit")}</DropdownMenuItem></DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <DialogTrigger asChild><Button size="sm" className="rounded-xl bg-primary font-semibold gap-1.5 text-primary-foreground shadow-xs"><Plus className="h-4 w-4" />{t("Buat Template Baru", "New Template")}</Button></DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md rounded-2xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

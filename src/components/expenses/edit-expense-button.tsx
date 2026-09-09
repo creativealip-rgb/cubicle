@@ -8,7 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Pencil } from "lucide-react";
+import { MoreHorizontal, Pencil } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ExpenseForm, type CategoryOption, type ProjectOption, type ClientOption } from "./expense-form";
 import { useT } from "@/lib/i18n-client";
 
@@ -49,16 +50,7 @@ export function EditExpenseButton({
 
   return (
     <>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-10 w-10 p-0 text-slate-400 hover:text-slate-800"
-        onClick={() => setOpen(true)}
-        title={t("Edit", "Edit")}
-        aria-label={t("Edit pengeluaran", "Edit expense")}
-      >
-        <Pencil className="h-4 w-4" />
-      </Button>
+      <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-7" aria-label={t("Aksi pengeluaran", "Expense actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => setOpen(true)}><Pencil className="size-3.5" />{t("Edit", "Edit")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="flex w-[calc(100%-1.5rem)] max-w-2xl max-h-[min(90dvh,720px)] flex-col gap-0 overflow-hidden p-0">
           <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 sm:px-6">
