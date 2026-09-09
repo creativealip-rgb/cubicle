@@ -1091,7 +1091,7 @@ export async function importTimeEntries(input: z.infer<typeof importTimeSchema>)
         billingType: projects.billingType,
       })
       .from(timeEntries)
-      .leftJoin(
+      .innerJoin(
         projects,
         and(
           eq(projects.id, timeEntries.projectId),
