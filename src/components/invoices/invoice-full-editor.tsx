@@ -15,7 +15,7 @@ import { LoadingButton } from "@/components/ui/loading-button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 
-type Line = { description: string; quantity: number; unitPrice: number; sourceType?: string | null };
+type Line = { description: string; quantity: number; unitPrice: number; amount?: number; sourceType?: string | null };
 type Option = { id: string; name: string; clientId?: string | null };
 
 export function InvoiceFullEditor({ invoice, initialItems, clients, projects, sourceActions, children }: {
@@ -32,9 +32,9 @@ export function InvoiceFullEditor({ invoice, initialItems, clients, projects, so
   const locked = ["cancelled", "archived"].includes(invoice.status);
   const [saving, setSaving] = useState(false);
   const [chargeType, setChargeType] = useState<"none" | "tax" | "admin_fee">(invoice.chargeType);
-  const [form, setForm] = useState({ ...invoice, items: initialItems.map(({ description, quantity, unitPrice }) => ({ description, quantity, unitPrice })) });
+  const [form, setForm] = useState({ ...invoice, items: initialItems.map(({ description, quantity, unitPrice, amount, sourceType }) => ({ description, quantity, unitPrice, amount, sourceType })) });
   const clientProjects = projects.filter((project) => project.clientId === form.clientId);
-  const subtotal = useMemo(() => form.items.reduce((sum, item) => sum + Number(item.quantity || 0) * Number(item.unitPrice || 0), 0), [form.items]);
+  const subtotal = useMemo(() => form.items.reduce((sum, item) => sum + Number(item.amount ?? Number(item.quantity || 0) * Number(item.unitPrice || 0)), 0), [form.items]);
   const total = Math.max(0, subtotal - Number(form.discount || 0) + Number(form.tax || 0));
   const updateLine = (index: number, key: keyof Line, value: string) => setForm((current) => ({ ...current, items: current.items.map((item, itemIndex) => itemIndex === index ? { ...item, [key]: key === "description" ? value : Number(value) } : item) }));
 

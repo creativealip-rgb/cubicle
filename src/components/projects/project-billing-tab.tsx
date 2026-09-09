@@ -15,7 +15,11 @@ type DialogClient = Parameters<typeof ProjectInvoiceCreateDialog>[0]["client"];
 
 export async function ProjectBillingTab({
   project,
+  client,
   invoices,
+  baseCurrency = "IDR",
+  currencyRates = [],
+  proposedInvoiceNumber = "",
   retainerPeriod = null,
 }: {
   project: DialogProject;
@@ -30,8 +34,15 @@ export async function ProjectBillingTab({
   const t = createT(lang);
   return (
     <div className="space-y-4">
+      <div className="flex justify-end">
+        {project.billingType === "retainer" ? (
+          <RetainerProjectInvoiceActions projectId={project.id} period={retainerPeriod} proposedInvoiceNumber={proposedInvoiceNumber} />
+        ) : client ? (
+          <ProjectInvoiceCreateDialog project={project} client={client} baseCurrency={baseCurrency} proposedInvoiceNumber={proposedInvoiceNumber} currencyRates={currencyRates} />
+        ) : null}
+      </div>
       {project.billingType === "retainer" && retainerPeriod ? (
-        <RetainerProjectInvoiceActions projectId={project.id} period={retainerPeriod} renderSummaryOnly />
+        <RetainerProjectInvoiceActions projectId={project.id} period={retainerPeriod} proposedInvoiceNumber={proposedInvoiceNumber} renderSummaryOnly />
       ) : null}
       <div className="overflow-hidden rounded-2xl border border-border/80 bg-card divide-y divide-border shadow-xs">
         {invoices.length === 0 ? (

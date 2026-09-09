@@ -330,6 +330,7 @@ export default async function InvoiceDetailPage({
           description: item.description,
           quantity: Number(item.quantity),
           unitPrice: Number(item.unitPrice),
+          amount: Number(item.amount),
           sourceType: item.sourceType,
         }))}
         clients={allClients}
