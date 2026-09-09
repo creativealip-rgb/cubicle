@@ -19,6 +19,7 @@ import {
   workspaces,
   clients,
   projects,
+  retainerPeriods,
   packages,
   projectServices,
   workspaceCurrencyRates,
@@ -1634,6 +1635,18 @@ export async function deleteInvoice(invoiceId: string) {
 
   await db.transaction(async (tx) => {
     await revertInvoiceTimeEntrySources(tx, workspaceId, invoiceId);
+    if (inv.retainerPeriodId) {
+      await tx.update(retainerPeriods).set({
+        status: "locked",
+        invoicedAt: null,
+        invoiceGeneration: sql`${retainerPeriods.invoiceGeneration} + 1`,
+        updatedAt: new Date(),
+      }).where(and(
+        eq(retainerPeriods.id, inv.retainerPeriodId),
+        eq(retainerPeriods.workspaceId, workspaceId),
+        eq(retainerPeriods.status, "invoiced"),
+      ));
+    }
     // Delete invoice items after restoring linked time entries.
     await tx.delete(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
     // Delete payments if any
