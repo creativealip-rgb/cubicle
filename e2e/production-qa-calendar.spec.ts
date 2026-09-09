@@ -1,53 +1,12 @@
 import { test, expect } from '@playwright/test';
-import * as fs from 'fs';
+
 
 const BASE_URL = process.env.BASE_URL || 'https://app.cubiqlo.com';
 
-let email = process.env.E2E_EMAIL;
-let password = process.env.E2E_PASSWORD;
-
-if (!email || !password) {
-  try {
-    const content = fs.readFileSync('/tmp/cubiqlo_qa_credentials', 'utf8');
-    for (const line of content.split('\n')) {
-      if (line.startsWith('EMAIL=')) email = line.substring(6).trim();
-      if (line.startsWith('PASSWORD=')) password = line.substring(9).trim();
-    }
-  } catch (e) {
-    // ignore
-  }
-}
-
 test('Calendar availability, public booking, internal cancel, and ICS download flow', async ({ browser }) => {
   test.setTimeout(120000);
-  if (!email || !password) {
-    throw new Error('E2E_EMAIL or E2E_PASSWORD missing');
-  }
-
-  const context = await browser.newContext();
+  const context = await browser.newContext({ storageState: '.auth/user.json' });
   const page = await context.newPage();
-
-  console.log(`Navigating to ${BASE_URL}/login`);
-  await page.goto(`${BASE_URL}/login`);
-
-  await page.fill('input[type="email"]', email);
-  await page.fill('input[type="password"]', password);
-  await page.click('button[type="submit"]');
-
-  await page.waitForTimeout(2000);
-  const url = page.url();
-  console.log(`Post-login URL: ${url}`);
-
-  if (url.includes('/login')) {
-    const text = await page.content();
-    if (text.includes('Too many requests') || text.includes('429')) {
-      console.log('LOGIN_FAILED: 429 Too many requests');
-      expect(false, 'Auth rate limited (429)').toBe(true);
-    } else {
-      console.log('LOGIN_FAILED: Bad credentials or auth error');
-      expect(false, 'Login failed').toBe(true);
-    }
-  }
 
   // Go to /app/settings to verify or set booking slug
   console.log('Navigating to /app/settings');
@@ -116,12 +75,20 @@ test('Calendar availability, public booking, internal cancel, and ICS download f
   await clientPage.goto(bookingUrl);
   await clientPage.waitForLoadState('networkidle');
 
-  // Check radio element
-  const slotRadio = clientPage.locator('input[name="slot"]').first();
-  if (await slotRadio.count() > 0) {
-    console.log('Checking slot radio input...');
-    await slotRadio.check({ force: true });
+  // Find first future date with a free slot; fixed dates become stale/full.
+  const dateInput = clientPage.locator('#booking-date');
+  let slotRadio = clientPage.locator('input[name="slot"]').first();
+  for (let offset = 1; offset <= 14; offset++) {
+    const date = new Date();
+    date.setUTCDate(date.getUTCDate() + offset);
+    await dateInput.fill(date.toISOString().slice(0, 10));
+    await clientPage.waitForTimeout(350);
+    slotRadio = clientPage.locator('input[name="slot"]').first();
+    if (await slotRadio.count()) break;
   }
+  await expect(slotRadio).toBeAttached({ timeout: 5_000 });
+  await slotRadio.locator('xpath=..').click();
+  await expect(slotRadio).toBeChecked();
 
   const timestamp = Date.now();
   const qaTitle = `QA-E2E Calendar Meeting ${timestamp}`;
@@ -184,17 +151,11 @@ test('Calendar availability, public booking, internal cancel, and ICS download f
 
   // Cancel appointment via UI
   console.log('Cancelling appointment via UI...');
-  const cancelBtn = page.locator(`button:has-text("Batalkan janji temu"), button:has-text("Cancel appointment"), button:has-text("Batalkan"), button:has-text("Batal")`).first();
-  if (await cancelBtn.isVisible()) {
-    await cancelBtn.click();
-    await page.waitForTimeout(500);
-    // Confirm dialog
-    const confirmBtn = page.locator('dialog button:has-text("Batalkan"), dialog button:has-text("Ya"), [role="dialog"] button:has-text("Batalkan"), [role="dialog"] button:has-text("Ya")').first();
-    if (await confirmBtn.isVisible()) {
-      await confirmBtn.click();
-    }
-    await page.waitForTimeout(1500);
-  }
+  const appointment = page.getByText(qaTitle, { exact: true }).locator('xpath=ancestor::div[contains(@class,"rounded")][1]');
+  await appointment.getByRole('button', { name: /Batalkan .*|Cancel appointment/i }).click();
+  const confirm = appointment.getByRole('group', { name: /Konfirmasi batalkan janji/i });
+  await confirm.getByRole('button', { name: /Batalkan|Cancel booking/i }).click();
+  await expect(page.getByText(/Janji temu dibatalkan|Appointment cancelled/i)).toBeVisible();
 
   // Verify cancelled state / disappearance in UI
   await page.reload();
