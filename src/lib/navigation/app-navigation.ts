@@ -58,7 +58,7 @@ export const appNavigation: NavigationEntry[] = [
   { kind: "group", id: "personal", icon: NotebookPen, label: { id: "Personal", en: "Personal" }, children: [
     direct("notes", "/app/personal", NotebookPen, { id: "Catatan", en: "Notes" }, { id: "Simpan catatan pribadi", en: "Keep private notes" }, undefined, undefined, true),
     direct("productivity", "/app/productivity", CheckSquare, { id: "Produktivitas", en: "Productivity" }, { id: "Kelola tujuan dan kebiasaan pribadi", en: "Manage personal goals and habits" }),
-    direct("planning", "/app/planning", WalletCards, { id: "Perencanaan", en: "Planning" }, { id: "Kelola anggaran 50/30/20 dan laporan pribadi", en: "Manage 50/30/20 budget and personal reports" }, undefined, undefined, true),
+    direct("planning", "/app/planning", WalletCards, { id: "Planning (50/30/20)", en: "Planning (50/30/20)" }, { id: "Kelola anggaran 50/30/20 dan laporan pribadi", en: "Manage 50/30/20 budget and personal reports" }, undefined, undefined, true),
     direct("journal", "/app/journal", NotebookPen, { id: "Jurnal", en: "Journal" }, { id: "Tulis jurnal pekerjaan", en: "Write your work journal" }, undefined, undefined, true),
   ]},
   { kind: "group", id: "ai", icon: Sparkles, label: { id: "AI", en: "AI" }, children: [

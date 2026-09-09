@@ -2121,7 +2121,7 @@ export const emailMessages = pgTable("email_messages", {
 
 export const personalNotes = pgTable("personal_notes", {
   id: uuid("id").defaultRandom().primaryKey(),
-  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  workspaceId: uuid("workspace_id").references(() => workspaces.id, { onDelete: "set null" }),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   body: text("body"),

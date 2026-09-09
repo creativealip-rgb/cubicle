@@ -23,7 +23,7 @@ export default async function PlanningPage({ searchParams }: {
   const page = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
 
   return <div className="space-y-4 sm:space-y-6">
-    <PageHeader icon={WalletCards} title={t("Perencanaan Pribadi", "Personal Planning")} description={t("Kelola anggaran 50/30/20 dan laporan keuangan pribadi.", "Manage your 50/30/20 budget and personal financial report.")} />
+    <PageHeader icon={WalletCards} title={t("Planning (50/30/20)", "Planning (50/30/20)")} description={t("Kelola anggaran 50/30/20 dan laporan keuangan pribadi.", "Manage your 50/30/20 budget and personal financial report.")} />
     <div className="inline-flex rounded-xl border bg-muted/70 p-1 shadow-xs">
       <Button asChild size="sm" variant="ghost" className={`h-8 rounded-lg px-3.5 text-xs font-semibold ${tab === "budget" ? "bg-background shadow-sm" : "text-muted-foreground"}`}><Link href={`/app/planning?tab=budget&month=${month}`}>{t("Perencanaan 50/30/20", "50/30/20 Planning")}</Link></Button>
       <Button asChild size="sm" variant="ghost" className={`h-8 rounded-lg px-3.5 text-xs font-semibold ${tab === "report" ? "bg-background shadow-sm" : "text-muted-foreground"}`}><Link href={`/app/planning?tab=report&month=${month}`}>{t("Laporan Pribadi", "Personal Report")}</Link></Button>

@@ -117,7 +117,6 @@ async function requireOwnedNote(noteId: string) {
     .where(
       and(
         eq(personalNotes.id, noteId),
-        eq(personalNotes.workspaceId, workspaceId),
         eq(personalNotes.userId, user.id),
       ),
     )
@@ -127,7 +126,6 @@ async function requireOwnedNote(noteId: string) {
 }
 
 function baseNoteConditions(
-  workspaceId: string,
   userId: string,
   opts?: {
     status?: PersonalNoteStatus | "all" | "active";
@@ -136,10 +134,7 @@ function baseNoteConditions(
     query?: string;
   },
 ) {
-  const conditions: SQL[] = [
-    eq(personalNotes.workspaceId, workspaceId),
-    eq(personalNotes.userId, userId),
-  ];
+  const conditions: SQL[] = [eq(personalNotes.userId, userId)];
 
   if (!opts?.includeSystem) {
     conditions.push(sql`${personalNotes.title} NOT LIKE ${"[journal]%"}`);
@@ -179,8 +174,8 @@ export async function listPersonalNotes(
     offset?: number;
   },
 ) {
-  const { user, workspaceId } = await getContext();
-  const conditions = baseNoteConditions(workspaceId, user.id, {
+  const { user } = await getContext();
+  const conditions = baseNoteConditions(user.id, {
     status: opts?.status,
     includeSystem: opts?.includeSystem,
     titlePrefix: opts?.titlePrefix,
@@ -204,8 +199,8 @@ export async function countPersonalNotes(
     titlePrefix?: string;
   },
 ) {
-  const { user, workspaceId } = await getContext();
-  const conditions = baseNoteConditions(workspaceId, user.id, {
+  const { user } = await getContext();
+  const conditions = baseNoteConditions(user.id, {
     status: opts?.status,
     includeSystem: opts?.includeSystem,
     titlePrefix: opts?.titlePrefix,
@@ -223,8 +218,8 @@ export async function countPersonalNotesByStatus(
   query?: string,
   opts?: { includeSystem?: boolean },
 ) {
-  const { user, workspaceId } = await getContext();
-  const conditions = baseNoteConditions(workspaceId, user.id, {
+  const { user } = await getContext();
+  const conditions = baseNoteConditions(user.id, {
     status: "all",
     includeSystem: opts?.includeSystem,
     query,
@@ -429,7 +424,6 @@ export async function convertPersonalNoteToTask(
       .where(
         and(
           eq(personalNotes.id, noteId),
-          eq(personalNotes.workspaceId, workspaceId),
           eq(personalNotes.userId, user.id),
         ),
       )
