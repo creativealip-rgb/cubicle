@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingButton } from "@/components/ui/loading-button";
-import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+
 
 type ClientOption = { id: string; name: string; companyName: string | null };
 type Props = { clients: ClientOption[]; proposedInvoiceNumber: string };
@@ -55,15 +55,13 @@ export function InvoiceCreateDialog({ clients, proposedInvoiceNumber }: Props) {
         </div>
         <div className="space-y-2">
           <Label htmlFor="new-invoice-client">{t("Klien", "Client")}</Label>
-          <Popover open={clientSearchOpen} onOpenChange={setClientSearchOpen}>
-            <PopoverAnchor asChild><div className="relative">
-              <Input id="new-invoice-client" name="clientId" role="combobox" aria-expanded={clientSearchOpen} autoComplete="off" value={clientSearchOpen ? clientSearch : selectedClient?.companyName || selectedClient?.name || ""} placeholder={t("Cari klien", "Search client")} onFocus={() => setClientSearchOpen(true)} onChange={(event) => { setClientSearch(event.target.value); setClientSearchOpen(true); }} required className="pr-9" />
-              <button type="button" aria-label={t("Buka daftar klien", "Open client list")} onClick={() => setClientSearchOpen((value) => !value)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"><ChevronDown className="h-4 w-4" /></button>
-            </div></PopoverAnchor>
-            <PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-1" onOpenAutoFocus={(event) => event.preventDefault()}>
-              <div className="max-h-60 overflow-y-auto">{filteredClients.length ? filteredClients.map((client) => <button key={client.id} type="button" role="option" aria-selected={client.id === clientId} className="flex min-h-10 w-full items-center rounded-md px-3 text-left text-sm hover:bg-muted" onClick={() => { setClientId(client.id); setClientSearch(""); setClientSearchOpen(false); }}>{client.companyName || client.name}</button>) : <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t("Klien tidak ditemukan", "No clients found")}</p>}</div>
-            </PopoverContent>
-          </Popover>
+          <div className="relative">
+            <div className="relative">
+              <Input id="new-invoice-client" name="clientId" role="combobox" aria-expanded={clientSearchOpen} aria-controls="new-invoice-client-list" autoComplete="off" value={clientSearchOpen ? clientSearch : selectedClient?.companyName || selectedClient?.name || ""} placeholder={t("Cari klien", "Search client")} onFocus={() => setClientSearchOpen(true)} onChange={(event) => { setClientSearch(event.target.value); setClientSearchOpen(true); }} required className="pr-9" />
+              <button type="button" aria-label={t("Buka daftar klien", "Open client list")} onMouseDown={(event) => event.preventDefault()} onClick={() => setClientSearchOpen((value) => !value)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"><ChevronDown className="h-4 w-4" /></button>
+            </div>
+            {clientSearchOpen && <div id="new-invoice-client-list" role="listbox" className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md border bg-popover p-1 shadow-md">{filteredClients.length ? filteredClients.map((client) => <button key={client.id} type="button" role="option" aria-selected={client.id === clientId} className="flex min-h-10 w-full items-center rounded-md px-3 text-left text-sm hover:bg-muted" onMouseDown={(event) => event.preventDefault()} onClick={() => { setClientId(client.id); setClientSearch(""); setClientSearchOpen(false); }}>{client.companyName || client.name}</button>) : <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t("Klien tidak ditemukan", "No clients found")}</p>}</div>}
+          </div>
         </div>
         <LoadingButton type="submit" loading={loading} loadingText={t("Membuat…", "Creating…")} className="w-full">{t("Buat Invoice", "Create Invoice")}</LoadingButton>
       </form>

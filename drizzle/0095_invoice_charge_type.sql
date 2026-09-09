@@ -1,0 +1,1 @@
+ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "charge_type" text NOT NULL DEFAULT 'none';

@@ -86,6 +86,8 @@ const saveInvoiceEditorSchema = z.object({
   currency: z.string().min(3).max(3),
   discount: z.number().min(0),
   tax: z.number().min(0),
+  status: z.enum(["draft", "sent", "viewed", "overdue"]),
+  chargeType: z.enum(["none", "tax", "admin_fee"]),
   notes: z.string(),
   terms: z.string(),
   items: z.array(z.object({
@@ -664,7 +666,8 @@ export async function saveInvoiceEditor(invoiceId: string, input: z.infer<typeof
         total: String(totals.total),
         notes: parsed.notes || null,
         terms: parsed.terms || null,
-        status: payment.status,
+        status: payment.paymentState === "paid" ? "paid" : parsed.status,
+        chargeType: parsed.chargeType,
         updatedAt: new Date(),
       }).where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId))).returning();
       return updated;

@@ -17,7 +17,7 @@ describe("simple global invoice creation", () => {
     expect(dialog).toContain("createEmptyInvoiceDraft");
     expect(dialog).toContain('name="invoiceNumber"');
     expect(dialog).toContain('name="clientId"');
-    expect(dialog).toContain("<Popover");
+    expect(dialog).toContain('role="listbox"');
     expect(dialog).toContain('role="combobox"');
     expect(dialog).toContain("filteredClients");
     expect(dialog).not.toContain("<InvoiceForm");
