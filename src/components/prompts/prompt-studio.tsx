@@ -452,7 +452,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
             {/* 3. Style & Visual (Grid 2-Col) */}
             <div className="space-y-2.5 border-t pt-3">
               <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                <span className="flex h-4.5 w-4.5 items-center justify-center rounded-md bg-primary/10 text-[10px] font-bold text-primary">3</span>
+                <span className="flex h-4.5 w-4.5 items-center justify-center rounded-md bg-primary/10 text-[10px] font-bold text-primary">{detailFields.length > 0 ? 3 : 2}</span>
                 {t("Gaya & Format Visual", "Style & Format")}
               </p>
 

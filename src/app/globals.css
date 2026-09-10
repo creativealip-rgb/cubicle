@@ -103,7 +103,7 @@
   --accent: #f0f0f0;
   --accent-foreground: #292D34;
 
-  --destructive: #ED5F00;
+  --destructive: #c2410c;
   --destructive-foreground: #ffffff;
 
   --border: #dcdfe4;
@@ -137,7 +137,7 @@
   --muted-foreground: #94a3b8;
   --accent: #1e293b;
   --accent-foreground: #f8fafc;
-  --destructive: #ef4444;
+  --destructive: #c2410c;
   --destructive-foreground: #ffffff;
   --border: #334155;
   --input: #334155;
@@ -225,5 +225,16 @@
 
 .top-progress-bar {
   animation: progress-slide 1s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
