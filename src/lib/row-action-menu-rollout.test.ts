@@ -17,4 +17,21 @@ describe("row action menu rollout", () => {
     expect(source).toContain("DropdownMenuTrigger");
     expect(source).toMatch(/MoreHorizontal|Ellipsis/);
   });
+
+  it("keeps all expense row actions inside one menu", () => {
+    const menu = readFileSync("src/components/expenses/edit-expense-button.tsx", "utf8");
+    const list = readFileSync("src/components/expenses/expenses-list-table.tsx", "utf8");
+    expect(menu).toContain("getExpenseReceiptDownloadUrl");
+    expect(menu).toContain("deleteExpense");
+    expect(menu.match(/<DropdownMenuItem/g)).toHaveLength(3);
+    expect(list).not.toContain("ReceiptLinkButton");
+    expect(list).not.toContain("DeleteExpenseButton");
+  });
+
+  it("keeps planning transaction actions in one menu and preserves transaction type", () => {
+    const source = readFileSync("src/components/expenses/personal-expenses-section.tsx", "utf8");
+    expect(source).toContain("MoreHorizontal");
+    expect(source).toContain('name="transactionType" value={r.transactionType}');
+    expect(source).toContain("PersonalReceiptControl");
+  });
 });

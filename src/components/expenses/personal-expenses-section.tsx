@@ -17,7 +17,7 @@ import { getPersonalBudget } from "@/lib/actions/personal-budget";
 import { budgetTargets } from "@/lib/personal-productivity/budget";
 import { budgetProgress } from "@/lib/personal-productivity/money";
 import { formatMoney } from "@/lib/utils";
-import { Pencil, Trash2, ChevronLeft, ChevronRight } from "lucide-react";
+import { Pencil, Trash2, ChevronLeft, ChevronRight, MoreHorizontal } from "lucide-react";
 import Link from "next/link";
 
 const PAGE_SIZE = 10;
@@ -367,24 +367,15 @@ export async function PersonalExpensesSection({
                   </div>
 
                   <div className="flex items-center gap-1.5 shrink-0">
-                    <PersonalReceiptControl
-                      transactionId={r.id}
-                      hasReceipt={Boolean(r.receiptKey)}
-                      label={{
-                        upload: t("Struk", "Receipt"),
-                        download: t("Unduh", "Download"),
-                        remove: t("Hapus", "Remove"),
-                      }}
-                    />
-
                     <details className="relative">
-                      <summary className="cursor-pointer list-none p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-800 text-xs font-semibold">
-                        <Pencil className="h-3.5 w-3.5" />
+                      <summary className="cursor-pointer list-none p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-800" aria-label={t("Aksi transaksi", "Transaction actions")}>
+                        <MoreHorizontal className="h-4 w-4" />
                       </summary>
                       <div className="absolute right-0 top-8 z-30 w-72 rounded-xl border bg-white p-3 shadow-xl">
-                        <p className="text-xs font-bold mb-2">{t("Edit Transaksi", "Edit Transaction")}</p>
+                        <div className="mb-3 flex items-center justify-between gap-2 border-b pb-2"><span className="flex items-center gap-1.5 text-xs font-bold"><Pencil className="size-3.5" />{t("Edit Transaksi", "Edit Transaction")}</span><PersonalReceiptControl transactionId={r.id} hasReceipt={Boolean(r.receiptKey)} label={{ upload: t("Struk", "Receipt"), download: t("Unduh", "Download"), remove: t("Hapus", "Remove") }} /></div>
                         <form action={editTransaction} className="space-y-2">
                           <input type="hidden" name="id" value={r.id} />
+                          <input type="hidden" name="transactionType" value={r.transactionType} />
                           <Input name="description" defaultValue={r.description} required className="h-8 text-xs" />
                           <Input name="merchant" defaultValue={r.merchant || ""} placeholder="Merchant" className="h-8 text-xs" />
                           <div className="grid grid-cols-2 gap-2">
@@ -401,20 +392,12 @@ export async function PersonalExpensesSection({
                           </select>
                           <Button size="sm" variant="outline" className="w-full text-xs h-8">{t("Simpan", "Save")}</Button>
                         </form>
+                        <form action={remove} className="mt-2 border-t pt-2">
+                          <input type="hidden" name="id" value={r.id} />
+                          <Button variant="ghost" size="sm" className="h-8 w-full justify-start text-xs text-red-600 hover:text-red-700"><Trash2 className="h-3.5 w-3.5" />{t("Hapus", "Delete")}</Button>
+                        </form>
                       </div>
                     </details>
-
-                    <form action={remove}>
-                      <input type="hidden" name="id" value={r.id} />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-slate-400 hover:text-red-600"
-                        title={t("Hapus", "Delete")}
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                    </form>
                   </div>
                 </div>
               );

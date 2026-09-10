@@ -13,9 +13,7 @@ import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { formatMoney } from "@/lib/utils";
-import { DeleteExpenseButton } from "@/components/expenses/delete-expense-button";
 import { EditExpenseButton } from "@/components/expenses/edit-expense-button";
-import { ReceiptLinkButton } from "@/components/expenses/receipt-link-button";
 import type {
   CategoryOption,
   ProjectOption,
@@ -53,7 +51,6 @@ type SortKey =
 
 function ExpenseActions({
   e,
-  mobile = false,
   canWrite,
   workspaceId,
   defaultCurrency,
@@ -73,7 +70,6 @@ function ExpenseActions({
   if (!canWrite) return null;
   return (
     <div className="flex min-w-[96px] items-center justify-end gap-1 shrink-0 overflow-visible">
-      {e.receiptUrl && <ReceiptLinkButton expenseId={e.id} />}
       <EditExpenseButton
         expense={{
           id: e.id,
@@ -98,7 +94,7 @@ function ExpenseActions({
         projects={projects}
         clients={clients}
       />
-      <DeleteExpenseButton expenseId={e.id} description={e.description} mobile={mobile} />
+
     </div>
   );
 }
@@ -312,11 +308,6 @@ export function ExpensesListTable({
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex items-center justify-end gap-0.5">
-                    {e.receiptUrl && (
-                      <ReceiptLinkButton
-                        expenseId={e.id}
-                      />
-                    )}
                     <ExpenseActions
                       e={e}
                       canWrite={canWrite}
