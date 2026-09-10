@@ -189,16 +189,16 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
-      <div className="grid gap-5 sm:grid-cols-2">
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-2">
         {/* Left Column: Identitas & Kontak */}
-        <div className="space-y-4">
+        <div data-testid="client-edit-left-column" className="space-y-3">
           <div className="space-y-3">
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Identitas", "Identity")}</h3>
               <p className="text-[11px] text-muted-foreground">{t("Nama kontak & perusahaan klien.", "Client contact name & company.")}</p>
             </div>
-            <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <Label htmlFor="clientNumber" className="text-xs font-medium">Custom Client ID</Label>
                 <Input id="clientNumber" value={form.clientNumber} onChange={(e) => set("clientNumber", e.target.value)} placeholder={t("Otomatis jika kosong", "Auto-generated if empty")} className="h-9 text-sm" maxLength={50} />
@@ -285,14 +285,14 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
                 onChange={(e) => set("address", e.target.value)}
                 placeholder={t("Alamat lengkap", "Full address")}
                 rows={2}
-                className="min-h-[64px] resize-y text-xs"
+                className="min-h-[64px] resize-none text-xs"
               />
             </div>
           </div>
         </div>
 
         {/* Right Column: Catatan Internal & Portal Klien */}
-        <div className="space-y-4">
+        <div data-testid="client-edit-right-column" className="space-y-3">
           <div className="space-y-3">
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Catatan Internal", "Internal Notes")}</h3>
@@ -304,8 +304,8 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
                 value={form.internalNotes}
                 onChange={(e) => set("internalNotes", e.target.value)}
                 placeholder={t("Preferensi klien, jadwal report, dll.", "Client preferences, reporting schedule, etc.")}
-                rows={4}
-                className="min-h-[110px] resize-y text-xs"
+                rows={3}
+                className="min-h-[76px] resize-none text-xs"
               />
             </div>
           </div>

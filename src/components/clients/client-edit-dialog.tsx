@@ -45,7 +45,7 @@ export function ClientEditDialog({ defaultValues, trigger }: ClientEditDialogPro
           <Pencil className="h-3 w-3" /> {t("Ubah", "Edit")}
         </Button>}
       </DialogTrigger>
-      <DialogContent className="flex max-h-[min(90dvh,720px)] w-[calc(100vw-1.5rem)] max-w-2xl flex-col gap-0 overflow-hidden p-0 sm:w-full">
+      <DialogContent className="flex max-h-[min(90dvh,720px)] w-[calc(100vw-1.5rem)] max-w-4xl flex-col gap-0 overflow-hidden p-0 sm:w-full md:overflow-hidden">
         <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12 text-left">
           <DialogTitle>{t("Ubah Klien", "Edit Client")}</DialogTitle>
           <DialogDescription>
