@@ -246,6 +246,7 @@ export default async function CalendarPage() {
             {upcoming.length === 0 && (
               <div className="flex min-h-[20rem] flex-1 items-center justify-center py-8 text-center">
                 <EmptyState
+                  embedded
                   icon={CalendarDays}
                   title={t("Belum ada jadwal mendatang", "No upcoming appointments")}
                   description={t("Bagikan link booking supaya klien bisa atur jadwal sendiri", "Share your booking link so clients can schedule themselves")}
