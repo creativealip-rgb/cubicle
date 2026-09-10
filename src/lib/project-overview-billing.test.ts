@@ -12,5 +12,6 @@ describe("project overview billing", () => {
   it("uses total hourly billable work, not one-hour rate, as invoice target", () => {
     expect(getProjectOverviewBilling({ model: "hourly", includedMinutes: 0, usedMinutes: 0, billableAmount: 600_000, invoicedAmount: 200_000 })).toMatchObject({ configuredAmount: 600_000, percent: 33 });
     expect(overviewSource).toContain("configuredAmount || isRetainer || isHourly ? progressLead");
+    expect(overviewSource).toContain("billingSettingAmount");
   });
 });
