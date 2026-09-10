@@ -41,9 +41,11 @@ test("production client portal set password unlock and slug", async ({ page }) =
     await page.goto("/app/clients");
     await page.getByRole("link", { name: clientName, exact: true }).click();
     await page.locator('button[aria-label="Client actions"]:visible, button[aria-label="Aksi klien"]:visible').first().click();
-    await page.getByRole("menuitem", { name: /^Hapus$|^Delete$/i }).click();
-    const confirm = page.getByRole("dialog");
-    await confirm.getByRole("textbox", { name: /Ketik nama untuk konfirmasi|Type name to confirm/i }).fill(clientName);
-    await confirm.getByRole("button", { name: /Hapus Permanen|Delete Permanently/i }).click();
+    const archiveItem = page.getByRole("menuitem", { name: /Arsipkan|Archive/i });
+    if (await archiveItem.isVisible()) {
+      await archiveItem.click();
+      const confirm = page.getByRole("dialog", { name: /Arsipkan klien|Archive client/i });
+      if (await confirm.isVisible()) await confirm.getByRole("button", { name: /Arsipkan|Archive/i }).click();
+    }
   }
 });

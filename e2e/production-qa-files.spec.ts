@@ -17,7 +17,7 @@ test("global file upload reload download delete", async ({ page }) => {
   });
   await expect(page.getByText(/File diunggah|File uploaded/i)).toBeVisible({ timeout: 20_000 });
   await page.reload();
-  await page.getByRole("textbox", { name: /Cari berkas|Search files/i }).fill(fileName);
+  await page.getByPlaceholder(/Cari folder dan file|Search folders and files/i).fill(fileName);
   const fileNameNode = page.getByText(fileName, { exact: true }).last();
   await expect(fileNameNode).toBeVisible();
   const card = fileNameNode.locator("xpath=ancestor::div[contains(@class,'group')][1]");

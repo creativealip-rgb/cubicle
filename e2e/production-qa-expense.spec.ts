@@ -20,13 +20,15 @@ test("production expense create edit reload delete", async ({ page }) => {
   await page.getByRole("dialog", { name: /Tambah pengeluaran|Add expense/i }).getByRole("button", { name: /Simpan|Save|Tambah|Add Expense/i }).click();
   await expect(page.getByText(description, { exact: true }).last()).toBeVisible({ timeout: 15000 });
   const createdRow = page.getByText(description, { exact: true }).locator("xpath=ancestor::tr");
-  await expect(createdRow.getByRole("button", { name: /Lihat struk|View receipt/i }).first()).toBeVisible();
+  await createdRow.getByRole("button", { name: /Aksi pengeluaran|Expense actions/i }).click();
+  await expect(page.getByRole("menuitem", { name: /Lihat struk|View receipt/i })).toBeVisible();
+  await page.keyboard.press("Escape");
   await page.reload();
   await expect(page.getByText(description, { exact: true }).last()).toBeVisible();
 
   const row = page.getByText(description, { exact: true }).locator("xpath=ancestor::tr");
-  const edit = row.getByRole("button", { name: /Ubah|Edit/i });
-  await edit.click();
+  await row.getByRole("button", { name: /Aksi pengeluaran|Expense actions/i }).click();
+  await page.getByRole("menuitem", { name: /Ubah|Edit/i }).click();
   const editDialog = page.getByRole("dialog");
   await editDialog.getByLabel(/Deskripsi|Description/i).fill(edited);
   await editDialog.getByRole("button", { name: /Simpan|Save|Ubah/i }).click();
@@ -35,7 +37,8 @@ test("production expense create edit reload delete", async ({ page }) => {
   await expect(page.getByText(edited, { exact: true }).last()).toBeVisible();
 
   const editedRow = page.getByText(edited, { exact: true }).locator("xpath=ancestor::tr");
-  await editedRow.getByRole("button", { name: /Hapus pengeluaran|Delete expense/i }).click();
-  await editedRow.getByRole("button", { name: /^Hapus$|^Delete$/i }).click();
+  await editedRow.getByRole("button", { name: /Aksi pengeluaran|Expense actions/i }).click();
+  await page.getByRole("menuitem", { name: /^Hapus$|^Delete$/i }).click();
+  await page.getByRole("dialog", { name: /Hapus pengeluaran|Delete expense/i }).getByRole("button", { name: /^Hapus$|^Delete$/i }).click();
   await expect(page.getByText(edited, { exact: true })).toHaveCount(0);
 });
