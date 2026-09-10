@@ -199,20 +199,20 @@ export function QuestionnaireBuilder({
                       aria-label="Move down"
                     >▼</button>
                   </div>
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0 flex-1 space-y-3">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                       <Badge variant="outline" className="text-xs">#{idx + 1}</Badge>
                       <Input
                         placeholder="Field label (e.g. Project goals)"
                         value={field.label}
                         onChange={(e) => updateField(field.id, { label: e.target.value })}
-                        className="flex-1"
+                        className="min-w-0 flex-1"
                       />
                       <Select
                         value={field.type}
                         onValueChange={(v: FieldType) => updateField(field.id, { type: v })}
                       >
-                        <SelectTrigger className="w-44">
+                        <SelectTrigger className="w-full sm:w-44">
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -227,7 +227,7 @@ export function QuestionnaireBuilder({
                           checked={field.required}
                           onChange={(e) => updateField(field.id, { required: e.target.checked })}
                         />
-                        Required
+                        {t("Wajib", "Required")}
                       </label>
                       <Button
                         type="button"

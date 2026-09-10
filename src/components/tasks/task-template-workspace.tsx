@@ -279,12 +279,12 @@ export function TaskTemplateWorkspace({
           />
 
           {projects.length > 0 && (
-            <div className="flex items-center gap-2">
+            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
               <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
                 {t("Terapkan ke Proyek:", "Apply to Project:")}
               </span>
               <select
-                className="h-8 rounded-xl border border-border/80 bg-background px-3 text-xs font-medium"
+                className="h-8 min-w-0 w-full rounded-xl border border-border/80 bg-background px-3 text-xs font-medium sm:w-auto sm:max-w-64"
                 value={projectId}
                 onChange={(event) => setProjectId(event.target.value)}
               >
