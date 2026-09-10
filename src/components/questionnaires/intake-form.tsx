@@ -69,16 +69,17 @@ export function IntakeForm({ token, fields }: { token: string; fields: Field[] }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form onSubmit={handleSubmit} aria-busy={pending} className="space-y-5">
       {fields.map(f => (
         <div key={f.id} className="space-y-1.5">
-          <label className="text-sm font-medium block">
+          <label htmlFor={`field-${f.id}`} className="text-sm font-medium block">
             {f.label}
             {f.required && <span className="text-red-500 ml-0.5">*</span>}
           </label>
 
           {f.type === "text" && (
             <Input
+              id={`field-${f.id}`}
               type="text"
               placeholder={f.placeholder}
               value={(answers[f.id] as string) || ""}
@@ -88,6 +89,7 @@ export function IntakeForm({ token, fields }: { token: string; fields: Field[] }
 
           {f.type === "textarea" && (
             <Textarea
+              id={`field-${f.id}`}
               rows={5}
               placeholder={f.placeholder}
               value={(answers[f.id] as string) || ""}
@@ -97,6 +99,7 @@ export function IntakeForm({ token, fields }: { token: string; fields: Field[] }
 
           {f.type === "email" && (
             <Input
+              id={`field-${f.id}`}
               type="email"
               placeholder={f.placeholder || "you@company.com"}
               value={(answers[f.id] as string) || ""}
@@ -106,6 +109,7 @@ export function IntakeForm({ token, fields }: { token: string; fields: Field[] }
 
           {f.type === "url" && (
             <Input
+              id={`field-${f.id}`}
               type="url"
               placeholder={f.placeholder || "https://..."}
               value={(answers[f.id] as string) || ""}
@@ -115,6 +119,7 @@ export function IntakeForm({ token, fields }: { token: string; fields: Field[] }
 
           {f.type === "number" && (
             <Input
+              id={`field-${f.id}`}
               type="number"
               placeholder={f.placeholder}
               value={(answers[f.id] as number | string) ?? ""}
@@ -124,6 +129,7 @@ export function IntakeForm({ token, fields }: { token: string; fields: Field[] }
 
           {f.type === "date" && (
             <Input
+              id={`field-${f.id}`}
               type="date"
               value={(answers[f.id] as string) || ""}
               onChange={(e) => setVal(f.id, e.target.value)}
@@ -132,6 +138,7 @@ export function IntakeForm({ token, fields }: { token: string; fields: Field[] }
 
           {f.type === "select" && (
             <select
+              id={`field-${f.id}`}
               className="w-full h-10 rounded-md border border-slate-300 bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
               value={(answers[f.id] as string) || ""}
               onChange={(e) => setVal(f.id, e.target.value)}
@@ -144,7 +151,7 @@ export function IntakeForm({ token, fields }: { token: string; fields: Field[] }
           )}
 
           {f.type === "multiselect" && (
-            <div className="space-y-2 border rounded-md p-3 bg-slate-50">
+            <div id={`field-${f.id}`} role="group" aria-label={f.label} className="space-y-2 border rounded-md p-3 bg-slate-50">
               {(f.options || []).map(opt => {
                 const cur = (answers[f.id] as string[]) || [];
                 return (
@@ -165,7 +172,7 @@ export function IntakeForm({ token, fields }: { token: string; fields: Field[] }
       ))}
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-2">
+        <div role="alert" className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-2">
           {error}
         </div>
       )}
