@@ -27,7 +27,7 @@ test("global file upload reload download delete", async ({ page }) => {
       return null;
     }) as typeof window.open;
   });
-  await card.getByTitle(/Buka \/ Download|Open \/ Download/i).click();
+  await card.getByRole("button", { name: /Buka \/ Unduh|Open \/ Download/i }).click();
   const downloadUrl = await page.locator("html").getAttribute("data-download-url");
   expect(downloadUrl).toMatch(/^\/api\/files\/[^/]+\/download$/);
   const downloadResponse = await page.request.get(downloadUrl!);
