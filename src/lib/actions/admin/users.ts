@@ -128,6 +128,7 @@ export async function createUser(input: z.infer<typeof createUserSchema>): Promi
         id: randomBytes(16).toString("base64url"),
         accountId: id, // seed script pattern: accountId = user.id
         providerId: "credential",
+        issuer: "local:credential",
         userId: id,
         password: passwordHash,
         createdAt: now,
@@ -212,7 +213,7 @@ export async function resetUserPassword(input: z.infer<typeof resetUserPasswordS
   const passwordHash = await hashPassword(parsed.newPassword);
   await db
     .update(accounts)
-    .set({ password: passwordHash, updatedAt: new Date() })
+    .set({ password: passwordHash, issuer: "local:credential", updatedAt: new Date() })
     .where(eq(accounts.id, credential.id));
 
   await writeAdminAudit(admin.id, "user.password_reset", {
