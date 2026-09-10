@@ -17,7 +17,7 @@ describe("files page layout and list wiring", () => {
       "utf8",
     );
     expect(fileList).toContain("const PAGE_SIZE = 10;");
-    expect(fileList).toContain("paginated.map");
+    expect(fileList).toContain("paginatedItems.map");
     expect(fileList).toContain("totalPages > 1");
   });
 });

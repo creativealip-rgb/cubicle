@@ -7,10 +7,10 @@ const clientAction = readFileSync("src/lib/actions/clients.ts", "utf8");
 const projectAction = readFileSync("src/lib/actions/projects.ts", "utf8");
 
 describe("list status editors", () => {
-  it("renders client Edit action in the final desktop and mobile positions", () => {
-    expect(clients).toContain("ClientStatusEditDialog");
+  it("renders client row actions in the final desktop and mobile positions", () => {
+    expect(clients).toContain("ClientRowActions");
     expect(clients).toContain('t("Aksi", "Action")');
-    expect(clients.match(/<ClientStatusEditDialog/g)?.length).toBeGreaterThanOrEqual(2);
+    expect(clients.match(/<ClientRowActions/g)?.length).toBeGreaterThanOrEqual(2);
     expect(clientAction).toContain('z.enum(["active", "inactive", "archived"])');
   });
 
