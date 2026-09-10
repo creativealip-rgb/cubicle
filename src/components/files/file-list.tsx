@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { deleteFile, updateFileMeta } from "@/lib/actions/files";
-import { formatFileDate } from "@/lib/file-manager-rules";
+
 import { useT } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   ChevronLeft,
   ChevronRight,
   Download,
@@ -46,7 +52,7 @@ import {
   Users,
   FolderKanban,
   ArrowUpDown,
-
+  MoreVertical,
 } from "lucide-react";
 
 interface FileItem {
@@ -91,16 +97,9 @@ function getFileIcon(mimeType: string | null) {
   return <FileText className="h-5 w-5 text-muted-foreground" />;
 }
 
-function formatBytes(bytes: number | null, unknownLabel: string): string {
-  if (bytes === null) return unknownLabel;
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
-}
-
 const PAGE_SIZE = 10;
 
-export function FileList({ files, folders = [], canWrite, lang }: FileListProps) {
+export function FileList({ files, folders = [], canWrite, lang: _lang }: FileListProps) {
   const { refresh } = useAppTransition();
   const { t } = useT();
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
@@ -314,7 +313,7 @@ export function FileList({ files, folders = [], canWrite, lang }: FileListProps)
       {combinedItems.length === 0 ? <EmptyState icon={Search} title={t("Tidak ada item yang cocok", "No matching items")} description={t("Coba ubah kata kunci atau filter.", "Try a different keyword or filter.")} /> : <>
         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("Semua item", "All items")} ({combinedItems.length})</p>
         {viewMode === "grid" ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {paginatedItems.map((item) => item.kind === "folder" ? (() => { const folder=item.folder; const Icon=folder.type === "client" ? Users : folder.type === "project" ? FolderKanban : Folder; return <a key={`folder-${folder.id}`} href={folder.href} className="group flex min-h-32 flex-col justify-between rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm"><div className="flex items-start justify-between"><div className="flex size-10 items-center justify-center rounded-xl bg-muted/60"><Icon className="size-5 text-amber-500" /></div><ChevronRight className="size-4 text-muted-foreground" /></div><div><p className="truncate text-sm font-semibold" title={folder.name}>{folder.name}</p><p className="text-xs text-muted-foreground">{folder.type === "client" ? t("Klien", "Client") : folder.type === "project" ? t("Proyek", "Project") : t("Folder", "Folder")}</p></div></a>; })() : (() => { const file=item.file; const busy=busyId === file.id; return <div key={`file-${file.id}`} className="group flex min-h-32 flex-col justify-between rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm"><div className="flex items-start justify-between"><div className="flex size-10 items-center justify-center rounded-xl bg-muted/60">{getFileIcon(file.mimeType)}</div><div className="flex gap-1"><Button variant="ghost" size="icon" className="size-8" onClick={() => window.open(`/api/files/${file.id}/download`, "_blank")} disabled={busy} aria-label={t(`Buka / Unduh ${file.name}`, `Open / Download ${file.name}`)}><Download className="size-4" /></Button>{canWrite && <Button variant="ghost" size="icon" className="size-8 hover:text-destructive" onClick={() => setDeleteTarget(file)} disabled={busy} aria-label={t(`Hapus ${file.name}`, `Delete ${file.name}`)}><Trash2 className="size-4" /></Button>}</div></div><div><p className="truncate text-sm font-semibold" title={file.name}>{file.name}</p><p className="text-xs text-muted-foreground"><span className="font-mono">{formatBytes(file.sizeBytes, t("Tidak diketahui", "Unknown"))}</span> · {formatFileDate(file.createdAt, lang)}</p></div>{canWrite && <div className="mt-2 flex gap-1.5 border-t pt-2"><Select value={file.visibility} onValueChange={(value) => handleVisibility(file.id, value as "internal" | "client")} disabled={busy}><SelectTrigger className="h-7 text-[11px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="internal">{t("Internal", "Internal")}</SelectItem><SelectItem value="client">{t("Klien", "Client")}</SelectItem></SelectContent></Select><Select value={file.fileType} onValueChange={(value) => handleFileType(file.id, value as "working_file" | "deliverable")} disabled={busy}><SelectTrigger className="h-7 text-[11px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="working_file">{t("Berkas kerja", "Working")}</SelectItem><SelectItem value="deliverable">{t("Hasil kerja", "Deliverable")}</SelectItem></SelectContent></Select></div>}</div>; })())}
+          {paginatedItems.map((item) => item.kind === "folder" ? (() => { const folder=item.folder; const Icon=folder.type === "client" ? Users : folder.type === "project" ? FolderKanban : Folder; return <div key={`folder-${folder.id}`} className="group flex h-14 items-center gap-3 rounded-xl bg-muted/60 px-3 transition-colors hover:bg-muted"><a href={folder.href} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><Icon className="size-5 shrink-0 text-muted-foreground" /><span className="truncate text-sm font-medium" title={folder.name}>{folder.name}</span></a><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-8 shrink-0 rounded-full" aria-label={t(`Aksi ${folder.name}`, `${folder.name} actions`)}><MoreVertical className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem asChild><a href={folder.href}>{t("Buka", "Open")}</a></DropdownMenuItem></DropdownMenuContent></DropdownMenu></div>; })() : (() => { const file=item.file; const busy=busyId === file.id; return <div key={`file-${file.id}`} className="group flex h-14 items-center gap-3 rounded-xl bg-muted/60 px-3 transition-colors hover:bg-muted"><div className="shrink-0">{getFileIcon(file.mimeType)}</div><span className="min-w-0 flex-1 truncate text-sm font-medium" title={file.name}>{file.name}</span><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-8 shrink-0 rounded-full" disabled={busy} aria-label={t(`Aksi ${file.name}`, `${file.name} actions`)}><MoreVertical className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => window.open(`/api/files/${file.id}/download`, "_blank")}><Download className="size-4" />{t("Unduh", "Download")}</DropdownMenuItem>{canWrite && <><DropdownMenuItem onSelect={() => handleVisibility(file.id, file.visibility === "internal" ? "client" : "internal")}>{file.visibility === "internal" ? t("Tampilkan ke klien", "Make client-visible") : t("Jadikan internal", "Make internal")}</DropdownMenuItem><DropdownMenuItem onSelect={() => handleFileType(file.id, file.fileType === "deliverable" ? "working_file" : "deliverable")}>{file.fileType === "deliverable" ? t("Jadikan berkas kerja", "Mark as working file") : t("Tandai hasil kerja", "Mark as deliverable")}</DropdownMenuItem><DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeleteTarget(file)}><Trash2 className="size-4" />{t("Hapus", "Delete")}</DropdownMenuItem></>}</DropdownMenuContent></DropdownMenu></div>; })())}
         </div> : <div className="overflow-hidden rounded-2xl border bg-card"><div className="divide-y">{paginatedItems.map((item) => item.kind === "folder" ? <a key={`folder-${item.folder.id}`} href={item.folder.href} className="flex h-11 items-center justify-between px-4 hover:bg-muted/30"><span className="flex min-w-0 items-center gap-3"><Folder className="size-4 shrink-0 text-amber-500" /><span className="truncate text-sm font-medium">{item.folder.name}</span></span><span className="text-xs text-muted-foreground">{t("Folder", "Folder")}</span></a> : <div key={`file-${item.file.id}`} className="flex h-11 items-center justify-between gap-3 px-4"><span className="flex min-w-0 items-center gap-3">{getFileIcon(item.file.mimeType)}<span className="truncate text-sm font-medium">{item.file.name}</span></span><Button variant="ghost" size="icon" className="size-8" onClick={() => window.open(`/api/files/${item.file.id}/download`, "_blank")} aria-label={t(`Buka / Unduh ${item.file.name}`, `Open / Download ${item.file.name}`)}><Download className="size-4" /></Button></div>)}</div></div>}
         {totalPages > 1 && <div className="flex items-center justify-between border-t pt-3"><Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft className="size-4" />{t("Sebelumnya", "Previous")}</Button><span className="text-xs text-muted-foreground">{t("Halaman", "Page")} {safePage} / {totalPages}</span><Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => setPage((value) => value + 1)}>{t("Berikutnya", "Next")}<ChevronRight className="size-4" /></Button></div>}
       </>}
