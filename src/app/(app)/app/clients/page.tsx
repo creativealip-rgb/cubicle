@@ -22,6 +22,9 @@ import { ClientCreateDialog } from "@/components/clients/client-create-dialog";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { getPlanYearlyLabel } from "@/lib/billing-pricing";
 import { BILLING_PLANS } from "@/lib/billing-plans";
+import { PaginationLinks } from "@/components/ui/pagination-links";
+
+const PAGE_SIZE = 10;
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -30,6 +33,7 @@ async function getWorkspaceId(): Promise<string> {
 interface SearchParams {
   search?: string;
   status?: string;
+  page?: string;
 }
 
 export default async function ClientsPage({
@@ -58,6 +62,7 @@ export default async function ClientsPage({
   const params = await searchParams;
   const search = params.search ?? "";
   const statusFilter = params.status ?? "active";
+  const requestedPage = Math.max(1, Number.parseInt(params.page ?? "1", 10) || 1);
 
   const whereClauses = [eq(clients.workspaceId, workspaceId)];
 
@@ -105,6 +110,16 @@ export default async function ClientsPage({
           (c.clientNumber?.toLowerCase().includes(search.toLowerCase()) ?? false)
       )
     : clientsList;
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const page = Math.min(requestedPage, totalPages);
+  const paginatedClients = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+  const clientPageHref = (nextPage: number) => {
+    const qs = new URLSearchParams();
+    if (statusFilter !== "active") qs.set("status", statusFilter);
+    if (search) qs.set("search", search);
+    if (nextPage > 1) qs.set("page", String(nextPage));
+    return qs.size ? `/app/clients?${qs.toString()}` : "/app/clients";
+  };
 
   // Get counts for tabs
   const [counts] = await db
@@ -218,11 +233,12 @@ export default async function ClientsPage({
         </div>
 
         <ClientsListTable
-          clients={filtered}
+          clients={paginatedClients}
           clientCount={clientCount}
           canWrite={canWrite}
           isAtLimit={isAtLimit}
         />
+        <PaginationLinks page={page} totalPages={totalPages} href={clientPageHref} labels={{ previous: t("Sebelumnya", "Previous"), next: t("Berikutnya", "Next"), page: t("Halaman klien", "Client page") }} />
       </div>
     </div>
   );
