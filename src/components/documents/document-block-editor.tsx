@@ -16,6 +16,7 @@ import {
 } from "@/lib/document-blocks";
 import { uploadOneFile, MAX_UPLOAD_BYTES } from "@/lib/files-upload";
 import { useT } from "@/lib/i18n-client";
+import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
 import { ContractPublicView } from "@/components/contracts/contract-public-view";
@@ -123,6 +124,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
   const [saving, setSaving] = useState(false);
   const [stale, setStale] = useState(false);
   const [pending, startTransition] = useTransition();
+  useUnsavedChanges(dirty || saving);
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [showPreview, setShowPreview] = useState(false);
@@ -332,7 +334,7 @@ export function DocumentBlockEditor({ kind, workspaceId, initialBlocks, initialR
   return (
     <div className="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden bg-slate-100">
       <div className="sticky top-0 z-10 flex shrink-0 items-center justify-between border-b bg-white px-4 py-3">
-        <div className="flex min-w-0 items-center gap-2">{backHref && <Button asChild type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={t("Kembali", "Back")}><Link href={backHref}><ArrowLeft className="h-4 w-4" /></Link></Button>}<div className="min-w-0"><h1 className="font-semibold">{kind === "proposal" ? t("Editor proposal", "Proposal editor") : t("Editor kontrak", "Contract editor")}</h1><p className="text-xs text-muted-foreground">{stale ? t("Dokumen berubah di tempat lain — muat ulang untuk melanjutkan", "Document changed elsewhere — reload to continue") : saving || pending ? t("Menyimpan...", "Saving...") : dirty ? t("Perubahan belum tersimpan", "Unsaved changes") : t("Perubahan tersimpan", "Changes saved")}</p></div></div>
+        <div className="flex min-w-0 items-center gap-2">{backHref && <Button asChild type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={t("Kembali", "Back")}><Link href={backHref} onClick={(event) => { if ((dirty || saving) && !window.confirm(t("Perubahan masih disimpan. Tinggalkan editor?", "Changes are still saving. Leave editor?"))) event.preventDefault(); }}><ArrowLeft className="h-4 w-4" /></Link></Button>}<div className="min-w-0"><h1 className="font-semibold">{kind === "proposal" ? t("Editor proposal", "Proposal editor") : t("Editor kontrak", "Contract editor")}</h1><p className="text-xs text-muted-foreground">{stale ? t("Dokumen berubah di tempat lain — muat ulang untuk melanjutkan", "Document changed elsewhere — reload to continue") : saving || pending ? t("Menyimpan...", "Saving...") : dirty ? t("Perubahan belum tersimpan", "Unsaved changes") : t("Perubahan tersimpan", "Changes saved")}</p></div></div>
         <div className="flex items-center gap-2">
           <div className="hidden items-center gap-1 rounded-md border bg-muted/40 p-0.5 sm:flex">
             {([["desktop", Monitor], ["tablet", Tablet], ["mobile", Smartphone]] as const).map(([name, Icon]) => <Button key={name} type="button" variant={device === name ? "default" : "ghost"} size="icon" className="h-7 w-7" onClick={() => setDevice(name)} aria-label={name} aria-pressed={device === name}><Icon className="h-3.5 w-3.5" /></Button>)}

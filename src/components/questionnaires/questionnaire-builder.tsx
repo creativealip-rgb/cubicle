@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
 import { useT } from "@/lib/i18n-client";
 import Link from "next/link";
+import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 
 type FieldType = "text" | "textarea" | "select" | "multiselect" | "number" | "date" | "email" | "url";
 
@@ -63,6 +64,18 @@ export function QuestionnaireBuilder({
   const [description, setDescription] = useState(initial?.description || "");
   const [fields, setFields] = useState<Field[]>(initial?.schema || []);
   const [pending, startTransition] = useTransition();
+  const dirty = useMemo(() => JSON.stringify({ name, description, fields }) !== JSON.stringify({
+    name: initial?.name || "",
+    description: initial?.description || "",
+    fields: initial?.schema || [],
+  }), [description, fields, initial, name]);
+  useUnsavedChanges(dirty && !pending);
+
+  function confirmLeave(event: React.MouseEvent<HTMLAnchorElement>) {
+    if (dirty && !window.confirm(t("Perubahan belum disimpan. Tinggalkan editor?", "Unsaved changes. Leave editor?"))) {
+      event.preventDefault();
+    }
+  }
 
   function addField() {
     setFields([...fields, {
@@ -280,7 +293,7 @@ export function QuestionnaireBuilder({
           {questionnaireId ? "Update form" : "Create form"}
         </Button>
         <Button variant="ghost" asChild>
-          <Link href="/app/questionnaires">Batal</Link>
+          <Link href="/app/questionnaires" onClick={confirmLeave}>{t("Batal", "Cancel")}</Link>
         </Button>
       </div>
     </div>
