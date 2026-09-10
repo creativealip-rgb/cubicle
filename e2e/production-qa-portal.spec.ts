@@ -40,7 +40,7 @@ test("production client portal set password unlock and slug", async ({ page }) =
   } finally {
     await page.goto("/app/clients");
     await page.getByRole("link", { name: clientName, exact: true }).click();
-    await page.getByRole("button", { name: /Aksi klien|Client actions/i }).click();
+    await page.locator('button[aria-label="Client actions"]:visible, button[aria-label="Aksi klien"]:visible').first().click();
     await page.getByRole("menuitem", { name: /^Hapus$|^Delete$/i }).click();
     const confirm = page.getByRole("dialog");
     await confirm.getByRole("textbox", { name: /Ketik nama untuk konfirmasi|Type name to confirm/i }).fill(clientName);
