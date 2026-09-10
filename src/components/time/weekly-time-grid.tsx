@@ -220,9 +220,10 @@ export function WeeklyTimeGrid({
         ) : (
           <>
             <div className="hidden overflow-x-auto lg:block">
-              <div className="min-w-[900px]">
-                <div className="grid grid-cols-[minmax(210px,1.7fr)_repeat(7,minmax(76px,1fr))_86px] gap-1 border-b pb-2 text-center text-xs font-medium text-muted-foreground">
-                  <span className="text-left">{t("Project / Task", "Project / Task")}</span>
+              <div className="min-w-[1092px]">
+                <div className="grid grid-cols-[minmax(280px,1.7fr)_minmax(220px,1.35fr)_repeat(7,minmax(72px,.55fr))_80px] gap-1 border-b pb-2 text-center text-xs font-medium text-muted-foreground">
+                  <span className="text-left">{t("Proyek", "Project")}</span>
+                  <span className="text-left">{t("Tugas", "Task")}</span>
                   {dates.map((date) => (
                     <span key={date.toISOString()}>
                       {date.toLocaleDateString(locale, { weekday: "short", day: "numeric", timeZone: "UTC" })}
@@ -231,17 +232,15 @@ export function WeeklyTimeGrid({
                   <span>{t("Total", "Total")}</span>
                 </div>
                 {rows.map((row) => (
-                  <div key={row.key} className="group grid grid-cols-[minmax(210px,1.7fr)_repeat(7,minmax(76px,1fr))_86px] items-center gap-1 border-b py-2 hover:bg-muted/20 transition-colors">
-                    <div className="min-w-0 pr-2">
-                      <p className="truncate text-sm font-medium">{row.projectName}</p>
-                      <p className="truncate text-xs text-muted-foreground">{row.taskTitle ?? t("Tanpa task", "No task")}</p>
-                    </div>
+                  <div key={row.key} className="group grid grid-cols-[minmax(280px,1.7fr)_minmax(220px,1.35fr)_repeat(7,minmax(72px,.55fr))_80px] items-center gap-1 border-b py-2 hover:bg-muted/20 transition-colors">
+                    <p className="min-w-0 truncate pr-2 text-sm font-medium">{row.projectName}</p>
+                    <p className="min-w-0 truncate pr-2 text-sm text-muted-foreground">{row.taskTitle ?? t("Tanpa task", "No task")}</p>
                     {row.cells.map((cell, index) => {
                       const hasNotes = cell.entries.some((e) => e.description || e.tags);
                       return (
-                        <div key={cell.date} className="group/cell relative flex items-center justify-center">
+                        <div key={cell.date} className="group/cell relative flex min-w-0 items-center justify-center">
                           <Input
-                            className="h-9 text-center text-xs focus:bg-accent/40 focus:ring-1 focus:ring-primary/40 transition-all placeholder:text-muted-foreground/50 pr-5"
+                            className="h-9 w-full min-w-0 pr-5 text-center text-xs tabular-nums transition-all placeholder:text-muted-foreground/50 focus:bg-accent/40 focus:ring-1 focus:ring-primary/40"
                             placeholder="HH:MM"
                             defaultValue={formatDurationInput(cell.totalMinutes)}
                             disabled={!canWrite || pending || !row.taskId}
@@ -310,8 +309,8 @@ export function WeeklyTimeGrid({
                   </div>
                 ))}
                 {/* Daily Totals Footer Row */}
-                <div className="grid grid-cols-[minmax(210px,1.7fr)_repeat(7,minmax(76px,1fr))_86px] items-center gap-1 bg-muted/30 py-2.5 font-medium">
-                  <span className="text-left text-xs font-semibold text-muted-foreground">{t("Total Harian", "Daily Total")}</span>
+                <div className="grid grid-cols-[minmax(280px,1.7fr)_minmax(220px,1.35fr)_repeat(7,minmax(72px,.55fr))_80px] items-center gap-1 bg-muted/30 py-2.5 font-medium">
+                  <span className="col-span-2 text-left text-xs font-semibold text-muted-foreground">{t("Total Harian", "Daily Total")}</span>
                   {dailyTotals.map((colTotal, idx) => (
                     <span key={dates[idx].toISOString()} className="text-center text-xs font-semibold">
                       {colTotal > 0 ? minutesLabel(colTotal, hLabel, mLabel) : "-"}
