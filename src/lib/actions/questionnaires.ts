@@ -288,8 +288,9 @@ export async function submitQuestionnaire(input: {
     .where(eq(questionnaireResponses.id, resp.id))
     .returning();
 
-  await writeActivityLog(resp.workspaceId, resp.respondentEmail || "anonymous", "submitted_questionnaire", "questionnaire_response", resp.id, {
+  await writeActivityLog(resp.workspaceId, null, "submitted_questionnaire", "questionnaire_response", resp.id, {
     questionnaireName: q.name,
+    respondentEmail: resp.respondentEmail,
   });
 
   try {
