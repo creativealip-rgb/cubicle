@@ -220,7 +220,7 @@ export function ExpenseForm({
   const gridCols = compact ? "grid-cols-1 sm:grid-cols-2 md:grid-cols-4" : "grid-cols-1 md:grid-cols-2";
 
   return (
-    <form onSubmit={handleSubmit} className="flex min-h-0 flex-1 flex-col">
+    <form onSubmit={handleSubmit} aria-busy={loading || uploading} className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
       <div className={`grid gap-3 ${gridCols}`}>
         <div className="space-y-1">

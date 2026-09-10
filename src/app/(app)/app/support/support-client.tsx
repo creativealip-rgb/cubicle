@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useT } from "@/lib/i18n-client";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent } from "@/components/ui/card";
@@ -90,6 +90,17 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
   const { t, locale } = useT();
   const { refresh } = useAppTransition();
   const [showCreate, setShowCreate] = useState(false);
+  const createTriggerRef = useRef<HTMLButtonElement | null>(null);
+
+  function openCreate(event: React.MouseEvent<HTMLButtonElement>) {
+    createTriggerRef.current = event.currentTarget;
+    setShowCreate(true);
+  }
+
+  function restoreCreateFocus(event: Event) {
+    event.preventDefault();
+    createTriggerRef.current?.focus();
+  }
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
@@ -179,7 +190,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
               </Link>
             </Button>
             <Button
-              onClick={() => setShowCreate(true)}
+              onClick={openCreate}
               size="sm"
               className="h-8 gap-1.5 rounded-lg text-xs font-semibold shadow-xs"
             >
@@ -286,7 +297,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
               )}
             </p>
             <Button
-              onClick={() => setShowCreate(true)}
+              onClick={openCreate}
               size="sm"
               className="mt-4 h-8 gap-1.5 rounded-lg text-xs font-semibold"
             >
@@ -479,7 +490,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
 
       {/* Modal Dialog: New Ticket Creation */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-md rounded-2xl">
+        <DialogContent onCloseAutoFocus={restoreCreateFocus} className="sm:max-w-md rounded-2xl">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <LifeBuoy className="h-4 w-4 text-primary" />
@@ -491,6 +502,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
           </DialogHeader>
 
           <form
+            aria-busy={isPending}
             action={(formData) => {
               startTransition(async () => {
                 try {

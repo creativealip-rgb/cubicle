@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -54,6 +54,12 @@ export function EditExpenseButton({
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(false);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+
+  function restoreTriggerFocus(event: Event) {
+    event.preventDefault();
+    triggerRef.current?.focus();
+  }
 
   async function openReceipt() {
     setLoading(true);
@@ -84,9 +90,9 @@ export function EditExpenseButton({
 
   return (
     <>
-      <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-7" aria-label={t("Aksi pengeluaran", "Expense actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => setOpen(true)}><Pencil className="size-3.5" />{t("Edit", "Edit")}</DropdownMenuItem>{expense.receiptUrl ? <DropdownMenuItem onSelect={() => void openReceipt()} disabled={loading}><Paperclip className="size-3.5" />{t("Lihat struk", "View receipt")}</DropdownMenuItem> : null}<DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setConfirming(true)}><Trash2 className="size-3.5" />{t("Hapus", "Delete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+      <DropdownMenu><DropdownMenuTrigger asChild><Button ref={triggerRef} variant="ghost" size="icon" className="size-7" aria-label={t("Aksi pengeluaran", "Expense actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => setOpen(true)}><Pencil className="size-3.5" />{t("Edit", "Edit")}</DropdownMenuItem>{expense.receiptUrl ? <DropdownMenuItem onSelect={() => void openReceipt()} disabled={loading}><Paperclip className="size-3.5" />{t("Lihat struk", "View receipt")}</DropdownMenuItem> : null}<DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setConfirming(true)}><Trash2 className="size-3.5" />{t("Hapus", "Delete")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="flex w-[calc(100%-1.5rem)] max-w-2xl max-h-[min(90dvh,720px)] flex-col gap-0 overflow-hidden p-0">
+        <DialogContent onCloseAutoFocus={restoreTriggerFocus} className="flex w-[calc(100%-1.5rem)] max-w-2xl max-h-[min(90dvh,720px)] flex-col gap-0 overflow-hidden p-0">
           <DialogHeader className="shrink-0 border-b px-4 py-4 pr-12 sm:px-6">
             <DialogTitle>{t("Edit pengeluaran", "Edit expense")}</DialogTitle>
           </DialogHeader>
@@ -117,7 +123,7 @@ export function EditExpenseButton({
         </DialogContent>
       </Dialog>
       <Dialog open={confirming} onOpenChange={setConfirming}>
-        <DialogContent className="sm:max-w-sm">
+        <DialogContent onCloseAutoFocus={restoreTriggerFocus} className="sm:max-w-sm">
           <DialogHeader><DialogTitle>{t("Hapus pengeluaran?", "Delete expense?")}</DialogTitle></DialogHeader>
           <p className="text-sm text-muted-foreground">{t("Tindakan ini tidak dapat dibatalkan.", "This action cannot be undone.")}</p>
           <DialogFooter><Button variant="outline" onClick={() => setConfirming(false)} disabled={loading}>{t("Batal", "Cancel")}</Button><Button variant="destructive" onClick={remove} disabled={loading}>{loading ? <Loader2 className="size-4 animate-spin" /> : null}{t("Hapus", "Delete")}</Button></DialogFooter>
