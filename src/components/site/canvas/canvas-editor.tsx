@@ -471,6 +471,24 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     }
   }, [onSave, refresh, site, t]);
 
+  const handlePublication = useCallback(async (published: boolean) => {
+    const next = { ...site, published };
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
+    setSaving(true);
+    try {
+      await onSave(next);
+      setSite(next);
+      setLastSaved(JSON.stringify(next));
+      setShowPublishConfirm(null);
+      toast.success(published ? t("Halaman berhasil dipublikasikan", "Page published") : t("Halaman berhasil disembunyikan", "Page unpublished"));
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Perubahan gagal disimpan", "Change was not saved"));
+    } finally {
+      setSaving(false);
+    }
+  }, [onSave, refresh, site, t]);
+
   const handleSelectReadinessIssue = useCallback((issue: { id: string }) => {
     if (issue.id.startsWith("cta") || issue.id === "placeholder-example-destination" || issue.id === "no-contact-method") {
       setShowPublishConfirm(true);
@@ -810,18 +828,16 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
             </div>
           )}
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowPublishConfirm(null)} className="flex-1">
+            <Button variant="outline" onClick={() => setShowPublishConfirm(null)} disabled={saving} className="flex-1">
               {t("Batal", "Cancel")}
             </Button>
             <Button
-              onClick={() => {
-                updateSite({ published: showPublishConfirm });
-                setShowPublishConfirm(null);
-              }}
-              disabled={showPublishConfirm && !isReadyToPublish(getPersonalSiteReadiness({ ...site, published: true }))}
+              onClick={() => void handlePublication(showPublishConfirm)}
+              disabled={saving || (showPublishConfirm && !isReadyToPublish(getPersonalSiteReadiness({ ...site, published: true })))}
+              aria-busy={saving}
               className="flex-1"
             >
-              {showPublishConfirm ? t("Publikasikan", "Publish") : t("Sembunyikan", "Unpublish")}
+              {saving ? t("Menyimpan...", "Saving...") : showPublishConfirm ? t("Publikasikan", "Publish") : t("Sembunyikan", "Unpublish")}
             </Button>
           </div>
         </div>
