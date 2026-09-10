@@ -11,12 +11,12 @@ describe("files page layout and list wiring", () => {
     expect(layout).toContain("lg:sticky lg:top-20 lg:self-start");
   });
 
-  it("paginates file list to 10 items per page with prev/next navigation", () => {
+  it("paginates file list to 15 items per page with prev/next navigation", () => {
     const fileList = readFileSync(
       resolve(__dirname, "../components/files/file-list.tsx"),
       "utf8",
     );
-    expect(fileList).toContain("const PAGE_SIZE = 10;");
+    expect(fileList).toContain("const PAGE_SIZE = 15;");
     expect(fileList).toContain("paginatedItems.map");
     expect(fileList).toContain("totalPages > 1");
   });

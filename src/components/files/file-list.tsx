@@ -97,7 +97,7 @@ function getFileIcon(mimeType: string | null) {
   return <FileText className="h-5 w-5 text-muted-foreground" />;
 }
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 15;
 
 export function FileList({ files, folders = [], canWrite, lang: _lang }: FileListProps) {
   const { refresh } = useAppTransition();
