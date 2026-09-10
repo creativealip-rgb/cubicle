@@ -11,10 +11,12 @@ export function ProjectOverview({ project, progress, taskUsageProgress, trackedM
   const billingLabel = isRetainer ? "Retainer" : isHourly ? t("Per Jam", "Hourly") : t("Harga Tetap", "Fixed Price");
   const model = isRetainer ? "retainer" : isHourly ? "hourly" : "fixed_price";
   const kpiLabel = isRetainer ? t("Nilai Retainer", "Retainer Value") : isHourly ? t("Nilai Tagihan", "Billable Amount") : t("Nilai Proyek", "Project Value");
-  const useMonthlyTaskUsage = (isHourly || isRetainer) && taskUsageProgress.total > 0;
-  const taskMetric = useMonthlyTaskUsage ? taskUsageProgress : progress;
-  const taskPercent = taskMetric.total ? Math.round(taskMetric.done / taskMetric.total * 100) : 0;
-  const taskProgress = taskMetric.total ? `${taskMetric.done}/${taskMetric.total} · ${taskPercent}%` : t("Belum ada tugas", "No tasks yet");
+  const showRecurringTaskCount = (isHourly || isRetainer) && taskUsageProgress.total > 0;
+  const taskProgress = showRecurringTaskCount
+    ? String(taskUsageProgress.total)
+    : progress.total
+      ? `${progress.done}/${progress.total} · ${progress.percent}%`
+      : t("Belum ada tugas", "No tasks yet");
   const includedMinutes = Number(retainerPeriod?.includedMinutesSnapshot ?? project.retainerIncludedMinutes ?? 0);
   const usedMinutes = Number(retainerUsedMinutes ?? retainerPeriod?.approvedMinutes ?? 0);
   const overviewBilling = getProjectOverviewBilling({ model, includedMinutes, usedMinutes, billableAmount, invoicedAmount, fixedAmount: Number(project.budget || 0) });
@@ -24,7 +26,7 @@ export function ProjectOverview({ project, progress, taskUsageProgress, trackedM
   const progressPercent = overviewBilling.percent;
   const progressLead = isRetainer ? overviewBilling.progressLead! : `${formatMoney(invoicedAmount, project.currency)} / ${formatMoney(configuredAmount, project.currency)}`;
   const progressRest = isRetainer ? `${formatMinutesCompact(Math.max(0, includedMinutes - usedMinutes))} ${t("tersisa", "left")}` : `${formatMoney(Math.max(0, configuredAmount - invoicedAmount), project.currency)} ${t("tersisa", "left")}`;
-  const kpis = [[t("Jam Tercatat", "Tracked Hours"), `${Math.floor(trackedMinutes / 60)}h ${trackedMinutes % 60}m`, Clock3], [useMonthlyTaskUsage ? t("Tugas Dipakai Bulan Ini", "Tasks Used This Month") : t("Progres Tugas", "Task Progress"), taskProgress, CheckCircle2], [kpiLabel, formatMoney(billableAmount, project.currency), Landmark], [t("Belum Dibayar", "Outstanding"), formatMoney(outstandingAmount, project.currency), Wallet]] as const;
+  const kpis = [[t("Jam Tercatat", "Tracked Hours"), `${Math.floor(trackedMinutes / 60)}h ${trackedMinutes % 60}m`, Clock3], [showRecurringTaskCount ? t("Tugas Berulang Aktif", "Active Recurring Tasks") : t("Progres Tugas", "Task Progress"), taskProgress, CheckCircle2], [kpiLabel, formatMoney(billableAmount, project.currency), Landmark], [t("Belum Dibayar", "Outstanding"), formatMoney(outstandingAmount, project.currency), Wallet]] as const;
   const section = (title: string, items: any[], href: string, render: (item: any) => React.ReactNode) => <Card className="h-full rounded-xl"><CardContent className="flex h-full min-h-56 flex-col p-4"><div className="mb-3 flex items-center justify-between"><h3 className="text-sm font-bold">{title}</h3><Link href={href} className="text-xs font-medium text-primary hover:underline">{t("Lihat semua", "View all")}</Link></div><div className="divide-y">{items.length ? items.map(render) : <p className="py-8 text-center text-sm text-muted-foreground">{t("Belum ada data", "No data yet")}</p>}</div></CardContent></Card>;
   return <div className="space-y-4">
     <div className="grid overflow-hidden rounded-xl border bg-card sm:grid-cols-2 lg:grid-cols-4">{kpis.map(([label,value,Icon], index)=><div key={label} className={`flex items-center gap-3 p-4 ${index ? "border-t sm:border-l sm:border-t-0" : ""} ${index === 2 ? "sm:border-l-0 sm:border-t lg:border-l lg:border-t-0" : ""}`}><div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary"><Icon className="h-4 w-4" /></div><div className="min-w-0"><p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</p><p className="truncate text-lg font-bold tabular-nums">{value}</p></div></div>)}</div>

@@ -13,9 +13,9 @@ describe("project recurring task usage", () => {
     expect(projectPage).toContain("lastUsedAt: task.lastUsedAt");
   });
 
-  it("shows monthly usage for reusable hourly and retainer tasks", () => {
+  it("shows active recurring task count for hourly and retainer projects", () => {
     expect(projectPage).toContain('task.mode === "reusable" && task.lifecycle === "active"');
-    expect(projectPage).toContain("usedReusableTaskIds");
-    expect(overview).toContain('t("Tugas Dipakai Bulan Ini", "Tasks Used This Month")');
+    expect(overview).toContain('t("Tugas Berulang Aktif", "Active Recurring Tasks")');
+    expect(overview).toContain("String(taskUsageProgress.total)");
   });
 });

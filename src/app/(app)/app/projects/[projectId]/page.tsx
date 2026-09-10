@@ -183,7 +183,7 @@ export default async function ProjectDetailPage({
       clientId: timeEntries.clientId,
       projectId: timeEntries.projectId,
       taskId: timeEntries.taskId,
-      workDate: timeEntries.workDate,
+
       tags: timeEntries.tags,
       clientName: clients.name,
       projectName: projects.name,
@@ -226,12 +226,9 @@ export default async function ProjectDetailPage({
     .map((row) => row.serviceId)
     .filter((id): id is string => Boolean(id));
   const trackedMinutes = projectTimeEntries.reduce((sum, entry) => sum + Number(entry.durationMinutes ?? entry.manualMinutes ?? 0), 0);
-  const monthStart = new Date().toISOString().slice(0, 7) + "-01";
   const activeReusableTasks = projectTasks.filter((task) => task.mode === "reusable" && task.lifecycle === "active");
-  const usedReusableTaskIds = new Set(projectTimeEntries.filter((entry) => entry.taskId && entry.workDate && entry.workDate >= monthStart).map((entry) => entry.taskId));
   const taskUsageProgress = {
     total: activeReusableTasks.length,
-    done: activeReusableTasks.filter((task) => usedReusableTaskIds.has(task.id)).length,
   };
   const retainerUsedMinutes = projectTimeEntries.reduce((sum, entry) =>
     entry.billable && (entry.status === "approved" || entry.status === "invoiced")
