@@ -223,6 +223,10 @@ export default async function ProjectDetailPage({
     .map((row) => row.serviceId)
     .filter((id): id is string => Boolean(id));
   const trackedMinutes = projectTimeEntries.reduce((sum, entry) => sum + Number(entry.durationMinutes ?? entry.manualMinutes ?? 0), 0);
+  const retainerUsedMinutes = projectTimeEntries.reduce((sum, entry) =>
+    entry.billable && (entry.status === "approved" || entry.status === "invoiced")
+      ? sum + Number(entry.durationMinutes ?? entry.manualMinutes ?? 0)
+      : sum, 0);
   const hourlyBillableAmount = projectTimeEntries.reduce((sum, entry) => sum + (entry.billable ? Number(entry.durationMinutes ?? entry.manualMinutes ?? 0) / 60 * Number(entry.hourlyRate ?? project.rate ?? 0) : 0), 0);
   const billableAmount = project.billingModel === "retainer"
     ? Number(project.retainerFee || 0)
@@ -338,7 +342,7 @@ export default async function ProjectDetailPage({
         timeCount={projectTimeEntries.length}
         invoicesCount={projectInvoices.length}
         showTimeTab={showTimeTab}
-        overviewContent={<ProjectOverview project={project} progress={progress} trackedMinutes={trackedMinutes} billableAmount={billableAmount} invoicedAmount={invoicedAmount} outstandingAmount={outstandingAmount} retainerPeriod={retainerPeriod} recentTime={projectTimeEntries.slice(0, 5)} recentInvoices={projectInvoices.slice(0, 5)} recentFiles={projectFiles.slice(0, 5)} editAction={<ProjectEditDialog section="general" project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah detail", "Edit details")}</button>} />} billingEditAction={<ProjectEditDialog section="billing" project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah pengaturan billing", "Edit billing settings")}</button>} />} locale={locale} t={t} />}
+        overviewContent={<ProjectOverview project={project} progress={progress} trackedMinutes={trackedMinutes} retainerUsedMinutes={retainerUsedMinutes} billableAmount={billableAmount} invoicedAmount={invoicedAmount} outstandingAmount={outstandingAmount} retainerPeriod={retainerPeriod} recentTime={projectTimeEntries.slice(0, 5)} recentInvoices={projectInvoices.slice(0, 5)} recentFiles={projectFiles.slice(0, 5)} editAction={<ProjectEditDialog section="general" project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah detail", "Edit details")}</button>} />} billingEditAction={<ProjectEditDialog section="billing" project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah pengaturan billing", "Edit billing settings")}</button>} />} locale={locale} t={t} />}
         tasksAction={
           <TaskCreateDialog
             projectId={projectId}

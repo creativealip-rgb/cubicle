@@ -91,7 +91,9 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
           : [],
         internalNotes: form.internalNotes || undefined,
         portalSlug: form.portalSlug || undefined,
-        portalSlugEnabled: Boolean(form.portalSlug),
+        ...(form.portalSlug !== (defaultValues?.portalSlug ?? "")
+          ? { portalSlugEnabled: Boolean(form.portalSlug) }
+          : {}),
         ...(mode === "create" ? { portalEnabled: form.portalEnabled } : {}),
       };
 

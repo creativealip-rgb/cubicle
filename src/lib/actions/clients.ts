@@ -297,6 +297,8 @@ export async function updateClient(clientId: string, input: Partial<z.infer<type
       .returning();
 
     await writeActivityLog(workspaceId, user.id, "updated_client", "client", clientId);
+    revalidatePath("/app/clients");
+    revalidatePath(`/app/clients/${clientId}`);
     return client;
   } catch (err: unknown) {
     if (typeof err === "object" && err !== null && "code" in err && err.code === "23505") {

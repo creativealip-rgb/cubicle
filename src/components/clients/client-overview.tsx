@@ -16,7 +16,7 @@ export function ClientOverview({ client, projects, invoices, editAction, project
     <div className="grid gap-4 xl:grid-cols-[minmax(0,.8fr)_minmax(0,1fr)_minmax(0,1fr)]">
       <Card className="h-full rounded-xl"><CardContent className="flex h-full flex-col p-4">
         <h2 className="text-sm font-semibold">{t("Detail Klien", "Client Details")}</h2>
-        <dl className="mt-3 space-y-2 text-sm">
+        <dl className="mt-3 space-y-2 pb-3 text-sm">
           {client.clientNumber && <Detail label={t("ID Klien", "Client ID")} value={client.clientNumber} />}
           {client.email && <Detail label="Email" value={client.email} />}
           {client.phone && <Detail label={t("Telepon", "Phone")} value={client.phone} />}
