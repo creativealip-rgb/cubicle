@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Archive, Ellipsis, Pencil, RotateCcw } from "lucide-react";
 import { toast } from "sonner";
 import { updateClientStatus } from "@/lib/actions/clients";
@@ -18,7 +18,7 @@ export function ClientRowActions({ client }: { client: ClientListItem }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const archived = client.status === "archived";
-  const editTriggerId = `client-edit-${client.id}`;
+  const editTriggerId = useId();
 
   async function changeStatus() {
     setPending(true);
