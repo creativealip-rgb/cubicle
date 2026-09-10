@@ -631,7 +631,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
 
         {/* Canvas area — centers the preview frame, scrolls vertically only; the
             frame never exceeds the area width so no horizontal overflow appears. */}
-        <main className="flex-1 overflow-y-auto overflow-x-hidden bg-muted/30 p-6 pb-16">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-muted/30 p-6 pb-16">
           <CanvasRenderer
             site={{ ...site, sections: activeSections }}
             device={previewDevice}
@@ -646,7 +646,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
             onReorderSections={reorderSections}
             readinessTarget={readinessTarget}
           />
-        </main>
+        </div>
 
         {/* Properties panel — desktop only, opens when a section is selected */}
         <PropertiesPanel
