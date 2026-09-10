@@ -11,16 +11,14 @@ import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 
 import { getCurrentLang, createT } from "@/lib/i18n";
-import { PaginationLinks } from "@/components/ui/pagination-links";
 
 export const dynamic = "force-dynamic";
-const PAGE_SIZE = 10;
 
 /** File list + breadcrumb only — tree lives in layout (no full-page flash). */
 export default async function FilesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ clientId?: string; projectId?: string; folderId?: string; folderPage?: string; filePage?: string }>;
+  searchParams: Promise<{ clientId?: string; projectId?: string; folderId?: string }>;
 }) {
   const lang = await getCurrentLang();
   const t = createT(lang);
@@ -34,8 +32,6 @@ export default async function FilesPage({
   const clientId = sp.clientId;
   const projectId = sp.projectId;
   const folderId = sp.folderId;
-  const folderPage = Math.max(1, Number.parseInt(sp.folderPage ?? "1", 10) || 1);
-  const filePage = Math.max(1, Number.parseInt(sp.filePage ?? "1", 10) || 1);
 
   const { users } = await import("@/db/schema");
   const conditions = [eq(filesTable.workspaceId, workspaceId)];
@@ -209,23 +205,6 @@ export default async function FilesPage({
         };
       });
   }
-  const folderTotalPages = Math.max(1, Math.ceil(folderGridItems.length / PAGE_SIZE));
-  const fileTotalPages = Math.max(1, Math.ceil(finalFiles.length / PAGE_SIZE));
-  const safeFolderPage = Math.min(folderPage, folderTotalPages);
-  const safeFilePage = Math.min(filePage, fileTotalPages);
-  const paginatedFolders = folderGridItems.slice((safeFolderPage - 1) * PAGE_SIZE, safeFolderPage * PAGE_SIZE);
-  const paginatedFiles = finalFiles.slice((safeFilePage - 1) * PAGE_SIZE, safeFilePage * PAGE_SIZE);
-  const pageHref = (key: "folderPage" | "filePage", value: number) => {
-    const qs = new URLSearchParams();
-    if (clientId) qs.set("clientId", clientId);
-    if (projectId) qs.set("projectId", projectId);
-    if (folderId) qs.set("folderId", folderId);
-    if (key === "folderPage" && value > 1) qs.set("folderPage", String(value));
-    if (key === "filePage" && value > 1) qs.set("filePage", String(value));
-    if (key !== "folderPage" && safeFolderPage > 1) qs.set("folderPage", String(safeFolderPage));
-    if (key !== "filePage" && safeFilePage > 1) qs.set("filePage", String(safeFilePage));
-    return `/app/files${qs.size ? `?${qs.toString()}` : ""}`;
-  };
 
   return (
     <>
@@ -249,15 +228,11 @@ export default async function FilesPage({
         canWrite={canWrite}
       >
         <FileList
-          files={paginatedFiles}
-          folders={paginatedFolders}
+          files={finalFiles}
+          folders={folderGridItems}
           canWrite={canWrite}
           lang={lang}
         />
-        <div className="space-y-2">
-          <PaginationLinks page={safeFolderPage} totalPages={folderTotalPages} href={(value) => pageHref("folderPage", value)} labels={{ previous: t("Folder sebelumnya", "Previous folders"), next: t("Folder berikutnya", "Next folders"), page: t("Halaman folder", "Folder page") }} />
-          <PaginationLinks page={safeFilePage} totalPages={fileTotalPages} href={(value) => pageHref("filePage", value)} labels={{ previous: t("File sebelumnya", "Previous files"), next: t("File berikutnya", "Next files"), page: t("Halaman file", "File page") }} />
-        </div>
       </FileDropZone>
     </>
   );
