@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { projects, clients, tasks, files, folders, timeEntries, workspaceMembers, users, projectServices, invoices, workspaces, workspaceCurrencyRates, packages, retainerPeriods } from "@/db/schema";
-import { and, eq, desc, inArray } from "drizzle-orm";
+import { and, eq, desc, inArray, sql } from "drizzle-orm";
 import { requireUser, assertProjectInWorkspace } from "@/lib/access";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
@@ -135,6 +135,8 @@ export default async function ProjectDetailPage({
       mode: tasks.mode,
       lifecycle: tasks.lifecycle,
       behavior: tasks.behavior,
+      monthMinutes: sql<number>`coalesce((select sum(coalesce(te.manual_minutes, te.duration_minutes, 0)) from time_entries te where te.task_id = ${tasks.id} and te.work_date >= date_trunc('month', current_date)), 0)::int`,
+      lastUsedAt: sql<string | null>`(select max(te.work_date)::text from time_entries te where te.task_id = ${tasks.id})`,
     })
     .from(tasks)
     .leftJoin(users, eq(users.id, tasks.assigneeId))
@@ -181,6 +183,7 @@ export default async function ProjectDetailPage({
       clientId: timeEntries.clientId,
       projectId: timeEntries.projectId,
       taskId: timeEntries.taskId,
+      workDate: timeEntries.workDate,
       tags: timeEntries.tags,
       clientName: clients.name,
       projectName: projects.name,
@@ -223,6 +226,13 @@ export default async function ProjectDetailPage({
     .map((row) => row.serviceId)
     .filter((id): id is string => Boolean(id));
   const trackedMinutes = projectTimeEntries.reduce((sum, entry) => sum + Number(entry.durationMinutes ?? entry.manualMinutes ?? 0), 0);
+  const monthStart = new Date().toISOString().slice(0, 7) + "-01";
+  const activeReusableTasks = projectTasks.filter((task) => task.mode === "reusable" && task.lifecycle === "active");
+  const usedReusableTaskIds = new Set(projectTimeEntries.filter((entry) => entry.taskId && entry.workDate && entry.workDate >= monthStart).map((entry) => entry.taskId));
+  const taskUsageProgress = {
+    total: activeReusableTasks.length,
+    done: activeReusableTasks.filter((task) => usedReusableTaskIds.has(task.id)).length,
+  };
   const retainerUsedMinutes = projectTimeEntries.reduce((sum, entry) =>
     entry.billable && (entry.status === "approved" || entry.status === "invoiced")
       ? sum + Number(entry.durationMinutes ?? entry.manualMinutes ?? 0)
@@ -342,7 +352,7 @@ export default async function ProjectDetailPage({
         timeCount={projectTimeEntries.length}
         invoicesCount={projectInvoices.length}
         showTimeTab={showTimeTab}
-        overviewContent={<ProjectOverview project={project} progress={progress} trackedMinutes={trackedMinutes} retainerUsedMinutes={retainerUsedMinutes} billableAmount={billableAmount} invoicedAmount={invoicedAmount} outstandingAmount={outstandingAmount} retainerPeriod={retainerPeriod} recentTime={projectTimeEntries.slice(0, 5)} recentInvoices={projectInvoices.slice(0, 5)} recentFiles={projectFiles.slice(0, 5)} editAction={<ProjectEditDialog section="general" project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah detail", "Edit details")}</button>} />} billingEditAction={<ProjectEditDialog section="billing" project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah pengaturan billing", "Edit billing settings")}</button>} />} locale={locale} t={t} />}
+        overviewContent={<ProjectOverview project={project} progress={progress} taskUsageProgress={taskUsageProgress} trackedMinutes={trackedMinutes} retainerUsedMinutes={retainerUsedMinutes} billableAmount={billableAmount} invoicedAmount={invoicedAmount} outstandingAmount={outstandingAmount} retainerPeriod={retainerPeriod} recentTime={projectTimeEntries.slice(0, 5)} recentInvoices={projectInvoices.slice(0, 5)} recentFiles={projectFiles.slice(0, 5)} editAction={<ProjectEditDialog section="general" project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah detail", "Edit details")}</button>} />} billingEditAction={<ProjectEditDialog section="billing" project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah pengaturan billing", "Edit billing settings")}</button>} />} locale={locale} t={t} />}
         tasksAction={
           <TaskCreateDialog
             projectId={projectId}
@@ -447,6 +457,8 @@ export default async function ProjectDetailPage({
                   projectName: task.projectName,
                   clientName: task.clientName,
                   assigneeName: task.assigneeName,
+                  monthMinutes: task.monthMinutes,
+                  lastUsedAt: task.lastUsedAt,
                   lifecycle: task.lifecycle,
                 }))}
               members={projectMembers}

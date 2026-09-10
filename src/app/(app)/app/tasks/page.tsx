@@ -92,7 +92,7 @@ export default async function TasksPage({
     behavior: tasks.behavior,
     mode: tasks.mode,
     lifecycle: tasks.lifecycle,
-    monthMinutes: sql<number>`coalesce((select sum(te.duration_minutes) from time_entries te where te.task_id = ${tasks.id} and te.work_date >= date_trunc('month', current_date)), 0)::int`,
+    monthMinutes: sql<number>`coalesce((select sum(coalesce(te.manual_minutes, te.duration_minutes, 0)) from time_entries te where te.task_id = ${tasks.id} and te.work_date >= date_trunc('month', current_date)), 0)::int`,
     lastUsedAt: sql<string | null>`(select max(te.work_date)::text from time_entries te where te.task_id = ${tasks.id})`,
   }).from(tasks).leftJoin(projects, eq(projects.id, tasks.projectId)).leftJoin(clients, eq(clients.id, projects.clientId)).leftJoin(users, eq(users.id, tasks.assigneeId)).where(and(...whereClauses)).orderBy(desc(tasks.createdAt)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
   const projectRows = await db.select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType }).from(projects).where(eq(projects.workspaceId, workspaceId));
