@@ -240,6 +240,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
             <Input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              aria-label={t("Cari tiket dukungan", "Search support tickets")}
               placeholder={t("Cari judul, klien, atau projek...", "Search title, client, or project...")}
               className="h-8 pl-8 text-xs rounded-lg"
             />

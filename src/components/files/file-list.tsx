@@ -299,7 +299,7 @@ export function FileList({ files, folders = [], canWrite, lang }: FileListProps)
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("Cari folder dan file...", "Search folders and files...")} className="h-9 rounded-xl border-border/80 bg-background pl-9 text-sm" />
+          <Input value={query} onChange={(event) => setQuery(event.target.value)} aria-label={t("Cari folder dan file", "Search folders and files")} placeholder={t("Cari folder dan file...", "Search folders and files...")} className="h-9 rounded-xl border-border/80 bg-background pl-9 text-sm" />
         </div>
         <div className="flex items-center gap-2">
           <Select value={`${sortBy}-${sortOrder}`} onValueChange={(value) => { const [nextSort, nextOrder] = value.split("-") as [typeof sortBy, typeof sortOrder]; setSortBy(nextSort); setSortOrder(nextOrder); }}>
