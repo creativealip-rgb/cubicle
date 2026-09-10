@@ -1,0 +1,146 @@
+[
+  {
+    "route": "/app/contract-templates/ca5c49e4-8b67-4a16-8308-5e233faba760",
+    "width": 1440,
+    "http": 200,
+    "final": "/app/contract-templates/ca5c49e4-8b67-4a16-8308-5e233faba760",
+    "notFound": false,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/app/contracts/98e70e4e-cd84-470b-985c-1b5301e9ef51/edit",
+    "width": 1440,
+    "http": 200,
+    "final": "/app/contracts/98e70e4e-cd84-470b-985c-1b5301e9ef51/edit",
+    "notFound": true,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/app/proposals/ffd9f570-9011-4be6-9f85-853b274dbb32/edit",
+    "width": 1440,
+    "http": 200,
+    "final": "/app/proposals/ffd9f570-9011-4be6-9f85-853b274dbb32/edit",
+    "notFound": true,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/app/templates/38e8c059-9cd9-4835-a3f1-cead18dcbfee/edit",
+    "width": 1440,
+    "http": 200,
+    "final": "/app/templates/38e8c059-9cd9-4835-a3f1-cead18dcbfee/edit",
+    "notFound": true,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/app/templates/38e8c059-9cd9-4835-a3f1-cead18dcbfee/edit/proposal",
+    "width": 1440,
+    "http": 200,
+    "final": "/app/templates/38e8c059-9cd9-4835-a3f1-cead18dcbfee/edit/proposal",
+    "notFound": true,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/client-portal/s/aaaa",
+    "width": 1440,
+    "http": 404,
+    "final": "/client-portal/s/aaaa",
+    "notFound": true,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/booking/alipdev",
+    "width": 1440,
+    "http": 200,
+    "final": "/booking/alipdev",
+    "notFound": false,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/site/aaaa",
+    "width": 1440,
+    "http": 200,
+    "final": "/site/aaaa",
+    "notFound": false,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/app/contract-templates/ca5c49e4-8b67-4a16-8308-5e233faba760",
+    "width": 390,
+    "http": 200,
+    "final": "/app/contract-templates/ca5c49e4-8b67-4a16-8308-5e233faba760",
+    "notFound": false,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/app/contracts/98e70e4e-cd84-470b-985c-1b5301e9ef51/edit",
+    "width": 390,
+    "http": 200,
+    "final": "/app/contracts/98e70e4e-cd84-470b-985c-1b5301e9ef51/edit",
+    "notFound": true,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/app/proposals/ffd9f570-9011-4be6-9f85-853b274dbb32/edit",
+    "width": 390,
+    "http": 200,
+    "final": "/app/proposals/ffd9f570-9011-4be6-9f85-853b274dbb32/edit",
+    "notFound": true,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/app/templates/38e8c059-9cd9-4835-a3f1-cead18dcbfee/edit",
+    "width": 390,
+    "http": 200,
+    "final": "/app/templates/38e8c059-9cd9-4835-a3f1-cead18dcbfee/edit",
+    "notFound": true,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/app/templates/38e8c059-9cd9-4835-a3f1-cead18dcbfee/edit/proposal",
+    "width": 390,
+    "http": 200,
+    "final": "/app/templates/38e8c059-9cd9-4835-a3f1-cead18dcbfee/edit/proposal",
+    "notFound": true,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/client-portal/s/aaaa",
+    "width": 390,
+    "http": 404,
+    "final": "/client-portal/s/aaaa",
+    "notFound": true,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/booking/alipdev",
+    "width": 390,
+    "http": 200,
+    "final": "/booking/alipdev",
+    "notFound": false,
+    "error": false,
+    "overflow": false
+  },
+  {
+    "route": "/site/aaaa",
+    "width": 390,
+    "http": 200,
+    "final": "/site/aaaa",
+    "notFound": false,
+    "error": false,
+    "overflow": false
+  }
+]

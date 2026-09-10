@@ -1,0 +1,720 @@
+{
+  "source": "/root/.hermes/profiles/coder/cache/documents/doc_957a9a38cb29_COVERAGE.md",
+  "count": 102,
+  "routes": [
+    {
+      "pattern": "/admin/audit",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/admin/dashboard",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/admin/mfa-recovery",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/admin",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/admin/payments",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/admin/users/[userId]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/admin/users",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/admin/workspaces/[workspaceId]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/admin/workspaces",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/activities",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/billing",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/brain",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/calendar",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/clients/[clientId]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/clients/new",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/clients",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/contract-templates/[templateId]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/contract-templates/new",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/contract-templates",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/contracts/[contractId]/edit",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/contracts/[contractId]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/contracts/[contractId]/preview",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/contracts/new",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/contracts",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/dashboard",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/docs/[slug]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/docs/getting-started",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/docs/invoice",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/docs/landing-page",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/docs",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/docs/workspace-settings",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/email",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/expenses",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/files",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/invoice-templates",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/invoices/[invoiceId]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/invoices/new",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/invoices",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/invoices/templates",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/journal",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/notes",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/packages",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/personal-site",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/personal",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/planning",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/productivity/goals/[goalId]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/productivity",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/projects/[projectId]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/projects",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/prompts",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/proposals/[proposalId]/edit",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/proposals/[proposalId]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/proposals/[proposalId]/preview",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/proposals/new",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/proposals",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/questionnaires/[questionnaireId]/edit",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/questionnaires/[questionnaireId]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/questionnaires/new",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/questionnaires",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/reports",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/search",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/services",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/settings",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/support",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/tasks",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/templates/[templateId]/edit",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/templates/[templateId]/edit/proposal",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/templates",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/time/activities",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/time/approvals",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/time/history",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/time",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/time/timesheet",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/app/whats-new",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/onboarding",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/mfa/recovery",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/mfa/setup",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/recover-access/[token]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/recover-access",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/two-factor",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/verify-email-change",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/booking/[slug]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/client-gcal",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/client-portal/[token]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/client-portal/s/[slug]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/contract/[token]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/forgot-password",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/intake/[token]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/invoice/[token]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/login",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/privacy",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/proposal/[token]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/reset-password/[token]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/reset-password",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/signup",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/site/[slug]/[pageSlug]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/site/[slug]",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/site/preview",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/terms",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/verify-email",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    },
+    {
+      "pattern": "/verify-email/success",
+      "status": "PENDING",
+      "desktop": null,
+      "mobile": null,
+      "behavior": "NOT_RUN"
+    }
+  ]
+}

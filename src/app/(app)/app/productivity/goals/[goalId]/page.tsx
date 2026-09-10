@@ -16,13 +16,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
 export default async function GoalDetail({
   params,
 }: {
   params: Promise<{ goalId: string }>;
 }) {
-  const { goalId } = await params,
-    goal = await getPersonalGoal(goalId);
+  const { goalId } = await params;
+  if (!UUID_RE.test(goalId)) notFound();
+  const goal = await getPersonalGoal(goalId);
   if (!goal) notFound();
   const lang = await getCurrentLang(),
     t = createT(lang);
