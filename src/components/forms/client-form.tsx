@@ -104,6 +104,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
           return;
         }
         toast.success(t("Klien dibuat", "Client created"));
+        if (stayOnPage) router.refresh();
         onSuccess?.(result.client.id, result.client.name);
         if (!stayOnPage) router.push(`/app/clients/${result.client.id}`);
         return;
