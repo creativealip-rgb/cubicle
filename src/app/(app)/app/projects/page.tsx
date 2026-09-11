@@ -294,13 +294,13 @@ export default async function ProjectsPage({
           <div className="flex items-center gap-2">
             {currentPage > 1 ? (
               <Link href={buildProjectsHref({ ...filtersForHref, page: currentPage - 1 })}>
-                <Button variant="outline" size="sm" className="gap-1 h-7.5 text-xs">
+                <Button variant="outline" size="sm" className="h-8 gap-1 text-xs">
                   <ChevronLeft className="h-3.5 w-3.5" />
                   {t("Sebelumnya", "Previous")}
                 </Button>
               </Link>
             ) : (
-              <Button variant="outline" size="sm" className="gap-1 h-7.5 text-xs" disabled>
+              <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" disabled>
                 <ChevronLeft className="h-3.5 w-3.5" />
                 {t("Sebelumnya", "Previous")}
               </Button>
@@ -310,13 +310,13 @@ export default async function ProjectsPage({
             </span>
             {currentPage < totalPages ? (
               <Link href={buildProjectsHref({ ...filtersForHref, page: currentPage + 1 })}>
-                <Button variant="outline" size="sm" className="gap-1 h-7.5 text-xs">
+                <Button variant="outline" size="sm" className="h-8 gap-1 text-xs">
                   {t("Berikutnya", "Next")}
                   <ChevronRight className="h-3.5 w-3.5" />
                 </Button>
               </Link>
             ) : (
-              <Button variant="outline" size="sm" className="gap-1 h-7.5 text-xs" disabled>
+              <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" disabled>
                 {t("Berikutnya", "Next")}
                 <ChevronRight className="h-3.5 w-3.5" />
               </Button>
