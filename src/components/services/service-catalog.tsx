@@ -39,6 +39,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/empty-state";
 import {
   archiveService,
+  restoreService,
   createService,
   createServiceCategory,
   updateService,
@@ -199,6 +200,19 @@ export function ServiceCatalog({
       refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Terjadi kesalahan", "Something went wrong"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleRestore(service: CatalogService) {
+    setLoading(true);
+    try {
+      await restoreService(service.id);
+      toast.success(t("Layanan dipulihkan", "Service restored"));
+      refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal memulihkan", "Restore failed"));
     } finally {
       setLoading(false);
     }
@@ -408,7 +422,7 @@ export function ServiceCatalog({
                       </div>
                     </div>
 
-                    <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-7" aria-label={t("Aksi layanan", "Service actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => openEdit(service)}><Pencil className="size-3.5" />{t("Ubah", "Edit")}</DropdownMenuItem><DropdownMenuItem className="text-destructive" onSelect={() => setDeleteTarget(service)}><Trash2 className="size-3.5" />{t("Arsip", "Archive")}</DropdownMenuItem></DropdownMenuContent></DropdownMenu>
+                    <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-7" aria-label={t("Aksi layanan", "Service actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => openEdit(service)}><Pencil className="size-3.5" />{t("Ubah", "Edit")}</DropdownMenuItem>{service.status === "archived" ? <DropdownMenuItem onSelect={() => handleRestore(service)}><Wrench className="size-3.5" />{t("Pulihkan", "Restore")}</DropdownMenuItem> : <DropdownMenuItem className="text-destructive" onSelect={() => setDeleteTarget(service)}><Trash2 className="size-3.5" />{t("Arsip", "Archive")}</DropdownMenuItem>}</DropdownMenuContent></DropdownMenu>
                   </div>
 
                   {/* Description */}

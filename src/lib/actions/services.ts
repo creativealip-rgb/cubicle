@@ -194,6 +194,16 @@ export async function updateService(serviceId: string, input: z.input<typeof ser
   return updated;
 }
 
+export async function restoreService(serviceId: string) {
+  const { user, workspaceId } = await actor();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  const [restored] = await db.update(services).set({ status: "active", updatedAt: new Date() }).where(and(eq(services.id, serviceId), eq(services.workspaceId, workspaceId))).returning();
+  if (!restored) throw new Error("Service tidak ditemukan");
+  await writeActivityLog(workspaceId, user.id, "restored_service", "service", serviceId);
+  revalidateServiceSurfaces();
+  return restored;
+}
+
 export async function archiveService(serviceId: string) {
   const { user, workspaceId } = await actor();
   await assertWorkspaceWritable(db, user.id, workspaceId);
