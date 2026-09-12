@@ -219,17 +219,17 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section aria-label={tx("Social proof", "Social proof")} className="border-y border-[#6647F0]/10 bg-[#F0ECFF] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
-          <div className="mx-auto grid max-w-7xl gap-6 sm:grid-cols-[auto_1fr] sm:items-center sm:gap-8">
-            <div className="flex items-center gap-4">
-              <div className="flex -space-x-2" aria-hidden="true">{testimonials.map((item, index) => <span key={item.initials} className={`flex size-11 items-center justify-center rounded-full border-2 border-[#F0ECFF] text-xs font-bold text-white shadow-sm ${index === 0 ? "bg-[#6647F0]" : index === 1 ? "bg-[#FF7657]" : "bg-emerald-500"}`}>{item.initials}</span>)}</div>
-              <strong className="text-4xl font-semibold tracking-[-.04em] text-[#6647F0] sm:text-5xl">100+</strong>
-            </div>
-            <div>
-              <h2 className="text-lg font-semibold text-[#292D34] sm:text-xl">{tx("Dibangun untuk freelancer dan creative studio", "Built for freelancers and creative studios")}</h2>
-              <p className="mt-1 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base">{tx("Project management berhenti di task. Cubiqlo lanjut sampai hasil diterima dan invoice dibayar.", "Project management stops at tasks. Cubiqlo keeps going until work is accepted and invoices are paid.")}</p>
-              <p className="mt-3 text-[10px] font-semibold uppercase tracking-[.18em] text-[#6647F0]/70">{tx("Dari proyek sampai pembayaran", "From project to payment")}</p>
-            </div>
+        <section aria-label={tx("Social proof", "Social proof")} className="border-y border-slate-950/[0.06] bg-white px-4 py-5 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex -space-x-2" aria-hidden="true">{testimonials.map((item, index) => <span key={item.initials} className={`flex size-9 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white ${index === 0 ? "bg-[#6647F0]" : index === 1 ? "bg-[#FF7657]" : "bg-emerald-500"}`}>{item.initials}</span>)}</div>
+            <p className="text-sm font-medium text-[#292D34] sm:text-right"><strong className="text-lg text-[#6647F0]">100+</strong> {tx("· Dibangun untuk freelancer dan creative studio", "· Built for freelancers and creative studios")}</p>
+          </div>
+        </section>
+
+        <section className="bg-white px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto grid max-w-7xl gap-6 sm:grid-cols-[1fr_auto] sm:items-center">
+            <p className="max-w-3xl text-lg font-medium leading-8 text-[#292D34] sm:text-xl">{tx("Project management berhenti di task. ", "Project management stops at tasks. ")}<span className="text-[#6647F0]">{tx("Cubiqlo lanjut sampai hasil diterima dan invoice dibayar.", "Cubiqlo keeps going until work is accepted and invoices are paid.")}</span></p>
+            <p className="text-xs font-semibold uppercase tracking-[.18em] text-slate-400">{tx("Dari proyek sampai pembayaran", "From project to payment")}</p>
           </div>
         </section>
 
