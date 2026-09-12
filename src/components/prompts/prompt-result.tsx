@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, FileText, Pencil, RotateCcw } from "lucide-react";
+import { Check, Copy, ExternalLink, FileText, Pencil, RotateCcw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 import type { PromptGenerationResult } from "@/lib/prompts/build-prompt";
@@ -54,6 +54,10 @@ function promptJson(result: PromptGenerationResult): string {
   return JSON.stringify(result, null, 2);
 }
 
+function readyPrompt(result: PromptGenerationResult): string {
+  return [`Task: ${result.title}`, ...result.readyOutput.map((item) => `${item.label}:\n${item.content}`), "Return a polished final result that follows every objective, platform, tone, style, format, ratio, and constraint stated above. Do not omit brief details."].join("\n\n");
+}
+
 export function PromptResult({ result, loading, view = "cards", onEdit, onRegenerate }: PromptResultProps) {
   const { t } = useT();
   if (loading) {
@@ -83,6 +87,15 @@ export function PromptResult({ result, loading, view = "cards", onEdit, onRegene
   }
 
   const json = promptJson(result);
+  const chatGptPrompt = readyPrompt(result);
+  function openChatGpt() {
+    window.open("https://chatgpt.com/", "_blank", "noopener,noreferrer");
+  }
+  async function copyAndOpenChatGpt() {
+    await writeClipboard(chatGptPrompt);
+    toast.success(t("Prompt disalin. Tempel di ChatGPT dengan Ctrl+V.", "Prompt copied. Paste it into ChatGPT with Ctrl+V."));
+    openChatGpt();
+  }
 
   return (
     <div className="rounded-xl border bg-card p-4 shadow-xs space-y-3">
@@ -123,6 +136,20 @@ export function PromptResult({ result, loading, view = "cards", onEdit, onRegene
           ))}
         </div>
       )}
+
+      <div className="rounded-lg border border-primary/20 bg-primary/[0.04] p-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-foreground">{t("Gunakan di ChatGPT", "Use in ChatGPT")}</p>
+            <p className="text-[11px] leading-relaxed text-muted-foreground">{t("Salin prompt, buka ChatGPT, tempel dengan Ctrl+V, lalu periksa hasil terhadap tujuan, platform, tone, style, format, rasio, dan batasan brief.", "Copy the prompt, open ChatGPT, paste with Ctrl+V, then check the result against the brief's objective, platform, tone, style, format, ratio, and constraints.")}</p>
+          </div>
+          <div className="flex shrink-0 flex-wrap gap-2">
+            <CopyButton text={chatGptPrompt} actionLabel={t("Copy Prompt", "Copy Prompt")} doneLabel={t("Tersalin", "Copied")} toastLabel={t("Prompt siap-paste disalin", "Ready-to-paste prompt copied")} />
+            <Button variant="outline" size="sm" className="h-7 gap-1 px-2.5 text-xs" onClick={openChatGpt}><ExternalLink className="size-3" />{t("Buka ChatGPT", "Open ChatGPT")}</Button>
+            <Button size="sm" className="h-7 gap-1 px-2.5 text-xs" onClick={copyAndOpenChatGpt}><Copy className="size-3" />{t("Copy & Buka", "Copy & Open")}</Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }
