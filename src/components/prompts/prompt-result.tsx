@@ -12,6 +12,7 @@ type PromptResultProps = {
   result: PromptGenerationResult | null;
   loading: boolean;
   view?: "cards" | "prompt";
+  brief?: Record<string, unknown>;
   onEdit(): void;
   onRegenerate(): void;
 };
@@ -54,11 +55,12 @@ function promptJson(result: PromptGenerationResult): string {
   return JSON.stringify(result, null, 2);
 }
 
-function readyPrompt(result: PromptGenerationResult): string {
-  return [`Task: ${result.title}`, ...result.readyOutput.map((item) => `${item.label}:\n${item.content}`), "Return a polished final result that follows every objective, platform, tone, style, format, ratio, and constraint stated above. Do not omit brief details."].join("\n\n");
+function readyPrompt(result: PromptGenerationResult, brief: Record<string, unknown> = {}): string {
+  const briefText = Object.entries(brief).filter(([, value]) => value !== "" && value != null).map(([key, value]) => `${key}: ${typeof value === "object" ? JSON.stringify(value) : String(value)}`).join("\n");
+  return [`Task: ${result.title}`, briefText && `Original brief:\n${briefText}`, ...result.readyOutput.map((item) => `${item.label}:\n${item.content}`), "Return a polished final result that follows every objective, platform, tone, style, format, ratio, and constraint stated above. Do not omit brief details."].filter(Boolean).join("\n\n");
 }
 
-export function PromptResult({ result, loading, view = "cards", onEdit, onRegenerate }: PromptResultProps) {
+export function PromptResult({ result, loading, view = "cards", brief, onEdit, onRegenerate }: PromptResultProps) {
   const { t } = useT();
   if (loading) {
     return (
@@ -87,7 +89,7 @@ export function PromptResult({ result, loading, view = "cards", onEdit, onRegene
   }
 
   const json = promptJson(result);
-  const chatGptPrompt = readyPrompt(result);
+  const chatGptPrompt = readyPrompt(result, brief);
   function openChatGpt() {
     window.open("https://chatgpt.com/", "_blank", "noopener,noreferrer");
   }

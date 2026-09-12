@@ -7,6 +7,8 @@ describe("Prompt Studio ChatGPT handoff", () => {
   it("builds a brief-aware ready-to-paste prompt", () => {
     expect(source).toContain("function readyPrompt");
     expect(source).toContain("result.readyOutput.map");
+    expect(source).toContain("Original brief:");
+    expect(source).toContain("Object.entries(brief)");
     expect(source).toContain("objective, platform, tone, style, format, ratio, and constraint");
   });
 

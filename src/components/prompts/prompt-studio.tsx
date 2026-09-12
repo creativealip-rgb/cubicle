@@ -585,6 +585,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
             result={result}
             loading={loading}
             view={showPrompt ? "prompt" : "cards"}
+            brief={form}
             onEdit={() => document.getElementById("prompt-brief")?.scrollIntoView({ behavior: "smooth" })}
             onRegenerate={generate}
           />
