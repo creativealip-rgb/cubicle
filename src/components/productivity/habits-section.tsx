@@ -287,13 +287,6 @@ export async function HabitsSection({
             </div>
           );
         })}
-
-        {activeHabits.length === 0 && (
-          <div className="rounded-xl border bg-card p-6 text-center space-y-1.5">
-            <p className="text-xs font-semibold text-foreground">{t("Belum ada kebiasaan aktif.", "No active habits tracked yet.")}</p>
-            <p className="text-[11px] text-muted-foreground">{t("Mulai dengan menambahkan kebiasaan kecil pertamamu hari ini.", "Start by adding your first small daily habit today.")}</p>
-          </div>
-        )}
       </div>
 
       {/* Archived Section */}

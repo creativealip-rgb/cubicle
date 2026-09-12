@@ -16,6 +16,7 @@ describe("invoice and productivity visual revisions", () => {
     const habits = read("src/components/productivity/habits-section.tsx");
     expect(page.match(/<GoalDialog/g)).toHaveLength(1);
     expect(habits).toContain("No Habits Created");
+    expect(habits).not.toContain("No active habits tracked yet.");
   });
 
   it("shows weekly trend without habit consistency heatmap", () => {
