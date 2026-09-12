@@ -528,7 +528,7 @@ export default async function ReportsPage({
       <div className="space-y-4 sm:space-y-6">
         <div className="app-page-header">
           <div className="min-w-0">
-            <h1 className="app-page-title">{t("Laporan", "Reports")}</h1>
+            <h1 className="app-page-title">Statement</h1>
             <p className="app-page-description">
               {t(
                 "Analisis waktu lintas proyek dan anggota.",
@@ -646,7 +646,7 @@ export default async function ReportsPage({
     <div className="space-y-4 sm:space-y-6">
       <PageHeader
         icon={BarChart3}
-        title={t("Laporan Keuangan Bisnis", "Business Financial Reports")}
+        title={t("Statement Keuangan Bisnis", "Business Financial Statement")}
         description={t(
           "Pantau arus kas, kinerja laba bersih, piutang, dan tren pendapatan bisnismu.",
           "Track cash flow, net profitability, receivables, and revenue trends.",

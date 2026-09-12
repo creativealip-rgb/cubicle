@@ -52,13 +52,13 @@ export const appNavigation: NavigationEntry[] = [
   { kind: "group", id: "finance", icon: Wallet, label: { id: "Keuangan", en: "Finance" }, children: [
     direct("invoices", "/app/invoices", FileText, { id: "Invoice", en: "Invoices" }, { id: "Kelola tagihan, pembayaran, dan waktu belum ditagihkan", en: "Manage invoices, payments, and uninvoiced time" }, "unpaidInvoices"),
     direct("expenses", "/app/expenses", Wallet, { id: "Pengeluaran", en: "Expenses" }, { id: "Catat biaya operasional", en: "Record operating costs" }),
-    direct("reports", "/app/reports", BarChart3, { id: "Laporan", en: "Reports" }, { id: "Analisis keuangan dan performa waktu", en: "Analyze financial and time performance" }),
+    direct("reports", "/app/reports", BarChart3, { id: "Statement", en: "Statement" }, { id: "Analisis keuangan dan performa waktu", en: "Analyze financial and time performance" }),
   ]},
   direct("calendar", "/app/calendar", Calendar, { id: "Kalender", en: "Calendar" }),
   { kind: "group", id: "personal", icon: NotebookPen, label: { id: "Personal", en: "Personal" }, children: [
     direct("notes", "/app/personal", NotebookPen, { id: "Catatan", en: "Notes" }, { id: "Simpan catatan pribadi", en: "Keep private notes" }, undefined, undefined, true),
     direct("productivity", "/app/productivity", CheckSquare, { id: "Produktivitas", en: "Productivity" }, { id: "Kelola tujuan dan kebiasaan pribadi", en: "Manage personal goals and habits" }),
-    direct("planning", "/app/planning", WalletCards, { id: "Planning (50/30/20)", en: "Planning (50/30/20)" }, { id: "Kelola anggaran 50/30/20 dan laporan pribadi", en: "Manage 50/30/20 budget and personal reports" }, undefined, undefined, true),
+    direct("planning", "/app/planning", WalletCards, { id: "Planning", en: "Planning" }, { id: "Kelola anggaran 50/30/20 dan laporan pribadi", en: "Manage 50/30/20 budget and personal reports" }, undefined, undefined, true),
     direct("journal", "/app/journal", NotebookPen, { id: "Jurnal", en: "Journal" }, { id: "Tulis jurnal pekerjaan", en: "Write your work journal" }, undefined, undefined, true),
   ]},
   { kind: "group", id: "ai", icon: Sparkles, label: { id: "AI", en: "AI" }, children: [

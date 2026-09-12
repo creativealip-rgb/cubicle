@@ -133,27 +133,6 @@ export function CurrencyRatesForm({
     <>
     {dialog}
     <div className="space-y-4">
-      <div className="rounded-lg border bg-muted/30 p-3 text-xs text-muted-foreground space-y-1">
-        <p>
-          {t(
-            `Base currency workspace: ${baseCurrency}. Ringkasan finance (dashboard, laporan, pengeluaran KPI) dihitung setara base ini.`,
-            `Workspace base currency: ${baseCurrency}. Finance summaries (dashboard, reports, expense KPIs) use this base.`,
-          )}
-        </p>
-        <p>
-          {t(
-            "Isi rate manual: 1 mata uang asing = berapa base. Tanpa rate, angka currency itu di-skip (tidak ditebak).",
-            "Set manual rates: 1 foreign unit = how many base. Missing rates are skipped (never guessed).",
-          )}
-        </p>
-        <p>
-          {t(
-            "Ubah base currency di tab Branding & Invoice. Invoice/expense item tetap currency asli.",
-            "Change base currency in Branding & Invoice tab. Invoice/expense line items keep original currency.",
-          )}
-        </p>
-      </div>
-
       <label
         className={`flex items-start gap-3 rounded-lg border px-3 py-3 ${
           canEdit ? "cursor-pointer" : "opacity-70"

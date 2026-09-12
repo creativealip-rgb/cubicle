@@ -223,7 +223,7 @@ function ItemFormDialog({
             <Input
               value={defaultAssigneeId}
               onChange={(e) => setDefaultAssigneeId(e.target.value)}
-              placeholder="user_id..."
+
               className="rounded-xl h-10 text-sm"
             />
           </div>

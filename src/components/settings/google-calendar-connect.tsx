@@ -127,12 +127,6 @@ export function GoogleCalendarConnect({
           <p className="font-medium">
             {t("Fitur Ini Belum Diverifikasi Google (Soon)", "Feature Pending Google Verification (Soon)")}
           </p>
-          <p className="mt-1">
-            {t(
-              "Integrasi ini sedang dikunci sementara hingga proses verifikasi aplikasi di Google Cloud Console selesai.",
-              "This integration is temporarily locked until Google Cloud Console app verification completes.",
-            )}
-          </p>
         </div>
       ) : null}
 

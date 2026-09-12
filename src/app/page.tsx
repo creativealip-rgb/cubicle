@@ -66,16 +66,16 @@ const pricing = [
     audience: "Coba dulu untuk client work kecil.",
     price: "Rp 0",
     suffix: "selamanya",
-    items: ["1 pengguna", "1 workspace", "3 klien", "5 proyek", "10 invoice/bulan", "Portal klien + AI", "10 permintaan AI/bulan", "Penyimpanan file aman"],
+    items: ["1 pengguna", "1 workspace", "3 klien", "5 proyek", "10 invoice/bulan", "Portal klien + AI", "15 permintaan AI/bulan", "Penyimpanan file aman"],
     cta: "Mulai gratis",
     featured: false,
   },
   {
     name: "Solo",
-    audience: "Untuk freelancer yang mulai serius.",
+    audience: "Untuk freelancer yang punya banyak klien.",
     price: "Rp 75.000/month",
     suffix: "Billed yearly: Rp 900.000/year",
-    items: ["1 pengguna", "1 workspace Solo", "5 GB/workspace", "Portal klien + AI", "100 permintaan AI/bulan", "Kelola dan bagikan file klien"],
+    items: ["1 pengguna", "1 workspace Solo", "Proposal, kontrak, dan invoice unlimited", "5 GB/workspace", "Portal klien + AI", "150 permintaan AI/bulan", "Kelola dan bagikan file klien"],
     cta: "Pilih Solo",
     featured: true,
   },
@@ -84,13 +84,19 @@ const pricing = [
     audience: "Untuk tim kecil yang kerja bareng.",
     price: "Rp 165.000/month",
     suffix: "Billed yearly: Rp 1.980.000/year",
-    items: ["Hingga 5 anggota/workspace", "Hingga 3 workspace", "5 GB/workspace", "Peran tim", "1.000 permintaan AI/bulan", "Penyimpanan bersama untuk tim"],
+    items: ["Hingga 5 anggota/workspace", "Hingga 3 workspace", "Proposal, kontrak, dan invoice unlimited", "5 GB/workspace", "Peran tim", "1.000 permintaan AI/bulan", "Penyimpanan bersama untuk tim"],
     cta: "Pilih Team",
     featured: false,
   },
 ];
 
-const landingEn: Record<string, string> = { "Client CRM": "Client CRM", "Time & work": "Time & work", Deliverables: "Deliverables", Billing: "Billing", Free: "Free", "1 pengguna": "1 user", "1 workspace": "1 workspace", "3 klien": "3 clients", "5 proyek": "5 projects", "10 invoice/bulan": "10 invoices/month", "Portal klien + AI": "Client portal + AI", "10 permintaan AI/bulan": "10 AI requests/month", "Penyimpanan file aman": "Secure file storage", "1 workspace Solo": "1 Solo workspace", "5 GB/workspace": "5 GB/workspace", "100 permintaan AI/bulan": "100 AI requests/month", "Kelola dan bagikan file klien": "Manage and share client files", "Hingga 5 anggota/workspace": "Up to 5 members/workspace", "Hingga 3 workspace": "Up to 3 workspaces", "Peran tim": "Team roles", "1.000 permintaan AI/bulan": "1,000 AI requests/month", "Penyimpanan bersama untuk tim": "Shared storage for your team" };
+const landingEn: Record<string, string> = { "Client CRM": "Client CRM", "Time & work": "Time & work", Deliverables: "Deliverables", Billing: "Billing", Free: "Free", "1 pengguna": "1 user", "1 workspace": "1 workspace", "3 klien": "3 clients", "5 proyek": "5 projects", "10 invoice/bulan": "10 invoices/month", "Portal klien + AI": "Client portal + AI", "15 permintaan AI/bulan": "15 AI requests/month", "Penyimpanan file aman": "Secure file storage", "1 workspace Solo": "1 Solo workspace", "5 GB/workspace": "5 GB/workspace", "150 permintaan AI/bulan": "150 AI requests/month", "Kelola dan bagikan file klien": "Manage and share client files", "Hingga 5 anggota/workspace": "Up to 5 members/workspace", "Hingga 3 workspace": "Up to 3 workspaces", "Peran tim": "Team roles", "1.000 permintaan AI/bulan": "1,000 AI requests/month", "Proposal, kontrak, dan invoice unlimited": "Unlimited proposals, contracts, and invoices", "Penyimpanan bersama untuk tim": "Shared storage for your team" };
+
+const testimonials = [
+  { initials: "NA", name: "Nadia A.", role: ["Freelance Designer", "Freelance Designer"], quote: ["Portal klien bikin feedback dan file final tidak lagi tercecer di chat.", "The client portal keeps feedback and final files from getting lost in chat."] },
+  { initials: "RP", name: "Raka P.", role: ["Web Developer", "Web Developer"], quote: ["Task, waktu kerja, dan invoice tetap terhubung tanpa pindah-pindah aplikasi.", "Tasks, tracked time, and invoices stay connected without switching apps."] },
+  { initials: "DS", name: "Dina S.", role: ["Pemilik Creative Studio", "Creative Studio Owner"], quote: ["Tim lebih mudah melihat progres, sementara klien hanya melihat yang memang dibagikan.", "The team sees progress clearly while clients see only what is shared with them."] },
+] as const;
 
 const comparison = [
   { label: "Harga mulai", honeybook: "$19/mo", bonsai: "$17/mo", cubiqlo: "Gratis" },
@@ -213,7 +219,14 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section className="border-y border-slate-950/[0.06] bg-white px-4 py-8 sm:px-6 lg:px-8">
+        <section aria-label={tx("Social proof", "Social proof")} className="border-y border-slate-950/[0.06] bg-white px-4 py-5 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex -space-x-2" aria-hidden="true">{testimonials.map((item, index) => <span key={item.initials} className={`flex size-9 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white ${index === 0 ? "bg-[#6647F0]" : index === 1 ? "bg-[#FF7657]" : "bg-emerald-500"}`}>{item.initials}</span>)}</div>
+            <p className="text-sm font-medium text-[#292D34] sm:text-right"><strong className="text-lg text-[#6647F0]">100+</strong> {tx("· Dibangun untuk freelancer dan creative studio", "· Built for freelancers and creative studios")}</p>
+          </div>
+        </section>
+
+        <section className="bg-white px-4 py-8 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-7xl gap-6 sm:grid-cols-[1fr_auto] sm:items-center">
             <p className="max-w-3xl text-lg font-medium leading-8 text-[#292D34] sm:text-xl">{tx("Project management berhenti di task. ", "Project management stops at tasks. ")}<span className="text-[#6647F0]">{tx("Cubiqlo lanjut sampai hasil diterima dan invoice dibayar.", "Cubiqlo keeps going until work is accepted and invoices are paid.")}</span></p>
             <p className="text-xs font-semibold uppercase tracking-[.18em] text-slate-400">{tx("Dari proyek sampai pembayaran", "From project to payment")}</p>
@@ -286,10 +299,29 @@ export default async function HomePage() {
           </div>
         </section>
 
+        <section className="px-4 pb-20 sm:px-6 sm:pb-28 lg:px-8">
+          <div className="mx-auto max-w-7xl">
+            <div className="mx-auto max-w-3xl text-center">
+              <p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">{tx("Cerita pengguna awal", "Early user stories")}</p>
+              <h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Client work terasa lebih terkendali.", "Client work feels more manageable.")}</h2>
+              <p className="mt-5 text-lg text-slate-600">{tx("Contoh bagaimana Cubiqlo membantu berbagai cara kerja.", "Illustrative examples of how Cubiqlo supports different workflows.")}</p>
+            </div>
+            <div className="mt-12 grid gap-5 lg:grid-cols-3">
+              {testimonials.map((item) => <figure key={item.name} className="flex flex-col rounded-3xl bg-white p-6 shadow-[0_16px_50px_rgba(41,45,52,.07)] ring-1 ring-slate-200">
+                <blockquote className="flex-1 text-base leading-7 text-slate-700">“{tx(item.quote[0], item.quote[1])}”</blockquote>
+                <figcaption className="mt-7 flex items-center gap-3 border-t border-slate-100 pt-5">
+                  <span className="flex size-10 items-center justify-center rounded-full bg-[#F0ECFF] text-xs font-bold text-[#6647F0]">{item.initials}</span>
+                  <span><strong className="block text-sm text-[#292D34]">{item.name}</strong><span className="text-xs text-slate-500">{tx(item.role[0], item.role[1])} · {tx("Ilustrasi", "Illustrative")}</span></span>
+                </figcaption>
+              </figure>)}
+            </div>
+          </div>
+        </section>
+
         <section id="pricing" className="bg-white px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#6647F0]">{tx("Harga transparan", "Transparent pricing")}</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Mulai gratis. Upgrade saat klien bertambah.", "Start free. Upgrade as your client work grows.")}</h2><p className="mt-5 text-lg text-slate-600">{tx("Tidak perlu kartu kredit untuk mulai.", "No credit card required.")}</p></div>
-            <div className="mt-12 grid gap-5 lg:grid-cols-3">{pricing.map(plan => <div key={plan.name} className={`relative flex flex-col rounded-3xl p-6 ${plan.featured ? "bg-[#292D34] text-white shadow-[0_24px_70px_rgba(41,45,52,.22)] lg:-translate-y-3" : "bg-[#FBFAFE] ring-1 ring-slate-200"}`}>{plan.featured && <span className="absolute right-5 top-5 rounded-full bg-[#FF7657] px-3 py-1 text-xs font-semibold">{tx("Paling populer", "Most popular")}</span>}<p className={`text-sm font-semibold ${plan.featured ? "text-violet-300" : "text-[#6647F0]"}`}>{tx(plan.name, plan.name === "Free" ? "Free" : plan.name)}</p><p className={`mt-3 text-sm ${plan.featured ? "text-slate-300" : "text-slate-600"}`}>{plan.name === "Free" ? tx("Coba dulu untuk client work kecil.", "Try it for small client work.") : plan.name === "Solo" ? tx("Untuk freelancer yang mulai serius.", "For freelancers getting serious.") : tx("Untuk tim kecil yang kerja bareng.", "For small teams working together.")}</p><div className="mt-7"><strong className="block text-3xl tracking-[-.03em]">{getLandingPrice(plan.name.toLowerCase() as "free" | "solo" | "team", "monthly", currency)}</strong><span className={`mt-1 block text-xs ${plan.featured ? "text-slate-400" : "text-slate-500"}`}>{plan.name === "Solo" || plan.name === "Team" ? `${getLandingPrice(plan.name.toLowerCase() as "solo" | "team", "yearly", currency)} / ${tx("tahun", "year")}` : tx("selamanya", "forever")}</span></div><div className={`my-6 h-px ${plan.featured ? "bg-white/10" : "bg-slate-200"}`} /><div className="flex-1 space-y-3">{plan.items.map(item => <div key={item} className={`flex items-center gap-2 text-sm ${plan.featured ? "text-slate-200" : "text-slate-700"}`}><Check className={`h-4 w-4 ${plan.featured ? "text-emerald-400" : "text-[#6647F0]"}`} />{tx(item, landingEn[item] ?? item)}</div>)}</div><Button asChild className={`mt-8 h-11 rounded-xl ${plan.featured ? "bg-white text-[#292D34] hover:bg-violet-50" : "bg-[#292D34] text-white hover:bg-[#17191E]"}`}><Link href="/signup">{tx(plan.cta, plan.name === "Free" ? "Start free" : `Choose ${plan.name}`)}<ArrowRight className="ml-1 inline h-4 w-4" /></Link></Button></div>)}</div>
+            <div className="mt-12 grid gap-5 lg:grid-cols-3">{pricing.map(plan => <div key={plan.name} className={`relative flex flex-col rounded-3xl p-6 ${plan.featured ? "bg-[#292D34] text-white shadow-[0_24px_70px_rgba(41,45,52,.22)] lg:-translate-y-3" : "bg-[#FBFAFE] ring-1 ring-slate-200"}`}>{plan.featured && <span className="absolute right-5 top-5 rounded-full bg-[#FF7657] px-3 py-1 text-xs font-semibold">{tx("Paling populer", "Most popular")}</span>}<p className={`text-sm font-semibold ${plan.featured ? "text-violet-300" : "text-[#6647F0]"}`}>{tx(plan.name, plan.name === "Free" ? "Free" : plan.name)}</p><p className={`mt-3 text-sm ${plan.featured ? "text-slate-300" : "text-slate-600"}`}>{plan.name === "Free" ? tx("Coba dulu untuk client work kecil.", "Try it for small client work.") : plan.name === "Solo" ? tx("Untuk freelancer yang punya banyak klien.", "For freelancers with many clients.") : tx("Untuk tim kecil yang kerja bareng.", "For small teams working together.")}</p><div className="mt-7"><strong className="block text-3xl tracking-[-.03em]">{getLandingPrice(plan.name.toLowerCase() as "free" | "solo" | "team", "monthly", currency)}</strong><span className={`mt-1 block text-xs ${plan.featured ? "text-slate-400" : "text-slate-500"}`}>{plan.name === "Solo" || plan.name === "Team" ? `${getLandingPrice(plan.name.toLowerCase() as "solo" | "team", "yearly", currency)} / ${tx("tahun", "year")}` : tx("selamanya", "forever")}</span></div><div className={`my-6 h-px ${plan.featured ? "bg-white/10" : "bg-slate-200"}`} /><div className="flex-1 space-y-3">{plan.items.map(item => <div key={item} className={`flex items-center gap-2 text-sm ${plan.featured ? "text-slate-200" : "text-slate-700"}`}><Check className={`h-4 w-4 ${plan.featured ? "text-emerald-400" : "text-[#6647F0]"}`} />{tx(item, landingEn[item] ?? item)}</div>)}</div><Button asChild className={`mt-8 h-11 rounded-xl ${plan.featured ? "bg-white text-[#292D34] hover:bg-violet-50" : "bg-[#292D34] text-white hover:bg-[#17191E]"}`}><Link href="/signup">{tx(plan.cta, plan.name === "Free" ? "Start free" : `Choose ${plan.name}`)}<ArrowRight className="ml-1 inline h-4 w-4" /></Link></Button></div>)}</div>
           </div>
         </section>
 

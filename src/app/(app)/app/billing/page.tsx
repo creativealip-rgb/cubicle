@@ -26,19 +26,19 @@ const plans = [
     name: "Free Forever",
     price: "Rp 0",
     description: ["Coba dulu buat client work kecil.", "Try it for small client work."],
-    features: [["1 pengguna", "1 user"], ["1 workspace", "1 workspace"], ["3 klien", "3 clients"], ["5 proyek", "5 projects"], ["10 invoice/bulan", "10 invoices/month"], ["Client portal + AI", "Client portal + AI"], ["10 AI request/bulan", "10 AI requests/month"], ["Penyimpanan file aman", "Secure file storage"]],
+    features: [["1 pengguna", "1 user"], ["1 workspace", "1 workspace"], ["3 klien", "3 clients"], ["5 proyek", "5 projects"], ["10 invoice/bulan", "10 invoices/month"], ["Client portal + AI", "Client portal + AI"], ["15 AI request/bulan", "15 AI requests/month"], ["Penyimpanan file aman", "Secure file storage"]],
   },
   {
     key: "solo",
     name: "Solo",
-    description: ["Untuk freelancer yang butuh unlimited clients.", "For freelancers who need unlimited clients."],
-    features: [["1 pengguna", "1 user"], ["3 workspace", "3 workspaces"], ["Klien/proyek/invoice unlimited", "Unlimited clients/projects/invoices"], ["Client portal + AI", "Client portal + AI"], ["100 AI request/bulan", "100 AI requests/month"], ["Kelola dan bagikan file klien", "Manage and share client files"]],
+    description: ["Untuk freelancer yang punya banyak klien.", "For freelancers with many clients."],
+    features: [["1 pengguna", "1 user"], ["3 workspace", "3 workspaces"], ["Klien, proyek, proposal, kontrak, dan invoice unlimited", "Unlimited clients, projects, proposals, contracts, and invoices"], ["Client portal + AI", "Client portal + AI"], ["150 AI request/bulan", "150 AI requests/month"], ["Kelola dan bagikan file klien", "Manage and share client files"]],
   },
   {
     key: "team",
     name: "Team",
     description: ["Untuk team kecil yang handle banyak client bareng.", "For small teams handling many clients together."],
-    features: [["Maksimal 5 member/workspace", "Up to 5 members/workspace"], ["Maksimal 3 workspace", "Up to 3 workspaces"], ["Klien/proyek/invoice unlimited", "Unlimited clients/projects/invoices"], ["Peran tim", "Team roles"], ["1.000 AI request/bulan", "1,000 AI requests/month"], ["5 GB/workspace", "5 GB/workspace"], ["Penyimpanan bersama untuk tim", "Shared storage for your team"]],
+    features: [["Maksimal 5 member/workspace", "Up to 5 members/workspace"], ["Maksimal 3 workspace", "Up to 3 workspaces"], ["Klien, proyek, proposal, kontrak, dan invoice unlimited", "Unlimited clients, projects, proposals, contracts, and invoices"], ["Peran tim", "Team roles"], ["1.000 AI request/bulan", "1,000 AI requests/month"], ["5 GB/workspace", "5 GB/workspace"], ["Penyimpanan bersama untuk tim", "Shared storage for your team"]],
   },
 ] as const;
 
