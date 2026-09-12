@@ -22,7 +22,8 @@ This repo includes a `docker-compose.yml` optimized for Dokploy.
 
 2. **Set environment variables in Dokploy UI**
    ```
-   DATABASE_URL=postgresql://postgres:***@cubicle-pg:5432/cubicle
+   DATABASE_URL=postgresql://cubiqlo_app:***@cubicle-pg:5432/cubicle
+   MIGRATION_DATABASE_URL=postgresql://cubiqlo_migrator:***@cubicle-pg:5432/cubicle
    BETTER_AUTH_SECRET=<openssl rand -base64 32>
    BETTER_AUTH_URL=https://cubicle.your-domain.com
    APP_URL=https://cubicle.your-domain.com
@@ -53,12 +54,12 @@ This repo includes a `docker-compose.yml` optimized for Dokploy.
 
 4. **Deploy**
    - Click "Deploy" in Dokploy UI
-   - First deploy will: build image, run `drizzle-kit push` (via startup), seed demo data
+   - Application startup never mutates schema. Provision roles first, then run the explicit migration release step before deploying app code.
    - Watch logs for "ready on :3000"
 
 5. **Run migrations + seed (one-time, post first deploy)**
    ```bash
-   docker exec -it cubicle-cubicle-1 npm run db:push
+   MIGRATION_DATABASE_URL="postgresql://cubiqlo_migrator:***@cubicle-pg:5432/cubicle" DB_CONTAINER=cubicle-pg ALLOW_PRODUCTION_MIGRATION=1 npm run db:migrate
    docker exec -it cubicle-cubicle-1 npm run db:seed
    docker exec -it cubicle-cubicle-1 npm run auth:seed
    ```
@@ -119,7 +120,7 @@ docker run -d \
 ### 4. Migrate + seed
 
 ```bash
-docker exec -it cubicle npm run db:push
+MIGRATION_DATABASE_URL="postgresql://cubiqlo_migrator:***@cubicle-pg:5432/cubicle" DB_CONTAINER=cubicle-pg ALLOW_PRODUCTION_MIGRATION=1 npm run db:migrate
 docker exec -it cubicle npm run db:seed
 docker exec -it cubicle npm run auth:seed
 ```

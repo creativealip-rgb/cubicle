@@ -10,6 +10,7 @@
     "analyze": "ANALYZE=true next build",
     "lint": "eslint",
     "smoke": "node scripts/smoke.mjs",
+    "db:migrate": "./scripts/migrate-ledger.sh",
     "test": "vitest run",
     "test:phase0a:db": "SOURCE_DB=cubicle_dev ./scripts/test-phase0a-db-integration.sh",
     "test:phase1:db": "SOURCE_DB=cubicle_dev ./scripts/test-phase1-db-integration.sh",
