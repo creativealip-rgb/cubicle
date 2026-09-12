@@ -1,0 +1,8 @@
+app=cubiqlo-prod:sha-893c84d68b860c847591356bba93c6496ab1266d|sha256:a04fd7c982a1ab81e9d086b3368d910285634cd1b7efd7f0881fdc84a2b54af2|unless-stopped|{}
+db=postgres:16|container=cubiqlo-new-pg|restart=unless-stopped|volume=cubiqlo-new-pg-data|network=dokploy-network|host_ports=none
+redis=redis:7-alpine|container=cubiqlo-new-redis|restart=unless-stopped|network=dokploy-network
+production_compose=/opt/cubiqlo-migration/docker-compose.yml
+shared_preload_libraries=off
+track_io_timing=-1
+log_min_duration_statement=100
+max_connections=

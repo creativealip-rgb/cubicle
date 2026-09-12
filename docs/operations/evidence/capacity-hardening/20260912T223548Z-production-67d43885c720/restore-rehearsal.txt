@@ -1,0 +1,10 @@
+run_id=20260912T223548Z-production-67d43885c720
+backup=/root/backups/cubiqlo/capacity-hardening/cubicle-20260912T223548Z-production-67d43885c720.dump
+format=PostgreSQL custom
+source=cubiqlo-new-pg/cubicle
+destination=ephemeral postgres:16 container and volume, no host ports
+first_attempt=FAIL: PostgreSQL container started with network disabled and did not become ready; automatic container/volume cleanup ran; no source mutation
+second_attempt=PASS: pg_restore --exit-on-error completed
+parity=tables 93; indexes 360; constraints 491; workspaces 58; migration ledger 52
+source_invariants=users 57; invalid indexes 0; unvalidated constraints 0
+cleanup=PASS: ephemeral container and volume removed
