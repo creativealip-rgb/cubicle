@@ -324,9 +324,6 @@ export default async function ProductivityPage({
                         "Create your first life or financial goal to start tracking visual progress.",
                       )}
                     </p>
-                    <div className="mt-3">
-                      <GoalDialog lang={lang} createGoalAction={createGoal} />
-                    </div>
                   </div>
                 )}
               </div>

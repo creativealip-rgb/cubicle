@@ -23,7 +23,7 @@ type ProjectEditDialogProps = {
     status: string;
     billingType: string;
     billingModel?: string | null;
-    timeTrackingMode: string;
+    timeTrackingMode: "off" | "internal" | "billable";
     activityRequired: boolean;
     currency: string;
     rate: string | null;

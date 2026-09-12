@@ -111,6 +111,7 @@ export async function GET(
       quantity: String(it.quantity),
       unitPrice: String(it.unitPrice),
       amount: String(it.amount),
+      sourceType: it.sourceType,
     })),
     amountPaid,
     timesheetReportUrl,

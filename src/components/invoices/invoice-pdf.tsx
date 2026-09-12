@@ -6,7 +6,6 @@ import {
   StyleSheet,
   Font,
   Image,
-  Link,
 } from "@react-pdf/renderer";
 
 Font.register({
@@ -325,6 +324,7 @@ interface InvoicePDFProps {
     quantity: string;
     unitPrice: string;
     amount: string;
+    sourceType?: string | null;
   }>;
   /** Sum of recorded payments (Catatan Pembayaran). */
   amountPaid?: string | number | null;
@@ -337,7 +337,6 @@ export function InvoicePDF({
   client,
   items,
   amountPaid,
-  timesheetReportUrl,
 }: InvoicePDFProps) {
   const companyName = workspace.billingName || "Cubiqlo";
   const initials = companyName.slice(0, 2).toUpperCase();
@@ -349,6 +348,17 @@ export function InvoicePDF({
   const paidRaw = Number(amountPaid ?? 0);
   const paid = Number.isFinite(paidRaw) ? paidRaw : 0;
   const amountDue = Math.max(0, (Number.isFinite(total) ? total : 0) - paid);
+  const displayItems = Array.from(items.reduce((groups, item) => {
+    if (item.sourceType !== "time_entry") {
+      groups.set(`item:${item.id}`, { ...item });
+      return groups;
+    }
+    const projectName = item.description.split(" — ", 1)[0] || item.description;
+    const key = `time:${projectName}:${item.unitPrice}`;
+    const current = groups.get(key);
+    groups.set(key, current ? { ...current, quantity: String(Number(current.quantity) + Number(item.quantity)), amount: String(Number(current.amount) + Number(item.amount)) } : { ...item, description: projectName });
+    return groups;
+  }, new Map<string, InvoicePDFProps["items"][number]>()).values());
   const isCancelled = invoice.status === "cancelled";
   // Fully paid only when payment records cover total (status alone is not enough).
   const isFullyPaid = !isCancelled && total > 0 && paid >= total;
@@ -448,7 +458,7 @@ export function InvoicePDF({
             </View>
           </View>
 
-          {items.map((item, i) => (
+          {displayItems.map((item, i) => (
             <View
               key={item.id || i}
               style={i % 2 === 1 ? [styles.tableRow, styles.tableRowAlt] : styles.tableRow}
@@ -473,15 +483,6 @@ export function InvoicePDF({
           ))}
         </View>
 
-        {/* Detail report — under description table */}
-        {timesheetReportUrl ? (
-          <View style={styles.detailReportUnderDesc}>
-            <Text style={styles.detailReportLabel}>Detail report</Text>
-            <Link src={timesheetReportUrl} style={styles.detailReportLink}>
-              {timesheetReportUrl}
-            </Link>
-          </View>
-        ) : null}
 
         {/* Totals */}
         <View style={styles.totalsSection}>

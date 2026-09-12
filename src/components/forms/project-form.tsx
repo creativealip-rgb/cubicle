@@ -26,6 +26,7 @@ type Defaults = {
   status?: string;
   billingModel?: BillingModel;
   billingType?: string;
+  timeTrackingMode?: "off" | "internal" | "billable";
   currency?: string;
   rate?: string;
   budget?: string;
@@ -116,6 +117,7 @@ export function ProjectForm({
     clientId: defaultValues?.clientId ?? clientId ?? "",
     status: defaultValues?.status ?? "active",
     billingModel: defaultValues?.billingModel ?? fallback,
+    timeTrackingMode: defaultValues?.timeTrackingMode ?? (fallback === "fixed_price" ? "off" : "billable"),
     currency: defaultValues?.currency ?? "IDR",
     rate: defaultValues?.rate ?? "",
     budget: defaultValues?.budget ?? "",
@@ -138,6 +140,7 @@ export function ProjectForm({
         ...form,
         clientId: form.clientId || undefined,
         billingModel: form.billingModel as BillingModel,
+        timeTrackingMode: form.timeTrackingMode,
         rate: form.rate ? Number(form.rate) : undefined,
         budget: form.budget ? Number(form.budget) : undefined,
         retainerFee: form.retainerFee ? Number(form.retainerFee) : undefined,
@@ -346,6 +349,19 @@ export function ProjectForm({
                 </SelectContent>
               </Select>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">{t("Pelacakan Waktu", "Time Tracking")}</Label>
+            <Select value={form.timeTrackingMode} onValueChange={(value) => setForm((current) => ({ ...current, timeTrackingMode: value as "off" | "internal" | "billable" }))}>
+              <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="off">{t("Nonaktif", "Off")}</SelectItem>
+                <SelectItem value="internal">Internal</SelectItem>
+                <SelectItem value="billable">{t("Dapat Ditagih", "Billable")}</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">{t("Aktifkan agar proyek muncul pada timer dan Tambah Log.", "Enable to show this project in timers and Add Log.")}</p>
           </div>
 
           {form.billingModel === "fixed_price" && (

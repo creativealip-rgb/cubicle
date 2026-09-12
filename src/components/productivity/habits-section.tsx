@@ -135,6 +135,13 @@ export async function HabitsSection({
 
       {/* Active Habits List */}
       <div className="space-y-2.5">
+        {activeHabits.length === 0 && (
+          <div className="rounded-xl border border-dashed p-8 text-center">
+            <Flame className="mx-auto size-8 text-muted-foreground/50" />
+            <h3 className="mt-2 text-sm font-bold text-foreground">{t("Belum Ada Kebiasaan", "No Habits Created")}</h3>
+            <p className="mx-auto mt-1 max-w-sm text-xs text-muted-foreground">{t("Tambahkan kebiasaan harian pertama untuk mulai membangun konsistensi.", "Add your first daily habit to start building consistency.")}</p>
+          </div>
+        )}
         {activeHabits.map((h) => {
           const scheduledToday = today >= h.startDate && isHabitScheduled(
             h.frequency as "daily" | "specific_weekdays",
