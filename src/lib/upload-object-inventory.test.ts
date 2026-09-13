@@ -17,7 +17,7 @@ it("paginates saga namespaces and classifies missing/orphan/metadata mismatch wi
   const report = await scanUploadObjectInventory(client, {
     bucket: "b", now: new Date("2026-02-01"), graceMs: 86_400_000,
     references: [
-      { key: "quarantine/ws/i1", intentId: "i1", attemptId: "a1", expectedBytes: 10, expectedMime: "application/pdf" },
+      { key: "quarantine/ws/i1", intentId: "i1", attemptId: "a1", expectedBytes: 10, expectedMime: "application/pdf", requireMetadata: true },
       { key: "workspaces/ws/files/missing", intentId: "i2", attemptId: "a2", expectedBytes: 2, expectedMime: "image/png" },
     ],
   });

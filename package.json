@@ -23,6 +23,7 @@
     "test:rate-limit": "tsx scripts/test-distributed-rate-limit.ts",
     "reconcile:storage-quota": "tsx scripts/reconcile-storage-quota.ts",
     "reconcile:personal-receipts": "tsx scripts/reconcile-personal-receipts.ts",
+    "reconcile:upload-saga": "tsx scripts/reconcile-upload-saga.ts",
     "retry:personal-receipt-cleanup": "tsx scripts/retry-personal-receipt-cleanup.ts"
   },
   "dependencies": {

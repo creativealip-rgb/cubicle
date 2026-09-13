@@ -1,7 +1,7 @@
 import { HeadObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 
 type ObjectClient = { send(command: ListObjectsV2Command | HeadObjectCommand): Promise<any> };
-type Reference = { key: string; intentId: string; attemptId: string | null; expectedBytes: number; expectedMime: string };
+type Reference = { key: string; intentId: string; attemptId: string | null; expectedBytes: number; expectedMime: string; requireMetadata?: boolean };
 
 const isSagaKey = (key: string) => /^quarantine\/[^/]+\/[^/]+$/.test(key) || /^workspaces\/[^/]+\/files\/[^/]+$/.test(key);
 
@@ -27,7 +27,7 @@ export async function scanUploadObjectInventory(client: ObjectClient, input: { b
   for (const reference of input.references) {
     if (!listed.has(reference.key)) continue;
     const head = await client.send(new HeadObjectCommand({ Bucket: input.bucket, Key: reference.key }));
-    if (head.ContentLength !== reference.expectedBytes || head.ContentType !== reference.expectedMime || head.Metadata?.intentid !== reference.intentId || (reference.attemptId && head.Metadata?.attemptid !== reference.attemptId)) metadataMismatches.push(reference.key);
+    if (head.ContentLength !== reference.expectedBytes || head.ContentType !== reference.expectedMime || (reference.requireMetadata && (head.Metadata?.intentid !== reference.intentId || (reference.attemptId && head.Metadata?.attemptid !== reference.attemptId)))) metadataMismatches.push(reference.key);
   }
   return { pages, scanned: listed.size, missing, orphans, metadataMismatches: metadataMismatches.sort(), deletedObjects: 0 as const };
 }
