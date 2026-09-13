@@ -1167,6 +1167,63 @@ export const files = pgTable("files", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const uploadIntents = pgTable("upload_intents", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  actorType: text("actor_type", { enum: ["user", "portal", "public"] }).notNull(),
+  actorId: text("actor_id").notNull(),
+  destinationType: text("destination_type").notNull(),
+  destinationId: text("destination_id").notNull(),
+  idempotencyKey: text("idempotency_key").notNull(),
+  quarantineKey: text("quarantine_key").notNull().unique(),
+  finalKey: text("final_key").notNull().unique(),
+  expectedMime: text("expected_mime").notNull(),
+  expectedBytes: bigint("expected_bytes", { mode: "number" }).notNull(),
+  maxBytes: bigint("max_bytes", { mode: "number" }).notNull(),
+  expectedSha256: text("expected_sha256"),
+  providerEtag: text("provider_etag"),
+  providerVersionId: text("provider_version_id"),
+  state: text("state").notNull().default("reserved"),
+  version: integer("version").notNull().default(0),
+  finalFileId: uuid("final_file_id").references(() => files.id, { onDelete: "set null" }),
+  promotionAttemptId: uuid("promotion_attempt_id"),
+  promotionLeaseOwner: text("promotion_lease_owner"),
+  promotionLeaseExpiresAt: timestamp("promotion_lease_expires_at", { withTimezone: true }),
+  retryCount: integer("retry_count").notNull().default(0),
+  lastErrorCode: text("last_error_code"),
+  cleanupRetryAt: timestamp("cleanup_retry_at", { withTimezone: true }),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  uploadedAt: timestamp("uploaded_at", { withTimezone: true }),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique("upload_intents_actor_idempotency_unique").on(table.workspaceId, table.actorType, table.actorId, table.destinationType, table.destinationId, table.idempotencyKey),
+  index("upload_intents_reconcile_idx").on(table.state, table.expiresAt, table.cleanupRetryAt),
+  check("upload_intents_state_check", sql`${table.state} in ('reserved','uploaded','validating','promoting','promotion_failed','completed','aborted','expired','quarantined','failed_cleanup')`),
+  check("upload_intents_bytes_check", sql`${table.expectedBytes} >= 0 and ${table.maxBytes} >= ${table.expectedBytes}`),
+  check("upload_intents_sha256_check", sql`${table.expectedSha256} is null or ${table.expectedSha256} ~ '^[0-9a-f]{64}$'`),
+  check("upload_intents_retry_check", sql`${table.retryCount} between 0 and 10`),
+]);
+
+export const uploadQuotaReservations = pgTable("upload_quota_reservations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  intentId: uuid("intent_id").notNull().references(() => uploadIntents.id, { onDelete: "cascade" }).unique(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  bytes: bigint("bytes", { mode: "number" }).notNull(),
+  files: integer("files").notNull().default(1),
+  state: text("state", { enum: ["active", "consumed", "released"] }).notNull().default("active"),
+  version: integer("version").notNull().default(0),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  releasedAt: timestamp("released_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("upload_quota_reservations_active_idx").on(table.workspaceId, table.state, table.expiresAt),
+  check("upload_quota_reservations_amount_check", sql`${table.bytes} >= 0 and ${table.files} = 1`),
+]);
+
 // ─── Time tracking ───
 
 export const activities = pgTable("activities", {
