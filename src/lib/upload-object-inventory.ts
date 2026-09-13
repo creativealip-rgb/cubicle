@@ -1,6 +1,6 @@
-import { HeadObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, HeadObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 
-type ObjectClient = { send(command: ListObjectsV2Command | HeadObjectCommand): Promise<any> };
+type ObjectClient = { send(command: ListObjectsV2Command | HeadObjectCommand | DeleteObjectCommand): Promise<any> };
 type Reference = { key: string; intentId: string; attemptId: string | null; expectedBytes: number; expectedMime: string; requireMetadata?: boolean };
 
 const isSagaKey = (key: string) => /^quarantine\/[^/]+\/[^/]+$/.test(key) || /^workspaces\/[^/]+\/files\/[^/]+$/.test(key);
@@ -32,4 +32,12 @@ export async function scanUploadObjectInventory(client: ObjectClient, input: { b
   return { pages, scanned: listed.size, missing, orphans, metadataMismatches: metadataMismatches.sort(), deletedObjects: 0 as const };
 }
 
-// Read-only by design: deletion needs a separate approved apply path with active-saga proof.
+export async function deleteUploadOrphans(client: ObjectClient, input: { bucket: string; keys: string[]; limit?: number }) {
+  const limit = input.limit ?? 100;
+  if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || input.keys.length > limit) throw new Error("INVALID_ORPHAN_DELETE_LIMIT");
+  for (const key of input.keys) {
+    if (!isSagaKey(key)) throw new Error("INVALID_UPLOAD_OBJECT_KEY");
+    await client.send(new DeleteObjectCommand({ Bucket: input.bucket, Key: key }));
+  }
+  return input.keys.length;
+}

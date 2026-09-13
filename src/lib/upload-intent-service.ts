@@ -49,12 +49,12 @@ export async function createUploadIntent(input: CreateUploadIntentInput) {
         eq(uploadIntents.idempotencyKey, input.idempotencyKey),
       )).limit(1);
       if (!existing || existing.expectedBytes !== input.expectedBytes || existing.expectedMime !== input.expectedMime || existing.expectedSha256 !== (input.expectedSha256?.toLowerCase() ?? null) || existing.fileName !== input.fileName || existing.visibility !== input.visibility || existing.fileType !== input.fileType || existing.clientId !== (input.clientId ?? null) || existing.projectId !== (input.projectId ?? null) || existing.folderId !== (input.folderId ?? null) || existing.intendedUploadedBy !== (input.uploadedBy ?? null)) throw new Error("IDEMPOTENCY_CONFLICT");
-      return existing;
+      return Object.assign(existing, { createdNow: false as const });
     }
 
     await reserveWorkspaceUploadTx(tx, input.workspaceId, input.expectedBytes);
     await tx.insert(uploadQuotaReservations).values({ intentId: created.id, workspaceId: input.workspaceId, bytes: input.expectedBytes, expiresAt: input.expiresAt });
-    return created;
+    return Object.assign(created, { createdNow: true as const });
   });
 }
 

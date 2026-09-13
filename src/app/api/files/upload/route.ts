@@ -44,8 +44,9 @@ export async function POST(req: NextRequest) {
     const mime = file.type || "application/octet-stream";
     if (!SAGA_MIME_TYPES.has(mime)) return NextResponse.json({ error: "File type is not supported by secure upload" }, { status: 400 });
     const intent = await createUploadIntent({ workspaceId, actorType: "user", actorId: user.id, destinationType: "workspace_file", destinationId: folderId ?? projectId ?? clientId ?? "root", idempotencyKey, expectedMime: mime, expectedBytes: body.length, maxBytes: MAX_BYTES, expectedSha256: createHash("sha256").update(body).digest("hex"), fileName: file.name, visibility, fileType, clientId, projectId, folderId, uploadedBy: user.id, expiresAt: new Date(Date.now() + 15 * 60_000) });
+    if (!intent.createdNow) return NextResponse.json({ error: "Upload request already exists", intentId: intent.id, state: intent.state }, { status: 409 });
     quarantineKey = intent.quarantineKey;
-    const put = await r2.send(new PutObjectCommand({ Bucket: R2_BUCKET, Key: intent.quarantineKey, Body: body, ContentType: mime, ContentLength: body.length }));
+    const put = await r2.send(new PutObjectCommand({ Bucket: R2_BUCKET, Key: intent.quarantineKey, Body: body, ContentType: mime, ContentLength: body.length, IfNoneMatch: "*" }));
     const uploaded = await confirmUpload(intent.id, workspaceId, intent.version, { etag: put.ETag ?? "", versionId: put.VersionId });
     const workerId = `upload-api-${randomUUID()}`;
     const validating = await claimValidation(uploaded.id, workspaceId, uploaded.version, workerId, new Date(Date.now() + 60_000));

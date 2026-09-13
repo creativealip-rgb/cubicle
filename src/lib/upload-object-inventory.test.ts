@@ -1,7 +1,6 @@
-import { HeadObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
-import { readFileSync } from "node:fs";
+import { DeleteObjectCommand, HeadObjectCommand, ListObjectsV2Command } from "@aws-sdk/client-s3";
 import { expect, it } from "vitest";
-import { scanUploadObjectInventory } from "./upload-object-inventory";
+import { deleteUploadOrphans, scanUploadObjectInventory } from "./upload-object-inventory";
 
 it("paginates saga namespaces and classifies missing/orphan/metadata mismatch without deletion", async () => {
   const calls: unknown[] = [];
@@ -28,8 +27,13 @@ it("paginates saga namespaces and classifies missing/orphan/metadata mismatch wi
   expect(calls.filter((x) => x instanceof ListObjectsV2Command)).toHaveLength(2);
 });
 
-it("contains no object deletion capability", () => {
-  expect(readFileSync("src/lib/upload-object-inventory.ts", "utf8")).not.toContain("DeleteObjectCommand");
+it("deletes only bounded canonical orphan keys", async () => {
+  const calls: unknown[] = [];
+  const client = { send: async (command: unknown) => { calls.push(command); return {}; } };
+  await expect(deleteUploadOrphans(client, { bucket: "b", keys: ["quarantine/ws/id", "workspaces/ws/files/id"] })).resolves.toBe(2);
+  expect(calls.every((call) => call instanceof DeleteObjectCommand)).toBe(true);
+  await expect(deleteUploadOrphans(client, { bucket: "b", keys: ["other/key"] })).rejects.toThrow("INVALID_UPLOAD_OBJECT_KEY");
+  await expect(deleteUploadOrphans(client, { bucket: "b", keys: Array(101).fill("quarantine/ws/id") })).rejects.toThrow("INVALID_ORPHAN_DELETE_LIMIT");
 });
 
 it("rejects invalid canonical reference keys and incomplete pagination", async () => {

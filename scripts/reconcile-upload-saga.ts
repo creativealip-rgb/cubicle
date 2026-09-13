@@ -2,7 +2,7 @@ import { inArray } from "drizzle-orm";
 import { db } from "@/db";
 import { uploadIntents } from "@/db/schema";
 import { R2_BUCKET, R2_CONFIGURED, r2 } from "@/lib/r2";
-import { scanUploadObjectInventory } from "@/lib/upload-object-inventory";
+import { deleteUploadOrphans, scanUploadObjectInventory } from "@/lib/upload-object-inventory";
 import { buildUploadReconcileEvidence } from "@/lib/upload-reconcile-evidence";
 import { reconcileUploadIntents } from "@/lib/upload-reconcile";
 
@@ -29,6 +29,7 @@ async function main() {
     return [{ ...common, key: intent.finalKey, requireMetadata: true }];
   });
   const objects = await scanUploadObjectInventory(r2, { bucket: R2_BUCKET, now: new Date(), graceMs, references });
+  if (apply && objects.orphans.length) objects.deletedObjects = await deleteUploadOrphans(r2, { bucket: R2_BUCKET, keys: objects.orphans.slice(0, 100), limit: 100 });
   const evidence = buildUploadReconcileEvidence({ dbReport, objects, bucket: R2_BUCKET, prefixes: ["quarantine/", "workspaces/"], referencesScanned: references.length });
   console.log(JSON.stringify(evidence, null, 2));
   const dbFindings = Object.entries(dbReport.counts).filter(([key, value]) => !["intents", "files", "reservations"].includes(key) && value > 0);

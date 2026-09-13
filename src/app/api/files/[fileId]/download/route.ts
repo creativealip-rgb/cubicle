@@ -5,10 +5,12 @@ import {
   files,
   portalVisits,
   projects,
+  uploadIntents,
   workspaceMembers,
 } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { getSignedDownloadUrl } from "@/lib/r2";
+import { HeadObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedDownloadUrl, r2, R2_BUCKET } from "@/lib/r2";
 import { and, eq } from "drizzle-orm";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 import { getClientPortalAccess } from "@/lib/actions/portal";
@@ -94,6 +96,12 @@ export async function GET(
   const allowed = await canAccessFile(file, token);
   if (!allowed) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  const [intent] = await db.select().from(uploadIntents).where(and(eq(uploadIntents.finalFileId, file.id), eq(uploadIntents.workspaceId, file.workspaceId), eq(uploadIntents.state, "completed"))).limit(1);
+  if (intent) {
+    const object = await r2.send(new HeadObjectCommand({ Bucket: R2_BUCKET, Key: file.storageKey }));
+    if (object.ContentLength !== file.sizeBytes || object.ContentType !== file.mimeType || object.Metadata?.intentid !== intent.id || object.Metadata?.attemptid !== intent.promotionAttemptId || (intent.expectedSha256 && object.Metadata?.sha256 !== intent.expectedSha256)) return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
   const url = await getSignedDownloadUrl(file.storageKey);

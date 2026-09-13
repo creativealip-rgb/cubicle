@@ -18,8 +18,9 @@ describe("unified upload reconciliation evidence", () => {
     expect(report.objectScope).toEqual({ bucket: "private", prefixes: ["quarantine/", "workspaces/"], pages: 2, referencesScanned: 2 });
   });
 
-  it("fails closed for partial object scope or destructive result", () => {
+  it("fails closed for partial object scope or unbounded repair", () => {
     expect(() => buildUploadReconcileEvidence({ dbReport, objects, bucket: "private", prefixes: ["quarantine/"], referencesScanned: 2 })).toThrow("UPLOAD_OBJECT_SCOPE_INCOMPLETE");
-    expect(() => buildUploadReconcileEvidence({ dbReport, objects: { ...objects, deletedObjects: 1 as 0 }, bucket: "private", prefixes: ["quarantine/", "workspaces/"], referencesScanned: 2 })).toThrow("UPLOAD_RECONCILE_DELETION_FORBIDDEN");
+    expect(() => buildUploadReconcileEvidence({ dbReport, objects: { ...objects, deletedObjects: 101 }, bucket: "private", prefixes: ["quarantine/", "workspaces/"], referencesScanned: 2 })).toThrow("UPLOAD_RECONCILE_DELETE_BOUND_EXCEEDED");
+    expect(() => buildUploadReconcileEvidence({ dbReport, objects: { ...objects, deletedObjects: 1 }, bucket: "private", prefixes: ["quarantine/", "workspaces/"], referencesScanned: 2 })).not.toThrow();
   });
 });
