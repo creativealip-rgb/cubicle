@@ -82,23 +82,23 @@ export async function claimUploadPromotion(input: { intentId: string; workspaceI
   });
 }
 
-export async function markPromotionFailed(intentId: string, workspaceId: string, version: number, promotionAttemptId: string, errorCode: string) {
-  const [failed] = await db.update(uploadIntents).set({ state: "promotion_failed", lastErrorCode: errorCode.slice(0, 100), promotionLeaseOwner: null, promotionLeaseExpiresAt: null, version: sql`${uploadIntents.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.workspaceId, workspaceId), eq(uploadIntents.state, "promoting"), eq(uploadIntents.version, version), eq(uploadIntents.promotionAttemptId, promotionAttemptId))).returning();
+export async function markPromotionFailed(intentId: string, workspaceId: string, version: number, promotionAttemptId: string, leaseOwner: string, errorCode: string) {
+  const [failed] = await db.update(uploadIntents).set({ state: "promotion_failed", lastErrorCode: errorCode.slice(0, 100), promotionLeaseOwner: null, promotionLeaseExpiresAt: null, version: sql`${uploadIntents.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.workspaceId, workspaceId), eq(uploadIntents.state, "promoting"), eq(uploadIntents.version, version), eq(uploadIntents.promotionAttemptId, promotionAttemptId), eq(uploadIntents.promotionLeaseOwner, leaseOwner), gt(uploadIntents.promotionLeaseExpiresAt, new Date()))).returning();
   return failed ?? null;
 }
 
-export async function completePromotion(intentId: string, workspaceId: string, version: number, promotionAttemptId: string, finalFileId: string) {
+export async function completePromotion(intentId: string, workspaceId: string, version: number, promotionAttemptId: string) {
   return db.transaction(async (tx) => {
     const [intent] = await tx.select().from(uploadIntents).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.workspaceId, workspaceId))).for("update");
-    if (!intent || intent.state !== "promoting" || intent.version !== version || intent.promotionAttemptId !== promotionAttemptId || !intent.promotionLeaseExpiresAt || intent.promotionLeaseExpiresAt <= new Date()) throw new Error("STALE_PROMOTION_ATTEMPT");
+    if (!intent || intent.state !== "promoting" || intent.version !== version || intent.promotionAttemptId !== promotionAttemptId || !intent.finalFileId || !intent.promotionLeaseExpiresAt || intent.promotionLeaseExpiresAt <= new Date()) throw new Error("STALE_PROMOTION_ATTEMPT");
     const [reservation] = await tx.select().from(uploadQuotaReservations).where(eq(uploadQuotaReservations.intentId, intentId)).for("update");
     if (!reservation || reservation.state !== "active") throw new Error("RESERVATION_CONFLICT");
     await consumeWorkspaceUploadTx(tx, workspaceId, reservation.bytes);
     const [consumed] = await tx.update(uploadQuotaReservations).set({ state: "consumed", consumedAt: new Date(), version: sql`${uploadQuotaReservations.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadQuotaReservations.id, reservation.id), eq(uploadQuotaReservations.workspaceId, workspaceId), eq(uploadQuotaReservations.state, "active"), eq(uploadQuotaReservations.version, reservation.version))).returning();
     if (!consumed) throw new Error("RESERVATION_CONFLICT");
-    const [completedFile] = await tx.update(files).set({ uploadState: "completed" }).where(and(eq(files.id, finalFileId), eq(files.workspaceId, workspaceId), eq(files.uploadState, "pending"))).returning();
+    const [completedFile] = await tx.update(files).set({ uploadState: "completed" }).where(and(eq(files.id, intent.finalFileId), eq(files.workspaceId, workspaceId), eq(files.uploadState, "pending"))).returning();
     if (!completedFile) throw new Error("PENDING_FILE_CONFLICT");
-    const [completed] = await tx.update(uploadIntents).set({ state: "completed", finalFileId, completedAt: new Date(), version: sql`${uploadIntents.version} + 1`, promotionLeaseOwner: null, promotionLeaseExpiresAt: null, updatedAt: new Date() }).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.workspaceId, workspaceId), eq(uploadIntents.state, "promoting"), eq(uploadIntents.version, version), eq(uploadIntents.promotionAttemptId, promotionAttemptId))).returning();
+    const [completed] = await tx.update(uploadIntents).set({ state: "completed", completedAt: new Date(), version: sql`${uploadIntents.version} + 1`, promotionLeaseOwner: null, promotionLeaseExpiresAt: null, updatedAt: new Date() }).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.workspaceId, workspaceId), eq(uploadIntents.state, "promoting"), eq(uploadIntents.version, version), eq(uploadIntents.promotionAttemptId, promotionAttemptId))).returning();
     if (!completed) throw new Error("STALE_PROMOTION_ATTEMPT");
     return completed;
   });

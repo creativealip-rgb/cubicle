@@ -1,8 +1,8 @@
 import { strict as assert } from "node:assert";
 import { eq } from "drizzle-orm";
 import { db } from "../../src/db";
-import { files, uploadIntents, uploadQuotaReservations, users, workspaceMembers, workspaces, workspaceStorageUsage } from "../../src/db/schema";
-import { claimPromotion, claimValidation, completePromotion, confirmUpload, createUploadIntent, expireUploadIntent } from "../../src/lib/upload-intent-service";
+import { uploadIntents, uploadQuotaReservations, users, workspaceMembers, workspaces, workspaceStorageUsage } from "../../src/db/schema";
+import { claimUploadPromotion, claimValidation, completePromotion, confirmUpload, createUploadIntent, expireUploadIntent } from "../../src/lib/upload-intent-service";
 
 const suffix = Date.now().toString(36);
 const userId = `race-${suffix}`;
@@ -43,14 +43,13 @@ async function main() {
   assert.equal(confirmations.filter((result) => result.status === "fulfilled").length, 1, "double confirm succeeded");
   const uploaded = confirmations.find((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof confirmUpload>>> => result.status === "fulfilled")!.value;
   const validating = await claimValidation(uploaded.id, workspaceId, uploaded.version);
-  const promoting = await claimPromotion(validating.id, workspaceId, validating.version, "worker-1", new Date(Date.now() + 60_000));
-
-  const [file] = await db.insert(files).values({ workspaceId, name: "race.pdf", storageKey: promoting.finalKey, mimeType: base.expectedMime, sizeBytes: base.expectedBytes, uploadedBy: userId }).returning();
-  await assert.rejects(completePromotion(promoting.id, workspaceId, promoting.version, "00000000-0000-0000-0000-000000000000", file.id), /STALE_PROMOTION_ATTEMPT/);
+  const claimed = await claimUploadPromotion({ intentId: validating.id, workspaceId, version: validating.version, leaseOwner: "worker-1", leaseExpiresAt: new Date(Date.now() + 60_000), name: "race.pdf", visibility: "internal", fileType: "working_file", uploadedBy: userId });
+  const promoting = claimed.intent;
+  await assert.rejects(completePromotion(promoting.id, workspaceId, promoting.version, "00000000-0000-0000-0000-000000000000"), /STALE_PROMOTION_ATTEMPT/);
 
   const completions = await Promise.allSettled([
-    completePromotion(promoting.id, workspaceId, promoting.version, promoting.promotionAttemptId!, file.id),
-    completePromotion(promoting.id, workspaceId, promoting.version, promoting.promotionAttemptId!, file.id),
+    completePromotion(promoting.id, workspaceId, promoting.version, promoting.promotionAttemptId!),
+    completePromotion(promoting.id, workspaceId, promoting.version, promoting.promotionAttemptId!),
   ]);
   assert.equal(completions.filter((result) => result.status === "fulfilled").length, 1, "double finalize succeeded");
   const [consumed] = await db.select().from(uploadQuotaReservations).where(eq(uploadQuotaReservations.intentId, promoting.id));

@@ -18,11 +18,11 @@ export async function runUploadPromotionSaga(input: Input) {
       expectedBytes: intent.expectedBytes, maxBytes: intent.maxBytes,
       expectedMime: intent.expectedMime, expectedSha256: intent.expectedSha256,
     });
-    const completed = await completePromotion(intent.id, intent.workspaceId, intent.version, intent.promotionAttemptId!, claimed.file.id);
+    const completed = await completePromotion(intent.id, intent.workspaceId, intent.version, intent.promotionAttemptId!);
     return { intent: completed, file: { ...claimed.file, uploadState: "completed" as const }, object };
   } catch (error) {
     const code = error instanceof Error && /^[A-Z0-9_]+$/.test(error.message) ? error.message : "PROMOTION_FAILED";
-    await markPromotionFailed(intent.id, intent.workspaceId, intent.version, intent.promotionAttemptId!, code);
+    await markPromotionFailed(intent.id, intent.workspaceId, intent.version, intent.promotionAttemptId!, input.workerId, code);
     throw error;
   }
 }
