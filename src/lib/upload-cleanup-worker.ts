@@ -3,6 +3,7 @@ import { and, eq, lte, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { files, uploadIntents, uploadQuotaReservations } from "@/db/schema";
 import { R2_BUCKET, r2 } from "@/lib/r2";
+import { consumeWorkspaceUploadTx } from "@/lib/storage-quota";
 
 export async function cleanupUploadIntent(intentId: string, now = new Date()) {
   const [intent] = await db.select().from(uploadIntents).where(eq(uploadIntents.id, intentId)).limit(1);
@@ -16,7 +17,8 @@ export async function cleanupUploadIntent(intentId: string, now = new Date()) {
     await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: intent.finalKey }));
     await db.transaction(async (tx) => {
       if (claimed.finalFileId) await tx.delete(files).where(and(eq(files.id, claimed.finalFileId), eq(files.workspaceId, claimed.workspaceId), eq(files.uploadState, "pending")));
-      await tx.update(uploadQuotaReservations).set({ state: "released", releasedAt: now, updatedAt: now }).where(and(eq(uploadQuotaReservations.intentId, claimed.id), eq(uploadQuotaReservations.state, "active")));
+      const [released] = await tx.update(uploadQuotaReservations).set({ state: "released", releasedAt: now, updatedAt: now }).where(and(eq(uploadQuotaReservations.intentId, claimed.id), eq(uploadQuotaReservations.state, "active"))).returning();
+      if (released) await consumeWorkspaceUploadTx(tx, claimed.workspaceId, released.bytes);
       const [finished] = await tx.update(uploadIntents).set({ state: "aborted", cleanupRetryAt: null, version: sql`${uploadIntents.version} + 1`, updatedAt: now }).where(and(eq(uploadIntents.id, claimed.id), eq(uploadIntents.workspaceId, claimed.workspaceId), eq(uploadIntents.state, "failed_cleanup"), eq(uploadIntents.version, claimed.version))).returning();
       if (!finished) throw new Error("UPLOAD_CLEANUP_FENCE_LOST");
     });

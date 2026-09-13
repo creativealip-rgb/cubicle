@@ -48,7 +48,7 @@ export async function GET(
     if (!object.Body) return new NextResponse("Not found", { status: 404 });
 
     const ext = "." + objectKey.split(".").pop()?.toLowerCase();
-    return new NextResponse(Buffer.from(await object.Body.transformToByteArray()), {
+    return new NextResponse(object.Body.transformToWebStream(), {
       headers: {
         "Content-Type": object.ContentType || MIME_MAP[ext] || "application/octet-stream",
         "Cache-Control": isPublicSiteImage ? "public, max-age=31536000, immutable" : "private, no-store",

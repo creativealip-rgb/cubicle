@@ -3,6 +3,9 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { R2_BUCKET, r2, deleteStoredFile } from "@/lib/r2";
 import { claimValidation, confirmUpload, createUploadIntent } from "@/lib/upload-intent-service";
 import { runUploadPromotionSaga } from "@/lib/upload-saga-coordinator";
+import { db } from "@/db";
+import { files } from "@/db/schema";
+import { and, eq } from "drizzle-orm";
 
 export async function promoteBufferedUpload(input: {
   workspaceId: string; actorType: "user" | "portal" | "public"; actorId: string;
@@ -21,7 +24,12 @@ export async function promoteBufferedUpload(input: {
     projectId: input.projectId ?? undefined, folderId: input.folderId ?? undefined, uploadedBy: input.uploadedBy ?? undefined,
     expiresAt: new Date(Date.now() + 15 * 60_000),
   });
-  if (!intent.createdNow) throw new Error("UPLOAD_ALREADY_IN_PROGRESS");
+  if (!intent.createdNow) {
+    if (intent.state !== "completed" || !intent.finalFileId) throw new Error("UPLOAD_ALREADY_IN_PROGRESS");
+    const [file] = await db.select().from(files).where(and(eq(files.id, intent.finalFileId), eq(files.workspaceId, input.workspaceId), eq(files.uploadState, "completed"))).limit(1);
+    if (!file) throw new Error("COMPLETED_UPLOAD_FILE_MISSING");
+    return { intent, file };
+  }
   let uploadedByThisRequest = false;
   let promotionStarted = false;
   try {

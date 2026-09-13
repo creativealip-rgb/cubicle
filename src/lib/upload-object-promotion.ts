@@ -12,7 +12,7 @@ type PromotionInput = UploadObjectExpectation & {
 };
 
 const cleanEtag = (value?: string) => value?.replaceAll('"', "") ?? "";
-const copySource = (bucket: string, key: string) => `${bucket}/${key.split("/").map(encodeURIComponent).join("/")}`;
+const copySource = (bucket: string, key: string, versionId?: string) => `${bucket}/${key.split("/").map(encodeURIComponent).join("/")}${versionId ? `?versionId=${encodeURIComponent(versionId)}` : ""}`;
 
 export async function promoteValidatedUploadObject(client: ObjectClient, input: PromotionInput) {
   const head = await client.send(new HeadObjectCommand({ Bucket: input.bucket, Key: input.quarantineKey }));
@@ -26,7 +26,7 @@ export async function promoteValidatedUploadObject(client: ObjectClient, input: 
   const copied = await client.send(new CopyObjectCommand({
     Bucket: input.bucket,
     Key: input.finalKey,
-    CopySource: copySource(input.bucket, input.quarantineKey),
+    CopySource: copySource(input.bucket, input.quarantineKey, head.VersionId),
     CopySourceIfMatch: head.ETag,
     MetadataDirective: "REPLACE",
     ContentType: input.expectedMime,

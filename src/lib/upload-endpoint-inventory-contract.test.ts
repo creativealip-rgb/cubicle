@@ -6,7 +6,8 @@ const read = (path: string) => readFileSync(path, "utf8");
 describe("Phase 4 upload endpoint inventory", () => {
   it("never deletes an existing intent object on replay", () => {
     const source = read("src/lib/upload-buffered-saga.ts");
-    expect(source).toContain("if (!intent.createdNow) throw");
+    expect(source).toContain('intent.state !== "completed"');
+    expect(source).toContain('eq(files.uploadState, "completed")');
     expect(source).toContain("uploadedByThisRequest && !promotionStarted");
   });
 
