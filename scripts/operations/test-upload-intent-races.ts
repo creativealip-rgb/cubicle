@@ -2,7 +2,7 @@ import { strict as assert } from "node:assert";
 import { eq } from "drizzle-orm";
 import { db } from "../../src/db";
 import { uploadIntents, uploadQuotaReservations, users, workspaceMembers, workspaces, workspaceStorageUsage } from "../../src/db/schema";
-import { claimUploadPromotion, claimValidation, completePromotion, confirmUpload, createUploadIntent, expireUploadIntent } from "../../src/lib/upload-intent-service";
+import { claimUploadPromotion, claimValidation, completePromotion, confirmUpload, createUploadIntent, expireUploadIntent, markPromotionFailed, recoverStalePromotion, renewValidationLease, retryFailedPromotion } from "../../src/lib/upload-intent-service";
 
 const suffix = Date.now().toString(36);
 const userId = `race-${suffix}`;
@@ -66,7 +66,28 @@ async function main() {
   const [released] = await db.select().from(uploadQuotaReservations).where(eq(uploadQuotaReservations.intentId, expiring.id));
   assert.equal(released.state, "released");
 
-  console.log("UPLOAD_INTENT_RACES=PASS concurrent=8 duplicate_intents=0 double_confirm=denied stale_fence=denied double_finalize=denied expiry_release=pass quota_reserved=0");
+  const retryBase = await createUploadIntent({ ...base, idempotencyKey: "retry" });
+  const retryUploaded = await confirmUpload(retryBase.id, workspaceId, retryBase.version, { etag: "retry-etag" });
+  const retryValidating = await claimValidation(retryUploaded.id, workspaceId, retryUploaded.version, "worker-retry", new Date(Date.now() + 60_000));
+  const wrongRenewal = await renewValidationLease(retryValidating.id, workspaceId, retryValidating.version, retryValidating.validationAttemptId!, "wrong-worker", new Date(Date.now() + 90_000));
+  assert.equal(wrongRenewal, null, "wrong validation lease owner renewed lease");
+  const renewed = await renewValidationLease(retryValidating.id, workspaceId, retryValidating.version, retryValidating.validationAttemptId!, "worker-retry", new Date(Date.now() + 90_000));
+  assert.ok(renewed, "correct validation lease owner failed renewal");
+  const retryPromoting = await claimUploadPromotion({ intentId: renewed!.id, workspaceId, version: renewed!.version, leaseOwner: "worker-retry", leaseExpiresAt: new Date(Date.now() + 60_000), name: "retry.pdf", visibility: "internal", fileType: "working_file", uploadedBy: userId });
+  const failed = await markPromotionFailed(retryPromoting.intent.id, workspaceId, retryPromoting.intent.version, retryPromoting.intent.promotionAttemptId!, "worker-retry", "TEST_FAILURE");
+  assert.ok(failed, "promotion failure transition failed");
+  const retries = await Promise.allSettled(Array.from({ length: 8 }, () => retryFailedPromotion(failed!.id, workspaceId, failed!.version, "worker-retry-2", new Date(Date.now() + 60_000))));
+  assert.equal(retries.filter((result) => result.status === "fulfilled").length, 1, "concurrent failed promotion retry succeeded more than once");
+
+  const staleBase = await createUploadIntent({ ...base, idempotencyKey: "stale" });
+  const staleUploaded = await confirmUpload(staleBase.id, workspaceId, staleBase.version, { etag: "stale-etag" });
+  const staleValidating = await claimValidation(staleUploaded.id, workspaceId, staleUploaded.version, "worker-stale", new Date(Date.now() + 60_000));
+  const staleClaim = await claimUploadPromotion({ intentId: staleValidating.id, workspaceId, version: staleValidating.version, leaseOwner: "worker-stale", leaseExpiresAt: new Date(Date.now() + 60_000), name: "stale.pdf", visibility: "internal", fileType: "working_file", uploadedBy: userId });
+  await db.update(uploadIntents).set({ promotionLeaseExpiresAt: new Date(Date.now() - 1_000) }).where(eq(uploadIntents.id, staleClaim.intent.id));
+  const recoveries = await Promise.allSettled(Array.from({ length: 8 }, () => recoverStalePromotion(staleClaim.intent.id, workspaceId, staleClaim.intent.version, new Date(Date.now() + 60_000))));
+  assert.equal(recoveries.filter((result) => result.status === "fulfilled" && result.value !== null).length, 1, "stale promotion recovered more than once");
+
+  console.log("UPLOAD_INTENT_RACES=PASS concurrent=8 duplicate_intents=0 double_confirm=denied stale_fence=denied double_finalize=denied expiry_release=pass validation_owner_fence=pass failed_retry_race=pass stale_recovery_race=pass");
 }
 
 main().finally(async () => {
