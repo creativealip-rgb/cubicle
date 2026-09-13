@@ -1162,6 +1162,7 @@ export const files = pgTable("files", {
   sizeBytes: bigint("size_bytes", { mode: "number" }),
   visibility: text("visibility", { enum: ["internal", "client"] }).notNull().default("internal"),
   fileType: text("file_type", { enum: ["working_file", "deliverable"] }).notNull().default("working_file"),
+  uploadState: text("upload_state", { enum: ["pending", "completed"] }).notNull().default("completed"),
   uploadedBy: text("uploaded_by").references(() => users.id, { onDelete: "set null" }),
   lastViewedAt: timestamp("last_viewed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

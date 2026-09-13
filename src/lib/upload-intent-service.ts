@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { and, eq, gt, sql } from "drizzle-orm";
 import { db } from "@/db";
-import { uploadIntents, uploadQuotaReservations } from "@/db/schema";
+import { files, uploadIntents, uploadQuotaReservations } from "@/db/schema";
 import { consumeWorkspaceUploadTx, reserveWorkspaceUploadTx } from "@/lib/storage-quota";
 
 export type CreateUploadIntentInput = {
@@ -70,6 +70,23 @@ export async function claimPromotion(intentId: string, workspaceId: string, vers
   return updated;
 }
 
+export async function claimUploadPromotion(input: { intentId: string; workspaceId: string; version: number; leaseOwner: string; leaseExpiresAt: Date; name: string; visibility: "internal" | "client"; fileType: "working_file" | "deliverable"; uploadedBy?: string }) {
+  return db.transaction(async (tx) => {
+    const [intent] = await tx.select().from(uploadIntents).where(and(eq(uploadIntents.id, input.intentId), eq(uploadIntents.workspaceId, input.workspaceId))).for("update");
+    if (!intent || intent.state !== "validating" || intent.version !== input.version || intent.expiresAt <= new Date() || intent.retryCount >= 10) throw new Error("UPLOAD_INTENT_CONFLICT");
+    const promotionAttemptId = randomUUID();
+    const [pendingFile] = await tx.insert(files).values({ workspaceId: input.workspaceId, name: input.name, storageKey: intent.finalKey, mimeType: intent.expectedMime, sizeBytes: intent.expectedBytes, visibility: input.visibility, fileType: input.fileType, uploadedBy: input.uploadedBy, uploadState: "pending" }).returning();
+    const [claimed] = await tx.update(uploadIntents).set({ state: "promoting", finalFileId: pendingFile.id, promotionAttemptId, promotionLeaseOwner: input.leaseOwner, promotionLeaseExpiresAt: input.leaseExpiresAt, retryCount: sql`${uploadIntents.retryCount} + 1`, version: sql`${uploadIntents.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadIntents.id, input.intentId), eq(uploadIntents.workspaceId, input.workspaceId), eq(uploadIntents.state, "validating"), eq(uploadIntents.version, input.version))).returning();
+    if (!claimed) throw new Error("UPLOAD_INTENT_CONFLICT");
+    return { intent: claimed, file: pendingFile };
+  });
+}
+
+export async function markPromotionFailed(intentId: string, workspaceId: string, version: number, promotionAttemptId: string, errorCode: string) {
+  const [failed] = await db.update(uploadIntents).set({ state: "promotion_failed", lastErrorCode: errorCode.slice(0, 100), promotionLeaseOwner: null, promotionLeaseExpiresAt: null, version: sql`${uploadIntents.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.workspaceId, workspaceId), eq(uploadIntents.state, "promoting"), eq(uploadIntents.version, version), eq(uploadIntents.promotionAttemptId, promotionAttemptId))).returning();
+  return failed ?? null;
+}
+
 export async function completePromotion(intentId: string, workspaceId: string, version: number, promotionAttemptId: string, finalFileId: string) {
   return db.transaction(async (tx) => {
     const [intent] = await tx.select().from(uploadIntents).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.workspaceId, workspaceId))).for("update");
@@ -79,6 +96,8 @@ export async function completePromotion(intentId: string, workspaceId: string, v
     await consumeWorkspaceUploadTx(tx, workspaceId, reservation.bytes);
     const [consumed] = await tx.update(uploadQuotaReservations).set({ state: "consumed", consumedAt: new Date(), version: sql`${uploadQuotaReservations.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadQuotaReservations.id, reservation.id), eq(uploadQuotaReservations.workspaceId, workspaceId), eq(uploadQuotaReservations.state, "active"), eq(uploadQuotaReservations.version, reservation.version))).returning();
     if (!consumed) throw new Error("RESERVATION_CONFLICT");
+    const [completedFile] = await tx.update(files).set({ uploadState: "completed" }).where(and(eq(files.id, finalFileId), eq(files.workspaceId, workspaceId), eq(files.uploadState, "pending"))).returning();
+    if (!completedFile) throw new Error("PENDING_FILE_CONFLICT");
     const [completed] = await tx.update(uploadIntents).set({ state: "completed", finalFileId, completedAt: new Date(), version: sql`${uploadIntents.version} + 1`, promotionLeaseOwner: null, promotionLeaseExpiresAt: null, updatedAt: new Date() }).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.workspaceId, workspaceId), eq(uploadIntents.state, "promoting"), eq(uploadIntents.version, version), eq(uploadIntents.promotionAttemptId, promotionAttemptId))).returning();
     if (!completed) throw new Error("STALE_PROMOTION_ATTEMPT");
     return completed;
