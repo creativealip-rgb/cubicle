@@ -1,100 +1,60 @@
-import { NextRequest, NextResponse } from "next/server";
+import { createHash, randomUUID } from "node:crypto";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { auth } from "@/lib/auth";
+import { NextRequest, NextResponse } from "next/server";
 import { headers } from "next/headers";
+import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { requireUser, assertWorkspaceWritable, assertClientInWorkspace, assertProjectInWorkspace, assertFolderInWorkspace } from "@/lib/access";
-import { r2, R2_BUCKET, buildFileKey, deleteStoredFile } from "@/lib/r2";
-import { assertUploadQuota, getUploadQuotaLimits, safeUploadErrorResponse, validateContentLength } from "@/lib/upload-safety";
-import { completeUpload } from "@/lib/actions/files";
+import { r2, R2_BUCKET, deleteStoredFile } from "@/lib/r2";
+import { getUploadQuotaLimits, safeUploadErrorResponse, validateContentLength } from "@/lib/upload-safety";
 import { validateUploadedFile } from "@/lib/file-validation";
-import { randomUUID } from "crypto";
+import { claimValidation, confirmUpload, createUploadIntent } from "@/lib/upload-intent-service";
+import { runUploadPromotionSaga } from "@/lib/upload-saga-coordinator";
 
 export const runtime = "nodejs";
-
 const MAX_BYTES = getUploadQuotaLimits("team").maxFileBytes;
 
-/**
- * Same-origin file upload proxy.
- * Avoids browser CSP/CORS failures on direct R2 presigned PUT.
- * Multipart fields: file, workspaceId, clientId?, projectId?, folderId?, visibility?, fileType?
- */
 export async function POST(req: NextRequest) {
-  let uploadedObject: string | null = null;
+  let quarantineKey: string | null = null;
+  let promotionStarted = false;
   try {
     if (!validateContentLength(req.headers.get("content-length"), MAX_BYTES)) return NextResponse.json({ error: "Upload too large" }, { status: 413 });
     const session = await auth.api.getSession({ headers: await headers() });
     const user = requireUser(session?.user);
-
     const form = await req.formData();
     const file = form.get("file");
     const workspaceId = String(form.get("workspaceId") ?? "");
+    const idempotencyKey = String(form.get("idempotencyKey") ?? "");
     const clientId = String(form.get("clientId") ?? "") || undefined;
     const projectId = String(form.get("projectId") ?? "") || undefined;
     const folderId = String(form.get("folderId") ?? "") || undefined;
-    const visibility = (String(form.get("visibility") ?? "internal") as "internal" | "client");
-    const fileType = (String(form.get("fileType") ?? "working_file") as "working_file" | "deliverable");
-
-    if (!workspaceId) {
-      return NextResponse.json({ error: "workspaceId required" }, { status: 400 });
-    }
-    if (!(file instanceof File)) {
-      return NextResponse.json({ error: "file required" }, { status: 400 });
-    }
-    if (file.size > MAX_BYTES) {
-      return NextResponse.json({ error: "File must be under 25MB" }, { status: 400 });
-    }
-
+    const visibility = String(form.get("visibility") ?? "internal") as "internal" | "client";
+    const fileType = String(form.get("fileType") ?? "working_file") as "working_file" | "deliverable";
+    if (!workspaceId || !idempotencyKey || !(file instanceof File)) return NextResponse.json({ error: "Invalid upload request" }, { status: 400 });
+    if (!/^[A-Za-z0-9_-]{8,128}$/.test(idempotencyKey) || !["internal", "client"].includes(visibility) || !["working_file", "deliverable"].includes(fileType)) return NextResponse.json({ error: "Invalid upload request" }, { status: 400 });
+    if (file.size > MAX_BYTES) return NextResponse.json({ error: "File must be under 25MB" }, { status: 400 });
     await assertWorkspaceWritable(db, user.id, workspaceId);
     if (clientId) await assertClientInWorkspace(db, user.id, workspaceId, clientId);
     if (projectId) await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
     if (folderId) await assertFolderInWorkspace(db, user.id, workspaceId, folderId);
-    await assertUploadQuota(workspaceId, file.size, clientId);
-
-    const tempFileId = randomUUID();
-    const safeFilename = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const storageKey = buildFileKey(workspaceId, tempFileId, safeFilename);
-    const mime = file.type || "application/octet-stream";
     const body = Buffer.from(await file.arrayBuffer());
     const validation = validateUploadedFile(file.name, body.subarray(0, 16));
-    if (!validation.ok) {
-      return NextResponse.json(
-        { error: validation.reason ?? "File tidak valid" },
-        { status: 400 },
-      );
-    }
-
-    await r2.send(
-      new PutObjectCommand({
-        Bucket: R2_BUCKET,
-        Key: storageKey,
-        Body: body,
-        ContentType: mime,
-        ContentLength: body.length,
-      }),
-    );
-
-    uploadedObject = storageKey;
-    const record = await completeUpload({
-      name: file.name,
-      storageKey,
-      mimeType: mime,
-      sizeBytes: file.size,
-      workspaceId,
-      clientId,
-      projectId,
-      folderId,
-      visibility,
-      fileType,
-    });
-    // completeUpload enforces the workspace quota atomically around the
-    // files insert — no separate reservation needed on this path.
-
-    return NextResponse.json({ ok: true, file: record });
-  } catch (err: unknown) {
-    console.error("[files/upload] failed", err);
-    if (uploadedObject) await deleteStoredFile(uploadedObject).catch(() => undefined);
-    const safe = safeUploadErrorResponse(err);
+    if (!validation.ok) return NextResponse.json({ error: validation.reason ?? "File tidak valid" }, { status: 400 });
+    const mime = file.type || "application/octet-stream";
+    const intent = await createUploadIntent({ workspaceId, actorType: "user", actorId: user.id, destinationType: "workspace_file", destinationId: folderId ?? projectId ?? clientId ?? "root", idempotencyKey, expectedMime: mime, expectedBytes: body.length, maxBytes: MAX_BYTES, expectedSha256: createHash("sha256").update(body).digest("hex"), expiresAt: new Date(Date.now() + 15 * 60_000) });
+    quarantineKey = intent.quarantineKey;
+    const put = await r2.send(new PutObjectCommand({ Bucket: R2_BUCKET, Key: intent.quarantineKey, Body: body, ContentType: mime, ContentLength: body.length }));
+    const uploaded = await confirmUpload(intent.id, workspaceId, intent.version, { etag: put.ETag ?? "", versionId: put.VersionId });
+    const workerId = `upload-api-${randomUUID()}`;
+    const validating = await claimValidation(uploaded.id, workspaceId, uploaded.version, workerId, new Date(Date.now() + 60_000));
+    promotionStarted = true;
+    const result = await runUploadPromotionSaga({ intentId: validating.id, workspaceId, version: validating.version, workerId, name: file.name, visibility, fileType, uploadedBy: user.id, clientId, projectId, folderId });
+    quarantineKey = null;
+    return NextResponse.json({ ok: true, file: result.file });
+  } catch (error) {
+    console.error("[files/upload] failed", error);
+    if (quarantineKey && !promotionStarted) await deleteStoredFile(quarantineKey).catch(() => undefined);
+    const safe = safeUploadErrorResponse(error);
     return NextResponse.json({ error: safe.error }, { status: safe.status });
   }
 }

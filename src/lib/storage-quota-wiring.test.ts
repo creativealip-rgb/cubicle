@@ -37,16 +37,14 @@ describe("workspace storage quota guard", () => {
     expect(complete.slice(0, insert)).toContain("reserveWorkspaceUploadTx");
   });
 
-  it("normal upload route does not double-reserve (completeUpload guards itself)", () => {
+  it("normal upload route reserves once through upload intent saga", () => {
     const body = normalUploadRoute();
-    // The route keeps the fast-fail pre-check but no longer reserves/consumes.
-    expect(body).toContain("assertUploadQuota(workspaceId, file.size, clientId)");
+    expect(body).toContain("await createUploadIntent({");
+    expect(body).toContain("await runUploadPromotionSaga({");
+    expect(body).not.toContain("assertUploadQuota(");
     expect(body).not.toContain("reserveWorkspaceUpload");
     expect(body).not.toContain("consumeWorkspaceUpload");
-    expect(body).not.toContain("releaseWorkspaceUpload");
-    expect(body).not.toContain("reservedBytes");
-    // It still delegates to the guarded action.
-    expect(body).toContain("await completeUpload({");
+    expect(body).not.toContain("await completeUpload({");
   });
 
   it("every other file-insert upload path shares the same workspace quota guard", () => {

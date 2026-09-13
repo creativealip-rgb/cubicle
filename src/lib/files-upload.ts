@@ -51,6 +51,7 @@ export async function uploadOneFile(
 
   const form = new FormData();
   form.append("file", file);
+  form.append("idempotencyKey", crypto.randomUUID());
   form.append("workspaceId", scope.workspaceId);
   if (scope.clientId) form.append("clientId", scope.clientId);
   if (scope.projectId) form.append("projectId", scope.projectId);

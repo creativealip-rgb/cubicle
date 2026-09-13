@@ -78,12 +78,12 @@ export async function claimPromotion(intentId: string, workspaceId: string, vers
   return updated;
 }
 
-export async function claimUploadPromotion(input: { intentId: string; workspaceId: string; version: number; leaseOwner: string; leaseExpiresAt: Date; name: string; visibility: "internal" | "client"; fileType: "working_file" | "deliverable"; uploadedBy?: string }) {
+export async function claimUploadPromotion(input: { intentId: string; workspaceId: string; version: number; leaseOwner: string; leaseExpiresAt: Date; name: string; visibility: "internal" | "client"; fileType: "working_file" | "deliverable"; uploadedBy?: string; clientId?: string; projectId?: string; folderId?: string }) {
   return db.transaction(async (tx) => {
     const [intent] = await tx.select().from(uploadIntents).where(and(eq(uploadIntents.id, input.intentId), eq(uploadIntents.workspaceId, input.workspaceId))).for("update");
     if (!intent || intent.state !== "validating" || intent.version !== input.version || intent.expiresAt <= new Date() || intent.retryCount >= 10 || intent.validationLeaseOwner !== input.leaseOwner || !intent.validationLeaseExpiresAt || intent.validationLeaseExpiresAt <= new Date()) throw new Error("UPLOAD_INTENT_CONFLICT");
     const promotionAttemptId = randomUUID();
-    const [pendingFile] = await tx.insert(files).values({ workspaceId: input.workspaceId, name: input.name, storageKey: intent.finalKey, mimeType: intent.expectedMime, sizeBytes: intent.expectedBytes, visibility: input.visibility, fileType: input.fileType, uploadedBy: input.uploadedBy, uploadState: "pending" }).returning();
+    const [pendingFile] = await tx.insert(files).values({ workspaceId: input.workspaceId, name: input.name, storageKey: intent.finalKey, mimeType: intent.expectedMime, sizeBytes: intent.expectedBytes, visibility: input.visibility, fileType: input.fileType, uploadedBy: input.uploadedBy, clientId: input.clientId, projectId: input.projectId, folderId: input.folderId, uploadState: "pending" }).returning();
     const [claimed] = await tx.update(uploadIntents).set({ state: "promoting", finalFileId: pendingFile.id, validationLeaseOwner: null, validationLeaseExpiresAt: null, promotionAttemptId, promotionLeaseOwner: input.leaseOwner, promotionLeaseExpiresAt: input.leaseExpiresAt, retryCount: sql`${uploadIntents.retryCount} + 1`, version: sql`${uploadIntents.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadIntents.id, input.intentId), eq(uploadIntents.workspaceId, input.workspaceId), eq(uploadIntents.state, "validating"), eq(uploadIntents.version, input.version))).returning();
     if (!claimed) throw new Error("UPLOAD_INTENT_CONFLICT");
     return { intent: claimed, file: pendingFile };

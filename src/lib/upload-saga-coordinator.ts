@@ -6,6 +6,7 @@ type Input = {
   intentId: string; workspaceId: string; version: number; workerId: string;
   name: string; visibility: "internal" | "client";
   fileType: "working_file" | "deliverable"; uploadedBy?: string;
+  clientId?: string; projectId?: string; folderId?: string;
 };
 
 export async function runUploadPromotionSaga(input: Input) {
