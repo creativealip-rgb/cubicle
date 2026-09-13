@@ -4,6 +4,12 @@ import { describe, expect, it } from "vitest";
 const read = (path: string) => readFileSync(path, "utf8");
 
 describe("Phase 4 upload endpoint inventory", () => {
+  it("never deletes an existing intent object on replay", () => {
+    const source = read("src/lib/upload-buffered-saga.ts");
+    expect(source).toContain("if (!intent.createdNow) throw");
+    expect(source).toContain("uploadedByThisRequest && !promotionStarted");
+  });
+
   it.each([
     "src/app/api/files/upload/route.ts",
     "src/app/api/client-portal/files/upload/route.ts",

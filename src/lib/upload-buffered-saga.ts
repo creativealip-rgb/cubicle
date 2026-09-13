@@ -21,16 +21,19 @@ export async function promoteBufferedUpload(input: {
     projectId: input.projectId ?? undefined, folderId: input.folderId ?? undefined, uploadedBy: input.uploadedBy ?? undefined,
     expiresAt: new Date(Date.now() + 15 * 60_000),
   });
+  if (!intent.createdNow) throw new Error("UPLOAD_ALREADY_IN_PROGRESS");
+  let uploadedByThisRequest = false;
   let promotionStarted = false;
   try {
     const put = await r2.send(new PutObjectCommand({ Bucket: R2_BUCKET, Key: intent.quarantineKey, Body: input.body, ContentType: input.mime, ContentLength: input.body.length, IfNoneMatch: "*" }));
+    uploadedByThisRequest = true;
     const uploaded = await confirmUpload(intent.id, input.workspaceId, intent.version, { etag: put.ETag ?? "", versionId: put.VersionId });
     const workerId = `buffered-upload-${randomUUID()}`;
     const validating = await claimValidation(uploaded.id, input.workspaceId, uploaded.version, workerId, new Date(Date.now() + 60_000));
     promotionStarted = true;
     return await runUploadPromotionSaga({ intentId: validating.id, workspaceId: input.workspaceId, version: validating.version, workerId, name: input.name, visibility: input.visibility, fileType: input.fileType });
   } catch (error) {
-    if (!promotionStarted) await deleteStoredFile(intent.quarantineKey).catch(() => undefined);
+    if (uploadedByThisRequest && !promotionStarted) await deleteStoredFile(intent.quarantineKey).catch(() => undefined);
     throw error;
   }
 }
