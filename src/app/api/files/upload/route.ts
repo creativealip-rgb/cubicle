@@ -13,7 +13,7 @@ import { runUploadPromotionSaga } from "@/lib/upload-saga-coordinator";
 
 export const runtime = "nodejs";
 const MAX_BYTES = getUploadQuotaLimits("team").maxFileBytes;
-const SAGA_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
+const SAGA_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "text/plain"]);
 
 export async function POST(req: NextRequest) {
   let quarantineKey: string | null = null;

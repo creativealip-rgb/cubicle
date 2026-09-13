@@ -37,7 +37,8 @@ export async function validateUploadObjectStream(
   }
 
   if (bytes !== expected.expectedBytes) throw new Error("OBJECT_SIZE_MISMATCH");
-  const detectedMime = magicType(prefix.subarray(0, prefixLength));
+  let detectedMime = magicType(prefix.subarray(0, prefixLength));
+  if (!detectedMime && expected.expectedMime === "text/plain" && !prefix.subarray(0, prefixLength).includes(0)) detectedMime = "text/plain";
   if (detectedMime !== expected.expectedMime) throw new Error("OBJECT_MIME_MISMATCH");
   const sha256 = hash.digest("hex");
   if (expected.expectedSha256 && sha256 !== expected.expectedSha256.toLowerCase()) throw new Error("OBJECT_CHECKSUM_MISMATCH");

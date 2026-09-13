@@ -14,7 +14,7 @@ export async function promoteBufferedUpload(input: {
   clientId?: string | null; projectId?: string | null; folderId?: string | null;
   destinationId: string; idempotencyKey?: string;
 }) {
-  if (!new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]).has(input.mime)) throw new Error("UNSUPPORTED_UPLOAD_MIME");
+  if (!new Set(["application/pdf", "image/jpeg", "image/png", "image/webp", "text/plain"]).has(input.mime)) throw new Error("UNSUPPORTED_UPLOAD_MIME");
   const intent = await createUploadIntent({
     workspaceId: input.workspaceId, actorType: input.actorType, actorId: input.actorId,
     destinationType: "file", destinationId: input.destinationId, idempotencyKey: input.idempotencyKey ?? randomUUID(),

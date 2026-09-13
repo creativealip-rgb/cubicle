@@ -7,6 +7,11 @@ async function* chunks(...values: Uint8Array[]) { for (const value of values) yi
 const pdf = Buffer.from("%PDF-1.7\nhello");
 
 describe("streamed upload object validation", () => {
+  it("accepts safe plain text", async () => {
+    const body = Buffer.from("Cubiqlo production file QA");
+    await expect(validateUploadObjectStream(chunks(body), { expectedBytes: body.length, maxBytes: 1024, expectedMime: "text/plain" })).resolves.toMatchObject({ bytes: body.length, mime: "text/plain", magic: "plain" });
+  });
+
   it("derives SHA-256 and validates signature across chunk boundaries", async () => {
     const result = await validateUploadObjectStream(chunks(pdf.subarray(0, 2), pdf.subarray(2)), { expectedBytes: pdf.length, maxBytes: pdf.length, expectedMime: "application/pdf" });
     expect(result.sha256).toBe(createHash("sha256").update(pdf).digest("hex"));
