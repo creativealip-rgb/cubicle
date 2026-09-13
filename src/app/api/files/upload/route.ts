@@ -13,6 +13,7 @@ import { runUploadPromotionSaga } from "@/lib/upload-saga-coordinator";
 
 export const runtime = "nodejs";
 const MAX_BYTES = getUploadQuotaLimits("team").maxFileBytes;
+const SAGA_MIME_TYPES = new Set(["application/pdf", "image/jpeg", "image/png", "image/webp"]);
 
 export async function POST(req: NextRequest) {
   let quarantineKey: string | null = null;
@@ -41,6 +42,7 @@ export async function POST(req: NextRequest) {
     const validation = validateUploadedFile(file.name, body.subarray(0, 16));
     if (!validation.ok) return NextResponse.json({ error: validation.reason ?? "File tidak valid" }, { status: 400 });
     const mime = file.type || "application/octet-stream";
+    if (!SAGA_MIME_TYPES.has(mime)) return NextResponse.json({ error: "File type is not supported by secure upload" }, { status: 400 });
     const intent = await createUploadIntent({ workspaceId, actorType: "user", actorId: user.id, destinationType: "workspace_file", destinationId: folderId ?? projectId ?? clientId ?? "root", idempotencyKey, expectedMime: mime, expectedBytes: body.length, maxBytes: MAX_BYTES, expectedSha256: createHash("sha256").update(body).digest("hex"), expiresAt: new Date(Date.now() + 15 * 60_000) });
     quarantineKey = intent.quarantineKey;
     const put = await r2.send(new PutObjectCommand({ Bucket: R2_BUCKET, Key: intent.quarantineKey, Body: body, ContentType: mime, ContentLength: body.length }));

@@ -79,6 +79,7 @@ export async function claimPromotion(intentId: string, workspaceId: string, vers
 }
 
 export async function claimUploadPromotion(input: { intentId: string; workspaceId: string; version: number; leaseOwner: string; leaseExpiresAt: Date; name: string; visibility: "internal" | "client"; fileType: "working_file" | "deliverable"; uploadedBy?: string; clientId?: string; projectId?: string; folderId?: string }) {
+  if (input.leaseExpiresAt <= new Date()) throw new Error("INVALID_PROMOTION_LEASE");
   return db.transaction(async (tx) => {
     const [intent] = await tx.select().from(uploadIntents).where(and(eq(uploadIntents.id, input.intentId), eq(uploadIntents.workspaceId, input.workspaceId))).for("update");
     if (!intent || intent.state !== "validating" || intent.version !== input.version || intent.expiresAt <= new Date() || intent.retryCount >= 10 || intent.validationLeaseOwner !== input.leaseOwner || !intent.validationLeaseExpiresAt || intent.validationLeaseExpiresAt <= new Date()) throw new Error("UPLOAD_INTENT_CONFLICT");

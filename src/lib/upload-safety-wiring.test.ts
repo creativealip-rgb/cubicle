@@ -4,14 +4,23 @@ import { describe, expect, it } from "vitest";
 
 const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
-const uploadRoutes = [
-  "src/app/api/files/upload/route.ts",
+const normalUploadRoute = "src/app/api/files/upload/route.ts";
+const portalUploadRoutes = [
   "src/app/api/client-portal/files/upload/route.ts",
   "src/app/api/client-portal/requests/upload/route.ts",
 ];
+const uploadRoutes = [normalUploadRoute, ...portalUploadRoutes];
 
 describe("upload safety wiring", () => {
-  it.each(uploadRoutes)("checks quota before R2 and compensates DB failure in %s", (path) => {
+  it("reserves quota through the intent saga before normal R2 upload", () => {
+    const body = read(normalUploadRoute);
+    expect(body).toContain("createUploadIntent");
+    expect(body.indexOf("createUploadIntent")).toBeLessThan(body.indexOf("new PutObjectCommand"));
+    expect(body).toContain("deleteStoredFile");
+    expect(body).toContain("quarantineKey");
+  });
+
+  it.each(portalUploadRoutes)("checks quota before R2 and compensates DB failure in %s", (path) => {
     const body = read(path);
     expect(body).toContain("assertUploadQuota");
     expect(body.indexOf("assertUploadQuota")).toBeLessThan(body.indexOf("new PutObjectCommand"));
