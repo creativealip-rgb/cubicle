@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     if (!validation.ok) return NextResponse.json({ error: validation.reason ?? "File tidak valid" }, { status: 400 });
     const mime = file.type || "application/octet-stream";
     if (!SAGA_MIME_TYPES.has(mime)) return NextResponse.json({ error: "File type is not supported by secure upload" }, { status: 400 });
-    const intent = await createUploadIntent({ workspaceId, actorType: "user", actorId: user.id, destinationType: "workspace_file", destinationId: folderId ?? projectId ?? clientId ?? "root", idempotencyKey, expectedMime: mime, expectedBytes: body.length, maxBytes: MAX_BYTES, expectedSha256: createHash("sha256").update(body).digest("hex"), expiresAt: new Date(Date.now() + 15 * 60_000) });
+    const intent = await createUploadIntent({ workspaceId, actorType: "user", actorId: user.id, destinationType: "workspace_file", destinationId: folderId ?? projectId ?? clientId ?? "root", idempotencyKey, expectedMime: mime, expectedBytes: body.length, maxBytes: MAX_BYTES, expectedSha256: createHash("sha256").update(body).digest("hex"), fileName: file.name, visibility, fileType, clientId, projectId, folderId, uploadedBy: user.id, expiresAt: new Date(Date.now() + 15 * 60_000) });
     quarantineKey = intent.quarantineKey;
     const put = await r2.send(new PutObjectCommand({ Bucket: R2_BUCKET, Key: intent.quarantineKey, Body: body, ContentType: mime, ContentLength: body.length }));
     const uploaded = await confirmUpload(intent.id, workspaceId, intent.version, { etag: put.ETag ?? "", versionId: put.VersionId });

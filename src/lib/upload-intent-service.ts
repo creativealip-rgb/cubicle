@@ -15,6 +15,13 @@ export type CreateUploadIntentInput = {
   expectedBytes: number;
   maxBytes: number;
   expectedSha256?: string;
+  fileName: string;
+  visibility: "internal" | "client";
+  fileType: "working_file" | "deliverable";
+  clientId?: string;
+  projectId?: string;
+  folderId?: string;
+  uploadedBy?: string;
   expiresAt: Date;
 };
 
@@ -41,7 +48,7 @@ export async function createUploadIntent(input: CreateUploadIntentInput) {
         eq(uploadIntents.destinationId, input.destinationId),
         eq(uploadIntents.idempotencyKey, input.idempotencyKey),
       )).limit(1);
-      if (!existing || existing.expectedBytes !== input.expectedBytes || existing.expectedMime !== input.expectedMime || existing.expectedSha256 !== (input.expectedSha256?.toLowerCase() ?? null)) throw new Error("IDEMPOTENCY_CONFLICT");
+      if (!existing || existing.expectedBytes !== input.expectedBytes || existing.expectedMime !== input.expectedMime || existing.expectedSha256 !== (input.expectedSha256?.toLowerCase() ?? null) || existing.fileName !== input.fileName || existing.visibility !== input.visibility || existing.fileType !== input.fileType || existing.clientId !== (input.clientId ?? null) || existing.projectId !== (input.projectId ?? null) || existing.folderId !== (input.folderId ?? null) || existing.intendedUploadedBy !== (input.uploadedBy ?? null)) throw new Error("IDEMPOTENCY_CONFLICT");
       return existing;
     }
 
@@ -78,13 +85,14 @@ export async function claimPromotion(intentId: string, workspaceId: string, vers
   return updated;
 }
 
-export async function claimUploadPromotion(input: { intentId: string; workspaceId: string; version: number; leaseOwner: string; leaseExpiresAt: Date; name: string; visibility: "internal" | "client"; fileType: "working_file" | "deliverable"; uploadedBy?: string; clientId?: string; projectId?: string; folderId?: string }) {
+export async function claimUploadPromotion(input: { intentId: string; workspaceId: string; version: number; leaseOwner: string; leaseExpiresAt: Date }) {
   if (input.leaseExpiresAt <= new Date()) throw new Error("INVALID_PROMOTION_LEASE");
   return db.transaction(async (tx) => {
     const [intent] = await tx.select().from(uploadIntents).where(and(eq(uploadIntents.id, input.intentId), eq(uploadIntents.workspaceId, input.workspaceId))).for("update");
     if (!intent || intent.state !== "validating" || intent.version !== input.version || intent.expiresAt <= new Date() || intent.retryCount >= 10 || intent.validationLeaseOwner !== input.leaseOwner || !intent.validationLeaseExpiresAt || intent.validationLeaseExpiresAt <= new Date()) throw new Error("UPLOAD_INTENT_CONFLICT");
     const promotionAttemptId = randomUUID();
-    const [pendingFile] = await tx.insert(files).values({ workspaceId: input.workspaceId, name: input.name, storageKey: intent.finalKey, mimeType: intent.expectedMime, sizeBytes: intent.expectedBytes, visibility: input.visibility, fileType: input.fileType, uploadedBy: input.uploadedBy, clientId: input.clientId, projectId: input.projectId, folderId: input.folderId, uploadState: "pending" }).returning();
+    if (!intent.fileName || !intent.visibility || !intent.fileType) throw new Error("UPLOAD_INTENT_METADATA_MISSING");
+    const [pendingFile] = await tx.insert(files).values({ workspaceId: input.workspaceId, name: intent.fileName, storageKey: intent.finalKey, mimeType: intent.expectedMime, sizeBytes: intent.expectedBytes, visibility: intent.visibility, fileType: intent.fileType, uploadedBy: intent.intendedUploadedBy, clientId: intent.clientId, projectId: intent.projectId, folderId: intent.folderId, uploadState: "pending" }).returning();
     const [claimed] = await tx.update(uploadIntents).set({ state: "promoting", finalFileId: pendingFile.id, validationLeaseOwner: null, validationLeaseExpiresAt: null, promotionAttemptId, promotionLeaseOwner: input.leaseOwner, promotionLeaseExpiresAt: input.leaseExpiresAt, retryCount: sql`${uploadIntents.retryCount} + 1`, version: sql`${uploadIntents.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadIntents.id, input.intentId), eq(uploadIntents.workspaceId, input.workspaceId), eq(uploadIntents.state, "validating"), eq(uploadIntents.version, input.version))).returning();
     if (!claimed) throw new Error("UPLOAD_INTENT_CONFLICT");
     return { intent: claimed, file: pendingFile };
@@ -118,6 +126,8 @@ export async function completePromotion(intentId: string, workspaceId: string, v
     if (!intent || intent.state !== "promoting" || intent.version !== version || intent.promotionAttemptId !== promotionAttemptId || !intent.finalFileId || !intent.promotionLeaseExpiresAt || intent.promotionLeaseExpiresAt <= new Date()) throw new Error("STALE_PROMOTION_ATTEMPT");
     const [reservation] = await tx.select().from(uploadQuotaReservations).where(eq(uploadQuotaReservations.intentId, intentId)).for("update");
     if (!reservation || reservation.state !== "active") throw new Error("RESERVATION_CONFLICT");
+    const [lockedFile] = await tx.select().from(files).where(and(eq(files.id, intent.finalFileId), eq(files.workspaceId, workspaceId))).for("update");
+    if (!lockedFile || lockedFile.uploadState !== "pending") throw new Error("PENDING_FILE_CONFLICT");
     await consumeWorkspaceUploadTx(tx, workspaceId, reservation.bytes);
     const [consumed] = await tx.update(uploadQuotaReservations).set({ state: "consumed", consumedAt: new Date(), version: sql`${uploadQuotaReservations.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadQuotaReservations.id, reservation.id), eq(uploadQuotaReservations.workspaceId, workspaceId), eq(uploadQuotaReservations.state, "active"), eq(uploadQuotaReservations.version, reservation.version))).returning();
     if (!consumed) throw new Error("RESERVATION_CONFLICT");

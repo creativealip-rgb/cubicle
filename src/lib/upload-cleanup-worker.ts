@@ -8,10 +8,12 @@ export async function cleanupUploadIntent(intentId: string, now = new Date()) {
   const [intent] = await db.select().from(uploadIntents).where(eq(uploadIntents.id, intentId)).limit(1);
   if (!intent || intent.state !== "failed_cleanup" || !intent.cleanupRetryAt || intent.cleanupRetryAt > now || intent.retryCount >= 10) return false;
   if (!intent.quarantineKey.startsWith(`quarantine/${intent.workspaceId}/`)) throw new Error("INVALID_QUARANTINE_KEY");
+  if (!intent.finalKey.startsWith(`workspaces/${intent.workspaceId}/files/`)) throw new Error("INVALID_FINAL_KEY");
   const [claimed] = await db.update(uploadIntents).set({ cleanupRetryAt: new Date(now.getTime() + 15 * 60_000), version: sql`${uploadIntents.version} + 1`, updatedAt: now }).where(and(eq(uploadIntents.id, intent.id), eq(uploadIntents.state, "failed_cleanup"), eq(uploadIntents.version, intent.version), lte(uploadIntents.cleanupRetryAt, now))).returning();
   if (!claimed) return false;
   try {
     await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: intent.quarantineKey }));
+    await r2.send(new DeleteObjectCommand({ Bucket: R2_BUCKET, Key: intent.finalKey }));
     await db.transaction(async (tx) => {
       if (claimed.finalFileId) await tx.delete(files).where(and(eq(files.id, claimed.finalFileId), eq(files.workspaceId, claimed.workspaceId), eq(files.uploadState, "pending")));
       await tx.update(uploadQuotaReservations).set({ state: "released", releasedAt: now, updatedAt: now }).where(and(eq(uploadQuotaReservations.intentId, claimed.id), eq(uploadQuotaReservations.state, "active")));

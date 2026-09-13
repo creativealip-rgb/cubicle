@@ -10,7 +10,7 @@ type Input = {
 };
 
 export async function runUploadPromotionSaga(input: Input) {
-  const claimed = await claimUploadPromotion({ ...input, leaseOwner: input.workerId, leaseExpiresAt: new Date(Date.now() + 60_000) });
+  const claimed = await claimUploadPromotion({ intentId: input.intentId, workspaceId: input.workspaceId, version: input.version, leaseOwner: input.workerId, leaseExpiresAt: new Date(Date.now() + 60_000) });
   const intent = claimed.intent;
   try {
     const object = await promoteValidatedUploadObject(r2, {
