@@ -33,3 +33,24 @@ it("rejects changed source identity before copy", async () => {
   }};
   await expect(promoteValidatedUploadObject(client, { bucket: "bucket", intentId: "i", attemptId: "a", quarantineKey: "quarantine/ws/o", finalKey: "workspaces/ws/files/o", expectedBytes: body.length, maxBytes: body.length, expectedMime: "application/pdf" })).rejects.toThrow("SOURCE_OBJECT_CHANGED");
 });
+
+it("fails closed on copy and final metadata failures", async () => {
+  const body = Buffer.from("%PDF-1.7\nhello");
+  const sha = createHash("sha256").update(body).digest("hex");
+  const input = { bucket: "bucket", intentId: "i", attemptId: "a", quarantineKey: "quarantine/ws/o", finalKey: "workspaces/ws/files/o", expectedBytes: body.length, maxBytes: body.length, expectedMime: "application/pdf", expectedSha256: sha };
+  const copyFailure = { send: async (command: unknown) => {
+    if (command instanceof HeadObjectCommand) return { ContentLength: body.length, ContentType: "application/pdf", ETag: '"etag"', VersionId: "v1" };
+    if (command instanceof GetObjectCommand) return { Body: stream(body), ETag: '"etag"', VersionId: "v1" };
+    throw new Error("R2_COPY_FAILED");
+  }};
+  await expect(promoteValidatedUploadObject(copyFailure, input)).rejects.toThrow("R2_COPY_FAILED");
+
+  let heads = 0;
+  const metadataFailure = { send: async (command: unknown) => {
+    if (command instanceof HeadObjectCommand) return ++heads === 1 ? { ContentLength: body.length, ContentType: "application/pdf", ETag: '"etag"', VersionId: "v1" } : { ContentLength: body.length, ContentType: "application/pdf", Metadata: { intentid: "wrong", attemptid: "a", sha256: sha } };
+    if (command instanceof GetObjectCommand) return { Body: stream(body), ETag: '"etag"', VersionId: "v1" };
+    if (command instanceof CopyObjectCommand) return {};
+    throw new Error("unexpected command");
+  }};
+  await expect(promoteValidatedUploadObject(metadataFailure, input)).rejects.toThrow("FINAL_OBJECT_VERIFICATION_FAILED");
+});

@@ -24,7 +24,8 @@
     "reconcile:storage-quota": "tsx scripts/reconcile-storage-quota.ts",
     "reconcile:personal-receipts": "tsx scripts/reconcile-personal-receipts.ts",
     "reconcile:upload-saga": "tsx scripts/reconcile-upload-saga.ts",
-    "retry:personal-receipt-cleanup": "tsx scripts/retry-personal-receipt-cleanup.ts"
+    "retry:personal-receipt-cleanup": "tsx scripts/retry-personal-receipt-cleanup.ts",
+    "retry:upload-cleanup": "tsx scripts/retry-upload-cleanup.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",
