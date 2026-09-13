@@ -96,7 +96,7 @@ docker compose up -d cubicle-pg
 ### 4. Run migrations + seed
 
 ```bash
-npm run db:push        # push schema to db
+npm run db:migrate     # apply checksummed migrations with dedicated migrator role
 npm run db:seed        # seed demo workspace + clients + projects
 npm run auth:seed      # create demo user accounts with passwords
 ```
@@ -300,7 +300,7 @@ Drizzle migrations live in `drizzle/*.sql`. To add a new one:
 npm run db:generate
 # 3. Review the generated SQL
 # 4. Apply
-npm run db:push
+npm run db:migrate
 ```
 
 ## Security

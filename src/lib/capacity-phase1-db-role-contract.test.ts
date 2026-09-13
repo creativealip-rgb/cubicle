@@ -18,10 +18,14 @@ describe("capacity phase 1 database role contract", () => {
     expect(drizzle).not.toContain("process.env.DATABASE_URL");
     expect(runner).toContain("MIGRATION_DATABASE_URL");
     expect(runner).toContain("current_user");
-    expect(runner).toContain("MIGRATION_OWNER=${MIGRATION_OWNER:-cubiqlo_owner}");
+    expect(runner).toContain("MIGRATION_OWNER=cubiqlo_owner");
     expect(runner).toContain('SET ROLE $MIGRATION_OWNER');
+    expect(runner).toContain('--env-file "$PG_ENV_FILE"');
+    expect(runner).not.toContain('docker exec -e MIGRATION_DATABASE_URL');
     expect(runner).toContain("current_role");
     expect(runner).not.toContain("DB_USER=${DB_USER:-postgres}");
+    expect(runner).toContain("ALLOW_PRODUCTION_MIGRATION");
+    expect(runner).toContain("Refusing production migration");
   });
 
   it("provides idempotent role bootstrap and ownership audit", () => {

@@ -42,8 +42,13 @@ BEGIN
   END LOOP;
   FOR item IN
     SELECT n.nspname, p.proname, pg_get_function_identity_arguments(p.oid) AS args
-    FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
     WHERE n.nspname = 'public'
+      AND NOT EXISTS (
+        SELECT 1 FROM pg_depend d
+        WHERE d.classid = 'pg_proc'::regclass AND d.objid = p.oid AND d.deptype = 'e'
+      )
   LOOP
     EXECUTE format('ALTER FUNCTION %I.%I(%s) OWNER TO cubiqlo_owner', item.nspname, item.proname, item.args);
   END LOOP;
@@ -60,6 +65,8 @@ GRANT USAGE, SELECT, UPDATE ON ALL SEQUENCES IN SCHEMA public TO cubiqlo_app;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO cubiqlo_backup;
 REVOKE CREATE ON SCHEMA public FROM cubiqlo_app, cubiqlo_backup;
 REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM PUBLIC;
+GRANT EXECUTE ON FUNCTION public.assign_client_number() TO cubiqlo_app;
+GRANT EXECUTE ON FUNCTION public.personal_weekdays_valid(text, smallint[]) TO cubiqlo_app;
 
 SET ROLE cubiqlo_owner;
 ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO cubiqlo_app;
