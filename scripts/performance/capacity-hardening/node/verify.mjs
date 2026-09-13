@@ -1,0 +1,1 @@
+import fs from "node:fs";import path from "node:path";import {guard} from "./guard.mjs";guard();const runId=process.argv[process.argv.indexOf("--run-id")+1];const dir=path.resolve(`.capacity-runtime/${runId}`);for(const f of ["dataset-manifest.json","sessions.json"])if(!fs.existsSync(`${dir}/${f}`))throw new Error(`missing ${f}`);console.log("CAPACITY_VERIFY=PASS");

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "policy": { "ratePerUserPerMinute": 10, "ratePerWorkspacePerMinute": 30, "concurrencyPerUser": 1, "concurrencyPerWorkspace": 2, "concurrencyPerInstance": 4, "leaseTtlMs": 120000, "renewEveryMs": 30000, "timeoutMs": 90000, "redisFailure": "fail-closed", "pressureStatus": { "user": 429, "workspace": 429, "instance": 503 } },
+  "endpoints": [
+    {"path":"/api/expenses/export/xlsx","format":"xlsx","auth":"session","scope":"workspace","maxRows":5000,"range":"month/custom","model":"buffer"},
+    {"path":"/api/reports/export/xlsx","format":"xlsx","auth":"session","scope":"workspace","maxRows":10000,"range":"bounded report period","model":"buffer"},
+    {"path":"/api/clients/export/xlsx","format":"xlsx","auth":"session","scope":"workspace","maxRows":5000,"range":"all workspace","model":"buffer"},
+    {"path":"/api/clients/:id/export/xlsx","format":"xlsx","auth":"session","scope":"workspace+client","maxRows":1,"range":"one client","model":"buffer"},
+    {"path":"/api/clients/export/pdf","format":"pdf","auth":"session","scope":"workspace","maxRows":2000,"range":"all workspace","model":"buffer"},
+    {"path":"/api/clients/:id/export/pdf","format":"pdf","auth":"session","scope":"workspace+client","maxRows":1,"range":"one client","model":"buffer"},
+    {"path":"/api/invoices/:id/pdf","format":"pdf","auth":"session","scope":"workspace+invoice","maxRows":500,"range":"one invoice","model":"buffer"},
+    {"path":"/api/proposals/:id/pdf","format":"pdf","auth":"session","scope":"workspace+proposal","maxRows":500,"range":"one proposal","model":"buffer"},
+    {"path":"/api/contracts/:id/pdf","format":"pdf","auth":"session","scope":"workspace+contract","maxRows":500,"range":"one contract","model":"buffer"},
+    {"path":"/api/time/export/pdf","format":"pdf","auth":"session","scope":"workspace","maxRows":5000,"range":"bounded query range","model":"buffer"},
+    {"path":"/api/time/export/pdf/va-timesheet","format":"pdf","auth":"session/signed-report","scope":"workspace+client/project","maxRows":5000,"range":"bounded query range","model":"buffer"},
+    {"path":"/api/invoices/share/:token/pdf","format":"pdf","auth":"share-token+IP","scope":"invoice","maxRows":500,"range":"one invoice","model":"buffer"},
+    {"path":"/api/client-portal/invoices/:id/pdf","format":"pdf","auth":"portal-token+IP","scope":"workspace+client+invoice","maxRows":500,"range":"one invoice","model":"buffer"}
+  ]
+}

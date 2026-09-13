@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "endpoints": [
+    {"path":"/api/files/upload","auth":"session","maxBytes":26214400,"mime":"pdf,jpeg,png,webp,text","visibility":"private until completed","quota":"intent reservation","namespace":"quarantine -> workspaces","cleanup":"fenced worker","decision":"quarantine saga"},
+    {"path":"/api/client-portal/files/upload","auth":"portal token","maxBytes":26214400,"mime":"pdf,jpeg,png,webp,text","visibility":"private until completed","quota":"intent reservation","namespace":"quarantine -> workspaces","cleanup":"fenced worker","decision":"quarantine saga"},
+    {"path":"/api/client-portal/requests/upload","auth":"portal token","maxBytes":26214400,"mime":"pdf,jpeg,png,webp,text","visibility":"private until completed","quota":"intent reservation","namespace":"quarantine -> workspaces","cleanup":"fenced worker","decision":"quarantine saga"},
+    {"path":"/api/expenses/receipt","auth":"session+workspace","maxBytes":10485760,"mime":"pdf,jpeg,png,webp","visibility":"private","quota":"workspace storage","namespace":"workspaces/receipts","cleanup":"expense lifecycle","decision":"bounded server upload"},
+    {"path":"/api/site/upload","auth":"session+workspace","maxBytes":5242880,"mime":"jpeg,png,webp","visibility":"public site only","quota":"site image policy","namespace":"site-images","cleanup":"site lifecycle","decision":"bounded image upload"},
+    {"path":"/api/workspace/logo","auth":"session+workspace","maxBytes":2097152,"mime":"jpeg,png,webp","visibility":"public logo cache","quota":"logo policy","namespace":"workspace-logos","cleanup":"replacement lifecycle","decision":"bounded image upload"},
+    {"path":"/api/files/:id/download","auth":"session+workspace","maxBytes":null,"mime":"stored metadata","visibility":"completed only","quota":"n/a","namespace":"exact final key","cleanup":"n/a","decision":"short signed URL"},
+    {"path":"/api/files/raw/*","auth":"session+workspace","maxBytes":null,"mime":"stored metadata","visibility":"completed only","quota":"n/a","namespace":"exact final key","cleanup":"n/a","decision":"stream"},
+    {"path":"/api/public/workspace-logo/:id","auth":"public exact workspace","maxBytes":2097152,"mime":"image","visibility":"public cache","quota":"n/a","namespace":"exact logo key","cleanup":"n/a","decision":"bounded cached image"}
+  ]
+}

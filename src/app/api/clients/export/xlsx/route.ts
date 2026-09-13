@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { clients } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
+import { withExportAdmission } from "@/lib/export-admission";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -19,6 +20,10 @@ export async function GET(_req: NextRequest) {
 
     // Same workspace resolution as app pages (cookie → membership → auto-create)
     const workspaceId = await getWorkspaceForCurrentUser();
+
+    return withExportAdmission(
+      { userId: session.user.id, workspaceId, endpoint: "clients-xlsx" },
+      async () => {
 
     const clientRows = await db
       .select()
@@ -79,6 +84,8 @@ export async function GET(_req: NextRequest) {
         "Cache-Control": "private, no-store",
       },
     });
+      },
+    );
   } catch (err) {
     console.error("[clients/export/xlsx]", err);
     return NextResponse.json(

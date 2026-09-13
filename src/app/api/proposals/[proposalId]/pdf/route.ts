@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { proposals, clients, workspaces, workspaceMembers } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { renderProposalPdf } from "@/lib/pdf/proposal-pdf";
+import { withExportAdmission } from "@/lib/export-admission";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -82,6 +83,7 @@ export async function GET(
     },
   };
 
+  return withExportAdmission({ userId: session.user.id, workspaceId: p.workspaceId, endpoint: "proposal-pdf" }, async () => {
   const buf = await renderProposalPdf(data);
   const safeTitle = p.title.replace(/[^a-zA-Z0-9-_]/g, "_").slice(0, 50);
   return new NextResponse(new Uint8Array(buf), {
@@ -91,5 +93,6 @@ export async function GET(
       "Content-Disposition": `inline; filename="proposal-${safeTitle}.pdf"`,
       "Cache-Control": "private, no-store",
     },
+  });
   });
 }

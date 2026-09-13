@@ -26,7 +26,13 @@
     "reconcile:personal-receipts": "tsx scripts/reconcile-personal-receipts.ts",
     "reconcile:upload-saga": "tsx scripts/reconcile-upload-saga.ts",
     "retry:personal-receipt-cleanup": "tsx scripts/retry-personal-receipt-cleanup.ts",
-    "retry:upload-cleanup": "tsx scripts/retry-upload-cleanup.ts"
+    "retry:upload-cleanup": "tsx scripts/retry-upload-cleanup.ts",
+    "capacity:seed": "node scripts/performance/capacity-hardening/node/seed.mjs",
+    "capacity:auth": "node scripts/performance/capacity-hardening/node/auth-bootstrap.mjs",
+    "capacity:verify": "node scripts/performance/capacity-hardening/node/verify.mjs",
+    "capacity:invariants": "node scripts/performance/capacity-hardening/node/invariants.mjs",
+    "capacity:cleanup": "node scripts/performance/capacity-hardening/node/cleanup.mjs",
+    "capacity:test": "bash scripts/performance/capacity-hardening/run.sh"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",

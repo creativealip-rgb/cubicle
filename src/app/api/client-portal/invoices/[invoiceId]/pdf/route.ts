@@ -10,6 +10,7 @@ import {
   payments,
 } from "@/db/schema";
 import { renderInvoicePdf } from "@/lib/pdf/invoice-pdf";
+import { withExportAdmission } from "@/lib/export-admission";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
 
 export const dynamic = "force-dynamic";
@@ -146,6 +147,7 @@ export async function GET(
     amountPaid,
   };
 
+  return withExportAdmission({ userId: client.id, workspaceId: inv.workspaceId, endpoint: "portal-invoice-pdf" }, async () => {
   const buf = await renderInvoicePdf(data);
   return new NextResponse(new Uint8Array(buf), {
     status: 200,
@@ -154,5 +156,6 @@ export async function GET(
       "Content-Disposition": `inline; filename="invoice-${inv.invoiceNumber}.pdf"`,
       "Cache-Control": "private, no-store",
     },
+  });
   });
 }

@@ -11,6 +11,7 @@ import {
   payments,
 } from "@/db/schema";
 import { renderInvoicePdf } from "@/lib/pdf/invoice-pdf";
+import { withExportAdmission } from "@/lib/export-admission";
 import { logPortalAccess } from "@/lib/actions/portal";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 
@@ -144,6 +145,7 @@ export async function GET(
     amountPaid,
   };
 
+  return withExportAdmission({ userId: tokenHash.slice(0, 16), workspaceId: inv.workspaceId, endpoint: "invoice-share-pdf" }, async () => {
   const buf = await renderInvoicePdf(data);
   return new NextResponse(new Uint8Array(buf), {
     status: 200,
@@ -152,5 +154,6 @@ export async function GET(
       "Content-Disposition": `inline; filename="invoice-${inv.invoiceNumber}.pdf"`,
       "Cache-Control": "private, no-store",
     },
+  });
   });
 }

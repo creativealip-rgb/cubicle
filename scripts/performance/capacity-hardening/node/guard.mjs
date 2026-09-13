@@ -1,0 +1,1 @@
+export function guard(){const u=process.env.CAPACITY_DATABASE_URL||"";const h=process.env.CAPACITY_BASE_URL||"";if(!u||!h)throw new Error("CAPACITY_DATABASE_URL and CAPACITY_BASE_URL required");if(/cubiqlo-new-pg|app\.cubiqlo\.com|cubiqlo\.com/i.test(u+" "+h))throw new Error("PRODUCTION_TARGET_FORBIDDEN");}

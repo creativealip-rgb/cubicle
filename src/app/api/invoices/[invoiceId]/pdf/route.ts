@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { invoices, invoiceItems, clients, workspaces, workspaceMembers, payments } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { renderInvoicePdf } from "@/lib/pdf/invoice-pdf";
+import { withExportAdmission } from "@/lib/export-admission";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -117,6 +118,7 @@ export async function GET(
     timesheetReportUrl,
   };
 
+  return withExportAdmission({ userId: session.user.id, workspaceId: inv.workspaceId, endpoint: "invoice-pdf" }, async () => {
   const buf = await renderInvoicePdf(data);
   return new NextResponse(new Uint8Array(buf), {
     status: 200,
@@ -125,5 +127,6 @@ export async function GET(
       "Content-Disposition": `inline; filename="invoice-${inv.invoiceNumber}.pdf"`,
       "Cache-Control": "private, no-store",
     },
+  });
   });
 }

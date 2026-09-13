@@ -28,6 +28,8 @@ import {
 } from "@/lib/report-period";
 import { styleWorksheet, xlsxResponse } from "@/lib/excel";
 import { buildTimeReport } from "@/lib/time-reporting";
+import { buildReportFxContract } from "@/lib/report-fx-contract";
+import { withExportAdmission } from "@/lib/export-admission";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export async function GET(request: Request) {
@@ -36,6 +38,7 @@ export async function GET(request: Request) {
     if (!session?.user?.id)
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     const ws = await getWorkspaceFullForCurrentUser();
+    return withExportAdmission({ userId: session.user.id, workspaceId: ws.id, endpoint: "reports-xlsx" }, async () => {
     const q = new URL(request.url).searchParams;
     const period = buildReportPeriod({
       period: q.get("period") || undefined,
@@ -87,6 +90,12 @@ export async function GET(request: Request) {
           lte(expenses.date, period.end),
         ),
       );
+    const fxContract = buildReportFxContract({
+      baseCurrency: base,
+      fxSnapshot: new Date().toISOString(),
+      rates,
+      rows: [...incomeRows, ...expenseRows].map((row) => ({ currency: row.currency, amount: row.amount })),
+    });
     const cv = (a: string | number | null, c: string) =>
       convertToBase(Number(a ?? 0), c, base, rates);
     let income = 0,
@@ -214,6 +223,14 @@ export async function GET(request: Request) {
       ],
     );
     summary.getColumn("Nilai").numFmt = "#,##0.00";
+    add("FX Status", [
+      { header: "Status", key: "Status", width: 16 },
+      { header: "Base Currency", key: "BaseCurrency", width: 18 },
+      { header: "FX Snapshot", key: "FxSnapshot", width: 28 },
+      { header: "Missing Currency", key: "Currency", width: 18 },
+      { header: "Missing Rows", key: "Rows", width: 16 },
+      { header: "Original Total", key: "OriginalTotal", width: 20 },
+    ], fxContract.missingFx.length ? fxContract.missingFx.map((missing) => ({ Status: fxContract.status, BaseCurrency: fxContract.baseCurrency, FxSnapshot: fxContract.fxSnapshot, Currency: missing.currency, Rows: missing.rowCount, OriginalTotal: missing.originalTotal })) : [{ Status: fxContract.status, BaseCurrency: fxContract.baseCurrency, FxSnapshot: fxContract.fxSnapshot, Currency: "", Rows: 0, OriginalTotal: 0 }]);
     const moneyCols = [
       { header: "Nama", key: "Nama", width: 28 },
       { header: "Jumlah Transaksi", key: "Transaksi", width: 18 },
@@ -258,6 +275,7 @@ export async function GET(request: Request) {
     add("Time Tracking", [{header:"Group",key:"Group",width:16},{header:"Name",key:"Name",width:30},{header:"Hours",key:"Hours",width:14},{header:"Billable Hours",key:"BillableHours",width:16},{header:"Value",key:"Value",width:20}], [...timeReport.byProject.map(r=>({Group:"Project",Name:r.name,Hours:r.minutes/60,BillableHours:r.billableMinutes/60,Value:r.value})),...timeReport.byTask.map(r=>({Group:"Task",Name:r.name,Hours:r.minutes/60,BillableHours:r.billableMinutes/60,Value:r.value})),...timeReport.byMember.map(r=>({Group:"Member",Name:r.name,Hours:r.minutes/60,BillableHours:r.billableMinutes/60,Value:r.value}))]);
     const buffer = Buffer.from(await wb.xlsx.writeBuffer());
     return xlsxResponse(buffer, `laporan-${period.start}-${period.end}.xlsx`);
+    });
   } catch (error) {
     console.error("[reports/export/xlsx]", error);
     return Response.json(

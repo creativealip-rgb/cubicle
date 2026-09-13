@@ -8,6 +8,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { and, desc, eq } from "drizzle-orm";
 import { effectiveWorkDateSql } from "@/lib/effective-work-date";
+import { withExportAdmission } from "@/lib/export-admission";
 
 function escapeHtml(value: unknown) {
   return String(value ?? "")
@@ -29,6 +30,7 @@ export async function GET(request: Request) {
   const user = requireUser(session.user);
   const workspaceId = await getWorkspaceForCurrentUser();
   await assertWorkspaceMember(db, user.id, workspaceId);
+  return withExportAdmission({ userId: user.id, workspaceId, endpoint: "time-pdf" }, async () => {
 
   const cookieStore = await cookies();
   const lang = (cookieStore.get("cubiqlo_lang")?.value === "id" ? "id" : "en") as "id" | "en";
@@ -184,5 +186,6 @@ export async function GET(request: Request) {
       "content-type": "text/html; charset=utf-8",
       "content-disposition": `inline; filename="timesheet-${new Date().toISOString().split("T")[0]}.html"`,
     },
+  });
   });
 }

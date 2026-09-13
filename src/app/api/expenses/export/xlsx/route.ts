@@ -6,6 +6,7 @@ import { clients, expenseCategories, expenses, projects } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { styleWorksheet, xlsxResponse } from "@/lib/excel";
+import { withExportAdmission } from "@/lib/export-admission";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -16,6 +17,7 @@ export async function GET(request: Request) {
     if (!session?.user?.id)
       return Response.json({ error: "Unauthorized" }, { status: 401 });
     const workspaceId = await getWorkspaceForCurrentUser();
+    return withExportAdmission({ userId: session.user.id, workspaceId: workspaceId, endpoint: "expenses-xlsx" }, async () => {
     const params = new URL(request.url).searchParams;
     const month = params.get("month");
     const categoryId = params.get("categoryId");
@@ -94,6 +96,7 @@ export async function GET(request: Request) {
       buffer,
       `pengeluaran-${month || "semua"}-${new Date().toISOString().slice(0, 10)}.xlsx`,
     );
+    });
   } catch (error) {
     console.error("[expenses/export/xlsx]", error);
     return Response.json(

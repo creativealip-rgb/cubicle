@@ -5,6 +5,7 @@ import * as ExcelJS from "exceljs";
 import { db } from "@/db";
 import { clients, workspaceMembers } from "@/db/schema";
 import { auth } from "@/lib/auth";
+import { withExportAdmission } from "@/lib/export-admission";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -42,6 +43,7 @@ export async function GET(
     if (!member) {
       return NextResponse.json({ error: "Workspace access denied" }, { status: 403 });
     }
+    return withExportAdmission({ userId: session.user.id, workspaceId: client.workspaceId, endpoint: "client-detail-xlsx" }, async () => {
 
     const detailRows = [
       {
@@ -88,6 +90,7 @@ export async function GET(
         "Content-Disposition": `attachment; filename="client-${safeName}.xlsx"`,
         "Cache-Control": "private, no-store",
       },
+    });
     });
   } catch (err) {
     console.error("[clients/[clientId]/export/xlsx]", err);

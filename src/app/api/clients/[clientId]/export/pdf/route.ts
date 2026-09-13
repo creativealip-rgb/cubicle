@@ -5,6 +5,7 @@ import { db } from "@/db";
 import { clients, projects, workspaces, workspaceMembers } from "@/db/schema";
 import { auth } from "@/lib/auth";
 import { renderClientPdf } from "@/lib/pdf/client-pdf";
+import { withExportAdmission } from "@/lib/export-admission";
 
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
@@ -23,6 +24,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ cli
     .where(and(eq(workspaceMembers.workspaceId, client.workspaceId), eq(workspaceMembers.userId, session.user.id)))
     .limit(1);
   if (!member) return NextResponse.json({ error: "Workspace access denied" }, { status: 403 });
+
+  return withExportAdmission({ userId: session.user.id, workspaceId: client.workspaceId, endpoint: "client-detail-pdf" }, async () => {
 
   const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, client.workspaceId)).limit(1);
   const projectRows = await db.select().from(projects).where(eq(projects.clientId, client.id));
@@ -63,5 +66,6 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ cli
       "Content-Disposition": `inline; filename="client-${safeName}.pdf"`,
       "Cache-Control": "private, no-store",
     },
+  });
   });
 }

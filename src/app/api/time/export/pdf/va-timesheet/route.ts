@@ -10,6 +10,7 @@ import { and, asc, eq, gte, lte } from "drizzle-orm";
 import { createHash } from "crypto";
 import { normalizeInvoiceReportRange, verifyInvoiceReportRangeSignature } from "@/lib/invoice-report-options";
 import { effectiveWorkDateSql } from "@/lib/effective-work-date";
+import { withExportAdmission } from "@/lib/export-admission";
 
 function escapeHtml(value: unknown) {
   return String(value ?? "")
@@ -227,6 +228,7 @@ export async function GET(request: Request) {
     await assertWorkspaceMember(db, user.id, workspaceId);
   }
 
+  return withExportAdmission({ userId: actorId ?? `token:${createHash("sha256").update(invoiceToken ?? "").digest("hex").slice(0, 16)}`, workspaceId, endpoint: "va-timesheet-pdf" }, async () => {
   const cookieStore = await cookies();
   const lang = (cookieStore.get("cubiqlo_lang")?.value === "id" ? "id" : "en") as "id" | "en";
   const locale = lang === "en" ? "en-US" : "id-ID";
@@ -633,5 +635,6 @@ export async function GET(request: Request) {
       "content-type": "text/html; charset=utf-8",
       "content-disposition": `inline; filename="va-timesheet-${new Date().toISOString().split("T")[0]}.html"`,
     },
+  });
   });
 }

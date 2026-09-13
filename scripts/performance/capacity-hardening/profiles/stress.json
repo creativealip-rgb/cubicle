@@ -1,0 +1,61 @@
+{
+  "version": 1,
+  "profile": "stress",
+  "vus": 100,
+  "duration": "30m",
+  "requestRate": 100,
+  "soak": "0m",
+  "seed": 20260913,
+  "arrivalModel": "constant-vus",
+  "thinkTimeMs": [
+    2000,
+    8000
+  ],
+  "routeWeights": {
+    "dashboard": 0.2,
+    "clients": 0.15,
+    "projects": 0.15,
+    "tasks": 0.2,
+    "reports": 0.1,
+    "calendar": 0.1,
+    "invoices": 0.1
+  },
+  "readWriteRatio": [
+    90,
+    10
+  ],
+  "roles": {
+    "owner": 0.2,
+    "member": 0.6,
+    "viewer": 0.2
+  },
+  "tenantSkew": {
+    "small": 0.6,
+    "medium": 0.3,
+    "large": 0.1
+  },
+  "acceptedStatuses": [
+    200,
+    302
+  ],
+  "timeoutMs": 10000,
+  "payloadBytes": 1024,
+  "rows": {
+    "users": 100,
+    "workspaces": 20,
+    "clients": 2000,
+    "projects": 3000,
+    "tasks": 10000,
+    "expenses": 20000,
+    "invoices": 10000
+  },
+  "expectedDbBytes": 200000000,
+  "fixtures": {
+    "upload5MiB": 5242880,
+    "upload50MiB": 52428800
+  },
+  "thresholds": {
+    "http_req_failed": "rate<0.01",
+    "http_req_duration": "p(95)<1500"
+  }
+}
