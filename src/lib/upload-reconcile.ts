@@ -37,13 +37,13 @@ export function validateUploadReconcileReport(report: UploadReconcileReport) {
 export async function reconcileUploadIntents(options: { dryRun?: boolean; limit?: number; workerId?: string } = {}): Promise<UploadReconcileReport> {
   const { dryRun = true, limit = 100 } = options;
   const now = new Date();
-  const staleBefore = new Date(now.getTime() - 5 * 60_000);
+
   const [summary] = await db.select({
     intents: sql<number>`(select count(*)::int from upload_intents)`,
     files: sql<number>`(select count(*)::int from files where upload_state = 'pending')`,
     reservations: sql<number>`(select count(*)::int from upload_quota_reservations where state = 'active')`,
-    stalePromoting: sql<number>`(select count(*)::int from upload_intents where state = 'promoting' and promotion_lease_expires_at < ${staleBefore})`,
-    expiredActive: sql<number>`(select count(*)::int from upload_intents where state in ('reserved','uploaded') and expires_at < ${now})`,
+    stalePromoting: sql<number>`(select count(*)::int from upload_intents where state = 'promoting' and promotion_lease_expires_at < now() - interval '5 minutes')`,
+    expiredActive: sql<number>`(select count(*)::int from upload_intents where state in ('reserved','uploaded') and expires_at < now())`,
     pendingWithoutIntent: sql<number>`(select count(*)::int from files f where f.upload_state = 'pending' and not exists (select 1 from upload_intents i where i.final_file_id = f.id and i.state in ('promoting','promotion_failed')))`,
     completedWithPendingFile: sql<number>`(select count(*)::int from upload_intents i join files f on f.id=i.final_file_id where i.state='completed' and f.upload_state <> 'completed')`,
     activeReservationTerminalIntent: sql<number>`(select count(*)::int from upload_quota_reservations r join upload_intents i on i.id=r.intent_id where r.state='active' and i.state in ('completed','aborted','expired','quarantined','failed_cleanup'))`,
