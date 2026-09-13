@@ -10,7 +10,8 @@ describe("billing-aware Waktu Phase 2", () => {
     const component = read("src/components/time/weekly-time-grid.tsx");
     expect(grid).toContain('`${entry.projectId}:${entry.taskId');
     expect(grid).toContain("taskTitle");
-    expect(component).toContain("Project / Task");
+    expect(component).toContain('t("Proyek", "Project")');
+    expect(component).toContain('t("Tugas", "Task")');
     expect(component).not.toContain("activityId");
     expect(component).not.toContain("ActivityOption");
   });

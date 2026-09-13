@@ -9,7 +9,6 @@ import {
 import { listPersonalHabits, togglePersonalHabitCheckin } from "@/lib/actions/personal-habits";
 import {
   calculateGoalMetrics,
-  calculateHabitHeatmap,
   calculateWeeklyConsistency,
 } from "@/lib/personal-productivity/visuals";
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -62,7 +61,6 @@ export default async function ProductivityPage({
   const bestStreak = habitRetentionStats.reduce((max, stats) => Math.max(max, stats.bestStreak), 0);
   const completedDays = new Set(activeHabits.flatMap((h) => h.checkins.map((c) => c.localDate))).size;
 
-  const heatmapCells = calculateHabitHeatmap(habits, today, 35);
   const weeklyTrends = calculateWeeklyConsistency(habits, today, 5);
 
   async function createGoal(formData: FormData) {
@@ -283,7 +281,6 @@ export default async function ProductivityPage({
                 {/* Habit Consistency Heatmap & Trends */}
                 <div className="space-y-3">
                   <HabitHeatmap
-                    cells={heatmapCells}
                     weeklyTrends={weeklyTrends}
                     t={t}
                   />

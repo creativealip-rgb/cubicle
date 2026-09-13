@@ -11,7 +11,7 @@ import { StreakRecoveryCard } from "@/components/productivity/weekly-review-card
 import { Button } from "@/components/ui/button";
 import { HabitDialog } from "@/components/productivity/habit-dialog";
 import { HabitHeatmap } from "@/components/productivity/habit-heatmap";
-import { calculateWeeklyConsistency, calculateHabitHeatmap } from "@/lib/personal-productivity/visuals";
+import { calculateWeeklyConsistency } from "@/lib/personal-productivity/visuals";
 import { Flame, CheckCircle2, Check, Archive, ChevronDown, Activity } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -48,10 +48,6 @@ export async function HabitsSection({
     await togglePersonalHabitCheckin(String(fd.get("habitId")));
   }
 
-  async function toggleDate(fd: FormData) {
-    "use server";
-    await togglePersonalHabitCheckin(String(fd.get("habitId")), String(fd.get("date")));
-  }
 
   async function archive(fd: FormData) {
     "use server";
@@ -249,11 +245,8 @@ export async function HabitsSection({
 
                   <div className="pt-2.5 space-y-3 border-t mt-1.5">
                     <HabitHeatmap
-                      cells={calculateHabitHeatmap([h], today)}
                       weeklyTrends={calculateWeeklyConsistency([h], today)}
                       t={t}
-                      habitId={h.id}
-                      toggleDateAction={toggleDate}
                     />
 
                     <div className="rounded-xl border bg-slate-50/50 p-3 space-y-2.5">

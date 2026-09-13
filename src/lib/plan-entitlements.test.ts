@@ -25,7 +25,7 @@ describe("plan entitlements", () => {
       canInviteMembers: false,
       hasClientPortal: true,
       hasAiAssistant: true,
-      aiRequestsPerMonth: 10,
+      aiRequestsPerMonth: 15,
       apiRequestsPerMinute: 30,
       maxClients: 3,
       maxProjects: 5,
@@ -38,7 +38,7 @@ describe("plan entitlements", () => {
       canInviteMembers: false,
       hasClientPortal: true,
       hasAiAssistant: true,
-      aiRequestsPerMonth: 100,
+      aiRequestsPerMonth: 150,
       apiRequestsPerMinute: 120,
       maxFileSizeMb: 25,
     });

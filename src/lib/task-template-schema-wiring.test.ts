@@ -51,7 +51,8 @@ describe("billing-aware task template schema", () => {
     const runner = readFileSync("scripts/migrate-ledger.sh", "utf8");
     expect(registry).toMatch(/0064[^\n]*committed/);
     expect(registry).toMatch(/0062[^\n]*(retired|must not run)/i);
-    expect(runner).toContain("RETIRED_MIGRATIONS=${RETIRED_MIGRATIONS:-0062_billing_aware_phase9_cleanup.sql}");
+    expect(runner).toContain("START_MIGRATION=${START_MIGRATION:-0097}");
+    expect(runner).toContain("RETIRED_MIGRATIONS=${RETIRED_MIGRATIONS:-}");
   });
 
   it("ships additive migration with conservative complete backfill", () => {

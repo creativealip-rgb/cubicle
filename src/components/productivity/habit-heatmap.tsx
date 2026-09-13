@@ -1,11 +1,8 @@
-import type { HeatmapCell, WeeklyConsistency } from "@/lib/personal-productivity/visuals";
+import type { WeeklyConsistency } from "@/lib/personal-productivity/visuals";
 
 interface HabitHeatmapProps {
-  cells: HeatmapCell[];
   weeklyTrends: WeeklyConsistency[];
   t: (id: string, en: string) => string;
-  habitId?: string;
-  toggleDateAction?: (formData: FormData) => Promise<void>;
 }
 
 export function HabitHeatmap({ weeklyTrends, t }: HabitHeatmapProps) {

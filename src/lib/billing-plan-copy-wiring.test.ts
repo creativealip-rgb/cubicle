@@ -12,7 +12,7 @@ describe("billing copy package limits", () => {
 
   it("mentions key Free/Solo/Team benefits without per-file limits", () => {
     const copy = `${landing}\n${billing}`;
-    for (const text of ["3 klien", "5 proyek", "10 invoice", "10 AI", "100 AI", "1,000 AI", "Up to 5 members/workspace"]) {
+    for (const text of ["3 klien", "5 proyek", "10 invoice", "15 AI", "150 AI", "1,000 AI", "Up to 5 members/workspace"]) {
       expect(copy).toContain(text);
     }
     expect(copy).not.toMatch(/\b(?:5|25|50) MB\/file\b/i);

@@ -41,7 +41,8 @@ describe("billing-aware Phase 9 cleanup gate", () => {
     expect(migration).not.toContain("DROP TABLE IF EXISTS services");
     expect(migration).not.toContain("DROP TABLE IF EXISTS project_services");
     expect(runner).toContain("RETIRED_MIGRATIONS");
-    expect(runner).toContain("0062_billing_aware_phase9_cleanup.sql");
+    expect(runner).toContain("START_MIGRATION=${START_MIGRATION:-0097}");
+    expect(runner).not.toMatch(/START_MIGRATION=.*0062/);
     expect(schema).toContain('export const activities = pgTable("activities"');
     expect(schema).toContain('export const packages = pgTable("packages"');
     expect(schema).toContain('activityId: uuid("activity_id")');
