@@ -8,8 +8,7 @@ it("paginates saga namespaces and classifies missing/orphan/metadata mismatch wi
   const client = { send: async (command: unknown) => {
     calls.push(command);
     if (command instanceof ListObjectsV2Command) {
-      const token = command.input.ContinuationToken;
-      if (!token) return { Contents: [{ Key: "quarantine/ws/i1", LastModified: new Date("2026-01-01") }], IsTruncated: true, NextContinuationToken: "p2" };
+      if (command.input.Prefix === "quarantine/") return { Contents: [{ Key: "quarantine/ws/i1", LastModified: new Date("2026-01-01") }], IsTruncated: false };
       return { Contents: [{ Key: "workspaces/ws/files/orphan", LastModified: new Date("2026-01-01") }], IsTruncated: false };
     }
     if (command instanceof HeadObjectCommand) return { Metadata: { intentid: "wrong", attemptid: "a1" }, ContentLength: 10, ContentType: "application/pdf" };
