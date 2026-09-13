@@ -42,7 +42,7 @@ async function main() {
   ]);
   assert.equal(confirmations.filter((result) => result.status === "fulfilled").length, 1, "double confirm succeeded");
   const uploaded = confirmations.find((result): result is PromiseFulfilledResult<Awaited<ReturnType<typeof confirmUpload>>> => result.status === "fulfilled")!.value;
-  const validating = await claimValidation(uploaded.id, workspaceId, uploaded.version);
+  const validating = await claimValidation(uploaded.id, workspaceId, uploaded.version, "worker-1", new Date(Date.now() + 60_000));
   const claimed = await claimUploadPromotion({ intentId: validating.id, workspaceId, version: validating.version, leaseOwner: "worker-1", leaseExpiresAt: new Date(Date.now() + 60_000), name: "race.pdf", visibility: "internal", fileType: "working_file", uploadedBy: userId });
   const promoting = claimed.intent;
   await assert.rejects(completePromotion(promoting.id, workspaceId, promoting.version, "00000000-0000-0000-0000-000000000000"), /STALE_PROMOTION_ATTEMPT/);

@@ -1,7 +1,7 @@
-import { and, eq, inArray, lt, or, sql } from "drizzle-orm";
+import { and, eq, gt, inArray, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { files, uploadIntents, uploadQuotaReservations } from "@/db/schema";
-import { expireUploadIntent } from "@/lib/upload-intent-service";
+import { expireUploadIntent, recoverStalePromotion, retryFailedPromotion } from "@/lib/upload-intent-service";
 
 export const UPLOAD_RECONCILE_CHECKS = [
   "intent_counts",
@@ -34,7 +34,8 @@ export function validateUploadReconcileReport(report: UploadReconcileReport) {
   return new Set(report.expectedChecks).size === expected.length && new Set(report.executedChecks).size === expected.length && expected.every((id) => report.expectedChecks.includes(id) && report.executedChecks.includes(id));
 }
 
-export async function reconcileUploadIntents({ dryRun = true }: { dryRun?: boolean } = {}): Promise<UploadReconcileReport> {
+export async function reconcileUploadIntents(options: { dryRun?: boolean; limit?: number; workerId?: string } = {}): Promise<UploadReconcileReport> {
+  const { dryRun = true, limit = 100 } = options;
   const now = new Date();
   const staleBefore = new Date(now.getTime() - 5 * 60_000);
   const [summary] = await db.select({
@@ -51,7 +52,17 @@ export async function reconcileUploadIntents({ dryRun = true }: { dryRun?: boole
 
   let expired = 0;
   if (!dryRun) {
-    const candidates = await db.select({ id: uploadIntents.id, workspaceId: uploadIntents.workspaceId, version: uploadIntents.version }).from(uploadIntents).where(and(inArray(uploadIntents.state, ["reserved", "uploaded"]), lt(uploadIntents.expiresAt, now), or(sql`${uploadIntents.promotionLeaseExpiresAt} is null`, lt(uploadIntents.promotionLeaseExpiresAt, now)))).limit(100);
+    const workerId = options.workerId ?? `upload-reconcile-${process.pid}`;
+    const retryLease = () => new Date(Date.now() + 5 * 60_000);
+    const failed = await db.select().from(uploadIntents).where(and(eq(uploadIntents.state, "promotion_failed"), gt(uploadIntents.expiresAt, now))).limit(limit);
+    for (const intent of failed) {
+      try { await retryFailedPromotion(intent.id, intent.workspaceId, intent.version, workerId, retryLease()); } catch { /* lost CAS race */ }
+    }
+    const stale = await db.select().from(uploadIntents).where(and(eq(uploadIntents.state, "promoting"), lt(uploadIntents.promotionLeaseExpiresAt, now))).limit(limit);
+    for (const intent of stale) {
+      try { await recoverStalePromotion(intent.id, intent.workspaceId, intent.version, retryLease()); } catch { /* lost CAS race */ }
+    }
+    const candidates = await db.select().from(uploadIntents).where(and(inArray(uploadIntents.state, ["reserved", "uploaded"]), lt(uploadIntents.expiresAt, now))).limit(limit);
     for (const candidate of candidates) {
       try { await expireUploadIntent(candidate.id, candidate.workspaceId, candidate.version); expired += 1; } catch { /* lost CAS race; next run re-evaluates */ }
     }

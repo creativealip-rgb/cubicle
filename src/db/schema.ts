@@ -1187,6 +1187,9 @@ export const uploadIntents = pgTable("upload_intents", {
   state: text("state").notNull().default("reserved"),
   version: integer("version").notNull().default(0),
   finalFileId: uuid("final_file_id").references(() => files.id, { onDelete: "set null" }),
+  validationAttemptId: uuid("validation_attempt_id"),
+  validationLeaseOwner: text("validation_lease_owner"),
+  validationLeaseExpiresAt: timestamp("validation_lease_expires_at", { withTimezone: true }),
   promotionAttemptId: uuid("promotion_attempt_id"),
   promotionLeaseOwner: text("promotion_lease_owner"),
   promotionLeaseExpiresAt: timestamp("promotion_lease_expires_at", { withTimezone: true }),
@@ -1201,6 +1204,7 @@ export const uploadIntents = pgTable("upload_intents", {
 }, (table) => [
   unique("upload_intents_actor_idempotency_unique").on(table.workspaceId, table.actorType, table.actorId, table.destinationType, table.destinationId, table.idempotencyKey),
   index("upload_intents_reconcile_idx").on(table.state, table.expiresAt, table.cleanupRetryAt),
+  index("upload_intents_validation_lease_idx").on(table.state, table.validationLeaseExpiresAt),
   check("upload_intents_state_check", sql`${table.state} in ('reserved','uploaded','validating','promoting','promotion_failed','completed','aborted','expired','quarantined','failed_cleanup')`),
   check("upload_intents_bytes_check", sql`${table.expectedBytes} >= 0 and ${table.maxBytes} >= ${table.expectedBytes}`),
   check("upload_intents_sha256_check", sql`${table.expectedSha256} is null or ${table.expectedSha256} ~ '^[0-9a-f]{64}$'`),

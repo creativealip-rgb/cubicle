@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, eq, gt, sql } from "drizzle-orm";
+import { and, eq, gt, lt, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { files, uploadIntents, uploadQuotaReservations } from "@/db/schema";
 import { consumeWorkspaceUploadTx, reserveWorkspaceUploadTx } from "@/lib/storage-quota";
@@ -57,9 +57,17 @@ export async function confirmUpload(intentId: string, workspaceId: string, versi
   return updated;
 }
 
-export async function claimValidation(intentId: string, workspaceId: string, version: number) {
-  const [updated] = await db.update(uploadIntents).set({ state: "validating", version: sql`${uploadIntents.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.workspaceId, workspaceId), eq(uploadIntents.state, "uploaded"), eq(uploadIntents.version, version), gt(uploadIntents.expiresAt, new Date()))).returning();
+export async function claimValidation(intentId: string, workspaceId: string, version: number, leaseOwner: string, leaseExpiresAt: Date) {
+  if (leaseExpiresAt <= new Date()) throw new Error("INVALID_VALIDATION_LEASE");
+  const [updated] = await db.update(uploadIntents).set({ state: "validating", validationAttemptId: randomUUID(), validationLeaseOwner: leaseOwner, validationLeaseExpiresAt: leaseExpiresAt, version: sql`${uploadIntents.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.workspaceId, workspaceId), eq(uploadIntents.state, "uploaded"), eq(uploadIntents.version, version), gt(uploadIntents.expiresAt, new Date()))).returning();
   if (!updated) throw new Error("UPLOAD_INTENT_CONFLICT");
+  return updated;
+}
+
+export async function renewValidationLease(intentId: string, workspaceId: string, version: number, attemptId: string, leaseOwner: string, leaseExpiresAt: Date) {
+  if (leaseExpiresAt <= new Date()) throw new Error("INVALID_VALIDATION_LEASE");
+  const [updated] = await db.update(uploadIntents).set({ validationLeaseExpiresAt: leaseExpiresAt, version: sql`${uploadIntents.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.workspaceId, workspaceId), eq(uploadIntents.state, "validating"), eq(uploadIntents.version, version), eq(uploadIntents.validationAttemptId, attemptId), eq(uploadIntents.validationLeaseOwner, leaseOwner), gt(uploadIntents.validationLeaseExpiresAt, new Date()))).returning();
+  if (!updated) throw new Error("STALE_VALIDATION_ATTEMPT");
   return updated;
 }
 
@@ -73,13 +81,29 @@ export async function claimPromotion(intentId: string, workspaceId: string, vers
 export async function claimUploadPromotion(input: { intentId: string; workspaceId: string; version: number; leaseOwner: string; leaseExpiresAt: Date; name: string; visibility: "internal" | "client"; fileType: "working_file" | "deliverable"; uploadedBy?: string }) {
   return db.transaction(async (tx) => {
     const [intent] = await tx.select().from(uploadIntents).where(and(eq(uploadIntents.id, input.intentId), eq(uploadIntents.workspaceId, input.workspaceId))).for("update");
-    if (!intent || intent.state !== "validating" || intent.version !== input.version || intent.expiresAt <= new Date() || intent.retryCount >= 10) throw new Error("UPLOAD_INTENT_CONFLICT");
+    if (!intent || intent.state !== "validating" || intent.version !== input.version || intent.expiresAt <= new Date() || intent.retryCount >= 10 || intent.validationLeaseOwner !== input.leaseOwner || !intent.validationLeaseExpiresAt || intent.validationLeaseExpiresAt <= new Date()) throw new Error("UPLOAD_INTENT_CONFLICT");
     const promotionAttemptId = randomUUID();
     const [pendingFile] = await tx.insert(files).values({ workspaceId: input.workspaceId, name: input.name, storageKey: intent.finalKey, mimeType: intent.expectedMime, sizeBytes: intent.expectedBytes, visibility: input.visibility, fileType: input.fileType, uploadedBy: input.uploadedBy, uploadState: "pending" }).returning();
-    const [claimed] = await tx.update(uploadIntents).set({ state: "promoting", finalFileId: pendingFile.id, promotionAttemptId, promotionLeaseOwner: input.leaseOwner, promotionLeaseExpiresAt: input.leaseExpiresAt, retryCount: sql`${uploadIntents.retryCount} + 1`, version: sql`${uploadIntents.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadIntents.id, input.intentId), eq(uploadIntents.workspaceId, input.workspaceId), eq(uploadIntents.state, "validating"), eq(uploadIntents.version, input.version))).returning();
+    const [claimed] = await tx.update(uploadIntents).set({ state: "promoting", finalFileId: pendingFile.id, validationLeaseOwner: null, validationLeaseExpiresAt: null, promotionAttemptId, promotionLeaseOwner: input.leaseOwner, promotionLeaseExpiresAt: input.leaseExpiresAt, retryCount: sql`${uploadIntents.retryCount} + 1`, version: sql`${uploadIntents.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadIntents.id, input.intentId), eq(uploadIntents.workspaceId, input.workspaceId), eq(uploadIntents.state, "validating"), eq(uploadIntents.version, input.version))).returning();
     if (!claimed) throw new Error("UPLOAD_INTENT_CONFLICT");
     return { intent: claimed, file: pendingFile };
   });
+}
+
+export async function retryFailedPromotion(intentId: string, workspaceId: string, version: number, leaseOwner: string, leaseExpiresAt: Date) {
+  if (leaseExpiresAt <= new Date()) throw new Error("INVALID_VALIDATION_LEASE");
+  return db.transaction(async (tx) => {
+    const [intent] = await tx.select().from(uploadIntents).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.workspaceId, workspaceId))).for("update");
+    if (!intent || intent.state !== "promotion_failed" || intent.version !== version || intent.retryCount >= 10 || intent.expiresAt <= new Date()) throw new Error("UPLOAD_INTENT_CONFLICT");
+    if (intent.finalFileId) await tx.delete(files).where(and(eq(files.id, intent.finalFileId), eq(files.workspaceId, workspaceId), eq(files.uploadState, "pending")));
+    const [retried] = await tx.update(uploadIntents).set({ state: "validating", finalFileId: null, validationAttemptId: randomUUID(), validationLeaseOwner: leaseOwner, validationLeaseExpiresAt: leaseExpiresAt, promotionAttemptId: null, promotionLeaseOwner: null, promotionLeaseExpiresAt: null, cleanupRetryAt: null, version: sql`${uploadIntents.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.version, version))).returning();
+    return retried;
+  });
+}
+
+export async function recoverStalePromotion(intentId: string, workspaceId: string, version: number, retryAt: Date) {
+  const [recovered] = await db.update(uploadIntents).set({ state: "failed_cleanup", cleanupRetryAt: retryAt, lastErrorCode: "STALE_PROMOTION", promotionLeaseOwner: null, promotionLeaseExpiresAt: null, version: sql`${uploadIntents.version} + 1`, updatedAt: new Date() }).where(and(eq(uploadIntents.id, intentId), eq(uploadIntents.workspaceId, workspaceId), eq(uploadIntents.state, "promoting"), eq(uploadIntents.version, version), lt(uploadIntents.promotionLeaseExpiresAt, new Date()))).returning();
+  return recovered ?? null;
 }
 
 export async function markPromotionFailed(intentId: string, workspaceId: string, version: number, promotionAttemptId: string, leaseOwner: string, errorCode: string) {
