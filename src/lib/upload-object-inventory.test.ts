@@ -29,11 +29,12 @@ it("paginates saga namespaces and classifies missing/orphan/metadata mismatch wi
 
 it("deletes only bounded canonical orphan keys", async () => {
   const calls: unknown[] = [];
-  const client = { send: async (command: unknown) => { calls.push(command); return {}; } };
-  await expect(deleteUploadOrphans(client, { bucket: "b", keys: ["quarantine/ws/id", "workspaces/ws/files/id"] })).resolves.toBe(2);
-  expect(calls.every((call) => call instanceof DeleteObjectCommand)).toBe(true);
-  await expect(deleteUploadOrphans(client, { bucket: "b", keys: ["other/key"] })).rejects.toThrow("INVALID_UPLOAD_OBJECT_KEY");
-  await expect(deleteUploadOrphans(client, { bucket: "b", keys: Array(101).fill("quarantine/ws/id") })).rejects.toThrow("INVALID_ORPHAN_DELETE_LIMIT");
+  const client = { send: async (command: unknown) => { calls.push(command); return command instanceof HeadObjectCommand ? { LastModified: new Date("2025-01-01") } : {}; } };
+  const olderThan = new Date("2026-01-01");
+  await expect(deleteUploadOrphans(client, { bucket: "b", keys: ["quarantine/ws/id", "workspaces/ws/files/id"], olderThan })).resolves.toBe(2);
+  expect(calls.filter((call) => call instanceof DeleteObjectCommand)).toHaveLength(2);
+  await expect(deleteUploadOrphans(client, { bucket: "b", keys: ["other/key"], olderThan })).rejects.toThrow("INVALID_UPLOAD_OBJECT_KEY");
+  await expect(deleteUploadOrphans(client, { bucket: "b", keys: Array(101).fill("quarantine/ws/id"), olderThan })).rejects.toThrow("INVALID_ORPHAN_DELETE_LIMIT");
 });
 
 it("rejects invalid canonical reference keys and incomplete pagination", async () => {

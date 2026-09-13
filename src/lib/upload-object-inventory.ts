@@ -32,11 +32,13 @@ export async function scanUploadObjectInventory(client: ObjectClient, input: { b
   return { pages, scanned: listed.size, missing, orphans, metadataMismatches: metadataMismatches.sort(), deletedObjects: 0 as const };
 }
 
-export async function deleteUploadOrphans(client: ObjectClient, input: { bucket: string; keys: string[]; limit?: number }) {
+export async function deleteUploadOrphans(client: ObjectClient, input: { bucket: string; keys: string[]; olderThan: Date; limit?: number }) {
   const limit = input.limit ?? 100;
   if (!Number.isSafeInteger(limit) || limit < 1 || limit > 100 || input.keys.length > limit) throw new Error("INVALID_ORPHAN_DELETE_LIMIT");
   for (const key of input.keys) {
     if (!isSagaKey(key)) throw new Error("INVALID_UPLOAD_OBJECT_KEY");
+    const current = await client.send(new HeadObjectCommand({ Bucket: input.bucket, Key: key }));
+    if (!current.LastModified || current.LastModified > input.olderThan) throw new Error("ORPHAN_DELETE_RECHECK_FAILED");
     await client.send(new DeleteObjectCommand({ Bucket: input.bucket, Key: key }));
   }
   return input.keys.length;
