@@ -47,27 +47,21 @@ describe("workspace storage quota guard", () => {
     expect(body).not.toContain("await completeUpload({");
   });
 
-  it("every other file-insert upload path shares the same workspace quota guard", () => {
+  it("portal file uploads delegate file insertion and quota to the saga", () => {
     const portalFiles = portalFilesRoute();
     const portalRequests = portalRequestsRoute();
     for (const [name, body] of [
       ["client-portal/files", portalFiles],
       ["client-portal/requests", portalRequests],
     ] as const) {
-      // R2 write happens before the quota transaction so a failed object can
-      // still be removed via deleteStoredFile in the catch below.
-      const r2 = body.indexOf("new PutObjectCommand");
-      const wrapper = body.indexOf("withWorkspaceQuotaReservation(client.workspaceId, upload.size,");
-      const insert = body.indexOf(".insert(files)");
-      expect(wrapper, `${name} must wrap the insert in the atomic quota tx`).toBeGreaterThanOrEqual(0);
-      expect(r2, `${name} must write R2 before the quota tx`).toBeLessThan(wrapper);
-      expect(wrapper, `${name} quota tx must wrap the file insert`).toBeLessThan(insert);
-      // The leak-prone standalone reserve/consume/release pair is gone.
+      expect(body, `${name} saga`).toContain("promoteBufferedUpload");
+      expect(body, `${name} no direct object write`).not.toContain("new PutObjectCommand");
+      expect(body, `${name} no direct file insert`).not.toContain(".insert(files)");
       expect(body).not.toContain("reserveWorkspaceUpload(client.workspaceId");
       expect(body).not.toContain("consumeWorkspaceUpload(client.workspaceId");
       expect(body).not.toContain("releaseWorkspaceUpload");
       expect(body).not.toContain("reservedBytes");
-      expect(body).toContain("deleteStoredFile");
+
     }
   });
 
@@ -93,7 +87,7 @@ describe("workspace storage quota guard", () => {
     expect(src).toMatch(/export const consumeWorkspaceUpload = releaseWorkspaceUpload;/);
   });
 
-  it("portal upload routes wire the atomic quota transaction from storage-quota", () => {
+  it("portal upload routes avoid legacy quota helpers", () => {
     const src = storageQuota();
     // storage-quota still exports the standalone helpers for other callers,
     // but the portal routes must use the single-transaction wrapper so the
@@ -105,12 +99,8 @@ describe("workspace storage quota guard", () => {
       ["client-portal/files", portalFilesRoute()],
       ["client-portal/requests", portalRequestsRoute()],
     ] as const) {
-      expect(body, `${name} import`).toContain(
-        'import { withWorkspaceQuotaReservation } from "@/lib/storage-quota";',
-      );
-      expect(body, `${name} atomic wrapper`).toContain(
-        "await withWorkspaceQuotaReservation(client.workspaceId, upload.size,",
-      );
+      expect(body, `${name} saga`).toContain("promoteBufferedUpload");
+      expect(body, `${name} no legacy wrapper`).not.toContain("withWorkspaceQuotaReservation");
       // No standalone reserve/consume/release — those left reservedBytes stuck
       // forever on crash.
       expect(body, `${name} no standalone reserve`).not.toContain("reserveWorkspaceUpload");

@@ -20,12 +20,11 @@ describe("upload safety wiring", () => {
     expect(body).toContain("quarantineKey");
   });
 
-  it.each(portalUploadRoutes)("checks quota before R2 and compensates DB failure in %s", (path) => {
+  it.each(portalUploadRoutes)("routes portal uploads through quota-reserving saga in %s", (path) => {
     const body = read(path);
-    expect(body).toContain("assertUploadQuota");
-    expect(body.indexOf("assertUploadQuota")).toBeLessThan(body.indexOf("new PutObjectCommand"));
-    expect(body).toContain("deleteStoredFile");
-    expect(body).toContain("uploadedObject");
+    expect(body).toContain("promoteBufferedUpload");
+    expect(body).not.toContain("new PutObjectCommand");
+    expect(body).not.toContain("withWorkspaceQuotaReservation");
   });
 
   it.each([

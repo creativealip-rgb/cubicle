@@ -1,16 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { and, eq, inArray, isNull, or } from "drizzle-orm";
 import { db } from "@/db";
-import { files, folders, projects } from "@/db/schema";
+import { folders, projects } from "@/db/schema";
 import { getClientPortalAccess } from "@/lib/actions/portal";
-import { buildFileKey, R2_BUCKET, r2, deleteStoredFile } from "@/lib/r2";
 import { validateUploadedFile } from "@/lib/file-validation";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
-import { assertUploadQuota, getUploadQuotaLimits, safeUploadErrorResponse, validateContentLength } from "@/lib/upload-safety";
-import { withWorkspaceQuotaReservation } from "@/lib/storage-quota";
+import { getUploadQuotaLimits, safeUploadErrorResponse, validateContentLength } from "@/lib/upload-safety";
 import { readRequestBodyWithinLimit, RequestBodyTooLargeError } from "@/lib/upload-request-limit";
+import { promoteBufferedUpload } from "@/lib/upload-buffered-saga";
 
 export const runtime = "nodejs";
 
@@ -22,7 +20,6 @@ const MAX_SIZE = getUploadQuotaLimits("team").maxFileBytes;
  * Always stored as visibility=client, fileType=working_file, uploadedBy=null.
  */
 export async function POST(req: NextRequest) {
-  let uploadedObject: string | null = null;
   if (!validateContentLength(req.headers.get("content-length"), MAX_SIZE)) return NextResponse.json({ error: "Upload too large" }, { status: 413 });
   const limited = await enforceRateLimitResponse(req, "portal:file-upload", { limit: 10, windowSec: 300 });
   if (limited) return limited;
@@ -107,66 +104,10 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    await assertUploadQuota(client.workspaceId, upload.size, client.id);
     const body = Buffer.from(await upload.arrayBuffer());
     const validation = validateUploadedFile(upload.name, body.subarray(0, 16));
-    if (!validation.ok) {
-      return NextResponse.json(
-        { error: validation.reason ?? "File tidak valid" },
-        { status: 400 },
-      );
-    }
-
-    const fileId = crypto.randomUUID();
-    const safeName = upload.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const storageKey = buildFileKey(client.workspaceId, fileId, safeName);
-
-    await r2.send(
-      new PutObjectCommand({
-        Bucket: R2_BUCKET,
-        Key: storageKey,
-        Body: body,
-        ContentType: upload.type || "application/octet-stream",
-        ContentLength: body.length,
-      }),
-    );
-
-    uploadedObject = storageKey;
-    // Insert the file row and enforce the workspace quota in one transaction:
-    // reserve -> insert -> consume commit atomically inside
-    // withWorkspaceQuotaReservation. The old standalone reserve/consume pair
-    // left the reservation stuck forever if the process died after the insert
-    // committed; the wrapper's single tx rolls it back together with the row,
-    // so a crash can never leak quota. R2 stays outside the tx — on any
-    // failure the object is removed in the catch below.
-    const [fileRow] = await withWorkspaceQuotaReservation(client.workspaceId, upload.size, (tx) =>
-      tx
-        .insert(files)
-        .values({
-          workspaceId: client.workspaceId,
-          clientId: client.id,
-          projectId,
-          folderId,
-          name: upload.name,
-          storageKey,
-          mimeType: upload.type || null,
-          sizeBytes: upload.size,
-          visibility: "client",
-          fileType: "working_file",
-          uploadedBy: null,
-        })
-        .returning({
-          id: files.id,
-          name: files.name,
-          mimeType: files.mimeType,
-          sizeBytes: files.sizeBytes,
-          fileType: files.fileType,
-          createdAt: files.createdAt,
-          projectId: files.projectId,
-          folderId: files.folderId,
-        }),
-    );
-
+    if (!validation.ok) return NextResponse.json({ error: validation.reason ?? "File tidak valid" }, { status: 400 });
+    const { file: fileRow } = await promoteBufferedUpload({ workspaceId: client.workspaceId, actorType: "portal", actorId: client.id, destinationId: folderId ?? projectId ?? client.id, body, mime: upload.type || "application/octet-stream", name: upload.name, visibility: "client", fileType: "working_file", uploadedBy: null, clientId: client.id, projectId, folderId, idempotencyKey: String(form.get("idempotencyKey") ?? "").trim() || undefined });
     try {
       await writeActivityLog(
         client.workspaceId,
@@ -204,7 +145,6 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     if (err instanceof RequestBodyTooLargeError) return NextResponse.json({ error: err.message }, { status: err.status });
-    if (uploadedObject) await deleteStoredFile(uploadedObject).catch(() => undefined);
     const safe = safeUploadErrorResponse(err);
     return NextResponse.json({ error: safe.error }, { status: safe.status });
   }
