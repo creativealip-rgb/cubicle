@@ -9,8 +9,11 @@ MIGRATION_LOGIN=cubiqlo_migrator
 MIGRATION_OWNER=cubiqlo_owner
 BASELINE_ID=${BASELINE_ID:-baseline-2026-07-25}
 BASELINE_CHECKSUM=${BASELINE_CHECKSUM:-1a4fb3403575a0f69429243bcc16bce1ada4be2ab62eda8b5232223a482350a2}
-START_MIGRATION=${START_MIGRATION:-0040}
-RETIRED_MIGRATIONS=${RETIRED_MIGRATIONS:-0062_billing_aware_phase9_cleanup.sql}
+# Production schema through 0096 predates a uniform SHA-256 ledger: some rows use
+# deployment labels and some were applied out-of-band. Preserve that history as
+# the audited Phase 0 baseline; all new migrations are strict from 0097 onward.
+START_MIGRATION=${START_MIGRATION:-0097}
+RETIRED_MIGRATIONS=${RETIRED_MIGRATIONS:-}
 
 if [[ "$MIGRATION_DATABASE_URL" == "${DATABASE_URL:-}" ]]; then
   echo "MIGRATION_DATABASE_URL must differ from DATABASE_URL" >&2
@@ -55,7 +58,7 @@ psql_exec() { { echo "SET ROLE $MIGRATION_OWNER;"; cat; } | psql_base "$@"; }
 psql_value() {
   local query=$1
   shift
-  { echo "SET ROLE $MIGRATION_OWNER;"; echo "$query"; } | psql_base "$@" -At | tail -n 1
+  { echo "SET ROLE $MIGRATION_OWNER;"; echo "$query"; } | psql_base "$@" -qAt | tail -n 1
 }
 
 psql_exec >/dev/null <<'SQL'
@@ -101,6 +104,8 @@ while IFS= read -r file; do
   echo "$filename ... applied"
 done < <(find "$MIGRATION_DIR" -maxdepth 1 -type f -name '[0-9][0-9][0-9][0-9]_*.sql' -printf '%f\n' | awk -v start="$START_MIGRATION" 'substr($0,1,4) >= start' | sort | sed "s|^|$MIGRATION_DIR/|")
 
-[[ "$found" == 1 ]] || { echo "No migrations found at or after $START_MIGRATION" >&2; exit 1; }
+if [[ "$found" == 0 ]]; then
+  echo "No pending migration files at or after $START_MIGRATION"
+fi
 unexpected_owner_count=$(psql_value "SELECT count(*) FROM pg_class c JOIN pg_namespace n ON n.oid=c.relnamespace WHERE n.nspname='public' AND c.relkind IN ('r','p','S','v','m') AND pg_get_userbyid(c.relowner) <> '$MIGRATION_OWNER'")
 [[ "$unexpected_owner_count" == 0 ]] || { echo "unexpected_owner_count=$unexpected_owner_count" >&2; exit 1; }
