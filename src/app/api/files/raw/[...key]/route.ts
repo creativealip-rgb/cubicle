@@ -36,7 +36,7 @@ export async function GET(
       .from(files)
       .where(eq(files.storageKey, objectKey))
       .limit(1);
-    if (!file) return new NextResponse("Not found", { status: 404 });
+    if (!file || file.uploadState !== "completed") return new NextResponse("Not found", { status: 404 });
     const allowed = await canAccessFile(file, request.nextUrl.searchParams.get("token"));
     if (!allowed) return new NextResponse("Not found", { status: 404 });
   }

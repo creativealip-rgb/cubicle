@@ -88,6 +88,7 @@ export async function GET(
   if (!file) {
     return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
+  if (file.uploadState !== "completed") return NextResponse.json({ error: "File not found" }, { status: 404 });
 
   const token = request.nextUrl.searchParams.get("token");
   const allowed = await canAccessFile(file, token);
