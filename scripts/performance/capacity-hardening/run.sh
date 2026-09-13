@@ -9,5 +9,5 @@ test "$(docker image inspect "$IMAGE" --format '{{index .RepoDigests 0}}')" = "$
 docker run --rm "$IMAGE" version | grep -q 'k6 v0.54.0'
 export CAPACITY_BASE_URL="$BASE_URL" CAPACITY_DATABASE_URL="$DB_URL"
 cd "$ROOT"; npm run capacity:seed -- --profile "$PROFILE" --run-id "$RUN_ID"; npm run capacity:auth -- --run-id "$RUN_ID"; npm run capacity:verify -- --run-id "$RUN_ID"; npm run capacity:invariants -- --run-id "$RUN_ID" --phase pre
-OUT="$ROOT/.capacity-runtime/$RUN_ID"; docker run --rm --network host -v "$ROOT/scripts/performance/capacity-hardening:/capacity:ro" -v "$OUT:/runtime" "$IMAGE" run --out "json=/runtime/k6-raw.jsonl" -e PROFILE="$PROFILE" -e BASE_URL="$BASE_URL" -e SESSIONS_FILE=/runtime/sessions.json -e SUMMARY_FILE=/runtime/k6-summary.json /capacity/k6/workload.js
+OUT="$ROOT/.capacity-runtime/$RUN_ID"; docker run --rm --user root --network host -v "$ROOT/scripts/performance/capacity-hardening:/capacity:ro" -v "$OUT:/runtime" "$IMAGE" run --out "json=/runtime/k6-raw.jsonl" -e PROFILE="$PROFILE" -e BASE_URL="$BASE_URL" -e SESSIONS_FILE=/runtime/sessions.json -e SUMMARY_FILE=/runtime/k6-summary.json /capacity/k6/workload.js
 npm run capacity:invariants -- --run-id "$RUN_ID" --phase post; gzip -9 "$OUT/k6-raw.jsonl"; sha256sum "$OUT"/* > "$OUT/artifacts.sha256"; echo "$OUT"
