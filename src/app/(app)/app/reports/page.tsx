@@ -2,7 +2,7 @@ import { headers } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { buildInvoiceDetailUrl } from "@/lib/invoice-origin";
-import { and, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, eq, gte, inArray, lt, lte, sql } from "drizzle-orm";
 import {
   AlertCircle,
   BarChart3,
@@ -165,14 +165,22 @@ export default async function ReportsPage({
     .where(eq(workspaceCurrencyRates.workspaceId, ws.id));
   const rates = buildRateMap(rateRows);
   const missingFx = new Set<string>();
+  const nextUtcDate = (value: string) => {
+    const date = new Date(`${value}T00:00:00Z`);
+    date.setUTCDate(date.getUTCDate() + 1);
+    return date.toISOString().slice(0, 10);
+  };
+  const paymentEndExclusive = nextUtcDate(period.end);
+  const comparisonPaymentEndExclusive = nextUtcDate(period.comparisonEnd);
 
-  const allIncomeRows = await db
+  const incomeAggregateRows = await db
     .select({
-      paidAt: payments.paidAt,
-      amount: payments.amount,
-      currency: invoices.currency,
       clientId: clients.id,
       clientName: clients.name,
+      currency: invoices.currency,
+      currentTotal: sql<string>`coalesce(sum(${payments.amount}) FILTER (WHERE ${payments.paidAt} >= ${period.start} AND ${payments.paidAt} < ${paymentEndExclusive}), 0)::text`,
+      previousTotal: sql<string>`coalesce(sum(${payments.amount}) FILTER (WHERE ${payments.paidAt} >= ${period.comparisonStart} AND ${payments.paidAt} < ${comparisonPaymentEndExclusive}), 0)::text`,
+      currentCount: sql<number>`count(*) FILTER (WHERE ${payments.paidAt} >= ${period.start} AND ${payments.paidAt} < ${paymentEndExclusive})::int`,
     })
     .from(payments)
     .innerJoin(invoices, eq(invoices.id, payments.invoiceId))
@@ -181,17 +189,19 @@ export default async function ReportsPage({
       and(
         eq(invoices.workspaceId, ws.id),
         gte(payments.paidAt, period.comparisonStart),
-        lte(payments.paidAt, period.end),
+        lt(payments.paidAt, paymentEndExclusive),
       ),
-    );
-  const allExpenseRows = await db
+    )
+    .groupBy(clients.id, clients.name, invoices.currency);
+  const expenseAggregateRows = await db
     .select({
-      date: expenses.date,
-      amount: expenses.amount,
-      currency: expenses.currency,
       categoryId: expenseCategories.id,
       categoryName: expenseCategories.name,
       categoryColor: expenseCategories.color,
+      currency: expenses.currency,
+      currentTotal: sql<string>`coalesce(sum(${expenses.amount}) FILTER (WHERE ${expenses.date} >= ${period.start}), 0)::text`,
+      previousTotal: sql<string>`coalesce(sum(${expenses.amount}) FILTER (WHERE ${expenses.date} >= ${period.comparisonStart} AND ${expenses.date} <= ${period.comparisonEnd}), 0)::text`,
+      currentCount: sql<number>`count(*) FILTER (WHERE ${expenses.date} >= ${period.start})::int`,
     })
     .from(expenses)
     .leftJoin(expenseCategories, eq(expenseCategories.id, expenses.categoryId))
@@ -201,6 +211,12 @@ export default async function ReportsPage({
         gte(expenses.date, period.comparisonStart),
         lte(expenses.date, period.end),
       ),
+    )
+    .groupBy(
+      expenseCategories.id,
+      expenseCategories.name,
+      expenseCategories.color,
+      expenses.currency,
     );
 
   let income = 0;
@@ -209,27 +225,36 @@ export default async function ReportsPage({
     string,
     { id: string; name: string; total: number; count: number }
   >();
-  for (const row of allIncomeRows) {
-    const value = convert(
-      row.amount,
+  for (const row of incomeAggregateRows) {
+    const currentValue = convert(
+      row.currentTotal,
       row.currency,
       baseCurrency,
       rates,
       missingFx,
     );
-    if (value === null) continue;
-    if (row.paidAt >= period.start) {
-      income += value;
-      const current = clientMap.get(row.clientId) ?? {
-        id: row.clientId,
-        name: row.clientName,
-        total: 0,
-        count: 0,
-      };
-      current.total += value;
-      current.count += 1;
-      clientMap.set(row.clientId, current);
-    } else previousIncome += value;
+    const previousValue = convert(
+      row.previousTotal,
+      row.currency,
+      baseCurrency,
+      rates,
+      missingFx,
+    );
+    if (currentValue !== null) {
+      income += currentValue;
+      if (row.currentCount > 0) {
+        const current = clientMap.get(row.clientId) ?? {
+          id: row.clientId,
+          name: row.clientName,
+          total: 0,
+          count: 0,
+        };
+        current.total += currentValue;
+        current.count += row.currentCount;
+        clientMap.set(row.clientId, current);
+      }
+    }
+    if (previousValue !== null) previousIncome += previousValue;
   }
 
   let expenseTotal = 0;
@@ -238,31 +263,72 @@ export default async function ReportsPage({
     string,
     { name: string; color: string | null; total: number; count: number }
   >();
-  for (const row of allExpenseRows) {
-    const value = convert(
-      row.amount,
+  for (const row of expenseAggregateRows) {
+    const currentValue = convert(
+      row.currentTotal,
       row.currency,
       baseCurrency,
       rates,
       missingFx,
     );
-    if (value === null) continue;
-    if (row.date >= period.start) {
-      expenseTotal += value;
-      const key = row.categoryId ?? "uncategorized";
-      const current = categoryMap.get(key) ?? {
-        name: row.categoryName ?? t("Tanpa kategori", "Uncategorized"),
-        color: row.categoryColor,
-        total: 0,
-        count: 0,
-      };
-      current.total += value;
-      current.count += 1;
-      categoryMap.set(key, current);
-    } else previousExpense += value;
+    const previousValue = convert(
+      row.previousTotal,
+      row.currency,
+      baseCurrency,
+      rates,
+      missingFx,
+    );
+    if (currentValue !== null) {
+      expenseTotal += currentValue;
+      if (row.currentCount > 0) {
+        const key = row.categoryId ?? "uncategorized";
+        const current = categoryMap.get(key) ?? {
+          name: row.categoryName ?? t("Tanpa kategori", "Uncategorized"),
+          color: row.categoryColor,
+          total: 0,
+          count: 0,
+        };
+        current.total += currentValue;
+        current.count += row.currentCount;
+        categoryMap.set(key, current);
+      }
+    }
+    if (previousValue !== null) previousExpense += previousValue;
   }
   const net = income - expenseTotal;
   const previousNet = previousIncome - previousExpense;
+
+  const incomeDailyRows = await db
+    .select({
+      day: sql<string>`date_trunc('day', ${payments.paidAt} AT TIME ZONE 'UTC')::date::text`,
+      currency: invoices.currency,
+      total: sql<string>`sum(${payments.amount})::text`,
+    })
+    .from(payments)
+    .innerJoin(invoices, eq(invoices.id, payments.invoiceId))
+    .where(
+      and(
+        eq(invoices.workspaceId, ws.id),
+        gte(payments.paidAt, period.start),
+        lt(payments.paidAt, paymentEndExclusive),
+      ),
+    )
+    .groupBy(sql`date_trunc('day', ${payments.paidAt} AT TIME ZONE 'UTC')::date`, invoices.currency);
+  const expenseDailyRows = await db
+    .select({
+      day: sql<string>`date_trunc('day', ${expenses.date})::date::text`,
+      currency: expenses.currency,
+      total: sql<string>`sum(${expenses.amount})::text`,
+    })
+    .from(expenses)
+    .where(
+      and(
+        eq(expenses.workspaceId, ws.id),
+        gte(expenses.date, period.start),
+        lte(expenses.date, period.end),
+      ),
+    )
+    .groupBy(sql`date_trunc('day', ${expenses.date})::date`, expenses.currency);
 
   const groups = buildTimeGroups(period.start, period.end, period.preset, lang);
   const chartPoints = groups.map((group) => ({
@@ -271,31 +337,24 @@ export default async function ReportsPage({
     income: 0,
     expense: 0,
   }));
-  for (const row of allIncomeRows) {
-    if (row.paidAt < period.start) continue;
-    const index = groups.findIndex(
-      (g) => row.paidAt >= g.start && row.paidAt <= g.end,
-    );
-    const value = convertToBase(
-      Number(row.amount),
-      row.currency,
-      baseCurrency,
-      rates,
-    );
-    if (index >= 0 && value !== null) chartPoints[index].income += value;
+  const groupIndexByDay = new Map<string, number>();
+  groups.forEach((group, index) => {
+    const cursor = new Date(`${group.start}T00:00:00Z`);
+    const end = new Date(`${group.end}T00:00:00Z`);
+    while (cursor <= end) {
+      groupIndexByDay.set(cursor.toISOString().slice(0, 10), index);
+      cursor.setUTCDate(cursor.getUTCDate() + 1);
+    }
+  });
+  for (const row of incomeDailyRows) {
+    const index = groupIndexByDay.get(row.day);
+    const value = convert(row.total, row.currency, baseCurrency, rates, missingFx);
+    if (index !== undefined && value !== null) chartPoints[index].income += value;
   }
-  for (const row of allExpenseRows) {
-    if (row.date < period.start) continue;
-    const index = groups.findIndex(
-      (g) => row.date >= g.start && row.date <= g.end,
-    );
-    const value = convertToBase(
-      Number(row.amount),
-      row.currency,
-      baseCurrency,
-      rates,
-    );
-    if (index >= 0 && value !== null) chartPoints[index].expense += value;
+  for (const row of expenseDailyRows) {
+    const index = groupIndexByDay.get(row.day);
+    const value = convert(row.total, row.currency, baseCurrency, rates, missingFx);
+    if (index !== undefined && value !== null) chartPoints[index].expense += value;
   }
 
   const topClients = Array.from(clientMap.values())
