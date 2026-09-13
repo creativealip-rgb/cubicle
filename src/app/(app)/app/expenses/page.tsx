@@ -10,7 +10,7 @@ import {
   clients,
   workspaceCurrencyRates,
 } from "@/db/schema";
-import { and, desc, eq, gte, lte } from "drizzle-orm";
+import { and, count, desc, eq, gte, lte, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -210,14 +210,38 @@ export default async function ExpensesPage({
     }))
     .sort((a, b) => b.primary - a.primary);
 
-  // List filters
-  const listConditions = [eq(expenses.workspaceId, ws.id)];
-  // Default list shows selected month; search q can broaden but still month-scoped for clarity
-  listConditions.push(gte(expenses.date, monthStart));
-  listConditions.push(lte(expenses.date, monthEnd));
+  // List filters stay in PostgreSQL so search/count/page see the same rows.
+  const escapeLikeLiteral = (value: string) =>
+    value.replaceAll("\\", "\\\\").replaceAll("%", "\\%").replaceAll("_", "\\_");
+  const listConditions = [
+    eq(expenses.workspaceId, ws.id),
+    gte(expenses.date, monthStart),
+    lte(expenses.date, monthEnd),
+  ];
   if (categoryId) listConditions.push(eq(expenses.categoryId, categoryId));
-
-  const allForFilter = await db
+  if (q) {
+    const pattern = `%${escapeLikeLiteral(q)}%`;
+    listConditions.push(sql`(
+      ${expenses.description} ILIKE ${pattern} ESCAPE '\\'
+      OR ${expenses.vendor} ILIKE ${pattern} ESCAPE '\\'
+      OR ${expenseCategories.name} ILIKE ${pattern} ESCAPE '\\'
+      OR ${projects.name} ILIKE ${pattern} ESCAPE '\\'
+      OR ${clients.name} ILIKE ${pattern} ESCAPE '\\'
+    )`);
+  }
+  const listPredicate = and(...listConditions);
+  const [{ total }] = await db
+    .select({ total: count(expenses.id) })
+    .from(expenses)
+    .leftJoin(expenseCategories, eq(expenseCategories.id, expenses.categoryId))
+    .leftJoin(projects, eq(projects.id, expenses.projectId))
+    .leftJoin(clients, eq(clients.id, expenses.clientId))
+    .where(listPredicate);
+  const totalCount = Number(total);
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const safePage = Math.min(page, totalPages);
+  const showApprox = ws.showBaseCurrencyApprox !== false;
+  const expenseRowsRaw = await db
     .select({
       id: expenses.id,
       date: expenses.date,
@@ -241,39 +265,21 @@ export default async function ExpensesPage({
     .leftJoin(expenseCategories, eq(expenseCategories.id, expenses.categoryId))
     .leftJoin(projects, eq(projects.id, expenses.projectId))
     .leftJoin(clients, eq(clients.id, expenses.clientId))
-    .where(and(...listConditions))
+    .where(listPredicate)
     .orderBy(desc(expenses.date), desc(expenses.createdAt), desc(expenses.id))
-    .limit(100);
-
-  const qLower = q.toLowerCase();
-  const filtered = q
-    ? allForFilter.filter(
-        (e) =>
-          e.description.toLowerCase().includes(qLower) ||
-          (e.vendor?.toLowerCase().includes(qLower) ?? false) ||
-          (e.categoryName?.toLowerCase().includes(qLower) ?? false) ||
-          (e.projectName?.toLowerCase().includes(qLower) ?? false) ||
-          (e.clientName?.toLowerCase().includes(qLower) ?? false),
-      )
-    : allForFilter;
-
-  const totalCount = filtered.length;
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const safePage = Math.min(page, totalPages);
-  const showApprox = ws.showBaseCurrencyApprox !== false;
-  const expenseRows = filtered
-    .slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE)
-    .map((e) => {
-      const amountBase = showApprox
-        ? convertToBase(
-            Number(e.amount) || 0,
-            e.currency,
-            baseCurrency,
-            rateMap,
-          )
-        : null;
-      return { ...e, amountBase };
-    });
+    .limit(PAGE_SIZE)
+    .offset((safePage - 1) * PAGE_SIZE);
+  const expenseRows = expenseRowsRaw.map((e) => {
+    const amountBase = showApprox
+      ? convertToBase(
+          Number(e.amount) || 0,
+          e.currency,
+          baseCurrency,
+          rateMap,
+        )
+      : null;
+    return { ...e, amountBase };
+  });
 
   // Recurring
   const recurringRaw = await db
