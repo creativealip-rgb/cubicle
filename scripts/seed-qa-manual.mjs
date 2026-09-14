@@ -79,8 +79,8 @@ async function upsertUser(email, name, passwordHash, plan = "solo") {
     [id, name, email, plan]
   );
   await client.query(
-    `INSERT INTO accounts (id, account_id, provider_id, user_id, password, created_at, updated_at)
-     VALUES ($1,$2,'credential',$3,$4,now(),now())`,
+    `INSERT INTO accounts (id, account_id, provider_id, issuer, user_id, password, created_at, updated_at)
+     VALUES ($1,$2,'credential','local:credential',$3,$4,now(),now())`,
     [randomUUID(), id, id, passwordHash]
   );
   return id;
