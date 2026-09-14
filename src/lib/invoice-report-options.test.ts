@@ -20,6 +20,12 @@ describe("normalizeInvoiceReportRange", () => {
       "Rentang tanggal tidak valid",
     );
   });
+
+  it("rejects impossible dates and ranges longer than 366 days", () => {
+    expect(() => normalizeInvoiceReportRange("2026-02-31", "2026-03-01")).toThrow("Rentang tanggal tidak valid");
+    expect(() => normalizeInvoiceReportRange("2025-01-01", "2026-01-02")).toThrow("Rentang tanggal maksimal 366 hari");
+    expect(normalizeInvoiceReportRange("2024-01-01", "2024-12-31")).toEqual({ from: "2024-01-01", to: "2024-12-31" });
+  });
 });
 
 describe("invoice report range signature", () => {

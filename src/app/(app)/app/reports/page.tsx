@@ -45,6 +45,7 @@ import {
 } from "@/lib/report-period";
 import { ReportControls } from "@/components/reports/report-controls";
 import { buildTimeReport } from "@/lib/time-reporting";
+import { buildReportFxContract } from "@/lib/report-fx-contract";
 import { effectiveWorkDateSql } from "@/lib/effective-work-date";
 import { parseReportTab, withQuery } from "@/lib/finance-tabs";
 import { IncomeExpenseChart } from "@/components/reports/income-expense-chart";
@@ -517,7 +518,16 @@ export default async function ReportsPage({
     );
   const timeReport = buildTimeReport(detailedTimeRows);
 
-  const missingFxList = Array.from(missingFx).sort();
+  const fxContract = buildReportFxContract({
+    baseCurrency,
+    fxSnapshot: new Date().toISOString(),
+    rates,
+    rows: [
+      ...incomeAggregateRows.filter((row) => row.currentCount > 0).map((row) => ({ currency: row.currency, amount: row.currentTotal, rowCount: row.currentCount })),
+      ...expenseAggregateRows.filter((row) => row.currentCount > 0).map((row) => ({ currency: row.currency, amount: row.currentTotal, rowCount: row.currentCount })),
+    ],
+  });
+  const missingFxList = fxContract.missingFx.map((entry) => entry.currency);
   const reportHref = (tab: "finance" | "time") =>
     withQuery(
       "/app/reports",

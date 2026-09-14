@@ -1,7 +1,7 @@
 # Cubiqlo Capacity, Performance & Schema Hardening — Execution Contract
 
 **Tanggal:** 13 September 2026  
-**Status:** Revised after review — planning only, execution `NO-GO` until Phase 0 evidence and approvals exist  
+**Status:** Execution in progress — Phase 6 two-hour soak active; Phase 7 verdict not established
 **Target host under test:** 4 vCPU, 16 GB RAM, 200 GB NVMe, 16 TB bandwidth  
 **Audited production source:** `main@893c84d`  
 **Audited production image:** `cubiqlo-prod:sha-893c84d68b860c847591356bba93c6496ab1266d`  
@@ -617,6 +617,10 @@ Executable reconciliation fails closed against a versioned expected-check ledger
 - URL TTL and exact key.
 - private object unavailable before finalize.
 
+### 8.11 Execution status
+
+**Source/state-machine/isolated-provider status: PASS.** Evidence: `docs/operations/evidence/capacity-hardening/phase4-upload-lifecycle-final-2026-09-13.md`. Production release/browser proof remains pending release phase. Real-provider 20-way R2 mutation was not run and is not claimed; §8.10 keeps it separately approval-gated.
+
 ## 9. Phase 5 — Export inventory and protection
 
 ### 9.1 Required endpoint matrix
@@ -665,6 +669,10 @@ No endpoint is declared safe by analogy; inspect each query and rendering path.
 Keep synchronous export only if all endpoint-specific concurrency SLOs pass. Promote to background worker when measured memory/CPU/time exceeds documented threshold. Do not add worker preemptively.
 
 **Acceptance:** complete matrix exists; all heavy endpoints enforce auth, tenant, range/row limits, rate and concurrency contract; slots release on every termination path; 5 parallel heavy exports do not break normal CRUD SLO or trigger OOM.
+
+### 9.4 Execution status
+
+**Source and isolated runtime status: PASS.** Evidence: `docs/operations/evidence/capacity-hardening/phase5-export-protection-final-2026-09-14.md`. Production monitoring hold remains release-phase work.
 
 ## 10. Phase 6 — Reproducible benchmark contract
 
@@ -926,6 +934,10 @@ After highest passing stage:
 - verify no restart/OOM/disk growth anomaly;
 - repeat recovery after any safety abort;
 - run mixed contention at bounded levels: normal traffic plus upload, export, and mocked AI, proving normal CRUD SLO remains within threshold.
+
+### 11.6 Execution status
+
+**Measured workload status: PARTIAL PASS with explicit ceilings.** Normal read, soak/recovery, repeated DB-heavy/XLSX, upload validator, and export contention passed. PDF, mutation-heavy, R2 transport, k6 SSE AI, and real-provider AI remain `NOT ESTABLISHED`; evidence: `docs/operations/evidence/capacity-hardening/phase6-benchmark-final-2026-09-14.md`.
 
 ## 12. Phase 7 — Capacity decision
 

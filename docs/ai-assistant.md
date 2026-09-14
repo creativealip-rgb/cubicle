@@ -1,7 +1,7 @@
 # Cubicle AI Assistant
 
 > **Status:** Live · **Component:** floating chat panel on every `/app/*` route
-> **Model:** tr/MiniMax-M3 via 9router (OpenAI-compatible)
+> **Model:** ag/gemini-3.7-flash via 9router (OpenAI-compatible)
 > **Architecture:** agentic RAG — model calls structured tool functions, no embeddings
 
 ## What it is
@@ -19,7 +19,7 @@ POST /api/ai/chat  (chat-panel.tsx)
    ↓
 Chat route: build messages = [system prompt, ...history, user msg]
    ↓
-tr/MiniMax-M3 (9router /v1/chat/completions)
+ag/gemini-3.7-flash (9router /v1/chat/completions)
    ↓   tool_calls?
 executeTool(name, args) — Drizzle queries
    ↓   tool returns JSON
@@ -80,7 +80,7 @@ Conversation list visible in panel sidebar (click History icon). Click row to lo
 # AI Assistant (OpenAI-compatible, used by /api/ai/chat)
 AI_API_KEY=sk-...             # or mount at /run/secrets/9router_api_key
 AI_BASE_URL=https://9router-168-144-37-19.sslip.io/v1
-AI_MODEL=tr/MiniMax-M3
+AI_MODEL=ag/gemini-3.7-flash
 ```
 
 Resolution order: `/run/secrets/9router_api_key` → `AI_API_KEY` env.

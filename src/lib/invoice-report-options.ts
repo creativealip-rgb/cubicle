@@ -4,9 +4,17 @@ export type InvoiceReportRange = { from: string; to: string };
 
 const ISO_DATE = /^\d{4}-\d{2}-\d{2}$/;
 
+function validIsoDate(value: string) {
+  if (!ISO_DATE.test(value)) return false;
+  const date = new Date(`${value}T00:00:00Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
 export function normalizeInvoiceReportRange(from: string, to: string): InvoiceReportRange {
-  if (!ISO_DATE.test(from) || !ISO_DATE.test(to)) throw new Error("Rentang tanggal tidak valid");
+  if (!validIsoDate(from) || !validIsoDate(to)) throw new Error("Rentang tanggal tidak valid");
   if (from > to) throw new Error("Tanggal awal harus sebelum tanggal akhir");
+  const days = Math.round((Date.parse(`${to}T00:00:00Z`) - Date.parse(`${from}T00:00:00Z`)) / 86_400_000) + 1;
+  if (days > 366) throw new Error("Rentang tanggal maksimal 366 hari");
   return { from, to };
 }
 

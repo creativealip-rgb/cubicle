@@ -50,7 +50,7 @@ openssl rand -base64 32
 ```env
 AI_API_KEY=your-ai-api-key
 AI_BASE_URL=https://your-openai-compatible-endpoint/v1
-AI_MODEL=ag/gemini-3-flash
+AI_MODEL=ag/gemini-3.7-flash
 AI_MONTHLY_CAP_USD=5
 
 # Legacy/fallback names used by prompt generator:

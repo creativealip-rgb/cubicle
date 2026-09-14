@@ -28,8 +28,10 @@ export async function GET(_req: NextRequest) {
   return withExportAdmission({ userId: session.user.id, workspaceId, endpoint: "clients-pdf" }, async () => {
 
   const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
-  const clientRows = await db.select().from(clients).where(eq(clients.workspaceId, workspaceId)).orderBy(desc(clients.createdAt));
-  const projectRows = await db.select().from(projects).where(eq(projects.workspaceId, workspaceId));
+  const clientRows = await db.select().from(clients).where(eq(clients.workspaceId, workspaceId)).orderBy(desc(clients.createdAt)).limit(2001);
+  if (clientRows.length > 2000) return NextResponse.json({ error: "Export terlalu besar. Maksimal 2.000 klien." }, { status: 413 });
+  const projectRows = await db.select().from(projects).where(eq(projects.workspaceId, workspaceId)).limit(10001);
+  if (projectRows.length > 10000) return NextResponse.json({ error: "Export terlalu besar. Terlalu banyak proyek terkait." }, { status: 413 });
   const lang = (cookieStore.get("cubiqlo_lang")?.value === "id" ? "id" : "en") as "id" | "en";
 
   const buf = await renderClientPdf({

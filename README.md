@@ -84,7 +84,7 @@ OPENAI_API_KEY=<key>          # fallback key for prompt generator
 OPENAI_API_BASE=https://api.example.com/v1
 AI_API_KEY=***                # AI Assistant key (or Docker secret /run/secrets/9router_api_key)
 AI_BASE_URL=http://10.0.1.12:20128/v1
-AI_MODEL=ag/gemini-3-flash
+AI_MODEL=ag/gemini-3.7-flash
 ```
 
 ### 3. Start database

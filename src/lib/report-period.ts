@@ -18,6 +18,13 @@ export type ReportTimeGroup = {
 
 const DAY_MS = 86_400_000;
 
+export function reportRangeDays(start: string, end: string): number | null {
+  const from = parseIsoDate(start);
+  const to = parseIsoDate(end);
+  if (!from || !to || from > to) return null;
+  return Math.round((to.getTime() - from.getTime()) / DAY_MS) + 1;
+}
+
 function pad(value: number) {
   return String(value).padStart(2, "0");
 }

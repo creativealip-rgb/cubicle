@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 const PARALLEL = 20;
-const BYTES = 25 * 1024 * 1024;
+const BYTES = 50 * 1024 * 1024;
 const CHUNK = 64 * 1024;
 const HEAP_CEILING = 256 * 1024 * 1024;
 const TIMEOUT_MS = 30_000;

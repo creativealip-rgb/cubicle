@@ -25,6 +25,7 @@ import {
   buildReportPeriod,
   buildTimeGroups,
   reportPeriodLabel,
+  reportRangeDays,
 } from "@/lib/report-period";
 import { styleWorksheet, xlsxResponse } from "@/lib/excel";
 import { buildTimeReport } from "@/lib/time-reporting";
@@ -45,6 +46,9 @@ export async function GET(request: Request) {
       from: q.get("from") || undefined,
       to: q.get("to") || undefined,
     });
+    if ((reportRangeDays(period.start, period.end) ?? 367) > 366) {
+      return Response.json({ error: "Rentang laporan maksimal 366 hari." }, { status: 400 });
+    }
     const base = normalizeCurrency(ws.defaultCurrency || "IDR");
     const rateRows = await db
       .select({
@@ -70,7 +74,8 @@ export async function GET(request: Request) {
           gte(payments.paidAt, period.start),
           lte(payments.paidAt, period.end),
         ),
-      );
+      )
+      .limit(10001);
     const expenseRows = await db
       .select({
         date: expenses.date,
@@ -89,7 +94,11 @@ export async function GET(request: Request) {
           gte(expenses.date, period.start),
           lte(expenses.date, period.end),
         ),
-      );
+      )
+      .limit(10001);
+    if (incomeRows.length + expenseRows.length > 10000) {
+      return Response.json({ error: "Export terlalu besar. Maksimal 10.000 transaksi." }, { status: 413 });
+    }
     const fxContract = buildReportFxContract({
       baseCurrency: base,
       fxSnapshot: new Date().toISOString(),
@@ -160,7 +169,8 @@ export async function GET(request: Request) {
           eq(invoices.workspaceId, ws.id),
           inArray(invoices.status, ["sent", "viewed", "overdue"]),
         ),
-      );
+      )
+      .limit(10001);
     const today = new Date().toISOString().slice(0, 10);
     const receivables = aging
       .map((r) => {
@@ -180,7 +190,10 @@ export async function GET(request: Request) {
         };
       })
       .filter((r) => r.Sisa > 0);
-    const timeRows = await db.select({ projectId: timeEntries.projectId, projectName: projects.name, taskId: timeEntries.taskId, taskTitle: tasks.title, userId: timeEntries.userId, userName: users.name, durationMinutes: timeEntries.durationMinutes, billable: timeEntries.billable, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).leftJoin(projects, eq(projects.id, timeEntries.projectId)).leftJoin(tasks, eq(tasks.id, timeEntries.taskId)).leftJoin(users, eq(users.id, timeEntries.userId)).where(and(eq(timeEntries.workspaceId, ws.id), gte(sql`(${timeEntries.startTime})::date`, period.start), lte(sql`(${timeEntries.startTime})::date`, period.end)));
+    const timeRows = await db.select({ projectId: timeEntries.projectId, projectName: projects.name, taskId: timeEntries.taskId, taskTitle: tasks.title, userId: timeEntries.userId, userName: users.name, durationMinutes: timeEntries.durationMinutes, billable: timeEntries.billable, hourlyRate: timeEntries.hourlyRate }).from(timeEntries).leftJoin(projects, eq(projects.id, timeEntries.projectId)).leftJoin(tasks, eq(tasks.id, timeEntries.taskId)).leftJoin(users, eq(users.id, timeEntries.userId)).where(and(eq(timeEntries.workspaceId, ws.id), gte(sql`(${timeEntries.startTime})::date`, period.start), lte(sql`(${timeEntries.startTime})::date`, period.end))).limit(10001);
+    if (aging.length + timeRows.length > 10000) {
+      return Response.json({ error: "Export terlalu besar. Maksimal 10.000 baris detail." }, { status: 413 });
+    }
     const timeReport = buildTimeReport(timeRows);
     const wb = new ExcelJS.Workbook();
     wb.creator = "Cubiqlo";

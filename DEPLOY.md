@@ -43,7 +43,7 @@ This repo includes a `docker-compose.yml` optimized for Dokploy.
    OPENAI_API_BASE=https://api.example.com/v1
    AI_API_KEY=...
    AI_BASE_URL=http://10.0.1.12:20128/v1
-   AI_MODEL=ag/gemini-3-flash
+   AI_MODEL=ag/gemini-3.7-flash
    AI_MONTHLY_CAP_USD=5
    ```
 

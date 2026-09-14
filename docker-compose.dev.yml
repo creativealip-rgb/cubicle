@@ -40,7 +40,7 @@ services:
       # an empty `${AI_API_KEY:-}` in `environment:` would override and null
       # out the real key coming from `.env.development.local` (env_file),
       # making generateVisualPrompt throw "AI belum dikonfigurasi".
-      AI_MODEL: ${AI_MODEL:-ag/gemini-3-flash}
+      AI_MODEL: ${AI_MODEL:-ag/gemini-3.7-flash}
       OPENAI_API_KEY: ""
       # CRON_SECRET is intentionally NOT pinned here: an empty value in
       # `environment:` would override (and null out) the secret coming from

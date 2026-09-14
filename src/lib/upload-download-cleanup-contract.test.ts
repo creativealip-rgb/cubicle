@@ -11,6 +11,14 @@ describe("upload download and cleanup lifecycle", () => {
     expect(raw).toContain('file.uploadState !== "completed"');
   });
 
+  it("signs only the authorized exact key for five minutes with a safe filename", () => {
+    const r2 = readFileSync("src/lib/r2.ts", "utf8");
+    expect(download).toContain("getSignedDownloadUrl(file.storageKey, 300, file.name)");
+    expect(r2).toContain("ResponseContentDisposition: contentDisposition(filename)");
+    expect(r2).toContain("expiresIn = 300");
+    expect(r2).toContain("filename.replace(");
+  });
+
   it("deletes only canonical quarantine objects behind terminal cleanup claims", () => {
     expect(cleanup).toContain("DeleteObjectCommand");
     expect(cleanup).toContain('startsWith(`quarantine/${intent.workspaceId}/`)');

@@ -7,6 +7,21 @@ async function* chunks(...values: Uint8Array[]) { for (const value of values) yi
 const pdf = Buffer.from("%PDF-1.7\nhello");
 
 describe("streamed upload object validation", () => {
+  it.each([5, 50])("streams an exact %i MiB PDF without buffering the object", async (mib) => {
+    const bytes = mib * 1024 * 1024;
+    async function* fixture() {
+      yield Buffer.from("%PDF-1.7\n");
+      let remaining = bytes - 9;
+      const chunk = Buffer.alloc(64 * 1024, 0x20);
+      while (remaining > 0) {
+        const size = Math.min(remaining, chunk.length);
+        yield chunk.subarray(0, size);
+        remaining -= size;
+      }
+    }
+    await expect(validateUploadObjectStream(fixture(), { expectedBytes: bytes, maxBytes: bytes, expectedMime: "application/pdf" })).resolves.toMatchObject({ bytes, mime: "application/pdf" });
+  });
+
   it("accepts safe plain text", async () => {
     const body = Buffer.from("Cubiqlo production file QA");
     await expect(validateUploadObjectStream(chunks(body), { expectedBytes: body.length, maxBytes: 1024, expectedMime: "text/plain" })).resolves.toMatchObject({ bytes: body.length, mime: "text/plain", magic: "plain" });

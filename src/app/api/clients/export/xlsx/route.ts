@@ -29,7 +29,9 @@ export async function GET(_req: NextRequest) {
       .select()
       .from(clients)
       .where(eq(clients.workspaceId, workspaceId))
-      .orderBy(desc(clients.createdAt));
+      .orderBy(desc(clients.createdAt))
+      .limit(5001);
+    if (clientRows.length > 5000) return NextResponse.json({ error: "Export terlalu besar. Maksimal 5.000 klien." }, { status: 413 });
 
     const rows = clientRows.map((client) => ({
       Nama: client.name,

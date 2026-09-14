@@ -18,4 +18,17 @@ describe("heavy export admission", () => {
       expect((response as Response).status).toBe(status);
     }
   });
+
+  it("aborts timed-out work and releases its lease", async () => {
+    const backend: ExportAdmissionBackend = { acquire: vi.fn().mockResolvedValue({ ok: true, token: "timeout-lease" }), renew: vi.fn(), release: vi.fn().mockResolvedValue(true) };
+    let aborted = false;
+    const result = await withExportAdmission({ userId: "u", workspaceId: "w", endpoint: "x", backend, timeoutMs: 5 }, async (signal) => {
+      await new Promise<void>((resolve) => signal.addEventListener("abort", () => { aborted = true; resolve(); }, { once: true }));
+      return "late";
+    });
+    expect(result).toBeInstanceOf(Response);
+    expect((result as Response).status).toBe(504);
+    expect(aborted).toBe(true);
+    expect(backend.release).toHaveBeenCalledWith("timeout-lease");
+  });
 });

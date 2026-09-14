@@ -47,9 +47,15 @@ export function buildFileKey(workspaceId: string, fileId: string, safeFilename: 
   return `workspaces/${workspaceId}/files/${fileId}/${safeFilename}`;
 }
 
-export async function getSignedDownloadUrl(storageKey: string, expiresIn = 300) {
+function contentDisposition(filename?: string) {
+  if (!filename) return undefined;
+  const safe = filename.replace(/[\r\n"\\/]/g, "_").slice(0, 180) || "download";
+  return `attachment; filename="${safe}"`;
+}
+
+export async function getSignedDownloadUrl(storageKey: string, expiresIn = 300, filename?: string) {
   assertR2Configured();
-  return getSignedUrl(r2, new GetObjectCommand({ Bucket: R2_BUCKET, Key: storageKey }), { expiresIn });
+  return getSignedUrl(r2, new GetObjectCommand({ Bucket: R2_BUCKET, Key: storageKey, ResponseContentDisposition: contentDisposition(filename) }), { expiresIn });
 }
 
 export async function getSignedUploadUrl(storageKey: string, contentType: string, expiresIn = 300) {

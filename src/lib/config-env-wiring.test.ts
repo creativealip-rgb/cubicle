@@ -32,8 +32,8 @@ describe("config env wiring", () => {
     expect(compose).toContain("AI_API_KEY: ${AI_API_KEY:-}");
   });
 
-  it("aligns AI_MODEL default to ag/gemini-3-flash in both compose files", () => {
-    expect(compose).toContain("AI_MODEL: ${AI_MODEL:-ag/gemini-3-flash}");
-    expect(composeDev).toContain("AI_MODEL: ${AI_MODEL:-ag/gemini-3-flash}");
+  it("aligns AI_MODEL default to ag/gemini-3.7-flash in both compose files", () => {
+    expect(compose).toContain("AI_MODEL: ${AI_MODEL:-ag/gemini-3.7-flash}");
+    expect(composeDev).toContain("AI_MODEL: ${AI_MODEL:-ag/gemini-3.7-flash}");
   });
 });

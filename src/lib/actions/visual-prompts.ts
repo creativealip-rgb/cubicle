@@ -18,7 +18,7 @@ const MONTHLY_CAP_USD = 50;
 
 const visualPromptSchema = promptBriefSchema.transform((input) => ({
   ...input,
-  model: input.model || (process.env.AI_MODEL ?? "ag/gemini-3.6-flash-low"),
+  model: input.model || (process.env.AI_MODEL ?? "ag/gemini-3.7-flash"),
 }));
 
 function getApiKey() {

@@ -104,7 +104,7 @@ export async function GET(
     if (object.ContentLength !== file.sizeBytes || object.ContentType !== file.mimeType || object.Metadata?.intentid !== intent.id || object.Metadata?.attemptid !== intent.promotionAttemptId || (intent.expectedSha256 && object.Metadata?.sha256 !== intent.expectedSha256)) return NextResponse.json({ error: "File not found" }, { status: 404 });
   }
 
-  const url = await getSignedDownloadUrl(file.storageKey);
+  const url = await getSignedDownloadUrl(file.storageKey, 300, file.name);
 
   // A portal file is viewed only after a successful token-authorized download.
   if (token) {
