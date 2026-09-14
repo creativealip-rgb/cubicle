@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { files, users } from "@/db/schema";
+import { files, uploadIntents, users } from "@/db/schema";
 import { eq, and, desc } from "drizzle-orm";
 import { z } from "zod";
 import {
@@ -156,7 +156,10 @@ export async function deleteFile(fileId: string) {
   if (!file) throw new Error("File not found");
 
   await deleteStoredFile(file.storageKey);
-  await db.delete(files).where(and(eq(files.id, fileId), eq(files.workspaceId, workspaceId)));
+  await db.transaction(async (tx) => {
+    await tx.delete(uploadIntents).where(and(eq(uploadIntents.finalFileId, fileId), eq(uploadIntents.workspaceId, workspaceId)));
+    await tx.delete(files).where(and(eq(files.id, fileId), eq(files.workspaceId, workspaceId)));
+  });
   await writeActivityLog(workspaceId, user.id, "deleted_file", "file", fileId);
   revalidatePath("/app/files");
   return { success: true };
