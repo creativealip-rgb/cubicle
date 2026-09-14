@@ -154,7 +154,7 @@ export async function generateVisualPrompt(rawInput: unknown) {
   // Reserve happens BEFORE the provider is invoked; the reservation is only
   // released when the provider call never succeeded (see checkAiRateLimitDb
   // boundary note — no refund for persistence failures after a success).
-  const aiRate = await checkAiRateLimitDb(workspaceId, plan);
+  const aiRate = await checkAiRateLimitDb(workspaceId, user.id, plan);
   if (!aiRate.allowed) {
     throw new Error(
       `Jatah AI bulanan ${aiRate.limit} sudah habis. Reset ${new Date(aiRate.resetAt).toISOString()}.`,
@@ -237,7 +237,7 @@ export async function generateVisualPrompt(rawInput: unknown) {
     // (promptGenerations insert, activity log) do NOT refund.
     if (!providerSucceeded) {
       try {
-        await releaseAiQuota(workspaceId);
+        await releaseAiQuota(user.id);
       } catch {
         // best-effort refund
       }

@@ -154,7 +154,7 @@ export async function POST(req: NextRequest) {
   // concurrent requests cannot exceed the cap). Reservation happens BEFORE the
   // provider is invoked; if the provider never returns a successful response
   // the reservation is refunded in runAgentLoop's finally.
-  const aiRate = await checkAiRateLimitDb(wsId, plan);
+  const aiRate = await checkAiRateLimitDb(wsId, session.user.id, plan);
   if (!aiRate.allowed) {
     const resetDate = new Date(aiRate.resetAt).toISOString();
     return new Response(
@@ -196,7 +196,7 @@ export async function POST(req: NextRequest) {
     // checkAiRateLimitDb boundary note). Best-effort; never mask the error.
     try {
       const { releaseAiQuota } = await import("@/lib/plan");
-      await releaseAiQuota(wsId);
+      await releaseAiQuota(session.user.id);
     } catch {
       // best-effort refund
     }
@@ -226,7 +226,7 @@ export async function POST(req: NextRequest) {
     messages,
     send,
     close,
-    workspaceId: wsId,
+    quotaUserId: session.user.id,
     conversationId,
     persistAssistant: async (final, toolRecords, lastToolName, totalUsage, isConfirmationPending) => {
       // Persist tool messages first
@@ -278,7 +278,7 @@ async function runAgentLoop(opts: {
   messages: ChatMessage[];
   send: (event: string, data: unknown) => void;
   close: () => void;
-  workspaceId: string;
+  quotaUserId: string;
   conversationId: string;
   persistAssistant: (
     finalContent: string,
@@ -288,7 +288,7 @@ async function runAgentLoop(opts: {
     isConfirmationPending?: boolean,
   ) => Promise<void>;
 }) {
-  const { messages, send, close, workspaceId, conversationId, persistAssistant } = opts;
+  const { messages, send, close, quotaUserId, conversationId, persistAssistant } = opts;
 
   let rounds = 0;
   let totalUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
@@ -433,10 +433,10 @@ async function runAgentLoop(opts: {
     // succeeded (streamChat threw / never returned). After a successful
     // provider response the quota is spent — persistence failures here do
     // NOT trigger a refund (see checkAiRateLimitDb boundary note).
-    if (!providerSucceeded && workspaceId) {
+    if (!providerSucceeded && quotaUserId) {
       try {
         const { releaseAiQuota } = await import("@/lib/plan");
-        await releaseAiQuota(workspaceId);
+        await releaseAiQuota(quotaUserId);
       } catch {
         // Refund is best-effort; never mask the original error.
       }

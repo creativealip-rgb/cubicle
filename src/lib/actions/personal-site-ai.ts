@@ -58,7 +58,7 @@ export async function generatePersonalSiteCopy(
   }
 
   // Monthly AI quota (DB-backed, same counter as chat/action routes).
-  const aiRate = await checkAiRateLimitDb(workspaceId, plan);
+  const aiRate = await checkAiRateLimitDb(workspaceId, user.id, plan);
   if (!aiRate.allowed) {
     const resetDate = new Date(aiRate.resetAt).toISOString();
     throw new Error(`Batas ${aiRate.limit} request AI/bulan tercapai. Reset setelah ${resetDate}.`);
@@ -148,7 +148,7 @@ export async function generatePersonalSiteCopy(
     // failures do NOT refund. Best-effort; never mask the original error.
     if (!providerSucceeded) {
       try {
-        await releaseAiQuota(workspaceId);
+        await releaseAiQuota(user.id);
       } catch {
         // best-effort refund
       }

@@ -29,9 +29,10 @@ describe("AI quota atomicity contract (plan.ts)", () => {
     expect(src).toContain("aiUsageDaily.count} + 1");
   });
 
-  it("releaseAiQuota(workspaceId) decrements atomically with a floor of zero", () => {
+  it("releaseAiQuota(userId) decrements atomically with a floor of zero", () => {
     const src = plan();
     expect(src).toMatch(/export async function releaseAiQuota/);
+    expect(src).toContain("eq(aiUsageDaily.userId, userId)");
     expect(src).toContain("GREATEST(");
     expect(src).toContain("aiUsageDaily.count} - 1");
     // Only decrement rows that actually have quota (never below zero).

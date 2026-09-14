@@ -194,6 +194,7 @@ export function checkWorkspaceRateLimit(
  */
 export async function checkAiRateLimitDb(
   workspaceId: string,
+  userId: string,
   plan: string,
 ): Promise<{ allowed: boolean; count: number; limit: number; resetAt: number }> {
   const limit = getPlanLimits(plan).aiRequestsPerMonth;
@@ -211,11 +212,12 @@ export async function checkAiRateLimitDb(
     .insert(aiUsageDaily)
     .values({
       workspaceId,
+      userId,
       usageDate: sql`date_trunc('month', current_date)::date`,
       count: 1,
     })
     .onConflictDoUpdate({
-      target: [aiUsageDaily.workspaceId, aiUsageDaily.usageDate],
+      target: [aiUsageDaily.userId, aiUsageDaily.usageDate],
       set: {
         count: sql`${aiUsageDaily.count} + 1`,
         updatedAt: new Date(),
@@ -240,7 +242,7 @@ export async function checkAiRateLimitDb(
  * checkAiRateLimitDb reservation. Never refund after a successful provider
  * response (see checkAiRateLimitDb boundary note).
  */
-export async function releaseAiQuota(workspaceId: string): Promise<void> {
+export async function releaseAiQuota(userId: string): Promise<void> {
   await db
     .update(aiUsageDaily)
     .set({
@@ -249,7 +251,7 @@ export async function releaseAiQuota(workspaceId: string): Promise<void> {
     })
     .where(
       and(
-        eq(aiUsageDaily.workspaceId, workspaceId),
+        eq(aiUsageDaily.userId, userId),
         eq(aiUsageDaily.usageDate, sql`date_trunc('month', current_date)::date`),
         gt(aiUsageDaily.count, 0),
       ),

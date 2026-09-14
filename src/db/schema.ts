@@ -670,11 +670,12 @@ export const userExtraWorkspaceEntitlements = pgTable("user_extra_workspace_enti
 
 export const aiUsageDaily = pgTable("ai_usage_daily", {
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   usageDate: date("usage_date").notNull(),
   count: integer("count").notNull().default(0),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (t) => [
-  unique("ai_usage_daily_ws_date").on(t.workspaceId, t.usageDate),
+  unique("ai_usage_daily_user_date_uidx").on(t.userId, t.usageDate),
 ]);
 
 // ─── Clients ───

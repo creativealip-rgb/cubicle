@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
   // the catch below. Once the action succeeds the request is spent — no
   // refund (see checkAiRateLimitDb boundary note).
   let quotaWorkspaceId: string | null = null;
+  let quotaUserId: string | null = null;
 
   try {
     const markDone = async () => {
@@ -72,7 +73,7 @@ export async function POST(req: NextRequest) {
       await assertWorkspaceWritable(db, session.user.id, task.workspaceId);
       const apiLimited = await enforcePlanApiRateLimit(req, { userId: session.user.id, workspaceId: task.workspaceId });
       if (apiLimited) return apiLimited;
-      const aiRate = await checkAiRateLimitDb(task.workspaceId, plan);
+      const aiRate = await checkAiRateLimitDb(task.workspaceId, session.user.id, plan);
       if (!aiRate.allowed) {
         return NextResponse.json(
           { error: `Batas AI bulanan tercapai (${aiRate.limit}/bulan). Reset ${new Date(aiRate.resetAt).toISOString()}.` },
@@ -80,6 +81,7 @@ export async function POST(req: NextRequest) {
         );
       }
       quotaWorkspaceId = task.workspaceId;
+      quotaUserId = session.user.id;
 
       const [updated] = await db.update(tasks)
         .set({ status: p.newStatus, updatedAt: new Date() })
@@ -110,7 +112,7 @@ export async function POST(req: NextRequest) {
       await assertWorkspaceWritable(db, session.user.id, invoice.workspaceId);
       const apiLimited = await enforcePlanApiRateLimit(req, { userId: session.user.id, workspaceId: invoice.workspaceId });
       if (apiLimited) return apiLimited;
-      const aiRate = await checkAiRateLimitDb(invoice.workspaceId, plan);
+      const aiRate = await checkAiRateLimitDb(invoice.workspaceId, session.user.id, plan);
       if (!aiRate.allowed) {
         return NextResponse.json(
           { error: `Batas AI bulanan tercapai (${aiRate.limit}/bulan). Reset ${new Date(aiRate.resetAt).toISOString()}.` },
@@ -118,6 +120,7 @@ export async function POST(req: NextRequest) {
         );
       }
       quotaWorkspaceId = invoice.workspaceId;
+      quotaUserId = session.user.id;
       await db.insert(activityLogs).values({
         workspaceId: invoice.workspaceId,
         actorId: session.user.id,
@@ -393,9 +396,9 @@ export async function POST(req: NextRequest) {
     // Refund the quota reservation made by checkAiRateLimitDb above — the
     // action never completed, so the reservation must not be left counted
     // against the monthly cap. Refund is best-effort; never mask the error.
-    if (quotaWorkspaceId) {
+    if (quotaWorkspaceId && quotaUserId) {
       try {
-        await releaseAiQuota(quotaWorkspaceId);
+        await releaseAiQuota(quotaUserId);
       } catch {
         // best-effort refund
       }
