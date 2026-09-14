@@ -238,6 +238,20 @@ export const auth = betterAuth({
         type: "email_verification",
       });
     },
+    afterEmailVerification: async (user) => {
+      const name = user.name?.trim() || "there";
+      await sendNotification({
+        to: user.email,
+        subject: "Welcome to Cubiqlo",
+        text:
+          `Hi ${name},\n\n` +
+          "Your email is verified. Your Cubiqlo workspace is ready.\n\n" +
+          "Start by setting up your workspace, invoice defaults, and first client.\n\n" +
+          "Open Cubiqlo: https://app.cubiqlo.com/app/dashboard\n\n" +
+          "— Cubiqlo",
+        type: "welcome_email",
+      });
+    },
   },
   secret: resolveBetterAuthSecret(
     process.env.BETTER_AUTH_SECRET,

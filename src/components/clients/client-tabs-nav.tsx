@@ -12,7 +12,7 @@ type ClientTabsNavProps = {
   projectsAction?: React.ReactNode;
   invoicesAction?: React.ReactNode;
   overviewContent: React.ReactNode;
-  portalContent: React.ReactNode;
+
   projectsContent: React.ReactNode;
   invoicesContent: React.ReactNode;
   calendarContent: React.ReactNode;
@@ -25,7 +25,7 @@ export function ClientTabsNav({
   projectsAction,
   invoicesAction,
   overviewContent,
-  portalContent,
+
   projectsContent,
   invoicesContent,
   calendarContent,
@@ -66,9 +66,7 @@ export function ClientTabsNav({
             <TabsTrigger value="calendar" className="gap-1.5 px-3 py-1 text-xs font-medium sm:text-sm data-[state=active]:shadow-sm">
               {t("Kalender", "Calendar")}
             </TabsTrigger>
-            <TabsTrigger value="portal" className="gap-1.5 px-3 py-1 text-xs font-medium sm:text-sm data-[state=active]:shadow-sm">
-              {t("Portal", "Portal")}
-            </TabsTrigger>
+
           </TabsList>
         </div>
 
@@ -83,9 +81,6 @@ export function ClientTabsNav({
         {currentTab === "overview" ? overviewContent : null}
       </TabsContent>
 
-      <TabsContent value="portal" className="pt-1">
-        {currentTab === "portal" ? portalContent : null}
-      </TabsContent>
 
       <TabsContent value="projects" className="pt-1">
         {currentTab === "projects" ? projectsContent : null}

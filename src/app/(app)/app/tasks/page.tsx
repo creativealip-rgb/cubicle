@@ -54,7 +54,7 @@ export default async function TasksPage({
   const workspaceId = await getWorkspaceForCurrentUser();
   const params = await searchParams;
   const tab = params.tab === "templates" ? "templates" : params.tab === "reusable" ? "reusable" : "workflow";
-  const view = params.view === "board" ? "board" : params.view === "weekly" ? "weekly" : "list";
+  const view = params.view === "list" ? "list" : params.view === "weekly" ? "weekly" : "board";
   const search = params.search?.trim() || "";
   const requestedPage = Math.max(1, Number(params.page) || 1);
   const whereClauses = [eq(tasks.workspaceId, workspaceId), eq(tasks.mode, tab === "templates" ? "workflow" : tab)];

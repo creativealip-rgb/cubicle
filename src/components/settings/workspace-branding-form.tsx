@@ -155,7 +155,7 @@ export function WorkspaceBrandingForm({
       {section === "workspace" ? <div className="space-y-3 rounded-lg border p-4">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <Label>{t("Logo invoice", "Invoice logo")}</Label>
+            <Label>{t("Business Logo", "Business Logo")}</Label>
             <p className="mt-1 text-xs text-muted-foreground">
               {t(
                 "Upload PNG/JPG/WebP/GIF, max 2MB. Muncul di PDF + preview klien.",

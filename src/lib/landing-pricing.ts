@@ -3,8 +3,8 @@ import type { DisplayCurrency } from "@/lib/region-preferences";
 
 const DISPLAY_PRICES = {
   free: { IDR: { monthly: 0, yearly: 0 }, USD: { monthly: 0, yearly: 0 } },
-  solo: { IDR: { monthly: 75_000, yearly: 900_000 }, USD: { monthly: 5, yearly: 60 } },
-  team: { IDR: { monthly: 165_000, yearly: 1_980_000 }, USD: { monthly: 10, yearly: 120 } },
+  solo: { IDR: { monthly: 99_000, yearly: 1_188_000 }, USD: { monthly: 6, yearly: 72 } },
+  team: { IDR: { monthly: 199_000, yearly: 2_388_000 }, USD: { monthly: 12, yearly: 144 } },
 } as const;
 
 export type { DisplayCurrency };

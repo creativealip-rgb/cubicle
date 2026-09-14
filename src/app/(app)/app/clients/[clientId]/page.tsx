@@ -23,14 +23,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ClientTabsNav } from "@/components/clients/client-tabs-nav";
 import Link from "next/link";
 import { Wallet, FolderKanban, FileSpreadsheet, Receipt, Users } from "lucide-react";
-import { PortalTokenSection } from "./portal-section";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
 import { ClientGoogleCalendarPanel } from "@/components/clients/client-google-calendar-panel";
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
 import { billingTypeLabel } from "@/lib/feature-access";
 import { getProposedInvoiceNumber } from "@/lib/actions/invoices";
 import { checkEntityLimit, getUserPlan } from "@/lib/plan";
-import { decryptSecret } from "@/lib/google-calendar";
 import {
   getClientGoogleConnectionStatus,
   listClientGoogleEvents,
@@ -75,7 +73,6 @@ export default async function ClientDetailPage({
     "projects",
     "invoices",
     "calendar",
-    "portal",
   ]);
   // Legacy deep-link ?tab=appointments → Calendar
   const initialTab =
@@ -111,20 +108,6 @@ export default async function ClientDetailPage({
     "projects",
     await getUserPlan(user.id),
   );
-
-  let existingPortalToken: string | null = null;
-  if (
-    client.portalEnabled &&
-    client.portalTokenEnc &&
-    !client.portalTokenRevokedAt &&
-    (!client.portalTokenExpiresAt || client.portalTokenExpiresAt > new Date())
-  ) {
-    try {
-      existingPortalToken = decryptSecret(client.portalTokenEnc);
-    } catch {
-      existingPortalToken = null;
-    }
-  }
 
   // Google Calendar client (separate from user calendar)
   const clientGcalStatus = await getClientGoogleConnectionStatus(clientId);
@@ -279,7 +262,7 @@ export default async function ClientDetailPage({
     archived: "Diarsipkan",
   };
 
-  const clientDefaults = { id: client.id, clientNumber: client.clientNumber, name: client.name, companyName: client.companyName ?? "", email: client.email ?? "", phone: client.phone ?? "", website: client.website ?? "", address: client.address ?? "", tags: client.tags ?? [], internalNotes: client.internalNotes ?? "", portalSlug: client.portalSlug ?? "", portalSlugEnabled: client.portalSlugEnabled ?? true };
+  const clientDefaults = { id: client.id, clientNumber: client.clientNumber, name: client.name, companyName: client.companyName ?? "", email: client.email ?? "", phone: client.phone ?? "", website: client.website ?? "", address: client.address ?? "", tags: client.tags ?? [], internalNotes: client.internalNotes ?? "", portalSlug: client.portalSlug ?? "", portalSlugEnabled: client.portalSlugEnabled ?? true, portalEnabled: client.portalEnabled ?? false, portalPasswordConfigured: Boolean(client.portalPasswordHash) };
   const invoiceProjects = clientProjects.map((project) => ({ id: project.id, name: project.name, clientId: client.id, billingType: project.billingModel ?? project.billingType, currency: project.currency, budget: project.budget, rate: project.rate, packagePrice: project.packagePrice, packageCustomPrice: null, agreedAmount: resolveProjectAmount({ billingType: project.billingModel ?? project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packagePrice ?? 0) || null }), priorActiveFixedBilledAmount: sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0, eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [] }));
 
   return (
@@ -396,12 +379,6 @@ export default async function ClientDetailPage({
           ) : null
         }
         overviewContent={<ClientOverview client={{ id: client.id, clientNumber: client.clientNumber, email: client.email, phone: client.phone, website: client.website, address: client.address, tags: client.tags, internalNotes: client.internalNotes, portalSlug: client.portalSlug, portalSlugEnabled: client.portalSlugEnabled }} projects={clientProjects} invoices={clientInvoices} editAction={<ClientEditDialog trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Ubah detail", "Edit details")}</Button>} defaultValues={clientDefaults} />} projectAction={canWrite ? <ProjectCreateDialog clients={[]} clientId={clientId} isAtLimit={!projectLimitState.allowed} projectCount={projectLimitState.current} projectLimit={projectLimitState.limit} trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Tambah Project", "Add Project")}</Button>} /> : undefined} invoiceAction={canWrite ? <ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} proposedInvoiceNumber={proposedInvoiceNumber} projects={invoiceProjects} baseCurrency={baseCurrency} currencyRates={currencyRates} trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Buat Invoice", "Create Invoice")}</Button>} /> : undefined} t={t} />}
-        portalContent={
-          <PortalTokenSection
-            client={{ ...client, portalPasswordCiphertext: client.portalPasswordCiphertext }}
-            existingPortalToken={existingPortalToken}
-          />
-        }
         projectsContent={
           <div className="space-y-4">
             {clientProjects.length === 0 && (

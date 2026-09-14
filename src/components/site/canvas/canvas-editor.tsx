@@ -711,7 +711,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
             title={site.published ? t("Klik untuk unpublish", "Click to unpublish") : t("Belum siap publikasi", "Not ready to publish")}
           >
             <span className={`h-2 w-2 rounded-full ${site.published ? "bg-emerald-500" : "bg-muted-foreground/30"}`} />
-            {site.published ? t("Tayang", "Live") : t("Draft", "Draft")}
+            {t("Edit URL", "Edit URL")}
           </button>
 
           <div className="flex shrink-0 items-center gap-1">

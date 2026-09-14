@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createClient, generateUniquePortalSlug, updateClient } from "@/lib/actions/clients";
+import { createClient, generatePortalToken, generateUniquePortalSlug, setClientPortalPassword, updateClient } from "@/lib/actions/clients";
 import { isStaleServerActionError } from "@/lib/client-errors";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -29,6 +29,7 @@ interface ClientFormProps {
     internalNotes?: string;
     portalSlug?: string;
     portalEnabled?: boolean;
+    portalPasswordConfigured?: boolean;
   };
   onSuccess?: (id?: string, name?: string) => void;
   redirectTo?: string;
@@ -65,6 +66,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
     portalSlug: defaultValues?.portalSlug ?? "",
     portalEnabled: defaultValues?.portalEnabled ?? false,
   });
+  const [portalPassword, setPortalPassword] = useState("");
 
   async function handleSave() {
     if (loading) return;
@@ -110,6 +112,11 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
         return;
       } else if (defaultValues?.id) {
         await updateClient(defaultValues.id, data);
+        if (portalPassword.trim()) {
+          await generatePortalToken(defaultValues.id);
+          await setClientPortalPassword(defaultValues.id, portalPassword);
+          setPortalPassword("");
+        }
         toast.success(t("Klien diperbarui", "Client updated"));
       }
 
@@ -333,7 +340,11 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
                 </Button>
               </div>
             </div>
-
+            <div className="space-y-1.5 border-t pt-3">
+              <Label htmlFor="portalPassword" className="text-xs font-medium">{t("Password Portal", "Portal Password")}</Label>
+              <Input id="portalPassword" type="password" minLength={8} value={portalPassword} onChange={(e) => setPortalPassword(e.target.value)} placeholder={t("Kosongkan jika tidak diubah", "Leave blank to keep current password")} className="h-9 text-sm" autoComplete="new-password" />
+              <p className="text-[11px] text-muted-foreground">{t("Password baru akan mengaktifkan portal jika belum aktif.", "A new password activates the portal if it is not active yet.")}</p>
+            </div>
           </div>
         </div>
       </div>

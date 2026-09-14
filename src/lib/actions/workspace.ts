@@ -10,6 +10,7 @@ import { workspaces } from "@/db/schema";
 import { requireUser, assertWorkspaceOwner } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
+import { getUserPlan } from "@/lib/plan";
 
 const renameSchema = z.object({
   name: z.string().trim().min(2).max(100),
@@ -62,6 +63,10 @@ export async function updateWorkspaceBranding(input: z.infer<typeof brandingSche
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
   await assertWorkspaceOwner(db, user.id, workspaceId);
+  const plan = await getUserPlan(user.id);
+  if (input.logoUrl && plan === "free") {
+    throw new Error("Custom business logo requires Solo or Team plan");
+  }
 
   const parsed = brandingSchema.parse(input);
 

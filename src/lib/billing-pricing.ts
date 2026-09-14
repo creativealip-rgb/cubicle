@@ -52,7 +52,7 @@ export type { BillingPeriod };
 type PaidPlanEntry = (typeof BILLING_PLANS)[PaidBillingPlan];
 
 /**
- * Exact Rupiah amount, e.g. 75_000 → "Rp 75.000" and 1_980_000 → "Rp 1.980.000"
+ * Exact Rupiah amount, e.g. 99_000 → "Rp 99.000" and 2_388_000 → "Rp 2.388.000"
  * (id-ID grouping). No "rb/jt" abbreviations and no discount framing — yearly
  * is exactly 12 × monthly.
  */

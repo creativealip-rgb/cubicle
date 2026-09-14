@@ -196,9 +196,7 @@ export function PortalRequestList({
               <p className="text-sm font-medium">
                 {request.title === "Request Meeting"
                   ? t("Permintaan Pertemuan", "Meeting Request")
-                  : request.title === "Request Report"
-                    ? t("Permintaan Laporan", "Report Request")
-                    : request.title}
+                  : request.title}
               </p>
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">
                 {done

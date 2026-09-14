@@ -96,18 +96,17 @@ export async function createPortalRequest(
 
 const createClientPortalRequestSchema = z.object({
   token: z.string().min(1),
-  kind: z.enum(["report", "meeting"]),
+  kind: z.literal("meeting"),
   message: z.string().max(2000).optional().nullable(),
   projectId: z.string().uuid().optional().nullable(),
   preferredDate: z.string().optional().nullable(),
   preferredTime: z.string().optional().nullable(),
   durationMinutes: z.number().optional().nullable(),
   timezone: z.string().optional().nullable(),
-  reportPeriod: z.string().max(120).optional().nullable(), // e.g. "Last 30 days"
 });
 
 /**
- * Client portal: client-initiated Request Report / Request Meeting.
+ * Client portal: client-initiated meeting request.
  * Stored as portal_requests (type info/other) so admin sees them on client detail.
  */
 export async function createClientPortalRequest(
@@ -132,25 +131,19 @@ export async function createClientPortalRequest(
     if (!project) throw new Error("Project not found");
   }
 
-  const isReport = parsed.kind === "report";
-  const schedule = !isReport
-    ? (await import("@/lib/meeting-schedule")).buildMeetingSchedule({
-        date: parsed.preferredDate || "",
-        time: parsed.preferredTime || "",
-        durationMinutes: parsed.durationMinutes || 0,
-        timezone: parsed.timezone || "",
-      })
-    : null;
-  if (!isReport && !parsed.message?.trim()) throw new Error("Agenda meeting wajib diisi");
-  const title = isReport ? "Request Report" : "Request Meeting";
-  const type = isReport ? ("info" as const) : ("other" as const);
+  const schedule = (await import("@/lib/meeting-schedule")).buildMeetingSchedule({
+    date: parsed.preferredDate || "",
+    time: parsed.preferredTime || "",
+    durationMinutes: parsed.durationMinutes || 0,
+    timezone: parsed.timezone || "",
+  });
+  if (!parsed.message?.trim()) throw new Error("Agenda meeting wajib diisi");
+  const title = "Request Meeting";
+  const type = "other" as const;
 
   const lines: string[] = [];
   lines.push(`[CLIENT_ORIGIN ${parsed.kind}]`);
-  if (isReport && parsed.reportPeriod?.trim()) {
-    lines.push(`Period: ${parsed.reportPeriod.trim()}`);
-  }
-  if (!isReport && parsed.preferredDate?.trim()) {
+  if (parsed.preferredDate?.trim()) {
     lines.push(`Preferred date: ${parsed.preferredDate.trim()}`);
   }
   if (parsed.message?.trim()) {
@@ -168,7 +161,7 @@ export async function createClientPortalRequest(
       description,
       type,
       dueDate:
-        !isReport && parsed.preferredDate?.trim()
+        parsed.preferredDate?.trim()
           ? parsed.preferredDate.trim()
           : null,
       meetingStartTime: schedule?.start || null,
@@ -184,15 +177,11 @@ export async function createClientPortalRequest(
       await import("@/lib/in-app-notifications");
     const clientLabel = client.companyName || client.name || "Client";
     await notifyWorkspaceMembers(client.workspaceId, {
-      type: isReport ? "portal_report_request" : "portal_meeting_request",
-      title: isReport
-        ? `${clientLabel} minta report`
-        : `${clientLabel} minta meeting`,
+      type: "portal_meeting_request",
+      title: `${clientLabel} minta meeting`,
       body:
         parsed.message?.trim() ||
-        (isReport
-          ? "Request report dari portal"
-          : "Request meeting dari portal"),
+        "Request meeting dari portal",
       link: `/app/clients/${client.id}?tab=portal`,
       entityType: "portal_request",
       entityId: row.id,

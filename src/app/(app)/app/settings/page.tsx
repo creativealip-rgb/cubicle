@@ -541,10 +541,7 @@ export default async function SettingsPage({
                   </span>
                 </CardTitle>
                 <CardDescription>
-                  {t(
-                    "Integrasi Google Calendar sedang dalam tahap verifikasi oleh Google dan akan segera tersedia.",
-                    "Google Calendar integration is pending Google verification and will be available soon.",
-                  )}
+                  {t("Hubungkan Google Calendar untuk sinkronisasi jadwal.", "Connect Google Calendar to sync your schedule.")}
                 </CardDescription>
               </CardHeader>
               <CardContent>

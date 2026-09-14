@@ -1144,12 +1144,12 @@ export default async function ClientPortalPage({
                     </div>
                     <div>
                       <h2 className="text-base sm:text-lg font-bold text-foreground leading-tight">
-                        {t("Permintaan & Laporan", "Requests & Reports")}
+                        {t("Permintaan Meeting", "Meeting Requests")}
                       </h2>
                       <p className="text-xs text-muted-foreground">
                         {t(
-                          "Riwayat permintaan meeting, request laporan, dan respons dari tim.",
-                          "History of meeting requests, report requests, and team responses.",
+                          "Jika ingin meeting, klik tombol request lalu isi agenda dan waktu yang diinginkan.",
+                          "Need a meeting? Click the request button, then enter your agenda and preferred time.",
                         )}
                       </p>
                     </div>

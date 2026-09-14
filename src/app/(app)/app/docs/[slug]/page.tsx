@@ -115,11 +115,11 @@ const GUIDES = {
       en: "Isolated private markdown notes, realtime auto-save, note-to-task conversion, and daily reflection journals.",
     },
     items: [
-      ["1. Catatan Pribadi Terisolasi", "Catatan hanya bisa diakses oleh akun kamu (tidak terlihat oleh anggota tim workspace lain)."],
-      ["2. Format Markdown Lengkap", "Tulis ide, referensi, checklist, atau kode dengan dukungan markdown formatting penuh."],
-      ["3. Auto-Save & Tabs", "Perubahan tersimpan otomatis seketika. Buat banyak tab catatan untuk memisahkan topik."],
-      ["4. Konversi Jadi Task Proyek", "Ubah poin catatan langsung menjadi task proyek operasional hanya dengan 1 klik."],
-      ["5. Jurnal Harian (Journal)", "Tulis refleksi harian dan pencapaian kerja di modul Jurnal untuk evaluasi mingguan."],
+      ["1. Private Notes", "Notes are accessible only to your account and are hidden from other workspace members."],
+      ["2. Full Markdown", "Write ideas, references, checklists, or code with full markdown formatting support."],
+      ["3. Auto-Save & Tabs", "Changes save automatically. Create multiple note tabs to separate topics."],
+      ["4. Convert to Project Task", "Turn a note item into an operational project task with one click."],
+      ["5. Daily Journal", "Write daily reflections and work achievements in Journal for weekly review."],
     ],
   },
   "security-2fa": {

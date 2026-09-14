@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
-import { BarChart3, Calendar, Loader2 } from "lucide-react";
+import { Calendar, Loader2 } from "lucide-react";
 import { createClientPortalRequest } from "@/lib/actions/portal-requests";
 import { useT } from "@/lib/i18n-client";
 import { Button } from "@/components/ui/button";
@@ -37,11 +37,10 @@ export function PortalActionButtons({
 }) {
   const { refresh } = useAppTransition();
   const { t } = useT();
-  const [kind, setKind] = useState<"report" | "meeting" | null>(null);
+  const [kind, setKind] = useState<"meeting" | null>(null);
   const [loading, setLoading] = useState(false);
   const [projectId, setProjectId] = useState<string>("");
   const [message, setMessage] = useState("");
-  const [reportPeriod, setReportPeriod] = useState("30 hari terakhir");
   const [preferredDate, setPreferredDate] = useState("");
   const [preferredTime, setPreferredTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("60");
@@ -54,7 +53,6 @@ export function PortalActionButtons({
     setKind(null);
     setMessage("");
     setProjectId("");
-    setReportPeriod("30 hari terakhir");
     setPreferredDate("");
     setPreferredTime("");
     setDurationMinutes("60");
@@ -69,23 +67,12 @@ export function PortalActionButtons({
         kind,
         message: message || null,
         projectId: projectId || null,
-        reportPeriod: kind === "report" ? reportPeriod || null : null,
         preferredDate: kind === "meeting" ? preferredDate || null : null,
         preferredTime: kind === "meeting" ? preferredTime || null : null,
         durationMinutes: kind === "meeting" ? Number(durationMinutes) : null,
         timezone: kind === "meeting" ? timezone : null,
       });
-      toast.success(
-        kind === "report"
-          ? t(
-              "Permintaan laporan terkirim ke tim",
-              "Report request sent to the team",
-            )
-          : t(
-              "Permintaan pertemuan terkirim ke tim",
-              "Meeting request sent to the team",
-            ),
-      );
+      toast.success(t("Permintaan pertemuan terkirim ke tim", "Meeting request sent to the team"));
       close();
       refresh();
     } catch (err) {
@@ -104,15 +91,6 @@ export function PortalActionButtons({
       <div className="flex items-center gap-2">
         <Button
           type="button"
-          variant="outline"
-          className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs"
-          onClick={() => setKind("report")}
-        >
-          <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
-          {t("Minta Laporan", "Request Report")}
-        </Button>
-        <Button
-          type="button"
           className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs"
           onClick={() => setKind("meeting")}
         >
@@ -125,20 +103,10 @@ export function PortalActionButtons({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {kind === "report"
-                ? t("Minta Laporan", "Request Report")
-                : t("Ajukan Pertemuan", "Schedule Meeting")}
+              {t("Ajukan Pertemuan", "Schedule Meeting")}
             </DialogTitle>
             <DialogDescription>
-              {kind === "report"
-                ? t(
-                    "Tim akan siapkan ringkasan progress / jam / invoice sesuai permintaan.",
-                    "The team will prepare the requested progress, hours, or invoice summary.",
-                  )
-                : t(
-                    "Tim akan hubungi kamu untuk jadwalkan meeting.",
-                    "The team will contact you to schedule the meeting.",
-                  )}
+              {t("Klik request untuk mengajukan meeting ke tim.", "Click request to ask the team for a meeting.")}
             </DialogDescription>
           </DialogHeader>
 
@@ -168,23 +136,6 @@ export function PortalActionButtons({
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
-            )}
-
-            {kind === "report" && (
-              <div className="space-y-1.5">
-                <Label htmlFor="report-period" className="text-xs">
-                  {t("Periode", "Period")}
-                </Label>
-                <Input
-                  id="report-period"
-                  value={reportPeriod}
-                  onChange={(e) => setReportPeriod(e.target.value)}
-                  placeholder={t(
-                    "30 hari terakhir / Bulan ini",
-                    "Last 30 days / This month",
-                  )}
-                />
               </div>
             )}
 
@@ -229,15 +180,10 @@ export function PortalActionButtons({
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 placeholder={
-                  kind === "report"
-                    ? t(
-                        "Mis. butuh ringkasan jam billable + status task…",
-                        "E.g. billable hours summary and task status…",
-                      )
-                    : t(
-                        "Mis. topik meeting, zona waktu, jam preferensi…",
-                        "E.g. meeting topic, time zone, preferred time…",
-                      )
+                  t(
+                    "Mis. topik meeting, zona waktu, jam preferensi…",
+                    "E.g. meeting topic, time zone, preferred time…",
+                  )
                 }
                 rows={3}
                 required={kind === "meeting"}

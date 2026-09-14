@@ -11,14 +11,14 @@ import {
 
 describe("annual billing plans", () => {
   it("charges Solo for twelve months without tax", () => {
-    expect(BILLING_PLANS.solo.monthlyReferenceAmount).toBe(75_000);
-    expect(BILLING_PLANS.solo.amount).toBe(900_000);
+    expect(BILLING_PLANS.solo.monthlyReferenceAmount).toBe(99_000);
+    expect(BILLING_PLANS.solo.amount).toBe(1_188_000);
     expect(BILLING_PLANS.solo.taxAmount).toBe(0);
   });
 
   it("charges Team for twelve months without tax", () => {
-    expect(BILLING_PLANS.team.monthlyReferenceAmount).toBe(165_000);
-    expect(BILLING_PLANS.team.amount).toBe(1_980_000);
+    expect(BILLING_PLANS.team.monthlyReferenceAmount).toBe(199_000);
+    expect(BILLING_PLANS.team.amount).toBe(2_388_000);
     expect(BILLING_PLANS.team.taxAmount).toBe(0);
   });
 
@@ -31,17 +31,17 @@ describe("annual billing plans", () => {
 
 describe("monthly/yearly plan amounts", () => {
   it("quotes Solo monthly and yearly from final pricing", () => {
-    expect(BILLING_PLANS.solo.monthlyAmount).toBe(75_000);
-    expect(BILLING_PLANS.solo.yearlyAmount).toBe(900_000);
-    expect(getPlanAmount("solo", "monthly")).toBe(75_000);
-    expect(getPlanAmount("solo", "yearly")).toBe(900_000);
+    expect(BILLING_PLANS.solo.monthlyAmount).toBe(99_000);
+    expect(BILLING_PLANS.solo.yearlyAmount).toBe(1_188_000);
+    expect(getPlanAmount("solo", "monthly")).toBe(99_000);
+    expect(getPlanAmount("solo", "yearly")).toBe(1_188_000);
   });
 
   it("quotes Team monthly and yearly from final pricing", () => {
-    expect(BILLING_PLANS.team.monthlyAmount).toBe(165_000);
-    expect(BILLING_PLANS.team.yearlyAmount).toBe(1_980_000);
-    expect(getPlanAmount("team", "monthly")).toBe(165_000);
-    expect(getPlanAmount("team", "yearly")).toBe(1_980_000);
+    expect(BILLING_PLANS.team.monthlyAmount).toBe(199_000);
+    expect(BILLING_PLANS.team.yearlyAmount).toBe(2_388_000);
+    expect(getPlanAmount("team", "monthly")).toBe(199_000);
+    expect(getPlanAmount("team", "yearly")).toBe(2_388_000);
   });
 
   it("keeps annual amount backward compatible with legacy amount field", () => {

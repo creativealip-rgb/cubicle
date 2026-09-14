@@ -43,7 +43,6 @@ const TYPE_ICON: Record<string, string> = {
   task_due_soon: "⏰",
   invoice_overdue: "⚠️",
   mention: "@",
-  portal_report_request: "📊",
   portal_meeting_request: "📅",
 };
 
@@ -62,7 +61,6 @@ function timeAgo(iso: string): string {
 
 function localizedNotification(n: NotificationItem, t: (id: string, en: string) => string) {
   const replace = (suffix: RegExp, id: string, en: string) => n.title.replace(suffix, t(id, en));
-  if (n.type === "portal_report_request") return { title: replace(/ minta report$/, " minta report", " requested a report"), body: n.body === "Request report dari portal" ? t(n.body, "Report request from client portal") : n.body };
   if (n.type === "portal_meeting_request") return { title: replace(/ minta meeting$/, " minta meeting", " requested a meeting"), body: n.body === "Request meeting dari portal" ? t(n.body, "Meeting request from client portal") : n.body };
   if (n.type === "client_task_approved") return { title: n.title.replace(" menyetujui: ", t(" menyetujui: ", " approved: ")), body: n.body === "Task disetujui lewat client portal" ? t(n.body, "Task approved through client portal") : n.body };
   if (n.type === "client_task_revision") return { title: n.title.replace(" minta revisi: ", t(" minta revisi: ", " requested changes: ")), body: n.body === "Client minta revisi lewat client portal" ? t(n.body, "Client requested changes through client portal") : n.body };

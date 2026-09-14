@@ -303,22 +303,10 @@ export function ClientGoogleCalendarPanel({
             </div>
           </div>
           <p className="text-sm text-muted-foreground">
-            {t("Integrasi Google Calendar klien dikunci sementara menunggu verifikasi aplikasi oleh Google.", "Client Google Calendar integration is temporarily locked pending Google verification.")}
+            {t("Hubungkan kalender klien untuk membantu penjadwalan.", "Connect a client calendar to help with scheduling.")}
           </p>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-xs text-amber-900">
-            <p className="font-medium">
-              {t("Fitur Belum Diverifikasi Google (Soon)", "Feature Pending Google Verification (Soon)")}
-            </p>
-            <p className="mt-1">
-              {t(
-                "Integrasi Google Calendar untuk klien belum dapat dihubungkan hingga proses verifikasi selesai.",
-                "Google Calendar integration for clients cannot be connected until verification completes.",
-              )}
-            </p>
-          </div>
-
           <div className="flex flex-wrap gap-2">
             {!connected ? (
               <Button

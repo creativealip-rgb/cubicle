@@ -94,7 +94,7 @@ export function AssistantEmptyState({
       </header>
 
       {/* Main Greeting & Input Composer */}
-      <main className="w-full space-y-6">
+      <main className="relative w-full space-y-6 lg:pr-60">
         <div className="text-center space-y-1.5 pt-2">
           <h2 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
             {copy.greeting}
@@ -198,6 +198,16 @@ export function AssistantEmptyState({
               );
             })}
           </div>
+        </section>
+
+        {/* Tutorial */}
+        <section className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-3.5 text-xs leading-relaxed lg:absolute lg:right-0 lg:top-0 lg:w-56">
+          <p className="font-bold text-foreground">{lang === "id" ? "Cara pakai AI Assistant" : "AI Assistant tutorial"}</p>
+          <ol className="mt-1.5 list-decimal space-y-1 pl-4 text-muted-foreground">
+            <li>{lang === "id" ? "Pilih prompt fitur: invoice, project, client, task, atau report." : "Choose a feature prompt: invoice, project, client, task, or report."}</li>
+            <li>{lang === "id" ? "Edit konteks dan minta AI menjelaskan langkahnya." : "Edit context and ask AI to explain each step."}</li>
+            <li>{lang === "id" ? "Review hasil. Perubahan data selalu minta konfirmasi." : "Review output. Data changes always require confirmation."}</li>
+          </ol>
         </section>
 
         {/* Capability Info Banner */}

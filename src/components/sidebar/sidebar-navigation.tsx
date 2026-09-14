@@ -121,8 +121,9 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
   return (
     <div>
       <div className="hidden space-y-1 lg:block">
-        {entries.map((entry) => {
-          if (entry.kind === "direct") return directLink(entry, collapsed);
+        <p className="px-2.5 pb-1 pt-2 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{t("Utama", "Main")}</p>
+        {entries.map((entry, index) => {
+          if (entry.kind === "direct") return <div key={entry.id}>{index === 1 && <p className="px-2.5 pb-1 pt-3 text-[10px] font-bold uppercase tracking-[0.14em] text-muted-foreground">{t("Tim", "Team")}</p>}{directLink(entry, collapsed)}</div>;
           const Icon = entry.icon;
           const groupActive = active.groupId === entry.id;
           const groupOpen = desktopGroup === entry.id;

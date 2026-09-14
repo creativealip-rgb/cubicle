@@ -15,12 +15,12 @@ describe("client detail tabs", () => {
     // Nav derives current tab from the query string, defaulting to initialTab
     expect(nav).toContain('const currentTab = searchParams.get("tab") || initialTab;');
     expect(nav).toContain('router.replace(`${pathname}?${params.toString()}`, { scroll: false });');
-    // All five tab triggers present, overview first and portal last
-    for (const tab of ["overview", "projects", "invoices", "calendar", "portal"]) {
+    // Four remaining tab triggers present; portal settings live in Edit Client.
+    for (const tab of ["overview", "projects", "invoices", "calendar"]) {
       expect(nav).toContain(`value="${tab}"`);
     }
     expect(nav.indexOf('value="overview"')).toBeLessThan(nav.indexOf('value="projects"'));
-    expect(nav.indexOf('value="portal"')).toBeGreaterThan(nav.indexOf('value="calendar"'));
+    expect(nav).not.toContain('value="portal"');
     expect(nav).not.toContain("?tab=notes");
     expect(page).not.toContain("?tab=notes");
   });

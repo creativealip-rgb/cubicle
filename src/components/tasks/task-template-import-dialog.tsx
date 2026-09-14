@@ -44,8 +44,8 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
     } finally { setLoading(false); }
   }
 
-  function toggleTemplate(id: string) {
-    setSelectedTemplateIds((current) => current.includes(id) ? current.filter((value) => value !== id) : [...current, id]);
+  function selectTemplate(id: string) {
+    setSelectedTemplateIds([id]);
     setPreview([]); setSelectedItems([]); setPreviewFingerprint("");
   }
 
@@ -89,10 +89,10 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
         <div className="space-y-4">
           <div className="space-y-2">
             {templates.map((template) => (
-              <label key={template.id} className="flex min-h-11 items-center gap-3 rounded-md border px-3 py-2 text-sm">
-                <input type="checkbox" checked={selectedTemplateIds.includes(template.id)} onChange={() => toggleTemplate(template.id)} />
+              <button key={template.id} type="button" className={`flex min-h-11 w-full items-center gap-3 rounded-md border px-3 py-2 text-left text-sm ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary/5" : ""}`} onClick={() => selectTemplate(template.id)}>
+                <span className={`h-3 w-3 rounded-full border ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary" : "border-muted-foreground/50"}`} />
                 <span className="flex-1">{template.name}</span><span className="text-xs text-muted-foreground">{template.target}</span>
-              </label>
+              </button>
             ))}
           </div>
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={allowIncompatibleTarget} onChange={(event) => {setAllowIncompatibleTarget(event.target.checked);setPreview([]);setSelectedItems([]);setPreviewFingerprint("");}} /><span>{t("Izinkan template tidak cocok", "Allow incompatible template")}</span></label>

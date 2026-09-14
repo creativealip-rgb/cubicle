@@ -143,7 +143,7 @@ describe("POST /api/billing/checkout — request shape and branch ordering", () 
     expect(response.status).toBe(200);
     expect(data.success).toBe(true);
     expect(data.data.plan).toBe("solo");
-    expect(data.data.amount).toBe(75_000);
+    expect(data.data.amount).toBe(99_000);
     expect(mockCreateTransaction).toHaveBeenCalledTimes(1);
     const inserted = dbRows.pakasir_payments[0] as any;
     expect(inserted.paymentType).toBe("plan");
