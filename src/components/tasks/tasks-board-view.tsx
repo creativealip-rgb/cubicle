@@ -140,7 +140,7 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                       {task.dueDate && (
                         <div className={`flex items-center gap-1 text-[10px] ${dueTone(task)}`}>
                           <Clock className="h-3 w-3" />
-                          {formatDue(task)}
+                          <span suppressHydrationWarning>{formatDue(task)}</span>
                         </div>
                       )}
                     </CardContent>

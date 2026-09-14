@@ -317,7 +317,7 @@ export function TasksListTable({
                   </div>
                   <div className={`flex items-center gap-1 text-sm w-28 ${dueTone(task)}`}>
                     <Clock className="h-3 w-3" />
-                    <span className="truncate">{formatDue(task)}</span>
+                    <span className="text-xs" suppressHydrationWarning>{formatDue(task)}</span>
                   </div>
                   <div className="w-24">
                     <Badge variant="outline" className={`text-[10px] px-2 py-0 h-5 rounded-full font-medium ${taskPriorityColor(task.priority)}`}>
