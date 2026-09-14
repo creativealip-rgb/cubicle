@@ -69,4 +69,4 @@ The normal k6 profile is read-dominant and does not establish capacity for task/
 - `.capacity-runtime/capacity-heavy-repeat2-20260914/`
 - `.capacity-runtime/capacity-upload-20260914.json`
 
-Large raw outputs remain local and checksummed. Session cookies are not copied into committed evidence.
+Large raw outputs were moved outside the repository to private storage at `/root/backups/cubiqlo/capacity-artifacts-20260914/`. Its `manifest.json` records each artifact path, byte size, SHA-256, private classification, and retention through 2026-10-14; manifest SHA-256: `6f9230ded6bc8e301a971d89e8dca82352e91a50cb32398034abeda0bb74797b`. Session credential files were deleted before archival. Raw artifacts are not committed.
