@@ -12,7 +12,9 @@ describe("weekly time picker parity", () => {
     expect(timesheet).toContain("templateName?: string | null");
   });
 
-  it("groups weekly and edit tasks by template source", () => {
+  it("groups projects by client and tasks by template source", () => {
+    expect(weekly).toContain("groupedFooterProjects.map(([clientName, group])");
+    expect(timesheet).toContain("groupedEditProjectOptions.map(([clientName, group])");
     expect(weekly).toContain('task.templateName || t("Tugas manual", "Manual tasks")');
     expect(timesheet).toContain('task.templateName || t("Tugas manual", "Manual tasks")');
   });

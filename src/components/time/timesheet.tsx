@@ -247,6 +247,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     );
     return matches.length > 0 ? matches : allEditProjectOptions;
   }, [allEditProjectOptions, editProjectSearch]);
+  const groupedEditProjectOptions = useMemo(() => Object.entries(Object.groupBy(filteredEditProjectOptions, (option) => option.clientName)), [filteredEditProjectOptions]);
 
   const editTasks = useMemo(() => {
     if (!editProjectId) return [];
@@ -483,23 +484,13 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                         {filteredEditProjectOptions.length === 0 ? (
                           <p className="p-2 text-xs text-muted-foreground">{t("Klien atau proyek tidak ditemukan", "No client or project found")}</p>
                         ) : (
-                          filteredEditProjectOptions.map((opt) => (
-                            <button
-                              key={opt.projectId}
-                              type="button"
-                              className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${editProjectId === opt.projectId ? "bg-accent font-medium" : ""}`}
-                              onClick={() => {
-                                setEditClientId(opt.clientId);
-                                setEditProjectId(opt.projectId);
-                                setEditProjectSearch(`${opt.clientName} — ${opt.projectName}`);
-                                setEditProjectSearchOpen(false);
-                                setEditTaskId("__none__");
-                                setEditTaskSearch("");
-                              }}
-                            >
-                              <span className="font-medium">{opt.clientName}</span>
-                              <span className="text-muted-foreground">{opt.projectName}</span>
-                            </button>
+                          groupedEditProjectOptions.map(([clientName, group]) => (
+                            <div key={clientName} className="py-1">
+                              <p className="px-3 py-1.5 text-xs font-semibold text-foreground">{clientName}</p>
+                              {(group ?? []).map((opt) => (
+                                <button key={opt.projectId} type="button" className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${editProjectId === opt.projectId ? "bg-accent font-medium" : ""}`} onClick={() => { setEditClientId(opt.clientId); setEditProjectId(opt.projectId); setEditProjectSearch(`${opt.clientName} — ${opt.projectName}`); setEditProjectSearchOpen(false); setEditTaskId("__none__"); setEditTaskSearch(""); }}><span>{opt.projectName}</span></button>
+                              ))}
+                            </div>
                           ))
                         )}
                       </div>

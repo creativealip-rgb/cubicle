@@ -379,27 +379,14 @@ export function WeeklyTimeGrid({
                 }}
                 className="h-10 text-sm"
               />
-              {projectSearchOpen && projectSearch.trim() !== "" && (
+              {projectSearchOpen && (
                 <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
                   {filteredProjects.length === 0 ? (
                     <p className="p-2 text-xs text-muted-foreground">{t("Project tidak ditemukan", "Project not found")}</p>
                   ) : (
-                    groupedFooterProjects.flatMap(([, group]) => group ?? []).map((p) => (
-                      <button
-                        key={p.id}
-                        type="button"
-                        className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${projectId === p.id ? "bg-accent font-medium" : ""}`}
-                        onClick={() => {
-                          setProjectId(p.id);
-                          setProjectSearch(p.name);
-                          setProjectSearchOpen(false);
-                          setTaskId("");
-                          setTaskSearch("");
-                        }}
-                      >
-                        <span>{p.name}</span>
-                      </button>
-                    ))
+                    groupedFooterProjects.map(([clientName, group]) => <div key={clientName} className="py-1"><p className="px-3 py-1.5 text-xs font-semibold">{clientName}</p>{(group ?? []).map((p) => (
+                      <button key={p.id} type="button" className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${projectId === p.id ? "bg-accent font-medium" : ""}`} onClick={() => { setProjectId(p.id); setProjectSearch(p.name); setProjectSearchOpen(false); setTaskId(""); setTaskSearch(""); }}><span>{p.name}</span></button>
+                    ))}</div>)
                   )}
                 </div>
               )}
@@ -422,7 +409,7 @@ export function WeeklyTimeGrid({
                 }}
                 className="h-10 text-sm"
               />
-              {taskSearchOpen && projectId && taskSearch.trim() !== "" && (
+              {taskSearchOpen && projectId && (
                 <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
                   {filteredTasks.length === 0 ? (
                     <p className="p-2 text-xs text-muted-foreground">{t("Task tidak ditemukan", "Task not found")}</p>
