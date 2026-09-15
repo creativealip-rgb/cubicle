@@ -290,10 +290,7 @@ export function ClientGoogleCalendarPanel({
           <div className="flex flex-wrap items-center justify-between gap-2">
             <CardTitle className="flex items-center gap-2 text-base">
               <Calendar className="h-4 w-4" />
-              {t("Google Calendar Klien", "Client Google Calendar")}{" "}
-              <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 border border-amber-300">
-                Soon
-              </span>
+              {t("Google Calendar Klien", "Client Google Calendar")}
             </CardTitle>
             <div className="flex items-center gap-2">
               <Badge variant={badge.variant}>{badge.label}</Badge>
@@ -315,7 +312,7 @@ export function ClientGoogleCalendarPanel({
                 disabled
               >
                 <Link2 className="h-4 w-4" />
-                {t("Hubungkan Google Calendar klien (Soon)", "Connect client Google Calendar (Soon)")}
+                {t("Hubungkan Google Calendar klien", "Connect client Google Calendar")}
               </Button>
             ) : (
               <>
