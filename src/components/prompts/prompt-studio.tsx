@@ -12,7 +12,7 @@ import { generateVisualPrompt } from "@/lib/actions/visual-prompts";
 import { launchPromptCatalog, type PromptCategory, type PromptFieldDefinition, type PromptOptionValue, type PromptTypeId, type OverlapKey, splitOverlapDefaults, nonOverlapFields, displayOption, isOverlapKey } from "@/lib/prompts/catalog";
 import { parsePromptResult, type PromptGenerationResult } from "@/lib/prompts/build-prompt";
 import { toneOptions, styleOptions, platformOptions, ratioOptions } from "@/lib/prompts/field-options";
-import { validateField } from "@/lib/prompts/prompt-studio-validation";
+import { validateCoreFields, validateField } from "@/lib/prompts/prompt-studio-validation";
 import { PromptResult } from "./prompt-result";
 import { PromptHistoryDrawer, type PromptHistoryItem } from "./prompt-history-drawer";
 import { PageHeader } from "@/components/ui/page-header";
@@ -107,7 +107,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
   }
 
   function fieldErrors(): Record<string, string> {
-    const next: Record<string, string> = {};
+    const next = validateCoreFields(form, lang);
     for (const field of selected.fields) {
       const message = validateField(field, fieldValue(field), lang);
       if (message) next[field.key] = message;
@@ -178,7 +178,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
     }
     setLoading(true);
     try {
-      const response = await generateVisualPrompt({ promptType: typeId, ...form });
+      const response = await generateVisualPrompt({ promptType: typeId, outputLanguage: lang, ...form });
       const next = parsePromptResult(response.generation.generatedOutput || "", typeId).result;
       setResult(next);
       toast.success(t("Materi selesai dibuat", "Material generated"));

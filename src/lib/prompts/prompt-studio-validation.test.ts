@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validateField, hasEnteredDetails, type PromptStudioFormState } from "./prompt-studio-validation";
+import { validateCoreFields, validateField, hasEnteredDetails, type PromptStudioFormState } from "./prompt-studio-validation";
 
 const text = { key: "topic", label: "Topik", type: "text", required: true } as const;
 const numberField = { key: "slideCount", label: "Jumlah slide", type: "number", required: true, min: 3, max: 10 } as const;
@@ -52,5 +52,14 @@ describe("hasEnteredDetails", () => {
   it("detects any type-specific option value", () => {
     expect(hasEnteredDetails({ ...emptyState, options: { duration: "30s" } })).toBe(true);
     expect(hasEnteredDetails({ ...emptyState, options: { frameCount: 3 } })).toBe(true);
+  });
+});
+
+describe("validateCoreFields", () => {
+  it("requires every core brief field with localized errors", () => {
+    expect(validateCoreFields({ brand: "", campaign: "", goal: "", audience: "" }, "en")).toEqual({
+      brand: "Brand is required", campaign: "Product / campaign is required", goal: "Goal is required", audience: "Audience is required",
+    });
+    expect(validateCoreFields({ brand: " Cubiqlo ", campaign: "Launch", goal: "Signup", audience: "Freelancer" }, "id")).toEqual({});
   });
 });

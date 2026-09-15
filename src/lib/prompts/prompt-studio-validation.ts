@@ -7,6 +7,13 @@ export type PromptStudioFormState = {
   options: Record<string, PromptOptionValue>;
 };
 
+export function validateCoreFields(form: Pick<PromptStudioFormState, "brand" | "campaign" | "goal" | "audience">, lang: "id" | "en"): Record<string, string> {
+  const labels = lang === "en"
+    ? { brand: "Brand", campaign: "Product / campaign", goal: "Goal", audience: "Audience" }
+    : { brand: "Nama Brand", campaign: "Produk / campaign", goal: "Tujuan", audience: "Target Audiens" };
+  return Object.fromEntries(Object.entries(labels).filter(([key]) => !form[key as keyof typeof labels].trim()).map(([key, label]) => [key, lang === "en" ? `${label} is required` : `${label} wajib diisi`]));
+}
+
 /**
  * Validates one field against the catalog schema rules (required, min/max,
  * select membership). Mirrors promptBriefSchema so users see the same rules

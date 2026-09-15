@@ -247,7 +247,7 @@ const baseSchema = z.object({
   audience: z.string().trim().min(1),
   offer: z.string().optional(), tone: z.string().optional(), style: z.string().optional(),
   platform: z.string().optional(), ratio: z.string().optional(), colorPalette: z.string().optional(),
-  notes: z.string().optional(), model: z.string().optional(),
+  notes: z.string().optional(), outputLanguage: z.enum(["id", "en"]).default("id"), model: z.string().optional(),
   options: z.record(z.string(), z.union([z.string(), z.number(), z.boolean()])),
 });
 
@@ -298,6 +298,7 @@ export const promptBriefSchema = baseSchema.superRefine((value, ctx) => {
 });
 
 export type PromptBrief = z.infer<typeof promptBriefSchema>;
+export type PromptBriefInput = z.input<typeof promptBriefSchema>;
 
 const legacyModes: Record<string, PromptTypeId> = {
   "Design Grafis": "product-ad", "Typography Ads": "product-ad", "9 Feed Konsisten": "content-series",

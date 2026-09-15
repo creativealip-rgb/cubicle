@@ -15,11 +15,8 @@ import { buildPromptRequest, parsePromptResult, serializePromptResult } from "@/
 import { checkAiRateLimitDb, getPlanLimits, getUserPlan, releaseAiQuota } from "@/lib/plan";
 
 const MONTHLY_CAP_USD = 50;
-
-const visualPromptSchema = promptBriefSchema.transform((input) => ({
-  ...input,
-  model: input.model || (process.env.AI_MODEL ?? "ag/gemini-3.7-flash"),
-}));
+const SERVER_MODEL = process.env.AI_MODEL ?? "ag/gemini-3.7-flash";
+const visualPromptSchema = promptBriefSchema.omit({ model: true });
 
 function getApiKey() {
   try {
@@ -45,6 +42,7 @@ function estimateCost(model: string, inputTokens: number, outputTokens: number):
     "gpt-3.5-turbo": { input: 0.5, output: 1.5 },
     "ag/gemini-pro-agent": { input: 0.15, output: 0.6 },
     "ag/gemini-flash-agent": { input: 0.075, output: 0.3 },
+    "ag/gemini-3.7-flash": { input: 0.15, output: 0.6 },
   };
   const p = pricing[model] ?? { input: 0.15, output: 0.6 };
   return (inputTokens / 1_000_000) * p.input + (outputTokens / 1_000_000) * p.output;
@@ -170,14 +168,15 @@ export async function generateVisualPrompt(rawInput: unknown) {
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: input.model,
+        model: SERVER_MODEL,
         messages: [
           { role: "system", content: request.systemPrompt },
           { role: "user", content: generatedPrompt },
         ],
-        temperature: 0.7,
+        temperature: 0.4,
         max_tokens: 3500,
       }),
+      signal: AbortSignal.timeout(60_000),
     });
 
     if (!response.ok) {
@@ -190,11 +189,12 @@ export async function generateVisualPrompt(rawInput: unknown) {
     const rawText = await response.text();
     const parsed = parseAiResponse(rawText);
     const normalized = parsePromptResult(parsed.content, input.promptType);
+    if (!normalized.structured) throw new Error("AI belum menghasilkan materi lengkap. Coba generate ulang.");
     generatedOutput = serializePromptResult(normalized.result);
     inputTokens =
       parsed.promptTokens || Math.ceil((request.systemPrompt.length + generatedPrompt.length) / 4);
     outputTokens = parsed.completionTokens || Math.ceil(generatedOutput.length / 4);
-    costUsd = estimateCost(input.model, inputTokens, outputTokens).toFixed(4);
+    costUsd = estimateCost(SERVER_MODEL, inputTokens, outputTokens).toFixed(4);
 
     const [generation] = await db
       .insert(promptGenerations)
@@ -203,7 +203,7 @@ export async function generateVisualPrompt(rawInput: unknown) {
         input,
         generatedPrompt,
         generatedOutput,
-        model: input.model,
+        model: SERVER_MODEL,
         inputTokens,
         outputTokens,
         costUsd,
