@@ -21,10 +21,11 @@ type PreviewItem = {
   included: boolean;
 };
 
-export function TaskTemplateImportDialog({ projectId, templates, selectedTemplateId }: { projectId: string; templates: TemplateOption[]; selectedTemplateId?: string | null }) {
+export function TaskTemplateImportDialog({ projects, templates, selectedTemplateId }: { projects: Array<{ id: string; name: string }>; templates: TemplateOption[]; selectedTemplateId?: string | null }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
+  const [projectId, setProjectId] = useState("");
   const [loading, setLoading] = useState(false);
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
   const [selectedItems, setSelectedItems] = useState<Array<{ itemId: string; duplicateAction?: "skip" | "keep" }>>([]);
@@ -40,10 +41,11 @@ export function TaskTemplateImportDialog({ projectId, templates, selectedTemplat
     setPreviewFingerprint("");
   }, [selectedTemplateId]);
 
-  async function loadPreview(templateIds = selectedTemplateIds) {
+  async function loadPreview(templateIds = selectedTemplateIds, destinationProjectId = projectId) {
+    if (!destinationProjectId) return;
     setLoading(true);
     try {
-      const result = await previewTaskTemplateImport({ projectId, templateIds, selectedItems: [], allowIncompatibleTarget });
+      const result = await previewTaskTemplateImport({ projectId: destinationProjectId, templateIds, selectedItems: [], allowIncompatibleTarget });
       setPreview(result.preview);
       setSelectedItems(result.preview.map((item) => ({ itemId: item.itemId })));
       setPreviewFingerprint(result.payloadFingerprint);
@@ -101,12 +103,26 @@ export function TaskTemplateImportDialog({ projectId, templates, selectedTemplat
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => {
       setOpen(nextOpen);
-      if (nextOpen && selectedTemplateId) void loadPreview([selectedTemplateId]);
+      if (!nextOpen) {
+        setProjectId(""); setPreview([]); setSelectedItems([]); setPreviewFingerprint("");
+      }
     }}>
       <DialogTrigger asChild><Button variant="outline">{t("Import Template", "Import Template")}</Button></DialogTrigger>
       <DialogContent className="max-h-[min(90dvh,720px)] w-[calc(100%-1.5rem)] max-w-2xl overflow-y-auto p-4 sm:w-full sm:p-6">
         <DialogHeader><DialogTitle>{t("Import Template Tugas", "Import Task Template")}</DialogTitle></DialogHeader>
         <div className="space-y-4">
+          <label className="block space-y-1.5 text-sm font-medium">
+            <span>{t("Pilih project tujuan", "Select destination project")}</span>
+            <select className="h-10 w-full rounded-xl border border-border bg-background px-3" value={projectId} onChange={(event) => {
+              const nextProjectId = event.target.value;
+              setProjectId(nextProjectId);
+              setPreview([]); setSelectedItems([]); setPreviewFingerprint("");
+              if (nextProjectId && selectedTemplateId) void loadPreview([selectedTemplateId], nextProjectId);
+            }}>
+              <option value="">{t("Pilih project...", "Select project...")}</option>
+              {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
+            </select>
+          </label>
           <div className="space-y-2">
             {visibleTemplates.map((template) => (
               <button key={template.id} type="button" className={`flex min-h-11 w-full items-center gap-3 rounded-md border px-3 py-2 text-left text-sm ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary/5" : ""}`} onClick={() => selectTemplate(template.id)}>
@@ -116,7 +132,7 @@ export function TaskTemplateImportDialog({ projectId, templates, selectedTemplat
             ))}
           </div>
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={allowIncompatibleTarget} onChange={(event) => {setAllowIncompatibleTarget(event.target.checked);setPreview([]);setSelectedItems([]);setPreviewFingerprint("");}} /><span>{t("Izinkan template tidak cocok", "Allow incompatible template")}</span></label>
-          <Button onClick={() => void loadPreview()} disabled={loading || selectedTemplateIds.length === 0}>{t("Lihat Preview", "View Preview")}</Button>
+          {(!selectedTemplateId || preview.length > 0) && <Button variant="outline" onClick={() => void loadPreview()} disabled={loading || !projectId || selectedTemplateIds.length === 0}>{preview.length > 0 ? t("Muat ulang preview", "Refresh preview") : t("Lihat Preview", "View Preview")}</Button>}
           {preview.length ? <div className="overflow-hidden rounded-md border">
             <label className="flex items-center gap-2 border-b bg-muted/30 px-3 py-2 text-sm font-medium">
               <input type="checkbox" checked={allItemsSelected} onChange={(event) => toggleAllItems(event.target.checked)} />
@@ -131,7 +147,8 @@ export function TaskTemplateImportDialog({ projectId, templates, selectedTemplat
               </div>;
             })}
           </div> : null}
-          <Button className="w-full" onClick={submit} disabled={loading || preview.length === 0 || selectedItems.length === 0 || !previewFingerprint}>Import Tugas Terpilih</Button>
+          {projectId && preview.length > 0 && <p className="text-center text-sm font-medium">{t("Import", "Import")} {selectedItems.length} {t("subtask ke", "subtasks into")} {projects.find((project) => project.id === projectId)?.name}</p>}
+          <Button className="w-full" onClick={submit} disabled={loading || !projectId || preview.length === 0 || selectedItems.length === 0 || !previewFingerprint}>{t("Import Subtask Terpilih", "Import Selected Subtasks")}</Button>
         </div>
       </DialogContent>
     </Dialog>

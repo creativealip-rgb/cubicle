@@ -11,7 +11,7 @@ describe("task template import dialog", () => {
 
   it("opens selected page template directly as task checklist", () => {
     expect(source).toContain("const visibleTemplates = selectedTemplateId");
-    expect(source).toContain("void loadPreview([selectedTemplateId])");
+    expect(source).toContain("void loadPreview([selectedTemplateId], nextProjectId)");
     expect(source).toContain("visibleTemplates.map((template)");
   });
 

@@ -250,7 +250,6 @@ export function TaskTemplateWorkspace({
 }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
-  const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
   async function run(action: () => Promise<unknown>) {
@@ -279,31 +278,11 @@ export function TaskTemplateWorkspace({
             onSave={(value) => run(() => createTaskTemplate({ ...value, status: "active" }))}
           />
 
-          {projects.length > 0 && (
-            <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-center">
-              <span className="text-xs text-muted-foreground font-medium hidden sm:inline">
-                {t("Terapkan ke Proyek:", "Apply to Project:")}
-              </span>
-              <select
-                className="h-8 min-w-0 w-full rounded-xl border border-border/80 bg-background px-3 text-xs font-medium sm:w-auto sm:max-w-64"
-                value={projectId}
-                onChange={(event) => setProjectId(event.target.value)}
-              >
-                {projects.map((project) => (
-                  <option key={project.id} value={project.id}>
-                    {project.name}
-                  </option>
-                ))}
-              </select>
-              {projectId && (
-                <TaskTemplateImportDialog
-                  projectId={projectId}
-                  selectedTemplateId={selectedTemplateId}
-                  templates={templates.map(({ id, name: label, target }) => ({ id, name: label, target }))}
-                />
-              )}
-            </div>
-          )}
+          {projects.length > 0 && <TaskTemplateImportDialog
+            projects={projects}
+            selectedTemplateId={selectedTemplateId}
+            templates={templates.map(({ id, name: label, target }) => ({ id, name: label, target }))}
+          />}
         </div>
 
         <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
