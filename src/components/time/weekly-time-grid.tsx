@@ -113,9 +113,12 @@ export function WeeklyTimeGrid({
 
   const filteredProjects = useMemo(() => {
     const term = projectSearch.toLowerCase().trim();
-    if (!term) return projects;
-    return projects.filter((p) => p.name.toLowerCase().includes(term));
-  }, [projects, projectSearch]);
+    return projects.filter((project) => {
+      const client = clients.find((item) => item.id === project.customerRef);
+      return !term || project.name.toLowerCase().includes(term) || client?.name.toLowerCase().includes(term);
+    });
+  }, [clients, projects, projectSearch]);
+  const groupedFooterProjects = useMemo(() => Object.entries(Object.groupBy(filteredProjects, (project) => clients.find((item) => item.id === project.customerRef)?.name || t("Tanpa Klien", "No client"))), [clients, filteredProjects, t]);
 
   const availableActivities = useMemo(
     () => tasks.filter((task) => task.projectId === projectId),
@@ -381,7 +384,7 @@ export function WeeklyTimeGrid({
                   {filteredProjects.length === 0 ? (
                     <p className="p-2 text-xs text-muted-foreground">{t("Project tidak ditemukan", "Project not found")}</p>
                   ) : (
-                    filteredProjects.map((p) => (
+                    groupedFooterProjects.flatMap(([, group]) => group ?? []).map((p) => (
                       <button
                         key={p.id}
                         type="button"
