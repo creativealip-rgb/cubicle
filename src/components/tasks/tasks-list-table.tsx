@@ -36,6 +36,7 @@ export type TasksListItem = {
   sourceNoteId?: string | null;
   behavior: "one_time" | "recurring" | null;
   mode?: "workflow" | "reusable";
+  templateName?: string | null;
 };
 
 type Member = { id: string; name: string | null; email: string | null };
@@ -223,6 +224,7 @@ export function TasksListTable({
                     <div className="min-w-0 flex-1">
                       <p className={`text-sm font-semibold transition-colors truncate ${task.status === "done" ? "line-through text-muted-foreground font-normal" : "text-foreground hover:text-primary"}`}>{task.title}</p>
                       <div className="flex items-center gap-1.5 mt-0.5">
+                        {task.templateName && <span className="rounded bg-primary/10 px-1.5 text-[9px] font-medium text-primary">{task.templateName}</span>}
                         {task.mode === "reusable" ? (
                           <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">Reusable</span>
                         ) : (
@@ -295,6 +297,7 @@ export function TasksListTable({
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5 flex-wrap">
                         <p className={`truncate text-sm font-semibold transition-colors ${task.status === "done" ? "line-through text-muted-foreground font-normal" : "text-foreground hover:text-primary"}`}>{task.title}</p>
+                        {task.templateName && <span className="rounded bg-primary/10 px-1.5 text-[9px] font-medium text-primary">{task.templateName}</span>}
                         {task.mode === "reusable" ? (
                           <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">Reusable</span>
                         ) : (

@@ -26,6 +26,7 @@ interface Task {
   sourceNoteId?: string | null;
   behavior: "one_time" | "recurring" | null;
   mode?: "workflow" | "reusable";
+  templateName?: string | null;
 }
 
 interface TasksBoardViewProps {
@@ -120,6 +121,7 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                   <Card draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/task-id", task.id); setDraggedId(task.id); }} onDragEnd={() => setDraggedId(null)} className="cursor-grab border-border transition-shadow hover:shadow-md active:cursor-grabbing">
                     <CardContent className="space-y-2 p-3">
                       <p className="text-sm font-medium leading-snug">{task.title}</p>
+                      {task.templateName && <Badge variant="outline" className="border-primary/30 bg-primary/5 text-[10px] text-primary">{task.templateName}</Badge>}
                       <Badge variant="outline" className="text-[10px] font-normal">
                         {task.mode === "reusable" ? "Reusable" : "Workflow"}
                       </Badge>
