@@ -23,6 +23,8 @@ describe("task template page card selection", () => {
     expect(dialog).toContain('t("Cari project tujuan...", "Search destination project...")');
     expect(dialog).toContain("filteredProjects.map((project)");
     expect(dialog).toContain("setProjectSearchOpen(true)");
+    expect(dialog).toContain('onTouchMove={(event) => event.stopPropagation()}');
+    expect(dialog).toContain("max-h-[min(15rem,45dvh)]");
     expect(dialog).toContain('disabled={loading || !projectId');
     expect(dialog).toContain('t("subtask ke", "subtasks into")');
   });

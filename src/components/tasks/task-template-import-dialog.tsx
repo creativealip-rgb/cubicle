@@ -137,7 +137,7 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
                 <button type="button" aria-label={t("Buka daftar project", "Toggle project list")} onClick={() => setProjectSearchOpen((current) => !current)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"><ChevronDown className={`size-4 transition-transform ${projectSearchOpen ? "rotate-180" : ""}`} /></button>
               </div></PopoverAnchor>
               <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
-                <div role="listbox" className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain">
+                <div role="listbox" className="max-h-[min(15rem,45dvh)] touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]" onTouchMove={(event) => event.stopPropagation()} onWheel={(event) => event.stopPropagation()}>
                   {filteredProjects.length === 0 ? <p className="p-2 text-xs text-muted-foreground">{t("Project tidak ditemukan", "No project found")}</p> : filteredProjects.map((project) => <button key={project.id} type="button" role="option" aria-selected={projectId === project.id} className={`flex min-h-10 w-full items-center rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${projectId === project.id ? "bg-accent font-medium" : ""}`} onClick={() => chooseProject(project.id)}>{project.name}</button>)}
                 </div>
               </PopoverContent>
