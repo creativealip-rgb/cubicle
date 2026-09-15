@@ -347,7 +347,10 @@ export function AppTopbar({ user }: AppTopbarProps) {
                   {t("Ruang Kerja", "Workspace")}
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {wsData?.workspaces.map((ws) => (
+                {(() => {
+                  const mainWorkspace = wsData?.workspaces.filter((ws) => ws.name.trim().toLowerCase() === "alip") ?? [];
+                  const teamWorkspaces = wsData?.workspaces.filter((ws) => ws.name.trim().toLowerCase() !== "alip") ?? [];
+                  const renderWorkspace = (ws: WorkspaceItem) => (
                   <DropdownMenuItem
                     key={ws.id}
                     onClick={() => handleSwitchWorkspace(ws.id)}
@@ -366,7 +369,16 @@ export function AppTopbar({ user }: AppTopbarProps) {
                       <Loader2 className="h-4 w-4 shrink-0 animate-spin text-muted-foreground" />
                     )}
                   </DropdownMenuItem>
-                ))}
+                  );
+                  return (
+                    <>
+                      <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("Workspace utama", "Main Workspace")}</DropdownMenuLabel>
+                      {mainWorkspace.map(renderWorkspace)}
+                      <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("Workspace tim", "Team Workspaces")}</DropdownMenuLabel>
+                      {teamWorkspaces.map(renderWorkspace)}
+                    </>
+                  );
+                })()}
                 <DropdownMenuSeparator />
                 {isFree ? (
                   <DropdownMenuItem asChild className="cursor-pointer">

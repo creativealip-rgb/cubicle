@@ -17,6 +17,7 @@ import { useConfirm } from "@/lib/hooks/use-confirm";
 interface WorkspaceBrandingFormProps {
   section: "workspace" | "invoice";
   canEdit?: boolean;
+  plan?: "free" | "solo" | "team";
   defaults: {
     billingName?: string | null;
     billingEmail?: string | null;
@@ -37,7 +38,9 @@ export function WorkspaceBrandingForm({
   section,
   defaults,
   canEdit = true,
+  plan = "free",
 }: WorkspaceBrandingFormProps) {
+  const canCustomizeLogo = plan !== "free";
   const { t } = useT();
   const { refresh } = useAppTransition();
   const { confirm, dialog } = useConfirm();
@@ -153,6 +156,12 @@ export function WorkspaceBrandingForm({
     <form onSubmit={onSubmit} className="space-y-4">
       <fieldset disabled={!canEdit} className="space-y-4">
       {section === "workspace" ? <div className="space-y-3 rounded-lg border p-4">
+        {!canCustomizeLogo ? <div className="rounded-md bg-muted/50 p-3 text-xs text-muted-foreground">
+          <p className="font-medium text-foreground">{t("Logo bisnis tersedia di paket berbayar.", "Business logo is available on paid plans.")}</p>
+          <p className="mt-1">{t("Preview default Cubiqlo tetap digunakan. Upgrade untuk menampilkan logo bisnis kamu.", "Cubiqlo default preview stays active. Upgrade to show your business logo.")}</p>
+          <a className="mt-2 inline-block font-semibold text-primary hover:underline" href="/app/billing">{t("Upgrade paket", "Upgrade plan")}</a>
+        </div> : null}
+        {canCustomizeLogo ? <>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <Label>{t("Business Logo", "Business Logo")}</Label>
@@ -248,6 +257,7 @@ export function WorkspaceBrandingForm({
             </p>
           </div>
         ) : null}
+        </> : null}
       </div> : null}
 
       {section === "workspace" ? (

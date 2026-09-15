@@ -27,8 +27,15 @@ describe("Assistant UI registry", () => {
     expect(formatAssistantRelativeTime("2026-07-26T06:58:00.000Z", "en", now)).toBe("2 minutes ago");
   });
 
-  it("has four primary actions and no demo entity defaults", () => {
-    expect(primaryAssistantActions).toHaveLength(4);
+  it("has creation, timer, and reports quick prompts and no demo entity defaults", () => {
+    expect(primaryAssistantActions).toEqual(expect.arrayContaining([
+      expect.objectContaining({ id: "create-client" }),
+      expect.objectContaining({ id: "create-invoice" }),
+      expect.objectContaining({ id: "create-task" }),
+      expect.objectContaining({ id: "create-project" }),
+      expect.objectContaining({ id: "start-timer" }),
+      expect.objectContaining({ id: "reports" }),
+    ]));
     const serialized = JSON.stringify(assistantQuickActions);
     expect(serialized).not.toMatch(/Kopi Senja|INV-0001/);
     expect(new Set(assistantQuickActions.map((item) => item.category))).toEqual(new Set(["summary", "finance", "work", "clients", "sales"]));

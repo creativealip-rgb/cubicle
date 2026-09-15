@@ -45,7 +45,7 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
   }
 
   function selectTemplate(id: string) {
-    setSelectedTemplateIds([id]);
+    setSelectedTemplateIds((current) => current.includes(id) ? [] : [id]);
     setPreview([]); setSelectedItems([]); setPreviewFingerprint("");
   }
 

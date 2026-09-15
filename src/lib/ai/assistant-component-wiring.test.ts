@@ -17,6 +17,8 @@ describe("full-page Assistant wiring", () => {
     expect(empty).toContain("primaryAssistantActions");
     expect(empty).toContain("setInput(prompt)");
     expect(empty).not.toContain("send(prompt)");
+    expect(empty).not.toContain("AI Assistant tutorial");
+    expect(empty).not.toContain("Cara pakai AI Assistant");
   });
   it("history requires custom delete confirmation and row loading", () => {
     const history = read("src/components/ai/assistant-history.tsx");

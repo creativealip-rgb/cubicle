@@ -85,6 +85,7 @@ export default async function SettingsPage({
       email: users.email,
       emailVerified: users.emailVerified,
       twoFactorEnabled: users.twoFactorEnabled,
+      plan: users.plan,
     })
     .from(users)
     .where(eq(users.id, user.id))
@@ -282,6 +283,7 @@ export default async function SettingsPage({
                     <WorkspaceBrandingForm
                       section="workspace"
                       canEdit={canEditWorkspace}
+                      plan={currentUser?.plan as "free" | "solo" | "team"}
                       defaults={{
                         billingName: workspace.billingName,
                         billingEmail: workspace.billingEmail,
@@ -535,10 +537,7 @@ export default async function SettingsPage({
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
-                  <Calendar className="h-5 w-5" /> Google Calendar{" "}
-                  <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-800 border border-amber-300">
-                    Soon
-                  </span>
+                  <Calendar className="h-5 w-5" /> Google Calendar
                 </CardTitle>
                 <CardDescription>
                   {t("Hubungkan Google Calendar untuk sinkronisasi jadwal.", "Connect Google Calendar to sync your schedule.")}

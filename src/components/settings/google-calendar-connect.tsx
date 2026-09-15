@@ -122,14 +122,6 @@ export function GoogleCalendarConnect({
         </p>
       )}
 
-      {!configured ? (
-        <div className="rounded-lg border border-amber-200 bg-amber-50/50 p-3 text-xs text-amber-900">
-          <p className="font-medium">
-            {t("Fitur Ini Belum Diverifikasi Google (Soon)", "Feature Pending Google Verification (Soon)")}
-          </p>
-        </div>
-      ) : null}
-
       <div className="flex flex-wrap gap-2">
         {connected ? (
           <Button
@@ -148,9 +140,9 @@ export function GoogleCalendarConnect({
             {t("Putuskan", "Disconnect")}
           </Button>
         ) : (
-          <Button type="button" size="sm" className="h-10" disabled>
+          <Button type="button" size="sm" className="h-10" disabled={!configured} onClick={() => { window.location.href = "/api/integrations/google-calendar/connect"; }}>
             <Calendar className="h-4 w-4" />
-            {t("Hubungkan Google Calendar (Soon)", "Connect Google Calendar (Soon)")}
+            {t("Hubungkan Google Calendar", "Connect Google Calendar")}
           </Button>
         )}
       </div>

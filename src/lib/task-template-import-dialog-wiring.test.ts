@@ -9,6 +9,11 @@ describe("task template import dialog", () => {
     expect(source).toContain("importTaskTemplates");
   });
 
+  it("makes whole template card toggle selection and clears selected state", () => {
+    expect(source).toContain("current.includes(id) ? [] : [id]");
+    expect(source).toContain("onClick={() => selectTemplate(template.id)}");
+  });
+
   it("supports multiple templates, item selection, and duplicate decisions", () => {
     expect(source).toContain("selectedTemplateIds");
     expect(source).toContain("selectedItems");

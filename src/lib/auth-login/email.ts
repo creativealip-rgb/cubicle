@@ -9,9 +9,9 @@ export async function sendLoginOtpEmail({
 }) {
   const result = await sendNotification({
     to: email,
-    subject: "Kode login Cubiqlo",
+    subject: "Your Cubiqlo login code",
     type: "login_otp",
-    text: `Kode login Cubiqlo kamu: ${code}\n\nKode berlaku 10 menit. Jangan bagikan kode ini.`,
+    text: `Your Cubiqlo login code: ${code}\n\nThis code expires in 10 minutes. Do not share it with anyone.`,
     idempotencyKey: `login-otp-${email}-${Date.now()}`,
   });
   if (!result.success) throw new Error("OTP delivery failed");

@@ -38,7 +38,7 @@ const plans = [
     key: "team",
     name: "Team",
     description: ["Untuk team kecil yang handle banyak client bareng.", "For small teams handling many clients together."],
-    features: [["Maksimal 5 member/workspace", "Up to 5 members/workspace"], ["Maksimal 3 workspace", "Up to 3 workspaces"], ["Klien, proyek, proposal, kontrak, dan invoice unlimited", "Unlimited clients, projects, proposals, contracts, and invoices"], ["Peran tim", "Team roles"], ["1.000 AI request/bulan", "1,000 AI requests/month"], ["5 GB/workspace", "5 GB/workspace"], ["Penyimpanan bersama untuk tim", "Shared storage for your team"]],
+    features: [["Maksimal 5 member/workspace", "Up to 5 members/workspace"], ["Maksimal 3 workspace", "Up to 3 workspaces"], ["Klien, proyek, proposal, kontrak, dan invoice unlimited", "Unlimited clients, projects, proposals, contracts, and invoices"], ["Client portal + AI", "Client portal + AI"], ["Peran tim", "Team roles"], ["1.000 AI request/bulan", "1,000 AI requests/month"], ["5 GB/workspace", "5 GB/workspace"], ["Penyimpanan bersama untuk tim", "Shared storage for your team"]],
   },
 ] as const;
 
@@ -153,15 +153,15 @@ export default async function BillingPage({
                     {paid && planConfig ? (
                       <div>
                         <p className="text-2xl font-semibold text-slate-950">
-                          {getPlanPeriodLabel(plan.key, "monthly")}
+                          {lang === "en" ? (plan.key === "solo" ? "$6" : "$12") : getPlanPeriodLabel(plan.key, "monthly")}
                           <span className="text-sm font-normal text-slate-500">/{t("bulan", "month")}</span>
                         </p>
                         <p className="mt-1 text-xs text-slate-500">
-                          {t("Ditagih tahunan", "Billed yearly")} · {getPlanPeriodLabel(plan.key, "yearly")}/{t("tahun", "year")}
+                          {t("Ditagih tahunan", "Billed yearly")} · {lang === "en" ? (plan.key === "solo" ? "$72" : "$144") : getPlanPeriodLabel(plan.key, "yearly")}/{t("tahun", "year")}
                         </p>
                       </div>
                     ) : (
-                      <p className="text-2xl font-semibold text-slate-950">Rp 0</p>
+                      <p className="text-2xl font-semibold text-slate-950">{lang === "en" ? "$0" : "Rp 0"}</p>
                     )}
                     <p className="text-sm text-slate-600">{t(plan.description[0], plan.description[1])}</p>
                   </CardHeader>

@@ -45,7 +45,21 @@ export async function HabitsSection({
 
   async function toggle(fd: FormData) {
     "use server";
-    await togglePersonalHabitCheckin(String(fd.get("habitId")));
+    await togglePersonalHabitCheckin(String(fd.get("habitId")), String(fd.get("date") || today));
+  }
+
+  const dates = Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(`${today}T12:00:00Z`);
+    date.setUTCDate(date.getUTCDate() - (6 - index));
+    return date.toISOString().slice(0, 10);
+  });
+
+  function dateLabel(date: string) {
+    return new Intl.DateTimeFormat(lang === "id" ? "id-ID" : "en-US", { weekday: "short", day: "numeric" }).format(new Date(`${date}T12:00:00Z`));
+  }
+
+  function isDone(habit: (typeof habits)[number], date: string) {
+    return habit.checkins.some((checkin) => checkin.localDate === date);
   }
 
 
@@ -130,6 +144,20 @@ export async function HabitsSection({
       )}
 
       {/* Active Habits List */}
+      <div className="overflow-x-auto rounded-lg border">
+        <div className="min-w-[620px]">
+          <div className="grid grid-cols-[minmax(180px,1fr)_repeat(7,64px)] border-b bg-muted/40 px-2 py-1.5 text-[10px] font-semibold text-muted-foreground">
+            <span>{t("Kebiasaan", "Habit")}</span>{dates.map((date) => <span key={date} className="text-center">{dateLabel(date)}</span>)}
+          </div>
+          <div className="divide-y">
+            {activeHabits.map((h) => <div key={`grid-${h.id}`} className="grid grid-cols-[minmax(180px,1fr)_repeat(7,64px)] items-center px-2 py-1">
+              <span className="truncate pr-2 text-xs font-medium">{h.name}</span>
+              {dates.map((date) => <form key={date} action={toggle} className="flex justify-center"><input type="hidden" name="habitId" value={h.id} /><input type="hidden" name="date" value={date} /><button type="submit" aria-label={`${h.name} ${date}`} className={`size-7 rounded-md border text-xs ${isDone(h, date) ? "border-emerald-600 bg-emerald-500 text-white" : "border-muted-foreground/20 hover:border-primary"}`}>{isDone(h, date) ? "✓" : ""}</button></form>)}
+            </div>)}
+          </div>
+          <div className="border-t p-2"><HabitDialog lang={lang} goals={goals} today={today} createHabitAction={create} /></div>
+        </div>
+      </div>
       <div className="space-y-2.5">
         {activeHabits.length === 0 && (
           <div className="rounded-xl border border-dashed p-8 text-center">

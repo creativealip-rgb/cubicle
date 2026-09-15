@@ -47,21 +47,15 @@ export function AssistantEmptyState({
 
   const filterChips = [
     { id: "all", label: lang === "id" ? "Semua Rekomendasi" : "All Prompts" },
-    { id: "finance", label: lang === "id" ? "Keuangan & Invoice" : "Finance & Invoices" },
-    { id: "projects", label: lang === "id" ? "Tugas & Proyek" : "Tasks & Projects" },
-    { id: "clients", label: lang === "id" ? "Klien & Portal" : "Clients & Portal" },
+    ...primaryAssistantActions.slice(0, 6).map((action) => ({
+      id: action.id,
+      label: localizeAssistantAction(action, lang).label,
+    })),
   ];
-
-  function getActionCategory(id: string) {
-    if (id.includes("invoice") || id.includes("business") || id.includes("financial")) return "finance";
-    if (id.includes("task") || id.includes("project")) return "projects";
-    if (id.includes("client")) return "clients";
-    return "general";
-  }
 
   const displayedActions = primaryAssistantActions.filter((action) => {
     if (activeCategory === "all") return true;
-    return getActionCategory(action.id) === activeCategory;
+    return action.id === activeCategory;
   });
 
   return (
@@ -198,16 +192,6 @@ export function AssistantEmptyState({
               );
             })}
           </div>
-        </section>
-
-        {/* Tutorial */}
-        <section className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-3.5 text-xs leading-relaxed lg:absolute lg:right-0 lg:top-0 lg:w-56">
-          <p className="font-bold text-foreground">{lang === "id" ? "Cara pakai AI Assistant" : "AI Assistant tutorial"}</p>
-          <ol className="mt-1.5 list-decimal space-y-1 pl-4 text-muted-foreground">
-            <li>{lang === "id" ? "Pilih prompt fitur: invoice, project, client, task, atau report." : "Choose a feature prompt: invoice, project, client, task, or report."}</li>
-            <li>{lang === "id" ? "Edit konteks dan minta AI menjelaskan langkahnya." : "Edit context and ask AI to explain each step."}</li>
-            <li>{lang === "id" ? "Review hasil. Perubahan data selalu minta konfirmasi." : "Review output. Data changes always require confirmation."}</li>
-          </ol>
         </section>
 
         {/* Capability Info Banner */}

@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Trash2, UserPlus, Mail } from "lucide-react";
+import { Trash2, UserPlus } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
 
 type Member = {
@@ -135,12 +135,7 @@ export function TeamManager({
             <UserPlus className="h-4 w-4" /> {t("Undang", "Invite")}
           </LoadingButton>
         </div>
-        <p className="text-xs text-muted-foreground flex items-start gap-1.5">
-          <Mail className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-          <span>
-            {t("Kalau email sudah punya akun Cubiqlo → langsung join workspace + email notif. Belum daftar → email undangan signup dikirim; setelah signup, undang lagi biar masuk.", "If email already has a Cubiqlo account → they join workspace directly and get an email notification. Not registered yet → signup invitation email is sent; invite again after signup to add them.")}
-          </span>
-        </p>
+
       </form>
 
       <div className="space-y-2">
@@ -152,7 +147,7 @@ export function TeamManager({
             </div>
             <div className="flex items-center gap-2">
               {member.role === "owner" ? (
-                <Badge>Pemilik</Badge>
+                <Badge>{t("Pemilik", "Owner")}</Badge>
               ) : (
                 <Select
                   value={member.role}
