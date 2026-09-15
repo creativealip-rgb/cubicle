@@ -410,14 +410,20 @@ export function WeeklyTimeGrid({
                 className="h-10 text-sm"
               />
               {taskSearchOpen && projectId && (
-                <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
-                  {filteredTasks.length === 0 ? (
-                    <p className="p-2 text-xs text-muted-foreground">{t("Task tidak ditemukan", "Task not found")}</p>
-                  ) : (
-                    groupedFooterTasks.map(([templateName, group]) => <div key={templateName} className="py-1"><p className="px-2 py-1 text-xs font-semibold">{templateName}</p>{(group ?? []).map((tItem) => (
-                      <button key={tItem.id} type="button" className={`flex min-h-10 w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${taskId === tItem.id ? "bg-accent font-medium" : ""}`} onClick={() => { setTaskId(tItem.id); setTaskSearch(tItem.title); setTaskSearchOpen(false); }}><span>{tItem.title}</span></button>
-                    ))}</div>)
-                  )}
+                <div className="absolute left-0 right-0 top-full z-50 mt-1 flex max-h-[min(22rem,55dvh)] flex-col overflow-hidden rounded-md border bg-popover shadow-md">
+                  <div className="min-h-0 flex-1 overflow-y-auto p-1">
+                    {filteredTasks.length === 0 ? (
+                      <p className="p-2 text-xs text-muted-foreground">{t("Task tidak ditemukan", "Task not found")}</p>
+                    ) : (
+                      groupedFooterTasks.map(([templateName, group]) => <div key={templateName} className="py-1"><p className="px-3 py-1.5 text-xs font-semibold">{templateName}</p>{(group ?? []).map((tItem) => (
+                        <button key={tItem.id} type="button" className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${taskId === tItem.id ? "bg-accent font-medium" : ""}`} onClick={() => { setTaskId(tItem.id); setTaskSearch(tItem.title); setTaskSearchOpen(false); }}><span>{tItem.title}</span></button>
+                      ))}</div>)
+                    )}
+                  </div>
+                  <div className="shrink-0 border-t bg-popover p-1.5 shadow-[0_-4px_10px_rgba(0,0,0,0.04)]">
+                    <Button asChild variant="ghost" size="sm" className="w-full justify-start gap-2"><Link href={`/app/tasks?tab=workflow&projectId=${projectId}`}><Plus className="size-4" />{t("Buat task baru", "Create new task")}</Link></Button>
+                    <Button asChild variant="ghost" size="sm" className="w-full justify-start gap-2"><Link href="/app/tasks?tab=templates"><ListPlus className="size-4" />{t("Import dari template", "Import from template")}</Link></Button>
+                  </div>
                 </div>
               )}
             </div>
