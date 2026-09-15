@@ -1040,23 +1040,13 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                       {filteredEditProjectOptions.length === 0 ? (
                         <p className="p-2 text-xs text-muted-foreground">{t("Klien atau proyek tidak ditemukan", "No client or project found")}</p>
                       ) : (
-                        filteredEditProjectOptions.map((opt) => (
-                          <button
-                            key={opt.projectId}
-                            type="button"
-                            className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${editProjectId === opt.projectId ? "bg-accent font-medium" : ""}`}
-                            onClick={() => {
-                              setEditClientId(opt.clientId);
-                              setEditProjectId(opt.projectId);
-                              setEditProjectSearch(`${opt.clientName} — ${opt.projectName}`);
-                              setEditProjectSearchOpen(false);
-                              setEditTaskId("__none__");
-                              setEditTaskSearch("");
-                            }}
-                          >
-                            <span>{opt.projectName}</span>
-                            <span className="text-[10px] text-muted-foreground">{opt.clientName}</span>
-                          </button>
+                        groupedEditProjectOptions.map(([clientName, group]) => (
+                          <div key={clientName} className="py-1">
+                            <p className="px-3 py-1.5 text-xs font-semibold text-foreground">{clientName}</p>
+                            {(group ?? []).map((opt) => (
+                              <button key={opt.projectId} type="button" className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${editProjectId === opt.projectId ? "bg-accent font-medium" : ""}`} onClick={() => { setEditClientId(opt.clientId); setEditProjectId(opt.projectId); setEditProjectSearch(`${opt.clientName} — ${opt.projectName}`); setEditProjectSearchOpen(false); setEditTaskId("__none__"); setEditTaskSearch(""); }}><span>{opt.projectName}</span></button>
+                            ))}
+                          </div>
                         ))
                       )}
                     </div>
@@ -1088,36 +1078,15 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                   </div>
                   {editTaskError ? <p className="text-xs text-destructive">{t("Task wajib dipilih untuk project Hourly/Retainer", "Task is required for Hourly/Retainer projects")}</p> : null}
                   {editTaskSearchOpen && editProjectId && (
-                    <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
-                      <button
-                        type="button"
-                        className={`w-full rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${editTaskId === "__none__" ? "bg-accent font-medium" : ""}`}
-                        onClick={() => {
-                          setEditTaskId("__none__");
-                          setEditTaskSearch("");
-                          setEditTaskSearchOpen(false);
-                        }}
-                      >
-                        {t("Tidak ada", "None")}
-                      </button>
-                      {filteredEditTaskOptions.length === 0 ? (
-                        <p className="p-2 text-xs text-muted-foreground">{t("Tugas tidak ditemukan", "No task found")}</p>
-                      ) : (
-                        filteredEditTaskOptions.map((tk) => (
-                          <button
-                            key={tk.id}
-                            type="button"
-                            className={`w-full rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${editTaskId === tk.id ? "bg-accent font-medium" : ""}`}
-                            onClick={() => {
-                              handleEditTaskChange(tk.id);
-                              setEditTaskSearch(tk.title);
-                              setEditTaskSearchOpen(false);
-                            }}
-                          >
-                            {tk.title}
-                          </button>
-                        ))
-                      )}
+                    <div className="absolute left-0 right-0 top-full z-50 mt-1 flex max-h-[min(22rem,55dvh)] flex-col overflow-hidden rounded-md border bg-popover shadow-md">
+                      <div className="min-h-0 flex-1 overflow-y-auto p-1">
+                        {editTasks.length === 0 && <button type="button" className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${editTaskId === "__none__" ? "bg-accent font-medium" : ""}`} onClick={() => { setEditTaskId("__none__"); setEditTaskSearch(""); setEditTaskSearchOpen(false); }}>{t("Tidak ada", "None")}</button>}
+                        {filteredEditTaskOptions.length === 0 && editTasks.length > 0 ? <p className="p-2 text-xs text-muted-foreground">{t("Tugas tidak ditemukan", "No task found")}</p> : groupedEditTaskOptions.map(([templateName, group]) => <div key={templateName} className="py-1"><p className="px-3 py-1.5 text-xs font-semibold text-foreground">{templateName}</p>{(group ?? []).map((tk) => <button key={tk.id} type="button" className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${editTaskId === tk.id ? "bg-accent font-medium" : ""}`} onClick={() => { handleEditTaskChange(tk.id); setEditTaskSearch(tk.title); setEditTaskSearchOpen(false); }}>{tk.title}</button>)}</div>)}
+                      </div>
+                      <div className="shrink-0 border-t bg-popover p-1.5 shadow-[0_-4px_10px_rgba(0,0,0,0.04)]">
+                        <Button asChild variant="ghost" size="sm" className="min-h-10 w-full justify-start gap-2 px-2.5 text-sm"><Link href={`/app/tasks?tab=workflow&projectId=${editProjectId}`}><Plus className="size-4" />{t("Buat task baru", "Create new task")}</Link></Button>
+                        <Button asChild variant="ghost" size="sm" className="min-h-10 w-full justify-start gap-2 px-2.5 text-sm"><Link href="/app/tasks?tab=templates"><ListPlus className="size-4" />{t("Import dari template", "Import from template")}</Link></Button>
+                      </div>
                     </div>
                   )}
                 </div>

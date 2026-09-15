@@ -15,7 +15,7 @@ describe("weekly time picker parity", () => {
 
   it("groups projects by client and tasks by template source", () => {
     expect(weekly).toContain("groupedFooterProjects.map(([clientName, group])");
-    expect(timesheet).toContain("groupedEditProjectOptions.map(([clientName, group])");
+    expect(timesheet.match(/groupedEditProjectOptions\.map\(\(\[clientName, group\]\)/g)).toHaveLength(2);
     expect(weekly).toContain('task.templateName || t("Tugas manual", "Manual tasks")');
     expect(timesheet).toContain('task.templateName || t("Tugas manual", "Manual tasks")');
   });
