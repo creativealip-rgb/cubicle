@@ -87,8 +87,8 @@ export default async function DocGettingStarted() {
                 t("Klik 'Proyek Baru'.", "Click 'New Project'."),
                 t("Pilih Klien terdaftar dan beri nama proyek.", "Select registered Client and enter project name."),
                 t(
-                  "Pilih Tipe Billing: Fixed Price, Hourly (Per Jam), atau Retainer.",
-                  "Select Billing Type: Fixed Price, Hourly, or Retainer."
+                  "Pilih Tipe Billing: Fixed Price atau Hourly (Per Jam).",
+                  "Select Billing Type: Fixed Price or Hourly."
                 ),
                 t("Atur tanggal mulai & estimasi selesai.", "Set start date and target completion date."),
                 t(
@@ -101,8 +101,8 @@ export default async function DocGettingStarted() {
           </div>
           <DocsCallout variant="info">
             {t(
-              "Tiga model billing aktif: Fixed Price (nilai tetap), Per Jam (tarif × jam), dan Retainer (biaya per periode + kuota menit).",
-              "Three active billing models: Fixed Price (flat value), Hourly (rate × hours), and Retainer (periodic fee + minute quota)."
+              "Dua model billing untuk proyek baru: Fixed Price (nilai tetap) dan Per Jam (tarif × jam). Recurring Invoice diatur terpisah.",
+              "Two billing models are available for new projects: Fixed Price (flat value) and Hourly (rate × hours). Recurring Invoices are configured separately."
             )}
           </DocsCallout>
         </DocsSection>

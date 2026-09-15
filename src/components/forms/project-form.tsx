@@ -304,7 +304,7 @@ export function ProjectForm({
         </div>}
 
         {/* Right Column: Billing & Financials */}
-        {mode === "edit" && section !== "general" && <div className="space-y-4">
+        {section !== "general" && <div className="space-y-4">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {t("Pengaturan Tagihan", "Billing Settings")}
           </h3>
@@ -323,7 +323,7 @@ export function ProjectForm({
                 <SelectContent>
                   <SelectItem value="fixed_price">{t("Harga Tetap", "Fixed Price")}</SelectItem>
                   <SelectItem value="hourly">{t("Per Jam", "Hourly")}</SelectItem>
-                  <SelectItem value="retainer">Retainer</SelectItem>
+                  {mode === "edit" && defaultValues?.billingModel === "retainer" && <SelectItem value="retainer">Retainer</SelectItem>}
                 </SelectContent>
               </Select>
               {billingModelLocked && (

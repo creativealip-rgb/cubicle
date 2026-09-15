@@ -147,7 +147,7 @@ const GUIDES = {
       en: "Manage project & task pipelines. Kanban boards, priority, assignees, deadlines, and billing models.",
     },
     items: [
-      ["1. Buat Proyek", "Proyek Baru → tentukan nama proyek, klien terkait, tipe billing (Fixed Price / Per Jam / Retainer), dan tanggal deadline.", "1. Create a Project", "Set the project name, client, billing model, and deadline when starting a project."],
+      ["1. Buat Proyek", "Proyek Baru → tentukan nama proyek, klien terkait, tipe billing (Fixed Price / Per Jam), dan tanggal deadline.", "1. Create a Project", "Set the project name, client, billing model (Fixed Price or Hourly), and deadline when starting a project."],
       ["2. Siklus Status Proyek", "Draf → Aktif → Ditunda → Selesai → Dibatalkan → Arsip.", "2. Project Status Lifecycle", "Move projects through Draft, Active, Paused, Completed, Cancelled, and Archived states."],
       ["3. Progress & Quota", "Pantau progress bar task, jumlah jam kerja terpakai vs estimasi, dan sisa kuota retainer bulanan.", "3. Progress and Quota", "Track task progress, used versus estimated hours, and remaining monthly retainer quota."],
       ["4. Kanban Board Interaktif", "Kolom Belum Mulai, Dikerjakan, Review, dan Selesai. Pindahkan task secara drag-and-drop.", "4. Interactive Kanban Board", "Move tasks between Not Started, In Progress, Review, and Done with drag and drop."],
@@ -317,8 +317,8 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
         {slug === "projects" && (
           <DocsCallout variant="info">
             {lang === "en"
-              ? "Three active billing models: Fixed Price, Hourly, and Retainer."
-              : "Tiga model billing aktif: Fixed Price, Per Jam, dan Retainer."}
+              ? "Two billing models for new projects: Fixed Price and Hourly. Existing Retainer projects remain supported."
+              : "Dua model billing untuk proyek baru: Fixed Price dan Per Jam. Proyek Retainer lama tetap didukung."}
           </DocsCallout>
         )}
         {slug === "expenses" && (
