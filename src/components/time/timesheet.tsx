@@ -144,6 +144,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialEditEntry]);
   const [editLoading, setEditLoading] = useState(false);
+  const [editSubmitted, setEditSubmitted] = useState(false);
   const [editDescription, setEditDescription] = useState("");
   const [editTags, setEditTags] = useState("");
   const [editClientId, setEditClientId] = useState("");
@@ -268,13 +269,12 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
   }, [clientFilter, projects]);
 
   const editMinutesNumber = Number(editMinutes);
-  const editClientError = editOpen && !editClientId;
-  const editProjectError = editOpen && !editProjectId;
-  const editMinutesError = editOpen && (!Number.isFinite(editMinutesNumber) || editMinutesNumber <= 0);
+  const editClientError = editSubmitted && !editClientId;
+  const editProjectError = editSubmitted && !editProjectId;
+  const editMinutesError = editSubmitted && (!Number.isFinite(editMinutesNumber) || editMinutesNumber <= 0);
   const selectedEditProject = projects.find((project) => project.id === editProjectId);
   const editTaskRequired = selectedEditProject?.billingType === "hours" || selectedEditProject?.billingType === "hourly" || selectedEditProject?.billingType === "retainer";
-  const editTaskError = editOpen && Boolean(editTaskRequired && (!editTaskId || editTaskId === "__none__"));
-  const editValid = !editClientError && !editProjectError && !editMinutesError && !editTaskError;
+  const editTaskError = editSubmitted && Boolean(editTaskRequired && (!editTaskId || editTaskId === "__none__"));
 
   function formatDuration(minutes: number | null): string {
     const hLabel = t("j", "h");
@@ -336,6 +336,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
       return;
     }
     setEditEntry(entry);
+    setEditSubmitted(false);
     setEditDescription(entry.description || "");
     setEditTags(entry.tags || "");
     setEditClientId(entry.clientId || "");
@@ -372,6 +373,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
 
   async function handleSaveEdit() {
     if (!editEntry) return;
+    setEditSubmitted(true);
     if (!editClientId || !editProjectId) {
       toast.error(t("Klien dan proyek wajib", "Client and project required"));
       return;
@@ -698,7 +700,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                 }} disabled={editLoading}>
                   {t("Batal", "Dismiss")}
                 </Button>
-                <Button className="min-h-10 sm:min-w-28" onClick={handleSaveEdit} disabled={editLoading || !editValid}>
+                <Button className="min-h-10 sm:min-w-28" onClick={handleSaveEdit} disabled={editLoading}>
                   {editLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("Simpan", "Save")}
                 </Button>
               </div>
@@ -1279,7 +1281,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
               <Button className="min-h-10 sm:min-w-24" variant="outline" onClick={() => setEditOpen(false)} disabled={editLoading}>
                 {t("Batal", "Dismiss")}
               </Button>
-              <Button className="min-h-10 sm:min-w-28" onClick={handleSaveEdit} disabled={editLoading || !editValid}>
+              <Button className="min-h-10 sm:min-w-28" onClick={handleSaveEdit} disabled={editLoading}>
                 {editLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : t("Simpan", "Save")}
               </Button>
             </div>

@@ -20,6 +20,11 @@ describe("weekly time picker parity", () => {
     expect(timesheet).toContain('task.templateName || t("Tugas manual", "Manual tasks")');
   });
 
+  it("does not show edit validation before save", () => {
+    expect(timesheet).toContain("const [editSubmitted, setEditSubmitted] = useState(false)");
+    expect(timesheet).toContain("const editClientError = editSubmitted && !editClientId");
+  });
+
   it("offers matching task creation and template import actions", () => {
     for (const source of [weekly, timesheet]) {
       expect(source).toContain('t("Buat task baru", "Create new task")');
