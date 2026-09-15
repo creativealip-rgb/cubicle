@@ -127,7 +127,7 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
       }
     }}>
       <DialogTrigger asChild><Button variant="outline">{t("Import Template", "Import Template")}</Button></DialogTrigger>
-      <DialogContent className="max-h-[min(90dvh,720px)] w-[calc(100%-1.5rem)] max-w-2xl overflow-y-auto p-4 sm:w-full sm:p-6">
+      <DialogContent className="max-h-[min(90dvh,720px)] w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] overflow-y-auto p-4 sm:max-w-lg sm:p-6">
         <DialogHeader><DialogTitle>{t("Import Template Tugas", "Import Task Template")}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div className="space-y-1.5 text-sm font-medium">
@@ -144,11 +144,11 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
               </PopoverContent>
             </Popover>
           </div>
-          <div className="space-y-2">
+          <div className="mx-auto w-full max-w-sm space-y-2">
             {visibleTemplates.map((template) => (
-              <button key={template.id} type="button" className={`flex min-h-11 w-full items-center gap-3 rounded-md border px-3 py-2 text-left text-sm ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary/5" : ""}`} onClick={() => selectTemplate(template.id)}>
-                <span className={`h-3 w-3 rounded-full border ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary" : "border-muted-foreground/50"}`} />
-                <span className="flex-1">{template.name}</span><span className="text-xs text-muted-foreground">{template.target}</span>
+              <button key={template.id} type="button" className={`flex min-h-11 w-full flex-col items-start gap-0.5 rounded-md border px-3 py-2 text-left text-sm ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary/5" : ""}`} onClick={() => selectTemplate(template.id)}>
+                <span className="flex items-center gap-2"><span className={`h-3 w-3 rounded-full border ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary" : "border-muted-foreground/50"}`} />{template.name}</span>
+                <span className="pl-5 text-xs text-muted-foreground">{template.target}</span>
               </button>
             ))}
           </div>

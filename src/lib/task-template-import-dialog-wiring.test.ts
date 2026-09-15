@@ -21,6 +21,12 @@ describe("task template import dialog", () => {
     expect(source).toContain('t("Pilih semua task", "Select all tasks")');
   });
 
+  it("keeps modal and selected template compact", () => {
+    expect(source).toContain("sm:max-w-lg");
+    expect(source).toContain("mx-auto w-full max-w-sm");
+    expect(source).toContain("flex-col items-start");
+  });
+
   it("supports multiple templates, item selection, and duplicate decisions", () => {
     expect(source).toContain("selectedTemplateIds");
     expect(source).toContain("selectedItems");
