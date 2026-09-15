@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { localDateIso } from "@/lib/effective-work-date";
 import { useT } from "@/lib/i18n-client";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+import Link from "next/link";
 
 type Client = { id: string; name: string };
 type Project = { id: string; name: string; customerRef: string | null; billingType?: string | null; rate?: string | null };
@@ -281,7 +282,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                 <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
                   <div className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain" onWheel={(event) => event.stopPropagation()}>
                     {!projectId ? <p className="p-3 text-sm text-muted-foreground">{t("Pilih proyek terlebih dahulu", "Please select a project first")}</p> : <>
-                    <button
+                    {projectTasks.length === 0 && <button
                       type="button"
                       className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${taskId === "__none__" ? "bg-accent font-medium" : ""}`}
                       onClick={() => {
@@ -291,7 +292,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                       }}
                     >
                       {t("Tidak ada", "None")}
-                    </button>
+                    </button>}
                     {filteredTaskOptions.length === 0 ? (
                       <p className="p-2 text-xs text-muted-foreground">{t("Tugas tidak ditemukan", "No task found")}</p>
                     ) : groupedTaskOptions.map(([templateName, group]) => (
@@ -312,7 +313,11 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                           </button>
                         ))}
                       </div>
-                    ))}</>}
+                    ))}
+                    <div className="mt-1 grid grid-cols-2 gap-1 border-t p-1 pt-2">
+                      <Button asChild size="sm" variant="ghost" className="justify-start text-xs"><Link href={`/app/tasks?tab=workflow&projectId=${projectId}`}>{t("Task baru", "New task")}</Link></Button>
+                      <Button asChild size="sm" variant="ghost" className="justify-start text-xs"><Link href="/app/tasks?tab=templates">{t("Import dari template", "Import from template")}</Link></Button>
+                    </div></>}
                   </div>
                 </PopoverContent>
               </Popover>

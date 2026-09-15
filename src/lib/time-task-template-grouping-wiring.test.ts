@@ -11,4 +11,13 @@ describe("time task template context", () => {
     expect(dialog).toContain("groupedTaskOptions.map(([templateName, group])");
     expect(dialog).toContain("task.templateName");
   });
+
+  it("only offers None when selected project has no tasks", () => {
+    expect(dialog).toContain("projectTasks.length === 0 &&");
+  });
+
+  it("offers task creation and template import at end of picker", () => {
+    expect(dialog).toContain('t("Task baru", "New task")');
+    expect(dialog).toContain('t("Import dari template", "Import from template")');
+  });
 });
