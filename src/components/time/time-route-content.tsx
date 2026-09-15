@@ -4,7 +4,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { timeEntries, clients, projects, tasks, users, activities, projectActivities, timesheetSubmissions } from "@/db/schema";
-import { eq, and, isNull, isNotNull, desc, gte, lt, or } from "drizzle-orm";
+import { eq, and, isNull, isNotNull, desc, gte, lt, or, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { TimerWidget } from "@/components/time/timer-widget";
 import { Timesheet } from "@/components/time/timesheet";
@@ -149,7 +149,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
     .orderBy(desc(projects.createdAt));
 
   const taskList = await db
-    .select({ id: tasks.id, title: tasks.title, projectId: tasks.projectId })
+    .select({ id: tasks.id, title: tasks.title, projectId: tasks.projectId, templateName: sql<string | null>`(select tt.name from task_template_items tti join task_templates tt on tt.id = tti.template_id and tt.workspace_id = ${workspaceId} where tti.id = ${tasks.templateItemSourceId} limit 1)` })
     .from(tasks)
     .where(and(eq(tasks.workspaceId, workspaceId), eq(tasks.lifecycle, "active")))
     .orderBy(tasks.title)
@@ -207,7 +207,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
 
   const primaryActions = canWrite ? (
     <>
-      <AddTimeLogDialog workspaceId={workspaceId} clients={clientList} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId, billingType: p.billingType, rate: p.rate }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />
+      <AddTimeLogDialog workspaceId={workspaceId} clients={clientList} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId, billingType: p.billingType, rate: p.rate }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId, templateName: t.templateName }))} />
       <NewTimerDialog initialOpen={action === "timer"} workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />
     </>
   ) : null;

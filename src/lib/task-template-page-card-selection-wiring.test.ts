@@ -21,7 +21,8 @@ describe("task template page card selection", () => {
     expect(workspace).not.toContain('t("Terapkan ke Proyek:", "Apply to Project:")');
     expect(workspace).toContain("projects={projects}");
     expect(dialog).toContain('t("Cari project tujuan...", "Search destination project...")');
-    expect(dialog).toContain("filteredProjects.map((project)");
+    expect(dialog).toContain("groupedProjects.map(([clientName, group])");
+    expect(dialog).toContain("project.clientName");
     expect(dialog).toContain("setProjectSearchOpen(true)");
     expect(dialog).toContain('onTouchMove={(event) => event.stopPropagation()}');
     expect(dialog).toContain("max-h-[min(15rem,45dvh)]");

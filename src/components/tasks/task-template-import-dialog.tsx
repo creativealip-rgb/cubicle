@@ -24,7 +24,7 @@ type PreviewItem = {
   included: boolean;
 };
 
-export function TaskTemplateImportDialog({ projects, templates, selectedTemplateId }: { projects: Array<{ id: string; name: string }>; templates: TemplateOption[]; selectedTemplateId?: string | null }) {
+export function TaskTemplateImportDialog({ projects, templates, selectedTemplateId }: { projects: Array<{ id: string; name: string; clientName?: string | null }>; templates: TemplateOption[]; selectedTemplateId?: string | null }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
@@ -106,8 +106,9 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
   const allItemsSelected = preview.length > 0 && preview.every((item) => selectedItems.some((selected) => selected.itemId === item.itemId));
   const filteredProjects = useMemo(() => {
     const term = projectSearch.trim().toLowerCase();
-    return term ? projects.filter((project) => project.name.toLowerCase().includes(term)) : projects;
+    return term ? projects.filter((project) => project.name.toLowerCase().includes(term) || project.clientName?.toLowerCase().includes(term)) : projects;
   }, [projectSearch, projects]);
+  const groupedProjects = useMemo(() => Object.entries(Object.groupBy(filteredProjects, (project) => project.clientName || t("Tanpa Klien", "No client"))).sort(([a], [b]) => a.localeCompare(b)), [filteredProjects, t]);
 
   function chooseProject(nextProjectId: string) {
     const project = projects.find((candidate) => candidate.id === nextProjectId);
@@ -138,7 +139,7 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
               </div></PopoverAnchor>
               <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
                 <div role="listbox" className="max-h-[min(15rem,45dvh)] touch-pan-y overflow-y-auto overscroll-contain [-webkit-overflow-scrolling:touch]" onTouchMove={(event) => event.stopPropagation()} onWheel={(event) => event.stopPropagation()}>
-                  {filteredProjects.length === 0 ? <p className="p-2 text-xs text-muted-foreground">{t("Project tidak ditemukan", "No project found")}</p> : filteredProjects.map((project) => <button key={project.id} type="button" role="option" aria-selected={projectId === project.id} className={`flex min-h-10 w-full items-center rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${projectId === project.id ? "bg-accent font-medium" : ""}`} onClick={() => chooseProject(project.id)}>{project.name}</button>)}
+                  {filteredProjects.length === 0 ? <p className="p-2 text-xs text-muted-foreground">{t("Project tidak ditemukan", "No project found")}</p> : groupedProjects.map(([clientName, group]) => <div key={clientName} className="py-1 first:pt-0"><p className="sticky top-0 bg-popover px-3 py-1.5 text-xs font-semibold">{clientName}</p>{(group ?? []).map((project) => <button key={project.id} type="button" role="option" aria-selected={projectId === project.id} className={`flex min-h-10 w-full items-center rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${projectId === project.id ? "bg-accent font-medium" : ""}`} onClick={() => chooseProject(project.id)}>{project.name}</button>)}</div>)}
                 </div>
               </PopoverContent>
             </Popover>

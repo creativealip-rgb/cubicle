@@ -17,7 +17,7 @@ import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover"
 
 type Client = { id: string; name: string };
 type Project = { id: string; name: string; customerRef: string | null; billingType?: string | null; rate?: string | null };
-type Task = { id: string; title: string; projectRef: string | null };
+type Task = { id: string; title: string; projectRef: string | null; templateName?: string | null };
 
 export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
   workspaceId: string;
@@ -86,6 +86,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
     if (!term) return projectTasks;
     return projectTasks.filter((tk) => tk.title.toLowerCase().includes(term));
   }, [projectTasks, taskSearch]);
+  const groupedTaskOptions = useMemo(() => Object.entries(Object.groupBy(filteredTaskOptions, (task) => task.templateName || t("Tugas manual", "Manual tasks"))), [filteredTaskOptions, t]);
 
   const project = projects.find((item) => item.id === projectId);
   const taskRequired = project?.billingType === "hours" || project?.billingType === "hourly" || project?.billingType === "retainer";
@@ -293,22 +294,25 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                     </button>
                     {filteredTaskOptions.length === 0 ? (
                       <p className="p-2 text-xs text-muted-foreground">{t("Tugas tidak ditemukan", "No task found")}</p>
-                    ) : (
-                      filteredTaskOptions.map((tk) => (
-                        <button
-                          key={tk.id}
-                          type="button"
-                          className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${taskId === tk.id ? "bg-accent font-medium" : ""}`}
-                          onClick={() => {
-                            setTaskId(tk.id);
-                            setTaskSearch(tk.title);
-                            setTaskSearchOpen(false);
-                          }}
-                        >
-                          {tk.title}
-                        </button>
-                      ))
-                    )}</>}
+                    ) : groupedTaskOptions.map(([templateName, group]) => (
+                      <div key={templateName} className="py-1">
+                        <p className="px-3 py-1.5 text-xs font-semibold text-foreground">{templateName}</p>
+                        {(group ?? []).map((tk) => (
+                          <button
+                            key={tk.id}
+                            type="button"
+                            className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${taskId === tk.id ? "bg-accent font-medium" : ""}`}
+                            onClick={() => {
+                              setTaskId(tk.id);
+                              setTaskSearch(tk.title);
+                              setTaskSearchOpen(false);
+                            }}
+                          >
+                            {tk.title}
+                          </button>
+                        ))}
+                      </div>
+                    ))}</>}
                   </div>
                 </PopoverContent>
               </Popover>

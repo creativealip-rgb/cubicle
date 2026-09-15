@@ -96,9 +96,9 @@ export default async function TasksPage({
     monthMinutes: sql<number>`coalesce((select sum(coalesce(te.manual_minutes, te.duration_minutes, 0)) from time_entries te where te.task_id = ${tasks.id} and te.workspace_id = ${workspaceId} and te.work_date >= date_trunc('month', current_date)), 0)::int`,
     lastUsedAt: sql<string | null>`(select max(te.work_date)::text from time_entries te where te.task_id = ${tasks.id} and te.workspace_id = ${workspaceId})`,
   }).from(tasks).leftJoin(projects, eq(projects.id, tasks.projectId)).leftJoin(clients, eq(clients.id, projects.clientId)).leftJoin(users, eq(users.id, tasks.assigneeId)).where(and(...whereClauses)).orderBy(desc(tasks.createdAt)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
-  const projectRows = await db.select({ id: projects.id, name: projects.name, billingModel: projects.billingModel, billingType: projects.billingType }).from(projects).where(eq(projects.workspaceId, workspaceId));
+  const projectRows = await db.select({ id: projects.id, name: projects.name, clientName: clients.name, billingModel: projects.billingModel, billingType: projects.billingType }).from(projects).leftJoin(clients, eq(clients.id, projects.clientId)).where(eq(projects.workspaceId, workspaceId));
   const writableProjectRows = projectRows.filter((project) => resolveBillingModel(project) !== "legacy_package");
-  const taskProjects = writableProjectRows.map((project) => ({ id: project.id, name: project.name, defaultBehavior: defaultTaskWorkMode(resolveBillingModel(project)) === "workflow" ? "one_time" as const : "recurring" as const }));
+  const taskProjects = writableProjectRows.map((project) => ({ id: project.id, name: project.name, clientName: project.clientName, defaultBehavior: defaultTaskWorkMode(resolveBillingModel(project)) === "workflow" ? "one_time" as const : "recurring" as const }));
   const members = await db.select({ id: users.id, name: users.name, email: users.email }).from(workspaceMembers).innerJoin(users, eq(users.id, workspaceMembers.userId)).where(eq(workspaceMembers.workspaceId, workspaceId));
   const templateRows = await db.select().from(taskTemplates).where(eq(taskTemplates.workspaceId, workspaceId)).orderBy(desc(taskTemplates.updatedAt));
   const itemRows = await db.select().from(taskTemplateItems).where(eq(taskTemplateItems.workspaceId, workspaceId));

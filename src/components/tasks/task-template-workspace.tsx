@@ -246,7 +246,7 @@ export function TaskTemplateWorkspace({
   projects,
 }: {
   templates: TemplateRow[];
-  projects: Array<{ id: string; name: string }>;
+  projects: Array<{ id: string; name: string; clientName?: string | null }>;
 }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
