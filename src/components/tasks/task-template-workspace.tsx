@@ -251,6 +251,7 @@ export function TaskTemplateWorkspace({
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
+  const [selectedTemplateId, setSelectedTemplateId] = useState<string | null>(null);
 
   async function run(action: () => Promise<unknown>) {
     try {
@@ -297,6 +298,7 @@ export function TaskTemplateWorkspace({
               {projectId && (
                 <TaskTemplateImportDialog
                   projectId={projectId}
+                  selectedTemplateId={selectedTemplateId}
                   templates={templates.map(({ id, name: label, target }) => ({ id, name: label, target }))}
                 />
               )}
@@ -347,8 +349,23 @@ export function TaskTemplateWorkspace({
             return (
               <div
                 key={template.id}
+                role="button"
+                tabIndex={0}
+                aria-pressed={selectedTemplateId === template.id}
+                onClick={(event) => {
+                  if ((event.target as HTMLElement).closest("button, input, select, textarea, a")) return;
+                  setSelectedTemplateId((current) => current === template.id ? null : template.id);
+                }}
+                onKeyDown={(event) => {
+                  if (event.target !== event.currentTarget) return;
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedTemplateId((current) => current === template.id ? null : template.id);
+                  }
+                }}
                 className={cn(
-                  "rounded-2xl border bg-card p-4 shadow-xs flex flex-col justify-between transition-all hover:border-primary/40",
+                  "cursor-pointer rounded-2xl border bg-card p-4 shadow-xs flex flex-col justify-between transition-all hover:border-primary/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary",
+                  selectedTemplateId === template.id && "border-primary bg-primary/5 ring-1 ring-primary/30",
                   template.status === "archived"
                     ? "border-dashed opacity-60 bg-muted/20"
                     : "border-border/80"

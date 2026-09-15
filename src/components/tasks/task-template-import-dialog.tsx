@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { importTaskTemplates, previewTaskTemplateImport } from "@/lib/actions/task-templates";
@@ -21,7 +21,7 @@ type PreviewItem = {
   included: boolean;
 };
 
-export function TaskTemplateImportDialog({ projectId, templates }: { projectId: string; templates: TemplateOption[] }) {
+export function TaskTemplateImportDialog({ projectId, templates, selectedTemplateId }: { projectId: string; templates: TemplateOption[]; selectedTemplateId?: string | null }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
@@ -32,6 +32,13 @@ export function TaskTemplateImportDialog({ projectId, templates }: { projectId: 
   const [previewFingerprint, setPreviewFingerprint] = useState("");
   const [allowIncompatibleTarget, setAllowIncompatibleTarget] = useState(false);
   const idempotencyKeyRef = useRef<string>(crypto.randomUUID());
+
+  useEffect(() => {
+    setSelectedTemplateIds(selectedTemplateId ? [selectedTemplateId] : []);
+    setPreview([]);
+    setSelectedItems([]);
+    setPreviewFingerprint("");
+  }, [selectedTemplateId]);
 
   async function loadPreview() {
     setLoading(true);
