@@ -16,16 +16,15 @@ test("production client portal set password unlock and slug", async ({ page }) =
   await expect(page.getByRole("heading", { name: clientName, exact: true })).toBeVisible();
 
   try {
-    await page.getByRole("tab", { name: /Portal/i }).click();
-    await expect(page.getByLabel(/Atur password|Set password/i)).toBeVisible();
-    await page.getByLabel(/Atur password|Set password/i).fill(portalPassword);
-    await page.getByRole("button", { name: /Simpan & aktifkan|Save & activate/i }).click();
+    await page.getByRole("button", { name: /Ubah detail|Edit details/i }).first().click();
+    const edit = page.getByRole("dialog");
+    await edit.getByLabel(/Password Portal|Portal Password/i).fill(portalPassword);
+    await edit.getByRole("button", { name: /Simpan Perubahan|Save Changes/i }).click();
     await page.waitForLoadState("networkidle");
     await page.reload({ waitUntil: "networkidle" });
-    await page.getByRole("tab", { name: /Portal/i }).click();
-    await expect(page.getByLabel(/Buka portal klien|Open client portal/i)).toBeVisible({ timeout: 15000 });
+    await expect(page.getByRole("link", { name: /Buka portal klien|Open Client Portal/i })).toBeVisible({ timeout: 15000 });
 
-    const portalLink = page.getByLabel(/Buka portal klien|Open client portal/i);
+    const portalLink = page.getByRole("link", { name: /Buka portal klien|Open Client Portal/i });
     const href = await portalLink.getAttribute("href");
     expect(href).toMatch(/\/client-portal\/[^/?]+$/);
     await page.goto(href!);
