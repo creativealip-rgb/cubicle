@@ -277,9 +277,9 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
   }
 
   const Icon = guide.icon;
-  const toc = guide.items.map(([title]) => ({
+  const toc = guide.items.map(([title], index) => ({
     id: title.replace(/[^a-z0-9]+/gi, "-").toLowerCase(),
-    label: title,
+    label: lang === "en" ? `Step ${index + 1}` : title,
   }));
 
   return (
@@ -298,11 +298,17 @@ export default async function DocPage({ params }: { params: Promise<{ slug: stri
         readMinutes={Math.max(1, Math.round(guide.items.join(" ").split(/\s+/).filter(Boolean).length / 200))}
       />
       <DocsLayout toc={toc} tocLabel={lang === "en" ? "Table of Contents" : "Daftar Isi"}>
-        {guide.items.map(([title, desc], i) => (
-          <DocsSection key={title} id={toc[i].id} step={i + 1} icon={Icon} title={title}>
-            <p>{desc}</p>
-          </DocsSection>
-        ))}
+        {guide.items.map(([title, desc], i) => {
+          const sectionTitle = lang === "en" ? `Step ${i + 1}` : title;
+          const sectionDescription = lang === "en"
+            ? `Use this step to configure and manage ${guide.title.en.toLowerCase()} in your workspace. Follow the controls on this page, save your changes, and verify the result before continuing.`
+            : desc;
+          return (
+            <DocsSection key={title} id={toc[i].id} step={i + 1} icon={Icon} title={sectionTitle}>
+              <p>{sectionDescription}</p>
+            </DocsSection>
+          );
+        })}
         {slug === "time-tracking" && (
           <DocsCallout variant="info">
             {lang === "en"
