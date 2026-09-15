@@ -16,7 +16,7 @@ import { checkAiRateLimitDb, getPlanLimits, getUserPlan, releaseAiQuota } from "
 
 const DISPLAY_MONTHLY_BUDGET_USD = 50;
 const SERVER_MODEL = process.env.AI_MODEL ?? "ag/gemini-3.7-flash";
-const visualPromptSchema = promptBriefSchema.omit({ model: true });
+const visualPromptSchema = promptBriefSchema;
 
 function getApiKey() {
   try {
