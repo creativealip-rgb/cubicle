@@ -12,12 +12,14 @@ import { Timesheet } from "@/components/time/timesheet";
 import { localDateIso, weekStartDate } from "@/lib/effective-work-date";
 import { useT } from "@/lib/i18n-client";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+import Link from "next/link";
+import { ListPlus } from "lucide-react";
 
 type _ProjectOption = { id: string; name: string };
 type _TaskOption = { id: string; title: string; projectId: string };
 type AddedRow = { projectId: string; taskId: string };
 type ProjectOption = { id: string; name: string; customerRef?: string | null };
-type TaskOption = { id: string; title: string; projectId: string | null; projectRef?: string | null };
+type TaskOption = { id: string; title: string; projectId: string | null; projectRef?: string | null; templateName?: string | null };
 const MIN_WEEKLY_ROWS = 5;
 
 function WeeklyDraftRow({ index, dates, projects, tasks, clients, canWrite, onSaved, mobile = false }: { index: number; dates: Date[]; projects: ProjectOption[]; tasks: TaskOption[]; clients: Array<{ id: string; name: string }>; canWrite: boolean; onSaved: () => void; mobile?: boolean }) {
@@ -43,8 +45,9 @@ function WeeklyDraftRow({ index, dates, projects, tasks, clients, canWrite, onSa
     return [...map.values()].sort((a, b) => !a.id ? -1 : !b.id ? 1 : a.name.localeCompare(b.name)).map((group) => ({ ...group, projects: group.projects.sort((a, b) => a.name.localeCompare(b.name)) }));
   }, [clients, projectSearch, projects, t]);
   const availableTasks = tasks.filter((task) => (task.projectId ?? task.projectRef) === projectId).filter((task) => task.title.toLocaleLowerCase().includes(taskSearch.toLocaleLowerCase().trim())).sort((a, b) => a.title.localeCompare(b.title));
+  const groupedTasks = Object.entries(Object.groupBy(availableTasks, (task) => task.templateName || t("Tugas manual", "Manual tasks")));
   const projectPicker = <Popover open={projectOpen} onOpenChange={setProjectOpen}><PopoverAnchor asChild><div className="relative"><Input aria-label={`${t("Proyek", "Project")} ${index + 1}`} value={projectSearch} placeholder={t("Cari proyek / klien", "Search project / client")} onChange={(event) => { setProjectSearch(event.target.value); setProjectOpen(true); }} onClick={() => setProjectOpen(true)} className="h-9 pr-9 text-sm"/><button type="button" aria-label={t("Buka daftar proyek", "Toggle project list")} onClick={() => setProjectOpen((open) => !open)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"><ChevronDown className={`h-4 w-4 transition-transform ${projectOpen ? "rotate-180" : ""}`}/></button></div></PopoverAnchor><PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-1"><div className="max-h-60 overflow-y-auto">{groupedProjects.map((group) => <div key={group.id || "none"} className="py-1"><p className="px-3 py-1 text-xs font-semibold">{group.name}</p>{group.projects.map((project) => <button key={project.id} type="button" className="min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => { setProjectId(project.id); setProjectSearch(project.name); setTaskId(""); setTaskSearch(""); setProjectOpen(false); }}>{project.name}</button>)}</div>)}</div></PopoverContent></Popover>;
-  const taskPicker = <Popover open={taskOpen} onOpenChange={setTaskOpen}><PopoverAnchor asChild><div className="relative"><Input aria-label={`${t("Tugas", "Task")} ${index + 1}`} value={taskSearch} placeholder={projectId ? t("Cari tugas", "Search task") : t("Pilih proyek dulu", "Select project first")} onChange={(event) => { setTaskSearch(event.target.value); setTaskOpen(true); }} onClick={() => setTaskOpen(true)} className="h-9 pr-9 text-sm"/><button type="button" aria-label={t("Buka daftar tugas", "Toggle task list")} onClick={() => setTaskOpen((open) => !open)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"><ChevronDown className={`h-4 w-4 transition-transform ${taskOpen ? "rotate-180" : ""}`}/></button></div></PopoverAnchor><PopoverContent align="start" className="w-[var(--radix-popover-trigger-width)] p-1">{!projectId ? <p className="p-3 text-sm text-muted-foreground">{t("Pilih proyek terlebih dahulu", "Please select a project first")}</p> : availableTasks.length ? availableTasks.map((task) => <button key={task.id} type="button" className="min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => { setTaskId(task.id); setTaskSearch(task.title); setTaskOpen(false); }}>{task.title}</button>) : <p className="p-3 text-sm text-muted-foreground">{t("Tugas tidak ditemukan", "No tasks found")}</p>}</PopoverContent></Popover>;
+  const taskPicker = <Popover open={taskOpen} onOpenChange={setTaskOpen}><PopoverAnchor asChild><div className="relative"><Input aria-label={`${t("Tugas", "Task")} ${index + 1}`} value={taskSearch} placeholder={projectId ? t("Cari tugas", "Search task") : t("Pilih proyek dulu", "Select project first")} onChange={(event) => { setTaskSearch(event.target.value); setTaskOpen(true); }} onClick={() => setTaskOpen(true)} className="h-9 pr-9 text-sm"/><button type="button" aria-label={t("Buka daftar tugas", "Toggle task list")} onClick={() => setTaskOpen((open) => !open)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"><ChevronDown className={`h-4 w-4 transition-transform ${taskOpen ? "rotate-180" : ""}`}/></button></div></PopoverAnchor><PopoverContent align="start" className="flex max-h-[min(22rem,55dvh)] w-[var(--radix-popover-trigger-width)] flex-col overflow-hidden p-0"><div className="min-h-0 flex-1 overflow-y-auto p-1">{!projectId ? <p className="p-3 text-sm text-muted-foreground">{t("Pilih proyek terlebih dahulu", "Please select a project first")}</p> : groupedTasks.length ? groupedTasks.map(([name, group]) => <div key={name} className="py-1"><p className="px-3 py-1 text-xs font-semibold">{name}</p>{(group ?? []).map((task) => <button key={task.id} type="button" className="min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent" onClick={() => { setTaskId(task.id); setTaskSearch(task.title); setTaskOpen(false); }}>{task.title}</button>)}</div>) : <p className="p-3 text-sm text-muted-foreground">{t("Tugas tidak ditemukan", "No tasks found")}</p>}</div>{projectId && <div className="shrink-0 border-t bg-popover p-1.5"><Button asChild variant="ghost" size="sm" className="w-full justify-start"><Link href={`/app/tasks?tab=workflow&projectId=${projectId}`}><Plus className="size-4" />{t("Buat task baru", "Create new task")}</Link></Button><Button asChild variant="ghost" size="sm" className="w-full justify-start"><Link href="/app/tasks?tab=templates"><ListPlus className="size-4" />{t("Import dari template", "Import from template")}</Link></Button></div>}</PopoverContent></Popover>;
   const save = (date: Date, raw: string) => { if (!projectId || !taskId || !raw.trim()) return; let totalMinutes: number; try { totalMinutes = parseDurationInput(raw); } catch { toast.error(t("Durasi tidak valid", "Invalid duration")); return; } if (!totalMinutes) return; startTransition(async () => { try { await setWeeklyTimeCell({ projectId, taskId, date: date.toISOString().slice(0, 10), totalMinutes }); onSaved(); } catch (error) { toast.error(error instanceof Error ? error.message : t("Gagal menyimpan waktu", "Failed to save time")); } }); };
   if (mobile) return <div className="space-y-3 rounded-lg border p-3"><div className="grid gap-2 sm:grid-cols-2">{projectPicker}{taskPicker}</div><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{dates.map((date) => <label key={date.toISOString()} className="text-xs text-muted-foreground"><span className="mb-1 block">{date.toLocaleDateString(undefined,{weekday:"short",day:"numeric",timeZone:"UTC"})}</span><Input placeholder="HH:MM" disabled={!canWrite || pending || !projectId || !taskId} className="h-9 text-center text-xs" onBlur={(event) => save(date,event.target.value)}/></label>)}</div></div>;
   return <div className="grid grid-cols-[minmax(280px,1.7fr)_minmax(220px,1.35fr)_repeat(7,minmax(72px,.55fr))_80px] items-center gap-1 border-b py-2">{projectPicker}{taskPicker}{dates.map((date) => <Input key={date.toISOString()} placeholder="HH:MM" disabled={!canWrite || pending || !projectId || !taskId} className="h-9 text-center text-xs" onBlur={(event) => save(date, event.target.value)}/>)}<strong className="text-center text-sm">00:00</strong></div>;
@@ -71,7 +74,7 @@ export function WeeklyTimeGrid({
   selectedDate: string;
   entries: WeeklyGridEntry[];
   projects: Array<{ id: string; name: string; customerRef?: string | null; billingType?: string | null; timeTrackingMode?: string | null }>;
-  tasks: Array<{ id: string; title: string; projectId: string | null; projectRef?: string | null }>;
+  tasks: Array<{ id: string; title: string; projectId: string | null; projectRef?: string | null; templateName?: string | null }>;
   clients?: Array<{ id: string; name: string }>;
   canWrite: boolean;
 }) {
@@ -124,6 +127,7 @@ export function WeeklyTimeGrid({
     if (!term) return availableActivities;
     return availableActivities.filter((t) => t.title.toLowerCase().includes(term));
   }, [availableActivities, taskSearch]);
+  const groupedFooterTasks = useMemo(() => Object.entries(Object.groupBy(filteredTasks, (task) => task.templateName || t("Tugas manual", "Manual tasks"))), [filteredTasks, t]);
 
   const grid = useMemo(() => buildWeeklyGrid(entries, anchor), [entries, anchor]);
   const dates = useMemo(() => getWeekDates(anchor), [anchor]);
@@ -420,20 +424,9 @@ export function WeeklyTimeGrid({
                   {filteredTasks.length === 0 ? (
                     <p className="p-2 text-xs text-muted-foreground">{t("Task tidak ditemukan", "Task not found")}</p>
                   ) : (
-                    filteredTasks.map((tItem) => (
-                      <button
-                        key={tItem.id}
-                        type="button"
-                        className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${taskId === tItem.id ? "bg-accent font-medium" : ""}`}
-                        onClick={() => {
-                          setTaskId(tItem.id);
-                          setTaskSearch(tItem.title);
-                          setTaskSearchOpen(false);
-                        }}
-                      >
-                        <span>{tItem.title}</span>
-                      </button>
-                    ))
+                    groupedFooterTasks.map(([templateName, group]) => <div key={templateName} className="py-1"><p className="px-2 py-1 text-xs font-semibold">{templateName}</p>{(group ?? []).map((tItem) => (
+                      <button key={tItem.id} type="button" className={`flex min-h-10 w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${taskId === tItem.id ? "bg-accent font-medium" : ""}`} onClick={() => { setTaskId(tItem.id); setTaskSearch(tItem.title); setTaskSearchOpen(false); }}><span>{tItem.title}</span></button>
+                    ))}</div>)
                   )}
                 </div>
               )}
@@ -461,7 +454,7 @@ export function WeeklyTimeGrid({
           entries={[]}
           clients={clients}
           projects={projects.map((p) => ({ id: p.id, name: p.name, clientId: p.customerRef, billingType: p.billingType }))}
-          tasks={tasks.map((t) => ({ id: t.id, title: t.title, projectId: t.projectId ?? t.projectRef ?? null }))}
+          tasks={tasks.map((t) => ({ id: t.id, title: t.title, projectId: t.projectId ?? t.projectRef ?? null, templateName: t.templateName }))}
         />
       )}
     </section>

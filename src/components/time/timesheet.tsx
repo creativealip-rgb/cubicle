@@ -32,9 +32,12 @@ import {
   Tag as TagIcon,
   Calendar as CalendarIcon,
   Hourglass,
+  Plus,
+  ListPlus,
 } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
 import { allowsTimeTrackingProject } from "@/lib/billing-model";
+import Link from "next/link";
 
 const PAGE_SIZE = 10;
 
@@ -83,6 +86,7 @@ interface Task {
   id: string;
   title: string;
   projectId?: string | null;
+  templateName?: string | null;
 }
 
 interface Activity {
@@ -254,6 +258,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
     if (!term) return editTasks;
     return editTasks.filter((tk) => tk.title.toLowerCase().includes(term));
   }, [editTasks, editTaskSearch]);
+  const groupedEditTaskOptions = useMemo(() => Object.entries(Object.groupBy(filteredEditTaskOptions, (task) => task.templateName || t("Tugas manual", "Manual tasks"))), [filteredEditTaskOptions, t]);
 
 
   const filterProjects = useMemo(() => {
@@ -527,32 +532,17 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                       />
                     </div>
                     {editTaskSearchOpen && editProjectId && (
-                      <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
-                        <button
-                          type="button"
-                          className={`flex w-full items-center rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${editTaskId === "__none__" ? "bg-accent font-medium" : ""}`}
-                          onClick={() => {
-                            setEditTaskId("__none__");
-                            setEditTaskSearch("");
-                            setEditTaskSearchOpen(false);
-                          }}
-                        >
-                          <span className="italic text-muted-foreground">{t("Tanpa Tugas", "No Task")}</span>
-                        </button>
-                        {filteredEditTaskOptions.map((tk) => (
-                          <button
-                            key={tk.id}
-                            type="button"
-                            className={`flex w-full items-center rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${editTaskId === tk.id ? "bg-accent font-medium" : ""}`}
-                            onClick={() => {
-                              setEditTaskId(tk.id);
-                              setEditTaskSearch(tk.title);
-                              setEditTaskSearchOpen(false);
-                            }}
-                          >
-                            <span>{tk.title}</span>
-                          </button>
-                        ))}
+                      <div className="absolute left-0 right-0 top-full z-50 mt-1 flex max-h-[min(22rem,55dvh)] flex-col overflow-hidden rounded-md border bg-popover shadow-md">
+                        <div className="min-h-0 flex-1 overflow-y-auto p-1">
+                          {editTasks.length === 0 && <button type="button" className={`flex min-h-10 w-full items-center rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${editTaskId === "__none__" ? "bg-accent font-medium" : ""}`} onClick={() => { setEditTaskId("__none__"); setEditTaskSearch(""); setEditTaskSearchOpen(false); }}><span className="italic text-muted-foreground">{t("Tanpa Tugas", "No Task")}</span></button>}
+                          {groupedEditTaskOptions.map(([templateName, group]) => <div key={templateName} className="py-1"><p className="px-2 py-1 text-xs font-semibold">{templateName}</p>{(group ?? []).map((tk) => (
+                            <button key={tk.id} type="button" className={`flex min-h-10 w-full items-center rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${editTaskId === tk.id ? "bg-accent font-medium" : ""}`} onClick={() => { setEditTaskId(tk.id); setEditTaskSearch(tk.title); setEditTaskSearchOpen(false); }}><span>{tk.title}</span></button>
+                          ))}</div>)}
+                        </div>
+                        <div className="shrink-0 border-t bg-popover p-1.5">
+                          <Button asChild variant="ghost" size="sm" className="w-full justify-start gap-2"><Link href={`/app/tasks?tab=workflow&projectId=${editProjectId}`}><Plus className="size-4" />{t("Buat task baru", "Create new task")}</Link></Button>
+                          <Button asChild variant="ghost" size="sm" className="w-full justify-start gap-2"><Link href="/app/tasks?tab=templates"><ListPlus className="size-4" />{t("Import dari template", "Import from template")}</Link></Button>
+                        </div>
                       </div>
                     )}
                   </div>
