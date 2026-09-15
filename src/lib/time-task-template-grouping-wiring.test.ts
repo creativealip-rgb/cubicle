@@ -17,7 +17,8 @@ describe("time task template context", () => {
   });
 
   it("offers task creation and template import at end of picker", () => {
-    expect(dialog).toContain('t("Task baru", "New task")');
+    expect(dialog).toContain('t("Buat task baru", "Create new task")');
     expect(dialog).toContain('t("Import dari template", "Import from template")');
+    expect(dialog).toContain("shrink-0 space-y-0.5 border-t");
   });
 });

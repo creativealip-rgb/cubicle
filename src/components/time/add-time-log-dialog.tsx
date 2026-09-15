@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
-import { Plus, Loader2, Briefcase, CheckSquare, Tag as TagIcon, Clock, Calendar as CalendarIcon, Hourglass, ChevronDown } from "lucide-react";
+import { Plus, Loader2, Briefcase, CheckSquare, Tag as TagIcon, Clock, Calendar as CalendarIcon, Hourglass, ChevronDown, ListPlus } from "lucide-react";
 import { toast } from "sonner";
 import { createManualEntry } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
@@ -279,8 +279,8 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                   </button>
                 </div>
                 </PopoverAnchor>
-                <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
-                  <div className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain" onWheel={(event) => event.stopPropagation()}>
+                <PopoverContent align="start" sideOffset={5} className="flex max-h-[min(22rem,55dvh)] w-[var(--radix-popover-trigger-width)] flex-col overflow-hidden p-0">
+                  <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-1" onTouchMove={(event) => event.stopPropagation()} onWheel={(event) => event.stopPropagation()}>
                     {!projectId ? <p className="p-3 text-sm text-muted-foreground">{t("Pilih proyek terlebih dahulu", "Please select a project first")}</p> : <>
                     {projectTasks.length === 0 && <button
                       type="button"
@@ -313,12 +313,12 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                           </button>
                         ))}
                       </div>
-                    ))}
-                    <div className="mt-1 grid grid-cols-2 gap-1 border-t p-1 pt-2">
-                      <Button asChild size="sm" variant="ghost" className="justify-start text-xs"><Link href={`/app/tasks?tab=workflow&projectId=${projectId}`}>{t("Task baru", "New task")}</Link></Button>
-                      <Button asChild size="sm" variant="ghost" className="justify-start text-xs"><Link href="/app/tasks?tab=templates">{t("Import dari template", "Import from template")}</Link></Button>
-                    </div></>}
+                    ))}</>}
                   </div>
+                  {projectId && <div className="shrink-0 space-y-0.5 border-t bg-popover p-1.5 shadow-[0_-4px_10px_rgba(0,0,0,0.04)]">
+                    <Button asChild size="sm" variant="ghost" className="min-h-10 w-full justify-start gap-2 px-2.5 text-sm"><Link href={`/app/tasks?tab=workflow&projectId=${projectId}`}><Plus className="size-4" />{t("Buat task baru", "Create new task")}</Link></Button>
+                    <Button asChild size="sm" variant="ghost" className="min-h-10 w-full justify-start gap-2 px-2.5 text-sm"><Link href="/app/tasks?tab=templates"><ListPlus className="size-4" />{t("Import dari template", "Import from template")}</Link></Button>
+                  </div>}
                 </PopoverContent>
               </Popover>
               {taskError ? <p className="text-xs text-destructive">{t("Tugas wajib dipilih untuk proyek ini", "Task is required for this project")}</p> : null}

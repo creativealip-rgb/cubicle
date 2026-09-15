@@ -144,11 +144,11 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
               </PopoverContent>
             </Popover>
           </div>
-          <div className="mx-auto w-full max-w-sm space-y-2">
+          <div className="w-full space-y-2">
             {visibleTemplates.map((template) => (
-              <button key={template.id} type="button" className={`flex min-h-11 w-full flex-col items-start gap-0.5 rounded-md border px-3 py-2 text-left text-sm ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary/5" : ""}`} onClick={() => selectTemplate(template.id)}>
-                <span className="flex items-center gap-2"><span className={`h-3 w-3 rounded-full border ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary" : "border-muted-foreground/50"}`} />{template.name}</span>
-                <span className="pl-5 text-xs text-muted-foreground">{template.target}</span>
+              <button key={template.id} type="button" className={`flex min-h-12 w-full items-center gap-3 rounded-md border px-3 py-2 text-left ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary/5" : ""}`} onClick={() => selectTemplate(template.id)}>
+                <span className={`h-3 w-3 shrink-0 rounded-full border ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary" : "border-muted-foreground/50"}`} />
+                <span className="min-w-0"><span className="block truncate text-sm font-medium">{template.name}</span><span className="block text-xs capitalize text-muted-foreground">{template.target.replaceAll("_", " / ")}</span></span>
               </button>
             ))}
           </div>

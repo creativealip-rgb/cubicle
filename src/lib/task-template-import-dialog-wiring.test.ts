@@ -23,8 +23,8 @@ describe("task template import dialog", () => {
 
   it("keeps modal and selected template compact", () => {
     expect(source).toContain("sm:max-w-lg");
-    expect(source).toContain("mx-auto w-full max-w-sm");
-    expect(source).toContain("flex-col items-start");
+    expect(source).toContain('className="w-full space-y-2"');
+    expect(source).toContain("template.target.replaceAll");
   });
 
   it("supports multiple templates, item selection, and duplicate decisions", () => {
