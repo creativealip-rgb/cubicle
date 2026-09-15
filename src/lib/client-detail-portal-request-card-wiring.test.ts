@@ -10,8 +10,10 @@ describe("client detail portal request card removal", () => {
     expect(clientDetail).not.toContain("portalRequests");
   });
 
-  it("keeps the portal token section available", () => {
-    expect(clientDetail).toContain("PortalTokenSection");
-    expect(clientDetail).toContain("existingPortalToken={existingPortalToken}");
+  it("keeps portal password ownership in the edit client form", () => {
+    const form = readFileSync("src/components/forms/client-form.tsx", "utf8");
+    expect(clientDetail).not.toContain("PortalTokenSection");
+    expect(form).toContain("setClientPortalPassword");
+    expect(form).toContain("portalPassword");
   });
 });

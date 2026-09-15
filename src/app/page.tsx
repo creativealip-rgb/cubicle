@@ -65,7 +65,7 @@ const pricing = [
     name: "Free",
     audience: "Coba dulu untuk client work kecil.",
     price: "Rp 0",
-    suffix: "selamanya",
+
     items: ["1 pengguna", "1 workspace", "3 klien", "5 proyek", "10 invoice/bulan", "Portal klien + AI", "15 permintaan AI/bulan", "Penyimpanan file aman"],
     cta: "Mulai gratis",
     featured: false,
@@ -74,7 +74,7 @@ const pricing = [
     name: "Solo",
     audience: "Untuk freelancer yang punya banyak klien.",
     price: "Rp 99.000/month · $6/month",
-    suffix: "Billed yearly: Rp 1.188.000/year · $72/year",
+
     items: ["1 pengguna", "1 workspace Solo", "Proposal, kontrak, dan invoice unlimited", "5 GB/workspace", "Portal klien + AI", "150 permintaan AI/bulan", "Kelola dan bagikan file klien"],
     cta: "Pilih Solo",
     featured: true,
@@ -83,7 +83,7 @@ const pricing = [
     name: "Team",
     audience: "Untuk tim kecil yang kerja bareng.",
     price: "Rp 199.000/month · $12/month",
-    suffix: "Billed yearly: Rp 2.388.000/year · $144/year",
+
     items: ["Hingga 5 anggota/workspace", "Hingga 3 workspace", "Proposal, kontrak, dan invoice unlimited", "5 GB/workspace", "Peran tim", "1.000 permintaan AI/bulan", "Penyimpanan bersama untuk tim"],
     cta: "Pilih Team",
     featured: false,

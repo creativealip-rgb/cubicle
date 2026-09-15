@@ -11,8 +11,10 @@ describe("Client Portal password UX", () => {
     expect(section).toContain("Sembunyikan password");
     expect(section).toContain("Salin password");
   });
-  it("does not server-render plaintext", () => {
+  it("keeps password mutation out of the server page", () => {
+    const form = fs.readFileSync("src/components/forms/client-form.tsx", "utf8");
     expect(page).not.toContain("revealClientPortalPassword");
-    expect(page).toContain("portalPasswordCiphertext");
+    expect(form).toContain("setClientPortalPassword");
+    expect(form).toContain("portalPassword");
   });
 });
