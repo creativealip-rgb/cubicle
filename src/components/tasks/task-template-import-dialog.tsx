@@ -40,11 +40,12 @@ export function TaskTemplateImportDialog({ projectId, templates, selectedTemplat
     setPreviewFingerprint("");
   }, [selectedTemplateId]);
 
-  async function loadPreview() {
+  async function loadPreview(templateIds = selectedTemplateIds) {
     setLoading(true);
     try {
-      const result = await previewTaskTemplateImport({ projectId, templateIds: selectedTemplateIds, selectedItems, allowIncompatibleTarget });
+      const result = await previewTaskTemplateImport({ projectId, templateIds, selectedItems: [], allowIncompatibleTarget });
       setPreview(result.preview);
+      setSelectedItems(result.preview.map((item) => ({ itemId: item.itemId })));
       setPreviewFingerprint(result.payloadFingerprint);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Preview gagal");
@@ -60,6 +61,10 @@ export function TaskTemplateImportDialog({ projectId, templates, selectedTemplat
     setSelectedItems((current) => checked
       ? current.some((item) => item.itemId === itemId) ? current : [...current, { itemId }]
       : current.filter((item) => item.itemId !== itemId));
+  }
+
+  function toggleAllItems(checked: boolean) {
+    setSelectedItems(checked ? preview.map((item) => ({ itemId: item.itemId })) : []);
   }
 
   function setDuplicate(itemId: string, duplicateAction: "skip" | "keep") {
@@ -88,14 +93,22 @@ export function TaskTemplateImportDialog({ projectId, templates, selectedTemplat
     } finally { setLoading(false); }
   }
 
+  const visibleTemplates = selectedTemplateId
+    ? templates.filter((template) => template.id === selectedTemplateId)
+    : templates;
+  const allItemsSelected = preview.length > 0 && preview.every((item) => selectedItems.some((selected) => selected.itemId === item.itemId));
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(nextOpen) => {
+      setOpen(nextOpen);
+      if (nextOpen && selectedTemplateId) void loadPreview([selectedTemplateId]);
+    }}>
       <DialogTrigger asChild><Button variant="outline">{t("Import Template", "Import Template")}</Button></DialogTrigger>
       <DialogContent className="max-h-[min(90dvh,720px)] w-[calc(100%-1.5rem)] max-w-2xl overflow-y-auto p-4 sm:w-full sm:p-6">
         <DialogHeader><DialogTitle>{t("Import Template Tugas", "Import Task Template")}</DialogTitle></DialogHeader>
         <div className="space-y-4">
           <div className="space-y-2">
-            {templates.map((template) => (
+            {visibleTemplates.map((template) => (
               <button key={template.id} type="button" className={`flex min-h-11 w-full items-center gap-3 rounded-md border px-3 py-2 text-left text-sm ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary/5" : ""}`} onClick={() => selectTemplate(template.id)}>
                 <span className={`h-3 w-3 rounded-full border ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary" : "border-muted-foreground/50"}`} />
                 <span className="flex-1">{template.name}</span><span className="text-xs text-muted-foreground">{template.target}</span>
@@ -103,8 +116,12 @@ export function TaskTemplateImportDialog({ projectId, templates, selectedTemplat
             ))}
           </div>
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={allowIncompatibleTarget} onChange={(event) => {setAllowIncompatibleTarget(event.target.checked);setPreview([]);setSelectedItems([]);setPreviewFingerprint("");}} /><span>{t("Izinkan template tidak cocok", "Allow incompatible template")}</span></label>
-          <Button onClick={loadPreview} disabled={loading || selectedTemplateIds.length === 0}>{t("Lihat Preview", "View Preview")}</Button>
+          <Button onClick={() => void loadPreview()} disabled={loading || selectedTemplateIds.length === 0}>{t("Lihat Preview", "View Preview")}</Button>
           {preview.length ? <div className="overflow-hidden rounded-md border">
+            <label className="flex items-center gap-2 border-b bg-muted/30 px-3 py-2 text-sm font-medium">
+              <input type="checkbox" checked={allItemsSelected} onChange={(event) => toggleAllItems(event.target.checked)} />
+              <span>{t("Pilih semua task", "Select all tasks")}</span>
+            </label>
             {preview.map((item) => {
               const decision = selectedItems.find((candidate) => candidate.itemId === item.itemId);
               return <div key={item.itemId} className="flex flex-wrap items-center gap-2 border-b px-3 py-2 last:border-b-0">

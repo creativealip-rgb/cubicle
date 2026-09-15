@@ -9,9 +9,16 @@ describe("task template import dialog", () => {
     expect(source).toContain("importTaskTemplates");
   });
 
-  it("makes whole template card toggle selection and clears selected state", () => {
-    expect(source).toContain("current.includes(id) ? [] : [id]");
-    expect(source).toContain("onClick={() => selectTemplate(template.id)}");
+  it("opens selected page template directly as task checklist", () => {
+    expect(source).toContain("const visibleTemplates = selectedTemplateId");
+    expect(source).toContain("void loadPreview([selectedTemplateId])");
+    expect(source).toContain("visibleTemplates.map((template)");
+  });
+
+  it("supports selecting or clearing all preview tasks", () => {
+    expect(source).toContain("function toggleAllItems");
+    expect(source).toContain('type="checkbox" checked={allItemsSelected}');
+    expect(source).toContain('t("Pilih semua task", "Select all tasks")');
   });
 
   it("supports multiple templates, item selection, and duplicate decisions", () => {

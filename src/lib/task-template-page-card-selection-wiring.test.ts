@@ -9,7 +9,7 @@ describe("task template page card selection", () => {
     expect(workspace).toContain('aria-pressed={selectedTemplateId === template.id}');
     expect(workspace).toContain('setSelectedTemplateId((current) => current === template.id ? null : template.id)');
     expect(workspace).toContain('selectedTemplateId={selectedTemplateId}');
-    expect(dialog).toContain('selectedTemplateId ? [selectedTemplateId] : []');
+    expect(dialog).toContain('void loadPreview([selectedTemplateId])');
   });
 
   it("keeps nested edit and item controls independent", () => {

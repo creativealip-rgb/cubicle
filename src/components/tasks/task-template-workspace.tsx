@@ -176,7 +176,7 @@ function ItemFormDialog({
         ) : (
           <Button size="sm" variant="ghost" className="h-7 px-2.5 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg gap-1">
             <Plus className="h-3.5 w-3.5" />
-            {t("Tambah Tugas", "Add Task")}
+            {t("Tambah Subtask", "Add Subtask")}
           </Button>
         )}
       </DialogTrigger>
