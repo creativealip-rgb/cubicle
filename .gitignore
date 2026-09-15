@@ -49,6 +49,8 @@ playwright-report/
 
 # local agent scratch
 .hermes/
+.hermes-*.mjs
+.capacity-runtime/
 .superpowers/brainstorm/
 public/screenshots/*.backup-*.png
 public/screenshots/*.generated-mock-backup.png
