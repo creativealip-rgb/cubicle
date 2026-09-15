@@ -18,20 +18,20 @@ test("production reusable task create edit archive delete", async ({ page }) => 
 
   try {
     await page.goto("/app/clients");
-    await page.getByRole("button", { name: /Tambah Klien|Add Client/i }).click();
-    let dialog = page.getByRole("dialog", { name: /Tambah Klien|Add Client/i });
-    await dialog.getByRole("textbox", { name: /Nama \*|Name \*/i }).fill(client);
-    await dialog.getByRole("button", { name: /Buat Klien|Create Client/i }).click();
-    await expect(page.getByRole("link", { name: client, exact: true })).toBeVisible();
+    const clientLink = page.locator('a[href^="/app/clients/"]:visible').first();
+    await expect(clientLink).toBeVisible({ timeout: 15000 });
+    const existingClient = (await clientLink.innerText()).trim();
 
     await page.goto("/app/projects");
-    await page.getByRole("button", { name: "Proyek Baru" }).click();
-    dialog = page.getByRole("dialog", { name: /Proyek Baru|New Project/i });
+    await page.getByRole("button", { name: /Proyek Baru|New Project/i }).click();
+    let dialog = page.getByRole("dialog", { name: /Proyek Baru|New Project/i });
     await dialog.locator("input").first().fill(project);
-    await dialog.getByRole("combobox").nth(0).click();
-    await page.getByRole("option", { name: client, exact: true }).click();
-    await dialog.getByRole("combobox").nth(1).click();
-    await page.getByRole("option", { name: "Per Jam", exact: true }).click();
+    const clientSearch = dialog.getByRole("textbox", { name: /Search client|Cari klien/i });
+    await clientSearch.fill(existingClient);
+    await dialog.getByRole("button", { name: /Toggle client list/i }).click();
+    await expect(page.getByText(existingClient, { exact: true }).last()).toBeVisible({ timeout: 15000 });
+    await page.getByText(existingClient, { exact: true }).last().click();
+    await dialog.getByRole("button", { name: /Per Jam|Hourly/i }).click();
     await dialog.getByRole("spinbutton").last().fill("180000");
     await dialog.getByRole("button", { name: "Simpan" }).click();
     const projectLink = page.getByRole("link", { name: project, exact: true });
