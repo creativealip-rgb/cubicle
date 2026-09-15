@@ -8,6 +8,7 @@ const route = readFileSync("src/components/time/time-route-content.tsx", "utf8")
 describe("weekly time picker parity", () => {
   it("passes template provenance into weekly and edit pickers", () => {
     expect(route).toContain("templateName: t.templateName");
+    expect(route).toContain("customerRef: project.clientId");
     expect(weekly).toContain("templateName?: string | null");
     expect(timesheet).toContain("templateName?: string | null");
   });

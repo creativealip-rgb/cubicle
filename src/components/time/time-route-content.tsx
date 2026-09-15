@@ -315,7 +315,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
               clientName: entry.clientName,
             }))}
             clients={clientList}
-            projects={projectList}
+            projects={projectList.map((project) => ({ ...project, customerRef: project.clientId }))}
             tasks={taskList}
             canWrite={canWrite}
           />
