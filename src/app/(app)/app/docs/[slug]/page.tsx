@@ -237,11 +237,11 @@ const GUIDES = {
     category: { id: "AI", en: "AI" },
     title: { id: "Prompt Studio & AI Assistant", en: "Prompt Studio & AI Assistant" },
     description: {
-      id: "Generator brief & prompt 17 preset (Social Media, Ads, Product, Video, Brand) dan Asisten RAG workspace.",
-      en: "17-preset prompt generator (Social Media, Ads, Product, Video, Brand) and workspace RAG Assistant.",
+      id: "Generator brief & prompt 18 preset (Social Media, Ads, Product, Video, Brand) dan Asisten RAG workspace.",
+      en: "18-preset prompt generator (Social Media, Ads, Product, Video, Brand) and workspace RAG Assistant.",
     },
     items: [
-      ["1. Prompt Studio 17 Preset", "Pilih preset konten: Feed Instagram, Carousel, Story, Product Ad, Script Video/TikTok, Logo, hingga Copywriting Marketing.", "1. 17-Preset Prompt Studio", "Choose presets for Instagram feeds, carousels, stories, ads, video scripts, logos, and marketing copy."],
+      ["1. Prompt Studio 18 Preset", "Pilih preset konten: Feed Instagram, Carousel, Story, Product Ad, Script Video/TikTok, Logo, hingga Copywriting Marketing.", "1. 18-Preset Prompt Studio", "Choose presets for Instagram feeds, carousels, stories, ads, video scripts, logos, and marketing copy."],
       ["2. Parameter Desain & Tone", "Kustomisasi style visual, rasio aspek (1:1, 9:16, 16:9), tone komunikasi, dan platform tujuan.", "2. Design and Tone Parameters", "Customize visual style, aspect ratio, communication tone, and target platform."],
       ["3. Hasil Siap Pakai", "AI menghasilkan visual prompt untuk Midjourney/Flux, caption copywriting, hashtag, dan hook video secara instan.", "3. Ready-to-Use Results", "Generate visual prompts, captions, hashtags, and video hooks for immediate use."],
       ["4. Asisten AI Workspace (RAG)", "Gunakan tombol sparkle di navbar untuk menanyakan status keuangan, task tertunda, atau ringkasan proyek workspace kamu.", "4. Workspace AI Assistant (RAG)", "Ask the navbar assistant about finances, pending tasks, and workspace project summaries."],

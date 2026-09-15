@@ -20,4 +20,10 @@ describe("visual prompt provider hardening", () => {
     expect(source).toContain("if (!normalized.structured)");
     expect(source).toContain("AI belum menghasilkan materi lengkap");
   });
+
+  it("requests JSON output and uses request quota as the hard limit", () => {
+    expect(source).toContain('response_format: { type: "json_object" }');
+    expect(source).not.toContain("MONTHLY_CAP_USD");
+    expect(source).not.toContain("currentCost >=");
+  });
 });

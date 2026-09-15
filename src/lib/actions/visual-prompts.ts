@@ -14,7 +14,7 @@ import { promptBriefSchema } from "@/lib/prompts/catalog";
 import { buildPromptRequest, parsePromptResult, serializePromptResult } from "@/lib/prompts/build-prompt";
 import { checkAiRateLimitDb, getPlanLimits, getUserPlan, releaseAiQuota } from "@/lib/plan";
 
-const MONTHLY_CAP_USD = 50;
+const DISPLAY_MONTHLY_BUDGET_USD = 50;
 const SERVER_MODEL = process.env.AI_MODEL ?? "ag/gemini-3.7-flash";
 const visualPromptSchema = promptBriefSchema.omit({ model: true });
 
@@ -137,11 +137,6 @@ export async function generateVisualPrompt(rawInput: unknown) {
   if (generationLimit > 0 && currentGenerations >= generationLimit) {
     throw new Error(`Jatah generate bulanan ${generationLimit} sudah habis.`);
   }
-  if (currentCost >= MONTHLY_CAP_USD) {
-    throw new Error(
-      `Monthly usage cap of $${MONTHLY_CAP_USD} reached. Current: $${currentCost.toFixed(4)}`,
-    );
-  }
 
   let generatedOutput = "";
   let inputTokens = 0;
@@ -175,6 +170,7 @@ export async function generateVisualPrompt(rawInput: unknown) {
         ],
         temperature: 0.4,
         max_tokens: 3500,
+        response_format: { type: "json_object" },
       }),
       signal: AbortSignal.timeout(60_000),
     });
@@ -228,7 +224,7 @@ export async function generateVisualPrompt(rawInput: unknown) {
         outputTokens,
         costUsd: Number(costUsd),
         monthlyCost: currentCost + Number(costUsd),
-        monthlyCap: MONTHLY_CAP_USD,
+        monthlyCap: DISPLAY_MONTHLY_BUDGET_USD,
       },
     };
   } catch (err) {

@@ -197,8 +197,8 @@ export const DOCS_CATALOG = [
     category: { id: "AI", en: "AI" },
     title: { id: "Prompt Studio & AI Assistant", en: "Prompt Studio & AI Assistant" },
     desc: {
-      id: "Generator brief/prompt 17 preset (Social Media, Ads, Product, Video, Brand) dan Asisten RAG workspace.",
-      en: "17-preset prompt generator (Social Media, Ads, Product, Video, Brand) and workspace RAG Assistant.",
+      id: "Generator brief/prompt 18 preset (Social Media, Ads, Product, Video, Brand) dan Asisten RAG workspace.",
+      en: "18-preset prompt generator (Social Media, Ads, Product, Video, Brand) and workspace RAG Assistant.",
     },
   },
   {
