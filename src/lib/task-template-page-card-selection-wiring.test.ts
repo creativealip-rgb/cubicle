@@ -20,7 +20,9 @@ describe("task template page card selection", () => {
   it("requires destination project inside import dialog instead of toolbar", () => {
     expect(workspace).not.toContain('t("Terapkan ke Proyek:", "Apply to Project:")');
     expect(workspace).toContain("projects={projects}");
-    expect(dialog).toContain('t("Pilih project tujuan", "Select destination project")');
+    expect(dialog).toContain('t("Cari project tujuan...", "Search destination project...")');
+    expect(dialog).toContain("filteredProjects.map((project)");
+    expect(dialog).toContain("setProjectSearchOpen(true)");
     expect(dialog).toContain('disabled={loading || !projectId');
     expect(dialog).toContain('t("subtask ke", "subtasks into")');
   });

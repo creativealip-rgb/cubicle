@@ -1,7 +1,10 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
+import { ChevronDown } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { importTaskTemplates, previewTaskTemplateImport } from "@/lib/actions/task-templates";
 import { toast } from "sonner";
@@ -26,6 +29,8 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
   const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
   const [projectId, setProjectId] = useState("");
+  const [projectSearch, setProjectSearch] = useState("");
+  const [projectSearchOpen, setProjectSearchOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
   const [selectedItems, setSelectedItems] = useState<Array<{ itemId: string; duplicateAction?: "skip" | "keep" }>>([]);
@@ -99,30 +104,45 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
     ? templates.filter((template) => template.id === selectedTemplateId)
     : templates;
   const allItemsSelected = preview.length > 0 && preview.every((item) => selectedItems.some((selected) => selected.itemId === item.itemId));
+  const filteredProjects = useMemo(() => {
+    const term = projectSearch.trim().toLowerCase();
+    return term ? projects.filter((project) => project.name.toLowerCase().includes(term)) : projects;
+  }, [projectSearch, projects]);
+
+  function chooseProject(nextProjectId: string) {
+    const project = projects.find((candidate) => candidate.id === nextProjectId);
+    setProjectId(nextProjectId);
+    setProjectSearch(project?.name ?? "");
+    setProjectSearchOpen(false);
+    setPreview([]); setSelectedItems([]); setPreviewFingerprint("");
+    if (selectedTemplateId) void loadPreview([selectedTemplateId], nextProjectId);
+  }
 
   return (
     <Dialog open={open} onOpenChange={(nextOpen) => {
       setOpen(nextOpen);
       if (!nextOpen) {
-        setProjectId(""); setPreview([]); setSelectedItems([]); setPreviewFingerprint("");
+        setProjectId(""); setProjectSearch(""); setProjectSearchOpen(false); setPreview([]); setSelectedItems([]); setPreviewFingerprint("");
       }
     }}>
       <DialogTrigger asChild><Button variant="outline">{t("Import Template", "Import Template")}</Button></DialogTrigger>
       <DialogContent className="max-h-[min(90dvh,720px)] w-[calc(100%-1.5rem)] max-w-2xl overflow-y-auto p-4 sm:w-full sm:p-6">
         <DialogHeader><DialogTitle>{t("Import Template Tugas", "Import Task Template")}</DialogTitle></DialogHeader>
         <div className="space-y-4">
-          <label className="block space-y-1.5 text-sm font-medium">
+          <div className="space-y-1.5 text-sm font-medium">
             <span>{t("Pilih project tujuan", "Select destination project")}</span>
-            <select className="h-10 w-full rounded-xl border border-border bg-background px-3" value={projectId} onChange={(event) => {
-              const nextProjectId = event.target.value;
-              setProjectId(nextProjectId);
-              setPreview([]); setSelectedItems([]); setPreviewFingerprint("");
-              if (nextProjectId && selectedTemplateId) void loadPreview([selectedTemplateId], nextProjectId);
-            }}>
-              <option value="">{t("Pilih project...", "Select project...")}</option>
-              {projects.map((project) => <option key={project.id} value={project.id}>{project.name}</option>)}
-            </select>
-          </label>
+            <Popover open={projectSearchOpen} onOpenChange={setProjectSearchOpen}>
+              <PopoverAnchor asChild><div className="relative">
+                <Input placeholder={t("Cari project tujuan...", "Search destination project...")} value={projectSearch} onChange={(event) => { setProjectSearch(event.target.value); setProjectId(""); setProjectSearchOpen(true); }} onClick={() => setProjectSearchOpen(true)} aria-expanded={projectSearchOpen} aria-haspopup="listbox" className="h-10 pr-9" />
+                <button type="button" aria-label={t("Buka daftar project", "Toggle project list")} onClick={() => setProjectSearchOpen((current) => !current)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"><ChevronDown className={`size-4 transition-transform ${projectSearchOpen ? "rotate-180" : ""}`} /></button>
+              </div></PopoverAnchor>
+              <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
+                <div role="listbox" className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain">
+                  {filteredProjects.length === 0 ? <p className="p-2 text-xs text-muted-foreground">{t("Project tidak ditemukan", "No project found")}</p> : filteredProjects.map((project) => <button key={project.id} type="button" role="option" aria-selected={projectId === project.id} className={`flex min-h-10 w-full items-center rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${projectId === project.id ? "bg-accent font-medium" : ""}`} onClick={() => chooseProject(project.id)}>{project.name}</button>)}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
           <div className="space-y-2">
             {visibleTemplates.map((template) => (
               <button key={template.id} type="button" className={`flex min-h-11 w-full items-center gap-3 rounded-md border px-3 py-2 text-left text-sm ${selectedTemplateIds.includes(template.id) ? "border-primary bg-primary/5" : ""}`} onClick={() => selectTemplate(template.id)}>
