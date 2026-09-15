@@ -13,23 +13,20 @@ test("production reusable task create edit archive delete", async ({ page }) => 
   const task = `QA-E2E Reusable Task ${stamp}`;
   const edited = `${task} Edited`;
 
-  await page.goto("/login");
-  await page.getByRole("textbox", { name: "Email" }).fill(email);
-  await page.getByRole("textbox", { name: "Password" }).fill(password);
-  await page.getByRole("button", { name: "Masuk" }).click();
+  await page.goto("/app/dashboard");
   await expect(page).toHaveURL(/\/app\/dashboard/, { timeout: 20_000 });
 
   try {
     await page.goto("/app/clients");
-    await page.getByRole("button", { name: "Tambah Klien" }).click();
-    let dialog = page.getByRole("dialog", { name: "Tambah Klien" });
-    await dialog.getByRole("textbox", { name: "Nama *" }).fill(client);
-    await dialog.getByRole("button", { name: "Buat Klien" }).click();
+    await page.getByRole("button", { name: /Tambah Klien|Add Client/i }).click();
+    let dialog = page.getByRole("dialog", { name: /Tambah Klien|Add Client/i });
+    await dialog.getByRole("textbox", { name: /Nama \*|Name \*/i }).fill(client);
+    await dialog.getByRole("button", { name: /Buat Klien|Create Client/i }).click();
     await expect(page.getByRole("link", { name: client, exact: true })).toBeVisible();
 
     await page.goto("/app/projects");
     await page.getByRole("button", { name: "Proyek Baru" }).click();
-    dialog = page.getByRole("dialog", { name: "Proyek Baru" });
+    dialog = page.getByRole("dialog", { name: /Proyek Baru|New Project/i });
     await dialog.locator("input").first().fill(project);
     await dialog.getByRole("combobox").nth(0).click();
     await page.getByRole("option", { name: client, exact: true }).click();
