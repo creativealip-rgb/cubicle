@@ -73,6 +73,10 @@ describe("dashboard phase2", () => {
     expect(src).toContain("analytics_events");
     expect(src).toContain("marketing_spend");
     expect(src).toContain("signupStarts");
+    expect(src).toContain("first_client_count");
+    expect(src).toContain("wau");
+    expect(src).toContain("subscription_events");
+    expect(src).toContain("freeToPaidRate");
   });
 });
 

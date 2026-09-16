@@ -59,7 +59,13 @@ export function GrowthKpiDashboard({ data }: { data: GrowthDashboard }) {
     <div className="grid gap-4 lg:grid-cols-2">
       <Panel title="Product usage" description="Meaningful activity during selected period">
         <Metric label="Active workspaces" value={number.format(data.activeWorkspaces)} help="Workspaces with meaningful activity" />
-        <Metric label="Active users" value={number.format(data.activeUsers)} help="Users creating projects, tasks, or time entries" />
+        <Metric label="Active users" value={number.format(data.activeUsers)} help="Users creating projects, tasks, or time entries in selected period" />
+        <Metric label="WAU" value={number.format(data.wau)} help="Distinct users active during trailing 7 days ending at range end" />
+        <Metric label="MAU" value={number.format(data.mau)} help="Distinct users active during trailing 30 days ending at range end" />
+        <Metric label="Projects / active user" value={data.projectsPerActiveUser == null ? "—" : data.projectsPerActiveUser.toFixed(2)} help="Projects created divided by active users; unavailable when denominator is zero" />
+        <Metric label="Tasks / project" value={data.tasksPerProject == null ? "—" : data.tasksPerProject.toFixed(2)} help="Tasks created divided by projects; unavailable when denominator is zero" />
+        <Metric label="First clients / projects / tasks" value={`${number.format(data.firstClientCount)} / ${number.format(data.firstProjectCount)} / ${number.format(data.firstTaskCount)}`} help="Client, project, and task records created in selected period" />
+        <Metric label="First invoices / portal visits" value={`${number.format(data.firstInvoiceCount)} / ${number.format(data.firstPortalCount)}`} help="Invoice records and portal visits in selected period" />
         <Metric label="Projects created" value={number.format(data.projects)} help="Projects created in range" />
         <Metric label="Tasks created" value={number.format(data.tasks)} help="Tasks created in range" />
         <Metric label="Time tracking adoption" value={`${number.format(data.timeTrackingWorkspaces)} workspaces`} help="Workspaces with time entries" />
@@ -82,11 +88,16 @@ export function GrowthKpiDashboard({ data }: { data: GrowthDashboard }) {
         <Metric label="Cost / signup" value={money(data.cps)} help="Spend divided by signup starts" />
         <Metric label="CAC" value={money(data.cac)} help="Spend divided by completed signups" />
       </Panel>
-      <Panel title="Retention & growth" description="Requires historical entitlement transitions">
-        <Metric label="Paid retention" value="Not tracked" unavailable help="Requires entitlement history" />
-        <Metric label="Churn" value="Not tracked" unavailable help="Requires entitlement history" />
-        <Metric label="Reactivation" value="Not tracked" unavailable help="Requires payment state transitions" />
-        <Metric label="Net paid growth" value="Not tracked" unavailable help="Requires paid account state transitions" />
+      <Panel title="Subscription lifecycle" description={data.subscriptionTrackingSince ? `Tracked since ${new Date(data.subscriptionTrackingSince).toLocaleDateString("en-GB")}` : "No lifecycle events tracked yet"}>
+        <Metric label="Started / reactivated" value={`${number.format(data.subscriptionStarted)} / ${number.format(data.subscriptionReactivated)}`} help="Subscription lifecycle events in selected period" />
+        <Metric label="Upgraded / renewed" value={`${number.format(data.subscriptionUpgraded)} / ${number.format(data.subscriptionRenewed)}`} help="Subscription lifecycle events in selected period" />
+        <Metric label="Expired" value={number.format(data.subscriptionExpired)} help="Subscription expiry events in selected period" />
+        <Metric label="Free → paid rate" value={data.freeToPaidRate == null ? "—" : `${data.freeToPaidRate.toFixed(1)}%`} help="Started plus reactivated divided by signup completions; shown only when signup tracking exists" />
+        <Metric label="Upgrade rate" value={data.upgradeRate == null ? "—" : `${data.upgradeRate.toFixed(1)}%`} help="Upgrades divided by started, reactivated, and upgraded lifecycle events" />
+        <Metric label="Churn" value={data.monthlyChurnRate == null ? "Event count only" : `${data.monthlyChurnRate.toFixed(1)}%`} help="Expired divided by current paid accounts; rate shown only for 30d, 90d, or 12m ranges" />
+      </Panel>
+      <Panel title="Retention & cohorts" description="Historical cohort retention and LTV unavailable">
+        <Metric label="Paid retention / cohorts / LTV" value="Not tracked" unavailable help="Requires historical entitlement and cohort revenue data" />
       </Panel>
     </div>
   </div>;
