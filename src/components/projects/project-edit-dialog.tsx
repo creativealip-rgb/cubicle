@@ -41,6 +41,7 @@ type ProjectEditDialogProps = {
   };
   activeProjectServiceIds: string[];
   billingModelLocked: boolean;
+  clients: Array<{ id: string; name: string }>;
   trigger?: ReactNode;
   section?: "general" | "billing";
 };
@@ -49,6 +50,7 @@ export function ProjectEditDialog({
   project,
   activeProjectServiceIds,
   billingModelLocked,
+  clients,
   trigger,
   section = "general",
 }: ProjectEditDialogProps) {
@@ -71,7 +73,7 @@ export function ProjectEditDialog({
         <ProjectForm
           mode="edit"
           clientId={project.clientId ?? undefined}
-          clients={[]}
+          clients={clients}
           defaultValues={{
             id: project.id,
             name: project.name,

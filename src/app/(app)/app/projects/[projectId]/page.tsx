@@ -101,6 +101,12 @@ export default async function ProjectDetailPage({
 
   if (!project) notFound();
 
+  const clientOptions = await db
+    .select({ id: clients.id, name: clients.name })
+    .from(clients)
+    .where(eq(clients.workspaceId, workspaceId))
+    .orderBy(clients.name);
+
   const progress = await getProjectProgress(projectId);
 
   // Workspace members for assignee selector on task create
@@ -333,6 +339,7 @@ export default async function ProjectDetailPage({
             <div className="flex items-center gap-2 self-start sm:self-center">
               <ProjectHeaderActions
                 project={project}
+                clients={clientOptions}
                 activeProjectServiceIds={activeProjectServiceIds}
                 billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0}
               />
@@ -349,7 +356,7 @@ export default async function ProjectDetailPage({
         timeCount={projectTimeEntries.length}
         invoicesCount={projectInvoices.length}
         showTimeTab={showTimeTab}
-        overviewContent={<ProjectOverview project={project} progress={progress} taskUsageProgress={taskUsageProgress} trackedMinutes={trackedMinutes} retainerUsedMinutes={retainerUsedMinutes} billableAmount={billableAmount} invoicedAmount={invoicedAmount} outstandingAmount={outstandingAmount} retainerPeriod={retainerPeriod} recentTime={projectTimeEntries.slice(0, 5)} recentInvoices={projectInvoices.slice(0, 5)} recentFiles={projectFiles.slice(0, 5)} editAction={<ProjectEditDialog section="general" project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah detail", "Edit details")}</button>} />} billingEditAction={<ProjectEditDialog section="billing" project={project} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah pengaturan billing", "Edit billing settings")}</button>} />} locale={locale} t={t} />}
+        overviewContent={<ProjectOverview project={project} progress={progress} taskUsageProgress={taskUsageProgress} trackedMinutes={trackedMinutes} retainerUsedMinutes={retainerUsedMinutes} billableAmount={billableAmount} invoicedAmount={invoicedAmount} outstandingAmount={outstandingAmount} retainerPeriod={retainerPeriod} recentTime={projectTimeEntries.slice(0, 5)} recentInvoices={projectInvoices.slice(0, 5)} recentFiles={projectFiles.slice(0, 5)} editAction={<ProjectEditDialog section="general" project={project} clients={clientOptions} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah detail", "Edit details")}</button>} />} billingEditAction={<ProjectEditDialog section="billing" project={project} clients={clientOptions} activeProjectServiceIds={activeProjectServiceIds} billingModelLocked={projectTimeEntries.length > 0 || projectInvoices.length > 0} trigger={<button type="button" className="text-xs font-medium text-primary hover:underline">{t("Ubah pengaturan billing", "Edit billing settings")}</button>} />} locale={locale} t={t} />}
         tasksAction={
           <TaskCreateDialog
             projectId={projectId}
