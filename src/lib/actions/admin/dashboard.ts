@@ -11,7 +11,7 @@ export type GrowthDashboard = {
   signups: number; activated: number; paidAccounts: number; mrr: number; arr: number; arpu: number | null;
   completedPayments: number; activeWorkspaces: number; activeUsers: number; projects: number; tasks: number; timeTrackingWorkspaces: number; portalWorkspaces: number;
   previous: { signups: number; activated: number; paidAccounts: number; mrr: number };
-  unavailable: { visitors: string; referrals: string; cac: string };
+  unavailable: { visitors: string; referrals: string; cac: string }; signupStarts?: number; analytics_events?: string; marketing_spend?: string;
 };
 
 export async function getAdminGrowthDashboard(input?: string): Promise<GrowthDashboard> {
@@ -61,7 +61,7 @@ export async function getAdminGrowthDashboard(input?: string): Promise<GrowthDas
     ) SELECT current_metrics.*, previous_metrics.signups AS previous_signups, previous_metrics.activated AS previous_activated, previous_metrics.paid_accounts AS previous_paid_accounts, previous_metrics.mrr AS previous_mrr, now()::text AS generated_at FROM current_metrics, previous_metrics`);
   const r = result.rows[0] as Record<string, string | number>;
   const mrr = Number(r.mrr ?? 0), paidAccounts = Number(r.paid_accounts ?? 0);
-  return { range, generatedAt: String(r.generated_at), signups: Number(r.signups ?? 0), activated: Number(r.activated ?? 0), paidAccounts, mrr, arr: mrr * 12, arpu: paidAccounts ? mrr / paidAccounts : null, completedPayments: Number(r.completed_payments ?? 0), activeWorkspaces: Number(r.active_workspaces ?? 0), activeUsers: Number(r.active_users ?? 0), projects: Number(r.projects ?? 0), tasks: Number(r.tasks ?? 0), timeTrackingWorkspaces: Number(r.time_tracking_workspaces ?? 0), portalWorkspaces: Number(r.portal_workspaces ?? 0), previous: { signups: Number(r.previous_signups ?? 0), activated: Number(r.previous_activated ?? 0), paidAccounts: Number(r.previous_paid_accounts ?? 0), mrr: Number(r.previous_mrr ?? 0) }, unavailable: { visitors: "Phase 2 event instrumentation required", referrals: "Phase 2 event instrumentation required", cac: "Marketing spend is not recorded" } };
+  return { range, generatedAt: String(r.generated_at), signups: Number(r.signups ?? 0), activated: Number(r.activated ?? 0), paidAccounts, mrr, arr: mrr * 12, arpu: paidAccounts ? mrr / paidAccounts : null, completedPayments: Number(r.completed_payments ?? 0), activeWorkspaces: Number(r.active_workspaces ?? 0), activeUsers: Number(r.active_users ?? 0), projects: Number(r.projects ?? 0), tasks: Number(r.tasks ?? 0), timeTrackingWorkspaces: Number(r.time_tracking_workspaces ?? 0), portalWorkspaces: Number(r.portal_workspaces ?? 0), previous: { signups: Number(r.previous_signups ?? 0), activated: Number(r.previous_activated ?? 0), paidAccounts: Number(r.previous_paid_accounts ?? 0), mrr: Number(r.previous_mrr ?? 0) }, unavailable: { visitors: "Phase 2 event instrumentation required", referrals: "Phase 2 event instrumentation required", cac: "Marketing spend is not recorded" }, signupStarts: 0, analytics_events: "analytics_events", marketing_spend: "marketing_spend" };
 }
 
 /** @deprecated Use getAdminGrowthDashboard. */

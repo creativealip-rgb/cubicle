@@ -532,6 +532,16 @@ export const adminAuditLogs = pgTable(
   ],
 );
 
+export const analyticsEvents = pgTable("analytics_events", {
+  id: uuid("id").defaultRandom().primaryKey(), eventName: text("event_name").notNull(), occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(), anonymousId: text("anonymous_id"), metadata: jsonb("metadata").notNull().default(sql`'{}'::jsonb`),
+});
+export const subscriptionEvents = pgTable("subscription_events", {
+  id: uuid("id").defaultRandom().primaryKey(), userId: text("user_id").references(() => users.id, { onDelete: "set null" }), workspaceId: uuid("workspace_id").references(() => workspaces.id, { onDelete: "set null" }), eventType: text("event_type").notNull(), fromPlan: text("from_plan"), toPlan: text("to_plan"), providerOrderId: text("provider_order_id"), occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(), metadata: jsonb("metadata").notNull().default(sql`'{}'::jsonb`),
+}, (t) => [unique("subscription_events_provider_type_uq").on(t.providerOrderId, t.eventType)]);
+export const marketingSpend = pgTable("marketing_spend", {
+  id: uuid("id").defaultRandom().primaryKey(), spendDate: date("spend_date").notNull(), source: text("source").notNull(), campaign: text("campaign"), amount: numeric("amount", { precision: 12, scale: 2 }).notNull(), currency: text("currency").notNull().default("IDR"), notes: text("notes"), createdBy: text("created_by").references(() => users.id, { onDelete: "set null" }), createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const sessions = pgTable("sessions", {
   id: text("id").primaryKey(),
   expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),

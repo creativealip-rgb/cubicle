@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { users } from "@/db/schema";
+import { users, subscriptionEvents } from "@/db/schema";
 import { eq, and, isNotNull, sql } from "drizzle-orm";
 
 const GRACE_PERIOD_DAYS = 3;
@@ -27,6 +27,7 @@ export async function expirePlans(): Promise<string[]> {
   if (expired.length === 0) return [];
 
   const ids: string[] = [];
+  // subscriptionEvents; db.transaction required for expiry event atomicity.
   for (const user of expired) {
     await db
       .update(users)

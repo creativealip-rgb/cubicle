@@ -1,7 +1,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { pakasirPayments, users, workspaces } from "@/db/schema";
+import { pakasirPayments, users, workspaces, subscriptionEvents } from "@/db/schema";
 import { getPakasirTransactionDetail, type PakasirWebhook } from "@/lib/pakasir";
 import { getPeriodExpiry } from "@/lib/billing-plans";
 import { getEffectivePlan } from "@/lib/plan";
@@ -13,6 +13,7 @@ import { activateStorageAddonTx } from "@/lib/storage-addons";
 // must never overwrite a currently effective higher plan.
 const PLAN_RANK: Record<string, number> = { free: 0, solo: 1, team: 2 };
 
+// subscriptionEvents, from_plan: lifecycle event insertion belongs in same transaction.
 export type PakasirActivationResult =
   | { kind: "activated"; plan: string }
   | { kind: "addon_activated"; plan: string; entitlementId: string }
