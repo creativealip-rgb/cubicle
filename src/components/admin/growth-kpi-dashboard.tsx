@@ -80,7 +80,7 @@ export function GrowthKpiDashboard({ data }: { data: GrowthDashboard }) {
       </Panel>
       <Panel title="Acquisition" description="Selected period, real event data">
         <Metric label="Visitors" value={number.format(data.visitors)} help="Unique tracked visitors" />
-        <Metric label="Organic visitors" value={number.format(data.organic)} help="Visitors without campaign attribution" />
+        <Metric label="Organic visitors" value={number.format(data.organic)} help="Visitors explicitly attributed with medium=organic" />
         <Metric label="Referrals" value={number.format(data.referrals)} help="Visitors with referral attribution" />
         <Metric label="Signup starts" value={number.format(data.signupStarts)} help="Tracked signup interactions" />
         <Metric label="Signup completions" value={number.format(data.signupCompletions)} help="Successful account creation events" />
@@ -94,7 +94,7 @@ export function GrowthKpiDashboard({ data }: { data: GrowthDashboard }) {
         <Metric label="Expired" value={number.format(data.subscriptionExpired)} help="Subscription expiry events in selected period" />
         <Metric label="Free → paid rate" value={data.freeToPaidRate == null ? "—" : `${data.freeToPaidRate.toFixed(1)}%`} help="Started plus reactivated divided by signup completions; shown only when signup tracking exists" />
         <Metric label="Upgrade rate" value={data.upgradeRate == null ? "—" : `${data.upgradeRate.toFixed(1)}%`} help="Upgrades divided by started, reactivated, and upgraded lifecycle events" />
-        <Metric label="Churn" value={data.monthlyChurnRate == null ? "Event count only" : `${data.monthlyChurnRate.toFixed(1)}%`} help="Expired divided by current paid accounts; rate shown only for 30d, 90d, or 12m ranges" />
+        <Metric label="Churn" value="Event count only" unavailable help="Paid-at-period-start denominator is unavailable until lifecycle history matures" />
       </Panel>
       <Panel title="Retention & cohorts" description="Historical cohort retention and LTV unavailable">
         <Metric label="Paid retention / cohorts / LTV" value="Not tracked" unavailable help="Requires historical entitlement and cohort revenue data" />
