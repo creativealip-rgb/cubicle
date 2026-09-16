@@ -185,6 +185,10 @@ export async function activateCompletedPakasirPayment(
       return { kind: "ignored" as const, status: "no_downgrade" };
     }
 
+    const lifecycleEvent = currentEffective === "free"
+      ? (owner?.plan !== "free" && owner?.planExpiresAt && owner.planExpiresAt < paidAt ? "reactivated" : "started")
+      : rank(paidPlan) > rank(currentEffective) ? "upgraded" : "renewed";
+
     await tx
       .update(users)
       .set({ plan: paidPlan, planExpiresAt: expiresAt })
@@ -204,6 +208,17 @@ export async function activateCompletedPakasirPayment(
       ))
       .returning({ id: pakasirPayments.id });
     if (completed.length !== 1) return { kind: "idempotent" as const, plan: current.plan };
+
+    await tx.insert(subscriptionEvents).values({
+      userId: workspace.ownerId,
+      workspaceId: current.workspaceId,
+      eventType: lifecycleEvent,
+      fromPlan: owner?.plan ?? "free",
+      toPlan: paidPlan,
+      providerOrderId: current.orderId,
+      occurredAt: paidAt,
+      metadata: { amount, billingPeriod: current.billingPeriod },
+    }).onConflictDoNothing();
 
     return { kind: "activated" as const, plan: current.plan };
   });

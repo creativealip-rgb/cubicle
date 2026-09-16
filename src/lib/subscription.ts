@@ -27,14 +27,30 @@ export async function expirePlans(): Promise<string[]> {
   if (expired.length === 0) return [];
 
   const ids: string[] = [];
-  // subscriptionEvents; db.transaction required for expiry event atomicity.
   for (const user of expired) {
-    await db
-      .update(users)
-      .set({ plan: "free", planExpiresAt: null })
-      .where(eq(users.id, user.id));
-    ids.push(user.id);
-    console.log(`[subscription] downgraded user "${user.name}" (${user.id}) from ${user.plan} to free, expired ${user.planExpiresAt?.toISOString()}`);
+    const changed = await db.transaction(async (tx) => {
+      const updated = await tx
+        .update(users)
+        .set({ plan: "free", planExpiresAt: null })
+        .where(and(eq(users.id, user.id), sql`${users.plan} != 'free'`))
+        .returning({ id: users.id });
+      if (updated.length !== 1) return false;
+
+      await tx.insert(subscriptionEvents).values({
+        userId: user.id,
+        eventType: "expired",
+        fromPlan: user.plan,
+        toPlan: "free",
+        providerOrderId: `expiry:${user.id}:${user.planExpiresAt?.toISOString() ?? "unknown"}`,
+        occurredAt: new Date(),
+        metadata: { planExpiresAt: user.planExpiresAt?.toISOString() },
+      }).onConflictDoNothing();
+      return true;
+    });
+    if (changed) {
+      ids.push(user.id);
+      console.log(`[subscription] downgraded user "${user.name}" (${user.id}) from ${user.plan} to free, expired ${user.planExpiresAt?.toISOString()}`);
+    }
   }
 
   return ids;
