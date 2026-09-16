@@ -88,8 +88,21 @@ export function GrowthKpiDashboard({ data }: { data: GrowthDashboard }) {
         <Metric label="Cost / signup" value={money(data.cps)} help="Spend divided by signup starts" />
         <Metric label="CAC" value={money(data.cac)} help="Spend divided by completed signups" />
       </Panel>
-      <Panel title="Daily trends" description="Bounded event flow; monthly buckets for 12m">
-        <div className="space-y-2" aria-label="Analytics trends">{data.trends.map((row) => <div key={row.bucket} className="grid grid-cols-[5rem_1fr] items-center gap-2 text-[11px]"><span className="text-slate-500">{row.bucket.slice(0, 10)}</span><div className="flex h-5 items-center gap-1"><div className="h-2 rounded bg-violet-400" style={{ width: `${Math.min(row.visitors * 8, 100)}%` }} title={`${row.visitors} visitors`} /><span className="tabular-nums text-slate-600">{row.visitors} visitors · {row.signupCompletions} complete · {money(row.revenue)}</span></div></div>)}</div>
+      <Panel title={data.range === "12m" ? "Monthly trends" : "Daily trends"} description="Visitors, signup completions, activations, and completed plan revenue">
+        {(() => {
+          const max = Math.max(1, ...data.trends.map(row => Math.max(row.visitors, row.signupCompletions, row.activated)));
+          const revenue = data.trends.reduce((sum, row) => sum + row.revenue, 0);
+          const completions = data.trends.reduce((sum, row) => sum + row.signupCompletions, 0);
+          const activations = data.trends.reduce((sum, row) => sum + row.activated, 0);
+          return <>
+            <div className="mt-4 flex h-28 items-end gap-1" aria-label="Analytics trend chart">{data.trends.map(row => <div key={row.bucket} className="flex min-w-0 flex-1 items-end justify-center gap-px" title={`${row.bucket.slice(0, 10)} · ${row.visitors} visitors · ${row.signupCompletions} completions · ${row.activated} activations · ${money(row.revenue)}`}>
+              <span className="w-1/2 rounded-t bg-violet-400" style={{ height: `${Math.max(row.visitors ? 4 : 0, row.visitors / max * 100)}%` }} />
+              <span className="w-1/2 rounded-t bg-emerald-400" style={{ height: `${Math.max(row.signupCompletions || row.activated ? 4 : 0, Math.max(row.signupCompletions, row.activated) / max * 100)}%` }} />
+            </div>)}</div>
+            <div className="mt-2 flex justify-between text-[10px] text-slate-400"><span>{data.trends[0]?.bucket.slice(0, 10)}</span><span>{data.trends.at(-1)?.bucket.slice(0, 10)}</span></div>
+            <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 border-t border-slate-100 pt-3 text-[11px] text-slate-600"><span><b className="text-violet-600">■</b> Visitors</span><span><b className="text-emerald-600">■</b> Conversion</span><span>{completions} completions</span><span>{activations} activations</span><span>{money(revenue)} plan revenue</span></div>
+          </>;
+        })()}
       </Panel>
       <Panel title="Acquisition sources" description="Tracked attribution joined with IDR spend; direct / unknown separated">
         <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead><tr className="border-b text-[11px] text-slate-500"><th className="py-2">Source / campaign</th><th>Visitors</th><th>Completed</th><th>Spend</th><th>CAC</th></tr></thead><tbody>{data.acquisition.map((row) => <tr key={`${row.source}-${row.campaign}`} className="border-b border-slate-100"><td className="py-2"><div className="font-medium">{row.source}</div><div className="text-[11px] text-slate-500">{row.campaign}</div></td><td>{row.visitors}</td><td>{row.signupCompletions}{row.conversionRate != null ? ` (${row.conversionRate.toFixed(1)}%)` : ""}</td><td>{money(row.spend)}</td><td>{money(row.cac)}</td></tr>)}</tbody></table></div>
