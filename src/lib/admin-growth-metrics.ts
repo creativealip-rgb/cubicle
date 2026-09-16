@@ -6,7 +6,10 @@ export type ActivationCounts = { clients: number; projects: number; tasks: numbe
 
 export function getRangeWindow(range: GrowthRange, end = new Date()) {
   const days = range === "7d" ? 7 : range === "30d" ? 30 : range === "90d" ? 90 : 365;
-  return { start: new Date(end.getTime() - days * 86400000), end, days };
+  const start = new Date(end);
+  if (range === "12m") start.setUTCMonth(start.getUTCMonth() - 12);
+  else start.setTime(end.getTime() - days * 86400000);
+  return { start, end, days };
 }
 
 export function activationRequirementsMet(counts: ActivationCounts) {

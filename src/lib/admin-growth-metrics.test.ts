@@ -7,6 +7,7 @@ describe("admin growth metric contracts", () => {
     expect(window.days).toBe(days);
     expect(window.end.toISOString()).toBe("2026-09-16T00:00:00.000Z");
     expect(window.start < window.end).toBe(true);
+    if (range === "12m") expect(window.start.toISOString()).toBe("2025-09-16T00:00:00.000Z");
   });
 
   it("requires client, project, and meaningful activity for activation", () => {

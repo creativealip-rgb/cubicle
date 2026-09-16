@@ -9,7 +9,10 @@ describe("admin growth query wiring", () => {
     expect(source).toContain("enforceServerActionRateLimit");
     expect(source).toContain("parseGrowthRange");
     expect(source).toContain("WITH bounds");
-    expect(source).toContain("has_activity");
+    expect(source).toContain("activation_dates");
+    expect(source).toContain("activated_at");
+    expect(source).toContain("paid_now");
+    expect(source).toContain("active_users");
     expect(source).toContain("payment_type = 'plan'");
   });
 });
