@@ -88,6 +88,12 @@ export function GrowthKpiDashboard({ data }: { data: GrowthDashboard }) {
         <Metric label="Cost / signup" value={money(data.cps)} help="Spend divided by signup starts" />
         <Metric label="CAC" value={money(data.cac)} help="Spend divided by completed signups" />
       </Panel>
+      <Panel title="Daily trends" description="Bounded event flow; monthly buckets for 12m">
+        <div className="space-y-2" aria-label="Analytics trends">{data.trends.map((row) => <div key={row.bucket} className="grid grid-cols-[5rem_1fr] items-center gap-2 text-[11px]"><span className="text-slate-500">{row.bucket.slice(0, 10)}</span><div className="flex h-5 items-center gap-1"><div className="h-2 rounded bg-violet-400" style={{ width: `${Math.min(row.visitors * 8, 100)}%` }} title={`${row.visitors} visitors`} /><span className="tabular-nums text-slate-600">{row.visitors} visitors · {row.signupCompletions} complete · {money(row.revenue)}</span></div></div>)}</div>
+      </Panel>
+      <Panel title="Acquisition sources" description="Tracked attribution joined with IDR spend; direct / unknown separated">
+        <div className="overflow-x-auto"><table className="w-full text-left text-xs"><thead><tr className="border-b text-[11px] text-slate-500"><th className="py-2">Source / campaign</th><th>Visitors</th><th>Completed</th><th>Spend</th><th>CAC</th></tr></thead><tbody>{data.acquisition.map((row) => <tr key={`${row.source}-${row.campaign}`} className="border-b border-slate-100"><td className="py-2"><div className="font-medium">{row.source}</div><div className="text-[11px] text-slate-500">{row.campaign}</div></td><td>{row.visitors}</td><td>{row.signupCompletions}{row.conversionRate != null ? ` (${row.conversionRate.toFixed(1)}%)` : ""}</td><td>{money(row.spend)}</td><td>{money(row.cac)}</td></tr>)}</tbody></table></div>
+      </Panel>
       <Panel title="Subscription lifecycle" description={data.subscriptionTrackingSince ? `Tracked since ${new Date(data.subscriptionTrackingSince).toLocaleDateString("en-GB")}` : "No lifecycle events tracked yet"}>
         <Metric label="Started / reactivated" value={`${number.format(data.subscriptionStarted)} / ${number.format(data.subscriptionReactivated)}`} help="Subscription lifecycle events in selected period" />
         <Metric label="Upgraded / renewed" value={`${number.format(data.subscriptionUpgraded)} / ${number.format(data.subscriptionRenewed)}`} help="Subscription lifecycle events in selected period" />
