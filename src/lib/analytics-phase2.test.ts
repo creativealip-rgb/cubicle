@@ -57,7 +57,7 @@ describe("admin marketing spend", () => {
 
 describe("marketing spend dashboard UI", () => {
   it("loads spend rows and renders compact management UI", () => {
-    const page = readFileSync(join(process.cwd(), "src/app/(admin)/admin/dashboard/page.tsx"), "utf8");
+    const page = readFileSync(join(process.cwd(), "src/app/(admin)/admin/analytics/page.tsx"), "utf8");
     const ui = readFileSync(join(process.cwd(), "src/components/admin/marketing-spend-manager.tsx"), "utf8");
     expect(page).toContain("listMarketingSpend");
     expect(page).toContain("MarketingSpendManager");
