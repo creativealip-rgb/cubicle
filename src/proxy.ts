@@ -16,6 +16,10 @@ export function proxy(request: NextRequest) {
   // group. Transparent to the browser — visible URLs stay /dashboard, /users,
   // etc., while internally Next serves /admin/dashboard, /admin/users.
   if (normalizedHost === "admin.cubiqlo.com") {
+    // Public brand assets live at the root; do not rewrite them into /admin/*.
+    if (pathname === "/logo-icon.png" || pathname === "/favicon-32.png") {
+      return NextResponse.next();
+    }
     const rewritten = getAdminRewritePath(pathname);
     if (rewritten && rewritten !== pathname) {
       const url = request.nextUrl.clone();

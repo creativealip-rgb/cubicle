@@ -49,7 +49,14 @@ export default async function AdminUsersPage({
           <CardTitle className="text-base">All users</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
+          <div className="divide-y md:hidden">
+            {data.users.map((u) => <div key={u.id} className="space-y-3 p-4">
+              <div className="flex items-start justify-between gap-3"><div><Link href={`/users/${u.id}`} className="font-medium text-[#6647F0] hover:underline">{u.name || "—"}</Link><p className="break-all text-sm text-muted-foreground">{u.email}</p></div><UserActions user={u} /></div>
+              <div className="flex flex-wrap items-center gap-2 text-sm"><Badge variant={u.plan === "free" ? "secondary" : "success"}>{u.plan}</Badge><span>{u.role}</span>{u.banned ? <Badge variant="destructive">Banned</Badge> : u.emailVerified ? <Badge variant="success">Verified</Badge> : <Badge variant="warning">Unverified</Badge>}<span className="text-muted-foreground">{formatDateID(u.createdAt)}</span></div>
+            </div>)}
+            {data.users.length === 0 && <p className="p-8 text-center text-muted-foreground">No users found.</p>}
+          </div>
+          <div className="hidden md:block"><Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
@@ -100,7 +107,7 @@ export default async function AdminUsersPage({
                 </TableRow>
               )}
             </TableBody>
-          </Table>
+          </Table></div>
         </CardContent>
       </Card>
 

@@ -62,7 +62,10 @@ export default async function AdminWorkspaceDetailPage({
           <CardTitle className="text-base">Members ({members.length})</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
+          <div className="divide-y md:hidden">
+            {members.map((m) => <div key={m.id} className="space-y-1 p-4"><p className="font-medium">{m.name ?? "—"}</p><p className="break-all text-sm text-muted-foreground">{m.email}</p><div className="flex items-center justify-between text-sm"><Badge variant={m.role === "owner" ? "default" : m.role === "member" ? "info" : "secondary"}>{m.role}</Badge><span className="text-muted-foreground">{formatDateID(m.createdAt)}</span></div></div>)}
+          </div>
+          <div className="hidden md:block"><Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
@@ -85,7 +88,7 @@ export default async function AdminWorkspaceDetailPage({
                 </TableRow>
               ))}
             </TableBody>
-          </Table>
+          </Table></div>
         </CardContent>
       </Card>
     </div>

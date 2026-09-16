@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Ellipsis, Pencil, Shield, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
@@ -23,6 +24,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import {
   banUser,
   changeUserPlan,
@@ -63,26 +65,15 @@ export function UserActions({ user }: { user: AdminListUserRow }) {
 
   return (
     <>
-      <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" onClick={() => setDialog({ kind: "edit", user })}>
-          Edit
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => setDialog({ kind: "plan", user })}>
-          Plan
-        </Button>
-        {user.banned ? (
-          <Button variant="secondary" size="sm" onClick={() => setDialog({ kind: "unban", user })}>
-            Unban
-          </Button>
-        ) : (
-          <Button variant="destructive" size="sm" onClick={() => setDialog({ kind: "ban", user })}>
-            Ban
-          </Button>
-        )}
-        <Button variant="ghost" size="sm" onClick={() => setDialog({ kind: "reset", user })}>
-          Reset PW
-        </Button>
-      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild><Button variant="outline" size="icon" className="size-10" aria-label={`Actions for ${user.email}`}><Ellipsis className="size-4" /></Button></DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem onSelect={() => setDialog({ kind: "edit", user })}><Pencil className="size-4" />Edit</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setDialog({ kind: "plan", user })}>Plan</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setDialog({ kind: user.banned ? "unban" : "ban", user })}><Shield className="size-4" />{user.banned ? "Unban" : "Ban"}</DropdownMenuItem>
+          <DropdownMenuItem onSelect={() => setDialog({ kind: "reset", user })}><KeyRound className="size-4" />Reset PW</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
       {dialog?.kind === "edit" && <EditUserDialog user={dialog.user} onClose={close} run={run} />}
       {dialog?.kind === "plan" && <PlanDialog user={dialog.user} onClose={close} run={run} />}

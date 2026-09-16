@@ -59,7 +59,16 @@ export default async function AdminPaymentsPage({
           <CardTitle className="text-base">All payments</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
+          <div className="space-y-3 p-4 md:hidden">
+            {data.payments.map((p) => (
+              <div key={p.id} className="rounded-xl border p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3"><div><p className="text-lg font-semibold">{formatMoney(p.amount)}</p><p className="font-mono text-xs text-muted-foreground">{p.orderId}</p></div><Badge variant={p.status === "completed" ? "success" : p.status === "pending" ? "warning" : "secondary"}>{p.status}</Badge></div>
+                <dl className="mt-3 grid grid-cols-2 gap-2 text-xs"><div><dt className="text-muted-foreground">Workspace</dt><dd>{p.workspaceName ?? "—"}</dd></div><div><dt className="text-muted-foreground">Plan / type</dt><dd>{p.plan} · {p.paymentType}</dd></div><div><dt className="text-muted-foreground">Paid</dt><dd>{p.paidAt ? formatDateID(p.paidAt) : "—"}</dd></div></dl>
+              </div>
+            ))}
+            {data.payments.length === 0 && <p className="py-8 text-center text-muted-foreground">No payments found.</p>}
+          </div>
+          <div className="hidden overflow-x-auto md:block"><Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Order</TableHead>
@@ -95,7 +104,7 @@ export default async function AdminPaymentsPage({
                 </TableRow>
               )}
             </TableBody>
-          </Table>
+          </Table></div>
         </CardContent>
       </Card>
 

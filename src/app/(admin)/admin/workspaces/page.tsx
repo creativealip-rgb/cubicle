@@ -43,7 +43,11 @@ export default async function AdminWorkspacesPage({
           <CardTitle className="text-base">All workspaces</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
+          <div className="divide-y md:hidden">
+            {data.workspaces.map((w) => <div key={w.id} className="space-y-2 p-4"><Link href={`/workspaces/${w.id}`} className="font-medium text-[#6647F0] hover:underline">{w.name}</Link><p className="font-mono text-xs text-muted-foreground">{w.slug}</p><p className="text-sm">{w.ownerName ?? "—"}<span className="block break-all text-xs text-muted-foreground">{w.ownerEmail}</span></p><div className="flex justify-between text-sm"><span>{w.memberCount} members</span><span className="text-muted-foreground">{formatDateID(w.createdAt)}</span></div></div>)}
+            {data.workspaces.length === 0 && <p className="p-8 text-center text-muted-foreground">No workspaces found.</p>}
+          </div>
+          <div className="hidden md:block"><Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
@@ -78,7 +82,7 @@ export default async function AdminWorkspacesPage({
                 </TableRow>
               )}
             </TableBody>
-          </Table>
+          </Table></div>
         </CardContent>
       </Card>
 

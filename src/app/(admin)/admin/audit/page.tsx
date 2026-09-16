@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/table";
 import { listAuditLogs } from "@/lib/actions/admin/audit";
 import { formatDateID } from "@/lib/utils";
+import { humanizeAuditAction, metadataJson, summarizeAuditMetadata } from "./audit-metadata";
 
 export const dynamic = "force-dynamic";
 
@@ -55,7 +56,11 @@ export default async function AdminAuditPage({
           <CardTitle className="text-base">Events</CardTitle>
         </CardHeader>
         <CardContent className="p-0">
-          <Table>
+          <div className="space-y-3 p-4 md:hidden">
+            {data.logs.map((l) => <div key={l.id} className="rounded-xl border p-4"><div className="flex justify-between gap-3"><Badge>{humanizeAuditAction(l.action)}</Badge><time className="text-xs text-muted-foreground">{formatDateID(l.createdAt)}</time></div><p className="mt-2 text-sm">{l.adminName ?? "—"} <span className="text-xs text-muted-foreground">{l.adminEmail}</span></p><p className="text-xs text-muted-foreground">Target: {l.targetUserId?.slice(0, 12) ?? l.targetWorkspaceId ?? "—"}</p><p className="mt-2 text-sm">{summarizeAuditMetadata(l.metadata)}</p><details className="mt-2 text-xs"><summary className="cursor-pointer text-muted-foreground">Raw details</summary><pre className="mt-1 whitespace-pre-wrap break-all">{metadataJson(l.metadata)}</pre></details></div>)}
+            {data.logs.length === 0 && <p className="py-8 text-center text-muted-foreground">No audit events found.</p>}
+          </div>
+          <div className="hidden overflow-x-auto md:block"><Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Action</TableHead>
@@ -71,7 +76,7 @@ export default async function AdminAuditPage({
                 <TableRow key={l.id}>
                   <TableCell>
                     <Badge variant={l.action.includes("ban") ? "destructive" : l.action.includes("plan") ? "info" : "secondary"}>
-                      {l.action}
+                      {humanizeAuditAction(l.action)}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -102,7 +107,7 @@ export default async function AdminAuditPage({
                 </TableRow>
               )}
             </TableBody>
-          </Table>
+          </Table></div>
         </CardContent>
       </Card>
 
