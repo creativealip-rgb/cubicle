@@ -470,6 +470,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                           setEditProjectSearch(val);
                           setEditProjectSearchOpen(true);
                         }}
+                        onClick={() => setEditProjectSearchOpen(true)}
                         onFocus={() => {
                           const currentClientName = clients.find((c) => c.id === editClientId)?.name || "";
                           const currentProjectName = projects.find((p) => p.id === editProjectId)?.name || "";
@@ -1023,6 +1024,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                         setEditProjectSearch(val);
                         setEditProjectSearchOpen(true);
                       }}
+                      onClick={() => setEditProjectSearchOpen(true)}
                       onFocus={() => {
                         // Don't auto open dropdown if text matches currently selected project
                         const currentClientName = clients.find((c) => c.id === editClientId)?.name || "";

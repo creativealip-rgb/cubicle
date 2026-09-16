@@ -20,6 +20,10 @@ describe("weekly time picker parity", () => {
     expect(timesheet).toContain('task.templateName || t("Tugas manual", "Manual tasks")');
   });
 
+  it("opens both edit project pickers on field click", () => {
+    expect(timesheet.match(/onClick=\{\(\) => setEditProjectSearchOpen\(true\)\}/g)).toHaveLength(2);
+  });
+
   it("does not show edit validation before save", () => {
     expect(timesheet).toContain("const [editSubmitted, setEditSubmitted] = useState(false)");
     expect(timesheet).toContain("const editClientError = editSubmitted && !editClientId");
