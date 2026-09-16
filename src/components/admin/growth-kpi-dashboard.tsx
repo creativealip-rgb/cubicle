@@ -1,26 +1,89 @@
+import { ArrowDownRight, ArrowUpRight, Minus } from "lucide-react";
 import { comparePercent, type GrowthRange } from "@/lib/admin-growth-metrics";
 import type { GrowthDashboard } from "@/lib/actions/admin/dashboard";
 
 const ranges: GrowthRange[] = ["7d", "30d", "90d", "12m"];
-const money = (value: number | null) => value == null ? "—" : new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 }).format(value);
+const number = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 });
+const money = (value: number | null) => value == null ? "—" : `Rp${number.format(value)}`;
 
-function Card({ label, value, comparison, help }: { label: string; value: string | number; comparison?: number | null; help: string }) {
-  return <div className="rounded-xl border bg-white p-4 shadow-sm" title={help}><p className="text-xs text-muted-foreground">{label}</p><p className="mt-2 text-2xl font-semibold tabular-nums">{value}</p>{comparison !== undefined && <p className="mt-1 text-xs text-muted-foreground">{comparison == null ? "No prior baseline" : `${comparison >= 0 ? "+" : ""}${comparison}% vs prior period`}</p>}</div>;
+function Delta({ value }: { value: number | null }) {
+  if (value == null) return <span className="inline-flex items-center gap-1 text-[11px] text-slate-400"><Minus className="size-3" />No prior baseline</span>;
+  const positive = value >= 0;
+  const Icon = positive ? ArrowUpRight : ArrowDownRight;
+  return <span className={`inline-flex items-center gap-1 text-[11px] font-medium ${positive ? "text-emerald-600" : "text-rose-600"}`}><Icon className="size-3" />{positive ? "+" : ""}{value}%</span>;
 }
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) { return <section><h2 className="mb-3 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{title}</h2><div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">{children}</div></section>; }
+function HeroMetric({ label, value, delta, help, accent = false }: { label: string; value: string | number; delta?: number | null; help: string; accent?: boolean }) {
+  return <div className={`min-w-0 border-r border-slate-200 px-4 py-3 last:border-r-0 ${accent ? "bg-violet-50/70" : "bg-white"}`} title={help}>
+    <p className="truncate text-[11px] font-medium text-slate-500">{label}</p>
+    <div className="mt-1 flex flex-wrap items-end justify-between gap-1.5"><p className="truncate text-xl font-bold tabular-nums text-slate-900">{value}</p>{delta !== undefined && <Delta value={delta} />}</div>
+  </div>;
+}
+
+function Metric({ label, value, help, unavailable = false }: { label: string; value: string | number; help: string; unavailable?: boolean }) {
+  return <div className="flex min-w-0 items-center justify-between gap-4 border-b border-slate-100 py-2.5 last:border-b-0" title={help}>
+    <span className="text-xs text-slate-600">{label}</span>
+    <span className={`shrink-0 text-right text-sm tabular-nums ${unavailable ? "font-normal text-slate-400" : "font-semibold text-slate-900"}`}>{value}</span>
+  </div>;
+}
+
+function Panel({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+  return <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+    <div className="mb-1"><h2 className="text-sm font-semibold text-slate-900">{title}</h2><p className="text-[11px] text-slate-500">{description}</p></div>
+    <div>{children}</div>
+  </section>;
+}
 
 export function GrowthKpiDashboard({ data }: { data: GrowthDashboard }) {
-  return <div className="space-y-7">
-    <div className="flex flex-wrap items-start justify-between gap-3"><div><h1 className="text-2xl font-semibold tracking-tight">Growth dashboard</h1><p className="text-sm text-muted-foreground">DB-derived workspace funnel. Updated {new Date(data.generatedAt).toLocaleString()}</p></div><nav aria-label="Date range" className="flex rounded-lg border bg-white p-1">{ranges.map(range => <a key={range} href={`/admin/dashboard?range=${range}`} className={`rounded-md px-3 py-1.5 text-sm ${data.range === range ? "bg-[#6647F0] text-white" : "text-muted-foreground"}`}>{range}</a>)}</nav></div>
-    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-6"><Card label="Signups" value={data.signups} comparison={comparePercent(data.signups, data.previous.signups)} help="Users created inside selected range"/><Card label="Activated workspaces" value={data.activated} comparison={comparePercent(data.activated, data.previous.activated)} help="Client + project + task, invoice, time entry, or portal visit"/><Card label="Paid accounts" value={data.paidAccounts} comparison={comparePercent(data.paidAccounts, data.previous.paidAccounts)} help="Distinct workspaces with completed plan payment"/><Card label="MRR" value={money(data.mrr)} comparison={comparePercent(data.mrr, data.previous.mrr)} help="Current active owner plan baseline; annual plans divided by 12"/><Card label="ARR" value={money(data.arr)} help="MRR multiplied by 12"/><Card label="Churn" value="Not tracked yet" help="Requires entitlement history"/></div>
-    <div className="rounded-xl border bg-white p-5"><h2 className="font-semibold">Executive funnel</h2><div className="mt-4 grid gap-3 md:grid-cols-3">{[["Signups", data.signups], ["Activated", data.activated], ["Paid", data.paidAccounts]].map(([label, value], i) => <div key={String(label)} className="rounded-lg bg-slate-50 p-4"><p className="text-sm text-muted-foreground">{label}</p><p className="text-2xl font-semibold">{value}</p>{i > 0 && <p className="text-xs text-muted-foreground">{data.signups ? `${Math.round((Number(value) / data.signups) * 1000) / 10}% of signups` : "No signups"}</p>}</div>)}</div></div>
-    <Section title="Acquisition"><Card label="Visitors" value="Not tracked yet" help={data.unavailable.visitors}/><Card label="Referrals" value="Not tracked yet" help={data.unavailable.referrals}/><Card label="CAC" value="Not tracked yet" help={data.unavailable.cac}/><Card label="Completed payments" value={data.completedPayments} help="Completed payment records"/></Section>
-    <Section title="Activation"><Card label="Activated workspaces" value={data.activated} help="Client + project + meaningful activity"/><Card label="Activation rate" value={data.signups ? `${Math.round(data.activated / data.signups * 1000) / 10}%` : "—"} help="Activated workspaces divided by signups"/></Section>
-    <Section title="Engagement"><Card label="Active workspaces" value={data.activeWorkspaces} help="Workspaces with meaningful activity in range"/><Card label="Active users" value={data.activeUsers} help="Workspace members in active workspaces"/><Card label="Projects" value={data.projects} help="Projects created in range"/><Card label="Tasks" value={data.tasks} help="Tasks created in range"/><Card label="Time tracking adoption" value={data.timeTrackingWorkspaces} help="Workspaces with time entries in range"/><Card label="Portal usage" value={data.portalWorkspaces} help="Workspaces with portal visits in range"/></Section>
-    <Section title="Monetization"><Card label="ARPU" value={money(data.arpu)} help="MRR divided by paid accounts"/><Card label="MRR" value={money(data.mrr)} help="Monthly recurring equivalent"/><Card label="ARR" value={money(data.arr)} help="MRR × 12"/></Section>
-    <Section title="Retention"><Card label="Retained paid accounts" value="Not tracked yet" help="Requires entitlement history"/><Card label="Churn" value="Not tracked yet" help="Requires entitlement history"/><Card label="Reactivation" value="Not tracked yet" help="Requires payment history transitions"/></Section>
-    <Section title="Growth"><Card label="Net paid-account growth" value="Not tracked yet" help="Requires paid account state transitions"/><Card label="MRR growth" value={comparePercent(data.mrr, data.previous.mrr) == null ? "Not tracked yet" : `${comparePercent(data.mrr, data.previous.mrr)}%`} help="Period-over-period MRR change"/></Section>
+  const activationRate = data.signups ? Math.round(data.activated / data.signups * 1000) / 10 : null;
+  return <div className="space-y-5">
+    <header className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div><h1 className="text-2xl font-semibold tracking-tight text-slate-900">Growth dashboard</h1><p className="mt-0.5 text-xs text-slate-500">Workspace funnel · Updated {new Date(data.generatedAt).toLocaleString("en-GB", { dateStyle: "medium", timeStyle: "short" })}</p></div>
+      <nav aria-label="Date range" className="inline-flex w-fit rounded-lg border border-slate-200 bg-white p-1 shadow-xs">{ranges.map(range => <a key={range} href={`/dashboard?range=${range}`} className={`rounded-md px-3 py-1.5 text-xs font-medium ${data.range === range ? "bg-[#6647F0] text-white shadow-sm" : "text-slate-500 hover:bg-slate-50"}`}>{range}</a>)}</nav>
+    </header>
+
+    <div className="overflow-hidden rounded-xl border border-slate-200 shadow-xs"><div className="grid grid-cols-2 lg:grid-cols-5">
+      <HeroMetric label="Signups" value={number.format(data.signups)} delta={comparePercent(data.signups, data.previous.signups)} help="Users created inside selected range" />
+      <HeroMetric label="Activated" value={number.format(data.activated)} delta={comparePercent(data.activated, data.previous.activated)} help="Workspaces reaching client + project + meaningful activity" />
+      <HeroMetric label="Current paid" value={number.format(data.paidAccounts)} help="Current active paid owner plans; not a selected-range cohort" />
+      <HeroMetric label="MRR" value={money(data.mrr)} help="Current active owner plan baseline; annual plans divided by 12" accent />
+      <HeroMetric label="ARR" value={money(data.arr)} help="MRR multiplied by 12" accent />
+    </div></div>
+
+    <section className="rounded-xl border border-slate-200 bg-white p-4 shadow-xs">
+      <div className="flex items-center justify-between gap-4"><div><h2 className="text-sm font-semibold text-slate-900">Activation funnel</h2><p className="text-[11px] text-slate-500">New users in selected period reaching first value</p></div><span className="text-sm font-semibold tabular-nums text-[#6647F0]">{activationRate == null ? "—" : `${activationRate}%`}</span></div>
+      <div className="mt-3 h-2 overflow-hidden rounded-full bg-slate-100"><div className="h-full rounded-full bg-[#6647F0]" style={{ width: `${Math.min(activationRate ?? 0, 100)}%` }} /></div>
+      <div className="mt-2 flex justify-between text-[11px] text-slate-500"><span>{number.format(data.signups)} signups</span><span>{number.format(data.activated)} activated</span></div>
+    </section>
+
+    <div className="grid gap-4 lg:grid-cols-2">
+      <Panel title="Product usage" description="Meaningful activity during selected period">
+        <Metric label="Active workspaces" value={number.format(data.activeWorkspaces)} help="Workspaces with meaningful activity" />
+        <Metric label="Active users" value={number.format(data.activeUsers)} help="Users creating projects, tasks, or time entries" />
+        <Metric label="Projects created" value={number.format(data.projects)} help="Projects created in range" />
+        <Metric label="Tasks created" value={number.format(data.tasks)} help="Tasks created in range" />
+        <Metric label="Time tracking adoption" value={`${number.format(data.timeTrackingWorkspaces)} workspaces`} help="Workspaces with time entries" />
+        <Metric label="Portal usage" value={`${number.format(data.portalWorkspaces)} workspaces`} help="Workspaces with portal visits" />
+      </Panel>
+      <Panel title="Revenue" description="Current recurring baseline and payment activity">
+        <Metric label="Current paid accounts" value={number.format(data.paidAccounts)} help="Owners with active paid plan" />
+        <Metric label="MRR" value={money(data.mrr)} help="Monthly recurring equivalent" />
+        <Metric label="ARR" value={money(data.arr)} help="MRR × 12" />
+        <Metric label="ARPU" value={money(data.arpu)} help="MRR divided by paid accounts" />
+        <Metric label="Completed plan payments" value={number.format(data.completedPayments)} help="All completed plan payment records" />
+      </Panel>
+      <Panel title="Acquisition" description="Instrumentation rollout status">
+        <Metric label="Visitors" value="Not tracked" unavailable help={data.unavailable.visitors} />
+        <Metric label="Referrals" value="Not tracked" unavailable help={data.unavailable.referrals} />
+        <Metric label="CAC" value="Not tracked" unavailable help={data.unavailable.cac} />
+      </Panel>
+      <Panel title="Retention & growth" description="Requires historical entitlement transitions">
+        <Metric label="Paid retention" value="Not tracked" unavailable help="Requires entitlement history" />
+        <Metric label="Churn" value="Not tracked" unavailable help="Requires entitlement history" />
+        <Metric label="Reactivation" value="Not tracked" unavailable help="Requires payment state transitions" />
+        <Metric label="Net paid growth" value="Not tracked" unavailable help="Requires paid account state transitions" />
+      </Panel>
+    </div>
   </div>;
 }
 
