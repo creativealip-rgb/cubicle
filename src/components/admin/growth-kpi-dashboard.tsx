@@ -72,10 +72,15 @@ export function GrowthKpiDashboard({ data }: { data: GrowthDashboard }) {
         <Metric label="ARPU" value={money(data.arpu)} help="MRR divided by paid accounts" />
         <Metric label="Completed plan payments" value={number.format(data.completedPayments)} help="All completed plan payment records" />
       </Panel>
-      <Panel title="Acquisition" description="Instrumentation rollout status">
-        <Metric label="Visitors" value="Not tracked" unavailable help={data.unavailable.visitors} />
-        <Metric label="Referrals" value="Not tracked" unavailable help={data.unavailable.referrals} />
-        <Metric label="CAC" value="Not tracked" unavailable help={data.unavailable.cac} />
+      <Panel title="Acquisition" description="Selected period, real event data">
+        <Metric label="Visitors" value={number.format(data.visitors)} help="Unique tracked visitors" />
+        <Metric label="Organic visitors" value={number.format(data.organic)} help="Visitors without campaign attribution" />
+        <Metric label="Referrals" value={number.format(data.referrals)} help="Visitors with referral attribution" />
+        <Metric label="Signup starts" value={number.format(data.signupStarts)} help="Tracked signup interactions" />
+        <Metric label="Signup completions" value={number.format(data.signupCompletions)} help="Successful account creation events" />
+        <Metric label="Marketing spend" value={money(data.spend)} help="Recorded IDR spend" />
+        <Metric label="Cost / signup" value={money(data.cps)} help="Spend divided by signup starts" />
+        <Metric label="CAC" value={money(data.cac)} help="Spend divided by completed signups" />
       </Panel>
       <Panel title="Retention & growth" description="Requires historical entitlement transitions">
         <Metric label="Paid retention" value="Not tracked" unavailable help="Requires entitlement history" />

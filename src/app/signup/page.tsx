@@ -2,6 +2,7 @@ import { SignupForm } from "@/components/auth/signup-form";
 import { AuthShell } from "@/components/auth/auth-shell";
 import type { Metadata } from "next";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { AcquisitionTracker } from "@/components/analytics/acquisition-tracker";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = createT(await getCurrentLang("en"));
@@ -11,6 +12,7 @@ export async function generateMetadata(): Promise<Metadata> {
 export default function SignupPage() {
   return (
     <AuthShell>
+      <AcquisitionTracker event="signup_started" startOnInteraction />
       <SignupForm />
     </AuthShell>
   );

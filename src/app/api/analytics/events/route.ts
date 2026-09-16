@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
+import { sql } from "drizzle-orm";
 import { cookies } from "next/headers";
 import { z } from "zod";
 import { db } from "@/db";
-import { analyticsEvents } from "@/db/schema";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 import { ALLOWED_ANALYTICS_EVENTS, anonymousId, sanitizeAnalyticsMetadata } from "@/lib/analytics";
 
@@ -14,7 +14,8 @@ export async function POST(request: Request) {
   let visitor = jar.get("cubiqlo_visitor_id")?.value;
   if (!visitor) visitor = anonymousId();
   await enforceServerActionRateLimit(`analytics:${visitor}`, visitor, { limit: 60, windowSec: 60 });
-  await db.insert(analyticsEvents).values({ eventName: parsed.data.eventName, anonymousId: visitor, metadata: sanitizeAnalyticsMetadata(parsed.data.metadata) });
+  const metadata = sanitizeAnalyticsMetadata(parsed.data.metadata);
+  await db.execute(sql`INSERT INTO analytics_events (event_name, anonymous_id, source, medium, campaign, term, content, referrer, referral_id, metadata) VALUES (${parsed.data.eventName}, ${visitor}, ${metadata.source ?? null}, ${metadata.medium ?? null}, ${metadata.campaign ?? null}, ${metadata.term ?? null}, ${metadata.content ?? null}, ${metadata.referrer ?? null}, ${metadata.referralId ?? null}, ${JSON.stringify(metadata)}::jsonb)`);
   const response = NextResponse.json({ ok: true });
   if (!jar.get("cubiqlo_visitor_id")) response.cookies.set("cubiqlo_visitor_id", visitor, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 365 });
   return response;

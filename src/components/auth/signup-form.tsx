@@ -46,6 +46,7 @@ export function SignupForm() {
         return;
       }
 
+      void fetch("/api/analytics/events", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ eventName: "signup_completed", metadata: { landingPath: location.pathname } }) });
       router.push(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch {
       setError(t("Terjadi kesalahan. Coba lagi.", "An error occurred. Try again."));

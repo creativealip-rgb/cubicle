@@ -55,6 +55,18 @@ describe("admin marketing spend", () => {
   });
 });
 
+describe("marketing spend dashboard UI", () => {
+  it("loads spend rows and renders compact management UI", () => {
+    const page = readFileSync(join(process.cwd(), "src/app/(admin)/admin/dashboard/page.tsx"), "utf8");
+    const ui = readFileSync(join(process.cwd(), "src/components/admin/marketing-spend-manager.tsx"), "utf8");
+    expect(page).toContain("listMarketingSpend");
+    expect(page).toContain("MarketingSpendManager");
+    expect(ui).toContain("recordMarketingSpend");
+    expect(ui).toContain("deleteMarketingSpend");
+    expect(ui).toContain("FormData");
+  });
+});
+
 describe("dashboard phase2", () => {
   it("queries analytics events and spend", () => {
     const src = readFileSync(join(process.cwd(), "src/lib/actions/admin/dashboard.ts"), "utf8");

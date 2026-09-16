@@ -26,6 +26,7 @@ import { getCurrentLang, createT } from "@/lib/i18n";
 import { LandingLanguageSwitch } from "@/components/landing/landing-language-switch";
 import { getCountryFromHeaders, resolveVisitorPreferences } from "@/lib/region-preferences";
 import { getLandingPrice, type DisplayCurrency } from "@/lib/landing-pricing";
+import { AcquisitionTracker } from "@/components/analytics/acquisition-tracker";
 
 export const dynamic = "force-dynamic";
 
@@ -150,6 +151,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen overflow-x-clip bg-[#FBFAFE] text-[#292D34]">
+      <AcquisitionTracker />
       <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-950/[0.06] bg-[#FBFAFE]/85 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between">
           <Link href="/" aria-label="Cubiqlo home">
