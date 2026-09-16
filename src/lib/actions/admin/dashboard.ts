@@ -23,9 +23,22 @@ export async function getAdminGrowthDashboard(input?: string): Promise<GrowthDas
   const result = await db.execute(sql`
     WITH bounds AS (
       SELECT now() AS finish, now() - ${interval} AS start, now() - (${interval}) * 2 AS previous_start
-    ), activation_dates AS (
-      SELECT w.id, CASE WHEN EXISTS (SELECT 1 FROM clients WHERE workspace_id = w.id) AND EXISTS (SELECT 1 FROM projects WHERE workspace_id = w.id) AND EXISTS (SELECT 1 FROM tasks WHERE workspace_id = w.id UNION ALL SELECT 1 FROM invoices WHERE workspace_id = w.id UNION ALL SELECT 1 FROM time_entries WHERE workspace_id = w.id UNION ALL SELECT 1 FROM portal_visits WHERE workspace_id = w.id) THEN GREATEST((SELECT min(created_at) FROM clients WHERE workspace_id = w.id), (SELECT min(created_at) FROM projects WHERE workspace_id = w.id), (SELECT min(ts) FROM (SELECT min(created_at) ts FROM tasks WHERE workspace_id = w.id UNION ALL SELECT min(created_at) FROM invoices WHERE workspace_id = w.id UNION ALL SELECT min(created_at) FROM time_entries WHERE workspace_id = w.id UNION ALL SELECT min(visited_at) FROM portal_visits WHERE workspace_id = w.id) activity)) END AS activated_at
+    ), activation_milestones AS (
+      SELECT
+        w.id,
+        (SELECT min(created_at) FROM clients WHERE workspace_id = w.id) AS first_client_at,
+        (SELECT min(created_at) FROM projects WHERE workspace_id = w.id) AS first_project_at,
+        (SELECT min(ts) FROM (
+          SELECT created_at AS ts FROM tasks WHERE workspace_id = w.id
+          UNION ALL SELECT created_at FROM invoices WHERE workspace_id = w.id
+          UNION ALL SELECT created_at FROM time_entries WHERE workspace_id = w.id
+          UNION ALL SELECT visited_at FROM portal_visits WHERE workspace_id = w.id
+        ) activity) AS first_activity_at
       FROM workspaces w
+    ), activation_dates AS (
+      SELECT id, GREATEST(first_client_at, first_project_at, first_activity_at) AS activated_at
+      FROM activation_milestones
+      WHERE first_client_at IS NOT NULL AND first_project_at IS NOT NULL AND first_activity_at IS NOT NULL
     ), latest_plan AS (
       SELECT DISTINCT ON (workspace_id) workspace_id, amount, billing_period FROM pakasir_payments WHERE status = 'completed' AND payment_type = 'plan' ORDER BY workspace_id, COALESCE(paid_at, created_at) DESC
     ), paid_now AS (
@@ -38,7 +51,7 @@ export async function getAdminGrowthDashboard(input?: string): Promise<GrowthDas
         (SELECT COALESCE(sum(CASE WHEN billing_period = 'monthly' THEN amount::numeric WHEN billing_period = 'yearly' THEN amount::numeric / 12 ELSE NULL END), NULL) FROM paid_now) AS mrr,
         (SELECT count(*) FROM pakasir_payments p WHERE p.status = 'completed' AND p.payment_type = 'plan')::int AS completed_payments,
         (SELECT count(DISTINCT workspace_id) FROM (SELECT workspace_id FROM clients WHERE created_at >= (SELECT start FROM bounds) UNION SELECT workspace_id FROM projects WHERE created_at >= (SELECT start FROM bounds) UNION SELECT workspace_id FROM tasks WHERE created_at >= (SELECT start FROM bounds) UNION SELECT workspace_id FROM invoices WHERE created_at >= (SELECT start FROM bounds) UNION SELECT workspace_id FROM time_entries WHERE created_at >= (SELECT start FROM bounds) UNION SELECT workspace_id FROM portal_visits WHERE visited_at >= (SELECT start FROM bounds)) active)::int AS active_workspaces,
-        (SELECT count(DISTINCT user_id) FROM (SELECT created_by AS user_id FROM tasks, bounds WHERE created_at >= start AND created_at < finish AND created_by IS NOT NULL UNION SELECT user_id FROM time_entries, bounds WHERE created_at >= start AND created_at < finish UNION SELECT created_by FROM projects, bounds WHERE created_at >= start AND created_at < finish AND created_by IS NOT NULL UNION SELECT created_by FROM clients, bounds WHERE created_at >= start AND created_at < finish AND created_by IS NOT NULL) actors)::int AS active_users,
+        (SELECT count(DISTINCT user_id) FROM (SELECT created_by AS user_id FROM tasks, bounds WHERE created_at >= start AND created_at < finish AND created_by IS NOT NULL UNION SELECT user_id FROM time_entries, bounds WHERE created_at >= start AND created_at < finish UNION SELECT created_by FROM projects, bounds WHERE created_at >= start AND created_at < finish AND created_by IS NOT NULL) actors)::int AS active_users,
         (SELECT count(*) FROM projects p, bounds b WHERE p.created_at >= b.start AND p.created_at < b.finish)::int AS projects,
         (SELECT count(*) FROM tasks t, bounds b WHERE t.created_at >= b.start AND t.created_at < b.finish)::int AS tasks,
         (SELECT count(DISTINCT te.workspace_id) FROM time_entries te, bounds b WHERE te.created_at >= b.start AND te.created_at < b.finish)::int AS time_tracking_workspaces,
