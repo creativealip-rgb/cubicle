@@ -25,6 +25,7 @@ import {
   CheckSquare,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Clock,
   Trash2,
   Filter,
@@ -458,12 +459,12 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
 
                 {/* Client & Project */}
                 <div className="space-y-1.5">
-                  <Label className="text-xs">{t("Klien & Proyek *", "Client & Project *")}</Label>
+                  <Label className="text-xs">{t("Proyek *", "Project *")}</Label>
                   <div className="relative">
                     <div className="relative flex items-center">
                       <Briefcase className="absolute left-3 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder={t("Cari klien atau proyek...", "Search client or project...")}
+                        placeholder={t("Cari proyek / klien", "Search project / client")}
                         value={editProjectSearch}
                         onChange={(e) => {
                           const val = e.target.value;
@@ -479,8 +480,9 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                             setEditProjectSearchOpen(true);
                           }
                         }}
-                        className={`h-10 pl-9 text-sm ${editProjectError || editClientError ? "border-destructive" : ""}`}
+                        className={`h-10 pl-9 pr-9 text-sm ${editProjectError || editClientError ? "border-destructive" : ""}`}
                       />
+                      <button type="button" aria-label={t("Buka daftar proyek", "Toggle project list")} onClick={() => setEditProjectSearchOpen((current) => !current)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"><ChevronDown className={`h-4 w-4 transition-transform ${editProjectSearchOpen ? "rotate-180" : ""}`} /></button>
                     </div>
                     {editProjectSearchOpen && (
                       <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
@@ -1012,12 +1014,12 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
 
               {/* Client & Project */}
               <div className="space-y-1.5">
-                <Label className="text-xs">{t("Klien & Proyek *", "Client & Project *")}</Label>
+                <Label className="text-xs">{t("Proyek *", "Project *")}</Label>
                 <div className="relative">
                   <div className="relative flex items-center">
                     <Briefcase className="absolute left-3 h-4 w-4 text-muted-foreground" />
                     <Input
-                      placeholder={t("Cari klien atau proyek...", "Search client or project...")}
+                      placeholder={t("Cari proyek / klien", "Search project / client")}
                       value={editProjectSearch}
                       onChange={(e) => {
                         const val = e.target.value;
@@ -1034,8 +1036,9 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                           setEditProjectSearchOpen(true);
                         }
                       }}
-                      className={`h-10 pl-9 text-sm ${editProjectError || editClientError ? "border-destructive" : ""}`}
+                      className={`h-10 pl-9 pr-9 text-sm ${editProjectError || editClientError ? "border-destructive" : ""}`}
                     />
+                    <button type="button" aria-label={t("Buka daftar proyek", "Toggle project list")} onClick={() => setEditProjectSearchOpen((current) => !current)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"><ChevronDown className={`h-4 w-4 transition-transform ${editProjectSearchOpen ? "rotate-180" : ""}`} /></button>
                   </div>
                   {editProjectSearchOpen && (
                     <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">

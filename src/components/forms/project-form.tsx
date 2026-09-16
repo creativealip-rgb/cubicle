@@ -210,6 +210,17 @@ export function ProjectForm({
 
           {field(t("Nama Project *", "Project Name *"), "name")}
 
+          {mode === "create" && <div className="space-y-1.5">
+            <Label className="text-xs font-medium">{t("Model Tagihan", "Billing Model")}</Label>
+            <Select value={form.billingModel} onValueChange={(value) => setForm((current) => ({ ...current, billingModel: value as BillingModel, timeTrackingMode: value === "hourly" ? "billable" : "off" }))}>
+              <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="fixed_price">{t("Harga Tetap", "Fixed Price")}</SelectItem>
+                <SelectItem value="hourly">{t("Per Jam", "Hourly")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>}
+
           {!clientId && (
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">{t("Klien (Opsional)", "Client (Optional)")}</Label>
@@ -304,7 +315,7 @@ export function ProjectForm({
         </div>}
 
         {/* Right Column: Billing & Financials */}
-        {section !== "general" && <div className="space-y-4">
+        {mode === "edit" && section !== "general" && <div className="space-y-4">
           <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
             {t("Pengaturan Tagihan", "Billing Settings")}
           </h3>
