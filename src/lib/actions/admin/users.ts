@@ -27,7 +27,7 @@ import {
 } from "@/lib/admin-schemas";
 import type { AdminActionResult, AdminListUserRow } from "@/lib/admin-schemas";
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 10;
 
 export async function listUsers(input: z.infer<typeof listUsersSchema>) {
   const admin = await requireAdmin();

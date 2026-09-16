@@ -8,7 +8,7 @@ import { requireAdmin } from "@/lib/admin";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 import { listPaymentsSchema } from "@/lib/admin-schemas";
 
-const PAGE_SIZE = 25;
+const PAGE_SIZE = 10;
 
 /**
  * Payment log — READ-ONLY (locked decision: no mark-paid; tier changes go

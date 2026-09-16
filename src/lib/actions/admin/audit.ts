@@ -8,7 +8,7 @@ import { requireAdmin } from "@/lib/admin";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 import { listAuditLogsSchema } from "@/lib/admin-schemas";
 
-const PAGE_SIZE = 50;
+const PAGE_SIZE = 10;
 
 export async function listAuditLogs(input: z.infer<typeof listAuditLogsSchema>) {
   const admin = await requireAdmin();
