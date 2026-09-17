@@ -66,7 +66,7 @@ export async function getWorkspaceDetail(workspaceId: string) {
 
   const [owner, members] = await Promise.all([
     db
-      .select({ id: usersTable.id, name: usersTable.name, email: usersTable.email, emailVerified: usersTable.emailVerified })
+      .select({ id: usersTable.id, name: usersTable.name, email: usersTable.email, emailVerified: usersTable.emailVerified, plan: usersTable.plan, planExpiresAt: usersTable.planExpiresAt, banned: usersTable.banned })
       .from(usersTable)
       .where(eq(usersTable.id, workspace.ownerId))
       .limit(1),

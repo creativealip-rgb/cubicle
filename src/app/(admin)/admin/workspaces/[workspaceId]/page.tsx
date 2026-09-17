@@ -50,9 +50,10 @@ export default async function AdminWorkspaceDetailPage({
             <CardTitle className="text-base">Plan</CardTitle>
           </CardHeader>
           <CardContent className="text-sm">
-            <Badge variant={(workspace as { plan?: string }).plan === "free" ? "secondary" : "success"}>
-              {(workspace as { plan?: string }).plan ?? "free"}
+            <Badge variant={(ownerRow?.plan ?? "free") === "free" ? "secondary" : "success"}>
+              {ownerRow?.plan ?? "free"}
             </Badge>
+            {ownerRow?.planExpiresAt && <p className="mt-2 text-xs text-muted-foreground">Owner entitlement until {formatDateID(ownerRow.planExpiresAt)}</p>}
           </CardContent>
         </Card>
       </div>
