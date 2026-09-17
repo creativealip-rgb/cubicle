@@ -1,27 +1,10 @@
 "use client";
-
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { decideMfaRecovery, executeMfaRecovery } from "@/lib/actions/admin/mfa-recovery";
 
-export function MfaRecoveryActions({ requestId, ready, approvals }: { requestId: string; ready: boolean; approvals: number }) {
-  const router = useRouter();
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  async function run(action: "approve" | "reject" | "execute") {
-    setLoading(true); setError("");
-    try {
-      if (action === "execute") await executeMfaRecovery(requestId);
-      else await decideMfaRecovery({ requestId, decision: action === "approve" ? "approved" : "rejected" });
-      router.refresh();
-    } catch { setError("Recovery action failed"); }
-    finally { setLoading(false); }
-  }
-  return <div className="flex flex-wrap justify-end gap-2">
-    {error && <p role="alert" className="w-full text-xs text-destructive">{error}</p>}
-    <Button size="sm" variant="outline" disabled={loading || !ready} onClick={() => run("approve")}>Approve</Button>
-    <Button size="sm" variant="destructive" disabled={loading} onClick={() => run("reject")}>Reject</Button>
-    <Button size="sm" disabled={loading || !ready || approvals < 2} onClick={() => run("execute")}>Execute</Button>
-  </div>;
-}
+type Action="approve"|"reject"|"execute";
+const message=(error:unknown)=>{const text=error instanceof Error?error.message:"";if(text.includes("cooling"))return "Cooling period is still active.";if(text.includes("own recovery"))return "You cannot approve your own recovery request.";if(text.includes("unique")||text.includes("duplicate"))return "You already reviewed this request.";if(text.includes("requirements"))return "Two distinct approvals are required before execution.";return "Recovery action could not be completed."};
+export function MfaRecoveryActions({requestId,coolingElapsed,ready,approvals,readOnly=false}:{requestId:string;coolingElapsed:boolean;ready:boolean;approvals:number;readOnly?:boolean}){const router=useRouter();const[action,setAction]=useState<Action|null>(null);const[note,setNote]=useState("");const[loading,setLoading]=useState(false);const[error,setError]=useState("");const[handoff,setHandoff]=useState("");async function submit(){if(!action)return;if(action==="reject"&&!note.trim()){setError("Rejection reason is required.");return}setLoading(true);setError("");try{if(action==="execute"){const result=await executeMfaRecovery(requestId);setHandoff(new URL(result.handoffUrl,window.location.origin).toString());}else{await decideMfaRecovery({requestId,decision:action==="approve"?"approved":"rejected",note:note||undefined});setAction(null);setNote("");router.refresh();}}catch(e){setError(message(e))}finally{setLoading(false)}}if(readOnly)return <p className="mt-3 text-xs text-muted-foreground">Historical record · no actions available.</p>;return <><div className="mt-3 flex flex-wrap justify-end gap-2"><Button size="sm" variant="outline" disabled={loading||!coolingElapsed} onClick={()=>setAction("approve")}>Approve</Button><Button size="sm" variant="destructive" disabled={loading} onClick={()=>setAction("reject")}>Reject</Button><Button size="sm" disabled={loading||!ready||approvals<2} onClick={()=>setAction("execute")}>Execute</Button></div><Dialog open={Boolean(action)&&!handoff} onOpenChange={open=>!open&&setAction(null)}><DialogContent><DialogHeader><DialogTitle>{action==="execute"?"Issue recovery link?":action==="reject"?"Reject recovery request?":"Approve recovery request?"}</DialogTitle><DialogDescription>{action==="execute"?"High-risk action. One-use link expires in 15 minutes.":"Decision is recorded in append-only audit history."}</DialogDescription></DialogHeader>{action!=="execute"&&<label className="text-sm font-medium">Review note {action==="reject"&&"(required)"}<textarea value={note} onChange={e=>setNote(e.target.value)} maxLength={1000} className="mt-2 min-h-24 w-full rounded-md border p-3 font-normal"/></label>}{error&&<p role="alert" className="text-sm text-destructive">{error}</p>}<DialogFooter><Button variant="outline" onClick={()=>setAction(null)}>Cancel</Button><Button variant={action==="reject"?"destructive":"default"} disabled={loading} onClick={submit}>{loading?"Working…":"Confirm"}</Button></DialogFooter></DialogContent></Dialog><Dialog open={Boolean(handoff)} onOpenChange={open=>{if(!open){setHandoff("");setAction(null);router.refresh()}}}><DialogContent><DialogHeader><DialogTitle>Recovery link ready</DialogTitle><DialogDescription>Expires in 15 minutes. Share through a secure channel. This link is shown once.</DialogDescription></DialogHeader><code className="break-all rounded bg-muted p-3 text-xs">{handoff}</code><DialogFooter><Button variant="outline" onClick={()=>void navigator.clipboard.writeText(handoff)}>Copy link</Button><Button onClick={()=>{setHandoff("");setAction(null);router.refresh()}}>Done</Button></DialogFooter></DialogContent></Dialog></>}
