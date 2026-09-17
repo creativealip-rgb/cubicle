@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
 import { sql } from "drizzle-orm";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { z } from "zod";
 import { db } from "@/db";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
-import { ALLOWED_ANALYTICS_EVENTS, anonymousId, sanitizeAnalyticsMetadata } from "@/lib/analytics";
+import { ALLOWED_ANALYTICS_EVENTS, anonymousId, normalizeAnalyticsPath, sanitizeAnalyticsMetadata } from "@/lib/analytics";
+import { auth } from "@/lib/auth";
+import { findWorkspaceFullForCurrentUser } from "@/lib/workspace";
 
 const input = z.object({ eventName: z.enum(ALLOWED_ANALYTICS_EVENTS), metadata: z.record(z.string(), z.unknown()).optional() });
 export async function POST(request: Request) {
@@ -15,14 +17,18 @@ export async function POST(request: Request) {
   if (!visitor) visitor = anonymousId();
   await enforceServerActionRateLimit(`analytics:${visitor}`, visitor, { limit: 60, windowSec: 60 });
   const metadata = sanitizeAnalyticsMetadata(parsed.data.metadata);
-  await db.execute(sql`INSERT INTO analytics_events (event_name, anonymous_id, source, medium, campaign, term, content, referrer, referral_id, metadata) VALUES (${parsed.data.eventName}, ${visitor}, ${metadata.source ?? null}, ${metadata.medium ?? null}, ${metadata.campaign ?? null}, ${metadata.term ?? null}, ${metadata.content ?? null}, ${metadata.referrer ?? null}, ${metadata.referralId ?? null}, ${JSON.stringify(metadata)}::jsonb)`);
+  const session = await auth.api.getSession({ headers: await headers() }).catch(() => null);
+  const workspace = session?.user ? await findWorkspaceFullForCurrentUser().catch(() => null) : null;
+  const normalizedPath = parsed.data.eventName === "page_viewed" ? normalizeAnalyticsPath(typeof metadata.path === "string" ? metadata.path : "") : null;
+  if (parsed.data.eventName === "page_viewed" && !normalizedPath) return NextResponse.json({ error: "invalid_path" }, { status: 400 });
+  const finalMetadata = normalizedPath ? { ...metadata, path: normalizedPath } : metadata;
+  await db.execute(sql`INSERT INTO analytics_events (event_name, anonymous_id, user_id, workspace_id, source, medium, campaign, term, content, referrer, referral_id, metadata) VALUES (${parsed.data.eventName}, ${visitor}, ${session?.user?.id ?? null}, ${workspace?.id ?? null}, ${finalMetadata.source ?? null}, ${finalMetadata.medium ?? null}, ${finalMetadata.campaign ?? null}, ${finalMetadata.term ?? null}, ${finalMetadata.content ?? null}, ${finalMetadata.referrer ?? null}, ${finalMetadata.referralId ?? null}, ${JSON.stringify(finalMetadata)}::jsonb)`);
   const response = NextResponse.json({ ok: true });
   if (!jar.get("cubiqlo_visitor_id")) response.cookies.set("cubiqlo_visitor_id", visitor, { httpOnly: true, sameSite: "lax", secure: process.env.NODE_ENV === "production", maxAge: 60 * 60 * 24 * 365 });
   return response;
 }
 export const runtime = "nodejs";
 
-// ponytail: anonymous event slice only; add authenticated linkage when auth hook exposes stable signup identity.
 
 // analyticsEvents
 // enforceServerActionRateLimit

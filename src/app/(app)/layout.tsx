@@ -6,6 +6,7 @@ import { and, eq, ne, count, sql } from "drizzle-orm";
 import { auth } from "@/lib/auth";
 
 import { AppShell } from "@/components/app-shell";
+import { UsageTracker } from "@/components/analytics/usage-tracker";
 import { db } from "@/db";
 import {
   workspaceMembers,
@@ -110,6 +111,7 @@ export default async function AppLayout({
       }}
       badgeCounts={badgeCounts}
     >
+      <UsageTracker />
       {children}
     </AppShell>
   );
