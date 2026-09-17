@@ -18,6 +18,8 @@ export const listUsersSchema = z.object({
   page: z.coerce.number().int().min(1).optional().default(1),
 });
 
+export type AdminUserSummary = { total: number; current: number; paid: number; unverified: number; banned: number; admin: number };
+
 export type AdminListUserRow = {
   id: string;
   name: string | null;

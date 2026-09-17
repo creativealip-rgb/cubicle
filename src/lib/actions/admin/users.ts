@@ -55,6 +55,13 @@ export async function listUsers(input: z.infer<typeof listUsersSchema>) {
     .select({ total: sql<number>`count(*)::int` })
     .from(usersTable)
     .where(where);
+  const [summary] = await db.select({
+    total: sql<number>`count(*)::int`,
+    paid: sql<number>`count(*) filter (where ${usersTable.plan} <> 'free')::int`,
+    unverified: sql<number>`count(*) filter (where not ${usersTable.emailVerified})::int`,
+    banned: sql<number>`count(*) filter (where ${usersTable.banned})::int`,
+    admin: sql<number>`count(*) filter (where ${usersTable.role} = 'admin')::int`,
+  }).from(usersTable);
 
   const rows = await db
     .select({
@@ -79,6 +86,7 @@ export async function listUsers(input: z.infer<typeof listUsersSchema>) {
 
   return {
     users: rows as unknown as AdminListUserRow[],
+    summary: { ...summary, current: total },
     total,
     page: parsed.page,
     pageSize: PAGE_SIZE,
