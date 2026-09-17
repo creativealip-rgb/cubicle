@@ -6,7 +6,8 @@ const ranges: GrowthRange[] = ["7d", "30d", "90d", "12m"];
 const views = ["overview", "acquisition", "usage", "product", "revenue", "retention"] as const;
 type View = (typeof views)[number];
 const number = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 1 });
-const money = (value: number | null) => value == null ? "—" : `Rp${number.format(value)}`;
+const rupiah = new Intl.NumberFormat("id-ID", { maximumFractionDigits: 0 });
+const money = (value: number | null) => value == null ? "—" : `Rp${rupiah.format(value)}`;
 const percent = (value: number | null) => value == null ? "—" : `${number.format(value)}%`;
 const date = (value: string) => new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
 
