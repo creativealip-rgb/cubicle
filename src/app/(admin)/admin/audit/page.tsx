@@ -1,158 +1,30 @@
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { listAuditLogs } from "@/lib/actions/admin/audit";
-import { formatDateID } from "@/lib/utils";
-import { humanizeAuditAction, metadataJson, summarizeAuditMetadata } from "./audit-metadata";
+import { auditDate, humanizeAuditAction, metadataJson, summarizeAuditMetadata } from "./audit-metadata";
 
 export const dynamic = "force-dynamic";
 
-export default async function AdminAuditPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ action?: string; page?: string }>;
-}) {
+export default async function AdminAuditPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
   const action = sp.action ?? "";
-  const page = Number(sp.page) || 1;
-
-  const data = await listAuditLogs({ page, action });
-
-  const actions = [
-    "user.create",
-    "user.update",
-    "user.password_reset",
-    "user.ban",
-    "user.unban",
-    "user.plan_change",
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-[#292D34]">Audit log</h1>
-        <p className="text-sm text-muted-foreground">
-          Immutable trail of every admin mutation · {data.total} total — page {data.page} / {data.totalPages}
-        </p>
-      </div>
-
-      <div className="flex flex-wrap gap-2">
-        <LinkFilter href="/audit" active={!action} label="All" />
-        {actions.map((a) => (
-          <LinkFilter key={a} href={`/audit?action=${encodeURIComponent(a)}`} active={action === a} label={a} />
-        ))}
-      </div>
-
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Events</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="space-y-3 p-4 md:hidden">
-            {data.logs.map((l) => <div key={l.id} className="rounded-xl border p-4"><div className="flex justify-between gap-3"><Badge>{humanizeAuditAction(l.action)}</Badge><time className="text-xs text-muted-foreground">{formatDateID(l.createdAt)}</time></div><p className="mt-2 text-sm">{l.adminName ?? "—"} <span className="text-xs text-muted-foreground">{l.adminEmail}</span></p><p className="text-xs text-muted-foreground">Target: {l.targetUserId?.slice(0, 12) ?? l.targetWorkspaceId ?? "—"}</p><p className="mt-2 text-sm">{summarizeAuditMetadata(l.metadata)}</p><details className="mt-2 text-xs"><summary className="cursor-pointer text-muted-foreground">Raw details</summary><pre className="mt-1 whitespace-pre-wrap break-all">{metadataJson(l.metadata)}</pre></details></div>)}
-            {data.logs.length === 0 && <p className="py-8 text-center text-muted-foreground">No audit events found.</p>}
-          </div>
-          <div className="hidden overflow-x-auto md:block"><Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Action</TableHead>
-                <TableHead>Admin</TableHead>
-                <TableHead>Target</TableHead>
-                <TableHead>Metadata</TableHead>
-                <TableHead>IP</TableHead>
-                <TableHead>At</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {data.logs.map((l) => (
-                <TableRow key={l.id}>
-                  <TableCell>
-                    <Badge variant={l.action.includes("ban") ? "destructive" : l.action.includes("plan") ? "info" : "secondary"}>
-                      {humanizeAuditAction(l.action)}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {l.adminName ?? "—"}
-                    <span className="block text-xs text-muted-foreground">{l.adminEmail}</span>
-                  </TableCell>
-                  <TableCell className="text-xs">
-                    {l.targetUserId ? (
-                      <span className="font-mono">{l.targetUserId.slice(0, 12)}…</span>
-                    ) : l.targetWorkspaceId ? (
-                      <span className="font-mono">{l.targetWorkspaceId}</span>
-                    ) : (
-                      "—"
-                    )}
-                  </TableCell>
-                  <TableCell className="max-w-[300px] truncate text-xs text-muted-foreground">
-                    {JSON.stringify(l.metadata)}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs">{l.ipAddress ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">{formatDateID(l.createdAt)}</TableCell>
-                </TableRow>
-              ))}
-              {data.logs.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="py-8 text-center text-muted-foreground">
-                    No audit events found.
-                  </TableCell>
-                </TableRow>
-              )}
-            </TableBody>
-          </Table></div>
-        </CardContent>
-      </Card>
-
-      {data.totalPages > 1 && (
-        <div className="flex items-center justify-end gap-2">
-          {page > 1 && (
-            <LinkFilter
-              href={`/audit?action=${encodeURIComponent(action)}&page=${page - 1}`}
-              active={false}
-              label="Prev"
-            />
-          )}
-          <span className="text-sm text-muted-foreground">
-            {page} / {data.totalPages}
-          </span>
-          {page < data.totalPages && (
-            <LinkFilter
-              href={`/audit?action=${encodeURIComponent(action)}&page=${page + 1}`}
-              active={false}
-              label="Next"
-            />
-          )}
-        </div>
-      )}
-    </div>
-  );
+  const page = Math.max(1, Number(sp.page) || 1);
+  const data = await listAuditLogs({ page, action, category: sp.category, adminId: sp.adminId, search: sp.search, from: sp.from, to: sp.to });
+  const summary = data.summary as { total: number; security: number; plan: number; access: number; today: number };
+  const href = (nextPage?: number, nextAction = action) => `/audit?${new URLSearchParams({ ...sp, ...(nextAction ? { action: nextAction } : { action: "" }), ...(nextPage ? { page: String(nextPage) } : { page: "" }) } as Record<string,string>)}`;
+  return <div className="space-y-6">
+    <header><h1 className="text-2xl font-semibold tracking-tight text-[#292D34]">Audit log</h1><p className="text-sm text-muted-foreground">Recorded administrative actions · {data.total} total · page {data.page} / {data.totalPages}</p></header>
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-5"><Metric label="Events" value={summary.total} /><Metric label="Security" value={summary.security} /><Metric label="Plan changes" value={summary.plan} /><Metric label="Access" value={summary.access} /><Metric label="Today" value={summary.today} /></div>
+    <form method="get" className="grid gap-3 rounded-xl border bg-white p-4 md:grid-cols-[1fr_140px_180px_180px_auto]"><input name="search" defaultValue={sp.search} placeholder="Actor, target, or action…" className="h-10 rounded-md border px-3 text-sm"/><select name="category" defaultValue={sp.category??""} className="h-10 rounded-md border px-3 text-sm"><option value="">All categories</option><option value="security">Security</option><option value="billing">Billing</option><option value="access">Access</option></select><select name="action" defaultValue={action} className="h-10 rounded-md border px-3 text-sm"><option value="">All actions</option>{data.actions.map((a)=><option value={a} key={a}>{humanizeAuditAction(a)}</option>)}</select><select name="adminId" defaultValue={sp.adminId??""} className="h-10 rounded-md border px-3 text-sm"><option value="">All admins</option>{(data.admins as Array<{id:string;name:string}>).map(a=><option value={a.id} key={a.id}>{a.name}</option>)}</select><button className="h-10 rounded-md bg-primary px-4 text-sm font-medium text-white">Filter</button></form>
+    <Card><CardHeader className="pb-2"><CardTitle className="text-base">Activity</CardTitle></CardHeader><CardContent className="p-0">
+      <div className="space-y-3 p-4 md:hidden">{data.logs.map((l) => <article key={l.id} className="rounded-xl border p-4"><div className="flex items-start justify-between gap-3"><Badge>{humanizeAuditAction(l.action)}</Badge><time className="text-right text-xs text-muted-foreground">{auditDate(l.createdAt)}</time></div><p className="mt-3 text-sm font-medium">{l.adminName ?? "Unknown admin"}</p><p className="text-xs text-muted-foreground">{l.adminEmail}</p><Target userId={l.targetUserId as string | null} workspaceId={l.targetWorkspaceId as string | null} label={l.targetLabel as string | null} /><p className="mt-3 text-sm">{summarizeAuditMetadata(l.metadata)}</p><details className="mt-3 text-xs"><summary className="cursor-pointer text-muted-foreground">Raw JSON</summary><pre className="mt-2 max-h-64 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2">{metadataJson(l.metadata)}</pre></details></article>)}{!data.logs.length && <p className="py-8 text-center text-muted-foreground">No audit events found.</p>}</div>
+      <div className="hidden overflow-x-auto md:block"><Table><TableHeader><TableRow><TableHead>Event</TableHead><TableHead>Actor</TableHead><TableHead>Target</TableHead><TableHead>Summary</TableHead><TableHead>Date and time (WIB)</TableHead></TableRow></TableHeader><TableBody>{data.logs.map((l) => <TableRow key={l.id}><TableCell><Badge>{humanizeAuditAction(l.action)}</Badge></TableCell><TableCell>{l.adminName ?? "Unknown admin"}<span className="block text-xs text-muted-foreground">{l.adminEmail}</span></TableCell><TableCell><Target userId={l.targetUserId as string | null} workspaceId={l.targetWorkspaceId as string | null} label={l.targetLabel as string | null} /></TableCell><TableCell className="max-w-[320px] text-sm">{summarizeAuditMetadata(l.metadata)}<details className="mt-1 text-xs"><summary className="cursor-pointer text-muted-foreground">Raw JSON</summary><pre className="mt-1 max-h-48 overflow-auto whitespace-pre-wrap break-all rounded bg-muted p-2">{metadataJson(l.metadata)}</pre></details></TableCell><TableCell className="whitespace-nowrap text-sm text-muted-foreground">{auditDate(l.createdAt)}</TableCell></TableRow>)}{!data.logs.length && <TableRow><TableCell colSpan={5} className="py-8 text-center text-muted-foreground">No audit events found.</TableCell></TableRow>}</TableBody></Table></div>
+    </CardContent></Card>
+    {data.totalPages > 1 && <nav className="flex items-center justify-end gap-2"><LinkFilter href={href(page - 1)} active={false} label="Previous" /><span className="text-sm text-muted-foreground">{page} / {data.totalPages}</span><LinkFilter href={href(page + 1)} active={false} label="Next" /></nav>}
+  </div>;
 }
-
-function LinkFilter({
-  href,
-  active,
-  label,
-}: {
-  href: string;
-  active: boolean;
-  label: string;
-}) {
-  return (
-    <Link
-      href={href}
-      className={`rounded-lg px-3 py-1.5 text-sm font-medium ${
-        active ? "bg-[#6647F0] text-white" : "bg-white text-[#292D34] border border-[#D9D9D9]"
-      }`}
-    >
-      {label}
-    </Link>
-  );
-}
+function Metric({ label, value }: { label: string; value: number }) { return <Card><CardContent className="p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-semibold">{value}</p></CardContent></Card>; }
+function Target({ userId, workspaceId, label }: { userId?: string | null; workspaceId?: string | null; label?: string | null }) { if (userId) return <p className="mt-2 text-xs">Target: <Link className="text-primary hover:underline" href={`/users/${userId}`}>{label || `${userId.slice(0, 12)}…`}</Link></p>; if (workspaceId) return <p className="mt-2 text-xs">Target: <Link className="text-primary hover:underline" href={`/workspaces/${workspaceId}`}>{label || workspaceId}</Link></p>; return <p className="mt-2 text-xs text-muted-foreground">Target: {label || "—"}</p>; }
+function LinkFilter({ href, active, label }: { href: string; active: boolean; label: string }) { return <Link href={href} className={`rounded-lg border px-3 py-1.5 text-sm font-medium ${active ? "border-[#6647F0] bg-[#6647F0] text-white" : "border-[#D9D9D9] bg-white text-[#292D34]"}`}>{label}</Link>; }

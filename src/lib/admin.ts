@@ -14,13 +14,19 @@ export type AdminAction =
   | "user.plan_change"
   | "mfa.recovery.approve"
   | "mfa.recovery.reject"
-  | "mfa.recovery.execute";
+  | "mfa.recovery.execute"
+  | "marketing_spend.create"
+  | "marketing_spend.update"
+  | "marketing_spend.delete";
 
 export interface AdminAuditInput {
   targetUserId?: string;
   targetWorkspaceId?: string;
+  targetLabelSnapshot?: string;
   metadata?: Record<string, unknown>;
   ipAddress?: string;
+  userAgent?: string;
+  requestId?: string;
 }
 
 /**
@@ -64,12 +70,24 @@ export async function writeAdminAudit(
   action: AdminAction,
   input: AdminAuditInput = {},
 ): Promise<void> {
+  const requestHeaders = await headers();
+  const forwarded = requestHeaders.get("x-forwarded-for")?.split(",")[0]?.trim();
+  const rawIp = input.ipAddress ?? requestHeaders.get("x-real-ip") ?? forwarded;
+  const ipAddress = rawIp?.replace(/[^0-9a-fA-F:.]/g, "").slice(0, 64) || null;
+  const userAgent = (input.userAgent ?? requestHeaders.get("user-agent"))?.slice(0, 512) || null;
+  const requestId = (input.requestId ?? requestHeaders.get("x-request-id"))?.replace(/[^a-zA-Z0-9._:-]/g, "").slice(0, 128) || null;
+  const [actor] = await db.select({ name: users.name, email: users.email }).from(users).where(eq(users.id, adminId)).limit(1);
   await db.insert(adminAuditLogs).values({
     adminUserId: adminId,
     action,
     targetUserId: input.targetUserId ?? null,
     targetWorkspaceId: input.targetWorkspaceId ?? null,
     metadata: input.metadata ?? {},
-    ipAddress: input.ipAddress ?? null,
+    ipAddress,
+    actorNameSnapshot: actor?.name ?? null,
+    actorEmailSnapshot: actor?.email ?? null,
+    targetLabelSnapshot: input.targetLabelSnapshot ?? null,
+    userAgent,
+    requestId,
   });
 }

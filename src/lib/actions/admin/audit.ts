@@ -1,52 +1,10 @@
 "use server";
-
-import { desc, eq, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/db";
-import { adminAuditLogs, users } from "@/db/schema";
 import { requireAdmin } from "@/lib/admin";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
 import { listAuditLogsSchema } from "@/lib/admin-schemas";
-
-const PAGE_SIZE = 10;
-
-export async function listAuditLogs(input: z.infer<typeof listAuditLogsSchema>) {
-  const admin = await requireAdmin();
-  await enforceServerActionRateLimit("admin:list-audit", admin.id, { limit: 120, windowSec: 60 });
-  const parsed = listAuditLogsSchema.parse(input);
-
-  const where = parsed.action ? eq(adminAuditLogs.action, parsed.action) : undefined;
-
-  const [{ total }] = await db
-    .select({ total: sql<number>`count(*)::int` })
-    .from(adminAuditLogs)
-    .where(where);
-
-  const rows = await db
-    .select({
-      id: adminAuditLogs.id,
-      action: adminAuditLogs.action,
-      adminUserId: adminAuditLogs.adminUserId,
-      adminName: users.name,
-      adminEmail: users.email,
-      targetUserId: adminAuditLogs.targetUserId,
-      targetWorkspaceId: adminAuditLogs.targetWorkspaceId,
-      metadata: adminAuditLogs.metadata,
-      ipAddress: adminAuditLogs.ipAddress,
-      createdAt: adminAuditLogs.createdAt,
-    })
-    .from(adminAuditLogs)
-    .leftJoin(users, eq(users.id, adminAuditLogs.adminUserId))
-    .where(where)
-    .orderBy(desc(adminAuditLogs.createdAt))
-    .limit(PAGE_SIZE)
-    .offset((parsed.page - 1) * PAGE_SIZE);
-
-  return {
-    logs: rows,
-    total,
-    page: parsed.page,
-    pageSize: PAGE_SIZE,
-    totalPages: Math.max(1, Math.ceil(total / PAGE_SIZE)),
-  };
-}
+const PAGE_SIZE=10;
+const categorySql=(category:string|undefined)=>category==="security"?sql`a.action IN ('user.password_reset','user.ban','user.unban','mfa.recovery.approve','mfa.recovery.reject','mfa.recovery.execute')`:category==="billing"?sql`(a.action LIKE 'user.plan_%' OR a.action LIKE 'marketing_spend.%')`:category==="access"?sql`(a.action LIKE 'user.%' AND a.action NOT IN ('user.plan_change','user.password_reset'))`:sql`true`;
+export async function listAuditLogs(input:z.infer<typeof listAuditLogsSchema>){const admin=await requireAdmin();await enforceServerActionRateLimit("admin:list-audit",admin.id,{limit:120,windowSec:60});const p=listAuditLogsSchema.parse(input);const q=`%${p.search??""}%`;const where=sql`WHERE (${p.action??""}='' OR a.action=${p.action??""}) AND (${p.adminId??""}='' OR a.admin_user_id=${p.adminId??""}) AND ${categorySql(p.category)} AND (${p.search??""}='' OR coalesce(a.actor_name_snapshot,u.name,'') ILIKE ${q} OR coalesce(a.actor_email_snapshot,u.email,'') ILIKE ${q} OR coalesce(a.target_label_snapshot,tu.name,tu.email,w.name,'') ILIKE ${q} OR a.action ILIKE ${q}) AND (${p.from??""}='' OR a.created_at>=${p.from||"1970-01-01T00:00:00Z"}::timestamptz) AND (${p.to??""}='' OR a.created_at<${p.to||"2999-01-01T00:00:00Z"}::timestamptz)`;const count=await db.execute(sql`SELECT count(*)::int total FROM admin_audit_logs a LEFT JOIN users u ON u.id=a.admin_user_id LEFT JOIN users tu ON tu.id=a.target_user_id LEFT JOIN workspaces w ON w.id=a.target_workspace_id ${where}`);const total=Number((count.rows[0] as {total:number}).total);const rows=await db.execute(sql`SELECT a.id,a.action,a.admin_user_id "adminUserId",coalesce(a.actor_name_snapshot,u.name) "adminName",coalesce(a.actor_email_snapshot,u.email) "adminEmail",a.target_user_id "targetUserId",a.target_workspace_id "targetWorkspaceId",coalesce(a.target_label_snapshot,tu.name,tu.email,w.name) "targetLabel",a.metadata,a.ip_address "ipAddress",a.user_agent "userAgent",a.request_id "requestId",a.created_at "createdAt" FROM admin_audit_logs a LEFT JOIN users u ON u.id=a.admin_user_id LEFT JOIN users tu ON tu.id=a.target_user_id LEFT JOIN workspaces w ON w.id=a.target_workspace_id ${where} ORDER BY a.created_at DESC LIMIT ${PAGE_SIZE} OFFSET ${(p.page-1)*PAGE_SIZE}`);const summary=await db.execute(sql`SELECT count(*)::int total,count(*) filter(where action IN ('user.password_reset','user.ban','user.unban','mfa.recovery.approve','mfa.recovery.reject','mfa.recovery.execute'))::int security,count(*) filter(where action='user.plan_change')::int plan,count(*) filter(where action IN ('user.create','user.update','user.ban','user.unban'))::int access,count(*) filter(where created_at>=date_trunc('day',now()))::int today FROM admin_audit_logs`);const options=await db.execute(sql`SELECT array_agg(DISTINCT action ORDER BY action) actions FROM admin_audit_logs`);const admins=await db.execute(sql`SELECT DISTINCT admin_user_id id,coalesce(actor_name_snapshot,u.name,'Unknown admin') name FROM admin_audit_logs a LEFT JOIN users u ON u.id=a.admin_user_id WHERE admin_user_id IS NOT NULL ORDER BY name`);type AuditRow={id:string;action:string;adminUserId:string|null;adminName:string|null;adminEmail:string|null;targetUserId:string|null;targetWorkspaceId:string|null;targetLabel:string|null;metadata:unknown;ipAddress:string|null;userAgent:string|null;requestId:string|null;createdAt:Date};return{logs:rows.rows as unknown as AuditRow[],total,page:p.page,pageSize:PAGE_SIZE,totalPages:Math.max(1,Math.ceil(total/PAGE_SIZE)),summary:summary.rows[0],actions:((options.rows[0] as {actions:string[]|null}).actions??[]),admins:admins.rows};}

@@ -523,6 +523,11 @@ export const adminAuditLogs = pgTable(
     targetWorkspaceId: uuid("target_workspace_id").references(() => workspaces.id, { onDelete: "set null" }),
     metadata: jsonb("metadata").notNull().default(sql`'{}'::jsonb`),
     ipAddress: text("ip_address"),
+    actorNameSnapshot: text("actor_name_snapshot"),
+    actorEmailSnapshot: text("actor_email_snapshot"),
+    targetLabelSnapshot: text("target_label_snapshot"),
+    userAgent: text("user_agent"),
+    requestId: text("request_id"),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (table) => [
