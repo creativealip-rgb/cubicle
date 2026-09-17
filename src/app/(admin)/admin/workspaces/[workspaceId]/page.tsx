@@ -1,97 +1,13 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getWorkspaceDetail } from "@/lib/actions/admin/workspaces";
-import { formatDateID } from "@/lib/utils";
-
-export const dynamic = "force-dynamic";
-
-export default async function AdminWorkspaceDetailPage({
-  params,
-}: {
-  params: Promise<{ workspaceId: string }>;
-}) {
-  const { workspaceId } = await params;
-  const data = await getWorkspaceDetail(workspaceId);
-  if (!data) notFound();
-
-  const { workspace, owner, members } = data;
-  const ownerRow = Array.isArray(owner) ? owner[0] : owner;
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-[#292D34]">{workspace.name}</h1>
-        <p className="text-sm text-muted-foreground">
-          <span className="font-mono text-xs">{workspace.slug}</span> · created {formatDateID(workspace.createdAt)}
-        </p>
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Owner</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm">
-            <p className="font-medium">{ownerRow?.name ?? "—"}</p>
-            <p className="text-muted-foreground">{ownerRow?.email}</p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">Plan</CardTitle>
-          </CardHeader>
-          <CardContent className="text-sm">
-            <Badge variant={(ownerRow?.plan ?? "free") === "free" ? "secondary" : "success"}>
-              {ownerRow?.plan ?? "free"}
-            </Badge>
-            {ownerRow?.planExpiresAt && <p className="mt-2 text-xs text-muted-foreground">Owner entitlement until {formatDateID(ownerRow.planExpiresAt)}</p>}
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Members ({members.length})</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <div className="divide-y md:hidden">
-            {members.map((m) => <div key={m.id} className="space-y-1 p-4"><p className="font-medium">{m.name ?? "—"}</p><p className="break-all text-sm text-muted-foreground">{m.email}</p><div className="flex items-center justify-between text-sm"><Badge variant={m.role === "owner" ? "default" : m.role === "member" ? "info" : "secondary"}>{m.role}</Badge><span className="text-muted-foreground">{formatDateID(m.createdAt)}</span></div></div>)}
-          </div>
-          <div className="hidden md:block"><Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Role</TableHead>
-                <TableHead>Joined</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {members.map((m) => (
-                <TableRow key={m.id}>
-                  <TableCell className="font-medium">{m.name ?? "—"}</TableCell>
-                  <TableCell>{m.email}</TableCell>
-                  <TableCell>
-                    <Badge variant={m.role === "owner" ? "default" : m.role === "member" ? "info" : "secondary"}>
-                      {m.role}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{formatDateID(m.createdAt)}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table></div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
+import { formatDateID, formatMoney } from "@/lib/utils";
+export const dynamic="force-dynamic";
+const date=(v:unknown)=>v?formatDateID(v as Date):"—";
+export default async function Page({params}:{params:Promise<{workspaceId:string}>}){const {workspaceId}=await params;const d=await getWorkspaceDetail(workspaceId);if(!d)notFound();const {workspace,owner,members}=d;const m=d.metrics;const payments=d.payments as Array<Record<string,unknown>>;const paidTotal=payments.filter(p=>p.status==="completed").reduce((n,p)=>n+Number(p.amount||0),0);return <div className="space-y-6"><Link href="/workspaces" className="text-sm font-medium text-muted-foreground hover:text-foreground">← Back to workspaces</Link><header className="flex flex-wrap items-start justify-between gap-4"><div><div className="flex flex-wrap items-center gap-2"><h1 className="text-2xl font-semibold tracking-tight">{workspace.name}</h1><Badge variant={(owner?.plan??"free")==="free"?"secondary":"success"}>{owner?.plan??"free"}</Badge><Badge variant={m.latestActivity?"info":"secondary"}>{m.latestActivity?"Active":"No activity"}</Badge></div><p className="mt-1 text-sm text-muted-foreground"><span className="font-mono text-xs">{workspace.slug}</span> · created {date(workspace.createdAt)}</p><p className="mt-1 break-all font-mono text-xs text-muted-foreground">{workspace.id}</p></div>{owner?.planExpiresAt&&<p className="text-xs text-muted-foreground">Entitlement until {date(owner.planExpiresAt)}</p>}</header><div className="grid grid-cols-2 gap-3 md:grid-cols-5">{[[members.length,"Members"],[m.clients,"Clients"],[m.projects,"Projects"],[m.tasks,"Tasks"],[m.invoices,"Invoices"]].map(([v,l])=><Metric key={String(l)} value={v} label={String(l)}/>)}</div><div className="grid gap-6 lg:grid-cols-2"><Card><CardHeader><CardTitle className="text-base">Owner & entitlement</CardTitle></CardHeader><CardContent>{owner?<Link href={`/users/${owner.id}`} className="block rounded-lg border p-3 hover:border-primary"><div className="flex flex-wrap justify-between gap-2"><div><p className="font-medium">{owner.name??"Unnamed user"}</p><p className="text-sm text-muted-foreground">{owner.email}</p></div><div className="flex gap-2"><Badge variant={owner.emailVerified?"success":"warning"}>{owner.emailVerified?"Verified":"Unverified"}</Badge>{owner.banned&&<Badge variant="destructive">Banned</Badge>}</div></div><p className="mt-2 text-xs text-muted-foreground">{owner.plan} plan{owner.planExpiresAt?` · until ${date(owner.planExpiresAt)}`:""}</p></Link>:<p className="text-sm text-destructive">Owner record missing.</p>}</CardContent></Card><Card><CardHeader><CardTitle className="text-base">Workspace health</CardTitle><CardDescription>Operational facts, not login activity.</CardDescription></CardHeader><CardContent className="grid grid-cols-2 gap-4 text-sm"><Info label="Latest activity" value={date(m.latestActivity)}/><Info label="Files" value={String(m.files)}/><Info label="Time entries" value={String(m.timeEntries)}/><Info label="Proposals" value={String(m.proposals)}/><Info label="Contracts" value={String(m.contracts)}/><Info label="Currency" value={workspace.defaultCurrency}/></CardContent></Card></div><Card><CardHeader><CardTitle className="text-base">Member access</CardTitle><CardDescription>{members.length} account{members.length===1?"":"s"} can access this workspace.</CardDescription></CardHeader><CardContent className="grid gap-2 sm:grid-cols-2">{members.map(x=><Link href={`/users/${x.userId}`} key={x.id} className="rounded-lg border p-3 hover:border-primary"><div className="flex justify-between gap-2"><div><p className="font-medium">{x.name??"Unnamed user"}</p><p className="break-all text-xs text-muted-foreground">{x.email}</p></div><Badge variant={x.role==="owner"?"default":"secondary"}>{x.role}</Badge></div><div className="mt-2 flex flex-wrap gap-2 text-xs text-muted-foreground"><span>{x.plan}</span><span>{x.emailVerified?"Verified":"Unverified"}</span>{x.banned&&<span className="text-destructive">Banned</span>}<span>Joined {date(x.createdAt)}</span></div></Link>)}</CardContent></Card><div className="grid gap-6 lg:grid-cols-2"><Card><CardHeader><CardTitle className="text-base">Billing</CardTitle><CardDescription>{paidTotal?`${formatMoney(paidTotal)} completed in recent records`:"No completed payment in recent records"}</CardDescription></CardHeader><CardContent className="space-y-2">{payments.map(p=><div key={String(p.orderId)} className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm"><div><p className="font-mono text-xs">{String(p.orderId)}</p><p className="text-muted-foreground">{String(p.plan)} · {String(p.billingPeriod)}</p></div><div className="text-right"><Badge variant={p.status==="completed"?"success":p.status==="pending"?"warning":"secondary"}>{String(p.status)}</Badge><p className="mt-1 font-medium">{formatMoney(Number(p.amount))}</p></div></div>)}{!payments.length&&<Empty text="No payment records."/>}</CardContent></Card><Card><CardHeader><CardTitle className="text-base">Recent operations</CardTitle><CardDescription>Latest projects and invoices in this tenant.</CardDescription></CardHeader><CardContent className="space-y-4"><Recent title="Projects" rows={d.recentProjects as Array<Record<string,unknown>>} label="name"/><Recent title="Invoices" rows={d.recentInvoices as Array<Record<string,unknown>>} label="number"/></CardContent></Card></div></div>}
+function Metric({value,label}:{value:unknown;label:string}){return <Card><CardContent className="p-4"><p className="text-2xl font-semibold tabular-nums">{String(value??0)}</p><p className="text-xs text-muted-foreground">{label}</p></CardContent></Card>}
+function Info({label,value}:{label:string;value:string}){return <div><p className="text-xs text-muted-foreground">{label}</p><p className="font-medium">{value}</p></div>}
+function Empty({text}:{text:string}){return <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">{text}</p>}
+function Recent({title,rows,label}:{title:string;rows:Array<Record<string,unknown>>;label:string}){return <section><p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{title}</p>{rows.length?<div className="space-y-1">{rows.map(r=><div key={String(r.id)} className="flex justify-between rounded-md bg-muted/50 px-3 py-2 text-sm"><span>{String(r[label]??"Untitled")}</span><span className="text-muted-foreground">{String(r.status??"")}</span></div>)}</div>:<Empty text={`No ${title.toLowerCase()}.`}/>}</section>}
