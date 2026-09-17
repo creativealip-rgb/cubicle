@@ -57,7 +57,7 @@ export async function listUsers(input: z.infer<typeof listUsersSchema>) {
     .where(where);
   const [summary] = await db.select({
     total: sql<number>`count(*)::int`,
-    paid: sql<number>`count(*) filter (where ${usersTable.plan} <> 'free')::int`,
+    paid: sql<number>`count(*) filter (where ${usersTable.plan} <> 'free' and (${usersTable.planExpiresAt} is null or ${usersTable.planExpiresAt} > now()))::int`,
     unverified: sql<number>`count(*) filter (where not ${usersTable.emailVerified})::int`,
     banned: sql<number>`count(*) filter (where ${usersTable.banned})::int`,
     admin: sql<number>`count(*) filter (where ${usersTable.role} = 'admin')::int`,

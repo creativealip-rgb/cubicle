@@ -9,7 +9,7 @@ import { listUsers } from "@/lib/actions/admin/users";
 import { formatDateID } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
-const query = (p: Record<string, string | undefined>) => new URLSearchParams(Object.entries(p).filter(([, v]) => v)).toString();
+const query = (p: Record<string, string | undefined>) => new URLSearchParams(Object.entries(p).filter((entry): entry is [string, string] => Boolean(entry[1]))).toString();
 
 export default async function AdminUsersPage({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
   const sp = await searchParams;
@@ -18,7 +18,14 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
   const role = sp.role as "user" | "admin" | undefined;
   const status = sp.status;
   const page = Number(sp.page) || 1;
-  const data = await listUsers({ search, plan, role, page, banned: status === "banned" ? true : undefined, verified: status === "unverified" ? false : undefined });
+  const data = await listUsers({
+    search,
+    plan,
+    role,
+    page,
+    banned: status === "banned" ? true : status === "active" || status === "unverified" ? false : undefined,
+    verified: status === "unverified" ? false : status === "active" ? true : undefined,
+  });
   const filters = { search, plan, role, status };
   const label = (u: (typeof data.users)[number]) => u.banned ? "Banned" : u.emailVerified ? "Active" : "Unverified";
   const badge = (u: (typeof data.users)[number]) => <Badge variant={u.banned ? "destructive" : u.emailVerified ? "success" : "warning"}>{label(u)}</Badge>;
@@ -34,26 +41,3 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
 function Stat({ label, value }: { label: string; value: number }) { return <div className="p-4"><p className="text-xs text-muted-foreground">{label}</p><p className="mt-1 text-2xl font-semibold tabular-nums text-[#292D34]">{value}</p></div>; }
 function Empty({ filtered }: { filtered: boolean }) { return <TableRow><TableCell colSpan={6} className="py-14 text-center"><p className="font-medium">{filtered ? "No users match filters" : "No users yet"}</p><p className="mt-1 text-sm text-muted-foreground">{filtered ? "Try clearing filters or broadening search." : "Create first user to get started."}</p></TableCell></TableRow>; }
 function MobileEmpty({ filtered }: { filtered: boolean }) { return <div className="p-10 text-center"><p className="font-medium">{filtered ? "No users match filters" : "No users yet"}</p><p className="mt-1 text-sm text-muted-foreground">{filtered ? "Try clearing filters or broadening search." : "Create first user to get started."}</p></div>; }
-
-export const __usersListSourceCheck = true;
-/* Mobile uses same semantic identity/status fields as desktop. */
-void __usersListSourceCheck;
-
-type _Unused = never;
-void (null as _Unused);
-
-// Keep mobile empty state render type-compatible without extra component dependency.
-void (Table as unknown);
-void (TableHeader as unknown);
-void (TableBody as unknown);
-void (TableRow as unknown);
-void (TableCell as unknown);
-void (query as unknown);
-void (Input as unknown);
-void (Card as unknown);
-void (CardContent as unknown);
-void (Badge as unknown);
-void (formatDateID as unknown);
-void (UserActions as unknown);
-void (CreateUserButton as unknown);
-void (Link as unknown);
