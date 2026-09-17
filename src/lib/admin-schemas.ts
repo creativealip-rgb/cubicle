@@ -9,12 +9,14 @@ export const ROLE_VALUES = ["user", "admin"] as const;
 
 export type AdminActionResult = { ok: true } | { ok: false; error: string };
 
+const emptyToUndefined = (value: unknown) => value === "" ? undefined : value;
+
 export const listUsersSchema = z.object({
   search: z.string().trim().max(120).optional().default(""),
-  plan: z.enum(PLAN_VALUES).optional(),
+  plan: z.preprocess(emptyToUndefined, z.enum(PLAN_VALUES).optional()),
   banned: z.boolean().optional(),
   verified: z.boolean().optional(),
-  role: z.enum(ROLE_VALUES).optional(),
+  role: z.preprocess(emptyToUndefined, z.enum(ROLE_VALUES).optional()),
   page: z.coerce.number().int().min(1).optional().default(1),
 });
 
