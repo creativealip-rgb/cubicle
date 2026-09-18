@@ -401,7 +401,7 @@ export function WorkspaceBrandingForm({
         {saved
           ? t("Tersimpan ✓", "Saved ✓")
           : section === "workspace"
-            ? t("Simpan workspace", "Save workspace")
+            ? t("Simpan profil bisnis", "Save business profile")
             : t("Simpan invoice", "Save invoice defaults")}
       </LoadingButton>
       </fieldset>

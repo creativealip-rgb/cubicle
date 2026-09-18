@@ -207,19 +207,19 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
 
   const primaryActions = canWrite ? (
     <>
-      <AddTimeLogDialog workspaceId={workspaceId} clients={clientList} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId, billingType: p.billingType, rate: p.rate }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId, templateName: t.templateName }))} />
       <NewTimerDialog initialOpen={action === "timer"} workspaceId={workspaceId} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId }))} />
+      <AddTimeLogDialog workspaceId={workspaceId} clients={clientList} projects={writableProjectList.map((p) => ({ id: p.id, name: p.name, customerRef: p.clientId, billingType: p.billingType, rate: p.rate }))} tasks={writableTaskList.map((t) => ({ id: t.id, title: t.title, projectRef: t.projectId, templateName: t.templateName }))} />
     </>
   ) : null;
 
   const totalPeriodMinutes = entries.reduce((acc, curr) => acc + (curr.durationMinutes || curr.manualMinutes || 0), 0);
   const billablePeriodMinutes = entries.filter((e) => e.billable).reduce((acc, curr) => acc + (curr.durationMinutes || curr.manualMinutes || 0), 0);
-  const billableRate = totalPeriodMinutes > 0 ? Math.round((billablePeriodMinutes / totalPeriodMinutes) * 100) : 100;
+  const billableRate = totalPeriodMinutes > 0 ? Math.round((billablePeriodMinutes / totalPeriodMinutes) * 100) : null;
 
   return (
     <TimePageShell actions={primaryActions}>
       {/* 3-KPI Work Hours Summary Banner */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <Card className="rounded-xl border shadow-none bg-card">
           <CardContent className="p-3.5 flex items-center justify-between gap-3">
             <div className="min-w-0">
@@ -246,7 +246,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
                 {t("Jam Billable", "Billable Ratio")}
               </p>
               <p className="mt-0.5 text-xl font-bold tracking-tight text-emerald-600 dark:text-emerald-400 tabular-nums">
-                {billableRate}% <span className="text-xs font-normal text-muted-foreground">({formatDurationMinutes(billablePeriodMinutes)})</span>
+                {totalPeriodMinutes > 0 ? `${billableRate}%` : "—"} <span className="text-xs font-normal text-muted-foreground">({formatDurationMinutes(billablePeriodMinutes)})</span>
               </p>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 {t("Dapat ditagihkan ke klien", "Billable to clients")}

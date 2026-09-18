@@ -332,6 +332,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
                   variant="ghost"
                   size="sm"
                   className="hidden h-8.5 max-w-[180px] gap-2 text-foreground/80 hover:text-foreground border border-transparent hover:border-border/60 hover:bg-muted/40 rounded-lg px-2 lg:inline-flex transition-all"
+                  aria-label={`${t("Workspace aktif", "Active workspace")}: ${activeWorkspace?.name || t("Tanpa nama", "Unnamed")}`}
                 >
                   <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-primary/10 text-[10px] font-bold text-primary">
                     {(activeWorkspace?.name || "W").charAt(0).toUpperCase()}

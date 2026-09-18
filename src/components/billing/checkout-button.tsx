@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useT } from "@/lib/i18n-client";
 import {
   getPlanPeriodLabel,
   loadStoredPeriod,
@@ -23,6 +24,7 @@ export function CheckoutButton({
   showPeriodToggle?: boolean;
   disabled?: boolean;
 }) {
+  const { t } = useT();
   const [period, setPeriod] = useState<BillingPeriod>("yearly");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,10 +49,10 @@ export function CheckoutButton({
         body: JSON.stringify({ plan, period }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal membuat checkout");
+      if (!res.ok) throw new Error(json.error || t("Gagal membuat checkout", "Failed to create checkout"));
       window.location.href = json.data.paymentUrl;
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal membuat checkout");
+      setError(err instanceof Error ? err.message : t("Gagal membuat checkout", "Failed to create checkout"));
     } finally {
       setLoading(false);
     }
@@ -62,7 +64,7 @@ export function CheckoutButton({
         <div className="space-y-2">
           <div
             role="tablist"
-            aria-label="Billing period"
+            aria-label={t("Periode billing", "Billing period")}
             className="inline-flex h-9 w-full items-center justify-center rounded-lg bg-slate-100 p-1 text-slate-600"
           >
             {(["monthly", "yearly"] as const).map((option) => (
@@ -79,7 +81,7 @@ export function CheckoutButton({
                     : "text-slate-500 hover:text-slate-800",
                 )}
               >
-                {option === "monthly" ? "Bulanan" : "Tahunan"}
+                {option === "monthly" ? t("Bulanan", "Monthly") : t("Tahunan", "Yearly")}
               </button>
             ))}
           </div>
@@ -87,19 +89,19 @@ export function CheckoutButton({
             {period === "monthly" ? (
               <>
                 {getPlanPeriodLabel(plan, "monthly")}
-                <span className="text-slate-400"> /bulan</span>
+                <span className="text-slate-400"> {t("/bulan", "/month")}</span>
               </>
             ) : (
               <>
                 {getPlanPeriodLabel(plan, "yearly")}
-                <span className="text-slate-400"> /tahun</span>
+                <span className="text-slate-400"> {t("/tahun", "/year")}</span>
               </>
             )}
           </p>
         </div>
       )}
       <Button onClick={checkout} disabled={disabled || loading} className="w-full bg-[#6647F0] text-white hover:bg-[#5333DD] disabled:bg-slate-200 disabled:text-slate-500">
-        {disabled ? "Plan aktif" : loading ? "Membuat QRIS..." : children}
+        {disabled ? t("Plan aktif", "Current plan") : loading ? t("Membuat QRIS...", "Creating QRIS...") : children}
       </Button>
       {error && <p className="text-xs text-red-600">{error}</p>}
     </div>

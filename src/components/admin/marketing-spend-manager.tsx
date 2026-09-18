@@ -28,6 +28,7 @@ export default function MarketingSpendManager({ rows }: { rows: SpendRow[] }) {
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const total = rows.reduce((sum, row) => sum + Number(row.amount), 0);
 
   function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -54,11 +55,11 @@ export default function MarketingSpendManager({ rows }: { rows: SpendRow[] }) {
   }
 
   function remove(id: string) {
-    if (!window.confirm("Delete this spend record?")) return;
     setError(null);
     startTransition(async () => {
       try {
         await deleteMarketingSpend(id);
+        setDeleteId(null);
       } catch (cause) {
         setError(cause instanceof Error ? cause.message : "Could not delete spend");
       }
@@ -106,12 +107,15 @@ export default function MarketingSpendManager({ rows }: { rows: SpendRow[] }) {
       {error && !dialogOpen && <p role="alert" className="mt-2 text-xs text-rose-600">{error}</p>}
 
       <div className="mt-4 hidden overflow-x-auto md:block">
-        <table className="w-full text-left text-xs"><caption className="sr-only">Recent marketing spend</caption><thead className="text-[11px] text-slate-500"><tr><th className="pb-2">Date</th><th className="pb-2">Source</th><th className="pb-2">Campaign</th><th className="pb-2 text-right">Amount</th><th className="pb-2"><span className="sr-only">Actions</span></th></tr></thead><tbody>{rows.map((row) => <tr key={row.id} className="border-t border-slate-100"><td className="py-2">{row.spendDate}</td><td>{row.source}</td><td className="text-slate-500">{row.campaign || "—"}</td><td className="text-right tabular-nums">Rp{money.format(Number(row.amount))}</td><td className="text-right"><button type="button" disabled={pending} onClick={() => remove(row.id)} className="text-rose-600 hover:underline disabled:opacity-50">Delete</button></td></tr>)}</tbody></table>
+        <table className="w-full text-left text-xs"><caption className="sr-only">Recent marketing spend</caption><thead className="text-[11px] text-slate-500"><tr><th className="pb-2">Date</th><th className="pb-2">Source</th><th className="pb-2">Campaign</th><th className="pb-2 text-right">Amount</th><th className="pb-2"><span className="sr-only">Actions</span></th></tr></thead><tbody>{rows.map((row) => <tr key={row.id} className="border-t border-slate-100"><td className="py-2">{row.spendDate}</td><td>{row.source}</td><td className="text-slate-500">{row.campaign || "—"}</td><td className="text-right tabular-nums">Rp{money.format(Number(row.amount))}</td><td className="text-right"><button type="button" disabled={pending} onClick={() => setDeleteId(row.id)} className="text-rose-600 hover:underline disabled:opacity-50">Delete</button></td></tr>)}</tbody></table>
       </div>
       <div className="mt-4 space-y-2 md:hidden">
-        {rows.map((row) => <article key={row.id} className="rounded-lg border border-slate-100 p-3"><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-medium text-slate-900">{row.source}</p><p className="text-xs text-slate-500">{row.spendDate}{row.campaign ? ` · ${row.campaign}` : ""}</p></div><p className="whitespace-nowrap text-sm font-semibold tabular-nums text-slate-900">Rp{money.format(Number(row.amount))}</p></div><button type="button" disabled={pending} onClick={() => remove(row.id)} className="mt-2 text-xs text-rose-600 hover:underline disabled:opacity-50">Delete</button></article>)}
+        {rows.map((row) => <article key={row.id} className="rounded-lg border border-slate-100 p-3"><div className="flex items-start justify-between gap-3"><div><p className="text-sm font-medium text-slate-900">{row.source}</p><p className="text-xs text-slate-500">{row.spendDate}{row.campaign ? ` · ${row.campaign}` : ""}</p></div><p className="whitespace-nowrap text-sm font-semibold tabular-nums text-slate-900">Rp{money.format(Number(row.amount))}</p></div><button type="button" disabled={pending} onClick={() => setDeleteId(row.id)} className="mt-2 text-xs text-rose-600 hover:underline disabled:opacity-50">Delete</button></article>)}
       </div>
       {rows.length === 0 && <p className="py-6 text-center text-xs text-slate-500">No spend recorded yet. Record first spend to start tracking acquisition costs.</p>}
+      <Dialog open={!!deleteId} onOpenChange={(open) => !pending && !open && setDeleteId(null)}>
+        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>Delete spend record?</DialogTitle><DialogDescription>This action cannot be undone.</DialogDescription></DialogHeader><DialogFooter><button type="button" disabled={pending} onClick={() => setDeleteId(null)} className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold">Cancel</button><button type="button" disabled={pending} onClick={() => deleteId && remove(deleteId)} className="rounded-md bg-rose-600 px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{pending ? "Deleting…" : "Delete"}</button></DialogFooter></DialogContent>
+      </Dialog>
     </section>
   );
 }

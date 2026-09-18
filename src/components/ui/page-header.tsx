@@ -45,7 +45,7 @@ export function PageHeader({
                   {badge && <div className="shrink-0">{badge}</div>}
                 </div>
                 {description && (
-                  <p className="text-xs text-muted-foreground truncate max-w-2xl mt-0.5">
+                  <p className="mt-0.5 max-w-2xl line-clamp-2 text-xs text-muted-foreground sm:truncate">
                     {description}
                   </p>
                 )}

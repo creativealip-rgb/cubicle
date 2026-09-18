@@ -74,7 +74,7 @@ export function WorkspaceNameForm({
         </p>
       </div>
       <LoadingButton type="submit" size="sm" loading={loading} loadingText={t("Menyimpan…", "Saving…")} disabled={name.trim() === defaultName}>
-        {t("Simpan nama", "Save name")}
+        {t("Simpan nama workspace", "Save workspace name")}
       </LoadingButton>
     </form>
   );

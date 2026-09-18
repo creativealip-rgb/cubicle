@@ -1119,7 +1119,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                                   className="mt-1.5 inline-flex items-center gap-1 text-[11px] font-medium text-amber-600 hover:text-amber-700 hover:underline"
                                 >
                                   <Crown className="h-3 w-3" />
-                                  Upgrade plan
+                                  {lang === "id" ? "Upgrade paket" : "Upgrade plan"}
                                 </a>
                               )}
                             </div>

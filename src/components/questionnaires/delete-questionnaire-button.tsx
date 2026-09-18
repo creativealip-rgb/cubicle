@@ -7,18 +7,21 @@ import { toast } from "sonner";
 import { Trash2 } from "lucide-react";
 import { deleteQuestionnaire } from "@/lib/actions/questionnaires";
 import { LoadingButton } from "@/components/ui/loading-button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 export function DeleteQuestionnaireButton({ questionnaireId }: { questionnaireId: string }) {
   const router = useRouter();
   const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
 
   async function remove() {
-    if (!window.confirm("Hapus formulir ini? Tidak bisa dibatalkan.")) return;
     setLoading(true);
     try {
       await deleteQuestionnaire(questionnaireId);
       toast.success("Formulir dihapus");
+      setOpen(false);
       router.push("/app/questionnaires");
       refresh();
     } catch (error) {
@@ -28,8 +31,11 @@ export function DeleteQuestionnaireButton({ questionnaireId }: { questionnaireId
   }
 
   return (
-    <LoadingButton type="button" variant="outline" size="sm" onClick={remove} loading={loading} loadingText="..." className="gap-1 text-destructive hover:text-destructive">
-      <Trash2 className="h-4 w-4" /> Hapus
-    </LoadingButton>
+    <>
+      <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)} className="gap-1 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Hapus</Button>
+      <Dialog open={open} onOpenChange={(next) => !loading && setOpen(next)}>
+        <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>Hapus formulir?</DialogTitle><DialogDescription>Tindakan ini tidak bisa dibatalkan.</DialogDescription></DialogHeader><DialogFooter><Button variant="outline" disabled={loading} onClick={() => setOpen(false)}>Batal</Button><LoadingButton variant="destructive" onClick={remove} loading={loading} loadingText="Menghapus...">Hapus</LoadingButton></DialogFooter></DialogContent>
+      </Dialog>
+    </>
   );
 }

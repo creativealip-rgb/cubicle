@@ -50,7 +50,7 @@ export default async function DashboardPage() {
     return (
       <div className="relative space-y-6" aria-hidden="true">
         <div className="space-y-2"><div className="h-8 w-56 rounded bg-muted" /><div className="h-4 w-72 rounded bg-muted" /></div>
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">{Array.from({ length: 5 }, (_, index) => <Card key={index}><CardContent className="h-24 p-4" /></Card>)}</div>
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">{Array.from({ length: 5 }, (_, index) => <Card key={index}><CardContent className="h-24 p-4" /></Card>)}</div>
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_400px]"><Card><CardContent className="h-64" /></Card><Card><CardContent className="h-64" /></Card></div>
         <FirstWorkspaceModal lang={lang} />
       </div>
@@ -240,6 +240,15 @@ export default async function DashboardPage() {
     return action.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
   }
 
+  function formatEntityType(entityType: string): string {
+    const normalized = entityType.replace(/_/g, " ");
+    const labels: Record<string, string> = {
+      time_entry: t("Log Waktu", "Time Entry"),
+      prompt_generation: t("Generasi Prompt", "Prompt Generation"),
+    };
+    return labels[entityType.toLowerCase()] ?? normalized.replace(/\b\w/g, (c) => c.toUpperCase());
+  }
+
   function getActivityIcon(entityType: string) {
     switch (entityType?.toLowerCase()) {
       case "invoice":
@@ -406,7 +415,7 @@ export default async function DashboardPage() {
           </span>
         </div>
 
-        <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 xl:grid-cols-5">
           {reminderItems.map((item) => {
             const Icon = item.icon;
             const cfg = toneConfig[item.tone];
@@ -502,8 +511,8 @@ export default async function DashboardPage() {
                 </CardTitle>
               </div>
               <Button variant="ghost" size="sm" className="h-7 px-2.5 text-xs font-semibold text-primary hover:bg-primary/10 rounded-lg gap-1" asChild>
-                <Link href="/app/tasks">
-                  {t("Semua Tugas", "All Tasks")}
+                <Link href="/app/activities">
+                  {t("Lihat Semua Aktivitas", "View All Activity")}
                   <ArrowUpRight className="h-3.5 w-3.5" />
                 </Link>
               </Button>
@@ -525,7 +534,7 @@ export default async function DashboardPage() {
                         <div className="min-w-0">
                           <p className="truncate text-sm font-semibold text-foreground">{formatAction(item.action)}</p>
                           <p className="truncate text-xs text-muted-foreground mt-0.5">
-                            <span className="capitalize">{item.entityType}</span>
+                            <span>{formatEntityType(item.entityType)}</span>
                             {item.actorName && ` · ${t("oleh", "by")} ${item.actorName}`}
                           </p>
                         </div>
