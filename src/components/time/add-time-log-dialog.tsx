@@ -219,7 +219,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                   </button>
                 </div>
                 </PopoverAnchor>
-                <PopoverContent align="start" sideOffset={5} className="w-[var(--radix-popover-trigger-width)] p-1">
+                <PopoverContent align="start" sideOffset={5} onOpenAutoFocus={(event) => event.preventDefault()} className="w-[var(--radix-popover-trigger-width)] p-1">
                   <div className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain" onWheel={(event) => event.stopPropagation()}>
                     {groupedProjectOptions.length === 0 ? (
                       <p className="p-2 text-xs text-muted-foreground">{t("Klien atau proyek tidak ditemukan", "No client or project found")}</p>
