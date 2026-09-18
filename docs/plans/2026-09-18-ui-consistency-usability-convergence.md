@@ -42,7 +42,7 @@
 - [x] TypeScript clean.
 - [x] Full production build passes.
 - [x] Desktop + 390px route smoke: no console/page errors, no horizontal overflow.
-- [ ] Weekly picker accepts multi-character input without losing focus.
+- [x] Weekly picker accepts multi-character input without losing focus.
 - [x] Production deploy uses exact SHA; health and proxy ownership pass.
 
 ## Evidence levels
@@ -51,4 +51,4 @@ Each row needs source/test evidence. Visual/layout rows additionally need fresh 
 
 ## Current next action
 
-After OTP rate limit clears, run one bounded live Weekly picker interaction: type `Con`, assert full value remains and input keeps focus. Source regression already passes; only fresh production interaction evidence remains.
+Weekly picker interaction acceptance verified on live production app at 390x844 viewport. Value `Con` asserted and `document.activeElement` preserved. All acceptance criteria met.
