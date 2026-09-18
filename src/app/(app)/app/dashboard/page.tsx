@@ -424,7 +424,7 @@ export default async function DashboardPage() {
               return (
                 <Popover key={item.key}>
                   <PopoverTrigger asChild>
-                    <button type="button" className="group text-left h-full">
+                    <button type="button" className="group col-span-2 h-full text-left xl:col-span-1">
                       <div className={cn("h-full rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:shadow-sm hover:border-primary/40 flex flex-col justify-between space-y-2.5", cfg.ring)}>
                         <div className="flex items-start justify-between gap-2">
                           <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", cfg.bg)}>

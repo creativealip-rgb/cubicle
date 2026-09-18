@@ -177,7 +177,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
   return (
     <Dialog open={open} onOpenChange={(next) => { setOpen(next); if (!next && !loading) reset(); }}>
       <DialogTrigger asChild>
-        <Button size="sm" className="h-11 w-full gap-1 sm:h-8 sm:w-auto">
+        <Button variant="outline" size="sm" className="h-11 w-full gap-1 sm:h-8 sm:w-auto">
           <Plus className="h-4 w-4" />
           {t("Catat Waktu", "Log Time")}
         </Button>

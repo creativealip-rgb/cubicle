@@ -258,7 +258,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl border shadow-none bg-card">
+        <Card className="col-span-2 rounded-xl border bg-card shadow-none sm:col-span-1">
           <CardContent className="p-3.5 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -270,7 +270,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
                   {activeTimer ? (activeTimer.projectName || t("Timer Aktif", "Timer Running")) : t("Siap Digunakan", "Ready")}
                 </span>
               </div>
-              <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
                 {activeTimer ? (activeTimer.taskTitle || activeTimer.description || t("Melacak durasi...", "Tracking...")) : t("Mulai timer atau log manual", "Start timer or log manual")}
               </p>
             </div>
