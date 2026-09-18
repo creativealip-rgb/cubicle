@@ -329,9 +329,14 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "
             </div>
           )}
         </div>
-        <LoadingButton type="submit" loading={loading} loadingText={t("Menyimpan...", "Saving...")} className="w-full sm:w-auto sm:min-w-36" size="sm">
-          {mode === "create" ? t("Buat Tugas", "Create Task") : t("Simpan Perubahan", "Save Changes")}
-        </LoadingButton>
+        <div className="flex w-full justify-end gap-2 sm:w-auto">
+          <Button type="button" variant="outline" size="sm" onClick={() => onSuccess?.()}>
+            {t("Batal", "Cancel")}
+          </Button>
+          <LoadingButton type="submit" loading={loading} loadingText={t("Menyimpan...", "Saving...")} className="sm:min-w-36" size="sm">
+            {mode === "create" ? t("Buat Tugas", "Create Task") : t("Simpan Perubahan", "Save Changes")}
+          </LoadingButton>
+        </div>
       </div>
     </form>
   );

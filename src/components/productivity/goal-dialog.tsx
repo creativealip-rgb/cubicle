@@ -87,34 +87,19 @@ export function GoalDialog({ lang = "id", createGoalAction }: GoalDialogProps) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-2.5">
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {isEn ? "Priority" : "Prioritas"}
-              </label>
-              <select
-                name="priority"
-                defaultValue="medium"
-                className="h-8 w-full rounded-lg border bg-background px-2 text-xs"
-              >
-                <option value="low">{isEn ? "Low" : "Rendah"}</option>
-                <option value="medium">{isEn ? "Medium" : "Sedang"}</option>
-                <option value="high">{isEn ? "High" : "Tinggi"}</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
-                {isEn ? "Manual Progress (%)" : "Progress Manual (%)"}
-              </label>
-              <Input
-                name="manualProgress"
-                type="number"
-                min="0"
-                max="100"
-                defaultValue="0"
-                className="h-8 rounded-lg text-xs"
-              />
-            </div>
+          <div className="space-y-1">
+            <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              {isEn ? "Priority" : "Prioritas"}
+            </label>
+            <select
+              name="priority"
+              defaultValue="medium"
+              className="h-8 w-full rounded-lg border bg-background px-2 text-xs"
+            >
+              <option value="low">{isEn ? "Low" : "Rendah"}</option>
+              <option value="medium">{isEn ? "Medium" : "Sedang"}</option>
+              <option value="high">{isEn ? "High" : "Tinggi"}</option>
+            </select>
           </div>
 
           <div className="pt-2 flex items-center justify-end gap-2">

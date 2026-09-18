@@ -63,7 +63,7 @@ export function InvoiceCreateDialog({ clients, proposedInvoiceNumber }: Props) {
             {clientSearchOpen && <div id="new-invoice-client-list" role="listbox" className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md border bg-popover p-1 shadow-md">{filteredClients.length ? filteredClients.map((client) => <button key={client.id} type="button" role="option" aria-selected={client.id === clientId} className="flex min-h-10 w-full items-center rounded-md px-3 text-left text-sm hover:bg-muted" onMouseDown={(event) => event.preventDefault()} onClick={() => { setClientId(client.id); setClientSearch(""); setClientSearchOpen(false); }}>{client.companyName || client.name}</button>) : <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t("Klien tidak ditemukan", "No clients found")}</p>}</div>}
           </div>
         </div>
-        <LoadingButton type="submit" loading={loading} loadingText={t("Membuat…", "Creating…")} className="w-full">{t("Buat Invoice", "Create Invoice")}</LoadingButton>
+        <LoadingButton type="submit" loading={loading} disabled={!clientId} loadingText={t("Membuat…", "Creating…")} className="w-full">{t("Buat Invoice", "Create Invoice")}</LoadingButton>
       </form>
     </DialogContent>
   </Dialog>;

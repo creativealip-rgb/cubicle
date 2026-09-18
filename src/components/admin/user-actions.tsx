@@ -199,16 +199,16 @@ function PlanDialog({
             </Select>
           </div>
           <div className="space-y-1.5">
-            <Label>Expires (YYYY-MM-DD, blank = permanent)</Label>
+            <Label>Expires (optional; blank = permanent)</Label>
             <Input type="date" value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} />
           </div>
           <div className="space-y-1.5">
-            <Label>Reason (audited)</Label>
-            <Textarea value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} maxLength={500} placeholder="Why this change?" />
+            <Label>Reason (audited) <span className="text-destructive">*</span></Label>
+            <Textarea required value={form.reason} onChange={(e) => setForm({ ...form, reason: e.target.value })} maxLength={500} placeholder="Why this change?" />
           </div>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>Cancel</Button>
-            <LoadingButton type="submit" loading={loading}>Save plan</LoadingButton>
+            <LoadingButton type="submit" loading={loading} disabled={!form.reason.trim()}>Save plan</LoadingButton>
           </DialogFooter>
         </form>
       </DialogContent>
