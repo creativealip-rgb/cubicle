@@ -39,7 +39,7 @@ export function ProjectCreateDialog({
     refresh();
   }
 
-  if (isAtLimit || (projectLimit > 0 && projectCount >= projectLimit)) {
+  if (isAtLimit) {
     return (
       <Button size="sm" className="gap-1 w-full sm:w-auto" asChild>
         <Link href="/app/billing">
