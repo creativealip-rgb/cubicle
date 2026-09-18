@@ -41,9 +41,9 @@
 - [x] Focused ESLint clean.
 - [x] TypeScript clean.
 - [x] Full production build passes.
-- [ ] Desktop + 390px route smoke: no console/page errors, no horizontal overflow.
+- [x] Desktop + 390px route smoke: no console/page errors, no horizontal overflow.
 - [ ] Weekly picker accepts multi-character input without losing focus.
-- [ ] Production deploy uses exact SHA; health and proxy ownership pass.
+- [x] Production deploy uses exact SHA; health and proxy ownership pass.
 
 ## Evidence levels
 
@@ -51,4 +51,4 @@ Each row needs source/test evidence. Visual/layout rows additionally need fresh 
 
 ## Current next action
 
-Commit implementation, then run fresh authenticated desktop/mobile browser QA against release candidate. Production deployment remains approval-gated.
+After OTP rate limit clears, run one bounded live Weekly picker interaction: type `Con`, assert full value remains and input keeps focus. Source regression already passes; only fresh production interaction evidence remains.
