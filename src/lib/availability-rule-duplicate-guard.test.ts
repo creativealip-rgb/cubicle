@@ -13,9 +13,15 @@ describe("availability rule duplicate guard", () => {
     expect(migration).toContain("CREATE UNIQUE INDEX IF NOT EXISTS availability_rules_exact_slot_unique");
   });
 
-  it("returns a human duplicate error from the create action", () => {
+  it("returns duplicate creation as typed domain feedback", () => {
     const action = read("src/lib/actions/appointments.ts");
-    expect(action).toContain("AVAILABILITY_RULE_DUPLICATE");
-    expect(action).toContain('tAvailabilityDuplicate');
+    expect(action).toContain("error: tAvailabilityDuplicate");
+    expect(action).not.toContain("throw new Error(`AVAILABILITY_RULE_DUPLICATE");
+  });
+
+  it("renders duplicate rejection as normal UI feedback", () => {
+    const form = read("src/components/calendar/availability-rule-form.tsx");
+    expect(form).toContain("if (!result.ok)");
+    expect(form).toContain("toast.error(result.error)");
   });
 });

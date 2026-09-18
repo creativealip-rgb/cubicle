@@ -58,7 +58,7 @@ export async function createAvailabilityRule(
       eq(availabilityRules.timezone, parsed.timezone),
     ))
     .limit(1);
-  if (duplicate) throw new Error(`AVAILABILITY_RULE_DUPLICATE: ${tAvailabilityDuplicate}`);
+  if (duplicate) return { ok: false as const, error: tAvailabilityDuplicate };
 
   let rule: typeof availabilityRules.$inferSelect;
   try {
@@ -75,13 +75,13 @@ export async function createAvailabilityRule(
       .returning();
   } catch (error) {
     if ((error as { code?: string }).code === "23505") {
-      throw new Error(`AVAILABILITY_RULE_DUPLICATE: ${tAvailabilityDuplicate}`);
+      return { ok: false as const, error: tAvailabilityDuplicate };
     }
     throw error;
   }
 
   await writeActivityLog(workspaceId, user.id, "created_availability_rule", "availability_rule", rule.id);
-  return rule;
+  return { ok: true as const, rule };
 }
 
 export async function updateAvailabilityRule(

@@ -36,7 +36,11 @@ export function AvailabilityRuleForm() {
     }
     setLoading(true);
     try {
-      await createAvailabilityRule({ dayOfWeek: Number(dayOfWeek), startTime, endTime, timezone });
+      const result = await createAvailabilityRule({ dayOfWeek: Number(dayOfWeek), startTime, endTime, timezone });
+      if (!result.ok) {
+        toast.error(result.error);
+        return;
+      }
       toast.success(t("Aturan ketersediaan ditambahkan", "Availability rule added"));
       setOpen(false);
       refresh();
