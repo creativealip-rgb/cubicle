@@ -9,6 +9,7 @@
     {"idx": 5, "version": "7", "when": 1783487303051, "tag": "0005_brief_zzzax", "breakpoints": true},
     {"idx": 6, "version": "7", "when": 1788214597826, "tag": "0083_mandatory_mfa", "breakpoints": true},
     {"idx": 7, "version": "7", "when": 1788214597827, "tag": "0086_mfa_manual_recovery", "breakpoints": true},
-    {"idx": 8, "version": "7", "when": 1788214597828, "tag": "0104_admin_audit_integrity", "breakpoints": true}
+    {"idx": 8, "version": "7", "when": 1788214597828, "tag": "0104_admin_audit_integrity", "breakpoints": true},
+    {"idx": 9, "version": "7", "when": 1789722800000, "tag": "0105_availability_rule_uniqueness", "breakpoints": true}
   ]
 }

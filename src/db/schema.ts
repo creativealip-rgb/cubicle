@@ -1610,7 +1610,15 @@ export const availabilityRules = pgTable("availability_rules", {
   endTime: time("end_time").notNull(),
   timezone: text("timezone").notNull().default("UTC"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
-});
+}, (table) => [
+  uniqueIndex("availability_rules_exact_slot_unique").on(
+    table.workspaceId,
+    table.dayOfWeek,
+    table.startTime,
+    table.endTime,
+    table.timezone,
+  ),
+]);
 
 export const appointments = pgTable("appointments", {
   id: uuid("id").defaultRandom().primaryKey(),

@@ -32,6 +32,8 @@ const availabilitySchema = z.object({
   timezone: z.string().default("UTC"),
 });
 
+const tAvailabilityDuplicate = "This availability slot already exists";
+
 export async function createAvailabilityRule(
   input: z.infer<typeof availabilitySchema>
 ) {
@@ -45,17 +47,38 @@ export async function createAvailabilityRule(
     throw new Error("End time must be after start time");
   }
 
-  const [rule] = await db
-    .insert(availabilityRules)
-    .values({
-      workspaceId,
-      userId: user.id,
-      dayOfWeek: parsed.dayOfWeek,
-      startTime: parsed.startTime,
-      endTime: parsed.endTime,
-      timezone: parsed.timezone,
-    })
-    .returning();
+  const [duplicate] = await db
+    .select({ id: availabilityRules.id })
+    .from(availabilityRules)
+    .where(and(
+      eq(availabilityRules.workspaceId, workspaceId),
+      eq(availabilityRules.dayOfWeek, parsed.dayOfWeek),
+      eq(availabilityRules.startTime, parsed.startTime),
+      eq(availabilityRules.endTime, parsed.endTime),
+      eq(availabilityRules.timezone, parsed.timezone),
+    ))
+    .limit(1);
+  if (duplicate) throw new Error(`AVAILABILITY_RULE_DUPLICATE: ${tAvailabilityDuplicate}`);
+
+  let rule: typeof availabilityRules.$inferSelect;
+  try {
+    [rule] = await db
+      .insert(availabilityRules)
+      .values({
+        workspaceId,
+        userId: user.id,
+        dayOfWeek: parsed.dayOfWeek,
+        startTime: parsed.startTime,
+        endTime: parsed.endTime,
+        timezone: parsed.timezone,
+      })
+      .returning();
+  } catch (error) {
+    if ((error as { code?: string }).code === "23505") {
+      throw new Error(`AVAILABILITY_RULE_DUPLICATE: ${tAvailabilityDuplicate}`);
+    }
+    throw error;
+  }
 
   await writeActivityLog(workspaceId, user.id, "created_availability_rule", "availability_rule", rule.id);
   return rule;
