@@ -1,3 +1,12 @@
+## 2026-09-19 — Backup and recovery drill
+
+- Upgraded the VPS PostgreSQL backup flow to produce an atomic recovery set: `database.sql.gz`, `database.sql.gz.sha256`, `globals.sql`, `globals.sql.sha256`, and `manifest.txt`.
+- Verified clean restore of database + PostgreSQL globals into disposable PostgreSQL 16, with restored roles `cubiqlo_app`, `cubiqlo_backup`, `cubiqlo_migrator`, and `cubiqlo_owner`.
+- Booted the production Cubiqlo image against restored data plus disposable Redis on an internal-only network; verified health, direct auth login, session retrieval, and `/app/dashboard` protected read path.
+- Added recovery evidence and a sanitized recovery runbook. Offsite encrypted round-trip remains the next hardening gap.
+
+Evidence: `docs/operations/evidence/backup-recovery-drill-2026-09-19.md`; runbook: `docs/operations/recovery-runbook.md`.
+
 ## 2026-09-18 — Calendar availability duplicate protection
 
 - Removed duplicate exact Availability Rules while preserving the oldest matching slot; workspace `Alip` now has one Monday rule and five total work-hour slots.
