@@ -12,6 +12,26 @@ import { activateStorageAddonTx } from "@/lib/storage-addons";
 // effective tier (or renew the same one). Lower-tier payments completing late
 // must never overwrite a currently effective higher plan.
 const PLAN_RANK: Record<string, number> = { free: 0, solo: 1, team: 2 };
+const STALE_PENDING_MS = 24 * 60 * 60 * 1000;
+
+function isProviderMissingOrHtmlError(err: unknown) {
+  const message = err instanceof Error ? err.message : String(err);
+  return message.includes("Pakasir detail HTTP 404")
+    || message.includes("Transaksi tidak ditemukan")
+    || message.includes("Unexpected token '<'");
+}
+
+async function expireStalePendingPakasirPayment(paymentId: string) {
+  const updated = await db
+    .update(pakasirPayments)
+    .set({ status: "expired", updatedAt: new Date() })
+    .where(and(
+      eq(pakasirPayments.id, paymentId),
+      eq(pakasirPayments.status, "pending"),
+    ))
+    .returning({ id: pakasirPayments.id });
+  return updated.length === 1;
+}
 
 // subscriptionEvents, from_plan: lifecycle event insertion belongs in same transaction.
 export type PakasirActivationResult =
@@ -254,7 +274,19 @@ export async function processPakasirPayment(paymentId: string) {
   }
 
   const amount = Math.round(Number(payment.amount));
-  const detail = await getPakasirTransactionDetail({ orderId: payment.orderId, amount });
+  let detail: Awaited<ReturnType<typeof getPakasirTransactionDetail>>;
+  try {
+    detail = await getPakasirTransactionDetail({ orderId: payment.orderId, amount });
+  } catch (err) {
+    if (
+      payment.createdAt.getTime() < Date.now() - STALE_PENDING_MS
+      && isProviderMissingOrHtmlError(err)
+      && await expireStalePendingPakasirPayment(payment.id)
+    ) {
+      return { orderId: payment.orderId, outcome: "expired" as const, status: "provider_missing" };
+    }
+    throw err;
+  }
   const transaction = detail.transaction;
   const verifiedStatus = transaction?.status;
 

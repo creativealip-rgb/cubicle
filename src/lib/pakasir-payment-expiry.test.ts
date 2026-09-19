@@ -71,4 +71,12 @@ describe("Pakasir payment expiry: stale pending rows close out as expired, never
     const src = provider();
     expect(src).toMatch(/expired_at\?: string;/);
   });
+
+  it("stale provider-not-found or HTML detail errors expire old pending rows instead of retrying forever", () => {
+    const src = sync();
+    expect(src).toContain("expireStalePendingPakasirPayment");
+    expect(src).toContain("isProviderMissingOrHtmlError");
+    expect(src).toMatch(/payment\.createdAt\.getTime\(\) < Date\.now\(\) - STALE_PENDING_MS/);
+    expect(src).toContain('outcome: "expired" as const');
+  });
 });
