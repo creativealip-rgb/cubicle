@@ -1,3 +1,12 @@
+## 2026-09-18 — Calendar availability duplicate protection
+
+- Removed duplicate exact Availability Rules while preserving the oldest matching slot; workspace `Alip` now has one Monday rule and five total work-hour slots.
+- Added `availability_rules_exact_slot_unique` across workspace, day, start time, end time, and timezone, plus server-side pre-check and race handling.
+- Changed expected duplicate rejection from a thrown Server Action exception into typed form feedback, eliminating production React error `#441`.
+- Verification: 3 focused regression tests, TypeScript, focused ESLint, production build, migration replay, direct duplicate rejection, health/DB, and proxy checks passed.
+- Production commits: `729bb15e`, `c273e597`; running image `cubiqlo-prod:sha-c273e597974a419b712ae4884052b0aa09823c01`.
+- Evidence: `docs/operations/evidence/calendar-availability-deduplication-2026-09-18.md`.
+
 ## 2026-09-08 — Project Control Center and progressive Client creation
 
 - Added Project Overview as default detail tab with model-aware KPI, Project Details, Billing Settings, Invoice Progress or Retainer Usage, and recent records.
