@@ -1,3 +1,10 @@
+## 2026-09-19 — Billing renewal checkout
+
+- Allowed same-plan paid checkout so Solo/Team users can renew their current plan instead of receiving a 409 “already on plan” error.
+- Added `src/lib/billing-checkout-renewal.test.ts`, verified Vitest/TypeScript/ESLint/build, deployed `cubiqlo-prod:sha-4a0b30bde36c5a3cb742a99ce0692418d53647ce`, and confirmed production health.
+
+Evidence: `docs/operations/evidence/billing-renewal-fix-2026-09-19.md`.
+
 ## 2026-09-19 — Payment sync, AI quota, and uptime hardening
 
 - Fixed Pakasir sync so stale provider-missing/HTML-error pending rows older than 24h close as `expired` instead of retrying forever.
