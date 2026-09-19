@@ -1,3 +1,12 @@
+## 2026-09-19 — Payment sync, AI quota, and uptime hardening
+
+- Fixed Pakasir sync so stale provider-missing/HTML-error pending rows older than 24h close as `expired` instead of retrying forever.
+- Deployed the fix, ran `/api/cron/pakasir-sync`, and closed 23 stale pending payments with 0 errors; installed `/root/scripts/cubiqlo_pakasir_sync.sh` on a 15-minute cron.
+- Audited AI quota source contracts: DB-backed atomic monthly cap, user-scope migration, and refund-only-before-provider-success semantics remain wired.
+- Installed Hermes public health watchdog every five minutes for `https://app.cubiqlo.com/api/health`.
+
+Evidence: `docs/operations/evidence/payment-email-ai-uptime-hardening-2026-09-19.md`.
+
 ## 2026-09-19 — Backup and recovery drill
 
 - Upgraded the VPS PostgreSQL backup flow to produce an atomic recovery set: `database.sql.gz`, `database.sql.gz.sha256`, `globals.sql`, `globals.sql.sha256`, and `manifest.txt`.
