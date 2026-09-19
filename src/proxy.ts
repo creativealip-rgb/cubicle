@@ -1,11 +1,18 @@
 import { NextResponse, type NextRequest } from "next/server";
-import { logRequest } from "@/lib/logger";
 import { getAdminRewritePath, getCanonicalRedirect } from "@/lib/host-routing";
+
+function isSensitiveProbePath(pathname: string) {
+  return /(?:^|\/)(?:\.env(?:\.|$)|\.git(?:\/|$)|phpinfo\.php$)/i.test(pathname);
+}
 
 export function proxy(request: NextRequest) {
   const host = request.headers.get("x-forwarded-host") || request.headers.get("host") || "";
   const { pathname, search } = request.nextUrl;
   const normalizedHost = host.split(":", 1)[0].toLowerCase();
+
+  if (isSensitiveProbePath(pathname)) {
+    return new NextResponse(null, { status: 404 });
+  }
 
   const target = getCanonicalRedirect(host, pathname, search, false);
   if (target) {
@@ -28,16 +35,7 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  const start = Date.now();
   const response = NextResponse.next();
-  const duration = Date.now() - start;
-
-  response.headers.set("X-Response-Time", `${duration}ms`);
-
-  // Log API and site requests
-  if (pathname.startsWith("/api") || pathname.startsWith("/site")) {
-    logRequest(request.method, pathname, response.status, duration);
-  }
 
   return response;
 }
