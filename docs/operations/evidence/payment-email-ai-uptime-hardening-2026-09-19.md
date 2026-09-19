@@ -107,6 +107,15 @@ PASSWORD_EMAIL_OTP_LOGIN_ENABLED=[present]
 
 Current proof level remains source/runtime-readiness until safe live delivery tests are run against approved recipient addresses.
 
+Follow-up live-send attempt:
+
+```text
+Controlled mailbox discovered: testing@cubiqlo.com
+App user row exists and is email_verified=true.
+Direct Better Auth sign-in with mailbox password: 401
+Conclusion: mailbox password is not the app credential, so production E2E/email delivery tests remain blocked until an approved app credential or recipient flow is provided.
+```
+
 Known routes/actions found:
 
 ```text
@@ -150,3 +159,37 @@ e2e/production-qa-reusable-task.spec.ts
 ```
 
 Mutation E2E not run in this pass. It needs approved QA account/session and cleanup budget because it mutates production data.
+
+Follow-up attempt:
+
+```text
+production-qa-files.spec.ts attempted with testing@cubiqlo.com.
+Playwright Chromium installed path found.
+Global setup reached app sign-in API.
+Result: E2E sign-in failed 401.
+No fixture mutation happened.
+```
+
+## Billing renewal follow-up
+
+Subagent payment audit flagged same-plan renewal as P0 gap. Fixed and deployed separately:
+
+```text
+Commit: 4a0b30bde36c5a3cb742a99ce0692418d53647ce
+Image: cubiqlo-prod:sha-4a0b30bde36c5a3cb742a99ce0692418d53647ce
+Health: app ok, DB ok
+```
+
+Evidence: `docs/operations/evidence/billing-renewal-fix-2026-09-19.md`.
+
+## AI quota follow-up
+
+```text
+Vitest: ai-quota-user-scope-contract, ai-entitlement-wiring, meeting-copy-pricing-revisions PASS (8 tests).
+Live DB ai_usage_daily rows: 17
+Total counted requests: 137
+Usage date range: 2026-07-19..2026-09-01
+Unique index: ai_usage_daily_user_date_uidx on (user_id, usage_date)
+```
+
+Exact cap exhaustion was not run on production because it would consume production allowance. Source/database contract remains PASS; destructive exact-cap should use isolated QA DB/workspace.
