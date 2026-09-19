@@ -3,7 +3,8 @@
 - Upgraded the VPS PostgreSQL backup flow to produce an atomic recovery set: `database.sql.gz`, `database.sql.gz.sha256`, `globals.sql`, `globals.sql.sha256`, and `manifest.txt`.
 - Verified clean restore of database + PostgreSQL globals into disposable PostgreSQL 16, with restored roles `cubiqlo_app`, `cubiqlo_backup`, `cubiqlo_migrator`, and `cubiqlo_owner`.
 - Booted the production Cubiqlo image against restored data plus disposable Redis on an internal-only network; verified health, direct auth login, session retrieval, and `/app/dashboard` protected read path.
-- Added recovery evidence and a sanitized recovery runbook. Offsite encrypted round-trip remains the next hardening gap.
+- Added encrypted R2 offsite upload/watchdog scripts, verified upload/download/decrypt/extract, then restored the downloaded artifact with globals in disposable PostgreSQL.
+- Added recovery evidence and a sanitized recovery runbook.
 
 Evidence: `docs/operations/evidence/backup-recovery-drill-2026-09-19.md`; runbook: `docs/operations/recovery-runbook.md`.
 

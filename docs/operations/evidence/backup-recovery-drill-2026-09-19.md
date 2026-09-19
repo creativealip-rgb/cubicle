@@ -132,6 +132,64 @@ On a real clean host, restore must inject runtime secrets from the secret manage
 
 ## Next gaps
 
-1. Offsite encrypted backup round-trip is not configured yet. No `rclone` remote was available during the drill.
-2. Clean-host provisioning, DNS, TLS, and public cutover were not part of this drill.
-3. Mutation flows after recovery were not exercised; this pass proved read-path and authenticated session recovery.
+1. Clean-host provisioning, DNS, TLS, and public cutover were not part of this drill.
+2. Mutation flows after recovery were not exercised; this pass proved read-path and authenticated session recovery.
+
+## Offsite encrypted backup round-trip
+
+Added after the clean-host drill.
+
+Bucket:
+
+```text
+cubiqlo-backups
+```
+
+Verified object prefix:
+
+```text
+db/daily/cubiqlo_20260919T035811Z/
+```
+
+Uploaded encrypted files:
+
+```text
+cubiqlo_20260919T035811Z.tar.gz.enc
+cubiqlo_20260919T035811Z.tar.gz.enc.sha256
+```
+
+Round-trip proof:
+
+```text
+Upload to R2: PASS
+HEAD object size check: PASS
+Download from R2: PASS
+Decrypt local archive: PASS
+Extract atomic set: PASS
+database.sql.gz checksum: PASS
+globals.sql checksum: PASS
+Restore downloaded artifact with globals: PASS
+Counts: roles=4, workspaces=62, users=61, clients=178, invoices=138, unvalidated_constraints=0
+```
+
+Automation:
+
+```text
+/root/scripts/cubiqlo_offsite_backup.sh
+/root/scripts/cubiqlo_offsite_backup_watchdog.sh
+```
+
+Cron:
+
+```text
+45 2 * * * /root/scripts/cubiqlo_offsite_backup.sh >> /var/log/cubiqlo_offsite_backup.log 2>&1
+37 8 * * * /root/scripts/cubiqlo_offsite_backup_watchdog.sh >> /var/log/cubiqlo_offsite_backup_watchdog.log 2>&1
+```
+
+Encryption key is stored outside the repo at:
+
+```text
+/root/.secrets/cubiqlo-offsite-backup-key.hex
+```
+
+Do not commit this key. A full host-loss recovery still requires this key from a separate secret backup.

@@ -120,15 +120,51 @@ Cron:
 
 These scripts live on the VPS, not in the repo. Keep repo docs sanitized; never commit plaintext secrets or dump files.
 
-## Offsite requirement
+## Offsite encrypted backups
 
-Local backups protect against bad deploys and accidental data damage. They do not protect against disk loss or host compromise.
+Local backups protect against bad deploys and accidental data damage. Offsite encrypted backups protect against VPS disk loss.
 
-Next hardening step:
+Current bucket:
 
-1. Configure encrypted offsite storage.
-2. Upload complete backup set.
-3. Download and decrypt to a temporary directory.
-4. Verify checksums match local artifact.
-5. Restore from the downloaded artifact in a disposable environment.
-6. Only then mark offsite recovery as PASS.
+```text
+cubiqlo-backups
+```
+
+Current object layout:
+
+```text
+db/daily/<backup-set>/<backup-set>.tar.gz.enc
+db/daily/<backup-set>/<backup-set>.tar.gz.enc.sha256
+```
+
+Host scripts:
+
+```text
+/root/scripts/cubiqlo_offsite_backup.sh
+/root/scripts/cubiqlo_offsite_backup_watchdog.sh
+```
+
+Cron:
+
+```text
+45 2 * * * /root/scripts/cubiqlo_offsite_backup.sh >> /var/log/cubiqlo_offsite_backup.log 2>&1
+37 8 * * * /root/scripts/cubiqlo_offsite_backup_watchdog.sh >> /var/log/cubiqlo_offsite_backup_watchdog.log 2>&1
+```
+
+Encryption key path:
+
+```text
+/root/.secrets/cubiqlo-offsite-backup-key.hex
+```
+
+This key must be backed up separately from the VPS. Without it, offsite encrypted archives cannot be decrypted.
+
+Offsite recovery acceptance:
+
+1. Download encrypted archive and checksum from R2.
+2. Verify encrypted archive checksum.
+3. Decrypt with the offsite backup key.
+4. Extract the atomic backup set.
+5. Validate `database.sql.gz.sha256` and `globals.sql.sha256`.
+6. Restore globals and database into disposable PostgreSQL.
+7. Verify role and business-row counts.
