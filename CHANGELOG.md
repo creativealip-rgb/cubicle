@@ -1,3 +1,11 @@
+## 2026-09-19 — Production E2E core batch
+
+- Created and verified the `testing@cubiqlo.com` QA app credential/session for production Playwright runs.
+- Ran production E2E core batch: client CRUD, expense CRUD, file upload/download/delete, and task CRUD passed with 4/4 tests.
+- Documented stale financial/calendar/time E2E selector blockers and historical QA fixture residue for a separate cleanup/spec-refresh pass.
+
+Evidence: `docs/operations/evidence/e2e-core-batch-2026-09-19.md`.
+
 ## 2026-09-19 — Billing renewal checkout
 
 - Allowed same-plan paid checkout so Solo/Team users can renew their current plan instead of receiving a 409 “already on plan” error.
