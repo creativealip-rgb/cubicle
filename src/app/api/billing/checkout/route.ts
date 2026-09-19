@@ -11,7 +11,6 @@ import { getEffectivePlan } from "@/lib/plan";
 import { canPurchaseStorageAddon } from "@/lib/storage-addons";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import {
-  BILLING_PLANS,
   getPlanAmount,
   getStorageAddonAmount,
   isBillingPlan,
@@ -27,8 +26,8 @@ const PLAN_RANK: Record<BillingPlan, number> = {
   team: 2,
 };
 
-function isUpgrade(current: BillingPlan, target: BillingPlan) {
-  return PLAN_RANK[target] > PLAN_RANK[current];
+function rank(plan: BillingPlan) {
+  return PLAN_RANK[plan] ?? 0;
 }
 
 export async function POST(request: Request) {
@@ -180,14 +179,7 @@ export async function POST(request: Request) {
   const effectivePlan = getEffectivePlan(user.plan, user.planExpiresAt);
   const now = new Date();
 
-  if (effectivePlan === plan) {
-    return NextResponse.json(
-      { error: `Kamu sudah di plan ${BILLING_PLANS[plan].label}` },
-      { status: 409 },
-    );
-  }
-
-  if (!isUpgrade(effectivePlan, plan)) {
+  if (rank(plan) < rank(effectivePlan)) {
     if (effectivePlan !== "free" && user.planExpiresAt && user.planExpiresAt > now) {
       return NextResponse.json(
         { error: "Downgrade belum tersedia. Plan aktif masih berjalan." },
