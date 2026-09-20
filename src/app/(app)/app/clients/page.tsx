@@ -15,7 +15,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
+import { StatusFilterDropdown } from "@/components/ui/status-filter-dropdown";
 import { PageHeader } from "@/components/ui/page-header";
 import { ClientsListTable } from "@/components/clients/clients-list-table";
 import { ClientCreateDialog } from "@/components/clients/client-create-dialog";
@@ -185,16 +185,15 @@ export default async function ClientsPage({
 
       <div className="space-y-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <StatusFilterTabs
+          <StatusFilterDropdown
             activeValue={statusFilter}
-            hideEmpty={false}
-            tabs={[
+            label={t("Status", "Status")}
+            options={[
               {
                 value: "active",
                 label: t("Aktif", "Active"),
                 href: search ? `?status=active&search=${encodeURIComponent(search)}` : "?status=active",
                 count: tabCounts.active,
-                alwaysShow: true,
               },
               {
                 value: "inactive",
@@ -203,7 +202,6 @@ export default async function ClientsPage({
                   ? `?status=inactive&search=${encodeURIComponent(search)}`
                   : "?status=inactive",
                 count: tabCounts.inactive,
-                alwaysShow: true,
               },
               {
                 value: "archived",
@@ -212,7 +210,6 @@ export default async function ClientsPage({
                   ? `?status=archived&search=${encodeURIComponent(search)}`
                   : "?status=archived",
                 count: tabCounts.archived,
-                alwaysShow: true,
               },
             ]}
           />

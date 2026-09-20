@@ -24,7 +24,7 @@ import {
   type ProjectStatusTab,
 } from "@/lib/project-list-filters";
 import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
-import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
+import { StatusFilterDropdown } from "@/components/ui/status-filter-dropdown";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -209,15 +209,14 @@ export default async function ProjectsPage({
       />
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <StatusFilterTabs
+        <StatusFilterDropdown
           activeValue={statusTab}
-          hideEmpty={false}
-          tabs={PROJECT_STATUS_TABS.map((tab) => ({
+          label={t("Status", "Status")}
+          options={PROJECT_STATUS_TABS.map((tab) => ({
             value: tab,
             label: tabLabel(tab),
             href: buildProjectsHref({ ...filtersForHref, status: tab, search: search || undefined }),
             count: statusCounts[tab] ?? 0,
-            alwaysShow: true,
           }))}
         />
 
