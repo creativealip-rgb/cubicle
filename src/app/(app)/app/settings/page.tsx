@@ -27,14 +27,11 @@ import {
   Users,
   Receipt,
   Calendar,
-  CheckCircle2,
-  Circle,
   Sliders,
 } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { TeamManager } from "@/components/settings/team-manager";
 import { WorkspaceBrandingForm } from "@/components/settings/workspace-branding-form";
-import { WorkspaceNameForm } from "@/components/settings/workspace-name-form";
 import { GoogleCalendarConnect } from "@/components/settings/google-calendar-connect";
 import { CurrencyRatesForm } from "@/components/settings/currency-rates-form";
 import { SettingsTabs } from "@/components/settings/settings-tabs";
@@ -256,20 +253,10 @@ export default async function SettingsPage({
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4 text-sm">
-                  <WorkspaceNameForm
-                    defaultName={workspace.name}
-                    canEdit={canEditWorkspace}
-                  />
-                  <div className="border-t pt-3">
-                    <h3 className="mb-3 text-sm font-semibold">
-                      {t(
-                        "Profil workspace & Branding",
-                        "Workspace profile & Branding",
-                      )}
-                    </h3>
                     <WorkspaceBrandingForm
                       section="workspace"
                       canEdit={canEditWorkspace}
+                      workspaceName={workspace.name}
                       plan={currentUser?.plan as "free" | "solo" | "team"}
                       defaults={{
                         billingName: workspace.billingName,
@@ -285,36 +272,6 @@ export default async function SettingsPage({
                         replyToEmail: workspace.replyToEmail,
                       }}
                     />
-                  </div>
-
-                  <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
-                    {workspaceSetupItems.map((item) => {
-                      const Icon = item.done ? CheckCircle2 : Circle;
-                      return (
-                        <div
-                          key={item.label}
-                          className="flex items-center gap-2 text-xs"
-                        >
-                          <Icon
-                            className={
-                              item.done
-                                ? "h-4 w-4 text-emerald-600"
-                                : "h-4 w-4 text-muted-foreground"
-                            }
-                          />
-                          <span
-                            className={
-                              item.done
-                                ? "text-slate-700"
-                                : "text-muted-foreground"
-                            }
-                          >
-                            {item.label}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
                 </CardContent>
               </Card>
             </>
@@ -474,34 +431,6 @@ export default async function SettingsPage({
                       workspace.showBaseCurrencyApprox !== false
                     }
                   />
-                  <div className="grid gap-2 rounded-lg border bg-muted/30 p-3 sm:grid-cols-2">
-                    {invoiceSetupItems.map((item) => {
-                      const Icon = item.done ? CheckCircle2 : Circle;
-                      return (
-                        <div
-                          key={item.label}
-                          className="flex items-center gap-2 text-xs"
-                        >
-                          <Icon
-                            className={
-                              item.done
-                                ? "h-4 w-4 text-emerald-600"
-                                : "h-4 w-4 text-muted-foreground"
-                            }
-                          />
-                          <span
-                            className={
-                              item.done
-                                ? "text-slate-700"
-                                : "text-muted-foreground"
-                            }
-                          >
-                            {item.label}
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
                 </CardContent>
               </Card>
             </>
