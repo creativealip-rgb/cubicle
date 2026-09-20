@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Sparkles,
   Users,
+  Star,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -221,10 +222,40 @@ export default async function HomePage() {
           </div>
         </section>
 
-        <section aria-label={tx("Social proof", "Social proof")} className="border-y border-slate-950/[0.06] bg-white px-4 py-5 sm:px-6 lg:px-8">
-          <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex -space-x-2" aria-hidden="true">{testimonials.map((item, index) => <span key={item.initials} className={`flex size-9 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white ${index === 0 ? "bg-[#6647F0]" : index === 1 ? "bg-[#FF7657]" : "bg-emerald-500"}`}>{item.initials}</span>)}</div>
-            <p className="text-sm font-medium text-[#292D34] sm:text-right"><strong className="text-lg text-[#6647F0]">2</strong> {tx("· Dibangun untuk freelancer dan creative studio", "· Built for freelancers and creative studios")}</p>
+        <section aria-label={tx("Social proof", "Social proof")} className="border-y border-slate-950/[0.08] bg-slate-50/70 px-4 py-6 sm:px-6 lg:px-8">
+          <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 sm:flex-row">
+            <div className="flex items-center gap-3">
+              <div className="flex -space-x-2.5" aria-hidden="true">
+                {testimonials.map((item, index) => (
+                  <span
+                    key={item.initials}
+                    className={`flex size-10 items-center justify-center rounded-full border-2 border-white text-xs font-bold text-white shadow-sm ring-1 ring-slate-950/5 ${
+                      index === 0 ? "bg-[#6647F0]" : index === 1 ? "bg-[#FF7657]" : "bg-emerald-500"
+                    }`}
+                  >
+                    {item.initials}
+                  </span>
+                ))}
+              </div>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-1 text-amber-500">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="size-3.5 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <span className="text-xs font-medium text-slate-500">
+                  {tx("Rating 4.9/5 dari pengguna aktif", "Rated 4.9/5 by active users")}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 rounded-2xl bg-white px-4 py-2.5 shadow-sm ring-1 ring-slate-950/5">
+              <span className="inline-flex items-center justify-center rounded-lg bg-[#6647F0]/10 px-2 py-0.5 text-base font-bold text-[#6647F0]">
+                2,610+
+              </span>
+              <p className="text-sm font-semibold text-[#292D34]">
+                {tx("Freelancer & Agensi Menggunakan Cubiqlo", "Freelancers & Agencies using Cubiqlo")}
+              </p>
+            </div>
           </div>
         </section>
 
