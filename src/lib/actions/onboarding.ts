@@ -11,6 +11,7 @@ const onboardingSchema = z.object({
   workspaceName: z.string().trim().min(2, "Workspace name is required").max(80).optional(),
   plan: z.enum(["solo", "team", "enterprise"]).optional(),
   source: z.enum(["instagram", "google", "friend", "tiktok", "other"]).optional(),
+  sourceOther: z.string().trim().max(120).optional(),
 });
 
 export async function finishOnboarding(input: z.infer<typeof onboardingSchema>) {
@@ -24,6 +25,7 @@ export async function finishOnboarding(input: z.infer<typeof onboardingSchema>) 
     workspaceName: parsed.workspaceName ?? workspace.name,
     plan: parsed.plan,
     source: parsed.source,
+    sourceOther: parsed.sourceOther,
   });
 
   return { success: true, workspace };

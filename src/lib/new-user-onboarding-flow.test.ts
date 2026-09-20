@@ -31,11 +31,14 @@ describe("new user onboarding flow", () => {
       expect(source).not.toContain("router.push(\"/app/dashboard\")");
       expect(source).not.toContain("Ke Dashboard");
     }
+    expect(flow).toContain("sourceOther");
+    expect(flow).toContain("Tulis sumber lain...");
   });
 
   it("persists plan and source in onboarding activity metadata", () => {
     expect(action).toContain('z.enum(["solo", "team", "enterprise"])');
     expect(action).toContain('z.enum(["instagram", "google", "friend", "tiktok", "other"])');
+    expect(action).toContain("sourceOther");
     expect(action).toContain("plan: parsed.plan");
     expect(action).toContain("source: parsed.source");
   });

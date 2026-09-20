@@ -6,6 +6,7 @@ import { useAppTransition } from "@/lib/transition-provider";
 import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, Loader2, Settings, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { finishOnboarding } from "@/lib/actions/onboarding";
 
 type PlanChoice = "solo" | "team" | "enterprise";
@@ -39,13 +40,14 @@ export function OnboardingFlow() {
   const [error, setError] = useState<string | null>(null);
   const [plan, setPlan] = useState<PlanChoice | "">("");
   const [source, setSource] = useState<SourceChoice | "">("");
+  const [sourceOther, setSourceOther] = useState("");
 
   async function finish() {
     if (!plan || !source || loading) return;
     setLoading(true);
     setError(null);
     try {
-      await finishOnboarding({ plan, source });
+      await finishOnboarding({ plan, source, sourceOther: sourceOther.trim() || undefined });
       router.push("/app/settings?tab=account");
       refresh();
     } catch (cause) {
@@ -115,6 +117,15 @@ export function OnboardingFlow() {
                     {source === item.id && <Check className="h-4 w-4 text-primary" />}
                   </button>
                 ))}
+                <Input
+                  value={sourceOther}
+                  onChange={(event) => {
+                    setSourceOther(event.target.value);
+                    setSource("other");
+                  }}
+                  placeholder="Tulis sumber lain..."
+                  className="h-11 rounded-xl sm:col-span-2"
+                />
               </div>
             </div>
           )}
