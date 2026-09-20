@@ -170,18 +170,7 @@ export function InvoiceFullEditor({ invoice, initialItems, clients, projects, so
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>{t("Status", "Status")}</Label>
-              <Select value={form.status} disabled={locked || form.status === "paid"} onValueChange={(status) => setForm({ ...form, status })}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="draft">Draft</SelectItem>
-                  <SelectItem value="sent">Sent</SelectItem>
-                  <SelectItem value="viewed">Viewed</SelectItem>
-                  <SelectItem value="overdue">Overdue</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+
           </CardContent>
         </Card>
 

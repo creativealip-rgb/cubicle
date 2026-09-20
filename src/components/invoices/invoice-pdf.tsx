@@ -338,7 +338,7 @@ export function InvoicePDF({
   items,
   amountPaid,
 }: InvoicePDFProps) {
-  const companyName = workspace.billingName || "Cubiqlo";
+  const companyName = workspace.billingName || "";
   const initials = companyName.slice(0, 2).toUpperCase();
   const sub = Number(invoice.subtotal);
   const tax = Number(invoice.tax);
