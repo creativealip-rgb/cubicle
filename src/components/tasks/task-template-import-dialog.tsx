@@ -168,7 +168,6 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
               </div>;
             })}
           </div> : null}
-          {projectId && preview.length > 0 && <p className="text-center text-sm font-medium">{t("Import", "Import")} {selectedItems.length} {t("subtask ke", "subtasks into")} {projects.find((project) => project.id === projectId)?.name}</p>}
           <Button className="w-full" onClick={submit} disabled={loading || !projectId || preview.length === 0 || selectedItems.length === 0 || !previewFingerprint}>{t("Import Subtask Terpilih", "Import Selected Subtasks")}</Button>
         </div>
       </DialogContent>

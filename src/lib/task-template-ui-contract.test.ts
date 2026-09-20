@@ -22,5 +22,7 @@ describe("task template UI contract", () => {
     expect(importDialogSource).not.toContain("Refresh preview");
     expect(importDialogSource).not.toContain("Muat ulang preview");
     expect(importDialogSource).toContain("View Preview");
+    expect(importDialogSource).not.toContain("subtasks into");
+    expect(importDialogSource).not.toContain("subtask ke");
   });
 });
