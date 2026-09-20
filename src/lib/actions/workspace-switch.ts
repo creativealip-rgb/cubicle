@@ -70,12 +70,12 @@ export async function getUserWorkspaces(): Promise<{
       name: workspaces.name,
       slug: workspaces.slug,
       role: workspaceMembers.role,
+      ownerId: workspaces.ownerId,
     })
     .from(workspaceMembers)
     .innerJoin(workspaces, eq(workspaceMembers.workspaceId, workspaces.id))
     .where(eq(workspaceMembers.userId, userId))
-    .orderBy(workspaces.name);
-
+    .orderBy(workspaces.createdAt);
   const currentPlan = await getUserPlan(userId);
   const cookieStore = await cookies();
   const activeId = cookieStore.get(COOKIE_NAME)?.value;
@@ -90,6 +90,7 @@ export async function getUserWorkspaces(): Promise<{
   return {
     workspaces: rows.map(r => ({
       ...r,
+      isOwner: r.ownerId === userId,
       isActive: r.id === activeWorkspaceId,
     })),
     plan: currentPlan,

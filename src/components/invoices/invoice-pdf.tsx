@@ -339,7 +339,6 @@ export function InvoicePDF({
   amountPaid,
 }: InvoicePDFProps) {
   const companyName = workspace.billingName || "";
-  const initials = companyName.slice(0, 2).toUpperCase();
   const sub = Number(invoice.subtotal);
   const tax = Number(invoice.tax);
   const discount = Number(invoice.discount);
@@ -376,9 +375,8 @@ export function InvoicePDF({
               // eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer Image has no alt prop API
               <Image src={workspace.logoUrl} style={styles.logo} />
             ) : (
-              <View style={styles.logoFallback}>
-                <Text style={styles.logoFallbackText}>{initials}</Text>
-              </View>
+              // eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer Image has no alt prop API
+              <Image src="https://cubiqlo.com/logo-header.png" style={{ width: 96, height: 32, marginRight: 12, objectFit: "contain" }} />
             )}
             <View style={{ flex: 1 }}>
               <Text style={styles.companyName}>

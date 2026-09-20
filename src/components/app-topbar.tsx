@@ -58,6 +58,7 @@ type WorkspaceItem = {
   name: string;
   slug: string;
   role: string;
+  isOwner?: boolean;
   isActive: boolean;
 };
 
@@ -349,8 +350,11 @@ export function AppTopbar({ user }: AppTopbarProps) {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {(() => {
-                  const mainWorkspace = wsData?.workspaces.filter((ws) => ws.name.trim().toLowerCase() === "alip") ?? [];
-                  const teamWorkspaces = wsData?.workspaces.filter((ws) => ws.name.trim().toLowerCase() !== "alip") ?? [];
+                  // Main workspace is the user's primary/owned workspace (or the very first one created)
+                  const allWorkspaces = wsData?.workspaces ?? [];
+                  const mainWorkspace = allWorkspaces.filter((ws, idx) => (ws.isOwner !== undefined ? ws.isOwner : idx === 0)).slice(0, 1);
+                  const mainId = mainWorkspace[0]?.id;
+                  const teamWorkspaces = allWorkspaces.filter((ws) => ws.id !== mainId);
                   const renderWorkspace = (ws: WorkspaceItem) => (
                   <DropdownMenuItem
                     key={ws.id}
@@ -375,7 +379,15 @@ export function AppTopbar({ user }: AppTopbarProps) {
                     <>
                       {mainWorkspace.map(renderWorkspace)}
                       <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("Workspace tim", "Team Workspaces")}</DropdownMenuLabel>
-                      {teamWorkspaces.map(renderWorkspace)}
+                      {teamWorkspaces.length > 0 ? (
+                        teamWorkspaces.map(renderWorkspace)
+                      ) : (
+                        <p className="px-2 py-1.5 text-xs text-muted-foreground italic">
+                          {isFree
+                            ? t("Upgrade untuk multi workspace", "Upgrade for multiple workspaces")
+                            : t("Belum ada workspace tim", "No team workspaces")}
+                        </p>
+                      )}
                     </>
                   );
                 })()}
