@@ -681,6 +681,22 @@ export const userExtraWorkspaceEntitlements = pgTable("user_extra_workspace_enti
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const userAiAddons = pgTable("user_ai_addons", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  requestsQuota: integer("requests_quota").notNull().default(1000),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull().default("10000"),
+  billingPeriod: text("billing_period", { enum: ["monthly", "yearly"] }).notNull().default("yearly"),
+  status: text("status", { enum: ["active", "cancel_scheduled", "cancelled", "expired"] }).notNull().default("active"),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull().defaultNow(),
+  endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+  autoRenew: boolean("auto_renew").notNull().default(false),
+  providerOrderId: text("provider_order_id").unique(),
+  providerEventId: text("provider_event_id").unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 // ─── AI usage counter (DB-backed rate limit, persists across restarts) ───
 
 export const aiUsageDaily = pgTable("ai_usage_daily", {

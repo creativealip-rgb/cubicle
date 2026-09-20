@@ -36,6 +36,8 @@ export const STORAGE_ADDONS = {
 
 export const EXTRA_WORKSPACE_ADDON = { monthlyAmount: 30_000 } as const;
 
+export const AI_REQUESTS_ADDON = { requestsQuota: 1000, amount: 10_000 } as const;
+
 export type StorageAddonKey = keyof typeof STORAGE_ADDONS;
 
 export function isStorageAddonKey(value: unknown): value is StorageAddonKey {

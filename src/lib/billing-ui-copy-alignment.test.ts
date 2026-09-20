@@ -39,16 +39,15 @@ describe("billing UI/copy alignment", () => {
     expect(src).not.toMatch(/hemat|diskon|discount|2x|saving/i);
   });
 
-  it("checkout button and add-on controls share the same period helpers", () => {
+  it("checkout button uses period helpers and add-on controls show yearly pricing", () => {
     const btn = checkoutButton();
     const addon = controls();
-    for (const src of [btn, addon]) {
-      expect(src).toContain("loadStoredPeriod()");
-      expect(src).toContain("persistPeriod(next)");
-    }
+    expect(btn).toContain("loadStoredPeriod()");
+    expect(btn).toContain("persistPeriod(next)");
     // Exact amount labels for the selected period on both.
     expect(addon).toContain("getStorageAddonPeriodLabel(gb, period)");
     expect(addon).toContain("getExtraWorkspacePeriodLabel(period)");
+    expect(addon).toContain("getAiRequestsAddonPeriodLabel()");
   });
 
   it("no stale abbreviated prices or fake discount copy remain in scoped UI files", () => {

@@ -102,4 +102,12 @@ export function getExtraWorkspacePeriodLabel(period: BillingPeriod): string {
   return formatRupiah(getExtraWorkspaceAmount(period));
 }
 
+export function getAiRequestsAddonAmount(): number {
+  return 10_000;
+}
+
+export function getAiRequestsAddonPeriodLabel(): string {
+  return formatRupiah(10_000);
+}
+
 export { BILLING_PLANS };
