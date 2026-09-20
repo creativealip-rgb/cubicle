@@ -101,10 +101,10 @@ export default async function CalendarPage() {
     <div className="space-y-4 sm:space-y-6">
       <PageHeader
         icon={Calendar}
-        title={t("Kalender & Janji Temu", "Calendar & Appointments")}
+        title={t("Booking Appointment", "Booking Appointment")}
         description={t(
-          "Kelola janji temu klien, ketersediaan jadwal mingguan, dan integrasi link booking publik.",
-          "Manage client appointments, weekly availability rules, and public booking link.",
+          "Kelola jadwal janji temu klien, ketersediaan jam kerja, dan tautan booking publik.",
+          "Manage client booking schedule, working availability hours, and public booking link.",
         )}
         actions={
           ws.bookingSlug ? (
@@ -156,12 +156,12 @@ export default async function CalendarPage() {
           <CardContent className="p-3.5 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                {t("Status Halaman Booking", "Public Booking Link")}
+                {t("Booking Slug", "Booking Slug")}
               </p>
               <div className="mt-0.5 flex items-center gap-1.5">
-                <span className="inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-sm font-bold text-foreground">
-                  {ws.bookingSlug ? `/${ws.bookingSlug}` : t("Belum Diatur", "Disabled")}
+                <span className={ws.bookingSlug ? "inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" : "inline-block h-2 w-2 rounded-full bg-muted-foreground/50"} />
+                <span className="text-sm font-bold text-foreground truncate font-mono">
+                  {ws.bookingSlug ? `/booking/${ws.bookingSlug}` : t("Belum Diatur", "Not Set")}
                 </span>
               </div>
             </div>

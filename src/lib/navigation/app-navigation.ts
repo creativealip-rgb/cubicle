@@ -54,7 +54,7 @@ export const appNavigation: NavigationEntry[] = [
     direct("expenses", "/app/expenses", Wallet, { id: "Pengeluaran", en: "Expenses" }, { id: "Catat biaya operasional", en: "Record operating costs" }),
     direct("reports", "/app/reports", BarChart3, { id: "Statement", en: "Statement" }, { id: "Analisis keuangan dan performa waktu", en: "Analyze financial and time performance" }),
   ]},
-  direct("calendar", "/app/calendar", Calendar, { id: "Kalender", en: "Calendar" }),
+  direct("calendar", "/app/calendar", Calendar, { id: "Appointment", en: "Appointment" }),
   { kind: "group", id: "personal", icon: NotebookPen, label: { id: "Personal", en: "Personal" }, children: [
     direct("notes", "/app/personal", NotebookPen, { id: "Catatan", en: "Notes" }, { id: "Simpan catatan pribadi", en: "Keep private notes" }, undefined, undefined, true),
     direct("productivity", "/app/productivity", CheckSquare, { id: "Produktivitas", en: "Productivity" }, { id: "Kelola tujuan dan kebiasaan pribadi", en: "Manage personal goals and habits" }),
