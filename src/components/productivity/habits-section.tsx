@@ -133,6 +133,7 @@ export async function HabitsSection({
           habits={activeHabits}
           today={today}
           lang={lang}
+          goals={goals}
         />
       ) : (
         <div className="rounded-xl border border-dashed p-8 text-center">
