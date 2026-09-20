@@ -13,6 +13,7 @@ import {
   getActiveExtraWorkspaceSlots,
   listActiveExtraWorkspaceEntitlements,
 } from "@/lib/extra-workspace";
+import { listActiveAiAddons, getUserPurchasedAiQuota } from "@/lib/ai-addons";
 import { getUserPlan } from "@/lib/plan";
 import { getUploadQuotaLimits } from "@/lib/upload-safety";
 import { revalidatePath } from "next/cache";
@@ -34,18 +35,22 @@ export async function listActiveAddOns(): Promise<{
   storageAddons: Awaited<ReturnType<typeof listActiveStorageAddons>>;
   extraWorkspaceSlots: number;
   extraWorkspaceEntitlements: Awaited<ReturnType<typeof listActiveExtraWorkspaceEntitlements>>;
+  aiAddonQuota: number;
+  aiAddons: Awaited<ReturnType<typeof listActiveAiAddons>>;
 }> {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
 
-  const [storageAddons, storageBytes, extraWorkspaceSlots, extraWorkspaceEntitlements] = await Promise.all([
+  const [storageAddons, storageBytes, extraWorkspaceSlots, extraWorkspaceEntitlements, aiAddons, aiAddonQuota] = await Promise.all([
     listActiveStorageAddons(user.id),
     getActiveStorageAddonBytes(user.id),
     getActiveExtraWorkspaceSlots(user.id),
     listActiveExtraWorkspaceEntitlements(user.id),
+    listActiveAiAddons(user.id),
+    getUserPurchasedAiQuota(user.id),
   ]);
 
-  return { ok: true, storageBytes, storageAddons, extraWorkspaceSlots, extraWorkspaceEntitlements };
+  return { ok: true, storageBytes, storageAddons, extraWorkspaceSlots, extraWorkspaceEntitlements, aiAddonQuota, aiAddons };
 }
 
 /** Storage add-on usage context (bytes + limits) for quota UI. */

@@ -36,9 +36,19 @@ function formatAmount(amount: string): string {
 export function AddonManagement({
   storageAddons,
   extraWorkspaceEntitlements,
+  aiAddons = [],
 }: {
   storageAddons: Addon[];
   extraWorkspaceEntitlements: ExtraWorkspaceEntitlement[];
+  aiAddons?: Array<{
+    id: string;
+    requestsQuota: number;
+    amount: string;
+    billingPeriod: string;
+    status: string;
+    startsAt: Date;
+    endsAt: Date;
+  }>;
 }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
@@ -77,6 +87,25 @@ export function AddonManagement({
           <Button size="sm" variant="outline" disabled={busy === addon.id || addon.status !== "active"} onClick={() => cancelStorage(addon.id)}>{busy === addon.id ? "…" : t("Batalkan", "Cancel")}</Button>
         </div>
       ))}
+      {aiAddons.length > 0 && (
+        <>
+          <p className="text-sm text-muted-foreground">
+            {t("Kuota AI tambahan aktif", "Active extra AI quota")}: +{aiAddons.reduce((sum, a) => sum + a.requestsQuota, 0).toLocaleString("id-ID")} requests
+          </p>
+          {aiAddons.map((addon) => (
+            <div key={addon.id} className="flex items-center justify-between gap-3 rounded-lg border p-3 text-sm">
+              <span>
+                +{addon.requestsQuota.toLocaleString("id-ID")} AI Requests · {formatAmount(addon.amount)} · {t("berakhir", "ends")} {addon.endsAt.toLocaleDateString()}
+                {addon.status === "cancel_scheduled" && (
+                  <span className="ml-2 text-xs text-muted-foreground">
+                    {t("aktif hingga akhir periode", "active until period end")}
+                  </span>
+                )}
+              </span>
+            </div>
+          ))}
+        </>
+      )}
       {extraWorkspaceEntitlements.length > 0 && (
         <>
           <p className="text-sm text-muted-foreground">

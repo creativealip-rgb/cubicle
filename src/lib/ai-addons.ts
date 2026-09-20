@@ -3,7 +3,27 @@ import { userAiAddons } from "@/db/schema";
 import { and, eq, gte, sql } from "drizzle-orm";
 import { getPeriodExpiry, type BillingPeriod } from "@/lib/billing-plans";
 
-export type AiAddonStatus = "active" | "cancel_scheduled" | "cancelled" | "expired";
+export async function listActiveAiAddons(userId: string, now: Date = new Date()) {
+  return db
+    .select({
+      id: userAiAddons.id,
+      requestsQuota: userAiAddons.requestsQuota,
+      amount: userAiAddons.amount,
+      billingPeriod: userAiAddons.billingPeriod,
+      status: userAiAddons.status,
+      startsAt: userAiAddons.startsAt,
+      endsAt: userAiAddons.endsAt,
+    })
+    .from(userAiAddons)
+    .where(
+      and(
+        eq(userAiAddons.userId, userId),
+        sql`${userAiAddons.status} IN ('active', 'cancel_scheduled')`,
+        gte(userAiAddons.endsAt, now),
+      ),
+    )
+    .orderBy(userAiAddons.createdAt);
+}
 
 export async function getUserPurchasedAiQuota(userId: string, now: Date = new Date()): Promise<number> {
   const [result] = await db
