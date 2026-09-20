@@ -1,7 +1,6 @@
 import {
   createPersonalHabit,
   listPersonalHabits,
-  togglePersonalHabitCheckin,
   updatePersonalHabit,
 } from "@/lib/actions/personal-habits";
 import { isHabitScheduled } from "@/lib/personal-productivity/habits";
@@ -38,11 +37,6 @@ export async function HabitsSection({
       startDate: String(fd.get("startDate")),
       status: "active",
     });
-  }
-
-  async function toggle(habitId: string, date: string) {
-    "use server";
-    await togglePersonalHabitCheckin(habitId, date);
   }
 
   async function archive(fd: FormData) {
@@ -139,7 +133,6 @@ export async function HabitsSection({
           habits={activeHabits}
           today={today}
           lang={lang}
-          toggleAction={toggle}
         />
       ) : (
         <div className="rounded-xl border border-dashed p-8 text-center">

@@ -3,11 +3,16 @@
 import { useMemo, useState, useTransition } from "react";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { togglePersonalHabitCheckin } from "@/lib/actions/personal-habits";
 import { cn } from "@/lib/utils";
 
 export interface HabitItem {
   id: string;
   name: string;
+  startDate: string;
+  frequency: "daily" | "specific_weekdays" | string;
+  weekdays: number[];
   status: string;
   checkins: Array<{ localDate: string }>;
 }
@@ -16,17 +21,16 @@ interface HabitWeeklyGridProps {
   habits: HabitItem[];
   today: string;
   lang?: string;
-  toggleAction: (habitId: string, date: string) => Promise<void>;
 }
 
 export function HabitWeeklyGrid({
   habits,
   today,
   lang = "id",
-  toggleAction,
 }: HabitWeeklyGridProps) {
   const [weekOffset, setWeekOffset] = useState(0);
-  const [isPending, startTransition] = useTransition();
+  const [, startTransition] = useTransition();
+
   const [optimisticCheckins, setOptimisticCheckins] = useState<
     Record<string, Set<string>>
   >(() => {
@@ -40,6 +44,7 @@ export function HabitWeeklyGrid({
   const { weekDays, monthYearLabel } = useMemo(() => {
     const curr = new Date(`${today}T12:00:00Z`);
     const dayOfWeek = curr.getUTCDay();
+    // Monday = 1, Sunday = 0
     const diffToMonday = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
     const monday = new Date(curr);
     monday.setUTCDate(curr.getUTCDate() + diffToMonday + weekOffset * 7);
@@ -49,6 +54,7 @@ export function HabitWeeklyGrid({
       dayName: string;
       dayNum: number;
       isToday: boolean;
+      isFuture: boolean;
     }> = [];
 
     const monthNames = new Set<string>();
@@ -57,7 +63,7 @@ export function HabitWeeklyGrid({
       const d = new Date(monday);
       d.setUTCDate(monday.getUTCDate() + i);
       const dateStr = d.toISOString().slice(0, 10);
-      
+
       const dayName = new Intl.DateTimeFormat(lang === "id" ? "id-ID" : "en-US", {
         weekday: "short",
         timeZone: "UTC",
@@ -75,6 +81,7 @@ export function HabitWeeklyGrid({
         dayName,
         dayNum: d.getUTCDate(),
         isToday: dateStr === today,
+        isFuture: dateStr > today,
       });
     }
 
@@ -84,35 +91,47 @@ export function HabitWeeklyGrid({
     };
   }, [today, weekOffset, lang]);
 
-  const handleToggle = (habitId: string, date: string) => {
+  const handleToggle = (h: HabitItem, date: string, isFuture: boolean) => {
+    if (isFuture) {
+      toast.error(
+        lang === "id"
+          ? "Tidak bisa check-in tanggal yang belum terjadi"
+          : "Future check-ins are not allowed"
+      );
+      return;
+    }
+
+    // Optimistic UI update
     setOptimisticCheckins((prev) => {
-      const set = new Set(prev[habitId] || []);
+      const set = new Set(prev[h.id] || []);
       if (set.has(date)) {
         set.delete(date);
       } else {
         set.add(date);
       }
-      return { ...prev, [habitId]: set };
+      return { ...prev, [h.id]: set };
     });
 
     startTransition(async () => {
       try {
-        await toggleAction(habitId, date);
-      } catch {
+        await togglePersonalHabitCheckin(h.id, date);
+      } catch (err) {
+        // Revert on error
         setOptimisticCheckins((prev) => {
           const original = new Set(
-            habits.find((h) => h.id === habitId)?.checkins.map((c) => c.localDate) || []
+            habits.find((item) => item.id === h.id)?.checkins.map((c) => c.localDate) || []
           );
-          return { ...prev, [habitId]: original };
+          return { ...prev, [h.id]: original };
         });
+        toast.error(err instanceof Error ? err.message : "Gagal update check-in");
       }
     });
   };
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       {/* Header navigasi Minggu & Bulan */}
-      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/50 p-2.5 sm:px-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-slate-200/80 bg-slate-50/50 px-3 py-2">
         <div className="flex items-center gap-2">
           <span className="text-xs font-bold text-slate-900 capitalize">
             {monthYearLabel}
@@ -125,7 +144,7 @@ export function HabitWeeklyGrid({
               onClick={() => setWeekOffset(0)}
               className="h-6 rounded-md px-2 text-[11px] font-semibold text-primary hover:bg-primary/10"
             >
-              {lang === "id" ? "Kembali ke Hari Ini" : "Today"}
+              {lang === "id" ? "Hari Ini" : "Today"}
             </Button>
           )}
         </div>
@@ -156,20 +175,22 @@ export function HabitWeeklyGrid({
 
       {/* Grid Tabel Habit */}
       <div className="overflow-x-auto rounded-xl border border-slate-200/80 bg-white shadow-xs">
-        <div className="min-w-[620px]">
+        <div className="min-w-[580px]">
           {/* Header Hari (Senin - Minggu) */}
-          <div className="grid grid-cols-[minmax(200px,1fr)_repeat(7,64px)] border-b border-slate-100 bg-slate-50/80 px-3 py-2 text-xs font-semibold text-slate-600">
-            <span>{lang === "id" ? "Nama Kebiasaan" : "Habit Name"}</span>
+          <div className="grid grid-cols-[minmax(180px,1fr)_repeat(7,48px)] items-center border-b border-slate-100 bg-slate-50/80 px-3 py-2 text-xs font-semibold text-slate-600">
+            <span className="flex items-center h-full text-slate-700">
+              {lang === "id" ? "Nama Kebiasaan" : "Habit Name"}
+            </span>
             {weekDays.map((d) => (
               <div
                 key={d.date}
                 className={cn(
-                  "flex flex-col items-center justify-center rounded-md py-0.5",
+                  "flex flex-col items-center justify-center rounded-lg py-1",
                   d.isToday && "bg-primary/10 text-primary font-bold"
                 )}
               >
-                <span className="text-[10px] uppercase">{d.dayName}</span>
-                <span className="text-[11px]">{d.dayNum}</span>
+                <span className="text-[10px] uppercase tracking-wider">{d.dayName}</span>
+                <span className="text-xs font-semibold">{d.dayNum}</span>
               </div>
             ))}
           </div>
@@ -179,29 +200,33 @@ export function HabitWeeklyGrid({
             {habits.map((h) => (
               <div
                 key={`row-${h.id}`}
-                className="grid grid-cols-[minmax(200px,1fr)_repeat(7,64px)] items-center px-3 py-2.5 transition hover:bg-slate-50/40"
+                className="grid grid-cols-[minmax(180px,1fr)_repeat(7,48px)] items-center px-3 py-2 transition hover:bg-slate-50/50"
               >
-                <span className="truncate pr-3 text-xs font-semibold text-slate-800">
-                  {h.name}
-                </span>
+                <div className="flex items-center min-h-[32px] pr-3">
+                  <span className="truncate text-xs font-semibold text-slate-800">
+                    {h.name}
+                  </span>
+                </div>
                 {weekDays.map((d) => {
                   const done = optimisticCheckins[h.id]?.has(d.date) ?? false;
                   return (
-                    <div key={d.date} className="flex justify-center">
+                    <div key={d.date} className="flex justify-center items-center">
                       <button
                         type="button"
-                        disabled={isPending}
-                        onClick={() => handleToggle(h.id, d.date)}
+                        onClick={() => handleToggle(h, d.date, d.isFuture)}
                         aria-label={`${h.name} ${d.date}`}
+                        disabled={d.isFuture}
                         className={cn(
-                          "flex size-7 items-center justify-center rounded-lg border text-xs transition-all duration-150 active:scale-90",
+                          "flex size-6 items-center justify-center rounded-md border transition-all duration-150 active:scale-90",
                           done
                             ? "border-emerald-600 bg-emerald-500 text-white shadow-xs"
-                            : "border-slate-200 bg-white hover:border-primary/50 text-transparent",
-                          d.isToday && !done && "border-dashed border-primary/40"
+                            : d.isFuture
+                              ? "border-slate-100 bg-slate-50 text-transparent opacity-40 cursor-not-allowed"
+                              : "border-slate-200 bg-white hover:border-primary/50 text-transparent cursor-pointer",
+                          d.isToday && !done && "border-dashed border-primary/50 ring-1 ring-primary/20"
                         )}
                       >
-                        {done && <Check className="h-4 w-4 stroke-[3]" />}
+                        {done && <Check className="h-3.5 w-3.5 stroke-[3]" />}
                       </button>
                     </div>
                   );
