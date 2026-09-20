@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createProject, updateProject } from "@/lib/actions/projects";
@@ -13,9 +14,8 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useT } from "@/lib/i18n-client";
 import { useAppTransition } from "@/lib/transition-provider";
-import { ChevronDown, Plus } from "lucide-react";
+import { AlertCircle, ChevronDown, Plus } from "lucide-react";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
-
 
 type BillingModel = "fixed_price" | "hourly" | "retainer";
 type Defaults = {
@@ -65,6 +65,7 @@ export function ProjectForm({
   const router = useRouter();
   const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
+  const [missingBillingConfig, setMissingBillingConfig] = useState(false);
 
   const [clientSearch, setClientSearch] = useState(() => {
     const selected = clients.find((c) => c.id === (defaultValues?.clientId ?? clientId ?? ""));
@@ -135,6 +136,8 @@ export function ProjectForm({
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
+    setMissingBillingConfig(false);
+
     try {
       const data = {
         ...form,
@@ -151,6 +154,12 @@ export function ProjectForm({
         status: form.status as "draft" | "active" | "on_hold" | "completed" | "cancelled" | "archived",
         clientVisible: form.clientVisible,
       };
+
+      if (form.billingModel === "hourly" && (!form.rate || Number(form.rate) <= 0)) {
+        setMissingBillingConfig(true);
+        setLoading(false);
+        return;
+      }
 
       if (mode === "create") {
         const result = await createProject(data);
@@ -201,6 +210,46 @@ export function ProjectForm({
 
   return (
     <form onSubmit={submit} className={mode === "create" ? "space-y-4" : "space-y-5"}>
+      {missingBillingConfig && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50/90 p-4 text-xs text-amber-900 shadow-sm space-y-2.5">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-bold text-amber-950">
+                {t("Rate per Jam & Pengaturan Tagihan Belum Lengkap", "Hourly Rate & Billing Settings Incomplete")}
+              </p>
+              <p className="mt-0.5 text-amber-800 leading-relaxed">
+                {t(
+                  "Untuk membuat proyek model per jam, tentukan rate per jam proyek atau atur default currency & hourly rate di pengaturan invoice workspace.",
+                  "To create an hourly project, please set the hourly rate or configure your default workspace currency and hourly rate in invoice settings."
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <Button
+              type="button"
+              size="sm"
+              asChild
+              className="h-8 rounded-lg bg-amber-600 px-3 text-xs font-semibold text-white hover:bg-amber-700"
+            >
+              <Link href="/app/settings?tab=invoice" target="_blank">
+                {t("Buka Invoice Settings", "Open Invoice Settings")}
+              </Link>
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => setMissingBillingConfig(false)}
+              className="h-8 rounded-lg text-xs text-amber-900 hover:bg-amber-100"
+            >
+              {t("Tutup", "Dismiss")}
+            </Button>
+          </div>
+        </div>
+      )}
+
       <div className={`grid gap-4 ${mode === "create" || section !== "all" ? "grid-cols-1" : "sm:grid-cols-2"}`}>
         {/* Left Column: Basic Info */}
         {section !== "billing" && <div className="space-y-4">
@@ -220,6 +269,35 @@ export function ProjectForm({
               </SelectContent>
             </Select>
           </div>}
+
+          {mode === "create" && form.billingModel === "hourly" && (
+            <div className="grid grid-cols-2 gap-3 rounded-xl border border-slate-200/80 bg-slate-50/50 p-3">
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">{t("Mata Uang", "Currency")}</Label>
+                <Select value={form.currency} onValueChange={(val) => setForm((p) => ({ ...p, currency: val }))}>
+                  <SelectTrigger className="h-9 bg-white text-xs"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="IDR">IDR (Rp)</SelectItem>
+                    <SelectItem value="USD">USD ($)</SelectItem>
+                    <SelectItem value="EUR">EUR (€)</SelectItem>
+                    <SelectItem value="SGD">SGD (S$)</SelectItem>
+                    <SelectItem value="GBP">GBP (£)</SelectItem>
+                    <SelectItem value="AUD">AUD (A$)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">{t("Rate per Jam", "Hourly Rate")}</Label>
+                <Input
+                  type="number"
+                  placeholder="e.g. 50"
+                  value={form.rate}
+                  onChange={(e) => setForm((p) => ({ ...p, rate: e.target.value }))}
+                  className="h-9 bg-white text-xs"
+                />
+              </div>
+            </div>
+          )}
 
           {!clientId && (
             <div className="space-y-1.5">
@@ -337,61 +415,30 @@ export function ProjectForm({
                   {mode === "edit" && defaultValues?.billingModel === "retainer" && <SelectItem value="retainer">Retainer</SelectItem>}
                 </SelectContent>
               </Select>
-              {billingModelLocked && (
-                <p className="text-[11px] text-muted-foreground">
-                  {t("Model tagihan dikunci karena proyek sudah memiliki waktu atau invoice.", "Billing model is locked because this project already has time entries or invoices.")}
-                </p>
-              )}
             </div>
-
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">{t("Mata Uang", "Currency")}</Label>
-              <Select value={form.currency} onValueChange={(v) => setForm((p) => ({ ...p, currency: v }))}>
-                <SelectTrigger className="h-9 text-sm">
-                  <SelectValue />
-                </SelectTrigger>
+              <Select value={form.currency} onValueChange={(val) => setForm((p) => ({ ...p, currency: val }))}>
+                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="IDR">IDR</SelectItem>
                   <SelectItem value="USD">USD</SelectItem>
                   <SelectItem value="EUR">EUR</SelectItem>
                   <SelectItem value="SGD">SGD</SelectItem>
-                  <SelectItem value="JPY">JPY</SelectItem>
+                  <SelectItem value="GBP">GBP</SelectItem>
                   <SelectItem value="AUD">AUD</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium">{t("Pelacakan Waktu", "Time Tracking")}</Label>
-            <Select value={form.timeTrackingMode} onValueChange={(value) => setForm((current) => ({ ...current, timeTrackingMode: value as "off" | "internal" | "billable" }))}>
-              <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="off">{t("Nonaktif", "Off")}</SelectItem>
-                <SelectItem value="internal">Internal</SelectItem>
-                <SelectItem value="billable">{t("Dapat Ditagih", "Billable")}</SelectItem>
-              </SelectContent>
-            </Select>
-            <p className="text-[11px] text-muted-foreground">{t("Aktifkan agar proyek muncul pada timer dan Tambah Log.", "Enable to show this project in timers and Add Log.")}</p>
-          </div>
-
-          {form.billingModel === "fixed_price" && (
-            <div className="space-y-3 rounded-lg border p-3 bg-muted/10">
-              {field(t(`Nilai Proyek (${form.currency})`, `Project Value (${form.currency})`), "budget", "number")}
-            </div>
-          )}
-
-          {form.billingModel === "hourly" && (
-            <div className="space-y-3 rounded-lg border p-3 bg-muted/10">
-              {field(t(`Tarif per Jam (${form.currency})`, `Hourly Rate (${form.currency})`), "rate", "number")}
-              {field(t(`Estimasi Budget (${form.currency})`, `Estimated Budget (${form.currency})`), "budget", "number")}
-            </div>
-          )}
+          {form.billingModel === "fixed_price" && field(t(`Total Anggaran / Budget (${form.currency})`, `Budget (${form.currency})`), "budget", "number")}
+          {form.billingModel === "hourly" && field(t(`Tarif per Jam (${form.currency})`, `Hourly Rate (${form.currency})`), "rate", "number")}
 
           {form.billingModel === "retainer" && (
-            <div className="space-y-3 rounded-lg border p-3 bg-muted/10">
-              {field(t(`Biaya Retainer (${form.currency})`, `Retainer Fee (${form.currency})`), "retainerFee", "number")}
-              <div className="grid gap-3 grid-cols-2">
+            <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+              <div className="grid gap-3 grid-cols-3">
+                {field(t(`Biaya Bulanan (${form.currency})`, `Monthly Fee (${form.currency})`), "retainerFee", "number")}
                 {field(t("Jam Termasuk (Menit)", "Included Minutes"), "retainerIncludedMinutes", "number")}
                 {field(t("Tanggal Reset Bulanan", "Monthly Reset Day"), "retainerResetDay", "number")}
               </div>

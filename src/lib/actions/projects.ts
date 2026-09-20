@@ -20,9 +20,20 @@ async function getWorkspaceId(): Promise<string> {
 
 async function assertWorkspaceCurrency(workspaceId: string, currency: string) {
   const [workspace] = await db.select({ defaultCurrency: workspaces.defaultCurrency }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
-  if (workspace?.defaultCurrency === currency) return;
+  if (!currency || workspace?.defaultCurrency === currency) return;
   const [rate] = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency }).from(workspaceCurrencyRates).where(and(eq(workspaceCurrencyRates.workspaceId, workspaceId), eq(workspaceCurrencyRates.fromCurrency, currency))).limit(1);
-  if (!rate) throw new Error(`Currency ${currency} belum dikonfigurasi. Atur currency workspace terlebih dahulu.`);
+  if (!rate) {
+    // Auto initialize currency rate 1.0 if not yet explicitly mapped so projects in foreign currency can be created seamlessly
+    try {
+      await db.insert(workspaceCurrencyRates).values({
+        workspaceId,
+        fromCurrency: currency,
+        rate: "1",
+      }).onConflictDoNothing();
+    } catch {
+      // ignore conflict or duplicate
+    }
+  }
 }
 
 const projectInputSchema = z.object({

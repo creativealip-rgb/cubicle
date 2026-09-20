@@ -184,13 +184,64 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
             <div className="space-y-1"><Label htmlFor="phone" className="text-sm font-medium">{t("Telepon", "Phone")}</Label><Input id="phone" value={form.phone} onChange={(e) => set("phone", e.target.value)} placeholder="+62..." className="h-10 text-sm" /></div>
           </div>
         </div>
-        <button type="button" aria-expanded={showMoreDetails} onClick={() => setShowMoreDetails((open) => !open)} className="flex w-full items-center justify-between border-t py-3 text-sm font-medium text-primary">{t("Detail lainnya", "More details")}<ChevronDown className={`h-4 w-4 transition-transform ${showMoreDetails ? "rotate-180" : ""}`} /></button>
-        {showMoreDetails && <div className="space-y-3 rounded-lg bg-muted/30 p-3">
-          <div className="space-y-1"><Label htmlFor="clientNumber" className="text-xs font-medium">Custom Client ID</Label><Input id="clientNumber" value={form.clientNumber} onChange={(e) => set("clientNumber", e.target.value)} placeholder={t("Otomatis jika kosong", "Auto-generated if empty")} className="h-9 text-sm" maxLength={50} /><p className="text-[11px] text-muted-foreground">{t("Kosongkan untuk membuat ID otomatis.", "Leave empty to generate automatically.")}</p></div>
-          <div className="grid gap-3 sm:grid-cols-2"><div className="space-y-1"><Label htmlFor="website" className="text-xs font-medium">Website</Label><Input id="website" value={form.website} onChange={(e) => set("website", e.target.value)} placeholder="https://..." className="h-9 text-sm" /></div><div className="space-y-1"><Label htmlFor="tags" className="text-xs font-medium">{t("Tag", "Tags")}</Label><Input id="tags" value={form.tags} onChange={(e) => set("tags", e.target.value)} placeholder="web, branding" className="h-9 text-sm" /></div></div>
-          <div className="space-y-1"><Label htmlFor="address" className="text-xs font-medium">{t("Alamat", "Address")}</Label><Textarea id="address" value={form.address} onChange={(e) => set("address", e.target.value)} placeholder={t("Alamat lengkap", "Full address")} rows={2} className="min-h-16 resize-y text-sm" /></div>
-          <div className="space-y-1"><Label htmlFor="internalNotes" className="text-xs font-medium">{t("Catatan internal", "Internal notes")}</Label><Textarea id="internalNotes" value={form.internalNotes} onChange={(e) => set("internalNotes", e.target.value)} placeholder={t("Preferensi klien, jadwal report, dll.", "Client preferences, reporting schedule, etc.")} rows={3} className="min-h-20 resize-y text-sm" /></div>
-        </div>}
+        <button
+          type="button"
+          aria-expanded={showMoreDetails}
+          onClick={() => setShowMoreDetails((open) => !open)}
+          className="flex w-full items-center justify-between border-t border-slate-100 py-2.5 text-xs font-semibold text-primary hover:underline"
+        >
+          <span>{t("Detail lainnya (opsional)", "More details (optional)")}</span>
+          <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${showMoreDetails ? "rotate-180" : ""}`} />
+        </button>
+        {showMoreDetails && (
+          <div className="space-y-3 rounded-xl border border-slate-200/80 bg-slate-50/50 p-3.5">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1">
+                <Label htmlFor="clientNumber" className="text-xs font-medium text-slate-700">Custom Client ID</Label>
+                <Input
+                  id="clientNumber"
+                  value={form.clientNumber}
+                  onChange={(e) => set("clientNumber", e.target.value)}
+                  placeholder={t("Otomatis jika kosong", "Auto-generated")}
+                  className="h-9 rounded-lg bg-white text-xs"
+                  maxLength={50}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="website" className="text-xs font-medium text-slate-700">Website</Label>
+                <Input
+                  id="website"
+                  value={form.website}
+                  onChange={(e) => set("website", e.target.value)}
+                  placeholder="https://..."
+                  className="h-9 rounded-lg bg-white text-xs"
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="address" className="text-xs font-medium text-slate-700">{t("Alamat", "Address")}</Label>
+              <Textarea
+                id="address"
+                value={form.address}
+                onChange={(e) => set("address", e.target.value)}
+                placeholder={t("Alamat lengkap klien...", "Full client address...")}
+                rows={2}
+                className="min-h-14 resize-none rounded-lg bg-white text-xs"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="internalNotes" className="text-xs font-medium text-slate-700">{t("Catatan internal", "Internal notes")}</Label>
+              <Textarea
+                id="internalNotes"
+                value={form.internalNotes}
+                onChange={(e) => set("internalNotes", e.target.value)}
+                placeholder={t("Preferensi klien, jadwal report, dll.", "Client preferences, reporting schedule, etc.")}
+                rows={2}
+                className="min-h-16 resize-none rounded-lg bg-white text-xs"
+              />
+            </div>
+          </div>
+        )}
         <div className="sticky bottom-0 -mx-1 flex justify-end gap-2 border-t bg-background/95 px-1 pt-3 backdrop-blur"><Button type="button" variant="outline" size="sm" onClick={onCancel}>{t("Batal", "Cancel")}</Button><LoadingButton type="submit" loading={loading} loadingText={t("Menyimpan...", "Saving...")} className="min-w-36" size="sm">{t("Buat Klien", "Create Client")}</LoadingButton></div>
       </form>
     );
@@ -263,7 +314,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
                 />
               </div>
             </div>
-            <div className="grid gap-2 grid-cols-2">
+            <div className="space-y-1">
               <div className="space-y-1">
                 <Label htmlFor="website" className="text-xs font-medium">{t("Website", "Website")}</Label>
                 <Input
@@ -271,16 +322,6 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
                   value={form.website}
                   onChange={(e) => set("website", e.target.value)}
                   placeholder="https://..."
-                  className="h-9 text-sm"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="tags" className="text-xs font-medium">{t("Tag", "Tags")}</Label>
-                <Input
-                  id="tags"
-                  value={form.tags}
-                  onChange={(e) => set("tags", e.target.value)}
-                  placeholder="web, branding"
                   className="h-9 text-sm"
                 />
               </div>
