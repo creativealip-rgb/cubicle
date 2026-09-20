@@ -58,33 +58,20 @@ export default async function DashboardPage() {
   }
   const workspaceId = workspace.id;
   const workspaceCurrency = workspace.defaultCurrency || "IDR";
-  const workspaceProfileDone = Boolean(
-    workspace.billingName &&
-      workspace.billingEmail &&
-      (workspace.billingAddress || workspace.logoUrl || workspace.billingPhone),
-  );
-  const invoiceSettingsDone = Boolean(
-    workspace.defaultCurrency &&
-      (workspace.defaultInvoiceTerms || workspace.defaultHourlyRate),
-  );
 
   const result = await db.execute(
     sql`SELECT
       (SELECT count(*)::int FROM projects WHERE workspace_id = ${workspaceId} AND status = 'active') as active_projects,
       (SELECT count(*)::int FROM clients WHERE workspace_id = ${workspaceId}) as total_clients,
-      (SELECT count(*)::int FROM projects WHERE workspace_id = ${workspaceId}) as total_projects,
-      (SELECT count(*)::int FROM invoices WHERE workspace_id = ${workspaceId}) as total_invoices,
-      (SELECT count(*)::int FROM time_entries WHERE workspace_id = ${workspaceId}) as total_time_entries,
-      (SELECT count(*)::int FROM clients WHERE workspace_id = ${workspaceId} AND portal_enabled = true AND portal_token_hash IS NOT NULL AND portal_token_revoked_at IS NULL) as portal_active
+      (SELECT count(*)::int FROM personal_sites WHERE workspace_id = ${workspaceId} AND published = true) as total_sites,
+      (SELECT count(*)::int FROM personal_notes WHERE workspace_id = ${workspaceId}) as total_personal_notes
     `,
   );
   const counts = result.rows[0] as Record<string, number>;
   const activeProjects = counts.active_projects || 0;
   const totalClients = counts.total_clients || 0;
-  const totalProjects = counts.total_projects || 0;
-  const totalInvoices = counts.total_invoices || 0;
-  const totalTimeEntries = counts.total_time_entries || 0;
-  const portalActive = counts.portal_active || 0;
+  const totalSites = counts.total_sites || 0;
+  const totalPersonalNotes = counts.total_personal_notes || 0;
 
   const now = new Date();
   const in7d = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
@@ -393,13 +380,10 @@ export default async function DashboardPage() {
       <DashboardOnboarding
         lang={lang}
         steps={[
-          { key: "workspace", done: workspaceProfileDone, href: "/app/settings?tab=workspace" },
-          { key: "invoiceSettings", done: invoiceSettingsDone, href: "/app/settings?tab=invoice" },
           { key: "client", done: totalClients > 0, href: "/app/clients" },
-          { key: "project", done: totalProjects > 0, href: "/app/projects" },
-          { key: "time", done: totalTimeEntries > 0, href: "/app/time" },
-          { key: "invoice", done: totalInvoices > 0, href: "/app/invoices" },
-          { key: "portal", done: portalActive > 0, href: "/app/clients" },
+          { key: "landingpage", done: totalSites > 0, href: "/app/personal-site" },
+          { key: "personal", done: totalPersonalNotes > 0, href: "/app/personal" },
+          { key: "docs", done: false, href: "/app/docs" },
         ]}
       />
 
