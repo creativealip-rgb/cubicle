@@ -127,7 +127,7 @@ export function AssistantEmptyState({
   openHistory: () => void;
 }) {
   const [allOpen, setAllOpen] = useState(false);
-  const [quotaInfo, setQuotaInfo] = useState<{ limit: number } | null>(null);
+  const [quotaInfo, setQuotaInfo] = useState<{ used: number; limit: number; remaining: number } | null>(null);
   const copy = getAssistantCopy(lang);
 
   useEffect(() => {
@@ -136,7 +136,10 @@ export function AssistantEmptyState({
       .then((res) => (res.ok ? res.json() : null))
       .then((data) => {
         if (!cancelled && data?.ok && typeof data.limit === "number") {
-          setQuotaInfo({ limit: data.limit });
+          const used = Number(data.used ?? 0);
+          const limit = Number(data.limit);
+          const remaining = Math.max(0, limit - used);
+          setQuotaInfo({ used, limit, remaining });
         }
       })
       .catch(() => {});
@@ -146,43 +149,49 @@ export function AssistantEmptyState({
   }, []);
 
   return (
-    <div className="flex min-h-full w-full flex-col px-4 py-4 md:px-8 md:py-6 space-y-6">
+    <div className="flex min-h-full w-full flex-col px-4 py-3 md:px-8 md:py-4 space-y-4">
       {/* Header Bar */}
-      <header className="flex items-center justify-between pb-3 border-b border-border/60">
-        <div className="flex items-center gap-3">
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 shadow-xs">
+      <header className="flex items-center justify-between pb-2.5 border-b border-border/60">
+        <div className="flex items-center gap-2.5">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary ring-1 ring-primary/20 shadow-xs">
             <Sparkles className="h-4 w-4" />
           </div>
           <div>
             <h1 className="text-sm font-bold text-foreground flex items-center gap-2">
               {copy.title}
               <Badge variant="outline" className="text-[10px] h-4.5 px-1.5 font-mono text-primary bg-primary/10 border-primary/20">
-                ⚡ {quotaInfo ? `${quotaInfo.limit}/bln` : "..."}
+                ⚡ {quotaInfo ? (
+                  quotaInfo.limit === 0 ? "Unlimited" : (
+                    lang === "id"
+                      ? `Sisa ${quotaInfo.remaining} / ${quotaInfo.limit} bln`
+                      : `${quotaInfo.remaining} / ${quotaInfo.limit} left`
+                  )
+                ) : "..."}
               </Badge>
             </h1>
-            <p className="text-xs text-muted-foreground">{copy.subtitle}</p>
+            <p className="text-[11px] text-muted-foreground">{copy.subtitle}</p>
           </div>
         </div>
         <Button
           variant="outline"
           size="sm"
           onClick={openHistory}
-          className="h-8 rounded-xl text-xs font-semibold gap-1.5 shadow-xs md:hidden"
+          className="h-7.5 rounded-xl text-xs font-semibold gap-1.5 shadow-xs md:hidden"
         >
           <History className="h-3.5 w-3.5 text-muted-foreground" />
           {copy.history}
         </Button>
       </header>
 
-      {/* Main Greeting & Input Composer (Full Width) */}
-      <main className="w-full space-y-6">
-        <div className="text-center space-y-1.5 pt-2 max-w-2xl mx-auto">
-          <h2 className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
+      {/* Main Greeting & Input Composer (Compact & Full Width) */}
+      <main className="w-full space-y-4">
+        <div className="text-center space-y-1 pt-0 max-w-xl mx-auto">
+          <h2 className="text-lg font-bold tracking-tight text-foreground md:text-xl">
             {copy.greeting}
           </h2>
-          <p className="text-xs text-muted-foreground">
+          <p className="text-[11px] text-muted-foreground">
             {lang === "id"
-              ? "Ketik instruksi, tanya performa operasional, buat invoice, atau kelola tugas secara instan."
+              ? "Ketik instruksi, tanya data operasional, buat invoice, atau kelola tugas secara instan."
               : "Ask questions, query business metrics, manage invoices, or update task statuses instantly."}
           </p>
         </div>
@@ -193,7 +202,7 @@ export function AssistantEmptyState({
             e.preventDefault();
             send(input);
           }}
-          className="relative w-full rounded-2xl border border-border/80 bg-card p-3 shadow-xs transition-all focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20"
+          className="relative w-full rounded-2xl border border-border/80 bg-card p-2.5 shadow-xs transition-all focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20"
         >
           <label className="sr-only" htmlFor="assistant-empty-input">
             {copy.placeholder}
@@ -206,24 +215,24 @@ export function AssistantEmptyState({
             onKeyDown={onKeyDown}
             rows={2}
             placeholder={copy.placeholder}
-            className="max-h-32 min-h-16 w-full resize-none bg-transparent px-2 py-1 text-sm outline-none placeholder:text-muted-foreground/60 text-foreground"
+            className="max-h-24 min-h-12 w-full resize-none bg-transparent px-2 py-0.5 text-xs outline-none placeholder:text-muted-foreground/60 text-foreground"
           />
-          <div className="flex items-center justify-between pt-2 border-t border-border/60">
-            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
+          <div className="flex items-center justify-between pt-1.5 border-t border-border/60">
+            <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+              <ShieldCheck className="h-3 w-3 text-emerald-600" />
               <span>{lang === "id" ? "Tindakan mutasi wajib konfirmasi" : "Mutations require approval"}</span>
             </div>
             <Button
               type={busy ? "button" : "submit"}
               onClick={busy ? stop : undefined}
               disabled={!busy && !input.trim()}
-              className="h-9 rounded-xl bg-primary text-primary-foreground font-semibold px-4 text-xs gap-1.5 shadow-xs"
+              className="h-7.5 rounded-xl bg-primary text-primary-foreground font-semibold px-3 text-xs gap-1.5 shadow-xs"
             >
               {busy ? (
-                <XCircle className="h-4 w-4" />
+                <XCircle className="h-3.5 w-3.5" />
               ) : (
                 <>
-                  <Send className="h-3.5 w-3.5" />
+                  <Send className="h-3 w-3" />
                   {copy.send}
                 </>
               )}
@@ -231,22 +240,22 @@ export function AssistantEmptyState({
           </div>
         </form>
 
-        {/* Featured Prompts Grid (3 Columns on desktop, rich prompt cards) */}
-        <section className="space-y-3">
+        {/* Featured Prompts Grid (Compact 3-column on desktop, fits screen without scrolling) */}
+        <section className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-xs font-semibold text-muted-foreground">
+            <p className="text-[11px] font-semibold text-muted-foreground">
               {lang === "id" ? "Contoh Perintah & Prompt Cepat" : "Suggested Prompts & Actions"}
             </p>
             <button
               type="button"
               onClick={() => setAllOpen(true)}
-              className="text-xs font-bold text-primary hover:underline flex items-center gap-1"
+              className="text-[11px] font-bold text-primary hover:underline flex items-center gap-0.5"
             >
               {copy.allHelp} <ChevronRight className="h-3 w-3" />
             </button>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURED_PROMPTS.map((item, idx) => {
               const Icon = item.icon;
               const isId = lang === "id";
@@ -262,45 +271,33 @@ export function AssistantEmptyState({
                     setInput(promptText);
                     inputRef.current?.focus();
                   }}
-                  className="group flex flex-col justify-between gap-3 rounded-2xl border border-border/80 bg-card p-4 text-left shadow-2xs transition-all hover:border-primary/50 hover:bg-primary/[0.02] hover:shadow-xs"
+                  className="group flex flex-col justify-between gap-1.5 rounded-xl border border-border/80 bg-card p-2.5 text-left shadow-2xs transition-all hover:border-primary/50 hover:bg-primary/[0.02] hover:shadow-xs"
                 >
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-                        <Icon className="h-4 w-4" />
+                      <div className="flex h-6.5 w-6.5 items-center justify-center rounded-md bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                        <Icon className="h-3.5 w-3.5" />
                       </div>
-                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/60 px-2 py-0.5 rounded-md">
+                      <span className="text-[9px] font-semibold text-muted-foreground uppercase tracking-wider bg-muted/60 px-1.5 py-0.5 rounded">
                         {categoryText}
                       </span>
                     </div>
                     <div>
-                      <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors">
+                      <p className="text-xs font-bold text-foreground group-hover:text-primary transition-colors line-clamp-1">
                         {titleText}
                       </p>
-                      <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5 leading-relaxed">
+                      <p className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5 leading-tight">
                         {descText}
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-border/40 text-[11px] font-medium text-primary">
+                  <div className="flex items-center justify-between pt-1 border-t border-border/40 text-[10px] font-medium text-primary">
                     <span>{isId ? "Gunakan prompt" : "Use prompt"}</span>
-                    <ChevronRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+                    <ChevronRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
                   </div>
                 </button>
               );
             })}
-          </div>
-        </section>
-
-        {/* Capability Info Banner */}
-        <section className="rounded-2xl border border-border/60 bg-muted/20 p-3.5 text-xs text-muted-foreground space-y-1.5 leading-relaxed">
-          <div className="flex items-start gap-2">
-            <span className="font-bold text-foreground shrink-0">{copy.capabilityReadTitle}:</span>
-            <span>{copy.capabilityRead}</span>
-          </div>
-          <div className="flex items-start gap-2">
-            <span className="font-bold text-foreground shrink-0">{copy.capabilityActTitle}:</span>
-            <span>{copy.capabilityAct}</span>
           </div>
         </section>
       </main>
