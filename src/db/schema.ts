@@ -617,7 +617,7 @@ export const pakasirPayments = pgTable("pakasir_payments", {
   orderId: text("order_id").notNull().unique(),
   plan: text("plan", { enum: ["solo", "team"] }).notNull(),
   billingPeriod: text("billing_period", { enum: ["monthly", "yearly"] }).notNull().default("yearly"),
-  paymentType: text("payment_type", { enum: ["plan", "storage_addon", "extra_workspace"] }).notNull().default("plan"),
+  paymentType: text("payment_type", { enum: ["plan", "storage_addon", "extra_workspace", "ai_addon"] }).notNull().default("plan"),
   entitlementRef: text("entitlement_ref"),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
   status: text("status", { enum: ["pending", "completed", "failed", "expired"] }).notNull().default("pending"),

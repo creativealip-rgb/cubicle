@@ -197,7 +197,10 @@ export async function checkAiRateLimitDb(
   userId: string,
   plan: string,
 ): Promise<{ allowed: boolean; count: number; limit: number; resetAt: number }> {
-  const limit = getPlanLimits(plan).aiRequestsPerMonth;
+  const baseLimit = getPlanLimits(plan).aiRequestsPerMonth;
+  const { getUserPurchasedAiQuota } = await import("@/lib/ai-addons");
+  const extraQuota = await getUserPurchasedAiQuota(userId);
+  const limit = baseLimit === 0 ? 0 : baseLimit + extraQuota;
 
   // Next UTC month 1st = reset boundary
   const now = new Date();

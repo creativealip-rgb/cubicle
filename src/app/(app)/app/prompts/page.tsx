@@ -17,6 +17,8 @@ export default async function PromptsPage() {
 
   const plan = await getUserPlan(user.id);
   const limits = getPlanLimits(plan);
-  const generationLimit = limits.aiRequestsPerMonth;
+  const { getUserPurchasedAiQuota } = await import("@/lib/ai-addons");
+  const extraQuota = await getUserPurchasedAiQuota(user.id);
+  const generationLimit = limits.aiRequestsPerMonth === 0 ? 0 : limits.aiRequestsPerMonth + extraQuota;
   return <PromptStudio generations={generations} usage={{ ...usage, generationLimit }} />;
 }

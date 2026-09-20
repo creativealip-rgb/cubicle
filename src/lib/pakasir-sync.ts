@@ -122,6 +122,33 @@ export async function activateCompletedPakasirPayment(
     // active.
     const storageAddonKey = current.paymentType === "storage_addon" ? current.entitlementRef : null;
     const extraWorkspace = current.paymentType === "extra_workspace";
+    const aiAddon = current.paymentType === "ai_addon";
+
+    if (aiAddon) {
+      const { activateAiAddonTx } = await import("@/lib/ai-addons");
+      const activated = await activateAiAddonTx(tx, {
+        userId: workspace.ownerId,
+        requestsQuota: 1000,
+        amount: Number(current.amount),
+        billingPeriod: current.billingPeriod as "monthly" | "yearly",
+        paidAt,
+        providerOrderId: current.orderId,
+        providerEventId: orderId,
+      });
+      if (activated.kind === "existing") {
+        return { kind: "idempotent" as const, plan: current.plan, entitlementId: activated.entitlementId };
+      }
+      await tx
+        .update(pakasirPayments)
+        .set({
+          status: "completed",
+          rawPayload,
+          paidAt,
+          updatedAt: new Date(),
+        })
+        .where(eq(pakasirPayments.id, current.id));
+      return { kind: "addon_activated" as const, plan: current.plan, entitlementId: activated.entitlementId };
+    }
 
     // Storage add-on: create the entitlement once (provider order/event ID
     // uniqueness guards replay), then mark the payment completed.

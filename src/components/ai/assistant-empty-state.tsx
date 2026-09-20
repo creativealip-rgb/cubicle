@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type KeyboardEvent, type RefObject } from "react";
+import { useState, useEffect, type KeyboardEvent, type RefObject } from "react";
 import {
   Send,
   Sparkles,
@@ -43,7 +43,23 @@ export function AssistantEmptyState({
 }) {
   const [allOpen, setAllOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>("all");
+  const [quotaInfo, setQuotaInfo] = useState<{ limit: number } | null>(null);
   const copy = getAssistantCopy(lang);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/ai/quota")
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (!cancelled && data?.ok && typeof data.limit === "number") {
+          setQuotaInfo({ limit: data.limit });
+        }
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filterChips = [
     { id: "all", label: lang === "id" ? "Semua Rekomendasi" : "All Prompts" },
@@ -70,7 +86,7 @@ export function AssistantEmptyState({
             <h1 className="text-sm font-bold text-foreground flex items-center gap-2">
               {copy.title}
               <Badge variant="outline" className="text-[10px] h-4.5 px-1.5 font-mono text-primary bg-primary/10 border-primary/20">
-                ⚡ 1000/bln
+                ⚡ {quotaInfo ? `${quotaInfo.limit}/bln` : "..."}
               </Badge>
             </h1>
             <p className="text-xs text-muted-foreground">{copy.subtitle}</p>

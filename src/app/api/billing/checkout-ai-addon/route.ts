@@ -87,7 +87,7 @@ export async function POST(request: Request) {
       orderId,
       plan: effectivePlan === "free" ? "solo" : (effectivePlan as "solo" | "team"),
       billingPeriod: "yearly",
-      paymentType: "plan",
+      paymentType: "ai_addon",
       entitlementRef: "ai_1000",
       amount: String(amount),
       status: "pending",
