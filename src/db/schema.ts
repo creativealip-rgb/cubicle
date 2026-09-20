@@ -1029,7 +1029,17 @@ export const taskTemplateImports = pgTable("task_template_imports", {
   unique("task_template_imports_idempotency_unique").on(table.workspaceId, table.projectId, table.idempotencyKey),
   foreignKey({ columns: [table.projectId, table.workspaceId], foreignColumns: [projects.id, projects.workspaceId], name: "task_template_imports_project_workspace_fk" }).onDelete("cascade"),
 ]);
-
+export const timerTags = pgTable("timer_tags", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  color: text("color"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("timer_tags_workspace_name_uidx").on(table.workspaceId, table.name),
+  index("timer_tags_workspace_idx").on(table.workspaceId),
+]);
 export const tasks = pgTable("tasks", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),

@@ -7,16 +7,20 @@ import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { EmptyState } from "@/components/empty-state";
-import { SortableHeader } from "@/components/ui/sortable-header";
-import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import {
   taskPriorityColor,
   taskStatusVariant,
   taskPriorityLabel,
 } from "@/lib/status-badge";
-import { Filter, Clock, AlertTriangle, CheckSquare2 } from "lucide-react";
-import { TableHeaderFilter } from "@/components/ui/table-header-filter";
+import {
+  Clock,
+  CheckSquare2,
+  ChevronDown,
+  ChevronRight,
+  Folder,
+  Briefcase,
+} from "lucide-react";
 
 export type TasksListItem = {
   id: string;
@@ -40,9 +44,7 @@ export type TasksListItem = {
 };
 
 type Member = { id: string; name: string | null; email: string | null };
-
-const PRIORITY_ORDER = ["urgent", "high", "medium", "low"] as const;
-const STATUS_ORDER = ["todo", "in_progress", "review", "done", "cancelled"] as const;
+type Project = { id: string; name: string };
 
 function dueDays(dueDate: string | null) {
   if (!dueDate) return null;
@@ -62,284 +64,335 @@ function dueTone(task: TasksListItem) {
   return "text-muted-foreground";
 }
 
-type SortKey =
-  | "title"
-  | "project"
-  | "assignee"
-  | "dueDate"
-  | "priority"
-  | "status";
+interface TasksListTableProps {
+  tasks: TasksListItem[];
+  members: Member[];
+  projects: Project[];
+  currentUserId?: string;
+  currentFilters?: {
+    status?: string;
+    priority?: string;
+    projectId?: string;
+    assignee?: string;
+  };
+  focusId?: string | null;
+}
 
 export function TasksListTable({
   tasks,
   members,
   projects,
-  currentUserId,
-  currentFilters,
-  focusId = null,
-}: {
-  tasks: TasksListItem[];
-  members: Member[];
-  projects: Array<{ id: string; name: string }>;
-  currentUserId: string;
-  currentFilters: { status?: string; priority?: string; projectId?: string; assignee?: string };
-  focusId?: string | null;
-}) {
-  const { t, lang, locale } = useT();
-  const [taskList, setTaskList] = useState(tasks);
+  focusId,
+}: TasksListTableProps) {
+  const { t, lang } = useT();
   const [, startTransition] = useTransition();
 
-  function handleFastToggle(taskId: string, currentStatus: string, e: React.MouseEvent) {
+  // Collapsed state per Client and Project
+  const [collapsedClients, setCollapsedClients] = useState<Record<string, boolean>>({});
+  const [collapsedProjects, setCollapsedProjects] = useState<Record<string, boolean>>({});
+
+  const toggleClient = (clientKey: string) => {
+    setCollapsedClients((prev) => ({ ...prev, [clientKey]: !prev[clientKey] }));
+  };
+
+  const toggleProject = (projectKey: string) => {
+    setCollapsedProjects((prev) => ({ ...prev, [projectKey]: !prev[projectKey] }));
+  };
+
+  const handleFastToggle = (
+    taskId: string,
+    currentStatus: string,
+    e: React.MouseEvent,
+  ) => {
     e.stopPropagation();
-    const newStatus = currentStatus === "done" ? "todo" : "done";
-    setTaskList((prev) =>
-      prev.map((item) => (item.id === taskId ? { ...item, status: newStatus } : item))
-    );
+    const nextStatus = currentStatus === "done" ? "todo" : "done";
     startTransition(async () => {
       try {
-        await updateTask(taskId, { status: newStatus });
-      } catch (err) {
-        toast.error("Gagal mengubah status tugas");
+        await updateTask(taskId, { status: nextStatus });
+        toast.success(
+          nextStatus === "done"
+            ? t("Tugas selesai!", "Task completed!")
+            : t("Tugas dibuka kembali", "Task reopened"),
+        );
+      } catch (err: unknown) {
+        toast.error(
+          err instanceof Error ? err.message : t("Gagal update status", "Failed to update status"),
+        );
       }
     });
-  }
+  };
 
-  const getters = useMemo(
-    () => ({
-      title: (r: TasksListItem) => r.title,
-      project: (r: TasksListItem) => r.projectName ?? "",
-      assignee: (r: TasksListItem) => r.assigneeName ?? "",
-      dueDate: (r: TasksListItem) => r.dueDate,
-      priority: (r: TasksListItem) => r.priority,
-      status: (r: TasksListItem) => r.status,
-    }),
-    [],
-  );
-
-  const orders = useMemo(
-    () => ({
-      priority: PRIORITY_ORDER,
-      status: STATUS_ORDER,
-    }),
-    [],
-  );
-
-  const { sorted, toggle, dirFor } = useTableSort<TasksListItem, SortKey>(
-    taskList,
-    getters,
-    orders,
-  );
-
-  function formatDue(task: TasksListItem) {
-    if (!task.dueDate) return t("Tanpa tenggat", "No due date");
-    const base = new Date(task.dueDate).toLocaleDateString(locale, { month: "short", day: "numeric" });
+  const formatDue = (task: TasksListItem) => {
+    if (!task.dueDate) return null;
+    const d = new Date(task.dueDate);
+    const formatted = d.toLocaleDateString(lang === "en" ? "en-US" : "id-ID", {
+      day: "numeric",
+      month: "short",
+    });
     const days = dueDays(task.dueDate);
-    if (days === null) return base;
-    if (days < 0) return task.status === "done" ? `${base} · ${t("selesai", "done")}` : `${base} · ${t("lewat", "overdue")}`;
-    if (days === 0) return `${base} · ${t("hari ini", "today")}`;
-    if (days <= 7) return `${base} · ${days} ${t("hari", "days")}`;
-    return base;
-  }
+    if (days === null) return formatted;
+    if (days < 0) return `${formatted} (${Math.abs(days)}h terlambat)`;
+    if (days === 0) return `${formatted} (hari ini)`;
+    if (days === 1) return `${formatted} (besok)`;
+    return formatted;
+  };
+
+  // Grouping Hierarchy: Client -> Projects -> Tasks
+  type ProjectGroup = {
+    projectId: string | null;
+    projectName: string;
+    tasks: TasksListItem[];
+  };
+
+  type ClientGroup = {
+    clientName: string;
+    projects: ProjectGroup[];
+    totalTasks: number;
+    activeTasks: number;
+    completedTasks: number;
+  };
+
+  const groupedData = useMemo(() => {
+    const clientMap = new Map<string, Map<string, TasksListItem[]>>();
+
+    for (const task of tasks) {
+      const cName = task.clientName || (task.projectId ? t("Klien Lain", "Other Client") : t("Tanpa Klien / Internal", "No Client / Internal"));
+      const pId = task.projectId || "__none__";
+
+      if (!clientMap.has(cName)) {
+        clientMap.set(cName, new Map());
+      }
+      const projectMap = clientMap.get(cName)!;
+      if (!projectMap.has(pId)) {
+        projectMap.set(pId, []);
+      }
+      projectMap.get(pId)!.push(task);
+    }
+
+    const result: ClientGroup[] = [];
+
+    clientMap.forEach((projectMap, clientName) => {
+      const projectGroups: ProjectGroup[] = [];
+      let totalTasks = 0;
+      let activeTasks = 0;
+      let completedTasks = 0;
+
+      projectMap.forEach((taskList, pId) => {
+        const pName = pId === "__none__" ? t("Tanpa Proyek", "No Project") : (taskList[0]?.projectName || t("Proyek", "Project"));
+        projectGroups.push({
+          projectId: pId === "__none__" ? null : pId,
+          projectName: pName,
+          tasks: taskList,
+        });
+
+        totalTasks += taskList.length;
+        activeTasks += taskList.filter((tk) => tk.status !== "done").length;
+        completedTasks += taskList.filter((tk) => tk.status === "done").length;
+      });
+
+      result.push({
+        clientName,
+        projects: projectGroups,
+        totalTasks,
+        activeTasks,
+        completedTasks,
+      });
+    });
+
+    return result;
+  }, [tasks, t]);
 
   if (tasks.length === 0) {
     return (
-      <div className="overflow-hidden rounded-lg border bg-card">
-        <EmptyState
-          icon={Filter}
-          title={t("Tidak ada tugas ditemukan", "No tasks found")}
-          description={t(
-            "Tidak ada tugas yang cocok dengan filter. Coba ubah filter atau buat tugas baru.",
-            "No tasks match the filter. Try changing the filter or create a new task.",
-          )}
-        />
-      </div>
+      <EmptyState
+        icon={Clock}
+        title={t("Belum ada tugas", "No tasks found")}
+        description={t(
+          "Buat tugas pertama Anda untuk mulai mengatur pekerjaan proyek.",
+          "Create your first task to start organizing project work.",
+        )}
+      />
     );
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs">
-      <div className="hidden items-center gap-3 border-b border-border/80 bg-muted/40 px-3.5 py-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground md:flex">
-        <div className="min-w-0 flex-1">
-          <SortableHeader
-            as="div"
-            label={t("Judul", "Title")}
-            dir={dirFor("title")}
-            onClick={() => toggle("title")}
-            className="text-[11px] uppercase tracking-wider"
-          />
-        </div>
-        <div className="w-44">
-          <TableHeaderFilter label={t("Proyek", "Project")} queryKey="projectId" value={currentFilters.projectId} basePath="/app/tasks" options={[{value:"all",label:t("Semua proyek","All projects")},...projects.map(p=>({value:p.id,label:p.name}))]} className="text-[11px] uppercase tracking-wider" />
-        </div>
-        <div className="w-28">
-          <TableHeaderFilter label={t("Ditugaskan", "Assignee")} queryKey="assignee" value={currentFilters.assignee} basePath="/app/tasks" options={[{value:"all",label:t("Semua petugas","All assignees")},{value:"me",label:t("Saya","Me")},{value:"unassigned",label:t("Belum ditugaskan","Unassigned")},...members.filter(m=>m.id!==currentUserId).map(m=>({value:m.id,label:m.name||m.email||m.id.slice(0,8)}))]} className="text-[11px] uppercase tracking-wider" />
-        </div>
-        <div className="w-28">
-          <SortableHeader
-            as="div"
-            label={t("Tenggat", "Due")}
-            dir={dirFor("dueDate")}
-            onClick={() => toggle("dueDate")}
-            className="text-[11px] uppercase tracking-wider"
-          />
-        </div>
-        <div className="w-24">
-          <TableHeaderFilter label={t("Prioritas", "Priority")} queryKey="priority" value={currentFilters.priority} basePath="/app/tasks" options={[{value:"all",label:t("Semua prioritas","All priorities")},{value:"urgent",label:t("Mendesak","Urgent")},{value:"high",label:t("Tinggi","High")},{value:"medium",label:t("Sedang","Medium")},{value:"low",label:t("Rendah","Low")}]} className="text-[11px] uppercase tracking-wider" />
-        </div>
-        <div className="w-24">
-          <TableHeaderFilter label={t("Status", "Status")} queryKey="status" value={currentFilters.status} basePath="/app/tasks" options={[{value:"all",label:t("Semua status","All statuses")},{value:"todo",label:t("Belum Mulai","To Do")},{value:"in_progress",label:t("Dikerjakan","In Progress")},{value:"review",label:"Review"},{value:"done",label:t("Selesai","Done")}]} className="text-[11px] uppercase tracking-wider" />
-        </div>
-      </div>
+    <div className="space-y-4">
+      {groupedData.map((clientGroup) => {
+        const isClientCollapsed = !!collapsedClients[clientGroup.clientName];
 
-      {/* Mobile cards */}
-      <div className="md:hidden space-y-3">
-        {sorted.map((task) => {
-          const sb = taskStatusVariant(task.status, lang);
-          const isFocus = focusId === task.id;
-          return (
-            <TaskDetailSheet
-              key={task.id}
-              task={{
-                ...task,
-                projectId: task.projectId ?? undefined,
-              }}
-              members={members}
-              defaultOpen={isFocus}
-              className="block"
+        return (
+          <div
+            key={clientGroup.clientName}
+            className="overflow-hidden rounded-xl border bg-card shadow-sm transition-all"
+          >
+            {/* Level 1: Client Header */}
+            <div
+              onClick={() => toggleClient(clientGroup.clientName)}
+              className="flex cursor-pointer select-none items-center justify-between border-b bg-muted/40 px-4 py-3 hover:bg-muted/60 transition-colors"
             >
-              <div
-                id={isFocus ? `task-${task.id}` : undefined}
-                className={`cursor-pointer rounded-xl border border-border/80 bg-card p-3.5 space-y-2.5 shadow-xs transition-colors hover:bg-muted/40 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
-              >
-                <div className="flex items-start justify-between gap-2">
-                  <div className="flex items-center gap-2 min-w-0 flex-1">
-                    <button
-                      type="button"
-                      onClick={(e) => handleFastToggle(task.id, task.status, e)}
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors ${task.status === "done" ? "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30" : "bg-primary/10 text-primary hover:bg-primary/20"}`}
-                      title={task.status === "done" ? "Tandai belum selesai" : "Tandai selesai"}
-                    >
-                      <CheckSquare2 className="h-3.5 w-3.5" />
-                    </button>
-                    <div className="min-w-0 flex-1">
-                      <p className={`text-sm font-semibold transition-colors truncate ${task.status === "done" ? "line-through text-muted-foreground font-normal" : "text-foreground hover:text-primary"}`}>{task.title}</p>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        {task.templateName && <span className="rounded bg-primary/10 px-1.5 text-[9px] font-medium text-primary">{task.templateName}</span>}
-                        {task.mode === "reusable" ? (
-                          <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">Reusable</span>
-                        ) : (
-                          <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">Workflow</span>
-                        )}
-                        {task.projectName && <span className="text-xs text-muted-foreground truncate">· {task.projectName}</span>}
-                      </div>
-                    </div>
-                  </div>
-                  <Badge
-                    variant="outline"
-                    className={`gap-1 text-[10px] px-2 py-0 h-5 rounded-full font-medium shrink-0 ${sb.variant === "default" ? "border-primary/30 bg-primary/10 text-primary" : "border-border/80 bg-muted/60 text-muted-foreground"}`}
-                  >
-                    <span className={`h-1 w-1 rounded-full ${task.status === "done" ? "bg-emerald-600" : task.status === "in_progress" ? "bg-blue-600" : "bg-muted-foreground"}`} />
-                    {sb.label}
-                  </Badge>
-                </div>
-
-                <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/60 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-2">
-                    <Badge variant="outline" className={`text-[10px] px-2 py-0 h-5 rounded-full font-medium ${taskPriorityColor(task.priority)}`}>
-                      {task.priority === "urgent" && <AlertTriangle className="mr-0.5 h-2.5 w-2.5" />}
-                      {taskPriorityLabel(task.priority, lang)}
-                    </Badge>
-                    {task.assigneeName && <span className="truncate">· {task.assigneeName}</span>}
-                  </div>
-                  {task.dueDate && (
-                    <span className={`text-xs flex items-center gap-1 ${dueTone(task)}`}>
-                      <Clock className="h-3 w-3" />
-                      {formatDue(task)}
-                    </span>
-                  )}
-                </div>
+              <div className="flex items-center gap-2.5">
+                {isClientCollapsed ? (
+                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                ) : (
+                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                )}
+                <Briefcase className="h-4 w-4 text-primary" />
+                <h3 className="text-sm font-bold text-foreground tracking-tight">
+                  {clientGroup.clientName}
+                </h3>
               </div>
-            </TaskDetailSheet>
-          );
-        })}
-      </div>
+              <div className="flex items-center gap-2 text-xs">
+                <span className="rounded-md bg-background px-2 py-0.5 font-medium text-foreground border shadow-xs">
+                  {clientGroup.projects.length} {t("Proyek", "Projects")}
+                </span>
+                <span className="rounded-md bg-primary/10 px-2 py-0.5 font-semibold text-primary">
+                  {clientGroup.activeTasks} {t("Aktif", "Active")}
+                </span>
+                {clientGroup.completedTasks > 0 && (
+                  <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 font-semibold text-emerald-600">
+                    {clientGroup.completedTasks} {t("Selesai", "Done")}
+                  </span>
+                )}
+              </div>
+            </div>
 
-      {/* Desktop rows */}
-      <div className="hidden md:block divide-y divide-border">
-        {sorted.map((task) => {
-          const sb = taskStatusVariant(task.status, lang);
-          const isFocus = focusId === task.id;
-          return (
-            <TaskDetailSheet
-              key={task.id}
-              task={{
-                ...task,
-                projectId: task.projectId ?? undefined,
-              }}
-              members={members}
-              defaultOpen={isFocus}
-              className="block"
-            >
-              <div
-                id={isFocus ? `task-${task.id}` : undefined}
-                className={`px-3.5 py-2.5 transition-colors hover:bg-muted/40 ${isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""}`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="min-w-0 flex-1 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={(e) => handleFastToggle(task.id, task.status, e)}
-                      className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md transition-colors ${task.status === "done" ? "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30" : "bg-primary/10 text-primary hover:bg-primary/20"}`}
-                      title={task.status === "done" ? "Tandai belum selesai" : "Tandai selesai"}
-                    >
-                      <CheckSquare2 className="h-3.5 w-3.5" />
-                    </button>
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-1.5 flex-wrap">
-                        <p className={`truncate text-sm font-semibold transition-colors ${task.status === "done" ? "line-through text-muted-foreground font-normal" : "text-foreground hover:text-primary"}`}>{task.title}</p>
-                        {task.templateName && <span className="rounded bg-primary/10 px-1.5 text-[9px] font-medium text-primary">{task.templateName}</span>}
-                        {task.mode === "reusable" ? (
-                          <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">Reusable</span>
-                        ) : (
-                          <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">Workflow</span>
-                        )}
-                        {task.sourceNoteId && (
-                          <span className="text-[9px] text-muted-foreground bg-muted/60 px-1 rounded">
-                            {t("Catatan", "Note")}
+            {/* Client Body (Projects List) */}
+            {!isClientCollapsed && (
+              <div className="divide-y divide-border/60">
+                {clientGroup.projects.map((projectGroup) => {
+                  const projectKey = `${clientGroup.clientName}-${projectGroup.projectName}`;
+                  const isProjectCollapsed = !!collapsedProjects[projectKey];
+
+                  return (
+                    <div key={projectKey} className="bg-background">
+                      {/* Level 2: Project Header */}
+                      <div
+                        onClick={() => toggleProject(projectKey)}
+                        className="flex cursor-pointer select-none items-center justify-between bg-muted/15 px-4 py-2 hover:bg-muted/30 transition-colors pl-8"
+                      >
+                        <div className="flex items-center gap-2">
+                          {isProjectCollapsed ? (
+                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+                          )}
+                          <Folder className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="text-xs font-semibold text-foreground">
+                            {projectGroup.projectName}
                           </span>
-                        )}
+                        </div>
+                        <span className="text-[11px] text-muted-foreground font-medium">
+                          {projectGroup.tasks.length} {t("tugas", "tasks")}
+                        </span>
                       </div>
+
+                      {/* Level 3: Tasks Rows */}
+                      {!isProjectCollapsed && (
+                        <div className="divide-y divide-border/40 pl-6 sm:pl-10">
+                          {projectGroup.tasks.map((task) => {
+                            const sb = taskStatusVariant(task.status, lang);
+                            const isFocus = focusId === task.id;
+
+                            return (
+                              <TaskDetailSheet
+                                key={task.id}
+                                task={{
+                                  ...task,
+                                  projectId: task.projectId ?? undefined,
+                                }}
+                                members={members}
+                                projects={projects}
+                                defaultOpen={isFocus}
+                                className="block"
+                              >
+                                <div
+                                  id={isFocus ? `task-${task.id}` : undefined}
+                                  className={`flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/40 transition-colors ${
+                                    isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""
+                                  }`}
+                                >
+                                  {/* Checkbox & Title */}
+                                  <div className="min-w-0 flex-1 flex items-center gap-2.5">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => handleFastToggle(task.id, task.status, e)}
+                                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors ${
+                                        task.status === "done"
+                                          ? "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30"
+                                          : "border border-input text-transparent hover:border-primary hover:text-primary/40"
+                                      }`}
+                                      title={
+                                        task.status === "done"
+                                          ? t("Tandai belum selesai", "Mark as uncompleted")
+                                          : t("Tandai selesai", "Mark as completed")
+                                      }
+                                    >
+                                      <CheckSquare2 className="h-3.5 w-3.5" />
+                                    </button>
+                                    <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
+                                      <span
+                                        className={`text-sm font-medium transition-colors ${
+                                          task.status === "done"
+                                            ? "line-through text-muted-foreground"
+                                            : "text-foreground"
+                                        }`}
+                                      >
+                                        {task.title}
+                                      </span>
+                                      {task.templateName && (
+                                        <span className="rounded bg-primary/10 px-1.5 py-0.2 text-[9px] font-medium text-primary">
+                                          {task.templateName}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+
+                                  {/* Right Meta: Assignee, Priority, Due Date, Status */}
+                                  <div className="flex items-center gap-3 shrink-0 text-xs">
+                                    {task.assigneeName ? (
+                                      <span className="text-muted-foreground hidden sm:inline max-w-24 truncate">
+                                        {task.assigneeName}
+                                      </span>
+                                    ) : (
+                                      <span className="text-muted-foreground/40 hidden sm:inline">—</span>
+                                    )}
+
+                                    <Badge
+                                      variant="outline"
+                                      className={`text-[10px] font-medium ${taskPriorityColor(task.priority)}`}
+                                    >
+                                      {taskPriorityLabel(task.priority, lang)}
+                                    </Badge>
+
+                                    {task.dueDate && (
+                                      <span
+                                        className={`hidden md:flex items-center gap-1 text-[11px] ${dueTone(
+                                          task,
+                                        )}`}
+                                      >
+                                        <Clock className="h-3 w-3" />
+                                        {formatDue(task)}
+                                      </span>
+                                    )}
+
+                                    <Badge variant={sb.variant} className="text-[10px] font-medium">
+                                      {sb.label}
+                                    </Badge>
+                                  </div>
+                                </div>
+                              </TaskDetailSheet>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <div className="text-sm text-muted-foreground w-44 truncate">
-                    <span>{task.projectName ?? t("Tanpa proyek", "No project")}</span>
-                    {task.clientName ? <span className="text-[11px] opacity-75 block truncate">{task.clientName}</span> : null}
-                  </div>
-                  <div className="text-sm text-muted-foreground w-28 truncate">
-                    {task.assigneeName ?? <span className="text-muted-foreground/60">—</span>}
-                  </div>
-                  <div className={`flex items-center gap-1 text-sm w-28 ${dueTone(task)}`}>
-                    <Clock className="h-3 w-3" />
-                    <span className="text-xs" suppressHydrationWarning>{formatDue(task)}</span>
-                  </div>
-                  <div className="w-24">
-                    <Badge variant="outline" className={`text-[10px] px-2 py-0 h-5 rounded-full font-medium ${taskPriorityColor(task.priority)}`}>
-                      {task.priority === "urgent" && <AlertTriangle className="mr-0.5 h-2.5 w-2.5" />}
-                      {taskPriorityLabel(task.priority, lang)}
-                    </Badge>
-                  </div>
-                  <div className="w-24">
-                    <Badge variant="outline" className={`gap-1 text-[10px] px-2 py-0 h-5 rounded-full font-medium ${sb.variant === "default" ? "border-primary/30 bg-primary/10 text-primary" : "border-border/80 bg-muted/60 text-muted-foreground"}`}>
-                      <span className={`h-1 w-1 rounded-full ${task.status === "done" ? "bg-emerald-600" : task.status === "in_progress" ? "bg-blue-600" : "bg-muted-foreground"}`} />
-                      {sb.label}
-                    </Badge>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
-            </TaskDetailSheet>
-          );
-        })}
-      </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

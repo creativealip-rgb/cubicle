@@ -4,9 +4,9 @@ import { useSearchParams } from "next/navigation";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { useT } from "@/lib/i18n-client";
 
-type TaskPageTab = "workflow" | "reusable" | "templates";
+type TaskPageTab = "workflow" | "reusable";
 
-export function TaskPageTabs({ current }: { current: TaskPageTab }) {
+export function TaskPageTabs({ current }: { current: string }) {
   const { t } = useT();
   const searchParams = useSearchParams();
   const href = (tab: TaskPageTab) => {
@@ -15,9 +15,14 @@ export function TaskPageTabs({ current }: { current: TaskPageTab }) {
     next.delete("page");
     return `/app/tasks?${next.toString()}`;
   };
-  return <StatusFilterTabs activeValue={current} hideEmpty={false} tabs={[
-    { value: "workflow", label: t("Sekali", "One-time"), href: href("workflow"), alwaysShow: true },
-    { value: "reusable", label: t("Berulang", "Recurring"), href: href("reusable"), alwaysShow: true },
-    { value: "templates", label: t("Template", "Templates"), href: href("templates"), alwaysShow: true },
-  ]} />;
+  return (
+    <StatusFilterTabs
+      activeValue={current === "reusable" ? "reusable" : "workflow"}
+      hideEmpty={false}
+      tabs={[
+        { value: "workflow", label: t("Sekali", "One-time"), href: href("workflow"), alwaysShow: true },
+        { value: "reusable", label: t("Berulang", "Recurring"), href: href("reusable"), alwaysShow: true },
+      ]}
+    />
+  );
 }

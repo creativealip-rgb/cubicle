@@ -14,13 +14,9 @@ export function TaskViewToggle({ current }: { current: "list" | "board" | "weekl
 
   function setView(view: "list" | "board" | "weekly") {
     const params = new URLSearchParams(searchParams.toString());
-    if (view === "list") {
-      params.delete("view");
-    } else {
-      params.set("view", view);
-    }
+    params.set("view", view);
     startTransition(() => {
-      router.push(`/app/tasks${params.toString() ? `?${params.toString()}` : ""}`);
+      router.push(`/app/tasks?${params.toString()}`);
     });
   }
 
@@ -29,17 +25,17 @@ export function TaskViewToggle({ current }: { current: "list" | "board" | "weekl
     <div className="inline-flex items-center gap-1 rounded-lg border bg-muted/40 p-0.5">
       <button
         type="button"
-        onClick={() => setView("list")}
-        className={cn(base, current === "list" ? "border border-primary/20 bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground")}
-      >
-        <List className="h-3.5 w-3.5" /> {t("Daftar", "List")}
-      </button>
-      <button
-        type="button"
         onClick={() => setView("board")}
         className={cn(base, current === "board" ? "border border-primary/20 bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground")}
       >
         <LayoutGrid className="h-3.5 w-3.5" /> {t("Papan", "Board")}
+      </button>
+      <button
+        type="button"
+        onClick={() => setView("list")}
+        className={cn(base, current === "list" ? "border border-primary/20 bg-background text-primary shadow-sm" : "text-muted-foreground hover:text-foreground")}
+      >
+        <List className="h-3.5 w-3.5" /> {t("Daftar", "List")}
       </button>
       <button
         type="button"
