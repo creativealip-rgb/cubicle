@@ -32,7 +32,7 @@ describe("new user onboarding flow", () => {
       expect(source).not.toContain("Ke Dashboard");
     }
     expect(flow).toContain("sourceOther");
-    expect(flow).toContain("Tulis sumber lain...");
+    expect(flow).toContain("Lainnya (tulis manual)...");
   });
 
   it("persists plan and source in onboarding activity metadata", () => {

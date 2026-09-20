@@ -24,12 +24,11 @@ const plans: Array<{ id: PlanChoice; title: string; note: string }> = [
   { id: "enterprise", title: "Enterprise", note: "Untuk operasional besar dan kebutuhan khusus." },
 ];
 
-const sources: Array<{ id: SourceChoice; label: string }> = [
+const sources: Array<{ id: Exclude<SourceChoice, "other">; label: string }> = [
   { id: "instagram", label: "Instagram" },
   { id: "google", label: "Google" },
   { id: "friend", label: "Teman / rekomendasi" },
   { id: "tiktok", label: "TikTok" },
-  { id: "other", label: "Lainnya" },
 ];
 
 export function OnboardingFlow() {
@@ -112,20 +111,24 @@ export function OnboardingFlow() {
               <div className="text-center"><Sparkles className="mx-auto h-12 w-12 text-primary" /><h2 className="mt-2 text-lg font-semibold">Tau Cubiqlo dari mana?</h2><p className="text-sm text-muted-foreground">Pilih satu sumber utama.</p></div>
               <div className="grid gap-2 sm:grid-cols-2">
                 {sources.map((item) => (
-                  <button key={item.id} type="button" onClick={() => setSource(item.id)} className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm transition hover:border-primary ${source === item.id ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border bg-card"}`}>
+                  <button key={item.id} type="button" onClick={() => { setSource(item.id); setSourceOther(""); }} className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm transition hover:border-primary ${source === item.id ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border bg-card"}`}>
                     {item.label}
                     {source === item.id && <Check className="h-4 w-4 text-primary" />}
                   </button>
                 ))}
-                <Input
-                  value={sourceOther}
-                  onChange={(event) => {
-                    setSourceOther(event.target.value);
-                    setSource("other");
-                  }}
-                  placeholder="Tulis sumber lain..."
-                  className="h-11 rounded-xl sm:col-span-2"
-                />
+                <div className={`relative flex items-center rounded-xl border transition ${source === "other" ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border bg-card"}`}>
+                  <Input
+                    value={sourceOther}
+                    onFocus={() => setSource("other")}
+                    onChange={(event) => {
+                      setSourceOther(event.target.value);
+                      setSource("other");
+                    }}
+                    placeholder="Lainnya (tulis manual)..."
+                    className="h-11 border-0 bg-transparent pr-9 text-sm shadow-none focus-visible:ring-0"
+                  />
+                  {source === "other" && <Check className="pointer-events-none absolute right-3 h-4 w-4 text-primary" />}
+                </div>
               </div>
             </div>
           )}
