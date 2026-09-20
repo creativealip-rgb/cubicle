@@ -57,17 +57,17 @@ const styles = StyleSheet.create({
     borderBottomColor: BORDER,
   },
   brandBlock: { flexDirection: "row", alignItems: "center", flex: 1 },
-  logo: { width: 48, height: 48, marginRight: 12, borderRadius: 8 },
+  logo: { width: 56, height: 56, marginRight: 14, borderRadius: 10 },
   logoFallback: {
-    width: 48,
-    height: 48,
-    marginRight: 12,
-    borderRadius: 10,
+    width: 56,
+    height: 56,
+    marginRight: 14,
+    borderRadius: 12,
     backgroundColor: ACCENT,
     alignItems: "center",
     justifyContent: "center",
   },
-  logoFallbackText: { color: "#ffffff", fontSize: 18, fontWeight: 700 },
+  logoFallbackText: { color: "#ffffff", fontSize: 20, fontWeight: 700 },
   companyName: {
     fontSize: 18,
     fontWeight: 700,
@@ -339,6 +339,7 @@ export function InvoicePDF({
   amountPaid,
 }: InvoicePDFProps) {
   const companyName = workspace.billingName || "";
+  const initials = companyName ? companyName.slice(0, 2).toUpperCase() : "CB";
   const sub = Number(invoice.subtotal);
   const tax = Number(invoice.tax);
   const discount = Number(invoice.discount);
@@ -375,8 +376,9 @@ export function InvoicePDF({
               // eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer Image has no alt prop API
               <Image src={workspace.logoUrl} style={styles.logo} />
             ) : (
-              // eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer Image has no alt prop API
-              <Image src="https://cubiqlo.com/logo-header.png" style={{ width: 96, height: 32, marginRight: 12, objectFit: "contain" }} />
+              <View style={styles.logoFallback}>
+                <Text style={styles.logoFallbackText}>{initials}</Text>
+              </View>
             )}
             <View style={{ flex: 1 }}>
               <Text style={styles.companyName}>
