@@ -209,7 +209,7 @@ export default async function SharedInvoicePage({
             </CardHeader>
             <CardContent>
               <p className="text-lg font-semibold">
-                {client.companyName || client.name}
+                {invoice.includeClientCompany !== false && client.companyName ? client.companyName : client.name}
               </p>
               {client.address && (
                 <p className="text-sm text-muted-foreground whitespace-pre-wrap">

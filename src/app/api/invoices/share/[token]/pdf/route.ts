@@ -131,7 +131,7 @@ export async function GET(
     },
     client: {
       name: clientRow?.name ?? "Unknown",
-      companyName: clientRow?.companyName ?? null,
+      companyName: inv.includeClientCompany !== false ? (clientRow?.companyName ?? null) : null,
       address: clientRow?.address ?? null,
     },
     items: items.map((it) => ({

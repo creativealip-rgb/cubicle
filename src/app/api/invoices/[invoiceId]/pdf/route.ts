@@ -103,7 +103,7 @@ export async function GET(
     },
     client: {
       name: client?.name ?? "Unknown",
-      companyName: client?.companyName ?? null,
+      companyName: inv.includeClientCompany !== false ? (client?.companyName ?? null) : null,
       address: client?.address ?? null,
     },
     items: items.map((it) => ({

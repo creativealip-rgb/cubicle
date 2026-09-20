@@ -1462,6 +1462,7 @@ export const invoices = pgTable("invoices", {
   discount: numeric("discount", { precision: 12, scale: 2 }).notNull().default("0"),
   tax: numeric("tax", { precision: 12, scale: 2 }).notNull().default("0"),
   chargeType: text("charge_type", { enum: ["none", "tax", "admin_fee"] }).notNull().default("none"),
+  includeClientCompany: boolean("include_client_company").notNull().default(true),
   total: numeric("total", { precision: 12, scale: 2 }).notNull().default("0"),
   status: text("status", { enum: ["draft", "sent", "viewed", "paid", "overdue", "cancelled", "archived"] }).notNull().default("draft"),
   notes: text("notes"),

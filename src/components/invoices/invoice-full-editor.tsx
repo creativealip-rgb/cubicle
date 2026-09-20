@@ -19,7 +19,7 @@ export type Line = { description: string; quantity: number; unitPrice: number; a
 type Option = { id: string; name: string; clientId?: string | null };
 
 export function InvoiceFullEditor({ invoice, initialItems, clients, projects, sourceActions, children }: {
-  invoice: { id: string; clientId: string; projectId: string | null; invoiceNumber: string; issueDate: string; dueDate: string | null; currency: string; discount: number; tax: number; chargeType: "none" | "tax" | "admin_fee"; notes: string; terms: string; status: string };
+  invoice: { id: string; clientId: string; projectId: string | null; invoiceNumber: string; issueDate: string; dueDate: string | null; currency: string; discount: number; tax: number; chargeType: "none" | "tax" | "admin_fee"; includeClientCompany?: boolean; notes: string; terms: string; status: string };
   initialItems: Line[];
   clients: Option[];
   projects: Option[];
@@ -45,6 +45,7 @@ export function InvoiceFullEditor({ invoice, initialItems, clients, projects, so
   const [form, setForm] = useState({
     ...invoice,
     discount: invoice.discount === 0 ? "" : String(invoice.discount),
+    includeClientCompany: invoice.includeClientCompany ?? true,
     items: initialItems.map(({ description, quantity, unitPrice, amount, sourceType }) => ({ description, quantity, unitPrice, amount, sourceType })),
   });
 
@@ -106,6 +107,7 @@ export function InvoiceFullEditor({ invoice, initialItems, clients, projects, so
         tax: calculatedTaxAmount,
         status: form.status as "draft" | "sent" | "viewed" | "overdue",
         chargeType,
+        includeClientCompany: form.includeClientCompany,
         notes: form.notes,
         terms: form.terms,
         items: form.items,
@@ -169,6 +171,24 @@ export function InvoiceFullEditor({ invoice, initialItems, clients, projects, so
                   <SelectItem value="AUD">AUD (A$)</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="sm:col-span-2 lg:col-span-3 flex items-center justify-between rounded-lg border p-3 bg-muted/20">
+              <div className="space-y-0.5">
+                <Label htmlFor="include-company" className="text-sm font-medium cursor-pointer">
+                  {t("Cantumkan Nama Perusahaan Klien", "Include Client Company Name")}
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  {t("Jika aktif, nama perusahaan klien ditampilkan di bawah nama klien pada invoice.", "When enabled, client company name is shown below client name on invoice.")}
+                </p>
+              </div>
+              <input
+                id="include-company"
+                type="checkbox"
+                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer accent-primary"
+                checked={form.includeClientCompany}
+                disabled={locked}
+                onChange={(e) => setForm({ ...form, includeClientCompany: e.target.checked })}
+              />
             </div>
 
           </CardContent>

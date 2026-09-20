@@ -320,6 +320,7 @@ export default async function InvoiceDetailPage({
           discount: Number(inv.discount),
           tax: Number(inv.tax),
           chargeType: inv.chargeType,
+          includeClientCompany: inv.includeClientCompany ?? true,
           notes: inv.notes ?? "",
           terms: inv.terms ?? "",
           status: inv.status,
