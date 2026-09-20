@@ -1,10 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import { ChevronLeft, ChevronRight, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { togglePersonalHabitCheckin } from "@/lib/actions/personal-habits";
 import { cn } from "@/lib/utils";
 
 export interface HabitItem {
@@ -29,7 +28,7 @@ export function HabitWeeklyGrid({
   lang = "id",
 }: HabitWeeklyGridProps) {
   const [weekOffset, setWeekOffset] = useState(0);
-  const [, startTransition] = useTransition();
+  const [pendingId, setPendingId] = useState<string | null>(null);
 
   const [optimisticCheckins, setOptimisticCheckins] = useState<
     Record<string, Set<string>>
@@ -91,7 +90,7 @@ export function HabitWeeklyGrid({
     };
   }, [today, weekOffset, lang]);
 
-  const handleToggle = (h: HabitItem, date: string, isFuture: boolean) => {
+  const handleToggle = async (h: HabitItem, date: string, isFuture: boolean) => {
     if (isFuture) {
       toast.error(
         lang === "id"
@@ -100,6 +99,9 @@ export function HabitWeeklyGrid({
       );
       return;
     }
+
+    const key = `${h.id}-${date}`;
+    if (pendingId === key) return;
 
     // Optimistic UI update
     setOptimisticCheckins((prev) => {
@@ -112,20 +114,29 @@ export function HabitWeeklyGrid({
       return { ...prev, [h.id]: set };
     });
 
-    startTransition(async () => {
-      try {
-        await togglePersonalHabitCheckin(h.id, date);
-      } catch (err) {
-        // Revert on error
-        setOptimisticCheckins((prev) => {
-          const original = new Set(
-            habits.find((item) => item.id === h.id)?.checkins.map((c) => c.localDate) || []
-          );
-          return { ...prev, [h.id]: original };
-        });
-        toast.error(err instanceof Error ? err.message : "Gagal update check-in");
+    setPendingId(key);
+    try {
+      const res = await fetch("/api/productivity/habits/checkin", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ habitId: h.id, date }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) {
+        throw new Error(data.error || "Failed to update check-in");
       }
-    });
+    } catch (err) {
+      // Revert on error
+      setOptimisticCheckins((prev) => {
+        const original = new Set(
+          habits.find((item) => item.id === h.id)?.checkins.map((c) => c.localDate) || []
+        );
+        return { ...prev, [h.id]: original };
+      });
+      toast.error(err instanceof Error ? err.message : "Gagal update check-in");
+    } finally {
+      setPendingId(null);
+    }
   };
 
   return (
@@ -209,13 +220,16 @@ export function HabitWeeklyGrid({
                 </div>
                 {weekDays.map((d) => {
                   const done = optimisticCheckins[h.id]?.has(d.date) ?? false;
+                  const key = `${h.id}-${d.date}`;
+                  const isThisPending = pendingId === key;
+
                   return (
                     <div key={d.date} className="flex justify-center items-center">
                       <button
                         type="button"
                         onClick={() => handleToggle(h, d.date, d.isFuture)}
                         aria-label={`${h.name} ${d.date}`}
-                        disabled={d.isFuture}
+                        disabled={d.isFuture || isThisPending}
                         className={cn(
                           "flex size-6 items-center justify-center rounded-md border transition-all duration-150 active:scale-90",
                           done
