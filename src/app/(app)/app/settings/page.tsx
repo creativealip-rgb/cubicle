@@ -215,8 +215,8 @@ export default async function SettingsPage({
         icon={Sliders}
         title={t("Pengaturan", "Settings")}
         description={t(
-          "Kelompokkan konfigurasi workspace, profil akun, keamanan 2FA, tim, dan integrasi.",
-          "Group workspace settings, account profile, 2FA security, team members, and integrations.",
+          "Kelola profil akun, workspace, tim, preferensi invoice, dan integrasi.",
+          "Manage account profile, workspace, team, invoice preferences, and integrations.",
         )}
       />
 
@@ -232,39 +232,26 @@ export default async function SettingsPage({
           initialTab={initialTab}
           workspace={
             <>
-              {workspaceSetupDone < workspaceSetupItems.length && (
-                <Card className="border-blue-200 bg-blue-50/70">
-                  <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-blue-950">
-                        {t(
-                          "Lengkapi profil workspace",
-                          "Complete workspace profile",
-                        )}
-                      </p>
-                      <p className="mt-1 text-sm text-blue-900/70">
-                        {t(
-                          "Data ini dipakai di invoice, portal client, booking, dan email agar terlihat profesional.",
-                          "This data is used on invoices, client portal, booking, and emails so everything looks professional.",
-                        )}
-                      </p>
-                    </div>
-                    <Badge className="w-fit bg-blue-600 text-white hover:bg-blue-600">
-                      {workspaceSetupDone}/{workspaceSetupItems.length}{" "}
-                      {t("selesai", "done")}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              )}
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Settings className="h-5 w-5" /> Workspace
-                  </CardTitle>
-                  <CardDescription>
+                <CardHeader className="pb-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <CardTitle className="flex items-center gap-2">
+                      <Settings className="h-5 w-5" /> Workspace
+                    </CardTitle>
+                    {workspaceSetupDone < workspaceSetupItems.length ? (
+                      <Badge variant="outline" className="border-blue-200 bg-blue-50 text-blue-700">
+                        {workspaceSetupDone}/{workspaceSetupItems.length} {t("selesai", "done")}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                        ✓ {t("Profil Lengkap", "Profile Complete")}
+                      </Badge>
+                    )}
+                  </div>
+                  <CardDescription className="mt-1">
                     {t(
-                      "Profil workspace dan branding bisnis kamu.",
-                      "Your workspace profile and business branding.",
+                      "Profil workspace dan branding bisnis kamu untuk tagihan dan preview klien.",
+                      "Your workspace profile and business branding for invoices and client preview.",
                     )}
                   </CardDescription>
                 </CardHeader>
@@ -434,40 +421,26 @@ export default async function SettingsPage({
           }
           invoice={
             <>
-              {invoiceSetupDone < invoiceSetupItems.length && (
-                <Card className="border-amber-200 bg-amber-50/70">
-                  <CardContent className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between">
-                    <div>
-                      <p className="text-sm font-semibold text-amber-950">
-                        {t(
-                          "Atur invoice sebelum kirim ke client",
-                          "Set invoice defaults before sending to clients",
-                        )}
-                      </p>
-                      <p className="mt-1 text-sm text-amber-900/70">
-                        {t(
-                          "Mata uang, terms pembayaran, pajak/rate, dan email invoice bikin tagihan lebih siap pakai.",
-                          "Currency, payment terms, tax/rate, and invoice email make billing ready to use.",
-                        )}
-                      </p>
-                    </div>
-                    <Badge className="w-fit bg-amber-600 text-white hover:bg-amber-600">
-                      {invoiceSetupDone}/{invoiceSetupItems.length}{" "}
-                      {t("selesai", "done")}
-                    </Badge>
-                  </CardContent>
-                </Card>
-              )}
               <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Receipt className="h-5 w-5" />{" "}
-                    {t("Default Invoice", "Invoice Defaults")}
-                  </CardTitle>
-                  <CardDescription>
+                <CardHeader className="pb-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <CardTitle className="flex items-center gap-2">
+                      <Receipt className="h-5 w-5" /> {t("Default Invoice", "Invoice Defaults")}
+                    </CardTitle>
+                    {invoiceSetupDone < invoiceSetupItems.length ? (
+                      <Badge variant="outline" className="border-amber-200 bg-amber-50 text-amber-800">
+                        {invoiceSetupDone}/{invoiceSetupItems.length} {t("selesai", "done")}
+                      </Badge>
+                    ) : (
+                      <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                        ✓ {t("Invoice Siap", "Invoice Ready")}
+                      </Badge>
+                    )}
+                  </div>
+                  <CardDescription className="mt-1">
                     {t(
-                      "Mata uang, terms pembayaran, pajak/rate, dan email invoice bikin tagihan lebih siap pakai.",
-                      "Currency, payment terms, tax/rate, and invoice email make billing ready to use.",
+                      "Mata uang, terms pembayaran, pajak/rate, dan email balasan untuk tagihan klien.",
+                      "Currency, payment terms, tax/rate, and reply-to email for client invoicing.",
                     )}
                   </CardDescription>
                 </CardHeader>
