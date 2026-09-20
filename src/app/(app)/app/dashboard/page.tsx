@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { formatMoneyCompact } from "@/lib/utils";
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { findWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { FirstWorkspaceModal } from "@/components/first-workspace-modal";
 import { DashboardOnboarding } from "@/components/dashboard-onboarding";
@@ -72,7 +73,8 @@ export default async function DashboardPage() {
   const totalClients = counts.total_clients || 0;
   const totalSites = counts.total_sites || 0;
   const totalPersonalNotes = counts.total_personal_notes || 0;
-
+  const cookieStore = await cookies();
+  const hasVisitedDocs = cookieStore.get("cubiqlo_docs_visited")?.value === "1";
   const now = new Date();
   const in7d = new Date(now.getTime() + 7 * 24 * 3600 * 1000);
   const in7dDateStr = in7d.toISOString().split("T")[0]!;
@@ -383,7 +385,7 @@ export default async function DashboardPage() {
           { key: "client", done: totalClients > 0, href: "/app/clients" },
           { key: "landingpage", done: totalSites > 0, href: "/app/personal-site" },
           { key: "personal", done: totalPersonalNotes > 0, href: "/app/personal" },
-          { key: "docs", done: false, href: "/app/docs" },
+          { key: "docs", done: hasVisitedDocs, href: "/app/docs" },
         ]}
       />
 

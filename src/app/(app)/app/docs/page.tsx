@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cookies } from "next/headers";
 import { BookOpen, LifeBuoy, Sparkles } from "lucide-react";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,13 @@ export default async function DocsPage() {
   const lang = await getCurrentLang();
   const t = createT(lang);
 
+  // Set cookie to record that user has visited documentation
+  const cookieStore = await cookies();
+  cookieStore.set("cubiqlo_docs_visited", "1", {
+    maxAge: 365 * 24 * 60 * 60,
+    path: "/",
+    sameSite: "lax",
+  });
   return (
     <div className="min-w-0 space-y-6">
       <PageHeader
