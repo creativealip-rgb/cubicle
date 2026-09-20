@@ -13,14 +13,27 @@ export async function assertTimeEntryContext(
   workspaceId: string,
   input: TimeContextInput,
 ): Promise<TimeContextInput> {
-  const { clientId = null, projectId = null, taskId = null } = input;
+  const { projectId = null, taskId = null } = input;
+  let { clientId = null } = input;
 
   if (taskId && !projectId) {
     throw new Error("Task wajib terhubung ke Project");
   }
+
+  // If projectId is present but clientId is missing, auto-link project's clientId
   if (projectId && !clientId) {
-    throw new Error("Project wajib terhubung ke Client");
+    const [prj] = await database
+      .select({ id: projects.id, clientId: projects.clientId })
+      .from(projects)
+      .where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId)))
+      .limit(1);
+    if (prj?.clientId) {
+      clientId = prj.clientId;
+    } else {
+      throw new Error("Project wajib terhubung ke Client");
+    }
   }
+
   if (!clientId && !projectId && !taskId) return { clientId, projectId, taskId };
 
   if (clientId) {

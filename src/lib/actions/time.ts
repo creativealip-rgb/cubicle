@@ -418,8 +418,21 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
   assertTimerNotStale(entry.startTime, endCandidate);
   const finalEnd = endCandidate;
 
-  const nextClientId = parsed.clientId ?? entry.clientId ?? null;
+  let nextClientId = parsed.clientId ?? entry.clientId ?? null;
   const nextProjectId = parsed.projectId ?? entry.projectId ?? null;
+
+  // Auto-resolve clientId from project if missing
+  if (nextProjectId && !nextClientId) {
+    const [prj] = await db
+      .select({ clientId: projects.clientId })
+      .from(projects)
+      .where(and(eq(projects.id, nextProjectId), eq(projects.workspaceId, workspaceId)))
+      .limit(1);
+    if (prj?.clientId) {
+      nextClientId = prj.clientId;
+    }
+  }
+
   const nextActivityId =
     parsed.activityId !== undefined ? parsed.activityId : entry.activityId;
   const nextTaskId = parsed.taskId ?? entry.taskId ?? null;
