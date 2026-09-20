@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { type ReactNode, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,9 +56,11 @@ export type TemplateRow = {
 
 function TemplateFormDialog({
   template,
+  children,
   onSave,
 }: {
   template?: TemplateRow;
+  children?: ReactNode;
   onSave: (value: {
     name: string;
     description?: string;
@@ -76,10 +78,7 @@ function TemplateFormDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       {template ? (
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-7" aria-label={t("Aksi template", "Template actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger>
-          <DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => setOpen(true)}><Edit2 className="size-3.5" />{t("Ubah", "Edit")}</DropdownMenuItem></DropdownMenuContent>
-        </DropdownMenu>
+        <DialogTrigger asChild>{children}</DialogTrigger>
       ) : (
         <DialogTrigger asChild><Button size="sm" className="rounded-xl bg-primary font-semibold gap-1.5 text-primary-foreground shadow-xs"><Plus className="h-4 w-4" />{t("Buat Template Baru", "New Template")}</Button></DialogTrigger>
       )}
@@ -318,13 +317,6 @@ export function TaskTemplateWorkspace({
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {templates.map((template) => {
             const itemCount = template.items?.length ?? 0;
-            const targetName =
-              template.target === "fixed_price"
-                ? t("Harga Tetap", "Fixed Price")
-                : template.target === "hourly_retainer"
-                ? t("Per Jam / Retainer", "Hourly / Retainer")
-                : t("Semua Proyek", "All Projects");
-
             return (
               <div
                 key={template.id}
@@ -362,11 +354,8 @@ export function TaskTemplateWorkspace({
                           {template.name}
                         </h4>
                         <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="rounded-md bg-muted px-1.5 py-0.2 text-[10px] font-semibold text-muted-foreground uppercase">
-                            {targetName}
-                          </span>
                           <span className="text-[10px] text-muted-foreground">
-                            • {itemCount} {t("tugas", "tasks")}
+                            {itemCount} {t("tugas", "tasks")}
                           </span>
                         </div>
                       </div>
@@ -374,10 +363,43 @@ export function TaskTemplateWorkspace({
 
                     <div className="flex items-center gap-1">
                       {template.status === "active" && (
-                        <TemplateFormDialog
-                          template={template}
-                          onSave={(value) => run(() => updateTaskTemplate(template.id, value))}
-                        />
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="size-7" aria-label={t("Aksi template", "Template actions")}>
+                              <MoreHorizontal className="size-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <TemplateFormDialog
+                              template={template}
+                              onSave={(value) => run(() => updateTaskTemplate(template.id, value))}
+                            >
+                              <DropdownMenuItem onSelect={(event) => event.preventDefault()}>
+                                <Edit2 className="size-3.5" />
+                                {t("Ubah", "Edit")}
+                              </DropdownMenuItem>
+                            </TemplateFormDialog>
+                            <DropdownMenuItem onClick={() => run(() => archiveTaskTemplate(template.id))}>
+                              <Archive className="size-3.5" />
+                              {t("Arsipkan", "Archive")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => run(() => duplicateTaskTemplate(template.id))}>
+                              <Copy className="size-3.5" />
+                              {t("Duplikat", "Duplicate")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
+                      {template.status === "archived" && (
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="size-7"
+                          onClick={() => run(() => restoreTaskTemplate(template.id))}
+                          title={t("Pulihkan", "Restore")}
+                        >
+                          <RotateCcw className="size-4" />
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -466,44 +488,6 @@ export function TaskTemplateWorkspace({
                       </div>
                     )}
                   </div>
-                </div>
-
-                {/* Card Footer Actions */}
-                <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="h-7 text-xs rounded-lg font-medium gap-1"
-                    onClick={() => run(() => duplicateTaskTemplate(template.id))}
-                  >
-                    <Copy className="h-3 w-3" />
-                    {t("Duplikat", "Duplicate")}
-                  </Button>
-
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 text-xs rounded-lg font-medium text-muted-foreground hover:text-foreground gap-1"
-                    onClick={() =>
-                      run(() =>
-                        template.status === "active"
-                          ? archiveTaskTemplate(template.id)
-                          : restoreTaskTemplate(template.id)
-                      )
-                    }
-                  >
-                    {template.status === "active" ? (
-                      <>
-                        <Archive className="h-3 w-3" />
-                        {t("Arsipkan", "Archive")}
-                      </>
-                    ) : (
-                      <>
-                        <RotateCcw className="h-3 w-3" />
-                        {t("Pulihkan", "Restore")}
-                      </>
-                    )}
-                  </Button>
                 </div>
               </div>
             );

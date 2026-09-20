@@ -153,7 +153,7 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
             ))}
           </div>
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={allowIncompatibleTarget} onChange={(event) => {setAllowIncompatibleTarget(event.target.checked);setPreview([]);setSelectedItems([]);setPreviewFingerprint("");}} /><span>{t("Izinkan template tidak cocok", "Allow incompatible template")}</span></label>
-          {(!selectedTemplateId || preview.length > 0) && <Button variant="outline" onClick={() => void loadPreview()} disabled={loading || !projectId || selectedTemplateIds.length === 0}>{preview.length > 0 ? t("Muat ulang preview", "Refresh preview") : t("Lihat Preview", "View Preview")}</Button>}
+          {preview.length === 0 && <Button variant="outline" onClick={() => void loadPreview()} disabled={loading || !projectId || selectedTemplateIds.length === 0}>{t("Lihat Preview", "View Preview")}</Button>}
           {preview.length ? <div className="overflow-hidden rounded-md border">
             <label className="flex items-center gap-2 border-b bg-muted/30 px-3 py-2 text-sm font-medium">
               <input type="checkbox" checked={allItemsSelected} onChange={(event) => toggleAllItems(event.target.checked)} />
