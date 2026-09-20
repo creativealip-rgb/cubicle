@@ -61,8 +61,7 @@ export default async function ProjectsPage({
   const t = createT(lang);
   const PROJECT_STATUS_LABELS: Record<string, string> = {
     active: t("Aktif", "Active"),
-    on_hold: t("Ditunda", "On Hold"),
-    completed: t("Selesai", "Completed"),
+    completed: t("Arsip", "Archived"),
   };
   const tabLabel = (tab: ProjectStatusTab) => {
     return PROJECT_STATUS_LABELS[tab] ?? tab;
@@ -108,12 +107,11 @@ export default async function ProjectsPage({
     .where(eq(projects.workspaceId, workspaceId))
     .groupBy(projects.status);
 
-  const statusCounts: Record<ProjectStatusTab, number> = { active: 0, on_hold: 0, completed: 0 };
+  const statusCounts: Record<ProjectStatusTab, number> = { active: 0, completed: 0 };
   for (const row of countRows) {
     const n = Number(row.count) || 0;
     if (PROJECT_STATUS_TAB_VALUES.active.includes(row.status)) statusCounts.active += n;
-    else if (row.status === "on_hold") statusCounts.on_hold = n;
-    else if (row.status === "completed") statusCounts.completed = n;
+    else if (PROJECT_STATUS_TAB_VALUES.completed.includes(row.status)) statusCounts.completed += n;
   }
 
   const whereClauses: SQL[] = [eq(projects.workspaceId, workspaceId)];

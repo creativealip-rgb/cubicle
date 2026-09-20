@@ -14,10 +14,10 @@ describe("project list billing type filter", () => {
 
   it("preserves status and client filters when selecting a billing type", () => {
     expect(buildProjectsHref({
-      status: "on_hold",
+      status: "completed",
       clientId: "client-1",
       billingType: "hourly",
-    })).toBe("/app/projects?status=on_hold&clientId=client-1&billingType=hourly");
+    })).toBe("/app/projects?status=completed&clientId=client-1&billingType=hourly");
   });
 
   it("removes billingType when all project types are selected", () => {

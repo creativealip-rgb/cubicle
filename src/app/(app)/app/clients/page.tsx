@@ -66,12 +66,10 @@ export default async function ClientsPage({
 
   const whereClauses = [eq(clients.workspaceId, workspaceId)];
 
-  if (statusFilter === "active") {
+  if (statusFilter === "archived" || statusFilter === "inactive") {
+    whereClauses.push(sql`${clients.status} IN ('archived', 'inactive')`);
+  } else {
     whereClauses.push(eq(clients.status, "active"));
-  } else if (statusFilter === "inactive") {
-    whereClauses.push(eq(clients.status, "inactive"));
-  } else if (statusFilter === "archived") {
-    whereClauses.push(eq(clients.status, "archived"));
   }
 
   // Fetch clients with project counts
@@ -125,13 +123,15 @@ export default async function ClientsPage({
   const [counts] = await db
     .select({
       active: sql<number>`count(case when ${clients.status} = 'active' then 1 end)::int`,
-      inactive: sql<number>`count(case when ${clients.status} = 'inactive' then 1 end)::int`,
-      archived: sql<number>`count(case when ${clients.status} = 'archived' then 1 end)::int`,
+      archived: sql<number>`count(case when ${clients.status} IN ('archived', 'inactive') then 1 end)::int`,
     })
     .from(clients)
     .where(eq(clients.workspaceId, workspaceId));
 
-  const tabCounts = counts ?? { active: 0, inactive: 0, archived: 0 };
+  const tabCounts = {
+    active: counts?.active ?? 0,
+    archived: counts?.archived ?? 0,
+  };
 
   return (
     <div className="space-y-4 sm:space-y-6">
@@ -194,14 +194,6 @@ export default async function ClientsPage({
                 label: t("Aktif", "Active"),
                 href: search ? `?status=active&search=${encodeURIComponent(search)}` : "?status=active",
                 count: tabCounts.active,
-              },
-              {
-                value: "inactive",
-                label: t("Tidak aktif", "Inactive"),
-                href: search
-                  ? `?status=inactive&search=${encodeURIComponent(search)}`
-                  : "?status=inactive",
-                count: tabCounts.inactive,
               },
               {
                 value: "archived",
