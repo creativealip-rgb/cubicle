@@ -31,7 +31,7 @@ export function VerifyEmailContent() {
     try {
       await authClient.sendVerificationEmail({
         email,
-        callbackURL: "/app/dashboard",
+        callbackURL: "/onboarding",
       });
       setResent(true);
     } catch {

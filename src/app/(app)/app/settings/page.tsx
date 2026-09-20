@@ -536,8 +536,11 @@ export default async function SettingsPage({
           integrations={
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex flex-wrap items-center gap-2">
                   <Calendar className="h-5 w-5" /> Google Calendar
+                  <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-semibold text-muted-foreground">
+                    Soon
+                  </span>
                 </CardTitle>
                 <CardDescription>
                   {t("Hubungkan Google Calendar untuk sinkronisasi jadwal.", "Connect Google Calendar to sync your schedule.")}

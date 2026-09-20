@@ -22,10 +22,10 @@ export type SettingsTabKey =
   | "billing";
 
 const TAB_KEYS: SettingsTabKey[] = [
+  "account",
   "workspace",
   "invoice",
   "team",
-  "account",
   "integrations",
   "billing",
 ];
@@ -97,6 +97,11 @@ export function SettingsTabs({
     icon: ReactNode;
   }> = [
     {
+      key: "account",
+      label: t("Akun", "Account"),
+      icon: <User className="h-3.5 w-3.5" />,
+    },
+    {
       key: "workspace",
       label: t("Workspace", "Workspace"),
       icon: <Settings className="h-3.5 w-3.5" />,
@@ -110,11 +115,6 @@ export function SettingsTabs({
       key: "team",
       label: t("Tim", "Team"),
       icon: <Users className="h-3.5 w-3.5" />,
-    },
-    {
-      key: "account",
-      label: t("Akun", "Account"),
-      icon: <User className="h-3.5 w-3.5" />,
     },
     {
       key: "integrations",

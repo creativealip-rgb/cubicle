@@ -3,33 +3,32 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
-import {
-  Loader2,
-  Check,
-  Building2,
-  Users,
-  Rocket,
-  ArrowRight,
-  ArrowLeft,
-  Plus,
-  X,
-} from "lucide-react";
+import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, Loader2, Settings, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { finishOnboarding } from "@/lib/actions/onboarding";
 
+type PlanChoice = "solo" | "team" | "enterprise";
+type SourceChoice = "instagram" | "google" | "friend" | "tiktok" | "other";
+
 const steps = [
-  { id: 1, label: "Workspace", icon: Building2 },
-  { id: 2, label: "Tim", icon: Users },
-  { id: 3, label: "Siap", icon: Rocket },
+  { id: 1, label: "Plan", icon: BriefcaseBusiness },
+  { id: 2, label: "Sumber", icon: Sparkles },
+  { id: 3, label: "Setup", icon: Settings },
+];
+
+const plans: Array<{ id: PlanChoice; title: string; note: string }> = [
+  { id: "solo", title: "Solo", note: "Untuk kerja sendiri dan mulai cepat." },
+  { id: "team", title: "Team", note: "Untuk kolaborasi dengan tim kecil." },
+  { id: "enterprise", title: "Enterprise", note: "Untuk operasional besar dan kebutuhan khusus." },
+];
+
+const sources: Array<{ id: SourceChoice; label: string }> = [
+  { id: "instagram", label: "Instagram" },
+  { id: "google", label: "Google" },
+  { id: "friend", label: "Teman / rekomendasi" },
+  { id: "tiktok", label: "TikTok" },
+  { id: "other", label: "Lainnya" },
 ];
 
 export default function OnboardingPage() {
@@ -38,244 +37,102 @@ export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [plan, setPlan] = useState<PlanChoice | "">("");
+  const [source, setSource] = useState<SourceChoice | "">("");
 
-  // Step 1: Workspace
-  const [workspaceName, setWorkspaceName] = useState("");
-
-  // Step 2: Team invites
-  const [inviteEmail, setInviteEmail] = useState("");
-  const [invites, setInvites] = useState<string[]>([]);
-
-  function addInvite() {
-    const email = inviteEmail.trim();
-    if (email && email.includes("@") && !invites.includes(email)) {
-      setInvites([...invites, email]);
-      setInviteEmail("");
-    }
-  }
-
-  function removeInvite(email: string) {
-    setInvites(invites.filter((i) => i !== email));
-  }
-
-  async function handleFinish() {
-    if (!workspaceName.trim()) {
-      setError("Nama workspace wajib diisi.");
-      setStep(1);
-      return;
-    }
-
+  async function finish() {
+    if (!plan || !source || loading) return;
     setLoading(true);
     setError(null);
     try {
-      await finishOnboarding({ workspaceName });
-      router.push("/app/dashboard");
+      await finishOnboarding({ plan, source });
+      router.push("/app/settings?tab=account");
       refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Gagal menyelesaikan onboarding.");
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : "Gagal menyelesaikan onboarding.");
       setLoading(false);
     }
   }
 
+  function next() {
+    if (step === 1 && !plan) return;
+    if (step === 2 && !source) return;
+    setStep((current) => Math.min(3, current + 1));
+  }
+
   return (
-    <div className="flex min-h-[calc(100vh-3.5rem)] w-full items-center justify-center px-4">
-      <Card className="w-full max-w-lg">
-        <CardHeader className="space-y-1 text-center">
-          {/* Step indicators */}
-          <div className="flex items-center justify-center gap-2 mb-2">
-            {steps.map((s, i) => {
-              const Icon = s.icon;
-              const isActive = s.id === step;
-              const isDone = s.id < step;
+    <div className="flex min-h-[calc(100vh-3.5rem)] w-full items-center justify-center px-4 py-8">
+      <Card className="w-full max-w-xl rounded-2xl">
+        <CardHeader className="space-y-4 text-center">
+          <div className="flex items-center justify-center gap-2">
+            {steps.map((item, index) => {
+              const Icon = item.icon;
+              const done = item.id < step;
+              const active = item.id === step;
               return (
-                <div key={s.id} className="flex items-center gap-2">
-                  <div
-                    className={`flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium ${
-                      isActive
-                        ? "bg-primary text-primary-foreground"
-                        : isDone
-                          ? "bg-emerald-100 text-emerald-700"
-                          : "bg-muted text-muted-foreground"
-                    }`}
-                  >
-                    {isDone ? (
-                      <Check className="h-3 w-3" />
-                    ) : (
-                      <Icon className="h-3 w-3" />
-                    )}
-                    {s.label}
+                <div key={item.id} className="flex items-center gap-2">
+                  <div className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${active ? "bg-primary text-primary-foreground" : done ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"}`}>
+                    {done ? <Check className="h-3 w-3" /> : <Icon className="h-3 w-3" />}
+                    {item.label}
                   </div>
-                  {i < steps.length - 1 && (
-                    <div className="h-px w-4 bg-border" />
-                  )}
+                  {index < steps.length - 1 && <div className="h-px w-5 bg-border" />}
                 </div>
               );
             })}
           </div>
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight">Setup akun Cubiqlo</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Pilih kebutuhan, info sumber, lalu lanjutkan setup di Settings.</p>
+          </div>
         </CardHeader>
 
-        <CardContent>
-          {error && (
-            <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
-              {error}
-            </div>
-          )}
+        <CardContent className="min-h-72 space-y-4">
+          {error && <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>}
 
-          {/* Step 1: Workspace name */}
           {step === 1 && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <Building2 className="mx-auto h-12 w-12 text-primary" />
-                <h3 className="mt-2 text-lg font-semibold">
-                  Buat workspace kamu
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Di sinilah kamu kelola klien, proyek, dan invoice.
-                </p>
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="workspace">Nama workspace</Label>
-                <Input
-                  id="workspace"
-                  placeholder="Agensi Saya"
-                  value={workspaceName}
-                  onChange={(e) => setWorkspaceName(e.target.value)}
-                />
+            <div className="space-y-3">
+              <div className="text-center"><BriefcaseBusiness className="mx-auto h-12 w-12 text-primary" /><h2 className="mt-2 text-lg font-semibold">Pilih tipe akun</h2><p className="text-sm text-muted-foreground">Ini membantu kami menyiapkan flow yang pas.</p></div>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {plans.map((item) => (
+                  <button key={item.id} type="button" onClick={() => setPlan(item.id)} className={`rounded-xl border p-4 text-left transition hover:border-primary ${plan === item.id ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border bg-card"}`}>
+                    <span className="font-semibold">{item.title}</span>
+                    <span className="mt-2 block text-xs leading-5 text-muted-foreground">{item.note}</span>
+                  </button>
+                ))}
               </div>
             </div>
           )}
 
-          {/* Step 2: Invite team */}
           {step === 2 && (
-            <div className="space-y-4">
-              <div className="text-center">
-                <Users className="mx-auto h-12 w-12 text-primary" />
-                <h3 className="mt-2 text-lg font-semibold">
-                  Undang tim kamu
-                </h3>
-                <p className="text-sm text-muted-foreground">
-                  Tambah rekan untuk kolaborasi. Bisa dilakukan nanti juga.
-                </p>
+            <div className="space-y-3">
+              <div className="text-center"><Sparkles className="mx-auto h-12 w-12 text-primary" /><h2 className="mt-2 text-lg font-semibold">Tau Cubiqlo dari mana?</h2><p className="text-sm text-muted-foreground">Pilih satu sumber utama.</p></div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                {sources.map((item) => (
+                  <button key={item.id} type="button" onClick={() => setSource(item.id)} className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm transition hover:border-primary ${source === item.id ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border bg-card"}`}>
+                    {item.label}
+                    {source === item.id && <Check className="h-4 w-4 text-primary" />}
+                  </button>
+                ))}
               </div>
-
-              <div className="flex gap-2">
-                <Input
-                  type="email"
-                  placeholder="rekan@contoh.com"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      addInvite();
-                    }
-                  }}
-                />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="icon"
-                  onClick={addInvite}
-                  disabled={!inviteEmail.trim()}
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </div>
-
-              {invites.length > 0 && (
-                <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    {invites.length} undangan
-                  </p>
-                  {invites.map((email) => (
-                    <div
-                      key={email}
-                      className="flex items-center justify-between rounded-lg border px-3 py-2"
-                    >
-                      <span className="text-sm">{email}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => removeInvite(email)}
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
             </div>
           )}
 
-          {/* Step 3: Ready */}
           {step === 3 && (
             <div className="space-y-4 text-center">
-              <Rocket className="mx-auto h-16 w-16 text-primary" />
-              <h3 className="text-xl font-semibold">Semua siap!</h3>
-              <p className="text-sm text-muted-foreground">
-                Workspace <strong>{workspaceName || "Workspace Saya"}</strong>{" "}
-                sudah siap. Mulai kelola bisnis kamu.
-              </p>
-              <div className="flex flex-wrap justify-center gap-2">
-                <Badge variant="secondary">
-                  <Check className="mr-1 h-3 w-3" />
-                  Workspace dibuat
-                </Badge>
-                {invites.length > 0 && (
-                  <Badge variant="secondary">
-                    <Check className="mr-1 h-3 w-3" />
-                    {invites.length} undangan disiapkan
-                  </Badge>
-                )}
+              <Settings className="mx-auto h-16 w-16 text-primary" />
+              <div><h2 className="text-xl font-semibold">Setup account di Settings</h2><p className="mt-1 text-sm text-muted-foreground">Kami akan arahkan ke Settings untuk lengkapi profil akun, workspace, invoice, team, dan billing.</p></div>
+              <div className="mx-auto grid max-w-sm gap-2 rounded-xl border bg-muted/30 p-3 text-left text-sm">
+                <div><span className="text-muted-foreground">Plan:</span> <strong>{plans.find((item) => item.id === plan)?.title}</strong></div>
+                <div><span className="text-muted-foreground">Sumber:</span> <strong>{sources.find((item) => item.id === source)?.label}</strong></div>
               </div>
             </div>
           )}
         </CardContent>
 
-        <CardFooter className="flex justify-between">
-          {step > 1 ? (
-            <Button
-              variant="outline"
-              onClick={() => setStep(step - 1)}
-              disabled={loading}
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Kembali
-            </Button>
-          ) : (
-            <div />
-          )}
-
-          {step < 3 ? (
-            <Button
-              onClick={() => setStep(step + 1)}
-              disabled={step === 2 ? false : !workspaceName.trim()}
-            >
-              Lanjut
-              <ArrowRight className="h-4 w-4" />
-            </Button>
-          ) : (
-            <Button onClick={handleFinish} disabled={loading}>
-              {loading && <Loader2 className="h-4 w-4 animate-spin" />}
-              Ke Dashboard
-            </Button>
-          )}
+        <CardFooter className="flex justify-between gap-3">
+          {step > 1 ? <Button variant="outline" onClick={() => setStep(step - 1)} disabled={loading}><ArrowLeft className="h-4 w-4" />Kembali</Button> : <div />}
+          {step < 3 ? <Button onClick={next} disabled={(step === 1 && !plan) || (step === 2 && !source)}>Lanjut<ArrowRight className="h-4 w-4" /></Button> : <Button onClick={finish} disabled={loading}>{loading && <Loader2 className="h-4 w-4 animate-spin" />}Buka Settings</Button>}
         </CardFooter>
-
-        {/* Skip team step */}
-        {step === 2 && (
-          <div className="px-6 pb-4 text-center">
-            <Button
-              variant="link"
-              size="sm"
-              onClick={() => setStep(3)}
-              className="text-muted-foreground"
-            >
-              Lewati dulu
-            </Button>
-          </div>
-        )}
       </Card>
     </div>
   );

@@ -58,7 +58,7 @@ export function VerifyEmailSuccess() {
       </CardContent>
       <CardFooter className="flex justify-center">
         <Button onClick={() => router.push("/onboarding")}>
-          Masuk ke Dashboard
+          Lanjut setup akun
         </Button>
       </CardFooter>
     </Card>

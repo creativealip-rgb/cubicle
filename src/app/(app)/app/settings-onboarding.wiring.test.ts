@@ -10,9 +10,14 @@ const dashboard = source("src/app/(app)/app/dashboard/page.tsx");
 
 describe("settings and onboarding source wiring", () => {
   it("keeps settings tab order and legacy aliases", () => {
-    expect(tabs).toMatch(/const TAB_KEYS[\s\S]*?\[\s*"workspace",\s*"invoice",\s*"team",\s*"account",\s*"integrations",\s*"billing",\s*\]/);
+    expect(tabs).toMatch(/const TAB_KEYS[\s\S]*?\[\s*"account",\s*"workspace",\s*"invoice",\s*"team",\s*"integrations",\s*"billing",\s*\]/);
     expect(tabs).toContain('if (tab === "branding") return "workspace"');
     expect(tabs).toContain('if (tab === "more") return "billing"');
+  });
+
+  it("keeps Google Calendar marked as soon", () => {
+    expect(settings).toContain("Google Calendar");
+    expect(settings).toContain("Soon");
   });
 
   it("keeps BookingSlug out of Settings and in Calendar", () => {

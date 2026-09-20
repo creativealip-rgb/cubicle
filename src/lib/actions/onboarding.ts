@@ -8,7 +8,9 @@ import { createWorkspaceForUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
 
 const onboardingSchema = z.object({
-  workspaceName: z.string().trim().min(2, "Workspace name is required").max(80),
+  workspaceName: z.string().trim().min(2, "Workspace name is required").max(80).optional(),
+  plan: z.enum(["solo", "team", "enterprise"]).optional(),
+  source: z.enum(["instagram", "google", "friend", "tiktok", "other"]).optional(),
 });
 
 export async function finishOnboarding(input: z.infer<typeof onboardingSchema>) {
@@ -19,7 +21,9 @@ export async function finishOnboarding(input: z.infer<typeof onboardingSchema>) 
   const workspaceId = workspace.id;
 
   await writeActivityLog(workspaceId, user.id, "completed_onboarding", "workspace", workspaceId, {
-    workspaceName: parsed.workspaceName,
+    workspaceName: parsed.workspaceName ?? workspace.name,
+    plan: parsed.plan,
+    source: parsed.source,
   });
 
   return { success: true, workspace };
