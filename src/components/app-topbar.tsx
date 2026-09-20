@@ -379,14 +379,8 @@ export function AppTopbar({ user }: AppTopbarProps) {
                     <>
                       {mainWorkspace.map(renderWorkspace)}
                       <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("Workspace tim", "Team Workspaces")}</DropdownMenuLabel>
-                      {teamWorkspaces.length > 0 ? (
+                      {teamWorkspaces.length > 0 && (
                         teamWorkspaces.map(renderWorkspace)
-                      ) : (
-                        <p className="px-2 py-1.5 text-xs text-muted-foreground italic">
-                          {isFree
-                            ? t("Upgrade untuk multi workspace", "Upgrade for multiple workspaces")
-                            : t("Belum ada workspace tim", "No team workspaces")}
-                        </p>
                       )}
                     </>
                   );
