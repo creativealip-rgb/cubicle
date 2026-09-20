@@ -20,6 +20,8 @@ export type AppointmentItem = {
   userName: string | null;
 };
 
+const MAX_DISPLAY_PER_TAB = 10;
+
 export function AppointmentsListPanel({
   appointments,
   locale = "id-ID",
@@ -32,7 +34,7 @@ export function AppointmentsListPanel({
 
   const now = new Date();
 
-  const filtered = appointments.filter((item) => {
+  const allFiltered = appointments.filter((item) => {
     const itemDate = new Date(item.startTime);
     if (tab === "upcoming") {
       return item.status === "scheduled" && itemDate >= now;
@@ -45,6 +47,8 @@ export function AppointmentsListPanel({
     }
     return true;
   });
+
+  const displayList = allFiltered.slice(0, MAX_DISPLAY_PER_TAB);
 
   const counts = {
     upcoming: appointments.filter((item) => item.status === "scheduled" && new Date(item.startTime) >= now).length,
@@ -144,7 +148,7 @@ export function AppointmentsListPanel({
       </div>
 
       {/* List Content */}
-      {filtered.length === 0 ? (
+      {displayList.length === 0 ? (
         <div className="flex h-56 items-center justify-center">
           <EmptyState
             icon={CalendarDays}
@@ -168,7 +172,7 @@ export function AppointmentsListPanel({
         </div>
       ) : (
         <div className="divide-y divide-border/60">
-          {filtered.map((item) => {
+          {displayList.map((item) => {
             const dateInfo = parseDateBadge(item.startTime);
             const isPast = new Date(item.startTime) < now;
             return (
@@ -235,7 +239,11 @@ export function AppointmentsListPanel({
                 </div>
 
                 <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
-                  <AppointmentActions id={item.id} title={item.title || "Sesi Diskusi"} />
+                  <AppointmentActions
+                    id={item.id}
+                    title={item.title || "Sesi Diskusi"}
+                    status={item.status}
+                  />
                 </div>
               </div>
             );

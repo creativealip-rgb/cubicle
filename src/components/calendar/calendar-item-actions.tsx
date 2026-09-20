@@ -3,65 +3,75 @@
 import { useState, useTransition } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
-import { Download, Loader2, XCircle } from "lucide-react";
-import { cancelAppointment, deleteAvailabilityRule } from "@/lib/actions/appointments";
+import { Download, Loader2, XCircle, Trash2 } from "lucide-react";
+import { cancelAppointment, deleteAppointment, deleteAvailabilityRule } from "@/lib/actions/appointments";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n-client";
 
 type PendingAction =
   | { type: "rule"; id: string; label: string }
-  | { type: "appointment"; id: string; label: string }
+  | { type: "cancel_appointment"; id: string; label: string }
+  | { type: "delete_appointment"; id: string; label: string }
   | null;
 
 export function DeleteAvailabilityRuleButton({ id, label }: { id: string; label: string }) {
-  return <CalendarDestructiveAction action={{ type: "rule", id, label }} />;
+  return <CalendarActionBtn action={{ type: "rule", id, label }} />;
 }
 
-export function AppointmentActions({ id, title }: { id: string; title: string }) {
+export function AppointmentActions({
+  id,
+  title,
+  status,
+}: {
+  id: string;
+  title: string;
+  status: string;
+}) {
   const { t } = useT();
+  const isCancelled = status === "cancelled";
+
   return (
-    <div className="flex items-center gap-2">
-      <Button variant="outline" size="sm" className="h-10 gap-1.5 px-3" asChild>
+    <div className="flex items-center gap-1.5">
+      <Button variant="outline" size="sm" className="h-8 gap-1.5 px-2.5 text-xs" asChild>
         <a href={`/api/calendar/${id}/ics`} target="_blank" rel="noreferrer">
-          <Download className="h-4 w-4" />
+          <Download className="h-3.5 w-3.5" />
           <span className="hidden sm:inline">{t("Unduh .ics", "Download .ics")}</span>
           <span className="sm:hidden">.ics</span>
         </a>
       </Button>
-      <CalendarDestructiveAction action={{ type: "appointment", id, label: title }} />
+
+      {isCancelled ? (
+        <CalendarActionBtn action={{ type: "delete_appointment", id, label: title }} />
+      ) : (
+        <CalendarActionBtn action={{ type: "cancel_appointment", id, label: title }} />
+      )}
     </div>
   );
 }
 
-function CalendarDestructiveAction({ action }: { action: Exclude<PendingAction, null> }) {
+function CalendarActionBtn({ action }: { action: Exclude<PendingAction, null> }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
-  const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [confirming, setConfirming] = useState(false);
   const [isPending, startTransition] = useTransition();
+
   const isRule = action.type === "rule";
+  const isDelete = action.type === "delete_appointment";
 
   function confirm() {
-    if (!pendingAction) return;
     startTransition(async () => {
       try {
-        if (pendingAction.type === "rule") await deleteAvailabilityRule(pendingAction.id);
-        else await cancelAppointment(pendingAction.id);
-        toast.success(
-          pendingAction.type === "rule"
-            ? t("Aturan ketersediaan dihapus", "Availability rule deleted")
-            : t("Janji temu dibatalkan", "Appointment cancelled"),
-        );
-        setPendingAction(null);
+        if (action.type === "rule") {
+          await deleteAvailabilityRule(action.id);
+          toast.success(t("Aturan ketersediaan dihapus", "Availability rule deleted"));
+        } else if (action.type === "delete_appointment") {
+          await deleteAppointment(action.id);
+          toast.success(t("Janji temu dihapus", "Appointment deleted"));
+        } else {
+          await cancelAppointment(action.id);
+          toast.success(t("Janji temu dibatalkan", "Appointment cancelled"));
+        }
+        setConfirming(false);
         refresh();
       } catch (error) {
         toast.error(error instanceof Error ? error.message : t("Tindakan gagal", "Action failed"));
@@ -69,52 +79,55 @@ function CalendarDestructiveAction({ action }: { action: Exclude<PendingAction, 
     });
   }
 
-  return (
-    <>
-      {!confirming && (
+  if (confirming) {
+    return (
+      <span className="inline-flex shrink-0 items-center gap-1.5" role="group">
         <Button
           type="button"
-          variant="ghost"
-          size="icon"
-          className="h-11 w-11 shrink-0 text-destructive hover:bg-destructive/10 hover:text-destructive sm:h-10 sm:w-10"
-          onClick={() => { setPendingAction(action); setConfirming(true); }}
-          aria-label={isRule ? t(`Hapus aturan ${action.label}`, `Delete ${action.label} rule`) : t(`Batalkan ${action.label}`, `Cancel appointment`)}
-          title={isRule ? t("Hapus aturan", "Delete rule") : t("Batalkan janji", "Cancel appointment")}
+          variant="outline"
+          size="sm"
+          className="h-8 px-2 text-xs"
+          disabled={isPending}
+          onClick={() => setConfirming(false)}
         >
-          <XCircle className="h-4 w-4" />
+          {t("Batal", "Cancel")}
         </Button>
-      )}
+        <Button
+          type="button"
+          variant="destructive"
+          size="sm"
+          className="h-8 px-2 text-xs"
+          disabled={isPending}
+          onClick={confirm}
+        >
+          {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" /> : null}
+          {isRule || isDelete ? t("Hapus", "Delete") : t("Batalkan", "Cancel")}
+        </Button>
+      </span>
+    );
+  }
 
-      {confirming && pendingAction && (
-        <span className="inline-flex shrink-0 items-center gap-2" role="group" aria-label={isRule ? "Konfirmasi hapus aturan" : "Konfirmasi batalkan janji"}>
-          <Button type="button" variant="outline" size="sm" disabled={isPending} onClick={() => { setConfirming(false); setPendingAction(null); }}>{t("Batal", "Cancel")}</Button>
-          <Button type="button" variant="destructive" size="sm" disabled={isPending} onClick={confirm}>
-            {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            {isRule ? t("Hapus", "Delete") : t("Batalkan", "Cancel booking")}
-          </Button>
-        </span>
-      )}
-      <Dialog open={false} onOpenChange={() => undefined}>
-        <DialogContent className="max-w-[calc(100%-2rem)] sm:max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{isRule ? t("Hapus aturan ketersediaan?", "Delete availability rule?") : t("Batalkan janji temu?", "Cancel appointment?")}</DialogTitle>
-            <DialogDescription>
-              {isRule
-                ? t(`Aturan “${action.label}” akan dihapus permanen.`, `Rule “${action.label}” will be permanently deleted.`)
-                : t(`Janji “${action.label}” akan dibatalkan.`, `Appointment “${action.label}” will be cancelled.`)}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-3">
-            <DialogClose asChild>
-              <Button className="min-h-11 flex-1" variant="outline" disabled={isPending}>{t("Batal", "Back")}</Button>
-            </DialogClose>
-            <Button className="min-h-11 flex-1" variant="destructive" onClick={confirm} disabled={isPending}>
-              {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-              {isRule ? t("Hapus", "Delete") : t("Batalkan janji", "Cancel booking")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
+  return (
+    <Button
+      type="button"
+      variant="ghost"
+      size="icon"
+      className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+      onClick={() => setConfirming(true)}
+      aria-label={
+        isRule
+          ? t(`Hapus aturan ${action.label}`, `Delete ${action.label} rule`)
+          : isDelete
+          ? t(`Hapus janji temu ${action.label}`, `Delete appointment ${action.label}`)
+          : t(`Batalkan janji temu ${action.label}`, `Cancel appointment ${action.label}`)
+      }
+      title={
+        isRule || isDelete
+          ? t("Hapus", "Delete")
+          : t("Batalkan janji", "Cancel appointment")
+      }
+    >
+      {isDelete ? <Trash2 className="h-3.5 w-3.5 text-destructive/80" /> : <XCircle className="h-3.5 w-3.5" />}
+    </Button>
   );
 }

@@ -230,9 +230,34 @@ export async function cancelAppointment(appointmentId: string) {
       replyTo,
     });
   }
-
   return updated;
 }
+export async function deleteAppointment(appointmentId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [apt] = await db
+    .select()
+    .from(appointments)
+    .where(
+      and(
+        eq(appointments.id, appointmentId),
+        eq(appointments.workspaceId, workspaceId)
+      )
+    )
+    .limit(1);
+
+  if (!apt) throw new Error("Appointment not found");
+
+  await db.delete(appointments).where(eq(appointments.id, appointmentId));
+  await writeActivityLog(workspaceId, user.id, "deleted_appointment", "appointment", appointmentId);
+
+  return { success: true };
+}
+
+// ─── Public booking ───
 
 // ─── Public booking ───
 
