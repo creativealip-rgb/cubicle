@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 const onboardingPage = readFileSync("src/app/onboarding/page.tsx", "utf8");
-const legacyOnboardingPage = readFileSync("src/app/(app)/onboarding/page.tsx", "utf8");
 const flow = readFileSync("src/components/onboarding/onboarding-flow.tsx", "utf8");
 const modal = readFileSync("src/components/first-workspace-modal.tsx", "utf8");
 const action = readFileSync("src/lib/actions/onboarding.ts", "utf8");
@@ -10,10 +9,9 @@ const verifyEmail = readFileSync("src/components/auth/verify-email-content.tsx",
 const verifyResult = readFileSync("src/components/auth/verify-email-result.tsx", "utf8");
 
 describe("new user onboarding flow", () => {
-  it("renders onboarding outside app shell and keeps legacy app path as redirect", () => {
+  it("renders onboarding outside app shell", () => {
     expect(onboardingPage).toContain('"@/components/onboarding/onboarding-flow"');
     expect(onboardingPage).toContain("auth.api.getSession");
-    expect(legacyOnboardingPage).toContain('redirect("/onboarding")');
     expect(onboardingPage).not.toContain("AppShell");
     expect(flow).toContain("min-h-screen");
   });
