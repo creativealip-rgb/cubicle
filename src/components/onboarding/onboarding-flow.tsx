@@ -13,11 +13,11 @@ import {
   Globe,
   Loader2,
   MessageSquare,
-  PenTool,
   Sparkles,
   User,
   Users,
   Video,
+  MoreHorizontal,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import { finishOnboarding } from "@/lib/actions/onboarding";
 
 type PlanChoice = "solo" | "team" | "enterprise";
-type SourceChoice = "instagram" | "google" | "friend" | "tiktok" | "other";
+type SourceChoice = "instagram" | "google" | "friend" | "tiktok" | "youtube" | "other";
 
 const plans: Array<{
   id: PlanChoice;
@@ -56,14 +56,16 @@ const plans: Array<{
 ];
 
 const predefinedSources: Array<{
-  id: Exclude<SourceChoice, "other">;
+  id: SourceChoice;
   label: string;
   icon: typeof Camera;
 }> = [
   { id: "instagram", label: "Instagram", icon: Camera },
   { id: "tiktok", label: "TikTok", icon: Video },
   { id: "google", label: "Google Search", icon: Globe },
+  { id: "youtube", label: "YouTube / Media", icon: Sparkles },
   { id: "friend", label: "Teman / Rekan", icon: MessageSquare },
+  { id: "other", label: "Lainnya", icon: MoreHorizontal },
 ];
 
 export function OnboardingFlow() {
@@ -84,8 +86,8 @@ export function OnboardingFlow() {
     try {
       await finishOnboarding({
         plan,
-        source,
-        sourceOther: sourceOther.trim() || undefined,
+        source: source === "youtube" ? "other" : source,
+        sourceOther: source === "youtube" ? "YouTube" : source === "other" ? sourceOther.trim() : undefined,
       });
       router.push("/app/settings?tab=account");
       refresh();
@@ -194,87 +196,51 @@ export function OnboardingFlow() {
             </div>
           )}
 
-          {/* STEP 2: SOURCE DISCOVERY (2x3 Symmetry) */}
+          {/* STEP 2: SOURCE DISCOVERY (2x3 Uniform Buttons + Dropdown Input on 'Lainnya') */}
           {step === 2 && (
-            <div className="grid grid-cols-2 gap-2.5">
-              {predefinedSources.map((item) => {
-                const Icon = item.icon;
-                const active = source === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => {
-                      setSource(item.id);
-                      setSourceOther("");
-                    }}
-                    className={`flex items-center gap-2.5 rounded-xl border p-3 text-left transition-all duration-150 ${
-                      active
-                        ? "border-primary bg-primary/[0.04] ring-2 ring-primary/20"
-                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
-                    }`}
-                  >
-                    <Icon
-                      className={`h-4 w-4 shrink-0 transition ${
-                        active ? "text-primary" : "text-slate-500"
+            <div className="space-y-3">
+              <div className="grid grid-cols-2 gap-2.5">
+                {predefinedSources.map((item) => {
+                  const Icon = item.icon;
+                  const active = source === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => {
+                        setSource(item.id);
+                        if (item.id !== "other") setSourceOther("");
+                      }}
+                      className={`flex items-center gap-2.5 rounded-xl border p-3.5 text-left transition-all duration-150 ${
+                        active
+                          ? "border-primary bg-primary/[0.04] ring-2 ring-primary/20"
+                          : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
                       }`}
-                    />
-                    <span className="truncate text-xs font-semibold text-slate-800">{item.label}</span>
-                    {active && <Check className="ml-auto h-3.5 w-3.5 shrink-0 text-primary" />}
-                  </button>
-                );
-              })}
-
-              {/* YouTube / Media */}
-              <button
-                type="button"
-                onClick={() => {
-                  setSource("other");
-                  setSourceOther("YouTube");
-                }}
-                className={`flex items-center gap-2.5 rounded-xl border p-3 text-left transition-all duration-150 ${
-                  source === "other" && sourceOther === "YouTube"
-                    ? "border-primary bg-primary/[0.04] ring-2 ring-primary/20"
-                    : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
-                }`}
-              >
-                <Sparkles
-                  className={`h-4 w-4 shrink-0 ${
-                    source === "other" && sourceOther === "YouTube" ? "text-primary" : "text-slate-500"
-                  }`}
-                />
-                <span className="truncate text-xs font-semibold text-slate-800">YouTube / Media</span>
-                {source === "other" && sourceOther === "YouTube" && (
-                  <Check className="ml-auto h-3.5 w-3.5 shrink-0 text-primary" />
-                )}
-              </button>
-
-              {/* Custom / Lainnya */}
-              <div
-                className={`relative flex items-center rounded-xl border px-3 transition-all duration-150 ${
-                  source === "other" && sourceOther !== "YouTube"
-                    ? "border-primary bg-primary/[0.04] ring-2 ring-primary/20"
-                    : "border-slate-200 bg-white"
-                }`}
-              >
-                <PenTool className="h-3.5 w-3.5 shrink-0 text-slate-400" />
-                <Input
-                  value={sourceOther === "YouTube" ? "" : sourceOther}
-                  onFocus={() => {
-                    setSource("other");
-                    if (sourceOther === "YouTube") setSourceOther("");
-                  }}
-                  onChange={(e) => {
-                    setSource("other");
-                    setSourceOther(e.target.value);
-                  }}
-                  placeholder="Lainnya..."
-                  className="h-9 border-0 bg-transparent px-2 text-xs shadow-none focus-visible:ring-0 placeholder:text-slate-400"
-                />
-                {source === "other" && sourceOther !== "YouTube" && sourceOther.trim() !== "" && (
-                  <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
-                )}
+                    >
+                      <Icon
+                        className={`h-4 w-4 shrink-0 transition ${
+                          active ? "text-primary" : "text-slate-500"
+                        }`}
+                      />
+                      <span className="truncate text-xs font-semibold text-slate-800">{item.label}</span>
+                      {active && <Check className="ml-auto h-3.5 w-3.5 shrink-0 text-primary" />}
+                    </button>
+                  );
+                })}
               </div>
+
+              {/* Expanding input field ONLY when 'Lainnya' is clicked */}
+              {source === "other" && (
+                <div className="animate-in fade-in-50 slide-in-from-top-1 duration-200">
+                  <Input
+                    autoFocus
+                    value={sourceOther}
+                    onChange={(e) => setSourceOther(e.target.value)}
+                    placeholder="Beri tahu kami sumber lainnya..."
+                    className="h-10 rounded-xl border-slate-300 bg-white px-3 text-xs shadow-sm focus-visible:ring-primary"
+                  />
+                </div>
+              )}
             </div>
           )}
 

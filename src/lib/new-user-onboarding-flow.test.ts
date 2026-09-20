@@ -23,12 +23,12 @@ describe("new user onboarding flow", () => {
 
   it("uses requested onboarding steps and sends users to account settings", () => {
     expect(flow).toContain('type PlanChoice = "solo" | "team" | "enterprise"');
-    expect(flow).toContain('type SourceChoice = "instagram" | "google" | "friend" | "tiktok" | "other"');
+    expect(flow).toContain('type SourceChoice = "instagram" | "google" | "friend" | "tiktok" | "youtube" | "other"');
     expect(flow).toContain("Dari Mana Kamu Tau Cubiqlo?");
     expect(flow).toContain('/app/settings?tab=account');
     expect(flow).not.toContain("router.push(\"/app/dashboard\")");
     expect(flow).toContain("sourceOther");
-    expect(flow).toContain("Lainnya...");
+    expect(flow).toContain("Beri tahu kami sumber lainnya...");
   });
 
   it("persists plan and source in onboarding activity metadata", () => {
