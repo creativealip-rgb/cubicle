@@ -97,6 +97,10 @@ type Confirmation =
       clientId?: string;
       clientName?: string;
       description?: string;
+    }
+  | {
+      kind: "stop_timer";
+      entryId?: string;
     };
 
 type Message = {

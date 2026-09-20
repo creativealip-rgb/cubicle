@@ -390,6 +390,33 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true, result: { timer: created } });
     }
 
+    if (request.kind === "stop_timer") {
+      const p = request.payload as { entryId?: string };
+      const { getWorkspaceForCurrentUser } = await import("@/lib/workspace");
+      const wsId = await getWorkspaceForCurrentUser();
+      await assertWorkspaceWritable(db, session.user.id, wsId);
+      const { stopTimer } = await import("@/lib/actions/time");
+      const { timeEntries } = await import("@/db/schema");
+
+      let targetId = p.entryId;
+      if (!targetId) {
+        const [running] = await db
+          .select({ id: timeEntries.id })
+          .from(timeEntries)
+          .where(and(eq(timeEntries.workspaceId, wsId), eq(timeEntries.userId, session.user.id), sql`${timeEntries.endTime} IS NULL`))
+          .limit(1);
+        targetId = running?.id;
+      }
+
+      if (!targetId) {
+        return NextResponse.json({ error: "Tidak ada timer yang sedang berjalan." }, { status: 400 });
+      }
+
+      await stopTimer(targetId);
+      await markDone();
+      return NextResponse.json({ ok: true, result: { stopped: true, entryId: targetId } });
+    }
+
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
   } catch (error) {
     console.error("AI action failed", error);

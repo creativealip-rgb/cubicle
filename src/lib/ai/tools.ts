@@ -962,6 +962,33 @@ async function startTimerAction(args: {
   };
 }
 
+async function stopTimerAction(args: { entryId?: string }) {
+  const ws = await getWorkspace();
+  const { auth } = await import("@/lib/auth");
+  const { headers } = await import("next/headers");
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = session?.user;
+  if (!user) throw new Error("Unauthorized");
+
+  let entryId = args.entryId;
+  if (!entryId) {
+    const { timeEntries } = await import("@/db/schema");
+    const [running] = await db
+      .select({ id: timeEntries.id })
+      .from(timeEntries)
+      .where(and(eq(timeEntries.workspaceId, ws.id), eq(timeEntries.userId, user.id), sql`${timeEntries.endTime} IS NULL`))
+      .limit(1);
+    entryId = running?.id;
+  }
+
+  return {
+    confirmation: {
+      kind: "stop_timer" as const,
+      entryId,
+    },
+  };
+}
+
 // ─── Read: finance (Sprint H) ─────────────────────────────────────
 
 async function listExpenses(args: { categoryId?: string; projectId?: string; limit?: number; fromDate?: string; toDate?: string }) {
@@ -2129,6 +2156,19 @@ export const TOOL_DEFS: ToolDefinition[] = [
       },
     },
   },
+  {
+    type: "function",
+    function: {
+      name: "stop_timer",
+      description: "Stop the currently running active time tracking timer. Returns a confirmation card for the user.",
+      parameters: {
+        type: "object",
+        properties: {
+          entryId: { type: "string", description: "Time entry UUID (optional, defaults to currently running timer)" },
+        },
+      },
+    },
+  },
 ];
 
 export type ToolName =
@@ -2167,7 +2207,8 @@ export type ToolName =
   | "create_project"
   | "create_invoice"
   | "create_task"
-  | "start_timer";
+  | "start_timer"
+  | "stop_timer";
 
 export const ACTION_TOOLS = new Set<string>([
   "update_task_status",
@@ -2177,6 +2218,7 @@ export const ACTION_TOOLS = new Set<string>([
   "create_invoice",
   "create_task",
   "start_timer",
+  "stop_timer",
 ]);
 
 export async function executeTool(
@@ -2259,6 +2301,8 @@ export async function executeTool(
       return createTaskAction(args as { title: string; description?: string; projectId?: string; projectName?: string; priority?: "low" | "medium" | "high" | "urgent"; dueDate?: string });
     case "start_timer":
       return startTimerAction(args as { taskId?: string; taskTitle?: string; projectId?: string; projectName?: string; clientId?: string; clientName?: string; description?: string });
+    case "stop_timer":
+      return stopTimerAction(args as { entryId?: string });
     default:
       throw new Error(`Unknown tool: ${name}`);
   }

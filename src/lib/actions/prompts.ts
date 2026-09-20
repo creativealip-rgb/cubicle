@@ -370,11 +370,25 @@ export async function getMonthlyUsage(workspaceId?: string) {
       )
     );
 
+  const { aiUsageDaily } = await import("@/db/schema");
+  const [dailyRow] = await db
+    .select({ count: aiUsageDaily.count })
+    .from(aiUsageDaily)
+    .where(
+      and(
+        eq(aiUsageDaily.userId, user.id),
+        eq(aiUsageDaily.usageDate, sql`date_trunc('month', current_date)::date`),
+      ),
+    )
+    .limit(1);
+
+  const sharedGenerations = dailyRow?.count ?? Number(result?.totalGenerations ?? 0);
+
   return {
     totalInputTokens: Number(result?.totalInputTokens ?? 0),
     totalOutputTokens: Number(result?.totalOutputTokens ?? 0),
     totalCost: Number(result?.totalCost ?? 0),
-    totalGenerations: Number(result?.totalGenerations ?? 0),
+    totalGenerations: sharedGenerations,
     monthlyCap: MONTHLY_CAP_USD,
   };
 }

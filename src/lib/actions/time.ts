@@ -439,7 +439,7 @@ export async function stopTimer(input: z.infer<typeof stopTimerSchema> | string)
       ? await getProjectTimeTrackingMode(db, workspaceId, nextProjectId)
       : await assertProjectTimeTrackingEnabled(db, workspaceId, nextProjectId)
     : null;
-  if (nextProjectId) {
+  if (nextProjectId && nextTaskId) {
     await assertTimeTaskEligible(db, { workspaceId, projectId: nextProjectId, taskId: nextTaskId, stage: "completion" });
   }
   const activityPolicy = await assertActivityWriteAllowed(db, {

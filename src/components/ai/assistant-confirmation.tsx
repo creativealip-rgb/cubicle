@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Check, Copy, Loader2, UserPlus, FolderPlus, Receipt, Play, Clock, Sparkles } from "lucide-react";
+import { Check, Copy, Loader2, UserPlus, FolderPlus, Receipt, Play, Square, Clock, Sparkles } from "lucide-react";
 import { type AssistantLang } from "@/lib/ai/ui-copy";
 
 export type AssistantConfirmation =
@@ -67,6 +67,10 @@ export type AssistantConfirmation =
       clientId?: string;
       clientName?: string;
       description?: string;
+    }
+  | {
+      kind: "stop_timer";
+      entryId?: string;
     };
 
 export function AssistantConfirmationCard({
@@ -117,6 +121,8 @@ export function AssistantConfirmationCard({
         return isId ? "Konfirmasi Buat Tugas Baru" : "Confirm New Task Creation";
       case "start_timer":
         return isId ? "Mulai Timer Pelacakan Waktu" : "Start Task Time Tracker";
+      case "stop_timer":
+        return isId ? "Hentikan Timer Aktif" : "Stop Active Time Tracker";
     }
   };
 
@@ -136,6 +142,8 @@ export function AssistantConfirmationCard({
         return <Sparkles className="h-4 w-4 text-purple-600" />;
       case "start_timer":
         return <Play className="h-4 w-4 text-primary fill-primary" />;
+      case "stop_timer":
+        return <Square className="h-4 w-4 text-rose-600 fill-rose-600" />;
     }
   };
 
@@ -159,6 +167,8 @@ export function AssistantConfirmationCard({
         return isId ? "✓ Buat Tugas" : "✓ Create Task";
       case "start_timer":
         return isId ? "✓ Mulai Timer" : "✓ Start Timer";
+      case "stop_timer":
+        return isId ? "✓ Hentikan Timer" : "✓ Stop Timer";
     }
   };
 
@@ -370,6 +380,14 @@ export function AssistantConfirmationCard({
               </>
             )}
           </dl>
+        )}
+
+        {conf.kind === "stop_timer" && (
+          <p className="text-muted-foreground leading-relaxed">
+            {isId
+              ? "Timer aktif yang sedang berjalan akan dihentikan dan dicatat ke timesheet."
+              : "The active running timer will be stopped and logged to your timesheet."}
+          </p>
         )}
       </div>
 
