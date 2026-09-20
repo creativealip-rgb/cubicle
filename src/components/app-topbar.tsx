@@ -373,7 +373,6 @@ export function AppTopbar({ user }: AppTopbarProps) {
                   );
                   return (
                     <>
-                      <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("Workspace utama", "Main Workspace")}</DropdownMenuLabel>
                       {mainWorkspace.map(renderWorkspace)}
                       <DropdownMenuLabel className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">{t("Workspace tim", "Team Workspaces")}</DropdownMenuLabel>
                       {teamWorkspaces.map(renderWorkspace)}
