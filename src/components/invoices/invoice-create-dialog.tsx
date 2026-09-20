@@ -12,18 +12,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { LoadingButton } from "@/components/ui/loading-button";
 
-
 type ClientOption = { id: string; name: string; companyName: string | null };
-type Props = { clients: ClientOption[]; proposedInvoiceNumber: string };
+type Props = { clients: ClientOption[]; proposedInvoiceNumber: string; trigger?: React.ReactNode };
 
-export function InvoiceCreateDialog({ clients, proposedInvoiceNumber }: Props) {
+export function InvoiceCreateDialog({ clients, proposedInvoiceNumber, trigger }: Props) {
   const { t } = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
   const [clientSearch, setClientSearch] = useState("");
-  const [clientId, setClientId] = useState("");
+  const [clientId, setClientId] = useState(clients.length === 1 ? clients[0].id : "");
   const [invoiceNumber, setInvoiceNumber] = useState(proposedInvoiceNumber);
   const selectedClient = clients.find((client) => client.id === clientId);
   const filteredClients = useMemo(() => clients.filter((client) => `${client.companyName ?? ""} ${client.name}`.toLowerCase().includes(clientSearch.trim().toLowerCase())).sort((a, b) => (a.companyName || a.name).localeCompare(b.companyName || b.name)), [clients, clientSearch]);
@@ -44,29 +43,105 @@ export function InvoiceCreateDialog({ clients, proposedInvoiceNumber }: Props) {
     }
   }
 
-  return <Dialog open={open} onOpenChange={setOpen}>
-    <DialogTrigger asChild><Button size="sm" className="gap-1"><Plus className="h-4 w-4" /> {t("Invoice Baru", "New Invoice")}</Button></DialogTrigger>
-    <DialogContent className="w-[calc(100%-1rem)] p-4 sm:max-w-md sm:p-6">
-      <DialogHeader><DialogTitle>{t("Buat Invoice", "Create Invoice")}</DialogTitle></DialogHeader>
-      <form onSubmit={submit} className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor="new-invoice-number">{t("Nomor Invoice", "Invoice Number")}</Label>
-          <Input id="new-invoice-number" name="invoiceNumber" value={invoiceNumber} onChange={(event) => setInvoiceNumber(event.target.value.toUpperCase())} required />
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="new-invoice-client">{t("Klien", "Client")}</Label>
-          <div className="relative">
-            <div className="relative">
-              <Input id="new-invoice-client" name="clientId" role="combobox" aria-expanded={clientSearchOpen} aria-controls="new-invoice-client-list" autoComplete="off" value={clientSearchOpen ? clientSearch : selectedClient?.companyName || selectedClient?.name || ""} placeholder={t("Cari klien", "Search client")} onFocus={() => setClientSearchOpen(true)} onChange={(event) => { setClientSearch(event.target.value); setClientSearchOpen(true); }} required className="pr-9" />
-              <button type="button" aria-label={t("Buka daftar klien", "Open client list")} onMouseDown={(event) => event.preventDefault()} onClick={() => setClientSearchOpen((value) => !value)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"><ChevronDown className="h-4 w-4" /></button>
-            </div>
-            {clientSearchOpen && <div id="new-invoice-client-list" role="listbox" className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md border bg-popover p-1 shadow-md">{filteredClients.length ? filteredClients.map((client) => <button key={client.id} type="button" role="option" aria-selected={client.id === clientId} className="flex min-h-10 w-full items-center rounded-md px-3 text-left text-sm hover:bg-muted" onMouseDown={(event) => event.preventDefault()} onClick={() => { setClientId(client.id); setClientSearch(""); setClientSearchOpen(false); }}>{client.companyName || client.name}</button>) : <p className="px-3 py-6 text-center text-sm text-muted-foreground">{t("Klien tidak ditemukan", "No clients found")}</p>}</div>}
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        {trigger ?? (
+          <Button size="sm" className="gap-1">
+            <Plus className="h-4 w-4" /> {t("Invoice Baru", "New Invoice")}
+          </Button>
+        )}
+      </DialogTrigger>
+      <DialogContent className="w-[calc(100%-1rem)] p-4 sm:max-w-md sm:p-6">
+        <DialogHeader>
+          <DialogTitle>{t("Buat Invoice", "Create Invoice")}</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={submit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="new-invoice-number">{t("Nomor Invoice", "Invoice Number")}</Label>
+            <Input
+              id="new-invoice-number"
+              name="invoiceNumber"
+              value={invoiceNumber}
+              onChange={(event) => setInvoiceNumber(event.target.value.toUpperCase())}
+              required
+            />
           </div>
-        </div>
-        <LoadingButton type="submit" loading={loading} disabled={!clientId} loadingText={t("Membuat…", "Creating…")} className="w-full">{t("Buat Invoice", "Create Invoice")}</LoadingButton>
-      </form>
-    </DialogContent>
-  </Dialog>;
+          <div className="space-y-2">
+            <Label htmlFor="new-invoice-client">{t("Klien", "Client")}</Label>
+            <div className="relative">
+              <div className="relative">
+                <Input
+                  id="new-invoice-client"
+                  name="clientId"
+                  role="combobox"
+                  aria-expanded={clientSearchOpen}
+                  aria-controls="new-invoice-client-list"
+                  autoComplete="off"
+                  value={clientSearchOpen ? clientSearch : selectedClient?.companyName || selectedClient?.name || ""}
+                  placeholder={t("Cari klien", "Search client")}
+                  onFocus={() => setClientSearchOpen(true)}
+                  onChange={(event) => {
+                    setClientSearch(event.target.value);
+                    setClientSearchOpen(true);
+                  }}
+                  required
+                  className="pr-9"
+                />
+                <button
+                  type="button"
+                  aria-label={t("Buka daftar klien", "Open client list")}
+                  onMouseDown={(event) => event.preventDefault()}
+                  onClick={() => setClientSearchOpen((value) => !value)}
+                  className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"
+                >
+                  <ChevronDown className="h-4 w-4" />
+                </button>
+              </div>
+              {clientSearchOpen && (
+                <div
+                  id="new-invoice-client-list"
+                  role="listbox"
+                  className="absolute z-50 mt-1 max-h-60 w-full overflow-y-auto rounded-md border bg-popover p-1 shadow-md"
+                >
+                  {filteredClients.length ? (
+                    filteredClients.map((client) => (
+                      <button
+                        key={client.id}
+                        type="button"
+                        role="option"
+                        aria-selected={client.id === clientId}
+                        className="flex min-h-10 w-full items-center rounded-md px-3 text-left text-sm hover:bg-muted"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => {
+                          setClientId(client.id);
+                          setClientSearch("");
+                          setClientSearchOpen(false);
+                        }}
+                      >
+                        {client.companyName || client.name}
+                      </button>
+                    ))
+                  ) : (
+                    <p className="px-3 py-6 text-center text-sm text-muted-foreground">
+                      {t("Klien tidak ditemukan", "No clients found")}
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          <LoadingButton
+            type="submit"
+            loading={loading}
+            disabled={!clientId}
+            loadingText={t("Membuat…", "Creating…")}
+            className="w-full"
+          >
+            {t("Buat Invoice", "Create Invoice")}
+          </LoadingButton>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
 }
-
-export type InvoiceCreateDialogProps = Props;

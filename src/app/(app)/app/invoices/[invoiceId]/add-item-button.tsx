@@ -16,7 +16,7 @@ import { ImportTimeSection, type TimeEntry } from "./import-time-section";
 
 export type ProjectInvoiceItemOption = { id: string; name: string; amount: number; currency: string };
 
-export function InvoiceItemManager({ invoiceId, projectOptions, timeEntries, currency }: { invoiceId: string; projectOptions: ProjectInvoiceItemOption[]; timeEntries: TimeEntry[]; currency: string }) {
+export function InvoiceItemManager({ invoiceId, projectOptions, timeEntries, currency, onItemAdded }: { invoiceId: string; projectOptions: ProjectInvoiceItemOption[]; timeEntries: TimeEntry[]; currency: string; onItemAdded?: (item: { description: string; quantity: number; unitPrice: number; amount: number; sourceType: string }) => void }) {
   const { refresh } = useAppTransition();
   const { t, locale } = useT();
   const [open, setOpen] = useState(false);
@@ -33,7 +33,14 @@ export function InvoiceItemManager({ invoiceId, projectOptions, timeEntries, cur
         if (!projectId) throw new Error(t("Pilih proyek klien", "Select a client project"));
         await addProjectInvoiceItem({ invoiceId, projectId });
       } else {
-        await addInvoiceItem({ invoiceId, description: form.description, quantity: Number(form.quantity), unitPrice: Number(form.unitPrice) });
+        const item = await addInvoiceItem({ invoiceId, description: form.description, quantity: Number(form.quantity), unitPrice: Number(form.unitPrice) });
+        onItemAdded?.({
+          description: item.description,
+          quantity: Number(item.quantity),
+          unitPrice: Number(item.unitPrice),
+          amount: Number(item.amount),
+          sourceType: "manual",
+        });
       }
       toast.success(t("Item ditambahkan", "Item added"));
       setOpen(false);

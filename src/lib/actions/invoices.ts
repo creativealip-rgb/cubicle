@@ -644,6 +644,13 @@ export async function saveInvoiceEditor(invoiceId: string, input: z.infer<typeof
 
       const [paidResult] = await tx.select({ total: sql<string>`coalesce(sum(${payments.amount}), '0')` }).from(payments).where(eq(payments.invoiceId, invoiceId));
       const payment = reconcileInvoicePaymentState({ total: totals.total, paid: Number(paidResult?.total ?? 0), workflowStatus: locked.status });
+      // If invoice was previously sent/viewed/overdue and is now updated, automatically return to draft unless paid
+      let nextStatus: "draft" | "sent" | "viewed" | "paid" | "overdue" | "cancelled" | "archived" = parsed.status;
+      if (payment.paymentState === "paid") {
+        nextStatus = "paid";
+      } else if (locked.status === "sent" || locked.status === "viewed" || locked.status === "overdue") {
+        nextStatus = "draft";
+      }
 
       if (!sourceItem) await tx.delete(invoiceItems).where(eq(invoiceItems.invoiceId, invoiceId));
       if (!sourceItem && parsed.items.length) await tx.insert(invoiceItems).values(parsed.items.map((item) => ({
@@ -667,7 +674,7 @@ export async function saveInvoiceEditor(invoiceId: string, input: z.infer<typeof
         total: String(totals.total),
         notes: parsed.notes || null,
         terms: parsed.terms || null,
-        status: payment.paymentState === "paid" ? "paid" : parsed.status,
+        status: nextStatus,
         chargeType: parsed.chargeType,
         updatedAt: new Date(),
       }).where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId))).returning();

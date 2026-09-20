@@ -433,9 +433,10 @@ export function InvoicePDF({
         {/* Bill To */}
         <View style={styles.billToSection}>
           <Text style={styles.billToTitle}>Bill To</Text>
-          <Text style={styles.clientName}>
-            {client.companyName || client.name}
-          </Text>
+          <Text style={styles.clientName}>{client.name}</Text>
+          {client.companyName ? (
+            <Text style={styles.clientAddress}>{client.companyName}</Text>
+          ) : null}
           {client.address && (
             <Text style={styles.clientAddress}>{client.address}</Text>
           )}

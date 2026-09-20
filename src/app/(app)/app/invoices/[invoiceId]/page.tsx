@@ -19,11 +19,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
-import { ArrowLeft, Eye, Share2 } from "lucide-react";
+import { ArrowLeft, Eye } from "lucide-react";
 import { InvoiceItemManager } from "./add-item-button";
-
 import { PaymentSection } from "./payment-section";
-import { ShareTokenSection } from "./share-token-section";
 import { SendInvoiceButton } from "./send-invoice-button";
 import { SendReminderButton } from "./send-reminder-button";
 import { DeleteInvoiceButton } from "./delete-invoice-button";
@@ -66,7 +64,6 @@ export default async function InvoiceDetailPage({
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceMember(db, user.id, workspaceId);
-
   const [inv] = await db
     .select()
     .from(invoices)
@@ -74,8 +71,9 @@ export default async function InvoiceDetailPage({
       and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)),
     )
     .limit(1);
-
   if (!inv) notFound();
+
+
 
   const requestedOrigin = parseInvoiceOrigin(await searchParams);
   let validatedOrigin: InvoiceOrigin | null =
@@ -335,17 +333,20 @@ export default async function InvoiceDetailPage({
         }))}
         clients={allClients}
         projects={allProjects}
-        sourceActions={<InvoiceItemManager invoiceId={invoiceId} projectOptions={eligibleProjectItems} timeEntries={eligibleTimeEntries} currency={inv.currency} />}
+        sourceActions={
+          <InvoiceItemManager
+            invoiceId={invoiceId}
+            projectOptions={eligibleProjectItems}
+            timeEntries={eligibleTimeEntries}
+            currency={inv.currency}
+          />
+        }
       >
         <Card>
           <CardHeader><CardTitle>{t("Pembayaran", "Payments")}</CardTitle></CardHeader>
           <CardContent>
             <PaymentSection invoiceId={invoiceId} payments={pays.map((p) => ({ ...p, paidAt: p.paidAt ? String(p.paidAt) : null, createdAt: String(p.createdAt) }))} total={Number(inv.total)} currency={inv.currency} />
           </CardContent>
-        </Card>
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Share2 className="h-4 w-4" /> {t("Link Berbagi Invoice", "Invoice Share Link")}</CardTitle></CardHeader>
-          <CardContent><ShareTokenSection invoiceId={invoiceId} hasToken={!!hasShareToken} isExpired={shareExpired} initialToken={existingShareToken} /></CardContent>
         </Card>
       </InvoiceFullEditor>
     </div>

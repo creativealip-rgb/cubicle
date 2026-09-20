@@ -38,9 +38,9 @@ import { formatMoney } from "@/lib/utils";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
 import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
-import { ClientInvoiceCreateDialog } from "@/components/invoices/client-invoice-create-dialog";
+import { InvoiceCreateDialog } from "@/components/invoices/invoice-create-dialog";
 import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
-import { resolveProjectAmount } from "@/lib/invoice-project-items";
+
 import { ClientKpis, ClientOverview } from "@/components/clients/client-overview";
 import { ClientHeaderActions } from "@/components/clients/client-header-actions";
 import { EmptyState } from "@/components/empty-state";
@@ -263,8 +263,6 @@ export default async function ClientDetailPage({
   };
 
   const clientDefaults = { id: client.id, clientNumber: client.clientNumber, name: client.name, companyName: client.companyName ?? "", email: client.email ?? "", phone: client.phone ?? "", website: client.website ?? "", address: client.address ?? "", tags: client.tags ?? [], internalNotes: client.internalNotes ?? "", portalSlug: client.portalSlug ?? "", portalSlugEnabled: client.portalSlugEnabled ?? true, portalEnabled: client.portalEnabled ?? false, portalPasswordConfigured: Boolean(client.portalPasswordHash) };
-  const invoiceProjects = clientProjects.map((project) => ({ id: project.id, name: project.name, clientId: client.id, billingType: project.billingModel ?? project.billingType, currency: project.currency, budget: project.budget, rate: project.rate, packagePrice: project.packagePrice, packageCustomPrice: null, agreedAmount: resolveProjectAmount({ billingType: project.billingModel ?? project.billingType, budget: project.budget ? Number(project.budget) : null, rate: project.rate ? Number(project.rate) : null, packagePrice: Number(project.packagePrice ?? 0) || null }), priorActiveFixedBilledAmount: sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0, eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [] }));
-
   return (
     <div className="space-y-6">
       {/* Unified Executive PageHeader with Integrated Breadcrumb */}
@@ -350,35 +348,13 @@ export default async function ClientDetailPage({
         }
         invoicesAction={
           canWrite ? (
-            <ClientInvoiceCreateDialog
-              client={{ id: client.id, name: client.name, companyName: client.companyName }}
+            <InvoiceCreateDialog
+              clients={[{ id: client.id, name: client.name, companyName: client.companyName }]}
               proposedInvoiceNumber={proposedInvoiceNumber}
-              projects={clientProjects.map((project) => ({
-                id: project.id,
-                name: project.name,
-                clientId: client.id,
-                billingType: project.billingModel ?? project.billingType,
-                currency: project.currency,
-                budget: project.budget,
-                rate: project.rate,
-                packagePrice: project.packagePrice,
-                packageCustomPrice: null,
-                agreedAmount: resolveProjectAmount({
-                  billingType: project.billingModel ?? project.billingType,
-                  budget: project.budget ? Number(project.budget) : null,
-                  rate: project.rate ? Number(project.rate) : null,
-                  packagePrice: Number(project.packagePrice ?? 0) || null,
-                }),
-                priorActiveFixedBilledAmount:
-                  sourceOptions.get(project.id)?.priorActiveFixedBilledAmount ?? 0,
-                eligibleTimeEntries: sourceOptions.get(project.id)?.eligibleTimeEntries ?? [],
-              }))}
-              baseCurrency={workspace?.defaultCurrency ?? "IDR"}
-              currencyRates={currencyRates}
             />
           ) : null
         }
-        overviewContent={<ClientOverview client={{ id: client.id, clientNumber: client.clientNumber, email: client.email, phone: client.phone, website: client.website, address: client.address, tags: client.tags, internalNotes: client.internalNotes, portalSlug: client.portalSlug, portalSlugEnabled: client.portalSlugEnabled }} projects={clientProjects} invoices={clientInvoices} editAction={<ClientEditDialog trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Ubah detail", "Edit details")}</Button>} defaultValues={clientDefaults} />} projectAction={canWrite ? <ProjectCreateDialog clients={[]} clientId={clientId} isAtLimit={!projectLimitState.allowed} projectCount={projectLimitState.current} projectLimit={projectLimitState.limit} trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Tambah Project", "Add Project")}</Button>} /> : undefined} invoiceAction={canWrite ? <ClientInvoiceCreateDialog client={{ id: client.id, name: client.name, companyName: client.companyName }} proposedInvoiceNumber={proposedInvoiceNumber} projects={invoiceProjects} baseCurrency={baseCurrency} currencyRates={currencyRates} trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Buat Invoice", "Create Invoice")}</Button>} /> : undefined} t={t} />}
+        overviewContent={<ClientOverview client={{ id: client.id, clientNumber: client.clientNumber, email: client.email, phone: client.phone, website: client.website, address: client.address, tags: client.tags, internalNotes: client.internalNotes, portalSlug: client.portalSlug, portalSlugEnabled: client.portalSlugEnabled }} projects={clientProjects} invoices={clientInvoices} editAction={<ClientEditDialog trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Ubah detail", "Edit details")}</Button>} defaultValues={clientDefaults} />} projectAction={canWrite ? <ProjectCreateDialog clients={[]} clientId={clientId} isAtLimit={!projectLimitState.allowed} projectCount={projectLimitState.current} projectLimit={projectLimitState.limit} trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Tambah Project", "Add Project")}</Button>} /> : undefined} invoiceAction={canWrite ? <InvoiceCreateDialog clients={[{ id: client.id, name: client.name, companyName: client.companyName }]} proposedInvoiceNumber={proposedInvoiceNumber} trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Buat Invoice", "Create Invoice")}</Button>} /> : undefined} t={t} />}
         projectsContent={
           <div className="space-y-4">
             {clientProjects.length === 0 && (
