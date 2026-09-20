@@ -18,8 +18,8 @@ import {
   ShieldCheck,
   PieChart,
   Mail,
+  Lock,
 } from "lucide-react";
-
 export const DOCS_CATALOG = [
   {
     href: "/app/docs/getting-started",
@@ -209,6 +209,16 @@ export const DOCS_CATALOG = [
     desc: {
       id: "Integrasi email bisnis kustom, notifikasi pengiriman invoice/proposal, dan webmail terpusat.",
       en: "Custom branded email integration, invoice/proposal dispatch notifications, and unified webmail.",
+    },
+  },
+  {
+    href: "/app/docs/privacy-policy",
+    icon: Lock,
+    category: { id: "Keamanan", en: "Security" },
+    title: { id: "Kebijakan Privasi & Perlindungan Data", en: "Data Privacy & Protection Policy" },
+    desc: {
+      id: "Transparansi pengumpulan data, enkripsi penyimpanan, hak pemilik data, dan integritas privasi workspace.",
+      en: "Data collection transparency, storage encryption, data owner rights, and workspace privacy integrity.",
     },
   },
 ];

@@ -224,7 +224,7 @@ export default async function HomePage() {
         <section aria-label={tx("Social proof", "Social proof")} className="border-y border-slate-950/[0.06] bg-white px-4 py-5 sm:px-6 lg:px-8">
           <div className="mx-auto flex max-w-7xl flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex -space-x-2" aria-hidden="true">{testimonials.map((item, index) => <span key={item.initials} className={`flex size-9 items-center justify-center rounded-full border-2 border-white text-[10px] font-bold text-white ${index === 0 ? "bg-[#6647F0]" : index === 1 ? "bg-[#FF7657]" : "bg-emerald-500"}`}>{item.initials}</span>)}</div>
-            <p className="text-sm font-medium text-[#292D34] sm:text-right"><strong className="text-lg text-[#6647F0]">100+</strong> {tx("· Dibangun untuk freelancer dan creative studio", "· Built for freelancers and creative studios")}</p>
+            <p className="text-sm font-medium text-[#292D34] sm:text-right"><strong className="text-lg text-[#6647F0]">2</strong> {tx("· Dibangun untuk freelancer dan creative studio", "· Built for freelancers and creative studios")}</p>
           </div>
         </section>
 

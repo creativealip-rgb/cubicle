@@ -15,6 +15,7 @@ import {
   ShieldCheck,
   PieChart,
   Mail,
+  Lock,
 } from "lucide-react";
 import {
   DocsBreadcrumb,
@@ -260,6 +261,22 @@ const GUIDES = {
       ["2. Dispatch Otomatis", "Kirim invoice, proposal penawaran, dan link kontrak langsung ke inbox klien dengan template email rapi.", "2. Automatic Dispatch", "Send invoices, estimates, and contract links to client inboxes with polished templates."],
       ["3. Reply-To Workspace", "Balasan dari klien otomatis masuk ke email utama yang kamu atur di pengaturan workspace.", "3. Workspace Reply-To", "Route client replies automatically to the primary workspace email."],
       ["4. Akses Webmail", "Akses webmail terintegrasi untuk membaca dan membalas pesan klien langsung dari ekosistem Cubiqlo.", "4. Webmail Access", "Read and reply to client messages from Cubiqlo integrated webmail."],
+    ],
+  },
+  "privacy-policy": {
+    icon: Lock,
+    category: { id: "Keamanan", en: "Security" },
+    title: { id: "Kebijakan Privasi & Perlindungan Data", en: "Data Privacy & Protection Policy" },
+    description: {
+      id: "Prinsip perlindungan data, transparansi pengumpulan informasi, enkripsi penyimpanan, dan hak privasi pengguna di Cubiqlo.",
+      en: "Data protection principles, collection transparency, storage encryption, and user privacy rights in Cubiqlo.",
+    },
+    items: [
+      ["1. Prinsip Kerahasiaan Data", "Kami tidak pernah menjual data pribadi, data klien, file deliverable, maupun rincian finansial workspace kamu ke pihak mana pun.", "1. Data Confidentiality Principle", "We never sell your personal data, client records, deliverable files, or workspace financial details to anyone."],
+      ["2. Data yang Dikelola", "Data yang disimpan meliputi profil akun, data workspace (klien, task, invoice, timesheet, berkas), serta log diagnostik keamanan untuk pencegahan abuse.", "2. Managed Data", "Stored data includes account credentials, workspace data (clients, tasks, invoices, timesheets, files), and security diagnostic logs."],
+      ["3. Keamanan & Enkripsi", "Seluruh lalu lintas data dienkripsi menggunakan protokol HTTPS/TLS modern. Password dan token disimpan dalam bentuk hash kriptografis yang aman.", "3. Security & Encryption", "All data in transit is encrypted using modern HTTPS/TLS protocols. Passwords and tokens are stored using secure cryptographic hashes."],
+      ["4. Pemisahan Workspace (Multi-Tenant Isolation)", "Setiap data klien, proyek, dan catatan pribadi diisolasi secara ketat per-workspace sehingga tidak dapat diakses oleh pihak luar.", "4. Multi-Tenant Workspace Isolation", "Client records, projects, and private notes are strictly isolated per-workspace and inaccessible to unauthorized parties."],
+      ["5. Hak & Kontrol Pengguna", "Kamu memiliki kendali penuh atas data kamu: dapat mengunduh laporan/ekspor data kapan saja, memperbarui informasi, atau mengajukan penghapusan akun.", "5. User Rights & Control", "You maintain full control of your data: export records anytime, update information, or request permanent account and data deletion."],
     ],
   },
 } as const;
