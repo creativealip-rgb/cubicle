@@ -3,7 +3,22 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
-import { ArrowLeft, ArrowRight, BriefcaseBusiness, Check, Loader2, Settings, Sparkles } from "lucide-react";
+import {
+  ArrowLeft,
+  ArrowRight,
+  Building2,
+  Camera,
+  Check,
+  CheckCircle2,
+  Globe,
+  Loader2,
+  MessageSquare,
+  PenTool,
+  Sparkles,
+  User,
+  Users,
+  Video,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -12,23 +27,43 @@ import { finishOnboarding } from "@/lib/actions/onboarding";
 type PlanChoice = "solo" | "team" | "enterprise";
 type SourceChoice = "instagram" | "google" | "friend" | "tiktok" | "other";
 
-const steps = [
-  { id: 1, label: "Plan", icon: BriefcaseBusiness },
-  { id: 2, label: "Sumber", icon: Sparkles },
-  { id: 3, label: "Setup", icon: Settings },
+const plans: Array<{
+  id: PlanChoice;
+  title: string;
+  badge?: string;
+  note: string;
+  icon: typeof User;
+}> = [
+  {
+    id: "solo",
+    title: "Solo",
+    note: "Freelancer / individu yang ingin mulai cepat.",
+    icon: User,
+  },
+  {
+    id: "team",
+    title: "Team",
+    badge: "Populer",
+    note: "Agensi kecil / tim kreatif untuk kolaborasi.",
+    icon: Users,
+  },
+  {
+    id: "enterprise",
+    title: "Enterprise",
+    note: "Organisasi besar dengan custom workflow.",
+    icon: Building2,
+  },
 ];
 
-const plans: Array<{ id: PlanChoice; title: string; note: string }> = [
-  { id: "solo", title: "Solo", note: "Untuk kerja sendiri dan mulai cepat." },
-  { id: "team", title: "Team", note: "Untuk kolaborasi dengan tim kecil." },
-  { id: "enterprise", title: "Enterprise", note: "Untuk operasional besar dan kebutuhan khusus." },
-];
-
-const sources: Array<{ id: Exclude<SourceChoice, "other">; label: string }> = [
-  { id: "instagram", label: "Instagram" },
-  { id: "google", label: "Google" },
-  { id: "friend", label: "Teman / rekomendasi" },
-  { id: "tiktok", label: "TikTok" },
+const predefinedSources: Array<{
+  id: Exclude<SourceChoice, "other">;
+  label: string;
+  icon: typeof Camera;
+}> = [
+  { id: "instagram", label: "Instagram", icon: Camera },
+  { id: "tiktok", label: "TikTok", icon: Video },
+  { id: "google", label: "Google Search", icon: Globe },
+  { id: "friend", label: "Teman / Rekan", icon: MessageSquare },
 ];
 
 export function OnboardingFlow() {
@@ -43,10 +78,15 @@ export function OnboardingFlow() {
 
   async function finish() {
     if (!plan || !source || loading) return;
+    if (source === "other" && !sourceOther.trim()) return;
     setLoading(true);
     setError(null);
     try {
-      await finishOnboarding({ plan, source, sourceOther: sourceOther.trim() || undefined });
+      await finishOnboarding({
+        plan,
+        source,
+        sourceOther: sourceOther.trim() || undefined,
+      });
       router.push("/app/settings?tab=account");
       refresh();
     } catch (cause) {
@@ -57,97 +97,264 @@ export function OnboardingFlow() {
 
   function next() {
     if (step === 1 && !plan) return;
-    if (step === 2 && !source) return;
+    if (step === 2 && (!source || (source === "other" && !sourceOther.trim()))) return;
     setStep((current) => Math.min(3, current + 1));
   }
 
+  const selectedPlanObj = plans.find((p) => p.id === plan);
+  const selectedSourceLabel =
+    source === "other"
+      ? sourceOther.trim() || "Lainnya"
+      : predefinedSources.find((s) => s.id === source)?.label || "";
+
   return (
-    <div className="flex min-h-screen w-full items-center justify-center bg-[radial-gradient(circle_at_top,#F0ECFF,transparent_36%),#FBFAFE] px-4 py-8">
-      <Card className="w-full max-w-xl rounded-3xl border-slate-200 bg-white/95 shadow-2xl shadow-slate-200/60">
-        <CardHeader className="space-y-4 text-center">
+    <div className="flex min-h-screen w-full items-center justify-center bg-[radial-gradient(circle_at_top,#F3E8FF,transparent_40%),#FAFAFA] px-4 py-8">
+      <Card className="w-full max-w-lg overflow-hidden rounded-3xl border border-slate-200/80 bg-white/95 shadow-2xl shadow-purple-900/5 backdrop-blur-md">
+        {/* Top Slim Progress Bar */}
+        <div className="h-1.5 w-full bg-slate-100">
+          <div
+            className="h-full bg-primary transition-all duration-300"
+            style={{ width: `${(step / 3) * 100}%` }}
+          />
+        </div>
+
+        <CardHeader className="space-y-4 pb-4 pt-7 text-center">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-header.png" alt="Cubiqlo" className="mx-auto h-9 w-auto object-contain" />
-          <div className="flex items-center justify-center gap-2">
-            {steps.map((item, index) => {
-              const Icon = item.icon;
-              const done = item.id < step;
-              const active = item.id === step;
-              return (
-                <div key={item.id} className="flex items-center gap-2">
-                  <div className={`flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${active ? "bg-primary text-primary-foreground" : done ? "bg-emerald-100 text-emerald-700" : "bg-muted text-muted-foreground"}`}>
-                    {done ? <Check className="h-3 w-3" /> : <Icon className="h-3 w-3" />}
-                    {item.label}
-                  </div>
-                  {index < steps.length - 1 && <div className="h-px w-5 bg-border" />}
-                </div>
-              );
-            })}
-          </div>
+          <img src="/logo-header.png" alt="Cubiqlo" className="mx-auto h-8 w-auto object-contain" />
+
           <div>
-            <h1 className="text-2xl font-semibold tracking-tight">Setup akun Cubiqlo</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Jawab beberapa pertanyaan dulu, lalu lanjut setup di Settings.</p>
+            <span className="text-xs font-semibold tracking-wider text-primary uppercase">
+              Langkah {step} dari 3
+            </span>
+            <h1 className="mt-1 text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+              {step === 1 && "Pilih Tipe Penggunaan"}
+              {step === 2 && "Dari Mana Kamu Tau Cubiqlo?"}
+              {step === 3 && "Akun Kamu Siap Digunakan!"}
+            </h1>
+            <p className="mt-1 text-xs text-slate-500 sm:text-sm">
+              {step === 1 && "Pilih skala workspace agar pengalaman disesuaikan untukmu."}
+              {step === 2 && "Bantu kami memahami channel terbaik untuk menjangkau pengguna."}
+              {step === 3 && "Selesaikan onboarding untuk langsung mengatur detail akun di Settings."}
+            </p>
           </div>
         </CardHeader>
 
-        <CardContent className="min-h-72 space-y-4">
-          {error && <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">{error}</div>}
+        <CardContent className="min-h-64 px-6 py-2">
+          {error && (
+            <div className="mb-4 rounded-xl border border-destructive/20 bg-destructive/10 p-3 text-xs text-destructive">
+              {error}
+            </div>
+          )}
 
+          {/* STEP 1: PLAN CHOOSER */}
           {step === 1 && (
-            <div className="space-y-3">
-              <div className="text-center"><BriefcaseBusiness className="mx-auto h-12 w-12 text-primary" /><h2 className="mt-2 text-lg font-semibold">Pilih tipe akun</h2><p className="text-sm text-muted-foreground">Ini membantu kami menyiapkan flow yang pas.</p></div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {plans.map((item) => (
-                  <button key={item.id} type="button" onClick={() => setPlan(item.id)} className={`rounded-xl border p-4 text-left transition hover:border-primary ${plan === item.id ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border bg-card"}`}>
-                    <span className="font-semibold">{item.title}</span>
-                    <span className="mt-2 block text-xs leading-5 text-muted-foreground">{item.note}</span>
+            <div className="grid gap-3">
+              {plans.map((item) => {
+                const Icon = item.icon;
+                const active = plan === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setPlan(item.id)}
+                    className={`group relative flex items-center gap-4 rounded-2xl border p-4 text-left transition-all duration-150 ${
+                      active
+                        ? "border-primary bg-primary/[0.03] ring-2 ring-primary/20"
+                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+                    }`}
+                  >
+                    <div
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl transition ${
+                        active ? "bg-primary text-primary-foreground" : "bg-slate-100 text-slate-600 group-hover:bg-slate-200"
+                      }`}
+                    >
+                      <Icon className="h-5 w-5" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-bold text-slate-900">{item.title}</span>
+                        {item.badge && (
+                          <span className="rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                            {item.badge}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-0.5 text-xs text-slate-500">{item.note}</p>
+                    </div>
+                    <div
+                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border transition ${
+                        active ? "border-primary bg-primary text-white" : "border-slate-300"
+                      }`}
+                    >
+                      {active && <Check className="h-3 w-3 stroke-[3]" />}
+                    </div>
                   </button>
-                ))}
+                );
+              })}
+            </div>
+          )}
+
+          {/* STEP 2: SOURCE DISCOVERY (2x3 Symmetry) */}
+          {step === 2 && (
+            <div className="grid grid-cols-2 gap-2.5">
+              {predefinedSources.map((item) => {
+                const Icon = item.icon;
+                const active = source === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => {
+                      setSource(item.id);
+                      setSourceOther("");
+                    }}
+                    className={`flex items-center gap-2.5 rounded-xl border p-3 text-left transition-all duration-150 ${
+                      active
+                        ? "border-primary bg-primary/[0.04] ring-2 ring-primary/20"
+                        : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+                    }`}
+                  >
+                    <Icon
+                      className={`h-4 w-4 shrink-0 transition ${
+                        active ? "text-primary" : "text-slate-500"
+                      }`}
+                    />
+                    <span className="truncate text-xs font-semibold text-slate-800">{item.label}</span>
+                    {active && <Check className="ml-auto h-3.5 w-3.5 shrink-0 text-primary" />}
+                  </button>
+                );
+              })}
+
+              {/* YouTube / Media */}
+              <button
+                type="button"
+                onClick={() => {
+                  setSource("other");
+                  setSourceOther("YouTube");
+                }}
+                className={`flex items-center gap-2.5 rounded-xl border p-3 text-left transition-all duration-150 ${
+                  source === "other" && sourceOther === "YouTube"
+                    ? "border-primary bg-primary/[0.04] ring-2 ring-primary/20"
+                    : "border-slate-200 bg-white hover:border-slate-300 hover:bg-slate-50/50"
+                }`}
+              >
+                <Sparkles
+                  className={`h-4 w-4 shrink-0 ${
+                    source === "other" && sourceOther === "YouTube" ? "text-primary" : "text-slate-500"
+                  }`}
+                />
+                <span className="truncate text-xs font-semibold text-slate-800">YouTube / Media</span>
+                {source === "other" && sourceOther === "YouTube" && (
+                  <Check className="ml-auto h-3.5 w-3.5 shrink-0 text-primary" />
+                )}
+              </button>
+
+              {/* Custom / Lainnya */}
+              <div
+                className={`relative flex items-center rounded-xl border px-3 transition-all duration-150 ${
+                  source === "other" && sourceOther !== "YouTube"
+                    ? "border-primary bg-primary/[0.04] ring-2 ring-primary/20"
+                    : "border-slate-200 bg-white"
+                }`}
+              >
+                <PenTool className="h-3.5 w-3.5 shrink-0 text-slate-400" />
+                <Input
+                  value={sourceOther === "YouTube" ? "" : sourceOther}
+                  onFocus={() => {
+                    setSource("other");
+                    if (sourceOther === "YouTube") setSourceOther("");
+                  }}
+                  onChange={(e) => {
+                    setSource("other");
+                    setSourceOther(e.target.value);
+                  }}
+                  placeholder="Lainnya..."
+                  className="h-9 border-0 bg-transparent px-2 text-xs shadow-none focus-visible:ring-0 placeholder:text-slate-400"
+                />
+                {source === "other" && sourceOther !== "YouTube" && sourceOther.trim() !== "" && (
+                  <Check className="h-3.5 w-3.5 shrink-0 text-primary" />
+                )}
               </div>
             </div>
           )}
 
-          {step === 2 && (
-            <div className="space-y-3">
-              <div className="text-center"><Sparkles className="mx-auto h-12 w-12 text-primary" /><h2 className="mt-2 text-lg font-semibold">Tau Cubiqlo dari mana?</h2><p className="text-sm text-muted-foreground">Pilih satu sumber utama.</p></div>
-              <div className="grid gap-2 sm:grid-cols-2">
-                {sources.map((item) => (
-                  <button key={item.id} type="button" onClick={() => { setSource(item.id); setSourceOther(""); }} className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm transition hover:border-primary ${source === item.id ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border bg-card"}`}>
-                    {item.label}
-                    {source === item.id && <Check className="h-4 w-4 text-primary" />}
-                  </button>
-                ))}
-                <div className={`relative flex items-center rounded-xl border transition ${source === "other" ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border bg-card"}`}>
-                  <Input
-                    value={sourceOther}
-                    onFocus={() => setSource("other")}
-                    onChange={(event) => {
-                      setSourceOther(event.target.value);
-                      setSource("other");
-                    }}
-                    placeholder="Lainnya (tulis manual)..."
-                    className="h-11 border-0 bg-transparent pr-9 text-sm shadow-none focus-visible:ring-0"
-                  />
-                  {source === "other" && <Check className="pointer-events-none absolute right-3 h-4 w-4 text-primary" />}
+          {/* STEP 3: FINISH & SUMMARY */}
+          {step === 3 && (
+            <div className="space-y-4 py-2">
+              <div className="rounded-2xl border border-purple-100 bg-purple-50/50 p-4">
+                <h3 className="text-xs font-bold uppercase tracking-wider text-primary">
+                  Ringkasan Akun
+                </h3>
+                <div className="mt-3 space-y-2.5">
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
+                    <span className="text-slate-500">Tipe Penggunaan</span>
+                    <span className="font-semibold text-slate-900">{selectedPlanObj?.title}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
+                    <span className="text-slate-500">Sumber Referensi</span>
+                    <span className="font-semibold text-slate-900">{selectedSourceLabel}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-xs sm:text-sm">
+                    <span className="text-slate-500">Tujuan Pertama</span>
+                    <span className="font-medium text-primary">Account Settings</span>
+                  </div>
                 </div>
               </div>
-            </div>
-          )}
 
-          {step === 3 && (
-            <div className="space-y-4 text-center">
-              <Settings className="mx-auto h-16 w-16 text-primary" />
-              <div><h2 className="text-xl font-semibold">Setup account di Settings</h2><p className="mt-1 text-sm text-muted-foreground">Kami akan arahkan ke Settings untuk lengkapi profil akun, workspace, invoice, team, dan billing.</p></div>
-              <div className="mx-auto grid max-w-sm gap-2 rounded-xl border bg-muted/30 p-3 text-left text-sm">
-                <div><span className="text-muted-foreground">Plan:</span> <strong>{plans.find((item) => item.id === plan)?.title}</strong></div>
-                <div><span className="text-muted-foreground">Sumber:</span> <strong>{sources.find((item) => item.id === source)?.label}</strong></div>
+              <div className="space-y-2 rounded-xl bg-slate-50 p-3 text-xs text-slate-600">
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                  <span>Workspace default otomatis siap digunakan.</span>
+                </div>
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                  <span>Kamu bisa melengkapi profil, invoice & branding di Settings.</span>
+                </div>
               </div>
             </div>
           )}
         </CardContent>
 
-        <CardFooter className="flex justify-between gap-3">
-          {step > 1 ? <Button variant="outline" onClick={() => setStep(step - 1)} disabled={loading}><ArrowLeft className="h-4 w-4" />Kembali</Button> : <div />}
-          {step < 3 ? <Button onClick={next} disabled={(step === 1 && !plan) || (step === 2 && !source)}>Lanjut<ArrowRight className="h-4 w-4" /></Button> : <Button onClick={finish} disabled={loading}>{loading && <Loader2 className="h-4 w-4 animate-spin" />}Buka Settings</Button>}
+        <CardFooter className="flex justify-between border-t border-slate-100 bg-slate-50/50 px-6 py-4">
+          {step > 1 ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setStep(step - 1)}
+              disabled={loading}
+              className="rounded-xl border-slate-200 text-xs font-medium"
+            >
+              <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+              Kembali
+            </Button>
+          ) : (
+            <div />
+          )}
+
+          {step < 3 ? (
+            <Button
+              size="sm"
+              onClick={next}
+              disabled={
+                (step === 1 && !plan) ||
+                (step === 2 && (!source || (source === "other" && !sourceOther.trim())))
+              }
+              className="rounded-xl px-5 text-xs font-semibold"
+            >
+              Lanjut
+              <ArrowRight className="ml-1.5 h-3.5 w-3.5" />
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              onClick={finish}
+              disabled={loading}
+              className="rounded-xl px-5 text-xs font-semibold"
+            >
+              {loading && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+              Buka Settings →
+            </Button>
+          )}
         </CardFooter>
       </Card>
     </div>
