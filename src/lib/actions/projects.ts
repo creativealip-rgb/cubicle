@@ -269,6 +269,48 @@ export async function archiveProject(projectId: string) {
   await writeActivityLog(workspaceId, user.id, "archived_project", "project", projectId);
   return project;
 }
+export async function duplicateProject(projectId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertProjectInWorkspace(db, user.id, workspaceId, projectId);
+
+  const [original] = await db.select().from(projects).where(and(eq(projects.id, projectId), eq(projects.workspaceId, workspaceId))).limit(1);
+  if (!original) throw new Error("Project tidak ditemukan");
+
+  const [duplicated] = await db.insert(projects).values({
+    workspaceId,
+    clientId: original.clientId,
+    name: `${original.name} (Copy)`,
+    description: original.description,
+    status: "active",
+    billingType: original.billingType,
+    billingModel: original.billingModel,
+    taskModePolicy: original.taskModePolicy,
+    retainerFee: original.retainerFee,
+    retainerIncludedMinutes: original.retainerIncludedMinutes,
+    retainerPeriodUnit: original.retainerPeriodUnit,
+    retainerResetDay: original.retainerResetDay,
+    retainerOveragePolicy: original.retainerOveragePolicy,
+    retainerOverageRate: original.retainerOverageRate,
+    timeTrackingMode: original.timeTrackingMode,
+    activityRequired: original.activityRequired,
+    rate: original.rate,
+    budget: original.budget,
+    currency: original.currency,
+    startDate: original.startDate,
+    finishDate: original.finishDate,
+    dueDate: original.dueDate,
+    clientVisible: original.clientVisible,
+    selectedPackageId: original.selectedPackageId,
+    createdBy: user.id,
+  }).returning();
+
+  await writeActivityLog(workspaceId, user.id, "created_project", "project", duplicated.id);
+  revalidatePath("/app/projects");
+  return duplicated;
+}
 
 export async function permanentlyDeleteProject(projectId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
