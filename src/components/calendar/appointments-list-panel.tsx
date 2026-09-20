@@ -163,6 +163,7 @@ export function AppointmentsListPanel({
                   )
                 : ""
             }
+            embedded
           />
         </div>
       ) : (

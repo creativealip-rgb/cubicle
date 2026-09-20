@@ -196,6 +196,7 @@ export default async function CalendarPage() {
                     "Tambah aturan untuk menentukan kapan kamu tersedia menerima booking",
                     "Add rules to define when you're available for bookings"
                   )}
+                  embedded
                 />
               )}
             <div className="divide-y divide-border/60 -mx-3.5 px-3.5">
