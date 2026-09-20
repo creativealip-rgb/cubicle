@@ -171,10 +171,10 @@ export default async function CalendarPage() {
       </div>
 
       {/* 2-Column Main Layout */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 items-start">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 items-stretch">
         {/* Availability Rules */}
-        <div className="space-y-4 lg:col-span-1">
-          <Card className="rounded-xl border shadow-none bg-card">
+        <div className="flex flex-col lg:col-span-1">
+          <Card className="rounded-xl border shadow-none bg-card flex flex-col h-full">
             <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3 border-b">
               <div>
                 <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
@@ -187,17 +187,19 @@ export default async function CalendarPage() {
               </div>
               <AvailabilityRuleForm />
             </CardHeader>
-            <CardContent className="p-3.5 space-y-2">
+            <CardContent className="p-3.5 space-y-2 flex-1 flex flex-col">
               {rules.length === 0 && (
-                <EmptyState
-                  icon={Clock}
-                  title={t("Belum ada aturan ketersediaan", "No availability rules yet")}
-                  description={t(
-                    "Tambah aturan untuk menentukan kapan kamu tersedia menerima booking",
-                    "Add rules to define when you're available for bookings"
-                  )}
-                  embedded
-                />
+                <div className="flex flex-1 items-center justify-center">
+                  <EmptyState
+                    icon={Clock}
+                    title={t("Belum ada aturan ketersediaan", "No availability rules yet")}
+                    description={t(
+                      "Tambah aturan untuk menentukan kapan kamu tersedia menerima booking",
+                      "Add rules to define when you're available for bookings"
+                    )}
+                    embedded
+                  />
+                </div>
               )}
             <div className="divide-y divide-border/60 -mx-3.5 px-3.5">
               {rules.map((rule) => (
