@@ -9,11 +9,10 @@ import {
 import { eq, and, gte } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
-import { Calendar, CalendarDays, Clock, User, Link as LinkIcon, CheckCircle2, Video, ShieldCheck } from "lucide-react";
+import { Calendar, Clock, Video, CalendarDays } from "lucide-react";
 import Link from "next/link";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
@@ -118,9 +117,9 @@ export default async function CalendarPage() {
         }
       />
 
-      {/* 3-KPI Overview Cards Banner */}
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-        <Card className="rounded-xl border shadow-none bg-card">
+      {/* 3 Top Cards: Active Bookings, Weekly Availability, and Inline Booking Slug Form */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 items-stretch">
+        <Card className="rounded-xl border shadow-none bg-card flex flex-col justify-between">
           <CardContent className="p-3.5 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -136,7 +135,7 @@ export default async function CalendarPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl border shadow-none bg-card">
+        <Card className="rounded-xl border shadow-none bg-card flex flex-col justify-between">
           <CardContent className="p-3.5 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
@@ -152,31 +151,13 @@ export default async function CalendarPage() {
           </CardContent>
         </Card>
 
-        <Card className="rounded-xl border shadow-none bg-card">
-          <CardContent className="p-3.5 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                {t("Booking Slug", "Booking Slug")}
-              </p>
-              <div className="mt-0.5 flex items-center gap-1.5">
-                <span className={ws.bookingSlug ? "inline-block h-2 w-2 rounded-full bg-emerald-500 animate-pulse" : "inline-block h-2 w-2 rounded-full bg-muted-foreground/50"} />
-                <span className="text-sm font-bold text-foreground truncate font-mono">
-                  {ws.bookingSlug ? `/booking/${ws.bookingSlug}` : t("Belum Diatur", "Not Set")}
-                </span>
-              </div>
-            </div>
-            <div className="h-9 w-9 rounded-lg bg-emerald-500/10 text-emerald-600 flex items-center justify-center shrink-0">
-              <LinkIcon className="h-4 w-4" />
-            </div>
-          </CardContent>
-        </Card>
+        <BookingSlugForm defaultSlug={ws.bookingSlug} canEdit={ws.ownerId === user.id} compact />
       </div>
 
+      {/* Main Content Layout: Availability Rules (Left 1/3) & Upcoming Appointments (Right 2/3) */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Availability Rules */}
         <div className="space-y-4 lg:col-span-1">
-          <BookingSlugForm defaultSlug={ws.bookingSlug} canEdit={ws.ownerId === user.id} />
-
-          {/* Availability Rules */}
           <Card className="rounded-xl border shadow-none bg-card">
             <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3 border-b">
               <div>
@@ -238,100 +219,80 @@ export default async function CalendarPage() {
                 {t("Daftar booking terjadwal yang siap dihadiri.", "Scheduled bookings ready for meeting.")}
               </p>
             </div>
-            <Badge variant="secondary" className="text-xs font-semibold px-2 py-0.5">
+            <span className="text-xs font-medium text-muted-foreground">
               {upcoming.length} {t("terjadwal", "scheduled")}
-            </Badge>
+            </span>
           </CardHeader>
-          <CardContent className="flex flex-1 flex-col space-y-3">
-            {upcoming.length === 0 && (
-              <div className="flex min-h-[20rem] flex-1 items-center justify-center py-8 text-center">
+          <CardContent className="flex-1 p-3.5">
+            {upcoming.length === 0 ? (
+              <div className="flex h-64 items-center justify-center">
                 <EmptyState
-                  embedded
                   icon={CalendarDays}
-                  title={t("Belum ada jadwal mendatang", "No upcoming appointments")}
-                  description={t("Bagikan link booking supaya klien bisa atur jadwal sendiri", "Share your booking link so clients can schedule themselves")}
+                  title={t("Belum ada janji temu mendatang", "No upcoming appointments")}
+                  description={t("Bagikan link booking kamu agar klien bisa menjadwalkan sesi secara mandiri", "Share your booking link so clients can schedule themselves")}
                 />
               </div>
-            )}
-            {upcoming.map((apt) => {
-              const dateBadge = parseDateBadge(apt.startTime);
-              return (
-                <div
-                  key={apt.id}
-                  className="rounded-xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm"
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex items-start gap-3 min-w-0">
-                      {/* Date Badge Mini Box */}
-                      <div className="flex flex-col items-center justify-center rounded-lg border border-primary/20 bg-primary/5 px-2.5 py-1.5 text-center shrink-0 w-12">
-                        <span className="text-[10px] font-bold text-primary tracking-wider uppercase leading-none">
-                          {dateBadge.month}
-                        </span>
-                        <span className="text-base font-extrabold text-foreground leading-tight mt-0.5">
-                          {dateBadge.day}
-                        </span>
-                        <span className="text-[9px] font-medium text-muted-foreground uppercase leading-none">
-                          {dateBadge.weekday}
-                        </span>
-                      </div>
-
-                      {/* Detail Janji Temu */}
-                      <div className="min-w-0 space-y-1.5">
-                        <p className="text-sm font-bold text-foreground tracking-tight leading-tight">
-                          {apt.title}
-                        </p>
-                        
-                        {/* 24-Hour Time & Host Badge */}
-                        <div className="flex flex-wrap items-center gap-2 text-xs">
-                          <span className="inline-flex items-center gap-1 font-mono font-semibold text-primary bg-primary/10 px-2 py-0.5 rounded-md">
-                            <Clock className="h-3 w-3 shrink-0" aria-hidden />
-                            {formatTime(apt.startTime)} – {formatTime(apt.endTime)} WIB
+            ) : (
+              <div className="divide-y divide-border/60">
+                {upcoming.map((item) => {
+                  const dateInfo = parseDateBadge(item.startTime);
+                  return (
+                    <div
+                      key={item.id}
+                      className="group flex flex-col gap-3 py-3 transition-colors first:pt-0 last:pb-0 sm:flex-row sm:items-center sm:justify-between"
+                    >
+                      <div className="flex items-start gap-3 min-w-0">
+                        <div className="flex flex-col items-center justify-center rounded-lg border border-border/80 bg-muted/30 px-2 py-1 min-w-12 text-center shrink-0">
+                          <span className="text-[10px] font-bold text-muted-foreground uppercase leading-none">
+                            {dateInfo.month}
                           </span>
-
-                          {apt.userName && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded-md">
-                              <ShieldCheck className="h-3 w-3 text-violet-600" />
-                              <span>Host: <strong className="text-foreground">{apt.userName}</strong></span>
-                            </span>
-                          )}
+                          <span className="text-base font-extrabold text-foreground leading-tight">
+                            {dateInfo.day}
+                          </span>
+                          <span className="text-[9px] text-muted-foreground uppercase leading-none">
+                            {dateInfo.weekday}
+                          </span>
                         </div>
 
-                        {/* Attendee Client Info */}
-                        {apt.attendeeName && (
-                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-1">
-                            <User className="h-3 w-3 inline shrink-0 text-foreground/70" aria-hidden />
-                            <span className="font-semibold text-foreground">{apt.attendeeName}</span>
-                            {apt.attendeeEmail && (
-                              <span className="text-[11px] text-muted-foreground truncate">
-                                &lt;{apt.attendeeEmail}&gt;
-                              </span>
-                            )}
+                        <div className="min-w-0 space-y-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="text-sm font-semibold text-foreground truncate">
+                              {item.title || t("Sesi Diskusi", "Discussion Session")}
+                            </p>
+                            <span className="inline-flex items-center gap-1 rounded bg-emerald-500/10 px-1.5 py-0.5 text-[10px] font-medium text-emerald-600">
+                              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+                              {item.status}
+                            </span>
                           </div>
-                        )}
 
-                        {apt.notes && (
-                          <p className="rounded-md bg-muted/40 border border-border/50 px-2.5 py-1.5 text-[11px] text-muted-foreground leading-relaxed mt-1">
-                            {apt.notes}
-                          </p>
-                        )}
+                          <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
+                            <span className="flex items-center gap-1 font-mono">
+                              <Clock className="h-3.5 w-3.5 text-muted-foreground/70" />
+                              {formatTime(item.startTime)} – {formatTime(item.endTime)}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <span className="h-1 w-1 rounded-full bg-border" />
+                              <span className="font-medium text-foreground">{item.attendeeName}</span>
+                              <span className="text-muted-foreground">({item.attendeeEmail})</span>
+                            </span>
+                          </div>
+
+                          {item.notes && (
+                            <p className="text-xs text-muted-foreground/90 bg-muted/40 rounded p-1.5 mt-1 line-clamp-2">
+                              {item.notes}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                        <AppointmentActions id={item.id} title={item.title || "Sesi Diskusi"} />
                       </div>
                     </div>
-
-                    {/* Actions & Status Badge */}
-                    <div className="flex flex-wrap items-center justify-end gap-2 shrink-0 self-end sm:self-start">
-                      <Badge
-                        variant="outline"
-                        className="text-[10px] font-semibold border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 gap-1 h-6"
-                      >
-                        <CheckCircle2 className="h-3 w-3" />
-                        {t("Terjadwal", "Scheduled")}
-                      </Badge>
-                      <AppointmentActions id={apt.id} title={apt.title} />
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>

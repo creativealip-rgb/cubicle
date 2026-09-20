@@ -24,9 +24,11 @@ function normalizeSlug(value: string) {
 export function BookingSlugForm({
   defaultSlug,
   canEdit,
+  compact = false,
 }: {
   defaultSlug: string | null;
   canEdit: boolean;
+  compact?: boolean;
 }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
@@ -82,6 +84,81 @@ export function BookingSlugForm({
     } catch {
       toast.error(t("Gagal salin link", "Failed to copy link"));
     }
+  }
+
+  if (compact && canEdit) {
+    return (
+      <Card className="rounded-xl border shadow-none bg-card flex flex-col justify-between">
+        <CardContent className="p-3.5 space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-[11px] font-medium uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Link2 className="h-3.5 w-3.5 text-primary" />
+              {t("Booking Slug", "Booking Slug")}
+            </p>
+            {defaultSlug && (
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 px-1.5 py-0.5 rounded">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                Live
+              </span>
+            )}
+          </div>
+
+          <form onSubmit={onSubmit} className="flex gap-1.5">
+            <div className="relative flex-1 min-w-0">
+              <span className="absolute left-2 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground font-mono select-none">
+                /booking/
+              </span>
+              <Input
+                id="booking-slug-compact"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                maxLength={64}
+                placeholder="your-name"
+                className="h-7 pl-[4.2rem] font-mono text-xs"
+              />
+            </div>
+            <LoadingButton
+              type="submit"
+              size="sm"
+              loading={loading}
+              disabled={normalizeSlug(slug) === (defaultSlug ?? "")}
+              className="h-7 px-2.5 text-xs shrink-0"
+            >
+              {t("Simpan", "Save")}
+            </LoadingButton>
+          </form>
+
+          {publicUrl ? (
+            <div className="flex items-center justify-between gap-1 pt-0.5">
+              <span className="truncate font-mono text-[10px] text-muted-foreground">{publicUrl}</span>
+              <div className="flex items-center gap-1 shrink-0">
+                <button
+                  type="button"
+                  onClick={copyLink}
+                  className="text-[10px] text-primary hover:underline flex items-center gap-0.5 font-medium"
+                >
+                  {copied ? <Check className="h-2.5 w-2.5 text-emerald-600" /> : <Copy className="h-2.5 w-2.5" />}
+                  {copied ? t("Tersalin", "Copied") : t("Salin", "Copy")}
+                </button>
+                <a
+                  href={publicUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[10px] text-primary hover:underline flex items-center gap-0.5 font-medium"
+                >
+                  <ExternalLink className="h-2.5 w-2.5" />
+                  {t("Buka", "Open")}
+                </a>
+              </div>
+            </div>
+          ) : (
+            <p className="text-[10px] text-muted-foreground">
+              {t("Klien bisa booking mandiri lewat slug ini.", "Clients can self-book via this slug.")}
+            </p>
+          )}
+        </CardContent>
+      </Card>
+    );
   }
 
   if (!canEdit) {
