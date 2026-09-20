@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -64,10 +64,8 @@ export function EditHabitDialog({
   const [goalId, setGoalId] = useState(habit?.goalId || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-
-  // Sync state on open
-  const handleOpenChange = (isOpen: boolean) => {
-    if (isOpen && habit) {
+  useEffect(() => {
+    if (habit && open) {
       setName(habit.name);
       setFrequency((habit.frequency as "daily" | "specific_weekdays") || "daily");
       setSelectedWeekdays(habit.weekdays?.length ? habit.weekdays : [1, 2, 3, 4, 5]);
@@ -75,6 +73,9 @@ export function EditHabitDialog({
       setGoalId(habit.goalId || "");
       setError("");
     }
+  }, [habit, open]);
+
+  const handleOpenChange = (isOpen: boolean) => {
     onOpenChange(isOpen);
   };
 
