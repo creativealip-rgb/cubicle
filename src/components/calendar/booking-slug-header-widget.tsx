@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
-import { Copy, ExternalLink, Link2, Check, Settings2, Globe } from "lucide-react";
+import { Copy, ExternalLink, Link2, Check, Settings2 } from "lucide-react";
 import { updateWorkspaceBookingSlug } from "@/lib/actions/workspace";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -88,33 +88,40 @@ export function BookingSlugHeaderWidget({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {publicUrl ? (
-        <div className="flex items-center gap-1.5 rounded-lg border border-border/80 bg-background/80 px-2.5 py-1 text-xs shadow-2xs">
-          <Globe className="h-3.5 w-3.5 text-primary" />
-          <span className="font-mono text-muted-foreground hidden md:inline">/booking/</span>
-          <span className="font-mono font-semibold text-foreground">{defaultSlug}</span>
-          <button
+        <>
+          <Button
             type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs font-semibold"
             onClick={copyLink}
-            className="ml-1 inline-flex items-center gap-1 rounded px-1.5 py-0.5 text-[11px] font-medium text-primary hover:bg-muted transition-colors"
           >
-            {copied ? <Check className="h-3 w-3 text-emerald-600" /> : <Copy className="h-3 w-3" />}
-            <span>{copied ? t("Tersalin", "Copied") : t("Salin", "Copy")}</span>
-          </button>
-          <Button variant="ghost" size="icon" className="h-6 w-6" asChild>
-            <a href={publicUrl} target="_blank" rel="noreferrer" title={t("Buka halaman booking", "Open booking page")}>
-              <ExternalLink className="h-3 w-3 text-muted-foreground hover:text-foreground" />
+            {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <Copy className="h-3.5 w-3.5" />}
+            <span>{copied ? t("Tersalin", "Copied") : t("Salin Link", "Copy Link")}</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-8 gap-1.5 text-xs font-semibold"
+            asChild
+          >
+            <a href={publicUrl} target="_blank" rel="noreferrer">
+              <ExternalLink className="h-3.5 w-3.5" />
+              <span>{t("Buka Link", "Open Link")}</span>
             </a>
           </Button>
-        </div>
+        </>
       ) : null}
 
       {canEdit && (
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button
-              variant={publicUrl ? "outline" : "default"}
+              variant={publicUrl ? "ghost" : "default"}
               size="sm"
-              className="h-8 gap-1.5 text-xs font-semibold"
+              className="h-8 gap-1.5 text-xs font-semibold border border-border/80 hover:bg-muted/80"
             >
               <Settings2 className="h-3.5 w-3.5" />
               <span>{defaultSlug ? t("Atur Slug", "Edit Slug") : t("Aktifkan Link Booking", "Set Booking Slug")}</span>

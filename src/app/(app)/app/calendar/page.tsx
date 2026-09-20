@@ -198,10 +198,11 @@ export default async function CalendarPage() {
                   )}
                 />
               )}
+            <div className="divide-y divide-border/60 -mx-3.5 px-3.5">
               {rules.map((rule) => (
                 <div
                   key={rule.id}
-                  className="flex items-center justify-between gap-2.5 rounded-lg border border-border/80 bg-muted/20 p-2.5 transition-all hover:bg-muted/40 hover:border-primary/40"
+                  className="flex items-center justify-between gap-2.5 py-2.5 first:pt-0 last:pb-0"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
                     <span className="flex h-7 w-10 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-xs uppercase shrink-0">
@@ -222,6 +223,7 @@ export default async function CalendarPage() {
                   />
                 </div>
               ))}
+            </div>
             </CardContent>
           </Card>
         </div>
