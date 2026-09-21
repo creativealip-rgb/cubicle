@@ -14,8 +14,8 @@ describe("task template UI contract", () => {
     const menuSource = workspaceSource.slice(menuStart, menuEnd);
 
     expect(menuSource).toContain('t("Ubah", "Edit")');
-    expect(menuSource).toContain("archiveTaskTemplate");
     expect(menuSource).toContain("duplicateTaskTemplate");
+    expect(menuSource).toContain("deleteTaskTemplate");
   });
 
   it("removes refresh preview after preview is loaded", () => {

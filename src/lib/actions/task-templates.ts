@@ -167,6 +167,22 @@ export async function updateTaskTemplate(templateIdInput: string, input: unknown
   return template;
 }
 
+export async function deleteTaskTemplate(templateIdInput: string) {
+  const { workspaceId } = await actionContext(true);
+  const templateId = idSchema.parse(templateIdInput);
+  await findTemplate(db, workspaceId, templateId);
+  return db.transaction(async (tx) => {
+    await tx.delete(taskTemplateItems).where(and(
+      eq(taskTemplateItems.workspaceId, workspaceId), eq(taskTemplateItems.templateId, templateId),
+    ));
+    const [deleted] = await tx.delete(taskTemplates).where(and(
+      eq(taskTemplates.id, templateId), eq(taskTemplates.workspaceId, workspaceId),
+    )).returning();
+    if (!deleted) throw new Error("Template tidak ditemukan");
+    return deleted;
+  });
+}
+
 export async function archiveTaskTemplate(templateIdInput: string) {
   const { workspaceId } = await actionContext(true);
   const templateId = idSchema.parse(templateIdInput);

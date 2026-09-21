@@ -7,9 +7,9 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { TaskTemplateImportDialog } from "@/components/tasks/task-template-import-dialog";
 import {
-  archiveTaskTemplate,
   createTaskTemplate,
   createTaskTemplateItem,
+  deleteTaskTemplate,
   duplicateTaskTemplate,
   removeTaskTemplateItem,
   reorderTaskTemplateItems,
@@ -24,7 +24,6 @@ import {
   LayoutTemplate,
   Plus,
   Copy,
-  Archive,
   RotateCcw,
   CheckSquare2,
   ChevronUp,
@@ -379,13 +378,16 @@ export function TaskTemplateWorkspace({
                                 {t("Ubah", "Edit")}
                               </DropdownMenuItem>
                             </TemplateFormDialog>
-                            <DropdownMenuItem onClick={() => run(() => archiveTaskTemplate(template.id))}>
-                              <Archive className="size-3.5" />
-                              {t("Arsipkan", "Archive")}
-                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => run(() => duplicateTaskTemplate(template.id))}>
                               <Copy className="size-3.5" />
                               {t("Duplikat", "Duplicate")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => run(() => deleteTaskTemplate(template.id))}
+                              className="text-destructive focus:text-destructive"
+                            >
+                              <Trash2 className="size-3.5" />
+                              {t("Hapus", "Delete")}
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
