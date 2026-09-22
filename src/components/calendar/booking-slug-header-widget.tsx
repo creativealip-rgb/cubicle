@@ -10,9 +10,17 @@ import { LoadingButton } from "@/components/ui/loading-button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n-client";
-
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const ALL_PLATFORMS = [
+  { id: "google_meet", label: "Google Meet" },
+  { id: "zoom", label: "Zoom" },
+  { id: "teams", label: "Microsoft Teams" },
+  { id: "phone", label: "Telepon / WhatsApp Call" },
+  { id: "in_person", label: "Tatap Muka Langsung (In-person)" },
+  { id: "custom", label: "Custom Link / Lainnya" },
+];
 
 function normalizeSlug(value: string) {
   return value
@@ -27,19 +35,25 @@ export function BookingSlugHeaderWidget({
   defaultSlug,
   defaultPlatform = "google_meet",
   defaultLink = "",
+  defaultAllowedPlatforms = ["google_meet", "zoom", "teams", "phone", "in_person", "custom"],
   canEdit,
 }: {
   defaultSlug: string | null;
   defaultPlatform?: string | null;
   defaultLink?: string | null;
+  defaultAllowedPlatforms?: string[];
   canEdit: boolean;
 }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
   const [slug, setSlug] = useState(defaultSlug ?? "");
-  const [platform, setPlatform] = useState(defaultPlatform ?? "google_meet");
   const [customLink, setCustomLink] = useState(defaultLink ?? "");
+  const [allowedPlatforms, setAllowedPlatforms] = useState<string[]>(
+    defaultAllowedPlatforms && defaultAllowedPlatforms.length > 0
+      ? defaultAllowedPlatforms
+      : ["google_meet", "zoom", "teams", "phone", "in_person", "custom"]
+  );
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -53,6 +67,20 @@ export function BookingSlugHeaderWidget({
     return `${origin}/booking/${clean}`;
   }, [defaultSlug]);
 
+  function togglePlatform(platformId: string) {
+    setAllowedPlatforms((prev) => {
+      if (prev.includes(platformId)) {
+        if (prev.length <= 1) {
+          toast.error(t("Minimal pilih satu opsi platform meeting", "Select at least one meeting platform"));
+          return prev;
+        }
+        return prev.filter((id) => id !== platformId);
+      } else {
+        return [...prev, platformId];
+      }
+    });
+  }
+
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
     if (!canEdit) return;
@@ -61,8 +89,9 @@ export function BookingSlugHeaderWidget({
     try {
       const result = await updateWorkspaceBookingSlug({
         bookingSlug: next,
-        bookingMeetingPlatform: platform as any,
+        bookingMeetingPlatform: (allowedPlatforms[0] as any) || "google_meet",
         bookingMeetingLink: customLink.trim() || undefined,
+        bookingAllowedPlatforms: allowedPlatforms,
       });
       if ("error" in result) {
         toast.error(t("Booking slug sudah dipakai workspace lain", "Booking slug is already used by another workspace"));
@@ -132,7 +161,7 @@ export function BookingSlugHeaderWidget({
               <span>{defaultSlug ? t("Atur Slug", "Edit Slug") : t("Aktifkan Link Booking", "Set Booking Slug")}</span>
             </Button>
           </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
+          <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Link2 className="h-4 w-4 text-primary" />
@@ -166,26 +195,38 @@ export function BookingSlugHeaderWidget({
                 </p>
               </div>
 
-              <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">{t("Platform Meeting Default", "Default Meeting Platform")}</Label>
-                <Select value={platform} onValueChange={setPlatform}>
-                  <SelectTrigger className="h-9 text-xs">
-                    <SelectValue placeholder={t("Pilih platform", "Select platform")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="google_meet">Google Meet</SelectItem>
-                    <SelectItem value="zoom">Zoom</SelectItem>
-                    <SelectItem value="teams">Microsoft Teams</SelectItem>
-                    <SelectItem value="phone">{t("Telepon / WhatsApp Call", "Phone / WhatsApp Call")}</SelectItem>
-                    <SelectItem value="in_person">{t("Tatap Muka Langsung (In-person)", "In-person Meeting")}</SelectItem>
-                    <SelectItem value="custom">{t("Custom Link / Lainnya", "Custom Link / Other")}</SelectItem>
-                  </SelectContent>
-                </Select>
+              {/* Opsi Checklist Platform yang Ditampilkan ke Klien */}
+              <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
+                <Label className="text-xs font-semibold block">
+                  {t("Opsi Platform Meeting yang Ditampilkan ke Klien", "Allowed Meeting Platforms in Booking Form")}
+                </Label>
+                <p className="text-[11px] text-muted-foreground">
+                  {t("Centang opsi yang ingin Anda sediakan di halaman booking publik:", "Check the options you want to offer on the public booking page:")}
+                </p>
+                <div className="grid grid-cols-1 gap-2 pt-1">
+                  {ALL_PLATFORMS.map((item) => {
+                    const isChecked = allowedPlatforms.includes(item.id);
+                    return (
+                      <label
+                        key={item.id}
+                        className="flex items-center gap-2.5 rounded-md border bg-background px-3 py-2 text-xs font-medium cursor-pointer hover:bg-muted/40 transition-colors"
+                      >
+                        <Checkbox
+                          checked={isChecked}
+                          onCheckedChange={() => togglePlatform(item.id)}
+                        />
+                        <span className="select-none">{item.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
               </div>
 
-              {(platform === "zoom" || platform === "teams" || platform === "custom") && (
+              {(allowedPlatforms.includes("zoom") ||
+                allowedPlatforms.includes("teams") ||
+                allowedPlatforms.includes("custom")) && (
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">{t("Link Ruang Meeting / Catatan", "Meeting Room Link / Note")}</Label>
+                  <Label className="text-xs font-semibold">{t("Link Ruang Meeting Tetap / Catatan (Opsional)", "Fixed Meeting Room Link / Note (Optional)")}</Label>
                   <Input
                     value={customLink}
                     onChange={(e) => setCustomLink(e.target.value)}
@@ -193,7 +234,7 @@ export function BookingSlugHeaderWidget({
                     className="h-9 text-xs"
                   />
                   <p className="text-[11px] text-muted-foreground">
-                    {t("Link ini akan otomatis ditampilkan kepada klien setelah booking.", "This link will be shown to clients upon booking.")}
+                    {t("Link ini akan otomatis disertakan jika klien memilih platform tersebut.", "This link will be included if the client chooses that platform.")}
                   </p>
                 </div>
               )}

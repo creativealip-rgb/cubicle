@@ -117,6 +117,7 @@ const bookingSlugSchema = z.object({
     .default("google_meet")
     .optional(),
   bookingMeetingLink: z.string().trim().max(500).optional().nullable(),
+  bookingAllowedPlatforms: z.array(z.string()).optional(),
 });
 
 export async function updateWorkspaceBookingSlug(input: z.infer<typeof bookingSlugSchema>) {
@@ -140,12 +141,17 @@ export async function updateWorkspaceBookingSlug(input: z.infer<typeof bookingSl
     }
   }
 
+  const allowed = (parsed.bookingAllowedPlatforms && parsed.bookingAllowedPlatforms.length > 0)
+    ? parsed.bookingAllowedPlatforms
+    : ["google_meet", "zoom", "teams", "phone", "in_person", "custom"];
+
   await db
     .update(workspaces)
     .set({
       bookingSlug: nextSlug,
       bookingMeetingPlatform: parsed.bookingMeetingPlatform || "google_meet",
       bookingMeetingLink: parsed.bookingMeetingLink || null,
+      bookingAllowedPlatforms: allowed,
       updatedAt: new Date(),
     })
     .where(eq(workspaces.id, workspaceId));
@@ -156,7 +162,7 @@ export async function updateWorkspaceBookingSlug(input: z.infer<typeof bookingSl
     nextSlug ? "updated_booking_slug" : "cleared_booking_slug",
     "workspace",
     workspaceId,
-    { slug: nextSlug, platform: parsed.bookingMeetingPlatform, link: parsed.bookingMeetingLink },
+    { slug: nextSlug, platform: parsed.bookingMeetingPlatform, link: parsed.bookingMeetingLink, allowed },
   );
 
   return { ok: true as const, bookingSlug: nextSlug };

@@ -608,6 +608,7 @@ export const workspaces = pgTable("workspaces", {
   bookingSlug: text("booking_slug").unique(),
   bookingMeetingPlatform: text("booking_meeting_platform").default("google_meet"),
   bookingMeetingLink: text("booking_meeting_link"),
+  bookingAllowedPlatforms: text("booking_allowed_platforms").array().notNull().default(sql`'{"google_meet","zoom","teams","phone","in_person","custom"}'::text[]`),
   timezone: text("timezone").notNull().default("UTC"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

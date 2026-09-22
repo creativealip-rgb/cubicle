@@ -107,6 +107,7 @@ export default async function CalendarPage() {
             defaultSlug={ws.bookingSlug}
             defaultPlatform={ws.bookingMeetingPlatform ?? "google_meet"}
             defaultLink={ws.bookingMeetingLink ?? ""}
+            defaultAllowedPlatforms={ws.bookingAllowedPlatforms ?? ["google_meet", "zoom", "teams", "phone", "in_person", "custom"]}
             canEdit={ws.ownerId === user.id}
           />
         }

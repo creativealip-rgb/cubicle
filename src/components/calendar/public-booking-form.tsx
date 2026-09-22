@@ -20,6 +20,7 @@ interface PublicBookingFormProps {
     bookingSlug: string | null;
     bookingMeetingPlatform?: string | null;
     bookingMeetingLink?: string | null;
+    bookingAllowedPlatforms?: string[] | null;
     logoUrl: string | null;
   };
   timezone: string;
@@ -44,7 +45,16 @@ export function PublicBookingForm({
   const [notes, setNotes] = useState("");
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selectedSlot, setSelectedSlot] = useState("");
-  const [meetingPlatform, setMeetingPlatform] = useState(workspace.bookingMeetingPlatform || "google_meet");
+
+  const allowed = (workspace.bookingAllowedPlatforms && workspace.bookingAllowedPlatforms.length > 0)
+    ? workspace.bookingAllowedPlatforms
+    : ["google_meet", "zoom", "teams", "phone", "in_person", "custom"];
+
+  const [meetingPlatform, setMeetingPlatform] = useState(
+    allowed.includes(workspace.bookingMeetingPlatform || "")
+      ? workspace.bookingMeetingPlatform!
+      : allowed[0] || "google_meet"
+  );
 
   const [slots, setSlots] = useState<Slot[]>(initialSlots);
   const [slotsError, setSlotsError] = useState(initialError);
@@ -246,15 +256,17 @@ export function PublicBookingForm({
                 { id: "phone", label: t("Telepon / WA", "Phone / WA") },
                 { id: "in_person", label: t("Tatap Muka", "In-person") },
                 { id: "custom", label: t("Lainnya", "Other") },
-              ].map((p) => (
+              ]
+                .filter((p) => allowed.includes(p.id))
+                .map((p) => (
                 <button
                   key={p.id}
                   type="button"
                   onClick={() => setMeetingPlatform(p.id)}
-                  className={`flex items-center justify-center rounded-xl border px-3 py-2 text-xs font-medium transition-all ${
+                  className={`flex items-center justify-center p-2.5 rounded-xl border text-xs font-medium transition-all ${
                     meetingPlatform === p.id
-                      ? "border-primary bg-primary/10 text-primary font-semibold"
-                      : "border-border/80 bg-background text-muted-foreground hover:bg-muted/50"
+                      ? "border-primary bg-primary/10 text-primary font-semibold ring-1 ring-primary"
+                      : "border-border/80 bg-card hover:bg-muted/40 text-foreground"
                   }`}
                 >
                   {p.label}
