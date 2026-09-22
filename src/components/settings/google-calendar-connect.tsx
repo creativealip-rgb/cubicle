@@ -96,6 +96,10 @@ export function GoogleCalendarConnect({
         {status === "error" ? <Badge variant="destructive">Error</Badge> : null}
       </div>
 
+      <p className="text-sm font-medium text-foreground">
+        {t("Hubungkan Google Calendar untuk sinkronisasi jadwal.", "Connect Google Calendar to sync your schedule.")}
+      </p>
+
       {connected ? (
         <div className="rounded-lg border bg-muted/30 p-3 text-sm">
           <div className="flex items-start gap-2">
@@ -114,7 +118,7 @@ export function GoogleCalendarConnect({
           </div>
         </div>
       ) : (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-xs text-muted-foreground leading-relaxed">
           {t(
             "Hubungkan akun Google supaya booking form publik langsung bikin event di kalender kamu.",
             "Connect Google so public booking form events appear on your calendar automatically.",
@@ -122,7 +126,7 @@ export function GoogleCalendarConnect({
         </p>
       )}
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-2 pt-1">
         {connected ? (
           <Button
             type="button"
