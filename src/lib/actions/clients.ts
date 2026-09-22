@@ -20,7 +20,7 @@ import {
 } from "@/lib/portal-slug";
 
 import { getCurrentLang, createT } from "@/lib/i18n";
-import { getUserPlan, assertCanUseClientPortal } from "@/lib/plan";
+import { getUserPlan } from "@/lib/plan";
 
 async function getT() {
   const lang = await getCurrentLang();
