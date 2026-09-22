@@ -14,14 +14,14 @@ describe("DashboardOnboarding completed state", () => {
     expect(renderToStaticMarkup(<DashboardOnboarding lang="en" steps={steps} />)).toBe("");
   });
 
-  it("keeps pending onboarding actions visible with updated 4 steps", () => {
+  it("keeps only pending onboarding actions visible and filters out completed ones", () => {
     const html = renderToStaticMarkup(
       <DashboardOnboarding lang="en" steps={steps.map((step, index) => ({ ...step, done: index !== 0 }))} />,
     );
     expect(html).toContain("Getting Started Checklist");
     expect(html).toContain("Add first client");
-    expect(html).toContain("Create landingpage");
-    expect(html).toContain("Setup your personal activity");
-    expect(html).toContain("Check documentation");
+    expect(html).not.toContain("Create Landing Page");
+    expect(html).not.toContain("Setup your personal activity");
+    expect(html).not.toContain("Check Documentation Hub");
   });
 });

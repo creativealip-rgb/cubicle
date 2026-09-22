@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   BookOpen,
-  CheckCircle2,
   Globe,
   Sparkles,
   UserPlus,
@@ -40,7 +39,7 @@ const STEP_META: Record<
   landingpage: {
     icon: Globe,
     id: { title: "Buat Landing Page", desc: "Publikasikan website portfolio bisnismu." },
-    en: { title: "Create landingpage", desc: "Publish your personal or agency website." },
+    en: { title: "Create Landing Page", desc: "Publish your personal or agency website." },
   },
   personal: {
     icon: Sparkles,
@@ -49,8 +48,8 @@ const STEP_META: Record<
   },
   docs: {
     icon: BookOpen,
-    id: { title: "Cek Dokumentasi", desc: "Pelajari panduan fitur & alur kerja." },
-    en: { title: "Check documentation", desc: "Explore workflow guides and features." },
+    id: { title: "Cek Documentation Hub", desc: "Pelajari panduan fitur & alur kerja." },
+    en: { title: "Check Documentation Hub", desc: "Explore workflow guides and features." },
   },
 };
 
@@ -61,8 +60,9 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
   const doneCount = steps.filter((s) => s.done).length;
   const total = steps.length;
   const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+  const pendingSteps = steps.filter((s) => !s.done);
 
-  if (dismissed || (total > 0 && doneCount === total)) return null;
+  if (dismissed || (total > 0 && doneCount === total) || pendingSteps.length === 0) return null;
 
   return (
     <div className="relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white/95 p-5 shadow-xs transition-all backdrop-blur-sm">
@@ -108,9 +108,20 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
         </div>
       </div>
 
-      {/* 4 Cards Grid Layout */}
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {steps.map((step) => {
+      {/* Pending Steps Cards Grid Layout */}
+      <div
+        className={cn(
+          "mt-4 grid gap-3",
+          pendingSteps.length === 1
+            ? "grid-cols-1"
+            : pendingSteps.length === 2
+              ? "grid-cols-1 sm:grid-cols-2"
+              : pendingSteps.length === 3
+                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+                : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4"
+        )}
+      >
+        {pendingSteps.map((step) => {
           const meta = STEP_META[step.key] || {
             icon: Sparkles,
             id: { title: step.key, desc: "" },
@@ -123,40 +134,18 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
             <Link
               key={step.key}
               href={step.href}
-              className={cn(
-                "group relative flex flex-col justify-between rounded-xl border p-4 transition-all duration-150 hover:shadow-sm",
-                step.done
-                  ? "border-emerald-200/80 bg-emerald-50/30 hover:border-emerald-300"
-                  : "border-slate-200/80 bg-slate-50/40 hover:border-primary/40 hover:bg-primary/[0.02]"
-              )}
+              className="group relative flex flex-col justify-between rounded-xl border border-slate-200/80 bg-slate-50/40 p-4 transition-all duration-150 hover:border-primary/40 hover:bg-primary/[0.02] hover:shadow-sm"
             >
               <div>
                 <div className="flex items-start justify-between gap-2">
-                  <div
-                    className={cn(
-                      "flex h-8 w-8 items-center justify-center rounded-lg transition",
-                      step.done
-                        ? "bg-emerald-100 text-emerald-700"
-                        : "bg-white text-slate-700 shadow-xs group-hover:bg-primary group-hover:text-white"
-                    )}
-                  >
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-white text-slate-700 shadow-xs transition group-hover:bg-primary group-hover:text-white">
                     <Icon className="h-4 w-4" />
                   </div>
-
-                  {step.done ? (
-                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                  ) : (
-                    <ArrowUpRight className="h-4 w-4 text-slate-400 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary" />
-                  )}
+                  <ArrowUpRight className="h-4 w-4 text-slate-400 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-primary" />
                 </div>
 
                 <div className="mt-3">
-                  <h3
-                    className={cn(
-                      "text-xs font-bold transition",
-                      step.done ? "text-emerald-950 line-through opacity-80" : "text-slate-900 group-hover:text-primary"
-                    )}
-                  >
+                  <h3 className="text-xs font-bold text-slate-900 transition group-hover:text-primary">
                     {copy.title}
                   </h3>
                   <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
@@ -166,11 +155,7 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
               </div>
 
               <div className="mt-3 flex items-center text-[10px] font-semibold">
-                {step.done ? (
-                  <span className="text-emerald-600">✓ {t("Selesai", "Completed")}</span>
-                ) : (
-                  <span className="text-primary group-hover:underline">{t("Mulai sekarang →", "Start now →")}</span>
-                )}
+                <span className="text-primary group-hover:underline">{t("Mulai sekarang →", "Start now →")}</span>
               </div>
             </Link>
           );
