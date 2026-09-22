@@ -32,7 +32,7 @@ export function PermanentDeleteButton({ entityType, entityId, entityName, redire
   const [loading, setLoading] = useState(false);
 
   async function remove() {
-    if (confirmation !== entityName) return;
+    if (confirmation.trim() !== "DELETE") return;
     setLoading(true);
     try {
       if (entityType === "client") await permanentlyDeleteClient(entityId);
@@ -63,12 +63,12 @@ export function PermanentDeleteButton({ entityType, entityId, entityName, redire
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-2">
-        <label htmlFor={`delete-${entityId}`} className="text-sm font-medium">{t("Ketik nama untuk konfirmasi", "Type name to confirm")}</label>
-        <Input id={`delete-${entityId}`} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} placeholder={entityName} autoComplete="off" />
+        <label htmlFor={`delete-${entityId}`} className="text-sm font-medium">{t("Ketik DELETE untuk konfirmasi", "Type DELETE to confirm")}</label>
+        <Input id={`delete-${entityId}`} value={confirmation} onChange={(event) => setConfirmation(event.target.value)} placeholder="DELETE" autoComplete="off" className="font-mono uppercase tracking-wider" />
       </div>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>{t("Batal", "Cancel")}</Button>
-        <LoadingButton type="button" variant="destructive" onClick={remove} loading={loading} loadingText={t("Menghapus...", "Deleting...")} disabled={confirmation !== entityName}>
+        <LoadingButton type="button" variant="destructive" onClick={remove} loading={loading} loadingText={t("Menghapus...", "Deleting...")} disabled={confirmation.trim() !== "DELETE"}>
           {t("Hapus Permanen", "Delete Permanently")}
         </LoadingButton>
       </DialogFooter>
