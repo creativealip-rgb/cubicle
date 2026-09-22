@@ -103,7 +103,12 @@ export default async function CalendarPage() {
           "Manage client booking schedule, working availability hours, and public booking link."
         )}
         actions={
-          <BookingSlugHeaderWidget defaultSlug={ws.bookingSlug} canEdit={ws.ownerId === user.id} />
+          <BookingSlugHeaderWidget
+            defaultSlug={ws.bookingSlug}
+            defaultPlatform={ws.bookingMeetingPlatform ?? "google_meet"}
+            defaultLink={ws.bookingMeetingLink ?? ""}
+            canEdit={ws.ownerId === user.id}
+          />
         }
       />
 

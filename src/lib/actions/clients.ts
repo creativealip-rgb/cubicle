@@ -20,6 +20,7 @@ import {
 } from "@/lib/portal-slug";
 
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { getUserPlan, assertCanUseClientPortal } from "@/lib/plan";
 
 async function getT() {
   const lang = await getCurrentLang();
@@ -128,6 +129,17 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
 
   const clientNumber = parsed.clientNumber || await nextClientNumber(workspaceId);
 
+  const plan = await getUserPlan(userId);
+  const isPaid = plan === "solo" || plan === "team";
+
+  // Free plan gets auto random alphanumeric slug and cannot customize slug
+  let portalSlugToSave = parsed.portalSlug || null;
+  if (!isPaid) {
+    if (!portalSlugToSave) {
+      portalSlugToSave = `client-${randomBytes(4).toString("hex")}`;
+    }
+  }
+
   try {
     const [client] = await db.insert(clients).values({
       workspaceId,
@@ -139,11 +151,8 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
       address: parsed.address || null,
       tags: parsed.tags,
       internalNotes: parsed.internalNotes || null,
-      portalSlug: parsed.portalSlug || null,
-      // Persist the caller-provided flag (e.g. form sets it from a filled slug).
-      // A slug is required for the portal slug to be usable, so an empty slug
-      // always stays disabled — even if the flag was sent as true.
-      portalSlugEnabled: parsed.portalSlug ? Boolean(parsed.portalSlugEnabled) : false,
+      portalSlug: portalSlugToSave,
+      portalSlugEnabled: portalSlugToSave ? Boolean(parsed.portalSlugEnabled) : false,
       clientNumber,
       status: "active",
       ...portalFields,
@@ -229,37 +238,51 @@ export async function createClientFromForm(formData: FormData) {
  * is GLOBAL (across all workspaces — see drizzle/0012), so uniqueness is
  * checked against the whole clients table, not just the current workspace.
  */
-export async function generateUniquePortalSlug(
-  basis: string,
+export async function checkPortalSlugAvailability(
+  slug: string,
   excludeClientId?: string,
-): Promise<{ ok: true; slug: string } | { ok: false; error: string }> {
+): Promise<{ ok: boolean; available: boolean; error?: string; isPaid?: boolean }> {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
-  for (const candidate of buildPortalSlugCandidates(basis || "")) {
-    const [existing] = await db
-      .select({ id: clients.id })
-      .from(clients)
-      .where(
-        and(
-          eq(clients.portalSlug, candidate),
-          excludeClientId ? ne(clients.id, excludeClientId) : undefined,
-        ),
-      )
-      .limit(1);
-    if (!existing) return { ok: true as const, slug: candidate };
+  const plan = await getUserPlan(user.id);
+  const isPaid = plan === "solo" || plan === "team";
+
+  const normalized = slug
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9-]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  if (!normalized) {
+    return { ok: false, available: false, error: "Slug tidak boleh kosong", isPaid };
   }
 
-  const t = await getT();
+  const [existing] = await db
+    .select({ id: clients.id })
+    .from(clients)
+    .where(
+      and(
+        eq(clients.portalSlug, normalized),
+        excludeClientId ? ne(clients.id, excludeClientId) : undefined,
+      ),
+    )
+    .limit(1);
+
   return {
-    ok: false as const,
-    error: t(
-      "Tidak dapat menemukan slug portal yang tersedia. Coba ubah nama perusahaan.",
-      "Could not find an available portal slug. Try changing the company name.",
-    ),
+    ok: true,
+    available: !existing,
+    isPaid,
   };
+}
+
+export async function getCurrentUserPlanForPortal(): Promise<{ isPaid: boolean; plan: string }> {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const plan = await getUserPlan(user.id);
+  return { isPaid: plan === "solo" || plan === "team", plan };
 }
 
 export async function updateClient(clientId: string, input: Partial<z.infer<typeof clientSchema>> & { status?: string }) {

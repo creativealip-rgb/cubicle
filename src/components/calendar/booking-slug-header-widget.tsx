@@ -11,6 +11,9 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n-client";
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
+
 function normalizeSlug(value: string) {
   return value
     .trim()
@@ -22,15 +25,21 @@ function normalizeSlug(value: string) {
 
 export function BookingSlugHeaderWidget({
   defaultSlug,
+  defaultPlatform = "google_meet",
+  defaultLink = "",
   canEdit,
 }: {
   defaultSlug: string | null;
+  defaultPlatform?: string | null;
+  defaultLink?: string | null;
   canEdit: boolean;
 }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
   const [slug, setSlug] = useState(defaultSlug ?? "");
+  const [platform, setPlatform] = useState(defaultPlatform ?? "google_meet");
+  const [customLink, setCustomLink] = useState(defaultLink ?? "");
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -48,22 +57,18 @@ export function BookingSlugHeaderWidget({
     e.preventDefault();
     if (!canEdit) return;
     const next = normalizeSlug(slug);
-    if (next === (defaultSlug ?? "")) {
-      setOpen(false);
-      return;
-    }
     setLoading(true);
     try {
-      const result = await updateWorkspaceBookingSlug({ bookingSlug: next });
+      const result = await updateWorkspaceBookingSlug({
+        bookingSlug: next,
+        bookingMeetingPlatform: platform as any,
+        bookingMeetingLink: customLink.trim() || undefined,
+      });
       if ("error" in result) {
         toast.error(t("Booking slug sudah dipakai workspace lain", "Booking slug is already used by another workspace"));
         return;
       }
-      toast.success(
-        next
-          ? t("Booking slug disimpan", "Booking slug saved")
-          : t("Booking slug dikosongkan", "Booking slug cleared"),
-      );
+      toast.success(t("Pengaturan booking disimpan", "Booking settings saved"));
       setOpen(false);
       refresh();
     } catch (err) {
@@ -143,6 +148,7 @@ export function BookingSlugHeaderWidget({
 
             <form onSubmit={onSave} className="space-y-4 py-2">
               <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">{t("Booking URL Slug", "Booking URL Slug")}</Label>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-muted-foreground select-none">
                     /booking/
@@ -159,6 +165,38 @@ export function BookingSlugHeaderWidget({
                   {t("Hanya huruf kecil, angka, dan tanda hubung (-).", "Lowercase letters, numbers, and dashes (-) only.")}
                 </p>
               </div>
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">{t("Platform Meeting Default", "Default Meeting Platform")}</Label>
+                <Select value={platform} onValueChange={setPlatform}>
+                  <SelectTrigger className="h-9 text-xs">
+                    <SelectValue placeholder={t("Pilih platform", "Select platform")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="google_meet">Google Meet</SelectItem>
+                    <SelectItem value="zoom">Zoom</SelectItem>
+                    <SelectItem value="teams">Microsoft Teams</SelectItem>
+                    <SelectItem value="phone">{t("Telepon / WhatsApp Call", "Phone / WhatsApp Call")}</SelectItem>
+                    <SelectItem value="in_person">{t("Tatap Muka Langsung (In-person)", "In-person Meeting")}</SelectItem>
+                    <SelectItem value="custom">{t("Custom Link / Lainnya", "Custom Link / Other")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {(platform === "zoom" || platform === "teams" || platform === "custom") && (
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold">{t("Link Ruang Meeting / Catatan", "Meeting Room Link / Note")}</Label>
+                  <Input
+                    value={customLink}
+                    onChange={(e) => setCustomLink(e.target.value)}
+                    placeholder="https://zoom.us/j/... atau https://teams.microsoft.com/..."
+                    className="h-9 text-xs"
+                  />
+                  <p className="text-[11px] text-muted-foreground">
+                    {t("Link ini akan otomatis ditampilkan kepada klien setelah booking.", "This link will be shown to clients upon booking.")}
+                  </p>
+                </div>
+              )}
 
               <DialogFooter>
                 <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)} disabled={loading}>

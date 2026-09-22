@@ -25,6 +25,8 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
       id: workspaces.id,
       name: workspaces.name,
       bookingSlug: workspaces.bookingSlug,
+      bookingMeetingPlatform: workspaces.bookingMeetingPlatform,
+      bookingMeetingLink: workspaces.bookingMeetingLink,
       logoUrl: workspaces.logoUrl,
     })
     .from(workspaces)

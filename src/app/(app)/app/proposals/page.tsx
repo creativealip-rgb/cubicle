@@ -75,7 +75,12 @@ export default async function ProposalsPage({
 
   const ws = await getWorkspaceFullForCurrentUser();
   const clientRows = await db
-    .select({ id: clients.id, name: clients.name })
+    .select({
+      id: clients.id,
+      name: clients.name,
+      email: clients.email,
+      companyName: clients.companyName,
+    })
     .from(clients)
     .where(and(eq(clients.workspaceId, workspaceId), eq(clients.status, "active")))
     .orderBy(clients.name);

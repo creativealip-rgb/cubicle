@@ -23,6 +23,8 @@ import { useT } from "@/lib/i18n-client";
 export interface ClientOption {
   id: string;
   name: string;
+  email?: string | null;
+  companyName?: string | null;
 }
 
 export interface ServiceOption {
@@ -64,10 +66,11 @@ interface LineItemDraft {
 const blankItem = (): LineItemDraft => ({ description: "", quantity: 1, unitPrice: 0 });
 const defaultValidUntil = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
 
-export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, clients: _clients, services = [], templates = [], onCancel, onCreated }: ProposalFormProps) {
+export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, clients = [], services = [], templates = [], onCancel, onCreated }: ProposalFormProps) {
   const router = useRouter();
   const { t } = useT();
   const [loading, setLoading] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [form, setForm] = useState(() => ({
     clientName: "",
     clientEmail: "",
@@ -81,6 +84,23 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
   }));
   const [items, setItems] = useState<LineItemDraft[]>([blankItem()]);
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
+
+  function handleSelectClient(clientId: string) {
+    setSelectedClientId(clientId);
+    if (clientId === "new") {
+      setForm((prev) => ({ ...prev, clientName: "", clientEmail: "", companyName: "" }));
+      return;
+    }
+    const chosen = clients.find((c) => c.id === clientId);
+    if (chosen) {
+      setForm((prev) => ({
+        ...prev,
+        clientName: chosen.name,
+        clientEmail: chosen.email || "",
+        companyName: chosen.companyName || "",
+      }));
+    }
+  }
 
   function applyTemplate(id: string) {
     const template = templates.find((item) => item.id === id);
@@ -129,6 +149,7 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
         }));
       const created = await createProposal({
         workspaceId,
+        clientId: selectedClientId && selectedClientId !== "new" ? selectedClientId : undefined,
         clientName: form.clientName,
         clientEmail: form.clientEmail || undefined,
         companyName: form.companyName || undefined,
@@ -172,6 +193,24 @@ export function ProposalForm({ workspaceId, defaultCurrency, defaultTaxRate, cli
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
+          {clients.length > 0 && (
+            <div className="space-y-1">
+              <Label>{t("Pilih klien yang ada", "Select existing client")}</Label>
+              <Select value={selectedClientId} onValueChange={handleSelectClient}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("Pilih klien yang sudah terdaftar (opsional)…", "Choose registered client (optional)…")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">{t("+ Input Manual / Klien Baru", "+ Manual Input / New Client")}</SelectItem>
+                  {clients.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} {c.companyName ? `(${c.companyName})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <div className="space-y-1"><Label htmlFor="clientName">{t("Nama client", "Client name")} <span className="text-red-500">*</span></Label><Input id="clientName" value={form.clientName} onChange={(e) => setForm({ ...form, clientName: e.target.value })} required /></div>
             <div className="space-y-1"><Label htmlFor="clientEmail">{t("Email client", "Client email")}</Label><Input id="clientEmail" type="email" value={form.clientEmail} onChange={(e) => setForm({ ...form, clientEmail: e.target.value })} /></div>

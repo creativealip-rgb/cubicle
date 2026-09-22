@@ -606,6 +606,8 @@ export const workspaces = pgTable("workspaces", {
   replyToEmail: text("reply_to_email"),
   invoiceEmailBody: text("invoice_email_body"),
   bookingSlug: text("booking_slug").unique(),
+  bookingMeetingPlatform: text("booking_meeting_platform").default("google_meet"),
+  bookingMeetingLink: text("booking_meeting_link"),
   timezone: text("timezone").notNull().default("UTC"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

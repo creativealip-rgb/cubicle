@@ -106,12 +106,17 @@ const bookingSlugSchema = z.object({
   bookingSlug: z
     .string()
     .trim()
-    .max(64)
+    .max(80, "Slug maksimal 80 karakter")
     .transform((v) => v.toLowerCase())
     .refine(
       (v) => v === "" || /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(v),
       "Slug hanya huruf kecil, angka, dan strip (contoh: your-meeting)",
     ),
+  bookingMeetingPlatform: z
+    .enum(["google_meet", "zoom", "teams", "custom", "phone", "in_person"])
+    .default("google_meet")
+    .optional(),
+  bookingMeetingLink: z.string().trim().max(500).optional().nullable(),
 });
 
 export async function updateWorkspaceBookingSlug(input: z.infer<typeof bookingSlugSchema>) {
@@ -139,6 +144,8 @@ export async function updateWorkspaceBookingSlug(input: z.infer<typeof bookingSl
     .update(workspaces)
     .set({
       bookingSlug: nextSlug,
+      bookingMeetingPlatform: parsed.bookingMeetingPlatform || "google_meet",
+      bookingMeetingLink: parsed.bookingMeetingLink || null,
       updatedAt: new Date(),
     })
     .where(eq(workspaces.id, workspaceId));
@@ -149,8 +156,8 @@ export async function updateWorkspaceBookingSlug(input: z.infer<typeof bookingSl
     nextSlug ? "updated_booking_slug" : "cleared_booking_slug",
     "workspace",
     workspaceId,
+    { slug: nextSlug, platform: parsed.bookingMeetingPlatform, link: parsed.bookingMeetingLink },
   );
-  revalidatePath("/app/settings");
-  revalidatePath("/app/calendar");
+
   return { ok: true as const, bookingSlug: nextSlug };
 }

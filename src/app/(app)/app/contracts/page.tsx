@@ -73,7 +73,12 @@ export default async function ContractsPage({
     .limit(100);
 
   const clientsList = await db
-    .select({ id: clients.id, name: clients.name })
+    .select({
+      id: clients.id,
+      name: clients.name,
+      email: clients.email,
+      companyName: clients.companyName,
+    })
     .from(clients)
     .where(and(eq(clients.workspaceId, workspaceId), eq(clients.status, "active")))
     .orderBy(clients.name);

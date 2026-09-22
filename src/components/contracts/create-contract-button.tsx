@@ -26,13 +26,13 @@ type ContractTemplateOption = { id: string; name: string; body: string; contentB
 export function CreateContractButton({
   workspaceId,
   proposedContractNumber,
-  clients: _clients,
+  clients = [],
   templates = [],
   defaultOpen = false,
 }: {
   workspaceId: string;
   proposedContractNumber: string;
-  clients: { id: string; name: string }[];
+  clients: { id: string; name: string; email?: string | null; companyName?: string | null }[];
   templates?: ContractTemplateOption[];
   defaultOpen?: boolean;
 }) {
@@ -42,6 +42,7 @@ export function CreateContractButton({
   const [open, setOpen] = useState(defaultOpen);
   const [pending, startTransition] = useTransition();
 
+  const [selectedClientId, setSelectedClientId] = useState<string>("");
   const [clientName, setClientName] = useState("");
   const [contractNumber, setContractNumber] = useState(proposedContractNumber);
   const [clientEmail, setClientEmail] = useState("");
@@ -50,6 +51,22 @@ export function CreateContractButton({
   const [validUntil, setValidUntil] = useState("");
   const [body, setBody] = useState("");
   const [selectedTemplateId, setSelectedTemplateId] = useState<string | undefined>(undefined);
+
+  function handleSelectClient(clientId: string) {
+    setSelectedClientId(clientId);
+    if (clientId === "new") {
+      setClientName("");
+      setClientEmail("");
+      setCompanyName("");
+      return;
+    }
+    const chosen = clients.find((c) => c.id === clientId);
+    if (chosen) {
+      setClientName(chosen.name);
+      setClientEmail(chosen.email || "");
+      setCompanyName(chosen.companyName || "");
+    }
+  }
 
   function applyTemplate(id: string) {
     const template = templates.find((item) => item.id === id);
@@ -74,6 +91,7 @@ export function CreateContractButton({
       try {
         const c = await createContract({
           workspaceId,
+          clientId: selectedClientId && selectedClientId !== "new" ? selectedClientId : undefined,
           contractNumber: contractNumber.trim(),
           clientName: clientName.trim(),
           clientEmail: clientEmail.trim(),
@@ -124,8 +142,37 @@ export function CreateContractButton({
             {t("Mulai dari template, edit isinya, lalu kirim ke klien untuk tanda tangan elektronik.", "Start from template, edit content, then send to client for e-signature.")}
           </DialogDescription>
         </DialogHeader>
-        <div className="space-y-3">
-          {templates.length > 0 && <div><label className="text-sm font-medium block mb-1">{t("Template kontrak", "Contract template")}</label><Select onValueChange={applyTemplate}><SelectTrigger><SelectValue placeholder={t("Pilih template", "Choose template")} /></SelectTrigger><SelectContent>{templates.map((template) => <SelectItem key={template.id} value={template.id}>{template.name}</SelectItem>)}</SelectContent></Select></div>}
+        <div className="space-y-4 py-2">
+          {clients.length > 0 && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">{t("Pilih klien yang ada", "Select existing client")}</label>
+              <Select value={selectedClientId} onValueChange={handleSelectClient}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t("Pilih klien terdaftar (opsional)…", "Choose registered client (optional)…")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="new">{t("+ Input Manual / Klien Baru", "+ Manual Input / New Client")}</SelectItem>
+                  {clients.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.name} {c.companyName ? `(${c.companyName})` : ""}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {templates.length > 0 && (
+            <div>
+              <label className="text-sm font-medium block mb-1">{t("Template kontrak", "Contract template")}</label>
+              <Select onValueChange={applyTemplate}>
+                <SelectTrigger><SelectValue placeholder={t("Pilih template", "Choose template")} /></SelectTrigger>
+                <SelectContent>
+                  {templates.map((template) => <SelectItem key={template.id} value={template.id}>{template.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
           <div><label htmlFor="contract-number" className="text-sm font-medium block mb-1">{t("Nomor Kontrak", "Contract Number")}</label><Input id="contract-number" maxLength={100} value={contractNumber} onChange={(e) => setContractNumber(e.target.value.toUpperCase())} required /></div>
           <div><label className="text-sm font-medium block mb-1">{t("Nama client", "Client name")}</label><Input value={clientName} onChange={(e) => setClientName(e.target.value)} /></div>
           <div><label className="text-sm font-medium block mb-1">{t("Email client", "Client email")}</label><Input type="email" value={clientEmail} onChange={(e) => setClientEmail(e.target.value)} required /></div>

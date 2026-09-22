@@ -18,6 +18,8 @@ interface PublicBookingFormProps {
     id: string;
     name: string;
     bookingSlug: string | null;
+    bookingMeetingPlatform?: string | null;
+    bookingMeetingLink?: string | null;
     logoUrl: string | null;
   };
   timezone: string;
@@ -42,6 +44,7 @@ export function PublicBookingForm({
   const [notes, setNotes] = useState("");
   const [selectedDate, setSelectedDate] = useState(initialDate);
   const [selectedSlot, setSelectedSlot] = useState("");
+  const [meetingPlatform, setMeetingPlatform] = useState(workspace.bookingMeetingPlatform || "google_meet");
 
   const [slots, setSlots] = useState<Slot[]>(initialSlots);
   const [slotsError, setSlotsError] = useState(initialError);
@@ -87,10 +90,11 @@ export function PublicBookingForm({
             const [startTime, endTime] = selectedSlot.split("|");
             if (!startTime || !endTime) return;
 
+            const meetingNote = `Platform: ${meetingPlatform}${workspace.bookingMeetingLink ? `\nMeeting Link: ${workspace.bookingMeetingLink}` : ""}${notes ? `\n\nNotes: ${notes}` : ""}`;
             await createPublicAppointment({
               workspaceId: workspace.id,
               title,
-              notes: notes || undefined,
+              notes: meetingNote,
               attendeeName,
               attendeeEmail,
               startTime,
@@ -229,18 +233,47 @@ export function PublicBookingForm({
             )}
           </div>
 
-          <div className="space-y-1.5 pt-1">
+          {/* Meeting Platform Selection */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-foreground">
+              {t("Pilihan Media Pertemuan", "Meeting Platform")}
+            </Label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+              {[
+                { id: "google_meet", label: "Google Meet" },
+                { id: "zoom", label: "Zoom" },
+                { id: "teams", label: "Teams" },
+                { id: "phone", label: t("Telepon / WA", "Phone / WA") },
+                { id: "in_person", label: t("Tatap Muka", "In-person") },
+                { id: "custom", label: t("Lainnya", "Other") },
+              ].map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  onClick={() => setMeetingPlatform(p.id)}
+                  className={`flex items-center justify-center rounded-xl border px-3 py-2 text-xs font-medium transition-all ${
+                    meetingPlatform === p.id
+                      ? "border-primary bg-primary/10 text-primary font-semibold"
+                      : "border-border/80 bg-background text-muted-foreground hover:bg-muted/50"
+                  }`}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
             <Label htmlFor="notes" className="text-xs font-semibold text-foreground">
-              {t("Catatan / Kebutuhan (Opsional)", "Notes / Requirements (Optional)")}
+              {t("Catatan Tambahan (Opsional)", "Additional Notes (Optional)")}
             </Label>
             <Textarea
               id="notes"
               name="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder={t("Jelaskan topik yang ingin dibahas...", "Any specific topics to discuss...")}
-              rows={3}
-              className="text-sm rounded-xl resize-none"
+              placeholder={t("Jelaskan topik yang ingin dibahas...", "Share anything that will help prepare for the meeting...")}
+              className="min-h-[80px] text-sm rounded-xl resize-none"
             />
           </div>
 

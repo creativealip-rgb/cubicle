@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createClient, generatePortalToken, generateUniquePortalSlug, setClientPortalPassword, updateClient } from "@/lib/actions/clients";
+import { createClient, generatePortalToken, checkPortalSlugAvailability, getCurrentUserPlanForPortal, setClientPortalPassword, updateClient } from "@/lib/actions/clients";
 import { isStaleServerActionError } from "@/lib/client-errors";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -51,7 +51,9 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
   const router = useRouter();
   const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
-  const [generatingSlug, setGeneratingSlug] = useState(false);
+  const [checkingSlug, setCheckingSlug] = useState(false);
+  const [slugStatus, setSlugStatus] = useState<"idle" | "available" | "taken" | "empty">("idle");
+  const [isPaidPlan, setIsPaidPlan] = useState<boolean>(true);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
   const [form, setForm] = useState({
     clientNumber: defaultValues?.clientNumber ?? "",
@@ -67,6 +69,38 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
     portalEnabled: defaultValues?.portalEnabled ?? false,
   });
   const [portalPassword, setPortalPassword] = useState("");
+
+  // Load user plan info on mount
+  useState(() => {
+    getCurrentUserPlanForPortal().then((res) => {
+      setIsPaidPlan(res.isPaid);
+    }).catch(() => {});
+  });
+
+  async function handleCheckSlug() {
+    const slug = form.portalSlug.trim();
+    if (!slug) {
+      setSlugStatus("empty");
+      toast.error(t("Masukkan slug URL portal terlebih dahulu", "Please enter a portal URL slug first"));
+      return;
+    }
+    setCheckingSlug(true);
+    try {
+      const res = await checkPortalSlugAvailability(slug, defaultValues?.id);
+      setIsPaidPlan(Boolean(res.isPaid));
+      if (res.available) {
+        setSlugStatus("available");
+        toast.success(t(`URL portal "/portal/${slug}" tersedia!`, `Portal URL "/portal/${slug}" is available!`));
+      } else {
+        setSlugStatus("taken");
+        toast.error(t(`URL portal "/portal/${slug}" sudah dipakai klien lain`, `Portal URL "/portal/${slug}" is already taken`));
+      }
+    } catch {
+      toast.error(t("Gagal mengecek ketersediaan URL", "Failed to check URL availability"));
+    } finally {
+      setCheckingSlug(false);
+    }
+  }
 
   async function handleSave() {
     if (loading) return;
@@ -145,32 +179,6 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
 
   function set(k: keyof typeof form, v: string | boolean) {
     setForm((prev) => ({ ...prev, [k]: v }));
-  }
-
-  async function regeneratePortalSlug() {
-    if (generatingSlug) return;
-    setGeneratingSlug(true);
-    try {
-      const basis = form.companyName || form.name;
-      const result = await generateUniquePortalSlug(basis, defaultValues?.id);
-      if (result.ok) {
-        set("portalSlug", result.slug);
-      } else {
-        toast.error(result.error);
-      }
-    } catch (err: unknown) {
-      const msg = isStaleServerActionError(err)
-        ? "App baru di-deploy. Refresh halaman, lalu coba lagi."
-        : err instanceof Error
-          ? err.message
-          : t("Gagal membuat slug portal", "Failed to generate portal slug");
-      toast.error(msg);
-      if (isStaleServerActionError(err)) {
-        setTimeout(() => window.location.reload(), 800);
-      }
-    } finally {
-      setGeneratingSlug(false);
-    }
   }
 
   if (mode === "create") {
@@ -363,7 +371,9 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
             <div>
               <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Portal Klien", "Client Portal")}</h3>
               <p className="text-[11px] text-muted-foreground">
-                {t("Slug kustom portal klien.", "Custom portal URL slug.")}
+                {isPaidPlan
+                  ? t("Slug kustom portal klien.", "Custom portal URL slug.")
+                  : t("Slug portal di-generate otomatis untuk akun gratis (upgrade ke Solo/Team untuk kustomisasi).", "Portal slug is auto-generated on free plan (upgrade to customize).")}
               </p>
             </div>
             <div className="space-y-1.5">
@@ -372,14 +382,37 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
                 <Input
                   id="portalSlug"
                   value={form.portalSlug}
-                  onChange={(e) => set("portalSlug", slugify(e.target.value))}
-                  placeholder="kopi-senja"
+                  onChange={(e) => {
+                    if (isPaidPlan) {
+                      set("portalSlug", slugify(e.target.value));
+                      setSlugStatus("idle");
+                    }
+                  }}
+                  disabled={!isPaidPlan}
+                  placeholder={isPaidPlan ? "kopi-senja" : "auto-generated-random"}
                   className="h-9 text-sm"
                 />
-                <Button type="button" variant="outline" size="sm" onClick={regeneratePortalSlug} disabled={generatingSlug} className="shrink-0 h-9">
-                  {generatingSlug ? t("...", "...") : "Generate"}
-                </Button>
+                {isPaidPlan ? (
+                  <Button type="button" variant="outline" size="sm" onClick={handleCheckSlug} disabled={checkingSlug || !form.portalSlug.trim()} className="shrink-0 h-9 font-medium">
+                    {checkingSlug ? t("Memeriksa...", "Checking...") : t("Cek URL", "Check URL")}
+                  </Button>
+                ) : null}
               </div>
+              {isPaidPlan && slugStatus === "available" && (
+                <p className="text-[11px] font-medium text-emerald-600">
+                  {t(`✓ URL portal "/portal/${form.portalSlug}" tersedia untuk digunakan.`, `✓ Portal URL "/portal/${form.portalSlug}" is available.`)}
+                </p>
+              )}
+              {isPaidPlan && slugStatus === "taken" && (
+                <p className="text-[11px] font-medium text-destructive">
+                  {t(`✕ URL portal "/portal/${form.portalSlug}" sudah digunakan oleh klien lain.`, `✕ Portal URL "/portal/${form.portalSlug}" is already taken.`)}
+                </p>
+              )}
+              {!isPaidPlan && (
+                <p className="text-[11px] text-muted-foreground">
+                  {t("Slug dibuat acak secara otomatis dan tidak dapat diubah pada plan Free.", "Slug is randomly generated and cannot be edited on Free plan.")}
+                </p>
+              )}
             </div>
             <div className="space-y-1.5 border-t pt-3">
               <Label htmlFor="portalPassword" className="text-xs font-medium">{t("Password Portal", "Portal Password")}</Label>
