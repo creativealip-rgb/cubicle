@@ -132,11 +132,11 @@ export default async function FilesPage({
         href: `/app/files?folderId=${f.id}`,
       }));
 
-    // 2. Client folders
+    // 2. Client folders (show all clients so archived clients' files remain accessible)
     const allClients = await db
       .select({ id: clients.id, name: clients.name })
       .from(clients)
-      .where(and(eq(clients.workspaceId, workspaceId), eq(clients.status, "active")))
+      .where(eq(clients.workspaceId, workspaceId))
       .orderBy(clients.name);
 
     const clientFolders = allClients.map((c) => ({
@@ -148,20 +148,7 @@ export default async function FilesPage({
 
     folderGridItems = [...rootWorkspaceFolders, ...clientFolders];
   } else if (clientId && !projectId && !folderId) {
-    // Inside client: show their project folders + custom client folders
-    const clientProjects = await db
-      .select({ id: projects.id, name: projects.name })
-      .from(projects)
-      .where(and(eq(projects.workspaceId, workspaceId), eq(projects.clientId, clientId)))
-      .orderBy(projects.name);
-
-    const projFolders = clientProjects.map((p) => ({
-      id: p.id,
-      name: p.name,
-      type: "project" as const,
-      href: `/app/files?clientId=${clientId}&projectId=${p.id}`,
-    }));
-
+    // Inside client: show custom client folders (projects are not automatically folders; users can create folders manually)
     const clientSubFolders = folderList
       .filter((f) => f.clientId === clientId && !f.projectId && !f.parentId)
       .map((f) => ({
@@ -171,7 +158,7 @@ export default async function FilesPage({
         href: `/app/files?clientId=${clientId}&folderId=${f.id}`,
       }));
 
-    folderGridItems = [...projFolders, ...clientSubFolders];
+    folderGridItems = clientSubFolders;
   } else if (projectId && !folderId) {
     // Inside project: show sub-folders created inside this project
     folderGridItems = folderList

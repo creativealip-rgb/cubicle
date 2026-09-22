@@ -38,7 +38,7 @@ export default async function FilesLayout({
   const clientList = await db
     .select({ id: clients.id, name: clients.name })
     .from(clients)
-    .where(and(eq(clients.workspaceId, workspaceId), eq(clients.status, "active")))
+    .where(eq(clients.workspaceId, workspaceId))
     .orderBy(clients.name);
 
   const projectList = await db

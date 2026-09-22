@@ -313,7 +313,53 @@ export function FileList({ files, folders = [], canWrite, lang: _lang }: FileLis
       {combinedItems.length === 0 ? <EmptyState icon={Search} title={t("Tidak ada item yang cocok", "No matching items")} description={t("Coba ubah kata kunci atau filter.", "Try a different keyword or filter.")} /> : <>
         <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("Semua item", "All items")} ({combinedItems.length})</p>
         {viewMode === "grid" ? <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {paginatedItems.map((item) => item.kind === "folder" ? (() => { const folder=item.folder; const Icon=folder.type === "client" ? Users : folder.type === "project" ? FolderKanban : Folder; return <div key={`folder-${folder.id}`} className="group flex h-14 items-center gap-3 rounded-xl bg-muted/60 px-3 transition-colors hover:bg-muted"><a href={folder.href} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"><Icon className="size-5 shrink-0 text-muted-foreground" /><span className="truncate text-sm font-medium" title={folder.name}>{folder.name}</span></a><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-8 shrink-0 rounded-full" aria-label={t(`Aksi ${folder.name}`, `${folder.name} actions`)}><MoreVertical className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem asChild><a href={folder.href}>{t("Buka", "Open")}</a></DropdownMenuItem></DropdownMenuContent></DropdownMenu></div>; })() : (() => { const file=item.file; const busy=busyId === file.id; return <div key={`file-${file.id}`} className="group flex h-14 items-center gap-3 rounded-xl bg-muted/60 px-3 transition-colors hover:bg-muted"><div className="shrink-0">{getFileIcon(file.mimeType)}</div><span className="min-w-0 flex-1 truncate text-sm font-medium" title={file.name}>{file.name}</span><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-8 shrink-0 rounded-full" disabled={busy} aria-label={t(`Aksi ${file.name}`, `${file.name} actions`)}><MoreVertical className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => window.open(`/api/files/${file.id}/download`, "_blank")}><Download className="size-4" />{t("Unduh", "Download")}</DropdownMenuItem>{canWrite && <><DropdownMenuItem onSelect={() => handleVisibility(file.id, file.visibility === "internal" ? "client" : "internal")}>{file.visibility === "internal" ? t("Tampilkan ke klien", "Make client-visible") : t("Jadikan internal", "Make internal")}</DropdownMenuItem><DropdownMenuItem onSelect={() => handleFileType(file.id, file.fileType === "deliverable" ? "working_file" : "deliverable")}>{file.fileType === "deliverable" ? t("Jadikan berkas kerja", "Mark as working file") : t("Tandai hasil kerja", "Mark as deliverable")}</DropdownMenuItem><DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeleteTarget(file)}><Trash2 className="size-4" />{t("Hapus", "Delete")}</DropdownMenuItem></>}</DropdownMenuContent></DropdownMenu></div>; })())}
+          {paginatedItems.map((item) => item.kind === "folder" ? (() => {
+            const folder = item.folder;
+            const Icon = folder.type === "client" ? Users : folder.type === "project" ? FolderKanban : Folder;
+            const isDeletable = folder.type === "workspace_folder";
+            return (
+              <div key={`folder-${folder.id}`} className="group flex h-14 items-center gap-3 rounded-xl bg-muted/60 px-3 transition-colors hover:bg-muted">
+                <a href={folder.href} className="flex min-w-0 flex-1 items-center gap-3 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                  <Icon className="size-5 shrink-0 text-muted-foreground" />
+                  <span className="truncate text-sm font-medium" title={folder.name}>{folder.name}</span>
+                </a>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="size-8 shrink-0 rounded-full" aria-label={t(`Aksi ${folder.name}`, `${folder.name} actions`)}>
+                      <MoreVertical className="size-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem asChild>
+                      <a href={folder.href}>{t("Buka", "Open")}</a>
+                    </DropdownMenuItem>
+                    {isDeletable && canWrite && (
+                      <DropdownMenuItem
+                        className="text-destructive focus:text-destructive"
+                        onSelect={async () => {
+                          const { deleteFolder } = await import("@/lib/actions/folders");
+                          try {
+                            const res = await deleteFolder(folder.id);
+                            if (res.success) {
+                              toast.success(t("Folder dihapus", "Folder deleted"));
+                              refresh();
+                            } else {
+                              toast.error(res.error);
+                            }
+                          } catch (e: unknown) {
+                            toast.error(e instanceof Error ? e.message : t("Gagal menghapus folder", "Failed to delete folder"));
+                          }
+                        }}
+                      >
+                        <Trash2 className="size-3.5 mr-2" />
+                        {t("Hapus Folder", "Delete Folder")}
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            );
+          })() : (() => { const file=item.file; const busy=busyId === file.id; return <div key={`file-${file.id}`} className="group flex h-14 items-center gap-3 rounded-xl bg-muted/60 px-3 transition-colors hover:bg-muted"><div className="shrink-0">{getFileIcon(file.mimeType)}</div><span className="min-w-0 flex-1 truncate text-sm font-medium" title={file.name}>{file.name}</span><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-8 shrink-0 rounded-full" disabled={busy} aria-label={t(`Aksi ${file.name}`, `${file.name} actions`)}><MoreVertical className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => window.open(`/api/files/${file.id}/download`, "_blank")}><Download className="size-4" />{t("Unduh", "Download")}</DropdownMenuItem>{canWrite && <><DropdownMenuItem onSelect={() => handleVisibility(file.id, file.visibility === "internal" ? "client" : "internal")}>{file.visibility === "internal" ? t("Tampilkan ke klien", "Make client-visible") : t("Jadikan internal", "Make internal")}</DropdownMenuItem><DropdownMenuItem onSelect={() => handleFileType(file.id, file.fileType === "deliverable" ? "working_file" : "deliverable")}>{file.fileType === "deliverable" ? t("Jadikan berkas kerja", "Mark as working file") : t("Tandai hasil kerja", "Mark as deliverable")}</DropdownMenuItem><DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeleteTarget(file)}><Trash2 className="size-4" />{t("Hapus", "Delete")}</DropdownMenuItem></>}</DropdownMenuContent></DropdownMenu></div>; })())}
         </div> : <div className="overflow-hidden rounded-2xl border bg-card"><div className="divide-y">{paginatedItems.map((item) => item.kind === "folder" ? <a key={`folder-${item.folder.id}`} href={item.folder.href} className="flex h-11 items-center justify-between px-4 hover:bg-muted/30"><span className="flex min-w-0 items-center gap-3"><Folder className="size-4 shrink-0 text-amber-500" /><span className="truncate text-sm font-medium">{item.folder.name}</span></span><span className="text-xs text-muted-foreground">{t("Folder", "Folder")}</span></a> : <div key={`file-${item.file.id}`} className="flex h-11 items-center justify-between gap-3 px-4"><span className="flex min-w-0 items-center gap-3">{getFileIcon(item.file.mimeType)}<span className="truncate text-sm font-medium">{item.file.name}</span></span><Button variant="ghost" size="icon" className="size-8" onClick={() => window.open(`/api/files/${item.file.id}/download`, "_blank")} aria-label={t(`Buka / Unduh ${item.file.name}`, `Open / Download ${item.file.name}`)}><Download className="size-4" /></Button></div>)}</div></div>}
         {totalPages > 1 && <div className="flex items-center justify-between border-t pt-3"><Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft className="size-4" />{t("Sebelumnya", "Previous")}</Button><span className="text-xs text-muted-foreground">{t("Halaman", "Page")} {safePage} / {totalPages}</span><Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => setPage((value) => value + 1)}>{t("Berikutnya", "Next")}<ChevronRight className="size-4" /></Button></div>}
       </>}
