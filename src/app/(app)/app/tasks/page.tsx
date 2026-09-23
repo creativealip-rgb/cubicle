@@ -181,6 +181,7 @@ export default async function TasksPage({
 
           {tab === "reusable" ? (
             <ReusableTaskWorkspace
+              workspaceId={workspaceId}
               tasks={taskList.map((task) => ({
                 id: task.id,
                 projectId: task.projectId ?? undefined,
@@ -193,6 +194,8 @@ export default async function TasksPage({
                 monthMinutes: task.monthMinutes,
                 lastUsedAt: task.lastUsedAt,
                 lifecycle: task.lifecycle,
+                subtaskTotal: task.subtaskTotal,
+                subtaskDone: task.subtaskDone,
               }))}
               members={members}
               projects={taskProjects}
