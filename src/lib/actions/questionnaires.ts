@@ -220,6 +220,109 @@ export async function getQuestionnaire(questionnaireId: string) {
 // ─── Public: Fill & Submit ───
 
 // Note: Public route bypasses auth, so we hash the provided token to look up
+// ─── Convert Questionnaire Response to Client / Project ───
+
+export async function convertResponseToClient(responseId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [resp] = await db
+    .select()
+    .from(questionnaireResponses)
+    .where(and(eq(questionnaireResponses.id, responseId), eq(questionnaireResponses.workspaceId, workspaceId)))
+    .limit(1);
+
+  if (!resp) throw new Error("Respon tidak ditemukan");
+
+  const answers = (resp.answers as Record<string, unknown>) || {};
+  let phone = "";
+  for (const [k, v] of Object.entries(answers)) {
+    if (typeof v === "string" && (/^\+?[0-9\s-]{8,20}$/.test(v) || k.toLowerCase().includes("phone") || k.toLowerCase().includes("wa"))) {
+      phone = v;
+      break;
+    }
+  }
+
+  const clientName = resp.respondentName?.trim() || "Klien Baru (dari Form)";
+  const clientEmail = resp.respondentEmail?.trim() || "";
+
+  // Create new client
+  const { createClient } = await import("@/lib/actions/clients");
+  const res = await createClient({
+    name: clientName,
+    email: clientEmail,
+    phone: phone || undefined,
+    tags: [],
+    internalNotes: `Dibuat otomatis dari respon formulir pada ${new Date().toLocaleDateString("id-ID")}`,
+  });
+
+  if (!res.ok || !res.client) {
+    throw new Error(res.error || "Gagal membuat klien");
+  }
+
+  // Link response to created client
+  await db
+    .update(questionnaireResponses)
+    .set({ clientId: res.client.id })
+    .where(eq(questionnaireResponses.id, responseId));
+
+  return { ok: true, clientId: res.client.id, clientName };
+}
+
+export async function convertResponseToProject(responseId: string, projectNameInput?: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [resp] = await db
+    .select()
+    .from(questionnaireResponses)
+    .where(and(eq(questionnaireResponses.id, responseId), eq(questionnaireResponses.workspaceId, workspaceId)))
+    .limit(1);
+
+  if (!resp) throw new Error("Respon tidak ditemukan");
+
+  const [q] = await db
+    .select()
+    .from(questionnaires)
+    .where(eq(questionnaires.id, resp.questionnaireId))
+    .limit(1);
+
+  const fields = q ? safeParseQuestionnaireSchema(q.schema) : [];
+  const answers = (resp.answers as Record<string, unknown>) || {};
+
+  // Build project description from form brief
+  const briefLines = fields.map((f) => {
+    const val = answers[f.id];
+    const display = val ? (Array.isArray(val) ? val.join(", ") : String(val)) : "-";
+    return `### ${f.label}\n${display}`;
+  });
+
+  const finalProjectName =
+    projectNameInput?.trim() ||
+    `Proyek Brief: ${resp.respondentName || q?.name || "Klien"}`;
+
+  const { createProject } = await import("@/lib/actions/projects");
+  const res = await createProject({
+    name: finalProjectName,
+    description: briefLines.join("\n\n"),
+    clientId: resp.clientId || undefined,
+    billingType: "fixed_price",
+    status: "active",
+  });
+
+  if ("id" in res && typeof res.id === "string") {
+    await db
+      .update(questionnaireResponses)
+      .set({ projectId: res.id })
+      .where(eq(questionnaireResponses.id, responseId));
+  }
+
+  return res;
+}
 export async function getPublicQuestionnaire(token: string) {
   const tokenHash = hashToken(token);
   const [resp] = await db.select().from(questionnaireResponses)

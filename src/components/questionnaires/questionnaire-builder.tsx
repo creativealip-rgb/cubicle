@@ -69,6 +69,8 @@ import {
   Edit2,
   QrCode,
   MessageCircle,
+  Sparkles,
+  LayoutTemplate,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
@@ -199,6 +201,50 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     icon: Heading,
     category: "advanced",
     defaultConfig: { label: "Bagian Baru", sublabel: "Deskripsi atau panduan pengisian bagian ini." },
+  },
+];
+
+const FORM_TEMPLATES = [
+  {
+    id: "web-dev",
+    title: "Web Development Client Intake",
+    description: "Brief lengkap untuk project pembuatan website, landing page, atau web app.",
+    fields: [
+      { id: makeId(), type: "text" as const, label: "Nama Lengkap / Perusahaan", required: true, placeholder: "PT Contoh Sukses" },
+      { id: makeId(), type: "email" as const, label: "Email Bisnis", required: true, placeholder: "contact@contoh.com" },
+      { id: makeId(), type: "phone" as const, label: "Nomor WhatsApp", required: true, placeholder: "+62 812-3456-7890" },
+      { id: makeId(), type: "select" as const, label: "Tipe Website yang Dibutuhkan", options: ["Company Profile / Landing Page", "E-Commerce / Toko Online", "Custom Web Application", "Redesign Website Lama"], required: true },
+      { id: makeId(), type: "textarea" as const, label: "Jelaskan Tujuan & Fitur Utama", required: true, placeholder: "Website untuk meningkatkan penjualan dan branding..." },
+      { id: makeId(), type: "url" as const, label: "Website Referensi / Kompetitor", required: false, placeholder: "https://apple.com, https://stripe.com" },
+      { id: makeId(), type: "file" as const, label: "Upload Asset / Dokumen Pendukung", acceptFiles: ".pdf,.doc,.docx,.png,.jpg,.zip", required: false },
+      { id: makeId(), type: "date" as const, label: "Target Tanggal Peluncuran (Launch Date)", required: false },
+    ],
+  },
+  {
+    id: "branding-design",
+    title: "Branding & Logo Design Brief",
+    description: "Kumpulkan preferensi visual, nilai brand, dan aset dari klien untuk project desain.",
+    fields: [
+      { id: makeId(), type: "text" as const, label: "Nama Brand / Brand Name", required: true, placeholder: "Cubiqlo Studio" },
+      { id: makeId(), type: "text" as const, label: "Tagline atau Slogan (Jika Ada)", required: false, placeholder: "Crafting modern experiences" },
+      { id: makeId(), type: "textarea" as const, label: "Ceritakan tentang Brand & Target Audiens Anda", required: true, placeholder: "Target kami adalah profesional muda umur 20-35 tahun..." },
+      { id: makeId(), type: "multiselect" as const, label: "Nuansa / Vibe Visual yang Diinginkan", options: ["Modern & Minimalist", "Bold & Energetic", "Luxury & Elegant", "Friendly & Approachable", "Tech / Futuristic"], required: true },
+      { id: makeId(), type: "textarea" as const, label: "Warna yang Disukai atau Dihindari", required: false, placeholder: "Suka warna biru navy dan ungu, hindari warna kuning cerah." },
+      { id: makeId(), type: "file" as const, label: "Upload Moodboard / Referensi Desain", acceptFiles: ".pdf,.png,.jpg,.zip", required: false },
+    ],
+  },
+  {
+    id: "feedback-survey",
+    title: "Client Feedback & Satisfaction Survey",
+    description: "Survey kepuasan klien setelah project selesai untuk review dan perbaikan layanan.",
+    fields: [
+      { id: makeId(), type: "text" as const, label: "Nama Klien / Perusahaan", required: true, placeholder: "Budi Santoso" },
+      { id: makeId(), type: "rating" as const, label: "Seberapa Puas Anda dengan Hasil Akhir Proyek?", required: true, maxRating: 5 },
+      { id: makeId(), type: "rating" as const, label: "Kecepatan Respon & Komunikasi Tim Kami", required: true, maxRating: 5 },
+      { id: makeId(), type: "textarea" as const, label: "Apa yang Paling Anda Sukai dari Kolaborasi Ini?", required: false, placeholder: "Hasil desain sangat memuaskan..." },
+      { id: makeId(), type: "textarea" as const, label: "Saran atau Hal yang Bisa Kami Tingkatkan?", required: false, placeholder: "Komunikasi estimasi waktu bisa lebih sering..." },
+      { id: makeId(), type: "signature" as const, label: "Tanda Tangan Konfirmasi Serah Terima", required: false },
+    ],
   },
 ];
 
@@ -416,6 +462,7 @@ export function QuestionnaireBuilder({
   // Navigation tab: "build" | "settings" | "publish"
   const [activeTab, setActiveTab] = useState<"build" | "settings" | "publish">("build");
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(!initial && !questionnaireId);
 
   // Form general state
   const [name, setName] = useState(initial?.name || "");
@@ -502,6 +549,15 @@ export function QuestionnaireBuilder({
     setSelectedFieldId(newField.id);
     setPropertiesOpen(true);
     toast.success(`${def.label} ditambahkan`);
+  }
+
+  function handleApplyTemplate(tpl: typeof FORM_TEMPLATES[0]) {
+    setName(tpl.title);
+    setDescription(tpl.description);
+    setFields(tpl.fields);
+    setSelectedFieldId(tpl.fields[0]?.id || null);
+    setTemplateDialogOpen(false);
+    toast.success(`Template ${tpl.title} diterapkan!`);
   }
 
   function handleDuplicateField(fieldId: string) {
@@ -642,8 +698,19 @@ export function QuestionnaireBuilder({
           </button>
         </div>
 
-        {/* Action Right: Device Switcher & Drawers & Save */}
+        {/* Action Right: Templates, Device Switcher, Drawers & Save */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setTemplateDialogOpen(true)}
+            className="h-8 gap-1.5 text-xs font-semibold text-primary border-primary/30 hover:bg-primary/5"
+          >
+            <LayoutTemplate className="h-3.5 w-3.5" />
+            <span className="hidden sm:inline">Templates</span>
+          </Button>
+
           {activeTab === "build" && (
             <>
               {/* Desktop / Mobile Switcher */}
@@ -708,6 +775,71 @@ export function QuestionnaireBuilder({
           </Button>
         </div>
       </header>
+
+      {/* ─── TEMPLATE GALLERY MODAL ─── */}
+      {templateDialogOpen && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in-0">
+          <div className="w-full max-w-2xl bg-background rounded-2xl border border-border shadow-2xl overflow-hidden flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-150">
+            <div className="p-5 border-b border-border/80 flex items-center justify-between bg-muted/20">
+              <div className="flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" />
+                <div>
+                  <h3 className="font-bold text-sm text-foreground">Template Galeri Formulir</h3>
+                  <p className="text-xs text-muted-foreground">Pilih template siap pakai atau mulai dari kertas kosong.</p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                onClick={() => setTemplateDialogOpen(false)}
+                className="h-8 w-8 rounded-lg"
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-5 space-y-3.5 custom-scrollbar">
+              {FORM_TEMPLATES.map((tpl) => (
+                <div
+                  key={tpl.id}
+                  className="p-4 rounded-xl border border-border/80 bg-card hover:border-primary/50 hover:shadow-xs transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4"
+                >
+                  <div className="space-y-1">
+                    <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                      <span>{tpl.title}</span>
+                      <Badge variant="secondary" className="text-[10px] font-semibold py-0">
+                        {tpl.fields.length} Kolom
+                      </Badge>
+                    </h4>
+                    <p className="text-xs text-muted-foreground">{tpl.description}</p>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    onClick={() => handleApplyTemplate(tpl)}
+                    className="h-8.5 px-4 text-xs font-semibold shrink-0 bg-primary text-primary-foreground"
+                  >
+                    Gunakan Template
+                  </Button>
+                </div>
+              ))}
+            </div>
+
+            <div className="p-4 border-t border-border/80 bg-muted/10 flex items-center justify-between">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setTemplateDialogOpen(false)}
+                className="text-xs text-muted-foreground"
+              >
+                Mulai dari Blank Form
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ─── TAB CONTENT: BUILD ─── */}
       {activeTab === "build" && (

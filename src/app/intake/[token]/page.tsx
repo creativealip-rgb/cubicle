@@ -11,20 +11,23 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
 
   if ("error" in result) {
     const messages: Record<string, { title: string; body: string }> = {
-      not_found: { title: "Link not found", body: "This intake link doesn't exist or was deleted." },
-      revoked: { title: "Link revoked", body: "This intake link was revoked by the workspace owner." },
-      expired: { title: "Link expired", body: "This intake link has expired. Please ask for a new one." },
-      already_submitted: { title: "Already submitted", body: "Your responses have been received. Thank you." },
+      not_found: { title: "Tautan Tidak Ditemukan", body: "Tautan formulir ini tidak valid atau sudah dihapus." },
+      revoked: { title: "Tautan Dinonaktifkan", body: "Tautan formulir ini telah ditutup oleh pemilik workspace." },
+      expired: { title: "Tautan Kedaluwarsa", body: "Masa berlaku tautan formulir ini telah berakhir." },
+      already_submitted: { title: "Sudah Diisi", body: "Tanggapan Anda telah berhasil kami terima sebelumnya. Terima kasih." },
     };
-    const m = messages[result.error as keyof typeof messages];
+    const m = messages[result.error as keyof typeof messages] || {
+      title: "Tidak Tersedia",
+      body: "Formulir tidak dapat diakses.",
+    };
     return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
-        <Card className="max-w-md w-full">
-          <CardContent className="py-12 text-center space-y-3">
-            <h1 className="text-xl font-semibold">{m.title}</h1>
-            <p className="text-sm text-slate-500">{m.body}</p>
-            <Button variant="outline" asChild>
-              <Link href="/">Back to home</Link>
+      <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex items-center justify-center p-4">
+        <Card className="max-w-md w-full rounded-2xl border shadow-lg">
+          <CardContent className="py-12 text-center space-y-4">
+            <h1 className="text-xl font-bold text-foreground">{m.title}</h1>
+            <p className="text-xs text-muted-foreground">{m.body}</p>
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/">Kembali ke Beranda</Link>
             </Button>
           </CardContent>
         </Card>
@@ -36,26 +39,40 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
   const fields = safeParseQuestionnaireSchema(questionnaire.schema);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-indigo-50 via-white to-white">
-      <div className="max-w-2xl mx-auto p-6 space-y-6">
-        <div className="text-center pt-6">
-          <Link href="/" className="inline-block text-2xl font-semibold text-slate-900">Cubiqlo</Link>
-          <p className="text-xs text-slate-500 mt-1">Client intake</p>
+    <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background py-10 px-4 sm:px-6">
+      <div className="max-w-2xl mx-auto space-y-6">
+        {/* Header Branding */}
+        <div className="text-center space-y-1">
+          <Link href="/" className="inline-block text-2xl font-black tracking-tight text-foreground">
+            Cubiqlo
+          </Link>
+          <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Client Brief & Intake Form
+          </p>
         </div>
 
-        <div className="bg-white rounded-2xl border shadow-sm p-6 md:p-8 space-y-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight">{questionnaire.name}</h1>
+        {/* Form Container Card */}
+        <div className="bg-card rounded-2xl border border-border/80 shadow-lg p-6 sm:p-10 space-y-7">
+          <div className="space-y-2 border-b border-border/60 pb-6">
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">
+              {questionnaire.name}
+            </h1>
             {questionnaire.description && (
-              <p className="text-sm text-slate-500 mt-2">{questionnaire.description}</p>
+              <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                {questionnaire.description}
+              </p>
             )}
           </div>
 
           <IntakeForm token={token} fields={fields} />
         </div>
 
-        <p className="text-center text-xs text-slate-400">
-          Powered by <Link href="/" className="hover:underline">Cubiqlo</Link>
+        {/* Footer */}
+        <p className="text-center text-[11px] text-muted-foreground">
+          Formulir aman ditenagai oleh{" "}
+          <Link href="/" className="font-semibold text-primary hover:underline">
+            Cubiqlo
+          </Link>
         </p>
       </div>
     </div>
