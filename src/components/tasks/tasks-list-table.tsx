@@ -41,6 +41,8 @@ export type TasksListItem = {
   behavior: "one_time" | "recurring" | null;
   mode?: "workflow" | "reusable";
   templateName?: string | null;
+  subtaskTotal?: number;
+  subtaskDone?: number;
 };
 
 type Member = { id: string; name: string | null; email: string | null };
@@ -342,6 +344,16 @@ export function TasksListTable({
                                       {task.templateName && (
                                         <span className="rounded bg-primary/10 px-1.5 py-0.2 text-[9px] font-medium text-primary">
                                           {task.templateName}
+                                        </span>
+                                      )}
+                                      {(task.subtaskTotal ?? 0) > 0 && (
+                                        <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
+                                          task.subtaskDone === task.subtaskTotal
+                                            ? "bg-emerald-500/10 text-emerald-600 border border-emerald-200/60"
+                                            : "bg-muted text-muted-foreground border border-border/80"
+                                        }`}>
+                                          <CheckSquare2 className="h-3 w-3" />
+                                          {task.subtaskDone}/{task.subtaskTotal}
                                         </span>
                                       )}
                                     </div>

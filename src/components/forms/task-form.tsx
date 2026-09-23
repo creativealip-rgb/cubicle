@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useT } from "@/lib/i18n-client";
+import { TaskSubtaskSection } from "@/components/tasks/task-subtask-section";
 
 interface TaskFormProps {
   mode: "create" | "edit";
@@ -303,6 +304,13 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "
             />
             <span className="text-xs font-medium">{t("Terlihat oleh klien di portal", "Visible to client in portal")}</span>
           </label>
+
+          {mode === "edit" && defaultValues?.id && (
+            <TaskSubtaskSection
+              taskId={defaultValues.id}
+              behavior={defaultValues.behavior}
+            />
+          )}
         </div>
       </div>
 

@@ -1092,6 +1092,22 @@ export const tasks = pgTable("tasks", {
   index("tasks_project_mode_lifecycle_position_idx").on(table.projectId, table.mode, table.lifecycle, table.position),
 ]);
 
+export const taskSubtasks = pgTable("task_subtasks", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  taskId: uuid("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  completed: boolean("completed").notNull().default(false),
+  position: integer("position").notNull().default(0),
+  assigneeId: text("assignee_id").references(() => users.id, { onDelete: "set null" }),
+  dueDate: date("due_date"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("task_subtasks_task_pos_idx").on(table.taskId, table.position),
+  index("task_subtasks_workspace_idx").on(table.workspaceId),
+]);
+
 
 export const portalRequests = pgTable("portal_requests", {
   id: uuid("id").defaultRandom().primaryKey(),

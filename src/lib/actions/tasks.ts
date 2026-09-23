@@ -4,8 +4,8 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { tasks, timeEntries, users, workspaceMembers, projects } from "@/db/schema";
-import { eq, and, sql, inArray } from "drizzle-orm";
+import { tasks, taskSubtasks, timeEntries, users, workspaceMembers, projects } from "@/db/schema";
+import { eq, and, sql, inArray, asc, desc } from "drizzle-orm";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceWritable, assertTaskInWorkspace, assertProjectInWorkspace } from "@/lib/access";
@@ -387,6 +387,104 @@ const respondPortalTaskSchema = z.object({
  * Client portal: approve / request changes on a client-visible task in `review`.
  * Approved → done. Rejected (minta revisi) → in_progress + optional note.
  */
+export async function getTaskSubtasks(taskId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+
+  return await db
+    .select({
+      id: taskSubtasks.id,
+      taskId: taskSubtasks.taskId,
+      title: taskSubtasks.title,
+      completed: taskSubtasks.completed,
+      position: taskSubtasks.position,
+      assigneeId: taskSubtasks.assigneeId,
+      dueDate: taskSubtasks.dueDate,
+    })
+    .from(taskSubtasks)
+    .where(and(eq(taskSubtasks.taskId, taskId), eq(taskSubtasks.workspaceId, workspaceId)))
+    .orderBy(asc(taskSubtasks.position), asc(taskSubtasks.createdAt));
+}
+
+export async function addSubtask(taskId: string, title: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const cleanTitle = title.trim();
+  if (!cleanTitle) throw new Error("Judul subtask tidak boleh kosong");
+
+  const [last] = await db
+    .select({ position: taskSubtasks.position })
+    .from(taskSubtasks)
+    .where(and(eq(taskSubtasks.taskId, taskId), eq(taskSubtasks.workspaceId, workspaceId)))
+    .orderBy(desc(taskSubtasks.position))
+    .limit(1);
+
+  const [subtask] = await db
+    .insert(taskSubtasks)
+    .values({
+      workspaceId,
+      taskId,
+      title: cleanTitle,
+      completed: false,
+      position: (last?.position ?? -1) + 1,
+    })
+    .returning();
+
+  return subtask;
+}
+
+export async function toggleSubtask(subtaskId: string, completed: boolean) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [updated] = await db
+    .update(taskSubtasks)
+    .set({
+      completed,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(taskSubtasks.id, subtaskId), eq(taskSubtasks.workspaceId, workspaceId)))
+    .returning();
+
+  return updated;
+}
+
+export async function deleteSubtask(subtaskId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  await db
+    .delete(taskSubtasks)
+    .where(and(eq(taskSubtasks.id, subtaskId), eq(taskSubtasks.workspaceId, workspaceId)));
+
+  return { ok: true };
+}
+
+export async function resetTaskSubtasks(taskId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  await db
+    .update(taskSubtasks)
+    .set({
+      completed: false,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(taskSubtasks.taskId, taskId), eq(taskSubtasks.workspaceId, workspaceId)));
+
+  return { ok: true };
+}
+
 export async function respondPortalTask(input: z.infer<typeof respondPortalTaskSchema>) {
   const parsed = respondPortalTaskSchema.parse(input);
   const { getClientPortalAccess } = await import("@/lib/actions/portal");

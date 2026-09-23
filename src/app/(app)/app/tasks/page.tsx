@@ -106,6 +106,8 @@ export default async function TasksPage({
     mode: tasks.mode,
     lifecycle: tasks.lifecycle,
     templateName: sql<string | null>`(select tt.name from task_template_items tti join task_templates tt on tt.id = tti.template_id and tt.workspace_id = ${workspaceId} where tti.id = ${tasks.templateItemSourceId} limit 1)`,
+    subtaskTotal: sql<number>`(select count(*)::int from task_subtasks ts where ts.task_id = ${tasks.id} and ts.workspace_id = ${workspaceId})`,
+    subtaskDone: sql<number>`(select count(*)::int from task_subtasks ts where ts.task_id = ${tasks.id} and ts.workspace_id = ${workspaceId} and ts.completed = true)`,
     monthMinutes: sql<number>`coalesce((select sum(coalesce(te.manual_minutes, te.duration_minutes, 0)) from time_entries te where te.task_id = ${tasks.id} and te.workspace_id = ${workspaceId} and te.work_date >= date_trunc('month', current_date)), 0)::int`,
     lastUsedAt: sql<string | null>`(select max(te.work_date)::text from time_entries te where te.task_id = ${tasks.id} and te.workspace_id = ${workspaceId})`,
   }).from(tasks).leftJoin(projects, eq(projects.id, tasks.projectId)).leftJoin(clients, eq(clients.id, projects.clientId)).leftJoin(users, eq(users.id, tasks.assigneeId)).where(and(...whereClauses)).orderBy(desc(tasks.createdAt)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);

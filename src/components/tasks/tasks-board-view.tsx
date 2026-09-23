@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { TaskDetailSheet } from "@/components/tasks/task-detail-sheet";
 import { taskPriorityColor, taskPriorityLabel } from "@/lib/status-badge";
 import { useT } from "@/lib/i18n-client";
-import { Clock, AlertTriangle } from "lucide-react";
+import { Clock, AlertTriangle, CheckSquare2 } from "lucide-react";
 import { updateTask } from "@/lib/actions/tasks";
 import { useEffect, useState, useTransition } from "react";
 
@@ -27,6 +27,8 @@ interface Task {
   behavior: "one_time" | "recurring" | null;
   mode?: "workflow" | "reusable";
   templateName?: string | null;
+  subtaskTotal?: number;
+  subtaskDone?: number;
 }
 
 interface TasksBoardViewProps {
@@ -121,10 +123,22 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                   <Card draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/task-id", task.id); setDraggedId(task.id); }} onDragEnd={() => setDraggedId(null)} className="cursor-grab border-border transition-shadow hover:shadow-md active:cursor-grabbing">
                     <CardContent className="space-y-2 p-3">
                       <p className="text-sm font-medium leading-snug">{task.title}</p>
-                      {task.templateName && <Badge variant="outline" className="border-primary/30 bg-primary/5 text-[10px] text-primary">{task.templateName}</Badge>}
-                      <Badge variant="outline" className="text-[10px] font-normal">
-                        {task.mode === "reusable" ? "Reusable" : "Workflow"}
-                      </Badge>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        {task.templateName && <Badge variant="outline" className="border-primary/30 bg-primary/5 text-[10px] text-primary">{task.templateName}</Badge>}
+                        {(task.subtaskTotal ?? 0) > 0 && (
+                          <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.2 text-[9px] font-medium ${
+                            task.subtaskDone === task.subtaskTotal
+                              ? "bg-emerald-500/10 text-emerald-600 border border-emerald-200/60"
+                              : "bg-muted text-muted-foreground border border-border/80"
+                          }`}>
+                            <CheckSquare2 className="h-2.5 w-2.5" />
+                            {task.subtaskDone}/{task.subtaskTotal}
+                          </span>
+                        )}
+                        <Badge variant="outline" className="text-[10px] font-normal">
+                          {task.mode === "reusable" ? "Reusable" : "Workflow"}
+                        </Badge>
+                      </div>
                       {task.projectName && (
                         <p className="truncate text-[11px] text-muted-foreground">{task.projectName}</p>
                       )}
