@@ -216,6 +216,36 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     defaultConfig: { maxRating: 5, colSpan: "full" },
   },
   {
+    type: "image_choice",
+    label: "Image Choice (Pilihan Gambar)",
+    description: "Pilihan visual dengan kartu gambar",
+    icon: ImageIcon,
+    category: "advanced",
+    defaultConfig: {
+      label: "Pilih Style Desain / Referensi",
+      imageOptions: [
+        { label: "Modern & Clean", imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80" },
+        { label: "Bold & Vibrant", imageUrl: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400&q=80" },
+        { label: "Minimalist Dark", imageUrl: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=400&q=80" },
+      ],
+      colSpan: "full",
+    },
+  },
+  {
+    type: "matrix",
+    label: "Matrix / Likert Table",
+    description: "Evaluasi baris & kolom penilaian",
+    icon: Columns,
+    category: "advanced",
+    defaultConfig: {
+      label: "Evaluasi Layanan",
+      sublabel: "Beri penilaian untuk setiap aspek di bawah ini.",
+      matrixRows: ["Kecepatan Respon", "Kualitas Hasil", "Kemudahan Komunikasi"],
+      matrixCols: ["Kurang", "Cukup", "Baik", "Sangat Baik"],
+      colSpan: "full",
+    },
+  },
+  {
     type: "calculation",
     label: "Estimasi Biaya / Kalkulator",
     description: "Hitung total budget otomatis dari pilihan",
@@ -593,6 +623,44 @@ function SortableCanvasField({
               <span className="font-mono font-bold text-sm text-primary">
                 {field.currency || "Rp"} 0
               </span>
+            </div>
+          )}
+          {field.type === "image_choice" && (
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
+              {(field.imageOptions || []).map((imgOpt, idx) => (
+                <div key={idx} className="rounded-xl border border-border/80 overflow-hidden bg-card text-center space-y-1 pb-2">
+                  <div className="h-20 bg-muted/30 overflow-hidden">
+                    <img src={imgOpt.imageUrl} alt={imgOpt.label} className="w-full h-full object-cover" />
+                  </div>
+                  <p className="text-[11px] font-semibold text-foreground px-1 truncate">{imgOpt.label}</p>
+                </div>
+              ))}
+            </div>
+          )}
+          {field.type === "matrix" && (
+            <div className="overflow-x-auto border border-border/80 rounded-xl">
+              <table className="w-full text-xs text-left">
+                <thead className="bg-muted/40 text-[10px] uppercase font-bold text-muted-foreground border-b border-border/70">
+                  <tr>
+                    <th className="p-2.5">Aspek / Pertanyaan</th>
+                    {(field.matrixCols || []).map((col, idx) => (
+                      <th key={idx} className="p-2.5 text-center">{col}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/60">
+                  {(field.matrixRows || []).map((row, rIdx) => (
+                    <tr key={rIdx} className="hover:bg-muted/20">
+                      <td className="p-2.5 font-medium text-foreground">{row}</td>
+                      {(field.matrixCols || []).map((_, cIdx) => (
+                        <td key={cIdx} className="p-2.5 text-center">
+                          <input type="radio" disabled className="h-3.5 w-3.5 text-primary" />
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
@@ -1495,6 +1563,74 @@ export function QuestionnaireBuilder({
                               placeholder="Rp / $ / EUR"
                               className="h-8.5 text-xs font-mono"
                             />
+                          </div>
+                        )}
+
+                        {/* Image Choice Settings */}
+                        {selectedField.type === "image_choice" && (
+                          <div className="space-y-2 pt-2 border-t border-border/60">
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs font-medium">Pilihan Kartu Gambar</Label>
+                              <span className="text-[10px] text-muted-foreground">Label : Image URL</span>
+                            </div>
+                            <Textarea
+                              value={(selectedField.imageOptions || [])
+                                .map((opt) => `${opt.label} : ${opt.imageUrl}`)
+                                .join("\n")}
+                              onChange={(e) => {
+                                const lines = e.target.value.split("\n");
+                                const imgOpts: { label: string; imageUrl: string }[] = [];
+                                lines.forEach((l) => {
+                                  const trimmed = l.trim();
+                                  if (!trimmed) return;
+                                  if (trimmed.includes(":")) {
+                                    const parts = trimmed.split(":");
+                                    const label = parts[0].trim();
+                                    const url = parts.slice(1).join(":").trim();
+                                    if (label && url) imgOpts.push({ label, imageUrl: url });
+                                  } else {
+                                    imgOpts.push({ label: trimmed, imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80" });
+                                  }
+                                });
+                                updateSelectedField({ imageOptions: imgOpts });
+                              }}
+                              rows={4}
+                              placeholder="Minimalist : https://image.com/1.jpg&#10;Retro Style : https://image.com/2.jpg"
+                              className="text-xs font-mono"
+                            />
+                          </div>
+                        )}
+
+                        {/* Matrix Table Settings */}
+                        {selectedField.type === "matrix" && (
+                          <div className="space-y-3 pt-2 border-t border-border/60">
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Baris Evaluasi (Aspek)</Label>
+                              <Textarea
+                                value={(selectedField.matrixRows || []).join("\n")}
+                                onChange={(e) =>
+                                  updateSelectedField({
+                                    matrixRows: e.target.value.split("\n").filter((s) => s.trim().length > 0),
+                                  })
+                                }
+                                rows={3}
+                                placeholder="Kecepatan&#10;Kualitas&#10;Komunikasi"
+                                className="text-xs font-mono"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Kolom Skala Nilai</Label>
+                              <Input
+                                value={(selectedField.matrixCols || []).join(", ")}
+                                onChange={(e) =>
+                                  updateSelectedField({
+                                    matrixCols: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
+                                  })
+                                }
+                                placeholder="Kurang, Cukup, Baik, Sangat Baik"
+                                className="h-8.5 text-xs font-mono"
+                              />
+                            </div>
                           </div>
                         )}
 

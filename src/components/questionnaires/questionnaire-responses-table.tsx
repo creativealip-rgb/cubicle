@@ -17,18 +17,21 @@ import { toast } from "sonner";
 import {
   Search,
   Download,
-  ExternalLink,
-  ChevronDown,
-  ChevronUp,
   Table as TableIcon,
   LayoutList,
-  FileSpreadsheet,
+  Eye,
   CheckCircle2,
   Clock,
   User,
-  Eye,
-  X,
   Mail,
+  Calendar,
+  Sparkles,
+  ExternalLink,
+  ChevronRight,
+  Briefcase,
+  X,
+  Printer,
+  FileSpreadsheet,
   Folder,
 } from "lucide-react";
 import type { QuestionnaireField } from "@/lib/questionnaire-schema";
@@ -159,18 +162,34 @@ export function QuestionnaireResponsesTable({
             </button>
           </div>
 
-          {/* Export CSV Button */}
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={handleExportCsv}
-            disabled={responses.length === 0}
-            className="h-8.5 gap-1.5 text-xs font-medium"
-          >
-            <Download className="h-3.5 w-3.5" />
-            <span>Export CSV</span>
-          </Button>
+          {/* Export CSV & Print PDF Buttons */}
+          <div className="flex items-center gap-1.5">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                if (typeof window !== "undefined") window.print();
+              }}
+              disabled={responses.length === 0}
+              className="h-8.5 gap-1.5 text-xs font-medium"
+              title="Cetak atau Simpan PDF Laporan"
+            >
+              <Printer className="h-3.5 w-3.5" />
+              <span>Cetak / PDF</span>
+            </Button>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={handleExportCsv}
+              disabled={responses.length === 0}
+              className="h-8.5 gap-1.5 text-xs font-medium"
+            >
+              <Download className="h-3.5 w-3.5" />
+              <span>Export CSV</span>
+            </Button>
+          </div>
         </div>
       </div>
 

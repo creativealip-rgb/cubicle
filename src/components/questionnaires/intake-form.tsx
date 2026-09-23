@@ -457,6 +457,82 @@ export function IntakeForm({
                   {f.sublabel && <p className="text-[11px] text-muted-foreground">{f.sublabel}</p>}
                 </div>
               )}
+              {f.type === "image_choice" && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+                  {(f.imageOptions || []).map((imgOpt, idx) => {
+                    const selected = answers[f.id] === imgOpt.label;
+                    return (
+                      <button
+                        key={idx}
+                        type="button"
+                        onClick={() => setFieldValue(f.id, imgOpt.label)}
+                        className={`rounded-xl border overflow-hidden text-left transition-all p-1 flex flex-col group cursor-pointer ${
+                          selected
+                            ? "border-primary ring-2 ring-primary/40 bg-primary/5"
+                            : "border-border/80 hover:border-border hover:shadow-xs bg-card"
+                        }`}
+                      >
+                        <div className="aspect-4/3 w-full rounded-lg bg-muted/30 overflow-hidden mb-1.5 relative">
+                          <img
+                            src={imgOpt.imageUrl}
+                            alt={imgOpt.label}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                          />
+                          {selected && (
+                            <div className="absolute top-1.5 right-1.5 bg-primary text-primary-foreground rounded-full p-0.5">
+                              <CheckCircle className="h-3.5 w-3.5" />
+                            </div>
+                          )}
+                        </div>
+                        <p className={`text-xs font-semibold px-1 truncate ${selected ? "text-primary" : "text-foreground"}`}>
+                          {imgOpt.label}
+                        </p>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+
+              {f.type === "matrix" && (
+                <div className="overflow-x-auto border border-border/80 rounded-xl bg-card">
+                  <table className="w-full text-xs text-left">
+                    <thead className="bg-muted/40 text-[10px] uppercase font-bold text-muted-foreground border-b border-border/70">
+                      <tr>
+                        <th className="p-3">Aspek / Evaluasi</th>
+                        {(f.matrixCols || []).map((col, idx) => (
+                          <th key={idx} className="p-3 text-center">{col}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border/60">
+                      {(f.matrixRows || []).map((row, rIdx) => {
+                        const currentMatrixAns = answers[f.id] || {};
+                        return (
+                          <tr key={rIdx} className="hover:bg-muted/20">
+                            <td className="p-3 font-medium text-foreground">{row}</td>
+                            {(f.matrixCols || []).map((col, cIdx) => (
+                              <td key={cIdx} className="p-3 text-center">
+                                <input
+                                  type="radio"
+                                  name={`matrix_${f.id}_${rIdx}`}
+                                  checked={currentMatrixAns[row] === col}
+                                  onChange={() => {
+                                    setFieldValue(f.id, {
+                                      ...currentMatrixAns,
+                                      [row]: col,
+                                    });
+                                  }}
+                                  className="h-4 w-4 text-primary cursor-pointer"
+                                />
+                              </td>
+                            ))}
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
               {f.type === "rating" && (
                 <div className="flex items-center gap-2 pt-1">
                   {Array.from({ length: f.maxRating || 5 }).map((_, idx) => {

@@ -20,6 +20,8 @@ export const questionnaireFieldTypeSchema = z.enum([
   "file",
   "signature",
   "rating",
+  "image_choice",
+  "matrix",
   "calculation",
   "heading",
   "divider",
@@ -39,6 +41,18 @@ export const questionnaireFieldSchema = z.object({
   options: z.array(z.string()).optional(),
   // Pricing/Option values for calculation: { [optionName: string]: number }
   optionPrices: z.record(z.string(), z.number()).optional(),
+  // Image Choices: array of { label: string, imageUrl: string }
+  imageOptions: z
+    .array(
+      z.object({
+        label: z.string().min(1),
+        imageUrl: z.string().min(1),
+      }),
+    )
+    .optional(),
+  // Matrix rows (statements) and columns (ratings/options)
+  matrixRows: z.array(z.string()).optional(),
+  matrixCols: z.array(z.string()).optional(),
   placeholder: z.string().optional(),
   acceptFiles: z.string().optional(),
   maxRating: z.number().int().min(3).max(10).optional(),
