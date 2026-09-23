@@ -55,7 +55,11 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [hydrated, setHydrated] = useState(false);
   const pathname = usePathname();
-  const focusEditor = pathname === "/app/personal-site";
+  const formEditor = Boolean(
+    pathname === "/app/questionnaires/new" ||
+    (pathname?.startsWith("/app/questionnaires/") && pathname?.endsWith("/edit"))
+  );
+  const focusEditor = pathname === "/app/personal-site" || formEditor;
   const documentEditor = Boolean(pathname?.endsWith("/edit") && (pathname.startsWith("/app/proposals/") || pathname.startsWith("/app/contracts/")));
   // Brain page renders the full-page AI panel itself; skip the floating one.
   const onBrainPage = pathname?.startsWith("/app/brain") ?? false;

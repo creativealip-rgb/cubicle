@@ -60,6 +60,11 @@ import {
   Sliders,
   FileCheck,
   Palette,
+  X,
+  Code,
+  Check,
+  Globe,
+  ExternalLink,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
@@ -193,6 +198,13 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
   },
 ];
 
+const THEME_PRESETS = [
+  { id: "purple", name: "Modern Purple", color: "bg-[#6C5CE7] text-white", hex: "#6C5CE7" },
+  { id: "blue", name: "Ocean Blue", color: "bg-blue-600 text-white", hex: "#2563EB" },
+  { id: "emerald", name: "Emerald Green", color: "bg-emerald-600 text-white", hex: "#059669" },
+  { id: "dark", name: "Minimal Dark", color: "bg-zinc-900 text-white", hex: "#18181B" },
+];
+
 // ─── Sortable Field Item Component ───
 function SortableCanvasField({
   field,
@@ -200,12 +212,14 @@ function SortableCanvasField({
   onSelect,
   onDuplicate,
   onDelete,
+  onOpenProperties,
 }: {
   field: QuestionnaireField;
   isSelected: boolean;
   onSelect: () => void;
   onDuplicate: () => void;
   onDelete: () => void;
+  onOpenProperties: () => void;
 }) {
   const {
     attributes,
@@ -219,7 +233,7 @@ function SortableCanvasField({
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    opacity: isDragging ? 0.4 : 1,
+    opacity: isDragging ? 0.35 : 1,
   };
 
   const isHeading = field.type === "heading";
@@ -229,15 +243,15 @@ function SortableCanvasField({
       ref={setNodeRef}
       style={style}
       onClick={onSelect}
-      className={`group relative rounded-xl border p-4 transition-all cursor-pointer ${
+      className={`group relative rounded-xl border p-5 transition-all cursor-pointer ${
         isSelected
           ? "border-primary bg-primary/[0.02] ring-2 ring-primary/20 shadow-xs"
-          : "border-border/60 bg-card hover:border-border hover:shadow-xs"
+          : "border-border/70 bg-card hover:border-primary/40 hover:shadow-xs"
       }`}
     >
-      {/* Action controls & Drag handle */}
+      {/* Top action toolbar */}
       <div
-        className={`absolute -top-3 right-3 flex items-center gap-1 bg-background border border-border shadow-xs rounded-md px-1 py-0.5 z-10 transition-opacity ${
+        className={`absolute -top-3.5 right-4 flex items-center gap-1 bg-background border border-border shadow-xs rounded-lg px-1.5 py-0.5 z-10 transition-opacity ${
           isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
         }`}
       >
@@ -245,10 +259,21 @@ function SortableCanvasField({
           type="button"
           {...attributes}
           {...listeners}
-          className="p-1 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+          className="p-1 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing rounded"
           title="Drag untuk geser posisi"
         >
-          <GripVertical className="h-3 w-3" />
+          <GripVertical className="h-3.5 w-3.5" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onOpenProperties();
+          }}
+          className="p-1 text-muted-foreground hover:text-primary rounded"
+          title="Buka Properti"
+        >
+          <Settings className="h-3.5 w-3.5" />
         </button>
         <button
           type="button"
@@ -256,10 +281,10 @@ function SortableCanvasField({
             e.stopPropagation();
             onDuplicate();
           }}
-          className="p-1 text-muted-foreground hover:text-primary"
+          className="p-1 text-muted-foreground hover:text-primary rounded"
           title="Duplikasi"
         >
-          <Copy className="h-3 w-3" />
+          <Copy className="h-3.5 w-3.5" />
         </button>
         <button
           type="button"
@@ -267,28 +292,28 @@ function SortableCanvasField({
             e.stopPropagation();
             onDelete();
           }}
-          className="p-1 text-muted-foreground hover:text-destructive"
+          className="p-1 text-muted-foreground hover:text-destructive rounded"
           title="Hapus"
         >
-          <Trash2 className="h-3 w-3" />
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
 
       {/* Heading Field */}
       {isHeading ? (
-        <div className="space-y-1">
-          <h3 className="text-base font-bold text-foreground">{field.label}</h3>
+        <div className="space-y-1.5 pt-1">
+          <h3 className="text-lg font-bold tracking-tight text-foreground">{field.label}</h3>
           {field.sublabel && <p className="text-xs text-muted-foreground">{field.sublabel}</p>}
         </div>
       ) : (
         /* Standard Field Preview */
-        <div className="space-y-2">
-          <div className="flex items-center justify-between">
+        <div className="space-y-2.5">
+          <div className="flex items-center justify-between gap-2">
             <label className="text-xs font-semibold text-foreground flex items-center gap-1">
               <span>{field.label}</span>
-              {field.required && <span className="text-destructive">*</span>}
+              {field.required && <span className="text-destructive font-bold">*</span>}
             </label>
-            <Badge variant="outline" className="text-[9px] uppercase font-bold tracking-wider py-0 px-1 text-muted-foreground">
+            <Badge variant="outline" className="text-[9px] uppercase font-bold tracking-wider py-0 px-1.5 text-muted-foreground">
               {field.type}
             </Badge>
           </div>
@@ -296,30 +321,30 @@ function SortableCanvasField({
           {field.sublabel && <p className="text-[11px] text-muted-foreground">{field.sublabel}</p>}
 
           {field.type === "text" && (
-            <Input disabled placeholder={field.placeholder || "Teks singkat..."} className="h-9 text-xs bg-muted/20" />
+            <Input disabled placeholder={field.placeholder || "Jawaban singkat..."} className="h-9.5 text-xs bg-muted/20" />
           )}
           {field.type === "textarea" && (
-            <Textarea disabled placeholder={field.placeholder || "Teks panjang..."} rows={3} className="text-xs bg-muted/20" />
+            <Textarea disabled placeholder={field.placeholder || "Tuliskan jawaban lengkap di sini..."} rows={3} className="text-xs bg-muted/20" />
           )}
           {field.type === "email" && (
-            <Input disabled placeholder={field.placeholder || "email@domain.com"} className="h-9 text-xs bg-muted/20" />
+            <Input disabled placeholder={field.placeholder || "email@domain.com"} className="h-9.5 text-xs bg-muted/20" />
           )}
           {field.type === "phone" && (
-            <Input disabled placeholder={field.placeholder || "+62 812..."} className="h-9 text-xs bg-muted/20" />
+            <Input disabled placeholder={field.placeholder || "+62 812..."} className="h-9.5 text-xs bg-muted/20" />
           )}
           {field.type === "number" && (
-            <Input disabled placeholder={field.placeholder || "0"} type="number" className="h-9 text-xs bg-muted/20" />
+            <Input disabled placeholder={field.placeholder || "0"} type="number" className="h-9.5 text-xs bg-muted/20" />
           )}
           {field.type === "date" && (
-            <Input disabled type="date" className="h-9 text-xs bg-muted/20" />
+            <Input disabled type="date" className="h-9.5 text-xs bg-muted/20" />
           )}
           {field.type === "url" && (
-            <Input disabled placeholder={field.placeholder || "https://..."} className="h-9 text-xs bg-muted/20" />
+            <Input disabled placeholder={field.placeholder || "https://..."} className="h-9.5 text-xs bg-muted/20" />
           )}
           {field.type === "select" && (
             <Select disabled>
-              <SelectTrigger className="h-9 text-xs bg-muted/20">
-                <SelectValue placeholder="Pilih opsi..." />
+              <SelectTrigger className="h-9.5 text-xs bg-muted/20">
+                <SelectValue placeholder="Pilih salah satu..." />
               </SelectTrigger>
             </Select>
           )}
@@ -334,7 +359,7 @@ function SortableCanvasField({
             </div>
           )}
           {field.type === "file" && (
-            <div className="border-2 border-dashed border-border/80 rounded-xl p-4 text-center bg-muted/10 space-y-1">
+            <div className="border-2 border-dashed border-border/80 rounded-xl p-5 text-center bg-muted/10 space-y-1">
               <Paperclip className="h-5 w-5 mx-auto text-muted-foreground" />
               <p className="text-xs font-medium text-foreground">Upload file brief atau dokumen</p>
               <p className="text-[10px] text-muted-foreground">{field.acceptFiles || "Format: PDF, PNG, ZIP"}</p>
@@ -347,7 +372,7 @@ function SortableCanvasField({
             </div>
           )}
           {field.type === "rating" && (
-            <div className="flex items-center gap-1.5 pt-1">
+            <div className="flex items-center gap-2 pt-1">
               {[1, 2, 3, 4, 5].map((star) => (
                 <Star key={star} className="h-5 w-5 text-amber-400 fill-amber-400/20" />
               ))}
@@ -378,6 +403,12 @@ export function QuestionnaireBuilder({
   // Form general state
   const [name, setName] = useState(initial?.name || "");
   const [description, setDescription] = useState(initial?.description || "");
+  const [selectedTheme, setSelectedTheme] = useState("purple");
+  const [thankYouMessage, setThankYouMessage] = useState(
+    "Terima kasih! Tanggapan Anda telah berhasil kami terima dan akan segera kami proses.",
+  );
+  const [redirectUrl, setRedirectUrl] = useState("");
+
   const [fields, setFields] = useState<QuestionnaireField[]>(
     initial?.schema && initial.schema.length > 0
       ? initial.schema
@@ -399,7 +430,9 @@ export function QuestionnaireBuilder({
         ],
   );
 
-  // Active selected field for right drawer properties
+  // Panels visibility: Elements sidebar (left) & Properties drawer (right)
+  const [elementsOpen, setElementsOpen] = useState(true);
+  const [propertiesOpen, setPropertiesOpen] = useState(true);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(fields[0]?.id ?? null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -450,6 +483,7 @@ export function QuestionnaireBuilder({
     };
     setFields((prev) => [...prev, newField]);
     setSelectedFieldId(newField.id);
+    setPropertiesOpen(true);
     toast.success(`${def.label} ditambahkan`);
   }
 
@@ -527,8 +561,11 @@ export function QuestionnaireBuilder({
     });
   }
 
+  const shareUrl = questionnaireId ? `https://app.cubiqlo.com/app/questionnaires/${questionnaireId}` : "";
+  const embedCode = questionnaireId ? `<iframe src="https://app.cubiqlo.com/app/questionnaires/${questionnaireId}" width="100%" height="700px" frameborder="0" style="border:0;border-radius:12px;"></iframe>` : "";
+
   return (
-    <div className="flex flex-col h-[calc(100vh-68px)] -m-4 sm:-m-6 bg-slate-50 dark:bg-zinc-950 overflow-hidden">
+    <div className="flex flex-col h-[calc(100vh-68px)] -m-4 sm:-m-6 bg-slate-100/70 dark:bg-zinc-950 overflow-hidden">
       {/* ─── Top Jotform Bar: Brand, Tabs, Actions ─── */}
       <header className="h-14 border-b border-border/80 bg-background px-4 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-3 min-w-0">
@@ -537,35 +574,35 @@ export function QuestionnaireBuilder({
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <div className="min-w-0">
+          <div className="min-w-0 flex items-center gap-2">
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t("Nama Formulir...", "Form Name...")}
-              className="font-bold text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1.5 py-0.5 max-w-[240px] sm:max-w-xs truncate"
+              className="font-bold text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1.5 py-0.5 max-w-[200px] sm:max-w-xs truncate"
             />
           </div>
         </div>
 
         {/* 3 Main Workflow Tabs */}
-        <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-lg border border-border/60">
+        <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/60">
           <button
             type="button"
             onClick={() => setActiveTab("build")}
-            className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+            className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold rounded-lg transition-all ${
               activeTab === "build"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Sliders className="h-3.5 w-3.5" />
+            <Sliders className="h-3.5 w-3.5 text-primary" />
             <span>BUILD</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("settings")}
-            className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+            className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold rounded-lg transition-all ${
               activeTab === "settings"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -577,7 +614,7 @@ export function QuestionnaireBuilder({
           <button
             type="button"
             onClick={() => setActiveTab("publish")}
-            className={`flex items-center gap-1.5 px-3 py-1 text-xs font-semibold rounded-md transition-all ${
+            className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold rounded-lg transition-all ${
               activeTab === "publish"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -588,18 +625,35 @@ export function QuestionnaireBuilder({
           </button>
         </div>
 
-        {/* Action Right: Preview & Save */}
+        {/* Action Right: Toggle Drawers, Preview & Save */}
         <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setPreviewOpen(!previewOpen)}
-            className="h-8 gap-1.5 text-xs font-medium"
-          >
-            <Eye className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{previewOpen ? "Tutup Preview" : "Preview"}</span>
-          </Button>
+          {activeTab === "build" && (
+            <>
+              <Button
+                type="button"
+                variant={elementsOpen ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setElementsOpen(!elementsOpen)}
+                className="h-8 gap-1.5 text-xs font-medium hidden md:inline-flex"
+                title="Toggle Element Catalog"
+              >
+                <Plus className="h-3.5 w-3.5" />
+                <span>Elements</span>
+              </Button>
+
+              <Button
+                type="button"
+                variant={propertiesOpen ? "secondary" : "outline"}
+                size="sm"
+                onClick={() => setPropertiesOpen(!propertiesOpen)}
+                className="h-8 gap-1.5 text-xs font-medium hidden md:inline-flex"
+                title="Toggle Field Properties"
+              >
+                <Settings className="h-3.5 w-3.5" />
+                <span>Properties</span>
+              </Button>
+            </>
+          )}
 
           <Button
             type="button"
@@ -614,122 +668,132 @@ export function QuestionnaireBuilder({
         </div>
       </header>
 
-      {/* ─── TAB CONTENT ─── */}
+      {/* ─── TAB CONTENT: BUILD ─── */}
       {activeTab === "build" && (
         <div className="flex-1 flex min-h-0 overflow-hidden relative">
-          {/* PANEL KIRI: Element Catalog */}
-          <aside className="w-64 border-r border-border/80 bg-background flex flex-col shrink-0 z-10">
-            <div className="p-3 border-b border-border/60">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Plus className="h-3.5 w-3.5 text-primary" />
-                <span>Form Elements</span>
-              </h4>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Klik untuk menambah atau drag di canvas.</p>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
-              {/* Basic Fields */}
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                  Basic Fields
-                </p>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {ELEMENT_CATALOG.filter((e) => e.category === "basic").map((item) => (
-                    <button
-                      key={item.type}
-                      type="button"
-                      onClick={() => handleAddField(item)}
-                      className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
-                    >
-                      <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
-                        <item.icon className="h-3.5 w-3.5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
-                          {item.label}
-                        </p>
-                      </div>
-                      <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  ))}
-                </div>
+          {/* PANEL KIRI: Element Catalog (Collapsible) */}
+          {elementsOpen && (
+            <aside className="w-64 border-r border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-left-4 duration-150">
+              <div className="p-3 border-b border-border/60 flex items-center justify-between">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Plus className="h-3.5 w-3.5 text-primary" />
+                  <span>Form Elements</span>
+                </h4>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setElementsOpen(false)}
+                  className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground md:hidden"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </Button>
               </div>
 
-              {/* Choice Fields */}
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                  Choices & Selection
-                </p>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {ELEMENT_CATALOG.filter((e) => e.category === "choice").map((item) => (
-                    <button
-                      key={item.type}
-                      type="button"
-                      onClick={() => handleAddField(item)}
-                      className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
-                    >
-                      <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
-                        <item.icon className="h-3.5 w-3.5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
-                          {item.label}
-                        </p>
-                      </div>
-                      <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  ))}
+              <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
+                {/* Basic Fields */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                    Basic Fields
+                  </p>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {ELEMENT_CATALOG.filter((e) => e.category === "basic").map((item) => (
+                      <button
+                        key={item.type}
+                        type="button"
+                        onClick={() => handleAddField(item)}
+                        className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                      >
+                        <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
+                          <item.icon className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
+                            {item.label}
+                          </p>
+                        </div>
+                        <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Choice Fields */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                    Choices & Selection
+                  </p>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {ELEMENT_CATALOG.filter((e) => e.category === "choice").map((item) => (
+                      <button
+                        key={item.type}
+                        type="button"
+                        onClick={() => handleAddField(item)}
+                        className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                      >
+                        <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
+                          <item.icon className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
+                            {item.label}
+                          </p>
+                        </div>
+                        <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Advanced Fields */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                    Advanced & Media
+                  </p>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {ELEMENT_CATALOG.filter((e) => e.category === "advanced").map((item) => (
+                      <button
+                        key={item.type}
+                        type="button"
+                        onClick={() => handleAddField(item)}
+                        className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                      >
+                        <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
+                          <item.icon className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
+                            {item.label}
+                          </p>
+                        </div>
+                        <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
+            </aside>
+          )}
 
-              {/* Advanced Fields */}
-              <div>
-                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                  Advanced & Media
-                </p>
-                <div className="grid grid-cols-1 gap-1.5">
-                  {ELEMENT_CATALOG.filter((e) => e.category === "advanced").map((item) => (
-                    <button
-                      key={item.type}
-                      type="button"
-                      onClick={() => handleAddField(item)}
-                      className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
-                    >
-                      <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
-                        <item.icon className="h-3.5 w-3.5" />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
-                          {item.label}
-                        </p>
-                      </div>
-                      <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          {/* PANEL TENGAH: Live Form Canvas with DnD */}
-          <main className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center custom-scrollbar bg-slate-100/70 dark:bg-zinc-900/50">
-            <div className="w-full max-w-2xl space-y-4">
-              {/* Form Paper Container */}
-              <div className="rounded-2xl border border-border/80 bg-background shadow-sm p-6 sm:p-8 space-y-6">
+          {/* PANEL TENGAH: Live Form Canvas (Lega & Centered) */}
+          <main className="flex-1 overflow-y-auto p-4 sm:p-8 md:p-12 flex justify-center custom-scrollbar">
+            <div className="w-full max-w-3xl space-y-4">
+              {/* Form Paper Sheet */}
+              <div className="rounded-2xl border border-border/80 bg-background shadow-md p-6 sm:p-10 space-y-7">
                 {/* Form Title & Header Area */}
-                <div className="space-y-2 border-b border-border/60 pb-5">
+                <div className="space-y-2 border-b border-border/60 pb-6">
                   <Input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Judul Formulir..."
-                    className="text-xl sm:text-2xl font-bold border-none px-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground/50"
+                    className="text-2xl sm:text-3xl font-extrabold tracking-tight border-none px-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground/40"
                   />
                   <Textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Tuliskan petunjuk atau deskripsi formulir untuk responden..."
                     rows={2}
-                    className="text-xs text-muted-foreground border-none px-0 min-h-[50px] resize-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
+                    className="text-xs text-muted-foreground border-none px-0 min-h-[45px] resize-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
                   />
                 </div>
 
@@ -742,7 +806,14 @@ export function QuestionnaireBuilder({
                           key={field.id}
                           field={field}
                           isSelected={field.id === selectedFieldId}
-                          onSelect={() => setSelectedFieldId(field.id)}
+                          onSelect={() => {
+                            setSelectedFieldId(field.id);
+                            setPropertiesOpen(true);
+                          }}
+                          onOpenProperties={() => {
+                            setSelectedFieldId(field.id);
+                            setPropertiesOpen(true);
+                          }}
                           onDuplicate={() => handleDuplicateField(field.id)}
                           onDelete={() => handleDeleteField(field.id)}
                         />
@@ -751,152 +822,182 @@ export function QuestionnaireBuilder({
                   </SortableContext>
                 </DndContext>
 
+                {/* Add question bottom banner */}
+                <div className="pt-2 flex items-center justify-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setElementsOpen(true)}
+                    className="h-9 px-4 text-xs font-semibold gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Tambah Pertanyaan Baru</span>
+                  </Button>
+                </div>
+
                 {/* Submit button preview */}
-                <div className="pt-4 border-t border-border/60">
-                  <Button disabled className="w-full sm:w-auto h-9 text-xs font-semibold bg-primary text-primary-foreground">
+                <div className="pt-6 border-t border-border/60 flex items-center justify-between">
+                  <Button disabled className="h-10 px-6 text-xs font-semibold bg-primary text-primary-foreground">
                     Submit Form
                   </Button>
+                  <span className="text-[11px] text-muted-foreground">Powered by Cubiqlo Forms</span>
                 </div>
               </div>
             </div>
           </main>
 
-          {/* PANEL KANAN: Field Properties Drawer */}
-          <aside className="w-72 border-l border-border/80 bg-background flex flex-col shrink-0 z-10">
-            <div className="p-3 border-b border-border/60 flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <Settings className="h-3.5 w-3.5 text-primary" />
-                <span>Properties</span>
-              </h4>
-              {selectedField && (
-                <Badge variant="secondary" className="text-[9px] uppercase font-bold py-0">
-                  {selectedField.type}
-                </Badge>
-              )}
-            </div>
+          {/* PANEL KANAN: Field Properties Drawer (Collapsible) */}
+          {propertiesOpen && (
+            <aside className="w-80 border-l border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-right-4 duration-150">
+              <div className="p-3.5 border-b border-border/60 flex items-center justify-between">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                  <Settings className="h-3.5 w-3.5 text-primary" />
+                  <span>Field Properties</span>
+                </h4>
+                <div className="flex items-center gap-1">
+                  {selectedField && (
+                    <Badge variant="secondary" className="text-[9px] uppercase font-bold py-0 mr-1">
+                      {selectedField.type}
+                    </Badge>
+                  )}
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setPropertiesOpen(false)}
+                    className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
+                    title="Tutup Panel"
+                  >
+                    <X className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              </div>
 
-            <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-              {selectedField ? (
-                <div className="space-y-4">
-                  {/* Field Label */}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium">Question Label / Heading</Label>
-                    <Input
-                      value={selectedField.label}
-                      onChange={(e) => updateSelectedField({ label: e.target.value })}
-                      className="h-8 text-xs"
-                    />
-                  </div>
+              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                {selectedField ? (
+                  <div className="space-y-4">
+                    {/* Field Label */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Question Label / Heading</Label>
+                      <Input
+                        value={selectedField.label}
+                        onChange={(e) => updateSelectedField({ label: e.target.value })}
+                        className="h-8.5 text-xs"
+                      />
+                    </div>
 
-                  {/* Field Sublabel / Description */}
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-medium">Sublabel / Help Text</Label>
-                    <Input
-                      value={selectedField.sublabel || ""}
-                      onChange={(e) => updateSelectedField({ sublabel: e.target.value })}
-                      placeholder="Petunjuk tambahan..."
-                      className="h-8 text-xs"
-                    />
-                  </div>
+                    {/* Field Sublabel / Description */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium">Sublabel / Help Text</Label>
+                      <Input
+                        value={selectedField.sublabel || ""}
+                        onChange={(e) => updateSelectedField({ sublabel: e.target.value })}
+                        placeholder="Petunjuk tambahan..."
+                        className="h-8.5 text-xs"
+                      />
+                    </div>
 
-                  {/* Placeholder (if applicable) */}
-                  {selectedField.type !== "heading" &&
-                    selectedField.type !== "rating" &&
-                    selectedField.type !== "signature" && (
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-medium">Placeholder</Label>
-                        <Input
-                          value={selectedField.placeholder || ""}
-                          onChange={(e) => updateSelectedField({ placeholder: e.target.value })}
-                          placeholder="Teks placeholder..."
-                          className="h-8 text-xs"
+                    {/* Placeholder (if applicable) */}
+                    {selectedField.type !== "heading" &&
+                      selectedField.type !== "rating" &&
+                      selectedField.type !== "signature" && (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-medium">Placeholder</Label>
+                          <Input
+                            value={selectedField.placeholder || ""}
+                            onChange={(e) => updateSelectedField({ placeholder: e.target.value })}
+                            placeholder="Teks placeholder..."
+                            className="h-8.5 text-xs"
+                          />
+                        </div>
+                      )}
+
+                    {/* Required Switch */}
+                    {selectedField.type !== "heading" && (
+                      <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/10">
+                        <div>
+                          <p className="text-xs font-medium">Wajib Diisi (Required)</p>
+                          <p className="text-[10px] text-muted-foreground">Klien tidak bisa submit jika kosong</p>
+                        </div>
+                        <Checkbox
+                          checked={selectedField.required}
+                          onCheckedChange={(checked) => updateSelectedField({ required: Boolean(checked) })}
                         />
                       </div>
                     )}
 
-                  {/* Required Switch */}
-                  {selectedField.type !== "heading" && (
-                    <div className="flex items-center justify-between rounded-lg border p-2.5 bg-muted/10">
-                      <div>
-                        <p className="text-xs font-medium">Wajib Diisi (Required)</p>
-                        <p className="text-[10px] text-muted-foreground">Klien tidak bisa submit jika kosong</p>
+                    {/* Options Editor for Select & Multiselect */}
+                    {(selectedField.type === "select" || selectedField.type === "multiselect") && (
+                      <div className="space-y-2 pt-2 border-t border-border/60">
+                        <Label className="text-xs font-medium">Pilihan Opsi (Satu per baris)</Label>
+                        <Textarea
+                          value={(selectedField.options || []).join("\n")}
+                          onChange={(e) =>
+                            updateSelectedField({
+                              options: e.target.value.split("\n").filter((s) => s.trim().length > 0),
+                            })
+                          }
+                          rows={5}
+                          placeholder="Opsi 1&#10;Opsi 2&#10;Opsi 3"
+                          className="text-xs font-mono"
+                        />
                       </div>
-                      <Checkbox
-                        checked={selectedField.required}
-                        onCheckedChange={(checked) => updateSelectedField({ required: Boolean(checked) })}
-                      />
-                    </div>
-                  )}
+                    )}
 
-                  {/* Options Editor for Select & Multiselect */}
-                  {(selectedField.type === "select" || selectedField.type === "multiselect") && (
-                    <div className="space-y-2 pt-2 border-t border-border/60">
-                      <Label className="text-xs font-medium">Pilihan Opsi (Satu per baris)</Label>
-                      <Textarea
-                        value={(selectedField.options || []).join("\n")}
-                        onChange={(e) =>
-                          updateSelectedField({
-                            options: e.target.value.split("\n").filter((s) => s.trim().length > 0),
-                          })
-                        }
-                        rows={4}
-                        placeholder="Opsi 1&#10;Opsi 2&#10;Opsi 3"
-                        className="text-xs font-mono"
-                      />
-                    </div>
-                  )}
+                    {/* File Upload Settings */}
+                    {selectedField.type === "file" && (
+                      <div className="space-y-1.5 pt-2 border-t border-border/60">
+                        <Label className="text-xs font-medium">Tipe File Diterima</Label>
+                        <Input
+                          value={selectedField.acceptFiles || ""}
+                          onChange={(e) => updateSelectedField({ acceptFiles: e.target.value })}
+                          placeholder=".pdf,.doc,.docx,.png,.zip"
+                          className="h-8.5 text-xs"
+                        />
+                      </div>
+                    )}
 
-                  {/* File Upload Settings */}
-                  {selectedField.type === "file" && (
-                    <div className="space-y-1.5 pt-2 border-t border-border/60">
-                      <Label className="text-xs font-medium">Tipe File Diterima</Label>
-                      <Input
-                        value={selectedField.acceptFiles || ""}
-                        onChange={(e) => updateSelectedField({ acceptFiles: e.target.value })}
-                        placeholder=".pdf,.doc,.docx,.png,.zip"
-                        className="h-8 text-xs"
-                      />
+                    {/* Quick Delete */}
+                    <div className="pt-4 border-t border-border/60">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleDeleteField(selectedField.id)}
+                        className="w-full h-8.5 text-xs text-destructive hover:bg-destructive/10 border-destructive/30"
+                      >
+                        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                        Hapus Pertanyaan Ini
+                      </Button>
                     </div>
-                  )}
-
-                  {/* Quick Delete */}
-                  <div className="pt-4 border-t border-border/60">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteField(selectedField.id)}
-                      className="w-full h-8 text-xs text-destructive hover:bg-destructive/10 border-destructive/30"
-                    >
-                      <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                      Hapus Pertanyaan Ini
-                    </Button>
                   </div>
-                </div>
-              ) : (
-                <div className="py-12 text-center text-muted-foreground">
-                  <Sliders className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                  <p className="text-xs">Klik salah satu pertanyaan di canvas untuk mengedit pengaturannya.</p>
-                </div>
-              )}
-            </div>
-          </aside>
+                ) : (
+                  <div className="py-12 text-center text-muted-foreground">
+                    <Sliders className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                    <p className="text-xs">Klik salah satu pertanyaan di canvas untuk mengedit pengaturannya.</p>
+                  </div>
+                )}
+              </div>
+            </aside>
+          )}
         </div>
       )}
 
-      {/* ─── TAB SETTINGS ─── */}
+      {/* ─── TAB CONTENT: SETTINGS ─── */}
       {activeTab === "settings" && (
-        <div className="flex-1 overflow-y-auto p-6 sm:p-10 flex justify-center custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-6 sm:p-12 flex justify-center custom-scrollbar">
           <div className="w-full max-w-2xl space-y-6">
-            <div className="rounded-xl border border-border/80 bg-background p-6 space-y-4 shadow-sm">
+            {/* General Info */}
+            <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 space-y-5 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Settings className="h-4 w-4 text-primary" />
-                <span>Pengaturan Umum Formulir</span>
+                <span>Pengaturan Formulir</span>
               </h3>
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">Nama Formulir</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} className="h-9 text-sm" />
+                <Input value={name} onChange={(e) => setName(e.target.value)} className="h-9.5 text-sm" />
               </div>
 
               <div className="space-y-1.5">
@@ -905,59 +1006,132 @@ export function QuestionnaireBuilder({
               </div>
             </div>
 
-            <div className="rounded-xl border border-border/80 bg-background p-6 space-y-4 shadow-sm">
+            {/* Theme & Styling */}
+            <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 space-y-5 shadow-sm">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                <Palette className="h-4 w-4 text-primary" />
+                <span>Tema & Warna Aksen</span>
+              </h3>
+              <p className="text-xs text-muted-foreground">Pilih warna branding yang cocok dengan identity agensi Anda.</p>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+                {THEME_PRESETS.map((tPreset) => (
+                  <button
+                    key={tPreset.id}
+                    type="button"
+                    onClick={() => setSelectedTheme(tPreset.id)}
+                    className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-2 ${
+                      selectedTheme === tPreset.id
+                        ? "border-primary ring-2 ring-primary/20 bg-muted/20"
+                        : "border-border/70 hover:border-border"
+                    }`}
+                  >
+                    <div className={`h-6 w-full rounded-md ${tPreset.color} flex items-center justify-center`}>
+                      {selectedTheme === tPreset.id && <Check className="h-3.5 w-3.5 text-white" />}
+                    </div>
+                    <span className="text-xs font-semibold">{tPreset.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Thank You Page & Redirect */}
+            <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 space-y-5 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <FileCheck className="h-4 w-4 text-emerald-500" />
-                <span>Halaman Terima Kasih (Thank You Page)</span>
+                <span>Aksi Setelah Submit (Thank You Page)</span>
               </h3>
-              <p className="text-xs text-muted-foreground">
-                Pesan yang ditampilkan ke klien sesaat setelah formulir berhasil dikirim.
-              </p>
-              <Textarea
-                defaultValue="Terima kasih! Tanggapan Anda telah kami terima dan akan segera kami proses."
-                rows={3}
-                className="text-xs"
-              />
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium">Pesan Sukses (Thank You Message)</Label>
+                <Textarea
+                  value={thankYouMessage}
+                  onChange={(e) => setThankYouMessage(e.target.value)}
+                  rows={3}
+                  className="text-xs"
+                />
+              </div>
+
+              <div className="space-y-1.5 pt-2">
+                <Label className="text-xs font-medium">Redirect URL (Opsional)</Label>
+                <Input
+                  value={redirectUrl}
+                  onChange={(e) => setRedirectUrl(e.target.value)}
+                  placeholder="https://wa.me/... atau https://website.com"
+                  className="h-9.5 text-xs font-mono"
+                />
+                <p className="text-[10px] text-muted-foreground">Jika diisi, responden akan langsung diarahkan ke URL ini setelah submit.</p>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* ─── TAB PUBLISH ─── */}
+      {/* ─── TAB CONTENT: PUBLISH ─── */}
       {activeTab === "publish" && (
-        <div className="flex-1 overflow-y-auto p-6 sm:p-10 flex justify-center custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-6 sm:p-12 flex justify-center custom-scrollbar">
           <div className="w-full max-w-2xl space-y-6">
-            <div className="rounded-xl border border-border/80 bg-background p-6 space-y-4 shadow-sm">
+            <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 space-y-5 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                <Share2 className="h-4 w-4 text-primary" />
-                <span>Bagikan Formulir ke Klien</span>
+                <Globe className="h-4 w-4 text-primary" />
+                <span>Bagikan Formulir</span>
               </h3>
-              <p className="text-xs text-muted-foreground">
-                {questionnaireId
-                  ? "Formulir ini dapat langsung dikirim ke klien tertentu dari halaman detail formulir, atau dibagikan tautan intake-nya."
-                  : "Simpan formulir terlebih dahulu untuk menghasilkan link publik dan membagikannya ke klien."}
-              </p>
 
-              {questionnaireId && (
-                <div className="space-y-3 pt-2">
-                  <div className="flex items-center gap-2">
-                    <Input
+              {questionnaireId ? (
+                <div className="space-y-5">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold">Tautan Langsung (Direct Link)</Label>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        readOnly
+                        value={shareUrl}
+                        className="h-9.5 text-xs bg-muted/30 font-mono"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() => {
+                          navigator.clipboard.writeText(shareUrl);
+                          toast.success("Tautan berhasil disalin!");
+                        }}
+                        className="h-9.5 px-4 text-xs font-semibold"
+                      >
+                        Salin Link
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-2 border-t border-border/60">
+                    <Label className="text-xs font-semibold flex items-center gap-1.5">
+                      <Code className="h-3.5 w-3.5 text-primary" />
+                      <span>Embed Formulir ke Website (iFrame)</span>
+                    </Label>
+                    <Textarea
                       readOnly
-                      value={`https://app.cubiqlo.com/app/questionnaires/${questionnaireId}`}
-                      className="h-9 text-xs bg-muted/30 font-mono"
+                      value={embedCode}
+                      rows={3}
+                      className="text-xs font-mono bg-muted/30"
                     />
                     <Button
                       type="button"
+                      variant="outline"
                       size="sm"
                       onClick={() => {
-                        navigator.clipboard.writeText(`https://app.cubiqlo.com/app/questionnaires/${questionnaireId}`);
-                        toast.success("Tautan disalin ke clipboard!");
+                        navigator.clipboard.writeText(embedCode);
+                        toast.success("Kode Embed disalin ke clipboard!");
                       }}
-                      className="h-9 px-3 text-xs"
+                      className="h-8.5 px-3 text-xs"
                     >
-                      Salin Link
+                      Salin Kode Embed
                     </Button>
                   </div>
+                </div>
+              ) : (
+                <div className="py-8 text-center space-y-2">
+                  <Share2 className="h-8 w-8 mx-auto text-muted-foreground/50" />
+                  <p className="text-xs text-muted-foreground">
+                    Klik tombol <strong>Simpan</strong> di kanan atas terlebih dahulu untuk menghasilkan link publik dan kode embed.
+                  </p>
                 </div>
               )}
             </div>

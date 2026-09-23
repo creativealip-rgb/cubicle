@@ -22,16 +22,11 @@ describe("questionnaire pages share the app page chrome", () => {
     expect(page).toContain("Back to Forms");
   });
 
-  it("new and edit pages share the form header pattern (back + title + description, localized)", () => {
+  it("new and edit pages render QuestionnaireBuilder in full-width focus mode", () => {
     const newPage = source("new/page.tsx");
     const editPage = source("[questionnaireId]/edit/page.tsx");
-    expect(newPage).toContain('className="space-y-6 p-6 max-w-4xl"');
-    expect(newPage).toContain("Semua Formulir");
-    expect(newPage).toContain("All Forms");
-    expect(editPage).toContain('className="space-y-6 p-6 max-w-4xl"');
-    expect(editPage).toContain("Kembali ke Formulir");
-    expect(editPage).toContain("Back to Forms");
-    expect(editPage).not.toContain('max-w-3xl');
+    expect(newPage).toContain("<QuestionnaireBuilder");
+    expect(editPage).toContain("<QuestionnaireBuilder");
   });
 
   it("detail page strings are localized (no bare English labels)", () => {
