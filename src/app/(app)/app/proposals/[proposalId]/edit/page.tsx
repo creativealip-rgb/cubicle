@@ -54,5 +54,23 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
     "use server";
     return saveProposalBlocks(proposalId, { contentBlocks: next, revision });
   }
-  return <DocumentBlockEditor kind="proposal" workspaceId={workspaceId} initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("proposal")} initialRevision={proposal.contentRevision} backHref={`/app/proposals/${proposalId}`} placeholderValues={placeholderValues} saveBlocks={saveBlocks} proposalMeta={{ title: proposal.title, clientName: proposal.clientName, clientEmail: proposal.clientEmail, validUntil: proposal.validUntil, status: proposal.status }} />;
+  return (
+    <DocumentBlockEditor
+      kind="proposal"
+      workspaceId={workspaceId}
+      initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("proposal")}
+      initialRevision={proposal.contentRevision}
+      backHref={`/app/proposals/${proposalId}`}
+      placeholderValues={placeholderValues}
+      saveBlocks={saveBlocks}
+      proposalMeta={{
+        id: proposal.id,
+        title: proposal.title,
+        clientName: proposal.clientName,
+        clientEmail: proposal.clientEmail,
+        validUntil: proposal.validUntil,
+        status: proposal.status,
+      }}
+    />
+  );
 }

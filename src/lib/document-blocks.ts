@@ -109,18 +109,20 @@ export function defaultDocumentBlocks(kind: "proposal" | "contract"): DocumentBl
  */
 export function buildProposalStarterBlocks(): DocumentBlock[] {
   return [
-    { id: crypto.randomUUID(), type: "heading", level: 1, content: "Proposal", align: "center" },
+    { id: crypto.randomUUID(), type: "heading", level: 1, content: "Project Proposal", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "{{workspace_name}}", align: "center" },
-    { id: crypto.randomUUID(), type: "text", content: "Untuk: {{client_name}}", align: "center" },
+    { id: crypto.randomUUID(), type: "text", content: "Prepared for: {{client_name}}", align: "center" },
     { id: crypto.randomUUID(), type: "divider" },
-    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Tentang Kami" },
-    { id: crypto.randomUUID(), type: "text", content: "" },
-    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Ruang Lingkup" },
-    { id: crypto.randomUUID(), type: "list", items: ["", "", ""], ordered: false },
-    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Timeline" },
-    { id: crypto.randomUUID(), type: "text", content: "" },
-    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Syarat & Ketentuan" },
-    { id: crypto.randomUUID(), type: "text", content: "Berlaku sampai {{valid_until}}" },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Executive Summary" },
+    { id: crypto.randomUUID(), type: "text", content: "Thank you for the opportunity to submit this proposal. We are pleased to provide the solution outlined below to achieve your goals." },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Scope of Work & Deliverables" },
+    { id: crypto.randomUUID(), type: "list", items: ["Discovery, strategy & architecture", "Design, implementation & development", "Quality assurance, review & deployment"], ordered: false },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Investment & Pricing" },
+    { id: crypto.randomUUID(), type: "table", rows: [["Item / Deliverable", "Est. Hours / Qty", "Amount"], ["Core Project Scope", "1", "{{total_amount}}"]] },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Timeline & Milestones" },
+    { id: crypto.randomUUID(), type: "text", content: "Estimated kickoff upon signature and down payment. Target delivery within 4–6 weeks." },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Terms & Conditions" },
+    { id: crypto.randomUUID(), type: "text", content: "This proposal is valid until {{valid_until}}. Payment terms: 50% down payment to initiate work, 50% upon final acceptance." },
   ];
 }
 
