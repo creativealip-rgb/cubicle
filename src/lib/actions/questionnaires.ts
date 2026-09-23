@@ -502,13 +502,29 @@ export async function submitQuestionnaire(input: {
     }
   }
 
+  // Extract respondent info from answers if not explicitly passed
+  const inferredEmail =
+    input.respondentEmail ||
+    Object.entries(input.answers).find(([k, v]) => {
+      if (typeof v === "string" && v.includes("@") && v.includes(".")) return true;
+      const fieldDef = fields.find((f) => f.id === k);
+      return fieldDef?.type === "email";
+    })?.[1] as string | undefined;
+
+  const inferredName =
+    input.respondentName ||
+    Object.entries(input.answers).find(([k, v]) => {
+      const fieldDef = fields.find((f) => f.id === k);
+      return fieldDef?.type === "text" && (fieldDef.label.toLowerCase().includes("nama") || fieldDef.label.toLowerCase().includes("name"));
+    })?.[1] as string | undefined;
+
   const [newResponse] = await db
     .insert(questionnaireResponses)
     .values({
       workspaceId: qMaster.workspaceId,
       questionnaireId: qMaster.id,
-      respondentName: input.respondentName || (input.answers["name"] as string) || (input.answers["full_name"] as string) || null,
-      respondentEmail: input.respondentEmail || (input.answers["email"] as string) || null,
+      respondentName: inferredName || null,
+      respondentEmail: inferredEmail || null,
       answers: input.answers,
       status: "submitted",
       submittedAt: new Date(),
@@ -520,6 +536,7 @@ export async function submitQuestionnaire(input: {
     respondentEmail: newResponse.respondentEmail,
   });
 
+  // 1. In-App Notification ke Member Workspace
   try {
     await notifyWorkspaceMembers(qMaster.workspaceId, {
       type: "questionnaire_answered",
@@ -532,6 +549,59 @@ export async function submitQuestionnaire(input: {
     });
   } catch {
     // best-effort
+  }
+
+  // 2. Email Autoresponder ke Klien / Responden
+  if (inferredEmail) {
+    try {
+      const [workspace] = await db
+        .select({ name: workspaces.name })
+        .from(workspaces)
+        .where(eq(workspaces.id, qMaster.workspaceId))
+        .limit(1);
+
+      const replyTo = await resolveWorkspaceReplyTo(qMaster.workspaceId);
+      const wsName = workspace?.name || "Cubiqlo";
+      const clientName = inferredName || "Klien";
+
+      const subject = `Konfirmasi Formulir: ${qMaster.name} — ${wsName}`;
+      const text = `Halo ${clientName},\n\nTerima kasih telah mengisi formulir "${qMaster.name}".\n\nTanggapan Anda telah berhasil kami terima. Tim ${wsName} akan segera meninjau brief/data yang Anda kirimkan dan menghubungi Anda kembali secepatnya.\n\nJika ada pertanyaan tambahan, Anda dapat langsung membalas email ini.\n\nSalam hangat,\nTim ${wsName}`;
+
+      await sendNotification({
+        to: inferredEmail,
+        subject,
+        text,
+        type: "email_suite",
+        replyTo,
+      });
+    } catch {
+      // best-effort email send
+    }
+  }
+
+  // 3. Email Notifikasi ke Admin / Owner Workspace
+  try {
+    const adminEmail = await resolveWorkspaceReplyTo(qMaster.workspaceId);
+    if (adminEmail) {
+      const [workspace] = await db
+        .select({ name: workspaces.name })
+        .from(workspaces)
+        .where(eq(workspaces.id, qMaster.workspaceId))
+        .limit(1);
+
+      const wsName = workspace?.name || "Cubiqlo";
+      const subject = `[Respon Baru] ${inferredName || inferredEmail || "Responden"} mengisi "${qMaster.name}"`;
+      const text = `Halo,\n\nAda tanggapan baru yang masuk untuk formulir "${qMaster.name}" pada workspace ${wsName}.\n\nDetail Responden:\n- Nama: ${inferredName || "-"}\n- Email: ${inferredEmail || "-"}\n- Waktu: ${new Date().toLocaleString("id-ID")}\n\nBuka dashboard untuk melihat jawaban lengkap:\nhttps://app.cubiqlo.com/app/questionnaires/${qMaster.id}\n\nSalam,\nCubiqlo System`;
+
+      await sendNotification({
+        to: adminEmail,
+        subject,
+        text,
+        type: "email_suite",
+      });
+    }
+  } catch {
+    // best-effort admin notification
   }
 
   return newResponse;
