@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SendQuestionnaireButton } from "@/components/questionnaires/send-questionnaire-button";
-import { ResponseViewer } from "@/components/questionnaires/response-viewer";
+import { QuestionnaireResponsesTable } from "@/components/questionnaires/questionnaire-responses-table";
 import { DeleteQuestionnaireButton } from "@/components/questionnaires/delete-questionnaire-button";
 import Link from "next/link";
 import { ArrowLeft, Edit, ClipboardList, Inbox } from "lucide-react";
@@ -137,26 +137,15 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
 
       <div className="space-y-3">
         <h2 className="flex items-center gap-2 text-lg font-semibold">
-          <Inbox className="h-5 w-5" />
-          {t("Jawaban", "Responses")}
+          <Inbox className="h-5 w-5 text-primary" />
+          {t("Jawaban Masuk (Jotform Tables)", "Responses Inbox")}
         </h2>
 
-        {responses.length === 0 ? (
-          <Card>
-            <CardContent className="py-8 text-center text-sm text-slate-500">
-              {t(
-                "Belum ada jawaban. Kirim formulir ke klien untuk mulai.",
-                "No responses yet. Send the form to a client to get started.",
-              )}
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-3">
-            {responses.map(r => (
-              <ResponseViewer key={r.id} response={r} fields={fields} />
-            ))}
-          </div>
-        )}
+        <QuestionnaireResponsesTable
+          responses={responses}
+          fields={fields}
+          formName={q.name}
+        />
       </div>
     </div>
   );

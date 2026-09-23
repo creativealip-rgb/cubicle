@@ -67,6 +67,8 @@ import {
   Monitor,
   Image as ImageIcon,
   Edit2,
+  QrCode,
+  MessageCircle,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
@@ -1233,14 +1235,14 @@ export function QuestionnaireBuilder({
               </h3>
 
               {questionnaireId ? (
-                <div className="space-y-4">
-                  <div className="space-y-1.5">
+                <div className="space-y-5">
+                  <div className="space-y-2">
                     <Label className="text-xs font-semibold">Tautan Langsung (Direct Link)</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         readOnly
                         value={shareUrl}
-                        className="h-9 text-xs bg-muted/30 font-mono"
+                        className="h-9.5 text-xs bg-muted/30 font-mono"
                       />
                       <Button
                         type="button"
@@ -1249,14 +1251,47 @@ export function QuestionnaireBuilder({
                           navigator.clipboard.writeText(shareUrl);
                           toast.success("Tautan berhasil disalin!");
                         }}
-                        className="h-9 px-4 text-xs font-semibold"
+                        className="h-9.5 px-4 text-xs font-semibold"
                       >
                         Salin Link
                       </Button>
                     </div>
                   </div>
 
-                  <div className="space-y-1.5 pt-2 border-t border-border/60">
+                  {/* WhatsApp Quick Share Button */}
+                  <div className="pt-2 flex items-center gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        const text = `Halo, mohon bantu isi formulir brief ${name || "proyek"} melalui tautan berikut:\n${shareUrl}`;
+                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
+                      }}
+                      className="h-9 gap-1.5 text-xs font-semibold border-emerald-500/40 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      <span>Bagikan ke WhatsApp</span>
+                    </Button>
+
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        window.open(
+                          `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}`,
+                          "_blank",
+                        );
+                      }}
+                      className="h-9 gap-1.5 text-xs font-semibold"
+                    >
+                      <QrCode className="h-4 w-4 text-primary" />
+                      <span>Lihat QR Code</span>
+                    </Button>
+                  </div>
+
+                  <div className="space-y-2 pt-3 border-t border-border/60">
                     <Label className="text-xs font-semibold flex items-center gap-1.5">
                       <Code className="h-3.5 w-3.5 text-primary" />
                       <span>Embed Formulir ke Website (iFrame)</span>
@@ -1275,7 +1310,7 @@ export function QuestionnaireBuilder({
                         navigator.clipboard.writeText(embedCode);
                         toast.success("Kode Embed disalin ke clipboard!");
                       }}
-                      className="h-8 px-3 text-xs"
+                      className="h-8.5 px-3 text-xs"
                     >
                       Salin Kode Embed
                     </Button>

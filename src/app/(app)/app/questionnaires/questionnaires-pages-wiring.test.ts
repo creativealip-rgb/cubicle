@@ -32,7 +32,7 @@ describe("questionnaire pages share the app page chrome", () => {
   it("detail page strings are localized (no bare English labels)", () => {
     const page = source("[questionnaireId]/page.tsx");
     expect(page).toContain('t("Pratinjau form", "Form preview")');
-    expect(page).toContain('t("Jawaban", "Responses")');
+    expect(page).toContain('t("Jawaban Masuk (Jotform Tables)", "Responses Inbox")');
     expect(page).not.toMatch(/>\s*Back\s*</);
     expect(page).not.toMatch(/>\s*Responses\s*</);
   });
