@@ -68,6 +68,26 @@ export function IntakeForm({ token, fields }: { token: string; fields: Questionn
   return (
     <form onSubmit={handleSubmit} aria-busy={pending} className="space-y-6">
       {fields.map((f) => {
+        // Evaluate Conditional Logic
+        if (f.condition?.fieldId) {
+          const triggerVal = answers[f.condition.fieldId];
+          const expectedVal = (f.condition.value || "").trim().toLowerCase();
+          const actualVal = String(triggerVal ?? "").trim().toLowerCase();
+
+          if (f.condition.operator === "equals" && actualVal !== expectedVal) {
+            return null; // Sembunyikan jika kondisi tidak terpenuhi
+          }
+          if (f.condition.operator === "not_equals" && actualVal === expectedVal) {
+            return null;
+          }
+          if (f.condition.operator === "is_filled" && !triggerVal) {
+            return null;
+          }
+          if (f.condition.operator === "is_empty" && triggerVal) {
+            return null;
+          }
+        }
+
         if (f.type === "heading") {
           return (
             <div key={f.id} className="pt-4 pb-2 border-b border-border/60 space-y-1">

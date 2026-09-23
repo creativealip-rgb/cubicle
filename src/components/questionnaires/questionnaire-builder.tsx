@@ -1031,6 +1031,88 @@ export function QuestionnaireBuilder({
                       </div>
                     )}
 
+                    {/* Conditional Logic Setting */}
+                    <div className="space-y-2 pt-2 border-t border-border/60">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-medium flex items-center gap-1.5">
+                          <Sliders className="h-3.5 w-3.5 text-primary" />
+                          <span>Conditional Logic</span>
+                        </Label>
+                        {selectedField.condition && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => updateSelectedField({ condition: undefined })}
+                            className="h-6 px-1.5 text-[10px] text-destructive hover:bg-destructive/10"
+                          >
+                            Reset
+                          </Button>
+                        )}
+                      </div>
+
+                      {fields.filter((f) => f.id !== selectedField.id && f.type !== "heading").length > 0 ? (
+                        <div className="space-y-2 rounded-lg border p-2.5 bg-muted/10">
+                          <p className="text-[11px] text-muted-foreground">Tampilkan pertanyaan ini hanya jika:</p>
+                          <Select
+                            value={selectedField.condition?.fieldId || "none"}
+                            onValueChange={(val) => {
+                              if (val === "none") {
+                                updateSelectedField({ condition: undefined });
+                              } else {
+                                updateSelectedField({
+                                  condition: {
+                                    fieldId: val,
+                                    operator: "equals",
+                                    value: "",
+                                  },
+                                });
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="h-8 text-xs bg-background">
+                              <SelectValue placeholder="Pilih pertanyaan pemicu..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="none">Tanpa Kondisi (Selalu Tampil)</SelectItem>
+                              {fields
+                                .filter((f) => f.id !== selectedField.id && f.type !== "heading")
+                                .map((f) => (
+                                  <SelectItem key={f.id} value={f.id}>
+                                    {f.label}
+                                  </SelectItem>
+                                ))}
+                            </SelectContent>
+                          </Select>
+
+                          {selectedField.condition && (
+                            <div className="space-y-1.5 pt-1">
+                              <Label className="text-[10px] text-muted-foreground uppercase font-bold">
+                                Nilai yang Cocok (Value Equals):
+                              </Label>
+                              <Input
+                                value={selectedField.condition.value || ""}
+                                onChange={(e) =>
+                                  updateSelectedField({
+                                    condition: {
+                                      ...selectedField.condition!,
+                                      value: e.target.value,
+                                    },
+                                  })
+                                }
+                                placeholder="Misal: Web Development, Ya, dsb."
+                                className="h-8 text-xs bg-background"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <p className="text-[10px] text-muted-foreground italic">
+                          Tambahkan minimal 2 pertanyaan untuk mengaktifkan conditional logic.
+                        </p>
+                      )}
+                    </div>
+
                     {/* Quick Delete */}
                     <div className="pt-3 border-t border-border/60">
                       <Button

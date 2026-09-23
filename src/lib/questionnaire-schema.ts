@@ -34,6 +34,14 @@ export const questionnaireFieldSchema = z.object({
   placeholder: z.string().optional(),
   acceptFiles: z.string().optional(),
   maxRating: z.number().int().min(3).max(10).optional(),
+  // Conditional Logic: show this field only if another field matches a value
+  condition: z
+    .object({
+      fieldId: z.string().min(1),
+      operator: z.enum(["equals", "not_equals", "is_filled", "is_empty"]).default("equals"),
+      value: z.string().optional(),
+    })
+    .optional(),
 });
 
 export type QuestionnaireField = z.infer<typeof questionnaireFieldSchema>;
