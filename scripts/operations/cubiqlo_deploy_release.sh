@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+cat >&2 <<'EOF'
+ERROR: legacy deployment path disabled. It targets dead Compose service cubicle-cubicle-1 and causes downtime.
+Use: scripts/operations/cubiqlo_blue_green_deploy.sh IMAGE_TAG
+EOF
+exit 2
+
 PROJECT_DIR=${PROJECT_DIR:-/root/projects/cubicle}
 RELEASE_DIR=${RELEASE_DIR:-/root/releases/cubiqlo}
 MANIFEST=${1:-$RELEASE_DIR/current.env}
