@@ -52,7 +52,6 @@ import {
   Copy,
   GripVertical,
   Settings,
-  Eye,
   Save,
   Loader2,
   ArrowLeft,
@@ -64,7 +63,10 @@ import {
   Code,
   Check,
   Globe,
-  ExternalLink,
+  Smartphone,
+  Monitor,
+  Image as ImageIcon,
+  Edit2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
@@ -199,10 +201,10 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
 ];
 
 const THEME_PRESETS = [
-  { id: "purple", name: "Modern Purple", color: "bg-[#6C5CE7] text-white", hex: "#6C5CE7" },
-  { id: "blue", name: "Ocean Blue", color: "bg-blue-600 text-white", hex: "#2563EB" },
-  { id: "emerald", name: "Emerald Green", color: "bg-emerald-600 text-white", hex: "#059669" },
-  { id: "dark", name: "Minimal Dark", color: "bg-zinc-900 text-white", hex: "#18181B" },
+  { id: "purple", name: "Modern Purple", bgBtn: "bg-[#6C5CE7] hover:bg-[#5b4cc4]", hex: "#6C5CE7" },
+  { id: "blue", name: "Ocean Blue", bgBtn: "bg-blue-600 hover:bg-blue-700", hex: "#2563EB" },
+  { id: "emerald", name: "Emerald Green", bgBtn: "bg-emerald-600 hover:bg-emerald-700", hex: "#059669" },
+  { id: "dark", name: "Minimal Dark", bgBtn: "bg-zinc-900 hover:bg-black", hex: "#18181B" },
 ];
 
 // ─── Sortable Field Item Component ───
@@ -213,6 +215,7 @@ function SortableCanvasField({
   onDuplicate,
   onDelete,
   onOpenProperties,
+  onUpdateLabel,
 }: {
   field: QuestionnaireField;
   isSelected: boolean;
@@ -220,6 +223,7 @@ function SortableCanvasField({
   onDuplicate: () => void;
   onDelete: () => void;
   onOpenProperties: () => void;
+  onUpdateLabel: (val: string) => void;
 }) {
   const {
     attributes,
@@ -243,7 +247,7 @@ function SortableCanvasField({
       ref={setNodeRef}
       style={style}
       onClick={onSelect}
-      className={`group relative rounded-xl border p-5 transition-all cursor-pointer ${
+      className={`group relative rounded-xl border p-4 sm:p-5 transition-all cursor-pointer ${
         isSelected
           ? "border-primary bg-primary/[0.02] ring-2 ring-primary/20 shadow-xs"
           : "border-border/70 bg-card hover:border-primary/40 hover:shadow-xs"
@@ -302,79 +306,89 @@ function SortableCanvasField({
       {/* Heading Field */}
       {isHeading ? (
         <div className="space-y-1.5 pt-1">
-          <h3 className="text-lg font-bold tracking-tight text-foreground">{field.label}</h3>
-          {field.sublabel && <p className="text-xs text-muted-foreground">{field.sublabel}</p>}
+          <input
+            type="text"
+            value={field.label}
+            onChange={(e) => onUpdateLabel(e.target.value)}
+            className="w-full text-base sm:text-lg font-bold tracking-tight text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1"
+          />
+          {field.sublabel && <p className="text-xs text-muted-foreground px-1">{field.sublabel}</p>}
         </div>
       ) : (
         /* Standard Field Preview */
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <label className="text-xs font-semibold text-foreground flex items-center gap-1">
-              <span>{field.label}</span>
-              {field.required && <span className="text-destructive font-bold">*</span>}
-            </label>
-            <Badge variant="outline" className="text-[9px] uppercase font-bold tracking-wider py-0 px-1.5 text-muted-foreground">
+            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+              <input
+                type="text"
+                value={field.label}
+                onChange={(e) => onUpdateLabel(e.target.value)}
+                className="text-xs font-semibold text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1 py-0.5 flex-1"
+              />
+              {field.required && <span className="text-destructive font-bold text-xs shrink-0">*</span>}
+            </div>
+            <Badge variant="outline" className="text-[9px] uppercase font-bold tracking-wider py-0 px-1.5 text-muted-foreground shrink-0">
               {field.type}
             </Badge>
           </div>
 
-          {field.sublabel && <p className="text-[11px] text-muted-foreground">{field.sublabel}</p>}
+          {field.sublabel && <p className="text-[11px] text-muted-foreground px-1">{field.sublabel}</p>}
 
           {field.type === "text" && (
-            <Input disabled placeholder={field.placeholder || "Jawaban singkat..."} className="h-9.5 text-xs bg-muted/20" />
+            <Input disabled placeholder={field.placeholder || "Jawaban singkat..."} className="h-9 text-xs bg-muted/20" />
           )}
           {field.type === "textarea" && (
-            <Textarea disabled placeholder={field.placeholder || "Tuliskan jawaban lengkap di sini..."} rows={3} className="text-xs bg-muted/20" />
+            <Textarea disabled placeholder={field.placeholder || "Tuliskan jawaban lengkap di sini..."} rows={2} className="text-xs bg-muted/20" />
           )}
           {field.type === "email" && (
-            <Input disabled placeholder={field.placeholder || "email@domain.com"} className="h-9.5 text-xs bg-muted/20" />
+            <Input disabled placeholder={field.placeholder || "email@domain.com"} className="h-9 text-xs bg-muted/20" />
           )}
           {field.type === "phone" && (
-            <Input disabled placeholder={field.placeholder || "+62 812..."} className="h-9.5 text-xs bg-muted/20" />
+            <Input disabled placeholder={field.placeholder || "+62 812..."} className="h-9 text-xs bg-muted/20" />
           )}
           {field.type === "number" && (
-            <Input disabled placeholder={field.placeholder || "0"} type="number" className="h-9.5 text-xs bg-muted/20" />
+            <Input disabled placeholder={field.placeholder || "0"} type="number" className="h-9 text-xs bg-muted/20" />
           )}
           {field.type === "date" && (
-            <Input disabled type="date" className="h-9.5 text-xs bg-muted/20" />
+            <Input disabled type="date" className="h-9 text-xs bg-muted/20" />
           )}
           {field.type === "url" && (
-            <Input disabled placeholder={field.placeholder || "https://..."} className="h-9.5 text-xs bg-muted/20" />
+            <Input disabled placeholder={field.placeholder || "https://..."} className="h-9 text-xs bg-muted/20" />
           )}
           {field.type === "select" && (
             <Select disabled>
-              <SelectTrigger className="h-9.5 text-xs bg-muted/20">
+              <SelectTrigger className="h-9 text-xs bg-muted/20">
                 <SelectValue placeholder="Pilih salah satu..." />
               </SelectTrigger>
             </Select>
           )}
           {field.type === "multiselect" && (
-            <div className="space-y-1.5 pt-1">
+            <div className="space-y-1.5 pt-1 px-1">
               {(field.options || ["Pilihan 1", "Pilihan 2"]).map((opt, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <div className="h-4 w-4 rounded border border-border bg-muted/30" />
+                  <div className="h-3.5 w-3.5 rounded border border-border bg-muted/30" />
                   <span>{opt}</span>
                 </div>
               ))}
             </div>
           )}
           {field.type === "file" && (
-            <div className="border-2 border-dashed border-border/80 rounded-xl p-5 text-center bg-muted/10 space-y-1">
-              <Paperclip className="h-5 w-5 mx-auto text-muted-foreground" />
+            <div className="border-2 border-dashed border-border/80 rounded-xl p-4 text-center bg-muted/10 space-y-1">
+              <Paperclip className="h-4 w-4 mx-auto text-muted-foreground" />
               <p className="text-xs font-medium text-foreground">Upload file brief atau dokumen</p>
               <p className="text-[10px] text-muted-foreground">{field.acceptFiles || "Format: PDF, PNG, ZIP"}</p>
             </div>
           )}
           {field.type === "signature" && (
-            <div className="border border-border/80 rounded-xl p-4 text-center bg-muted/10 h-16 flex items-center justify-center gap-2">
-              <PenTool className="h-4 w-4 text-muted-foreground" />
-              <p className="text-[11px] text-muted-foreground italic">Area Tanda Tangan Digital Klien</p>
+            <div className="border border-border/80 rounded-xl p-3 text-center bg-muted/10 h-14 flex items-center justify-center gap-2">
+              <PenTool className="h-3.5 w-3.5 text-muted-foreground" />
+              <p className="text-[11px] text-muted-foreground italic">Area Tanda Tangan Digital</p>
             </div>
           )}
           {field.type === "rating" && (
-            <div className="flex items-center gap-2 pt-1">
+            <div className="flex items-center gap-1.5 pt-1 px-1">
               {[1, 2, 3, 4, 5].map((star) => (
-                <Star key={star} className="h-5 w-5 text-amber-400 fill-amber-400/20" />
+                <Star key={star} className="h-4 w-4 text-amber-400 fill-amber-400/20" />
               ))}
             </div>
           )}
@@ -399,10 +413,12 @@ export function QuestionnaireBuilder({
 
   // Navigation tab: "build" | "settings" | "publish"
   const [activeTab, setActiveTab] = useState<"build" | "settings" | "publish">("build");
+  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
 
   // Form general state
   const [name, setName] = useState(initial?.name || "");
   const [description, setDescription] = useState(initial?.description || "");
+  const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [selectedTheme, setSelectedTheme] = useState("purple");
   const [thankYouMessage, setThankYouMessage] = useState(
     "Terima kasih! Tanggapan Anda telah berhasil kami terima dan akan segera kami proses.",
@@ -434,7 +450,6 @@ export function QuestionnaireBuilder({
   const [elementsOpen, setElementsOpen] = useState(true);
   const [propertiesOpen, setPropertiesOpen] = useState(true);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(fields[0]?.id ?? null);
-  const [previewOpen, setPreviewOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
   // DnD Sensors setup
@@ -565,32 +580,32 @@ export function QuestionnaireBuilder({
   const embedCode = questionnaireId ? `<iframe src="https://app.cubiqlo.com/app/questionnaires/${questionnaireId}" width="100%" height="700px" frameborder="0" style="border:0;border-radius:12px;"></iframe>` : "";
 
   return (
-    <div className="flex flex-col h-[calc(100vh-68px)] -m-4 sm:-m-6 bg-slate-100/70 dark:bg-zinc-950 overflow-hidden">
-      {/* ─── Top Jotform Bar: Brand, Tabs, Actions ─── */}
-      <header className="h-14 border-b border-border/80 bg-background px-4 flex items-center justify-between shrink-0 z-20">
-        <div className="flex items-center gap-3 min-w-0">
+    <div className="flex flex-col h-full w-full bg-slate-100/70 dark:bg-zinc-950 overflow-hidden select-none">
+      {/* ─── Top Jotform Bar: Brand, Tabs, Device Switcher, Actions ─── */}
+      <header className="h-13 border-b border-border/80 bg-background px-3 sm:px-4 flex items-center justify-between shrink-0 z-20">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Button variant="ghost" size="icon" asChild className="h-8 w-8 rounded-lg shrink-0">
             <Link href="/app/questionnaires">
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
-          <div className="min-w-0 flex items-center gap-2">
+          <div className="min-w-0 flex items-center gap-1.5">
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t("Nama Formulir...", "Form Name...")}
-              className="font-bold text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1.5 py-0.5 max-w-[200px] sm:max-w-xs truncate"
+              className="font-bold text-xs sm:text-sm bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1.5 py-0.5 max-w-[140px] sm:max-w-xs truncate"
             />
           </div>
         </div>
 
         {/* 3 Main Workflow Tabs */}
-        <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/60">
+        <div className="flex items-center gap-1 bg-muted/60 p-0.5 sm:p-1 rounded-xl border border-border/60">
           <button
             type="button"
             onClick={() => setActiveTab("build")}
-            className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1 text-xs font-semibold rounded-lg transition-all ${
               activeTab === "build"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -602,7 +617,7 @@ export function QuestionnaireBuilder({
           <button
             type="button"
             onClick={() => setActiveTab("settings")}
-            className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1 text-xs font-semibold rounded-lg transition-all ${
               activeTab === "settings"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -614,7 +629,7 @@ export function QuestionnaireBuilder({
           <button
             type="button"
             onClick={() => setActiveTab("publish")}
-            className={`flex items-center gap-1.5 px-3.5 py-1 text-xs font-semibold rounded-lg transition-all ${
+            className={`flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1 text-xs font-semibold rounded-lg transition-all ${
               activeTab === "publish"
                 ? "bg-background text-foreground shadow-xs"
                 : "text-muted-foreground hover:text-foreground"
@@ -625,10 +640,34 @@ export function QuestionnaireBuilder({
           </button>
         </div>
 
-        {/* Action Right: Toggle Drawers, Preview & Save */}
-        <div className="flex items-center gap-2">
+        {/* Action Right: Device Switcher & Drawers & Save */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
           {activeTab === "build" && (
             <>
+              {/* Desktop / Mobile Switcher */}
+              <div className="hidden lg:flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/60">
+                <button
+                  type="button"
+                  onClick={() => setPreviewDevice("desktop")}
+                  className={`p-1 rounded-md transition-all ${
+                    previewDevice === "desktop" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Desktop Preview"
+                >
+                  <Monitor className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPreviewDevice("mobile")}
+                  className={`p-1 rounded-md transition-all ${
+                    previewDevice === "mobile" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Mobile Preview"
+                >
+                  <Smartphone className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
               <Button
                 type="button"
                 variant={elementsOpen ? "secondary" : "outline"}
@@ -673,7 +712,7 @@ export function QuestionnaireBuilder({
         <div className="flex-1 flex min-h-0 overflow-hidden relative">
           {/* PANEL KIRI: Element Catalog (Collapsible) */}
           {elementsOpen && (
-            <aside className="w-64 border-r border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-left-4 duration-150">
+            <aside className="w-60 sm:w-64 border-r border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-left-4 duration-150">
               <div className="p-3 border-b border-border/60 flex items-center justify-between">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Plus className="h-3.5 w-3.5 text-primary" />
@@ -776,31 +815,60 @@ export function QuestionnaireBuilder({
           )}
 
           {/* PANEL TENGAH: Live Form Canvas (Lega & Centered) */}
-          <main className="flex-1 overflow-y-auto p-4 sm:p-8 md:p-12 flex justify-center custom-scrollbar">
-            <div className="w-full max-w-3xl space-y-4">
+          <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex justify-center custom-scrollbar">
+            <div className={`w-full transition-all duration-200 ${previewDevice === "mobile" ? "max-w-sm" : "max-w-3xl"}`}>
               {/* Form Paper Sheet */}
-              <div className="rounded-2xl border border-border/80 bg-background shadow-md p-6 sm:p-10 space-y-7">
+              <div className="rounded-2xl border border-border/80 bg-background shadow-md p-5 sm:p-8 space-y-6">
+                {/* Optional Header Logo Banner */}
+                <div className="flex items-center justify-between pb-1">
+                  {logoUrl ? (
+                    <div className="relative group">
+                      <img src={logoUrl} alt="Logo" className="h-10 object-contain rounded" />
+                      <button
+                        type="button"
+                        onClick={() => setLogoUrl(null)}
+                        className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Hapus Logo"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const url = window.prompt("Masukkan URL Logo / Gambar:");
+                        if (url) setLogoUrl(url);
+                      }}
+                      className="text-[11px] font-medium text-muted-foreground hover:text-primary flex items-center gap-1.5 py-1 px-2 rounded-lg border border-dashed border-border hover:border-primary/40 transition-all"
+                    >
+                      <ImageIcon className="h-3.5 w-3.5" />
+                      <span>+ Pasang Logo Brand</span>
+                    </button>
+                  )}
+                </div>
+
                 {/* Form Title & Header Area */}
-                <div className="space-y-2 border-b border-border/60 pb-6">
+                <div className="space-y-1.5 border-b border-border/60 pb-5">
                   <Input
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     placeholder="Judul Formulir..."
-                    className="text-2xl sm:text-3xl font-extrabold tracking-tight border-none px-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground/40"
+                    className="text-xl sm:text-2xl font-extrabold tracking-tight border-none px-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground/40"
                   />
                   <Textarea
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
                     placeholder="Tuliskan petunjuk atau deskripsi formulir untuk responden..."
                     rows={2}
-                    className="text-xs text-muted-foreground border-none px-0 min-h-[45px] resize-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
+                    className="text-xs text-muted-foreground border-none px-0 min-h-[40px] resize-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
                   />
                 </div>
 
                 {/* DnD Sortable Field List Canvas */}
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-4">
+                    <div className="space-y-3.5">
                       {fields.map((field) => (
                         <SortableCanvasField
                           key={field.id}
@@ -813,6 +881,11 @@ export function QuestionnaireBuilder({
                           onOpenProperties={() => {
                             setSelectedFieldId(field.id);
                             setPropertiesOpen(true);
+                          }}
+                          onUpdateLabel={(val) => {
+                            setFields((prev) =>
+                              prev.map((f) => (f.id === field.id ? { ...f, label: val } : f)),
+                            );
                           }}
                           onDuplicate={() => handleDuplicateField(field.id)}
                           onDelete={() => handleDeleteField(field.id)}
@@ -829,19 +902,19 @@ export function QuestionnaireBuilder({
                     variant="outline"
                     size="sm"
                     onClick={() => setElementsOpen(true)}
-                    className="h-9 px-4 text-xs font-semibold gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5"
+                    className="h-8.5 px-4 text-xs font-semibold gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5"
                   >
-                    <Plus className="h-4 w-4" />
+                    <Plus className="h-3.5 w-3.5" />
                     <span>Tambah Pertanyaan Baru</span>
                   </Button>
                 </div>
 
                 {/* Submit button preview */}
-                <div className="pt-6 border-t border-border/60 flex items-center justify-between">
-                  <Button disabled className="h-10 px-6 text-xs font-semibold bg-primary text-primary-foreground">
+                <div className="pt-5 border-t border-border/60 flex items-center justify-between">
+                  <Button disabled className="h-9.5 px-5 text-xs font-semibold bg-primary text-primary-foreground">
                     Submit Form
                   </Button>
-                  <span className="text-[11px] text-muted-foreground">Powered by Cubiqlo Forms</span>
+                  <span className="text-[10px] text-muted-foreground">Powered by Cubiqlo Forms</span>
                 </div>
               </div>
             </div>
@@ -849,7 +922,7 @@ export function QuestionnaireBuilder({
 
           {/* PANEL KANAN: Field Properties Drawer (Collapsible) */}
           {propertiesOpen && (
-            <aside className="w-80 border-l border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-right-4 duration-150">
+            <aside className="w-72 sm:w-80 border-l border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-right-4 duration-150">
               <div className="p-3.5 border-b border-border/60 flex items-center justify-between">
                 <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                   <Settings className="h-3.5 w-3.5 text-primary" />
@@ -915,7 +988,7 @@ export function QuestionnaireBuilder({
 
                     {/* Required Switch */}
                     {selectedField.type !== "heading" && (
-                      <div className="flex items-center justify-between rounded-lg border p-3 bg-muted/10">
+                      <div className="flex items-center justify-between rounded-lg border p-2.5 bg-muted/10">
                         <div>
                           <p className="text-xs font-medium">Wajib Diisi (Required)</p>
                           <p className="text-[10px] text-muted-foreground">Klien tidak bisa submit jika kosong</p>
@@ -938,7 +1011,7 @@ export function QuestionnaireBuilder({
                               options: e.target.value.split("\n").filter((s) => s.trim().length > 0),
                             })
                           }
-                          rows={5}
+                          rows={4}
                           placeholder="Opsi 1&#10;Opsi 2&#10;Opsi 3"
                           className="text-xs font-mono"
                         />
@@ -959,13 +1032,13 @@ export function QuestionnaireBuilder({
                     )}
 
                     {/* Quick Delete */}
-                    <div className="pt-4 border-t border-border/60">
+                    <div className="pt-3 border-t border-border/60">
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
                         onClick={() => handleDeleteField(selectedField.id)}
-                        className="w-full h-8.5 text-xs text-destructive hover:bg-destructive/10 border-destructive/30"
+                        className="w-full h-8 text-xs text-destructive hover:bg-destructive/10 border-destructive/30"
                       >
                         <Trash2 className="h-3.5 w-3.5 mr-1.5" />
                         Hapus Pertanyaan Ini
@@ -986,10 +1059,10 @@ export function QuestionnaireBuilder({
 
       {/* ─── TAB CONTENT: SETTINGS ─── */}
       {activeTab === "settings" && (
-        <div className="flex-1 overflow-y-auto p-6 sm:p-12 flex justify-center custom-scrollbar">
-          <div className="w-full max-w-2xl space-y-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 md:p-12 flex justify-center custom-scrollbar">
+          <div className="w-full max-w-2xl space-y-5">
             {/* General Info */}
-            <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 space-y-5 shadow-sm">
+            <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Settings className="h-4 w-4 text-primary" />
                 <span>Pengaturan Formulir</span>
@@ -997,7 +1070,7 @@ export function QuestionnaireBuilder({
 
               <div className="space-y-1.5">
                 <Label className="text-xs font-medium">Nama Formulir</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} className="h-9.5 text-sm" />
+                <Input value={name} onChange={(e) => setName(e.target.value)} className="h-9 text-xs sm:text-sm" />
               </div>
 
               <div className="space-y-1.5">
@@ -1007,27 +1080,27 @@ export function QuestionnaireBuilder({
             </div>
 
             {/* Theme & Styling */}
-            <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 space-y-5 shadow-sm">
+            <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Palette className="h-4 w-4 text-primary" />
                 <span>Tema & Warna Aksen</span>
               </h3>
               <p className="text-xs text-muted-foreground">Pilih warna branding yang cocok dengan identity agensi Anda.</p>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
                 {THEME_PRESETS.map((tPreset) => (
                   <button
                     key={tPreset.id}
                     type="button"
                     onClick={() => setSelectedTheme(tPreset.id)}
-                    className={`p-3 rounded-xl border text-left transition-all flex flex-col gap-2 ${
+                    className={`p-2.5 rounded-xl border text-left transition-all flex flex-col gap-2 ${
                       selectedTheme === tPreset.id
                         ? "border-primary ring-2 ring-primary/20 bg-muted/20"
                         : "border-border/70 hover:border-border"
                     }`}
                   >
-                    <div className={`h-6 w-full rounded-md ${tPreset.color} flex items-center justify-center`}>
-                      {selectedTheme === tPreset.id && <Check className="h-3.5 w-3.5 text-white" />}
+                    <div className={`h-5 w-full rounded-md ${tPreset.bgBtn} flex items-center justify-center`}>
+                      {selectedTheme === tPreset.id && <Check className="h-3 w-3 text-white" />}
                     </div>
                     <span className="text-xs font-semibold">{tPreset.name}</span>
                   </button>
@@ -1036,7 +1109,7 @@ export function QuestionnaireBuilder({
             </div>
 
             {/* Thank You Page & Redirect */}
-            <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 space-y-5 shadow-sm">
+            <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <FileCheck className="h-4 w-4 text-emerald-500" />
                 <span>Aksi Setelah Submit (Thank You Page)</span>
@@ -1058,7 +1131,7 @@ export function QuestionnaireBuilder({
                   value={redirectUrl}
                   onChange={(e) => setRedirectUrl(e.target.value)}
                   placeholder="https://wa.me/... atau https://website.com"
-                  className="h-9.5 text-xs font-mono"
+                  className="h-9 text-xs font-mono"
                 />
                 <p className="text-[10px] text-muted-foreground">Jika diisi, responden akan langsung diarahkan ke URL ini setelah submit.</p>
               </div>
@@ -1069,23 +1142,23 @@ export function QuestionnaireBuilder({
 
       {/* ─── TAB CONTENT: PUBLISH ─── */}
       {activeTab === "publish" && (
-        <div className="flex-1 overflow-y-auto p-6 sm:p-12 flex justify-center custom-scrollbar">
-          <div className="w-full max-w-2xl space-y-6">
-            <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 space-y-5 shadow-sm">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-8 md:p-12 flex justify-center custom-scrollbar">
+          <div className="w-full max-w-2xl space-y-5">
+            <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
                 <span>Bagikan Formulir</span>
               </h3>
 
               {questionnaireId ? (
-                <div className="space-y-5">
-                  <div className="space-y-2">
+                <div className="space-y-4">
+                  <div className="space-y-1.5">
                     <Label className="text-xs font-semibold">Tautan Langsung (Direct Link)</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         readOnly
                         value={shareUrl}
-                        className="h-9.5 text-xs bg-muted/30 font-mono"
+                        className="h-9 text-xs bg-muted/30 font-mono"
                       />
                       <Button
                         type="button"
@@ -1094,14 +1167,14 @@ export function QuestionnaireBuilder({
                           navigator.clipboard.writeText(shareUrl);
                           toast.success("Tautan berhasil disalin!");
                         }}
-                        className="h-9.5 px-4 text-xs font-semibold"
+                        className="h-9 px-4 text-xs font-semibold"
                       >
                         Salin Link
                       </Button>
                     </div>
                   </div>
 
-                  <div className="space-y-2 pt-2 border-t border-border/60">
+                  <div className="space-y-1.5 pt-2 border-t border-border/60">
                     <Label className="text-xs font-semibold flex items-center gap-1.5">
                       <Code className="h-3.5 w-3.5 text-primary" />
                       <span>Embed Formulir ke Website (iFrame)</span>
@@ -1120,7 +1193,7 @@ export function QuestionnaireBuilder({
                         navigator.clipboard.writeText(embedCode);
                         toast.success("Kode Embed disalin ke clipboard!");
                       }}
-                      className="h-8.5 px-3 text-xs"
+                      className="h-8 px-3 text-xs"
                     >
                       Salin Kode Embed
                     </Button>

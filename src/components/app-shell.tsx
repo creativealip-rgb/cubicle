@@ -140,7 +140,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
           )}
         >
           <AppTopbar user={user} />
-          <main id="main-content" className={cn("min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28", (focusEditor || documentEditor || onBrainPage) && "p-0 pb-0 sm:p-0 md:p-0 md:pb-0")}>{children}</main>
+          <main id="main-content" className={cn("min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28", (focusEditor || documentEditor || onBrainPage) && "p-0 pb-0 sm:p-0 md:p-0 md:pb-0 h-[calc(100vh-56px)] overflow-hidden")}>{children}</main>
         </div>
         {!onBrainPage && <AIChatPanel variant="floating" />}
       </div>
