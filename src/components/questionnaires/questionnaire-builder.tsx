@@ -1184,34 +1184,48 @@ export function QuestionnaireBuilder({
                           : "rounded-2xl"
                     }`}
                   >
-                    {/* Optional Header Logo Banner */}
-                    <div className="flex items-center justify-between pb-1">
-                      {logoUrl ? (
-                        <div className="relative group">
-                          <img src={logoUrl} alt="Logo" className="h-10 object-contain rounded" />
-                          <button
-                            type="button"
-                            onClick={() => setLogoUrl(null)}
-                            className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                            title="Hapus Logo"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const url = window.prompt("Masukkan URL Logo / Gambar:");
-                            if (url) setLogoUrl(url);
-                          }}
-                          className="text-[11px] font-medium text-muted-foreground hover:text-primary flex items-center gap-1.5 py-1 px-2 rounded-lg border border-dashed border-border hover:border-primary/40 transition-all"
-                        >
-                          <ImageIcon className="h-3.5 w-3.5" />
-                          <span>+ Pasang Logo Brand</span>
-                        </button>
-                      )}
-                    </div>
+                      {/* Optional Header Logo Banner */}
+                      <div className="flex items-center justify-between pb-1">
+                        {logoUrl ? (
+                          <div className="relative group">
+                            <img src={logoUrl} alt="Logo" className="h-10 object-contain rounded" />
+                            <button
+                              type="button"
+                              onClick={() => setLogoUrl(null)}
+                              className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                              title="Hapus Logo"
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <label className="text-[11px] font-medium text-muted-foreground hover:text-primary flex items-center gap-1.5 py-1 px-2 rounded-lg border border-dashed border-border hover:border-primary/40 transition-all cursor-pointer">
+                            <ImageIcon className="h-3.5 w-3.5" />
+                            <span>+ Upload Logo Brand</span>
+                            <input
+                              type="file"
+                              accept="image/png,image/jpeg,image/webp,image/gif"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (!file) return;
+                                if (file.size > 2 * 1024 * 1024) {
+                                  toast.error("Ukuran logo maksimal 2MB");
+                                  return;
+                                }
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                  if (typeof reader.result === "string") {
+                                    setLogoUrl(reader.result);
+                                    toast.success("Logo berhasil diupload!");
+                                  }
+                                };
+                                reader.readAsDataURL(file);
+                              }}
+                            />
+                          </label>
+                        )}
+                      </div>
 
                     {/* Form Title & Header Area */}
                     <div className="space-y-1.5 border-b border-border/60 pb-5">
