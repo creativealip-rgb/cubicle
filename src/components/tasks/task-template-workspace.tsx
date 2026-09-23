@@ -417,7 +417,7 @@ export function TaskTemplateWorkspace({
                     <div className="flex items-center justify-between pb-1 border-b border-border/40">
                       <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                         <CheckSquare2 className="h-3 w-3 text-primary" />
-                        {t("Subtask", "Subtask")}
+                        {t("Daftar Tugas", "Task List")}
                       </span>
                       {template.status === "active" && (
                         <ItemFormDialog

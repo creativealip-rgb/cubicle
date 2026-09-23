@@ -222,10 +222,17 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "
               value={form.description}
               onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))}
               placeholder={t("Detail tugas...", "Task details...")}
-              rows={4}
-              className="min-h-[110px] resize-y text-xs"
+              rows={3}
+              className="min-h-[80px] resize-y text-xs"
             />
           </div>
+
+          {mode === "edit" && defaultValues?.id && (
+            <TaskSubtaskSection
+              taskId={defaultValues.id}
+              behavior={defaultValues.behavior}
+            />
+          )}
         </div>
 
         {/* Right Column: Status & Penugasan */}
@@ -304,13 +311,6 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "
             />
             <span className="text-xs font-medium">{t("Terlihat oleh klien di portal", "Visible to client in portal")}</span>
           </label>
-
-          {mode === "edit" && defaultValues?.id && (
-            <TaskSubtaskSection
-              taskId={defaultValues.id}
-              behavior={defaultValues.behavior}
-            />
-          )}
         </div>
       </div>
 
