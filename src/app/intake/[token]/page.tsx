@@ -12,7 +12,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
   if ("error" in result) {
     const messages: Record<string, { title: string; body: string }> = {
       not_found: { title: "Tautan Tidak Ditemukan", body: "Tautan formulir ini tidak valid atau sudah dihapus." },
-      revoked: { title: "Tautan Dinonaktifkan", body: "Tautan formulir ini telah ditutup oleh pemilik workspace." },
+      revoked: { title: "Tautan Dinonaktifkan", body: "Tautan formulir ini telah ditutup oleh pembuat formulir." },
       expired: { title: "Tautan Kedaluwarsa", body: "Masa berlaku tautan formulir ini telah berakhir." },
       already_submitted: { title: "Sudah Diisi", body: "Tanggapan Anda telah berhasil kami terima sebelumnya. Terima kasih." },
     };
@@ -47,7 +47,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
             Cubiqlo
           </Link>
           <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-            Client Brief & Intake Form
+            Online Form & Brief
           </p>
         </div>
 
@@ -68,12 +68,11 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
         </div>
 
         {/* Footer */}
-        <p className="text-center text-[11px] text-muted-foreground">
-          Formulir aman ditenagai oleh{" "}
-          <Link href="/" className="font-semibold text-primary hover:underline">
-            Cubiqlo
-          </Link>
-        </p>
+        <div className="text-center">
+          <p className="text-[11px] text-muted-foreground">
+            Dibuat secara aman menggunakan <span className="font-semibold text-foreground">Cubiqlo Forms</span>
+          </p>
+        </div>
       </div>
     </div>
   );

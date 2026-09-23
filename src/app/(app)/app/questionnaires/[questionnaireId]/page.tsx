@@ -8,12 +8,11 @@ import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { safeParseQuestionnaireSchema } from "@/lib/questionnaire-schema";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SendQuestionnaireButton } from "@/components/questionnaires/send-questionnaire-button";
 import { QuestionnaireResponsesTable } from "@/components/questionnaires/questionnaire-responses-table";
 import { DeleteQuestionnaireButton } from "@/components/questionnaires/delete-questionnaire-button";
 import Link from "next/link";
-import { ArrowLeft, Edit, ClipboardList, Inbox } from "lucide-react";
+import { ArrowLeft, Edit, ExternalLink, Share2, Eye } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
@@ -31,7 +30,9 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
   const lang = await getCurrentLang();
   const t = createT(lang);
 
-  const [q] = await db.select().from(questionnaires)
+  const [q] = await db
+    .select()
+    .from(questionnaires)
     .where(and(eq(questionnaires.id, questionnaireId), eq(questionnaires.workspaceId, workspaceId)))
     .limit(1);
   if (!q) notFound();
@@ -57,90 +58,84 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
     .where(eq(questionnaireResponses.questionnaireId, questionnaireId))
     .orderBy(desc(questionnaireResponses.createdAt));
 
-  const clientsList = await db.select({ id: clients.id, name: clients.name, email: clients.email })
-    .from(clients).where(eq(clients.workspaceId, workspaceId));
-  const projectsList = await db.select({ id: projects.id, name: projects.name })
-    .from(projects).where(eq(projects.workspaceId, workspaceId));
+  const clientsList = await db
+    .select({ id: clients.id, name: clients.name, email: clients.email })
+    .from(clients)
+    .where(eq(clients.workspaceId, workspaceId));
+  const projectsList = await db
+    .select({ id: projects.id, name: projects.name })
+    .from(projects)
+    .where(eq(projects.workspaceId, workspaceId));
 
-  const submitted = responses.filter(r => r.status === "submitted");
-  const pending = responses.filter(r => r.status === "pending");
+  const submitted = responses.filter((r) => r.status === "submitted");
+  const pending = responses.filter((r) => r.status === "pending");
+  const publicShareUrl = `/intake/${q.id}`;
 
   return (
-    <div className="min-w-0 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="min-w-0">
-          <Link
-            href="/app/questionnaires"
-            className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
-          >
-            <ArrowLeft className="h-3 w-3" /> {t("Kembali ke Formulir", "Back to Forms")}
-          </Link>
-          <h1 className="app-page-title mt-1">{q.name}</h1>
-          {q.description && <p>{q.description}</p>}
-          <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-            <span>
-              {fields.length} {t("kolom", "fields")}
-            </span>
+    <div className="min-w-0 space-y-4">
+      {/* ─── Top Jotform Tables Header Bar ─── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border/70 pb-4">
+        <div className="min-w-0 space-y-1">
+          <div className="flex items-center gap-2">
+            <Link
+              href="/app/questionnaires"
+              className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+              title="Kembali ke Daftar Formulir"
+            >
+              <ArrowLeft className="h-4 w-4" />
+            </Link>
+            <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-foreground truncate">
+              {q.name}
+            </h1>
+            <Badge variant="outline" className="text-[10px] font-semibold py-0 px-2 h-5 border-primary/30 bg-primary/5 text-primary">
+              Jotform Tables
+            </Badge>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground pl-6">
+            <span>{fields.length} {t("kolom pertanyaan", "fields")}</span>
             <span>•</span>
-            <span>
-              {submitted.length} {t("terkirim", "submitted")}
-            </span>
-            <span>•</span>
-            <span>
-              {pending.length} {t("menunggu", "pending")}
-            </span>
+            <span className="text-emerald-600 font-semibold">{submitted.length} {t("tanggapan masuk", "submitted")}</span>
+            {pending.length > 0 && (
+              <>
+                <span>•</span>
+                <span className="text-amber-600">{pending.length} {t("menunggu respon", "pending")}</span>
+              </>
+            )}
           </div>
         </div>
-        {canWrite && (
-          <div className="flex shrink-0 flex-wrap items-center gap-2">
-            <Button variant="outline" size="sm" className="gap-1" asChild>
-              <Link href={`/app/questionnaires/${q.id}/edit`}>
-                <Edit className="h-4 w-4" />
-                {t("Edit", "Edit")}
-              </Link>
-            </Button>
-            <SendQuestionnaireButton
-              questionnaireId={q.id}
-              name={q.name}
-              clients={clientsList}
-              projects={projectsList}
-            />
-            <DeleteQuestionnaireButton questionnaireId={q.id} />
-          </div>
-        )}
+
+        {/* Action Buttons */}
+        <div className="flex flex-wrap items-center gap-2">
+          <Button variant="outline" size="sm" className="h-8 text-xs font-semibold gap-1.5" asChild>
+            <Link href={publicShareUrl} target="_blank" rel="noopener noreferrer">
+              <ExternalLink className="h-3.5 w-3.5" />
+              <span>Buka Form Publik</span>
+            </Link>
+          </Button>
+
+          {canWrite && (
+            <>
+              <Button variant="outline" size="sm" className="h-8 text-xs font-semibold gap-1.5" asChild>
+                <Link href={`/app/questionnaires/${q.id}/edit`}>
+                  <Edit className="h-3.5 w-3.5" />
+                  <span>Edit Builder</span>
+                </Link>
+              </Button>
+              <SendQuestionnaireButton
+                questionnaireId={q.id}
+                name={q.name}
+                clients={clientsList}
+                projects={projectsList}
+              />
+              <DeleteQuestionnaireButton questionnaireId={q.id} />
+            </>
+          )}
+        </div>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <ClipboardList className="h-4 w-4" />
-            {t("Pratinjau form", "Form preview")}
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {fields.map((f) => (
-            <div key={f.id} className="border-l-2 border-slate-200 pl-3">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-medium">{f.label}</span>
-                {f.required && <Badge variant="destructive" className="h-4 text-[10px]">{t("wajib", "required")}</Badge>}
-                <Badge variant="outline" className="h-4 text-[10px]">{f.type}</Badge>
-              </div>
-              {f.placeholder && <p className="mt-0.5 text-xs text-slate-500">&ldquo;{f.placeholder}&rdquo;</p>}
-              {f.options && f.options.length > 0 && (
-                <p className="mt-0.5 text-xs text-slate-500">{t("Opsi", "Options")}: {f.options.join(", ")}</p>
-              )}
-            </div>
-          ))}
-        </CardContent>
-      </Card>
-
-      <div className="space-y-3">
-        <h2 className="flex items-center gap-2 text-lg font-semibold">
-          <Inbox className="h-5 w-5 text-primary" />
-          {t("Jawaban Masuk (Jotform Tables)", "Responses Inbox")}
-        </h2>
-
+      {/* ─── Hero Spreadsheet Table (Jotform Tables View) ─── */}
+      <div className="w-full">
         <QuestionnaireResponsesTable
           responses={responses}
           fields={fields}

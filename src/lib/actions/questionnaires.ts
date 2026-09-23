@@ -355,57 +355,146 @@ export async function convertResponseToProject(responseId: string, projectNameIn
 
   return res;
 }
-export async function getPublicQuestionnaire(token: string) {
-  const tokenHash = hashToken(token);
-  const [resp] = await db.select().from(questionnaireResponses)
+export async function getPublicQuestionnaire(tokenOrId: string) {
+  const tokenHash = hashToken(tokenOrId);
+  
+  // 1. Coba cari by direct response token (link khusus per klien/respon)
+  const [resp] = await db
+    .select()
+    .from(questionnaireResponses)
     .where(eq(questionnaireResponses.sharedTokenHash, tokenHash))
     .limit(1);
-  if (!resp) return { error: "not_found" as const };
-  if (resp.sharedTokenRevokedAt) return { error: "revoked" as const };
-  if (resp.sharedTokenExpiresAt && resp.sharedTokenExpiresAt < new Date()) {
-    return { error: "expired" as const };
-  }
-  if (resp.status === "submitted") {
-    return { error: "already_submitted" as const };
+
+  if (resp) {
+    if (resp.sharedTokenRevokedAt) return { error: "revoked" as const };
+    if (resp.sharedTokenExpiresAt && resp.sharedTokenExpiresAt < new Date()) {
+      return { error: "expired" as const };
+    }
+    if (resp.status === "submitted") {
+      return { error: "already_submitted" as const };
+    }
+
+    const [q] = await db
+      .select()
+      .from(questionnaires)
+      .where(eq(questionnaires.id, resp.questionnaireId))
+      .limit(1);
+    if (!q) return { error: "not_found" as const };
+
+    return {
+      response: resp,
+      questionnaire: q,
+      isPublicMasterLink: false,
+    };
   }
 
-  const [q] = await db.select().from(questionnaires)
-    .where(eq(questionnaires.id, resp.questionnaireId))
+  // 2. Jika bukan token respon spesifik, coba cari by Questionnaire Master ID (Public Shareable Link ke siapapun)
+  const [qMaster] = await db
+    .select()
+    .from(questionnaires)
+    .where(eq(questionnaires.id, tokenOrId))
     .limit(1);
-  if (!q) return { error: "not_found" as const };
 
-  return {
-    response: resp,
-    questionnaire: q,
-  };
+  if (qMaster) {
+    return {
+      questionnaire: qMaster,
+      isPublicMasterLink: true,
+    };
+  }
+
+  return { error: "not_found" as const };
 }
 
 export async function submitQuestionnaire(input: {
   token: string;
   answers: Record<string, string | string[] | number>;
+  respondentName?: string;
+  respondentEmail?: string;
 }) {
-  const tokenHash = hashToken(input.token);
   const { enforceServerActionRateLimit } = await import("@/lib/distributed-rate-limit");
-  await enforceServerActionRateLimit("questionnaire:submit", tokenHash, { limit: 10, windowSec: 300 });
-  const [resp] = await db.select().from(questionnaireResponses)
+  await enforceServerActionRateLimit("questionnaire:submit", input.token, { limit: 20, windowSec: 300 });
+
+  const tokenHash = hashToken(input.token);
+
+  // 1. Coba submit via specific client token
+  const [resp] = await db
+    .select()
+    .from(questionnaireResponses)
     .where(eq(questionnaireResponses.sharedTokenHash, tokenHash))
     .limit(1);
-  if (!resp) throw new Error("Response not found");
-  if (resp.sharedTokenRevokedAt) throw new Error("Token revoked");
-  if (resp.sharedTokenExpiresAt && resp.sharedTokenExpiresAt < new Date()) {
-    throw new Error("Token expired");
+
+  if (resp) {
+    if (resp.sharedTokenRevokedAt) throw new Error("Token revoked");
+    if (resp.sharedTokenExpiresAt && resp.sharedTokenExpiresAt < new Date()) {
+      throw new Error("Token expired");
+    }
+    if (resp.status === "submitted") throw new Error("Already submitted");
+
+    // Validate required fields
+    const [q] = await db
+      .select()
+      .from(questionnaires)
+      .where(eq(questionnaires.id, resp.questionnaireId))
+      .limit(1);
+    if (!q) throw new Error("Questionnaire not found");
+
+    const fields = safeParseQuestionnaireSchema(q.schema);
+    for (const field of fields) {
+      if (field.required && field.type !== "heading" && field.type !== "divider" && field.type !== "info" && field.type !== "page_break") {
+        const val = input.answers[field.id];
+        if (val === undefined || val === null || val === "" || (Array.isArray(val) && val.length === 0)) {
+          throw new Error(`Field "${field.label}" is required`);
+        }
+      }
+    }
+
+    const [updated] = await db
+      .update(questionnaireResponses)
+      .set({
+        answers: input.answers,
+        respondentName: input.respondentName || resp.respondentName,
+        respondentEmail: input.respondentEmail || resp.respondentEmail,
+        status: "submitted",
+        submittedAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .where(eq(questionnaireResponses.id, resp.id))
+      .returning();
+
+    await writeActivityLog(resp.workspaceId, null, "submitted_questionnaire", "questionnaire_response", resp.id, {
+      questionnaireName: q.name,
+      respondentEmail: resp.respondentEmail,
+    });
+
+    try {
+      await notifyWorkspaceMembers(resp.workspaceId, {
+        type: "questionnaire_answered",
+        title: `${resp.respondentName ?? resp.respondentEmail ?? "Responden"} answered form`,
+        body: q.name,
+        link: `/app/questionnaires/${q.id}`,
+        entityType: "questionnaire_response",
+        entityId: resp.id,
+        actorId: null,
+      });
+    } catch {
+      // best-effort
+    }
+
+    return updated;
   }
-  if (resp.status === "submitted") throw new Error("Already submitted");
 
-  // Validate required fields
-  const [q] = await db.select().from(questionnaires)
-    .where(eq(questionnaires.id, resp.questionnaireId))
+  // 2. Submit via Public Master Link (Membuat entry respon baru di database secara dinamis)
+  const [qMaster] = await db
+    .select()
+    .from(questionnaires)
+    .where(eq(questionnaires.id, input.token))
     .limit(1);
-  if (!q) throw new Error("Questionnaire not found");
 
-  const fields = safeParseQuestionnaireSchema(q.schema);
+  if (!qMaster) throw new Error("Formulir tidak ditemukan");
+
+  const fields = safeParseQuestionnaireSchema(qMaster.schema);
   for (const field of fields) {
-    if (field.required) {
+    if (field.required && field.type !== "heading" && field.type !== "divider" && field.type !== "info" && field.type !== "page_break") {
       const val = input.answers[field.id];
       if (val === undefined || val === null || val === "" || (Array.isArray(val) && val.length === 0)) {
         throw new Error(`Field "${field.label}" is required`);
@@ -413,34 +502,37 @@ export async function submitQuestionnaire(input: {
     }
   }
 
-  const [updated] = await db.update(questionnaireResponses)
-    .set({
+  const [newResponse] = await db
+    .insert(questionnaireResponses)
+    .values({
+      workspaceId: qMaster.workspaceId,
+      questionnaireId: qMaster.id,
+      respondentName: input.respondentName || (input.answers["name"] as string) || (input.answers["full_name"] as string) || null,
+      respondentEmail: input.respondentEmail || (input.answers["email"] as string) || null,
       answers: input.answers,
       status: "submitted",
       submittedAt: new Date(),
-      updatedAt: new Date(),
     })
-    .where(eq(questionnaireResponses.id, resp.id))
     .returning();
 
-  await writeActivityLog(resp.workspaceId, null, "submitted_questionnaire", "questionnaire_response", resp.id, {
-    questionnaireName: q.name,
-    respondentEmail: resp.respondentEmail,
+  await writeActivityLog(qMaster.workspaceId, null, "submitted_questionnaire", "questionnaire_response", newResponse.id, {
+    questionnaireName: qMaster.name,
+    respondentEmail: newResponse.respondentEmail,
   });
 
   try {
-    await notifyWorkspaceMembers(resp.workspaceId, {
+    await notifyWorkspaceMembers(qMaster.workspaceId, {
       type: "questionnaire_answered",
-      title: `${resp.respondentName ?? resp.respondentEmail ?? "Client"} answered questionnaire`,
-      body: q.name,
-      link: `/app/questionnaires/${q.id}`,
+      title: `${newResponse.respondentName ?? newResponse.respondentEmail ?? "Responden"} mengisi formulir`,
+      body: qMaster.name,
+      link: `/app/questionnaires/${qMaster.id}`,
       entityType: "questionnaire_response",
-      entityId: resp.id,
+      entityId: newResponse.id,
       actorId: null,
     });
   } catch {
     // best-effort
   }
 
-  return updated;
+  return newResponse;
 }

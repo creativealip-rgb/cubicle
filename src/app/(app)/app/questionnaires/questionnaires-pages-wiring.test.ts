@@ -16,10 +16,9 @@ describe("questionnaire pages share the app page chrome", () => {
 
   it("detail page uses app-page-title + localized back link + full-width container", () => {
     const page = source("[questionnaireId]/page.tsx");
-    expect(page).toContain('className="min-w-0 space-y-6"');
-    expect(page).not.toMatch(/<div className="space-y-6 p-6 max-w-4xl">/);
-    expect(page).toContain("Kembali ke Formulir");
-    expect(page).toContain("Back to Forms");
+    expect(page).toContain('className="min-w-0 space-y-4"');
+    expect(page).not.toMatch(/<div className="space-y-6 p-6 max-w-4xl"/);
+    expect(page).toContain("Kembali ke Daftar Formulir");
   });
 
   it("new and edit pages render QuestionnaireBuilder in full-width focus mode", () => {
@@ -31,8 +30,8 @@ describe("questionnaire pages share the app page chrome", () => {
 
   it("detail page strings are localized (no bare English labels)", () => {
     const page = source("[questionnaireId]/page.tsx");
-    expect(page).toContain('t("Pratinjau form", "Form preview")');
-    expect(page).toContain('t("Jawaban Masuk (Jotform Tables)", "Responses Inbox")');
+    expect(page).toContain('t("kolom pertanyaan", "fields")');
+    expect(page).toContain('t("tanggapan masuk", "submitted")');
     expect(page).not.toMatch(/>\s*Back\s*</);
     expect(page).not.toMatch(/>\s*Responses\s*</);
   });
