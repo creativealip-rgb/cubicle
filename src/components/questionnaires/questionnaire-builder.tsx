@@ -78,6 +78,9 @@ import {
   Sparkles,
   LayoutTemplate,
   Lock,
+  Calculator,
+  Coins,
+  DollarSign,
   Eye,
   Play,
 } from "lucide-react";
@@ -211,6 +214,19 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     icon: Star,
     category: "advanced",
     defaultConfig: { maxRating: 5, colSpan: "full" },
+  },
+  {
+    type: "calculation",
+    label: "Estimasi Biaya / Kalkulator",
+    description: "Hitung total budget otomatis dari pilihan",
+    icon: Calculator,
+    category: "advanced",
+    defaultConfig: {
+      label: "Total Estimasi Investasi Proyek",
+      sublabel: "Dihitung otomatis berdasarkan layanan dan opsi yang Anda pilih di atas.",
+      currency: "Rp",
+      colSpan: "full",
+    },
   },
   {
     type: "terms",
@@ -566,6 +582,17 @@ function SortableCanvasField({
               {Array.from({ length: field.maxRating || 5 }).map((_, idx) => (
                 <Star key={idx} className="h-4 w-4 text-amber-400 fill-amber-400/20" />
               ))}
+            </div>
+          )}
+          {field.type === "calculation" && (
+            <div className="p-3.5 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Calculator className="h-4 w-4 text-primary" />
+                <span className="text-xs font-semibold text-foreground">Total Estimasi Real-time</span>
+              </div>
+              <span className="font-mono font-bold text-sm text-primary">
+                {field.currency || "Rp"} 0
+              </span>
             </div>
           )}
         </div>
@@ -1458,19 +1485,59 @@ export function QuestionnaireBuilder({
                           </div>
                         )}
 
+                        {/* Calculation Settings */}
+                        {selectedField.type === "calculation" && (
+                          <div className="space-y-2 pt-2 border-t border-border/60">
+                            <Label className="text-xs font-medium">Simbol Mata Uang</Label>
+                            <Input
+                              value={selectedField.currency || "Rp"}
+                              onChange={(e) => updateSelectedField({ currency: e.target.value })}
+                              placeholder="Rp / $ / EUR"
+                              className="h-8.5 text-xs font-mono"
+                            />
+                          </div>
+                        )}
+
                         {/* Options Editor for Select & Multiselect */}
                         {(selectedField.type === "select" || selectedField.type === "multiselect") && (
                           <div className="space-y-2 pt-2 border-t border-border/60">
-                            <Label className="text-xs font-medium">Pilihan Opsi (Satu per baris)</Label>
+                            <div className="flex items-center justify-between">
+                              <Label className="text-xs font-medium">Pilihan Opsi & Harga</Label>
+                              <span className="text-[10px] text-muted-foreground">Format: Opsi : Harga</span>
+                            </div>
                             <Textarea
-                              value={(selectedField.options || []).join("\n")}
-                              onChange={(e) =>
-                                updateSelectedField({
-                                  options: e.target.value.split("\n").filter((s) => s.trim().length > 0),
+                              value={(selectedField.options || [])
+                                .map((opt) => {
+                                  const price = selectedField.optionPrices?.[opt];
+                                  return price !== undefined ? `${opt} : ${price}` : opt;
                                 })
-                              }
+                                .join("\n")}
+                              onChange={(e) => {
+                                const lines = e.target.value.split("\n");
+                                const opts: string[] = [];
+                                const prices: Record<string, number> = {};
+                                lines.forEach((line) => {
+                                  const trimmed = line.trim();
+                                  if (!trimmed) return;
+                                  if (trimmed.includes(":")) {
+                                    const [name, priceStr] = trimmed.split(":");
+                                    const optName = name.trim();
+                                    const p = parseFloat(priceStr.replace(/[^0-9.-]+/g, "")) || 0;
+                                    if (optName) {
+                                      opts.push(optName);
+                                      prices[optName] = p;
+                                    }
+                                  } else {
+                                    opts.push(trimmed);
+                                  }
+                                });
+                                updateSelectedField({
+                                  options: opts,
+                                  optionPrices: Object.keys(prices).length > 0 ? prices : undefined,
+                                });
+                              }}
                               rows={4}
-                              placeholder="Opsi 1&#10;Opsi 2&#10;Opsi 3"
+                              placeholder="Landing Page : 3000000&#10;Add-on SEO : 1000000&#10;Maintenance : 500000"
                               className="text-xs font-mono"
                             />
                           </div>

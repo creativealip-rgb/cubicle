@@ -20,6 +20,7 @@ export const questionnaireFieldTypeSchema = z.enum([
   "file",
   "signature",
   "rating",
+  "calculation",
   "heading",
   "divider",
   "info",
@@ -36,6 +37,8 @@ export const questionnaireFieldSchema = z.object({
   sublabel: z.string().max(500).optional(),
   required: z.boolean().default(false),
   options: z.array(z.string()).optional(),
+  // Pricing/Option values for calculation: { [optionName: string]: number }
+  optionPrices: z.record(z.string(), z.number()).optional(),
   placeholder: z.string().optional(),
   acceptFiles: z.string().optional(),
   maxRating: z.number().int().min(3).max(10).optional(),
@@ -43,6 +46,8 @@ export const questionnaireFieldSchema = z.object({
   colSpan: z.enum(["full", "half"]).default("full").optional(),
   // Info text content (for 'info' type) or terms text (for 'terms' type)
   content: z.string().max(2000).optional(),
+  // Currency symbol for calculation (e.g. "Rp", "$")
+  currency: z.string().max(10).optional(),
   // Conditional Logic: show this field only if another field matches a value
   condition: z
     .object({

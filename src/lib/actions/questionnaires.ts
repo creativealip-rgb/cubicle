@@ -90,6 +90,38 @@ export async function updateQuestionnaire(questionnaireId: string, input: z.infe
   return updated;
 }
 
+export async function duplicateQuestionnaire(questionnaireId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [existing] = await db
+    .select()
+    .from(questionnaires)
+    .where(and(eq(questionnaires.id, questionnaireId), eq(questionnaires.workspaceId, workspaceId)))
+    .limit(1);
+  if (!existing) throw new Error("Questionnaire not found");
+
+  const [created] = await db
+    .insert(questionnaires)
+    .values({
+      workspaceId,
+      name: `${existing.name} (Salinan)`,
+      description: existing.description,
+      schema: existing.schema,
+      createdBy: user.id,
+    })
+    .returning();
+
+  await writeActivityLog(workspaceId, user.id, "created_questionnaire", "questionnaire", created.id, {
+    name: created.name,
+    duplicatedFrom: questionnaireId,
+  });
+
+  return created;
+}
+
 export async function deleteQuestionnaire(questionnaireId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);

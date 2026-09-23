@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -25,6 +25,7 @@ import {
   Paperclip,
   ArrowRight,
   ArrowLeft,
+  Calculator,
 } from "lucide-react";
 import type { QuestionnaireField } from "@/lib/questionnaire-schema";
 
@@ -39,6 +40,49 @@ export function IntakeForm({
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [submitted, setSubmitted] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  // URL Prefill support (e.g. ?name=Budi&email=budi@pt.com)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const prefilled: Record<string, any> = {};
+
+    fields.forEach((f) => {
+      const paramVal =
+        params.get(f.id) ||
+        (f.type === "text" && params.get("name")) ||
+        (f.type === "email" && params.get("email")) ||
+        (f.type === "phone" && (params.get("phone") || params.get("wa")));
+
+      if (paramVal) {
+        prefilled[f.id] = paramVal;
+      }
+    });
+
+    if (Object.keys(prefilled).length > 0) {
+      setAnswers((prev) => ({ ...prefilled, ...prev }));
+    }
+  }, [fields]);
+
+  // Calculate live total price from choices with optionPrices
+  const totalCalculated = useMemo(() => {
+    let sum = 0;
+    fields.forEach((f) => {
+      if (f.optionPrices) {
+        const val = answers[f.id];
+        if (typeof val === "string" && f.optionPrices[val]) {
+          sum += f.optionPrices[val];
+        } else if (Array.isArray(val)) {
+          val.forEach((item) => {
+            if (f.optionPrices?.[item]) {
+              sum += f.optionPrices[item];
+            }
+          });
+        }
+      }
+    });
+    return sum;
+  }, [fields, answers]);
 
   // Multi-Step / Multi-Page Splitting via 'page_break'
   const pages = useMemo(() => {
@@ -399,6 +443,20 @@ export function IntakeForm({
                 </div>
               )}
 
+              {f.type === "calculation" && (
+                <div className="p-4 rounded-xl border border-primary/40 bg-primary/5 space-y-1">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Calculator className="h-4 w-4 text-primary" />
+                      <span className="text-xs sm:text-sm font-bold text-foreground">{f.label}</span>
+                    </div>
+                    <span className="font-mono font-extrabold text-base sm:text-lg text-primary">
+                      {f.currency || "Rp"} {totalCalculated.toLocaleString("id-ID")}
+                    </span>
+                  </div>
+                  {f.sublabel && <p className="text-[11px] text-muted-foreground">{f.sublabel}</p>}
+                </div>
+              )}
               {f.type === "rating" && (
                 <div className="flex items-center gap-2 pt-1">
                   {Array.from({ length: f.maxRating || 5 }).map((_, idx) => {

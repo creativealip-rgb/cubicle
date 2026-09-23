@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,9 @@ import {
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
-import { ClipboardList } from "lucide-react";
+import { ClipboardList, Copy } from "lucide-react";
+import { toast } from "sonner";
+import { useAppTransition } from "@/lib/transition-provider";
 
 export type QuestionnaireListItem = {
   id: string;
@@ -35,6 +37,21 @@ export function QuestionnairesListTable({
   rows: QuestionnaireListItem[];
 }) {
   const { t, lang } = useT();
+  const { refresh } = useAppTransition();
+  const [pending, startTransition] = useTransition();
+
+  function handleDuplicate(id: string) {
+    startTransition(async () => {
+      try {
+        const { duplicateQuestionnaire } = await import("@/lib/actions/questionnaires");
+        await duplicateQuestionnaire(id);
+        toast.success("Formulir berhasil diduplikasi!");
+        refresh();
+      } catch (err: any) {
+        toast.error(err?.message || "Gagal menduplikasi formulir");
+      }
+    });
+  }
 
   const getters = useMemo(
     () => ({
@@ -98,7 +115,7 @@ export function QuestionnairesListTable({
                   className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
-              <TableHead className="w-16 text-right text-[11px] uppercase tracking-wider">{t("Aksi", "Action")}</TableHead>
+              <TableHead className="w-28 text-right text-[11px] uppercase tracking-wider">{t("Aksi", "Action")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -142,11 +159,24 @@ export function QuestionnairesListTable({
                   {q.updatedAt ? new Date(q.updatedAt).toLocaleDateString(lang === "en" ? "en-US" : "id-ID") : "—"}
                 </TableCell>
                 <TableCell className="text-right align-middle">
-                  <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
-                    <Link href={`/app/questionnaires/${q.id}`}>
-                      {t("Buka", "Open")}
-                    </Link>
-                  </Button>
+                  <div className="flex items-center justify-end gap-1">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      disabled={pending}
+                      onClick={() => handleDuplicate(q.id)}
+                      className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-md"
+                      title="Duplikasi Formulir"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button asChild variant="ghost" size="sm" className="h-7 text-xs font-semibold">
+                      <Link href={`/app/questionnaires/${q.id}`}>
+                        {t("Buka", "Open")}
+                      </Link>
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
             ))}
