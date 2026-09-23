@@ -40,6 +40,7 @@ import {
   Link as LinkIcon,
   Hash,
   Calendar,
+  Clock,
   ListFilter,
   CheckSquare,
   Phone,
@@ -47,6 +48,9 @@ import {
   PenTool,
   Star,
   Heading,
+  Minus,
+  Info,
+  ShieldCheck,
   Plus,
   Trash2,
   Copy,
@@ -66,11 +70,13 @@ import {
   Smartphone,
   Monitor,
   Image as ImageIcon,
-  Edit2,
+  Columns,
+  Square,
   QrCode,
   MessageCircle,
   Sparkles,
   LayoutTemplate,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
@@ -88,7 +94,7 @@ interface ElementDefinition {
   label: string;
   description: string;
   icon: React.ElementType;
-  category: "basic" | "choice" | "advanced";
+  category: "basic" | "choice" | "advanced" | "structure";
   defaultConfig: Partial<QuestionnaireField>;
 }
 
@@ -100,7 +106,7 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     description: "Nama, judul, input pendek",
     icon: Type,
     category: "basic",
-    defaultConfig: { placeholder: "Jawaban singkat..." },
+    defaultConfig: { placeholder: "Jawaban singkat...", colSpan: "full" },
   },
   {
     type: "textarea",
@@ -108,7 +114,7 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     description: "Deskripsi, brief rinci, catatan",
     icon: AlignLeft,
     category: "basic",
-    defaultConfig: { placeholder: "Tuliskan jawaban lengkap di sini..." },
+    defaultConfig: { placeholder: "Tuliskan jawaban lengkap di sini...", colSpan: "full" },
   },
   {
     type: "email",
@@ -116,7 +122,7 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     description: "Validasi format email klien",
     icon: Mail,
     category: "basic",
-    defaultConfig: { placeholder: "contoh@perusahaan.com" },
+    defaultConfig: { placeholder: "contoh@perusahaan.com", colSpan: "half" },
   },
   {
     type: "phone",
@@ -124,15 +130,15 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     description: "Nomor kontak telepon atau WA",
     icon: Phone,
     category: "basic",
-    defaultConfig: { placeholder: "+62 812-3456-7890" },
+    defaultConfig: { placeholder: "+62 812-3456-7890", colSpan: "half" },
   },
   {
     type: "number",
     label: "Number",
-    description: "Angka, jumlah tim, budget",
+    description: "Angka, budget, nominal",
     icon: Hash,
     category: "basic",
-    defaultConfig: { placeholder: "0" },
+    defaultConfig: { placeholder: "0", colSpan: "half" },
   },
   {
     type: "date",
@@ -140,7 +146,15 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     description: "Tanggal deadline / mulai",
     icon: Calendar,
     category: "basic",
-    defaultConfig: {},
+    defaultConfig: { colSpan: "half" },
+  },
+  {
+    type: "time",
+    label: "Time Picker",
+    description: "Waktu / jam meeting & ketersediaan",
+    icon: Clock,
+    category: "basic",
+    defaultConfig: { colSpan: "half" },
   },
   {
     type: "url",
@@ -148,7 +162,7 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     description: "Tautan referensi atau website",
     icon: LinkIcon,
     category: "basic",
-    defaultConfig: { placeholder: "https://example.com" },
+    defaultConfig: { placeholder: "https://example.com", colSpan: "full" },
   },
 
   // Choice
@@ -158,7 +172,7 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     description: "Pilih satu dari beberapa opsi",
     icon: ListFilter,
     category: "choice",
-    defaultConfig: { options: ["Opsi 1", "Opsi 2", "Opsi 3"] },
+    defaultConfig: { options: ["Opsi 1", "Opsi 2", "Opsi 3"], colSpan: "full" },
   },
   {
     type: "multiselect",
@@ -166,7 +180,7 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     description: "Pilih beberapa opsi sekaligus",
     icon: CheckSquare,
     category: "choice",
-    defaultConfig: { options: ["Pilihan A", "Pilihan B", "Pilihan C"] },
+    defaultConfig: { options: ["Pilihan A", "Pilihan B", "Pilihan C"], colSpan: "full" },
   },
 
   // Advanced / Interactive
@@ -176,7 +190,7 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     description: "Klien upload dokumen brief / aset",
     icon: Paperclip,
     category: "advanced",
-    defaultConfig: { acceptFiles: ".pdf,.doc,.docx,.png,.jpg,.zip", placeholder: "Upload file brief (PDF, PNG, ZIP)" },
+    defaultConfig: { acceptFiles: ".pdf,.doc,.docx,.png,.jpg,.zip", placeholder: "Upload file brief (PDF, PNG, ZIP)", colSpan: "full" },
   },
   {
     type: "signature",
@@ -184,23 +198,58 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     description: "Tanda tangan digital langsung",
     icon: PenTool,
     category: "advanced",
-    defaultConfig: { placeholder: "Tanda tangan di sini" },
+    defaultConfig: { placeholder: "Tanda tangan di sini", colSpan: "full" },
   },
   {
     type: "rating",
-    label: "Rating Scale",
-    description: "Skala rating 1-5 bintang",
+    label: "Rating Scale (1-5 / 1-10)",
+    description: "Skala rating kepuasan / NPS",
     icon: Star,
     category: "advanced",
-    defaultConfig: { maxRating: 5 },
+    defaultConfig: { maxRating: 5, colSpan: "full" },
   },
+  {
+    type: "terms",
+    label: "Terms & Consent Checkbox",
+    description: "Persetujuan syarat & ketentuan brief",
+    icon: ShieldCheck,
+    category: "advanced",
+    defaultConfig: {
+      label: "Saya menyetujui syarat & ketentuan pengerjaan proyek",
+      content: "Dengan mengirim formulir ini, Anda menyetujui seluruh ketentuan layanan dan privasi.",
+      required: true,
+      colSpan: "full",
+    },
+  },
+
+  // Structural & Content
   {
     type: "heading",
     label: "Section Heading",
-    description: "Pemisah bagian formulir",
+    description: "Pemisah judul bagian formulir",
     icon: Heading,
-    category: "advanced",
-    defaultConfig: { label: "Bagian Baru", sublabel: "Deskripsi atau panduan pengisian bagian ini." },
+    category: "structure",
+    defaultConfig: { label: "Bagian Baru", sublabel: "Deskripsi atau panduan pengisian bagian ini.", colSpan: "full" },
+  },
+  {
+    type: "info",
+    label: "Information / Note Box",
+    description: "Kotak informasi atau panduan penting",
+    icon: Info,
+    category: "structure",
+    defaultConfig: {
+      label: "Petunjuk Pengisian",
+      content: "Mohon isi formulir ini secara lengkap untuk mempercepat proses estimasi dan kickoff proyek Anda.",
+      colSpan: "full",
+    },
+  },
+  {
+    type: "divider",
+    label: "Divider Line",
+    description: "Garis pembatas horizontal visual",
+    icon: Minus,
+    category: "structure",
+    defaultConfig: { label: "Divider", colSpan: "full" },
   },
 ];
 
@@ -210,14 +259,16 @@ const FORM_TEMPLATES = [
     title: "Web Development Client Intake",
     description: "Brief lengkap untuk project pembuatan website, landing page, atau web app.",
     fields: [
-      { id: makeId(), type: "text" as const, label: "Nama Lengkap / Perusahaan", required: true, placeholder: "PT Contoh Sukses" },
-      { id: makeId(), type: "email" as const, label: "Email Bisnis", required: true, placeholder: "contact@contoh.com" },
-      { id: makeId(), type: "phone" as const, label: "Nomor WhatsApp", required: true, placeholder: "+62 812-3456-7890" },
-      { id: makeId(), type: "select" as const, label: "Tipe Website yang Dibutuhkan", options: ["Company Profile / Landing Page", "E-Commerce / Toko Online", "Custom Web Application", "Redesign Website Lama"], required: true },
-      { id: makeId(), type: "textarea" as const, label: "Jelaskan Tujuan & Fitur Utama", required: true, placeholder: "Website untuk meningkatkan penjualan dan branding..." },
-      { id: makeId(), type: "url" as const, label: "Website Referensi / Kompetitor", required: false, placeholder: "https://apple.com, https://stripe.com" },
-      { id: makeId(), type: "file" as const, label: "Upload Asset / Dokumen Pendukung", acceptFiles: ".pdf,.doc,.docx,.png,.jpg,.zip", required: false },
-      { id: makeId(), type: "date" as const, label: "Target Tanggal Peluncuran (Launch Date)", required: false },
+      { id: makeId(), type: "text" as const, label: "Nama Lengkap / Perusahaan", required: true, placeholder: "PT Contoh Sukses", colSpan: "full" as const },
+      { id: makeId(), type: "email" as const, label: "Email Bisnis", required: true, placeholder: "contact@contoh.com", colSpan: "half" as const },
+      { id: makeId(), type: "phone" as const, label: "Nomor WhatsApp", required: true, placeholder: "+62 812-3456-7890", colSpan: "half" as const },
+      { id: makeId(), type: "select" as const, label: "Tipe Website yang Dibutuhkan", options: ["Company Profile / Landing Page", "E-Commerce / Toko Online", "Custom Web Application", "Redesign Website Lama"], required: true, colSpan: "full" as const },
+      { id: makeId(), type: "textarea" as const, label: "Jelaskan Tujuan & Fitur Utama", required: true, placeholder: "Website untuk meningkatkan penjualan dan branding...", colSpan: "full" as const },
+      { id: makeId(), type: "url" as const, label: "Website Referensi / Kompetitor", required: false, placeholder: "https://apple.com, https://stripe.com", colSpan: "full" as const },
+      { id: makeId(), type: "file" as const, label: "Upload Asset / Dokumen Pendukung", acceptFiles: ".pdf,.doc,.docx,.png,.jpg,.zip", required: false, colSpan: "full" as const },
+      { id: makeId(), type: "date" as const, label: "Target Tanggal Peluncuran", required: false, colSpan: "half" as const },
+      { id: makeId(), type: "time" as const, label: "Waktu Hubungi Terbaik", required: false, colSpan: "half" as const },
+      { id: makeId(), type: "terms" as const, label: "Saya menyetujui data brief ini digunakan untuk pembuatan estimasi proposal", required: true, colSpan: "full" as const },
     ],
   },
   {
@@ -225,12 +276,12 @@ const FORM_TEMPLATES = [
     title: "Branding & Logo Design Brief",
     description: "Kumpulkan preferensi visual, nilai brand, dan aset dari klien untuk project desain.",
     fields: [
-      { id: makeId(), type: "text" as const, label: "Nama Brand / Brand Name", required: true, placeholder: "Cubiqlo Studio" },
-      { id: makeId(), type: "text" as const, label: "Tagline atau Slogan (Jika Ada)", required: false, placeholder: "Crafting modern experiences" },
-      { id: makeId(), type: "textarea" as const, label: "Ceritakan tentang Brand & Target Audiens Anda", required: true, placeholder: "Target kami adalah profesional muda umur 20-35 tahun..." },
-      { id: makeId(), type: "multiselect" as const, label: "Nuansa / Vibe Visual yang Diinginkan", options: ["Modern & Minimalist", "Bold & Energetic", "Luxury & Elegant", "Friendly & Approachable", "Tech / Futuristic"], required: true },
-      { id: makeId(), type: "textarea" as const, label: "Warna yang Disukai atau Dihindari", required: false, placeholder: "Suka warna biru navy dan ungu, hindari warna kuning cerah." },
-      { id: makeId(), type: "file" as const, label: "Upload Moodboard / Referensi Desain", acceptFiles: ".pdf,.png,.jpg,.zip", required: false },
+      { id: makeId(), type: "text" as const, label: "Nama Brand / Brand Name", required: true, placeholder: "Cubiqlo Studio", colSpan: "half" as const },
+      { id: makeId(), type: "text" as const, label: "Tagline atau Slogan", required: false, placeholder: "Crafting modern experiences", colSpan: "half" as const },
+      { id: makeId(), type: "textarea" as const, label: "Ceritakan tentang Brand & Target Audiens Anda", required: true, placeholder: "Target kami adalah profesional muda umur 20-35 tahun...", colSpan: "full" as const },
+      { id: makeId(), type: "multiselect" as const, label: "Nuansa / Vibe Visual yang Diinginkan", options: ["Modern & Minimalist", "Bold & Energetic", "Luxury & Elegant", "Friendly & Approachable", "Tech / Futuristic"], required: true, colSpan: "full" as const },
+      { id: makeId(), type: "textarea" as const, label: "Warna yang Disukai atau Dihindari", required: false, placeholder: "Suka warna biru navy dan ungu, hindari warna kuning cerah.", colSpan: "full" as const },
+      { id: makeId(), type: "file" as const, label: "Upload Moodboard / Referensi Desain", acceptFiles: ".pdf,.png,.jpg,.zip", required: false, colSpan: "full" as const },
     ],
   },
   {
@@ -238,12 +289,12 @@ const FORM_TEMPLATES = [
     title: "Client Feedback & Satisfaction Survey",
     description: "Survey kepuasan klien setelah project selesai untuk review dan perbaikan layanan.",
     fields: [
-      { id: makeId(), type: "text" as const, label: "Nama Klien / Perusahaan", required: true, placeholder: "Budi Santoso" },
-      { id: makeId(), type: "rating" as const, label: "Seberapa Puas Anda dengan Hasil Akhir Proyek?", required: true, maxRating: 5 },
-      { id: makeId(), type: "rating" as const, label: "Kecepatan Respon & Komunikasi Tim Kami", required: true, maxRating: 5 },
-      { id: makeId(), type: "textarea" as const, label: "Apa yang Paling Anda Sukai dari Kolaborasi Ini?", required: false, placeholder: "Hasil desain sangat memuaskan..." },
-      { id: makeId(), type: "textarea" as const, label: "Saran atau Hal yang Bisa Kami Tingkatkan?", required: false, placeholder: "Komunikasi estimasi waktu bisa lebih sering..." },
-      { id: makeId(), type: "signature" as const, label: "Tanda Tangan Konfirmasi Serah Terima", required: false },
+      { id: makeId(), type: "text" as const, label: "Nama Klien / Perusahaan", required: true, placeholder: "Budi Santoso", colSpan: "full" as const },
+      { id: makeId(), type: "rating" as const, label: "Seberapa Puas Anda dengan Hasil Akhir Proyek?", required: true, maxRating: 5, colSpan: "half" as const },
+      { id: makeId(), type: "rating" as const, label: "Kecepatan Respon & Komunikasi Tim Kami", required: true, maxRating: 5, colSpan: "half" as const },
+      { id: makeId(), type: "textarea" as const, label: "Apa yang Paling Anda Sukai dari Kolaborasi Ini?", required: false, placeholder: "Hasil desain sangat memuaskan...", colSpan: "full" as const },
+      { id: makeId(), type: "textarea" as const, label: "Saran atau Hal yang Bisa Kami Tingkatkan?", required: false, placeholder: "Komunikasi estimasi waktu bisa lebih sering...", colSpan: "full" as const },
+      { id: makeId(), type: "signature" as const, label: "Tanda Tangan Konfirmasi Serah Terima", required: false, colSpan: "full" as const },
     ],
   },
 ];
@@ -282,6 +333,8 @@ function SortableCanvasField({
     isDragging,
   } = useSortable({ id: field.id });
 
+  const isHalf = field.colSpan === "half";
+
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -289,6 +342,9 @@ function SortableCanvasField({
   };
 
   const isHeading = field.type === "heading";
+  const isDivider = field.type === "divider";
+  const isInfo = field.type === "info";
+  const isTerms = field.type === "terms";
 
   return (
     <div
@@ -296,6 +352,8 @@ function SortableCanvasField({
       style={style}
       onClick={onSelect}
       className={`group relative rounded-xl border p-4 sm:p-5 transition-all cursor-pointer ${
+        isHalf ? "col-span-12 md:col-span-6" : "col-span-12"
+      } ${
         isSelected
           ? "border-primary bg-primary/[0.02] ring-2 ring-primary/20 shadow-xs"
           : "border-border/70 bg-card hover:border-primary/40 hover:shadow-xs"
@@ -351,6 +409,13 @@ function SortableCanvasField({
         </button>
       </div>
 
+      {/* Field Layout Indicator Badge */}
+      {isHalf && (
+        <span className="absolute top-2 right-2 text-[9px] font-mono px-1.5 py-0.5 rounded bg-muted/60 text-muted-foreground hidden group-hover:inline">
+          ½ width
+        </span>
+      )}
+
       {/* Heading Field */}
       {isHeading ? (
         <div className="space-y-1.5 pt-1">
@@ -361,6 +426,41 @@ function SortableCanvasField({
             className="w-full text-base sm:text-lg font-bold tracking-tight text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1"
           />
           {field.sublabel && <p className="text-xs text-muted-foreground px-1">{field.sublabel}</p>}
+        </div>
+      ) : isDivider ? (
+        <div className="py-2">
+          <hr className="border-t-2 border-border/80" />
+          <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider pt-1 block text-center">
+            Divider Line
+          </span>
+        </div>
+      ) : isInfo ? (
+        <div className="p-3 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-1">
+          <div className="flex items-center gap-1.5 text-blue-600 font-bold text-xs">
+            <Info className="h-3.5 w-3.5" />
+            <input
+              type="text"
+              value={field.label}
+              onChange={(e) => onUpdateLabel(e.target.value)}
+              className="bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+            />
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed px-1">
+            {field.content || "Tuliskan informasi atau catatan panduan untuk responden."}
+          </p>
+        </div>
+      ) : isTerms ? (
+        <div className="flex items-start gap-2.5 pt-1">
+          <Checkbox disabled className="mt-0.5" />
+          <div className="space-y-0.5 min-w-0 flex-1">
+            <input
+              type="text"
+              value={field.label}
+              onChange={(e) => onUpdateLabel(e.target.value)}
+              className="w-full text-xs font-semibold text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1"
+            />
+            {field.content && <p className="text-[11px] text-muted-foreground px-1">{field.content}</p>}
+          </div>
         </div>
       ) : (
         /* Standard Field Preview */
@@ -400,6 +500,9 @@ function SortableCanvasField({
           {field.type === "date" && (
             <Input disabled type="date" className="h-9 text-xs bg-muted/20" />
           )}
+          {field.type === "time" && (
+            <Input disabled type="time" className="h-9 text-xs bg-muted/20" />
+          )}
           {field.type === "url" && (
             <Input disabled placeholder={field.placeholder || "https://..."} className="h-9 text-xs bg-muted/20" />
           )}
@@ -435,8 +538,8 @@ function SortableCanvasField({
           )}
           {field.type === "rating" && (
             <div className="flex items-center gap-1.5 pt-1 px-1">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Star key={star} className="h-4 w-4 text-amber-400 fill-amber-400/20" />
+              {Array.from({ length: field.maxRating || 5 }).map((_, idx) => (
+                <Star key={idx} className="h-4 w-4 text-amber-400 fill-amber-400/20" />
               ))}
             </div>
           )}
@@ -469,10 +572,14 @@ export function QuestionnaireBuilder({
   const [description, setDescription] = useState(initial?.description || "");
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [selectedTheme, setSelectedTheme] = useState("purple");
+  const [customHex, setCustomHex] = useState("#6C5CE7");
+  const [cardRoundness, setCardRoundness] = useState<"normal" | "rounded" | "soft">("rounded");
   const [thankYouMessage, setThankYouMessage] = useState(
     "Terima kasih! Tanggapan Anda telah berhasil kami terima dan akan segera kami proses.",
   );
   const [redirectUrl, setRedirectUrl] = useState("");
+  const [formStatus, setFormStatus] = useState<"active" | "disabled">("active");
+  const [passwordProtection, setPasswordProtection] = useState("");
 
   const [fields, setFields] = useState<QuestionnaireField[]>(
     initial?.schema && initial.schema.length > 0
@@ -484,6 +591,7 @@ export function QuestionnaireBuilder({
             label: "Nama Lengkap",
             required: true,
             placeholder: "Masukkan nama Anda",
+            colSpan: "full",
           },
           {
             id: makeId(),
@@ -491,6 +599,15 @@ export function QuestionnaireBuilder({
             label: "Email Bisnis",
             required: true,
             placeholder: "email@perusahaan.com",
+            colSpan: "half",
+          },
+          {
+            id: makeId(),
+            type: "phone",
+            label: "Nomor WhatsApp",
+            required: true,
+            placeholder: "+62 812...",
+            colSpan: "half",
           },
         ],
   );
@@ -540,9 +657,17 @@ export function QuestionnaireBuilder({
     const newField: QuestionnaireField = {
       id: makeId(),
       type: def.type,
-      label: def.type === "heading" ? "Judul Bagian Baru" : `Pertanyaan ${def.label}`,
+      label:
+        def.type === "heading"
+          ? "Judul Bagian Baru"
+          : def.type === "divider"
+            ? "Divider"
+            : def.type === "info"
+              ? "Informasi Penting"
+              : `Pertanyaan ${def.label}`,
       sublabel: def.type === "heading" ? "Panduan singkat bagian ini..." : undefined,
-      required: def.type !== "heading",
+      required: def.type !== "heading" && def.type !== "divider" && def.type !== "info",
+      colSpan: def.defaultConfig.colSpan || "full",
       ...def.defaultConfig,
     };
     setFields((prev) => [...prev, newField]);
@@ -921,10 +1046,37 @@ export function QuestionnaireBuilder({
                 {/* Advanced Fields */}
                 <div>
                   <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                    Advanced & Media
+                    Advanced & Interactive
                   </p>
                   <div className="grid grid-cols-1 gap-1.5">
                     {ELEMENT_CATALOG.filter((e) => e.category === "advanced").map((item) => (
+                      <button
+                        key={item.type}
+                        type="button"
+                        onClick={() => handleAddField(item)}
+                        className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                      >
+                        <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
+                          <item.icon className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
+                            {item.label}
+                          </p>
+                        </div>
+                        <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Structure Fields */}
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                    Structure & Notes
+                  </p>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {ELEMENT_CATALOG.filter((e) => e.category === "structure").map((item) => (
                       <button
                         key={item.type}
                         type="button"
@@ -952,7 +1104,15 @@ export function QuestionnaireBuilder({
           <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex justify-center custom-scrollbar">
             <div className={`w-full transition-all duration-200 ${previewDevice === "mobile" ? "max-w-sm" : "max-w-3xl"}`}>
               {/* Form Paper Sheet */}
-              <div className="rounded-2xl border border-border/80 bg-background shadow-md p-5 sm:p-8 space-y-6">
+              <div
+                className={`border border-border/80 bg-background shadow-md p-5 sm:p-8 space-y-6 ${
+                  cardRoundness === "normal"
+                    ? "rounded-md"
+                    : cardRoundness === "soft"
+                      ? "rounded-3xl"
+                      : "rounded-2xl"
+                }`}
+              >
                 {/* Optional Header Logo Banner */}
                 <div className="flex items-center justify-between pb-1">
                   {logoUrl ? (
@@ -999,10 +1159,10 @@ export function QuestionnaireBuilder({
                   />
                 </div>
 
-                {/* DnD Sortable Field List Canvas */}
+                {/* DnD Sortable Field List Canvas with 12-Column Grid */}
                 <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
                   <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
-                    <div className="space-y-3.5">
+                    <div className="grid grid-cols-12 gap-3.5">
                       {fields.map((field) => (
                         <SortableCanvasField
                           key={field.id}
@@ -1039,7 +1199,7 @@ export function QuestionnaireBuilder({
                     className="h-8.5 px-4 text-xs font-semibold gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5"
                   >
                     <Plus className="h-3.5 w-3.5" />
-                    <span>Tambah Pertanyaan Baru</span>
+                    <span>Tambah Elemen Baru</span>
                   </Button>
                 </div>
 
@@ -1084,6 +1244,42 @@ export function QuestionnaireBuilder({
               <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
                 {selectedField ? (
                   <div className="space-y-4">
+                    {/* Grid Column Layout (Shrink / Full) */}
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium flex items-center justify-between">
+                        <span>Lebar Kolom (Column Width)</span>
+                        <Badge variant="outline" className="text-[9px] font-mono">
+                          {selectedField.colSpan === "half" ? "50% (2 Kolom)" : "100% (Penuh)"}
+                        </Badge>
+                      </Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => updateSelectedField({ colSpan: "full" })}
+                          className={`p-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                            selectedField.colSpan !== "half"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border/70 hover:border-border text-muted-foreground"
+                          }`}
+                        >
+                          <Square className="h-3.5 w-3.5" />
+                          <span>100% Full</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => updateSelectedField({ colSpan: "half" })}
+                          className={`p-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                            selectedField.colSpan === "half"
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border/70 hover:border-border text-muted-foreground"
+                          }`}
+                        >
+                          <Columns className="h-3.5 w-3.5" />
+                          <span>50% Shrink</span>
+                        </button>
+                      </div>
+                    </div>
+
                     {/* Field Label */}
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium">Question Label / Heading</Label>
@@ -1095,18 +1291,36 @@ export function QuestionnaireBuilder({
                     </div>
 
                     {/* Field Sublabel / Description */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium">Sublabel / Help Text</Label>
-                      <Input
-                        value={selectedField.sublabel || ""}
-                        onChange={(e) => updateSelectedField({ sublabel: e.target.value })}
-                        placeholder="Petunjuk tambahan..."
-                        className="h-8.5 text-xs"
-                      />
-                    </div>
+                    {selectedField.type !== "divider" && (
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">Sublabel / Help Text</Label>
+                        <Input
+                          value={selectedField.sublabel || ""}
+                          onChange={(e) => updateSelectedField({ sublabel: e.target.value })}
+                          placeholder="Petunjuk tambahan..."
+                          className="h-8.5 text-xs"
+                        />
+                      </div>
+                    )}
+
+                    {/* Content Text (For Info / Terms) */}
+                    {(selectedField.type === "info" || selectedField.type === "terms") && (
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-medium">Isi Teks / Penjelasan</Label>
+                        <Textarea
+                          value={selectedField.content || ""}
+                          onChange={(e) => updateSelectedField({ content: e.target.value })}
+                          rows={3}
+                          className="text-xs"
+                        />
+                      </div>
+                    )}
 
                     {/* Placeholder (if applicable) */}
                     {selectedField.type !== "heading" &&
+                      selectedField.type !== "divider" &&
+                      selectedField.type !== "info" &&
+                      selectedField.type !== "terms" &&
                       selectedField.type !== "rating" &&
                       selectedField.type !== "signature" && (
                         <div className="space-y-1.5">
@@ -1121,16 +1335,37 @@ export function QuestionnaireBuilder({
                       )}
 
                     {/* Required Switch */}
-                    {selectedField.type !== "heading" && (
-                      <div className="flex items-center justify-between rounded-lg border p-2.5 bg-muted/10">
-                        <div>
-                          <p className="text-xs font-medium">Wajib Diisi (Required)</p>
-                          <p className="text-[10px] text-muted-foreground">Klien tidak bisa submit jika kosong</p>
+                    {selectedField.type !== "heading" &&
+                      selectedField.type !== "divider" &&
+                      selectedField.type !== "info" && (
+                        <div className="flex items-center justify-between rounded-lg border p-2.5 bg-muted/10">
+                          <div>
+                            <p className="text-xs font-medium">Wajib Diisi (Required)</p>
+                            <p className="text-[10px] text-muted-foreground">Klien tidak bisa submit jika kosong</p>
+                          </div>
+                          <Checkbox
+                            checked={selectedField.required}
+                            onCheckedChange={(checked) => updateSelectedField({ required: Boolean(checked) })}
+                          />
                         </div>
-                        <Checkbox
-                          checked={selectedField.required}
-                          onCheckedChange={(checked) => updateSelectedField({ required: Boolean(checked) })}
-                        />
+                      )}
+
+                    {/* Rating Scale Max setting */}
+                    {selectedField.type === "rating" && (
+                      <div className="space-y-1.5 pt-2 border-t border-border/60">
+                        <Label className="text-xs font-medium">Skala Bintang Maksimal</Label>
+                        <Select
+                          value={String(selectedField.maxRating || 5)}
+                          onValueChange={(val) => updateSelectedField({ maxRating: Number(val) })}
+                        >
+                          <SelectTrigger className="h-8.5 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="5">5 Bintang (Standar)</SelectItem>
+                            <SelectItem value="10">10 Bintang (NPS Scale)</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                     )}
 
@@ -1185,9 +1420,9 @@ export function QuestionnaireBuilder({
                         )}
                       </div>
 
-                      {fields.filter((f) => f.id !== selectedField.id && f.type !== "heading").length > 0 ? (
+                      {fields.filter((f) => f.id !== selectedField.id && f.type !== "heading" && f.type !== "divider").length > 0 ? (
                         <div className="space-y-2 rounded-lg border p-2.5 bg-muted/10">
-                          <p className="text-[11px] text-muted-foreground">Tampilkan pertanyaan ini hanya jika:</p>
+                          <p className="text-[11px] text-muted-foreground">Tampilkan elemen ini hanya jika:</p>
                           <Select
                             value={selectedField.condition?.fieldId || "none"}
                             onValueChange={(val) => {
@@ -1210,7 +1445,7 @@ export function QuestionnaireBuilder({
                             <SelectContent>
                               <SelectItem value="none">Tanpa Kondisi (Selalu Tampil)</SelectItem>
                               {fields
-                                .filter((f) => f.id !== selectedField.id && f.type !== "heading")
+                                .filter((f) => f.id !== selectedField.id && f.type !== "heading" && f.type !== "divider")
                                 .map((f) => (
                                   <SelectItem key={f.id} value={f.id}>
                                     {f.label}
@@ -1257,7 +1492,7 @@ export function QuestionnaireBuilder({
                         className="w-full h-8 text-xs text-destructive hover:bg-destructive/10 border-destructive/30"
                       >
                         <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                        Hapus Pertanyaan Ini
+                        Hapus Elemen Ini
                       </Button>
                     </div>
                   </div>
@@ -1295,20 +1530,63 @@ export function QuestionnaireBuilder({
               </div>
             </div>
 
+            {/* Access & Status Controls */}
+            <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
+              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                <Lock className="h-4 w-4 text-amber-500" />
+                <span>Kontrol Akses & Status</span>
+              </h3>
+
+              <div className="flex items-center justify-between rounded-xl border p-3 bg-muted/10">
+                <div>
+                  <p className="text-xs font-semibold">Status Formulir</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {formStatus === "active" ? "Formulir aktif dan dapat menerima respon" : "Formulir dinonaktifkan (tutup penerimaan)"}
+                  </p>
+                </div>
+                <Select value={formStatus} onValueChange={(val: any) => setFormStatus(val)}>
+                  <SelectTrigger className="h-8 text-xs w-32">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">🟢 Aktif</SelectItem>
+                    <SelectItem value="disabled">🔴 Ditutup</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5 pt-1">
+                <Label className="text-xs font-medium">Password Protection (Opsional)</Label>
+                <Input
+                  type="password"
+                  value={passwordProtection}
+                  onChange={(e) => setPasswordProtection(e.target.value)}
+                  placeholder="Kosongkan jika form publik tanpa password"
+                  className="h-9 text-xs"
+                />
+                <p className="text-[10px] text-muted-foreground">
+                  Jika diisi, responden wajib memasukkan sandi ini sebelum dapat mengisi formulir.
+                </p>
+              </div>
+            </div>
+
             {/* Theme & Styling */}
             <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Palette className="h-4 w-4 text-primary" />
-                <span>Tema & Warna Aksen</span>
+                <span>Tema, Warna & Sudut Card</span>
               </h3>
-              <p className="text-xs text-muted-foreground">Pilih warna branding yang cocok dengan identity agensi Anda.</p>
+              <p className="text-xs text-muted-foreground">Sesuaikan tampilan branding agar selaras dengan citra agensi Anda.</p>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
                 {THEME_PRESETS.map((tPreset) => (
                   <button
                     key={tPreset.id}
                     type="button"
-                    onClick={() => setSelectedTheme(tPreset.id)}
+                    onClick={() => {
+                      setSelectedTheme(tPreset.id);
+                      setCustomHex(tPreset.hex);
+                    }}
                     className={`p-2.5 rounded-xl border text-left transition-all flex flex-col gap-2 ${
                       selectedTheme === tPreset.id
                         ? "border-primary ring-2 ring-primary/20 bg-muted/20"
@@ -1321,6 +1599,40 @@ export function QuestionnaireBuilder({
                     <span className="text-xs font-semibold">{tPreset.name}</span>
                   </button>
                 ))}
+              </div>
+
+              {/* Card Roundness Switcher */}
+              <div className="space-y-2 pt-3 border-t border-border/60">
+                <Label className="text-xs font-medium">Bentuk Sudut Kartu (Card Roundness)</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setCardRoundness("normal")}
+                    className={`p-2 border text-xs font-semibold rounded-md transition-all ${
+                      cardRoundness === "normal" ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    Normal (6px)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCardRoundness("rounded")}
+                    className={`p-2 border text-xs font-semibold rounded-xl transition-all ${
+                      cardRoundness === "rounded" ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    Rounded (16px)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setCardRoundness("soft")}
+                    className={`p-2 border text-xs font-semibold rounded-2xl transition-all ${
+                      cardRoundness === "soft" ? "border-primary bg-primary/10 text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    Soft (24px)
+                  </button>
+                </div>
               </div>
             </div>
 

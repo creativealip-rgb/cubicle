@@ -13,6 +13,7 @@ export const questionnaireFieldTypeSchema = z.enum([
   "multiselect",
   "number",
   "date",
+  "time",
   "email",
   "url",
   "phone",
@@ -20,6 +21,9 @@ export const questionnaireFieldTypeSchema = z.enum([
   "signature",
   "rating",
   "heading",
+  "divider",
+  "info",
+  "terms",
 ]);
 
 export type QuestionnaireFieldType = z.infer<typeof questionnaireFieldTypeSchema>;
@@ -34,6 +38,10 @@ export const questionnaireFieldSchema = z.object({
   placeholder: z.string().optional(),
   acceptFiles: z.string().optional(),
   maxRating: z.number().int().min(3).max(10).optional(),
+  // Layout Column: "full" (100%) or "half" (50% 2-column inline shrink)
+  colSpan: z.enum(["full", "half"]).default("full").optional(),
+  // Info text content (for 'info' type) or terms text (for 'terms' type)
+  content: z.string().max(2000).optional(),
   // Conditional Logic: show this field only if another field matches a value
   condition: z
     .object({
