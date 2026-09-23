@@ -17,6 +17,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
+import {
   Type,
   AlignLeft,
   Mail,
@@ -38,11 +55,11 @@ import {
   Eye,
   Save,
   Loader2,
-  Sparkles,
   ArrowLeft,
   Share2,
   Sliders,
   FileCheck,
+  Palette,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
@@ -176,6 +193,172 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
   },
 ];
 
+// ─── Sortable Field Item Component ───
+function SortableCanvasField({
+  field,
+  isSelected,
+  onSelect,
+  onDuplicate,
+  onDelete,
+}: {
+  field: QuestionnaireField;
+  isSelected: boolean;
+  onSelect: () => void;
+  onDuplicate: () => void;
+  onDelete: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: field.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.4 : 1,
+  };
+
+  const isHeading = field.type === "heading";
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      onClick={onSelect}
+      className={`group relative rounded-xl border p-4 transition-all cursor-pointer ${
+        isSelected
+          ? "border-primary bg-primary/[0.02] ring-2 ring-primary/20 shadow-xs"
+          : "border-border/60 bg-card hover:border-border hover:shadow-xs"
+      }`}
+    >
+      {/* Action controls & Drag handle */}
+      <div
+        className={`absolute -top-3 right-3 flex items-center gap-1 bg-background border border-border shadow-xs rounded-md px-1 py-0.5 z-10 transition-opacity ${
+          isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        }`}
+      >
+        <button
+          type="button"
+          {...attributes}
+          {...listeners}
+          className="p-1 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing"
+          title="Drag untuk geser posisi"
+        >
+          <GripVertical className="h-3 w-3" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDuplicate();
+          }}
+          className="p-1 text-muted-foreground hover:text-primary"
+          title="Duplikasi"
+        >
+          <Copy className="h-3 w-3" />
+        </button>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onDelete();
+          }}
+          className="p-1 text-muted-foreground hover:text-destructive"
+          title="Hapus"
+        >
+          <Trash2 className="h-3 w-3" />
+        </button>
+      </div>
+
+      {/* Heading Field */}
+      {isHeading ? (
+        <div className="space-y-1">
+          <h3 className="text-base font-bold text-foreground">{field.label}</h3>
+          {field.sublabel && <p className="text-xs text-muted-foreground">{field.sublabel}</p>}
+        </div>
+      ) : (
+        /* Standard Field Preview */
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <label className="text-xs font-semibold text-foreground flex items-center gap-1">
+              <span>{field.label}</span>
+              {field.required && <span className="text-destructive">*</span>}
+            </label>
+            <Badge variant="outline" className="text-[9px] uppercase font-bold tracking-wider py-0 px-1 text-muted-foreground">
+              {field.type}
+            </Badge>
+          </div>
+
+          {field.sublabel && <p className="text-[11px] text-muted-foreground">{field.sublabel}</p>}
+
+          {field.type === "text" && (
+            <Input disabled placeholder={field.placeholder || "Teks singkat..."} className="h-9 text-xs bg-muted/20" />
+          )}
+          {field.type === "textarea" && (
+            <Textarea disabled placeholder={field.placeholder || "Teks panjang..."} rows={3} className="text-xs bg-muted/20" />
+          )}
+          {field.type === "email" && (
+            <Input disabled placeholder={field.placeholder || "email@domain.com"} className="h-9 text-xs bg-muted/20" />
+          )}
+          {field.type === "phone" && (
+            <Input disabled placeholder={field.placeholder || "+62 812..."} className="h-9 text-xs bg-muted/20" />
+          )}
+          {field.type === "number" && (
+            <Input disabled placeholder={field.placeholder || "0"} type="number" className="h-9 text-xs bg-muted/20" />
+          )}
+          {field.type === "date" && (
+            <Input disabled type="date" className="h-9 text-xs bg-muted/20" />
+          )}
+          {field.type === "url" && (
+            <Input disabled placeholder={field.placeholder || "https://..."} className="h-9 text-xs bg-muted/20" />
+          )}
+          {field.type === "select" && (
+            <Select disabled>
+              <SelectTrigger className="h-9 text-xs bg-muted/20">
+                <SelectValue placeholder="Pilih opsi..." />
+              </SelectTrigger>
+            </Select>
+          )}
+          {field.type === "multiselect" && (
+            <div className="space-y-1.5 pt-1">
+              {(field.options || ["Pilihan 1", "Pilihan 2"]).map((opt, i) => (
+                <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <div className="h-4 w-4 rounded border border-border bg-muted/30" />
+                  <span>{opt}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          {field.type === "file" && (
+            <div className="border-2 border-dashed border-border/80 rounded-xl p-4 text-center bg-muted/10 space-y-1">
+              <Paperclip className="h-5 w-5 mx-auto text-muted-foreground" />
+              <p className="text-xs font-medium text-foreground">Upload file brief atau dokumen</p>
+              <p className="text-[10px] text-muted-foreground">{field.acceptFiles || "Format: PDF, PNG, ZIP"}</p>
+            </div>
+          )}
+          {field.type === "signature" && (
+            <div className="border border-border/80 rounded-xl p-4 text-center bg-muted/10 h-16 flex items-center justify-center gap-2">
+              <PenTool className="h-4 w-4 text-muted-foreground" />
+              <p className="text-[11px] text-muted-foreground italic">Area Tanda Tangan Digital Klien</p>
+            </div>
+          )}
+          {field.type === "rating" && (
+            <div className="flex items-center gap-1.5 pt-1">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <Star key={star} className="h-5 w-5 text-amber-400 fill-amber-400/20" />
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export function QuestionnaireBuilder({
   workspaceId,
   questionnaireId,
@@ -221,6 +404,23 @@ export function QuestionnaireBuilder({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [pending, startTransition] = useTransition();
 
+  // DnD Sensors setup
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (over && active.id !== over.id) {
+      setFields((items) => {
+        const oldIndex = items.findIndex((i) => i.id === active.id);
+        const newIndex = items.findIndex((i) => i.id === over.id);
+        return arrayMove(items, oldIndex, newIndex);
+      });
+    }
+  }
+
   const selectedField = useMemo(
     () => fields.find((f) => f.id === selectedFieldId) || null,
     [fields, selectedFieldId],
@@ -239,7 +439,6 @@ export function QuestionnaireBuilder({
 
   useUnsavedChanges(dirty);
 
-  // Add field from element catalog
   function handleAddField(def: ElementDefinition) {
     const newField: QuestionnaireField = {
       id: makeId(),
@@ -254,7 +453,6 @@ export function QuestionnaireBuilder({
     toast.success(`${def.label} ditambahkan`);
   }
 
-  // Duplicate field
   function handleDuplicateField(fieldId: string) {
     const target = fields.find((f) => f.id === fieldId);
     if (!target) return;
@@ -271,7 +469,6 @@ export function QuestionnaireBuilder({
     toast.success("Field diduplikasi");
   }
 
-  // Delete field
   function handleDeleteField(fieldId: string) {
     if (fields.length <= 1) {
       toast.error("Formulir harus memiliki minimal 1 field");
@@ -285,17 +482,6 @@ export function QuestionnaireBuilder({
     toast.success("Field dihapus");
   }
 
-  // Move field up/down
-  function handleMoveField(index: number, direction: "up" | "down") {
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= fields.length) return;
-    const updated = [...fields];
-    const [moved] = updated.splice(index, 1);
-    updated.splice(targetIndex, 0, moved);
-    setFields(updated);
-  }
-
-  // Update specific field property
   function updateSelectedField(patch: Partial<QuestionnaireField>) {
     if (!selectedFieldId) return;
     setFields((prev) =>
@@ -303,7 +489,6 @@ export function QuestionnaireBuilder({
     );
   }
 
-  // Save form
   function handleSave() {
     if (!name.trim()) {
       toast.error(t("Nama formulir wajib diisi", "Form name is required"));
@@ -439,7 +624,7 @@ export function QuestionnaireBuilder({
                 <Plus className="h-3.5 w-3.5 text-primary" />
                 <span>Form Elements</span>
               </h4>
-              <p className="text-[11px] text-muted-foreground mt-0.5">Klik elemen untuk menambahkan ke canvas.</p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">Klik untuk menambah atau drag di canvas.</p>
             </div>
 
             <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
@@ -526,7 +711,7 @@ export function QuestionnaireBuilder({
             </div>
           </aside>
 
-          {/* PANEL TENGAH: Live Form Canvas (Jotform Sheet) */}
+          {/* PANEL TENGAH: Live Form Canvas with DnD */}
           <main className="flex-1 overflow-y-auto p-4 sm:p-8 flex justify-center custom-scrollbar bg-slate-100/70 dark:bg-zinc-900/50">
             <div className="w-full max-w-2xl space-y-4">
               {/* Form Paper Container */}
@@ -548,166 +733,23 @@ export function QuestionnaireBuilder({
                   />
                 </div>
 
-                {/* Field List Canvas */}
-                <div className="space-y-4">
-                  {fields.map((field, idx) => {
-                    const isSelected = field.id === selectedFieldId;
-                    const isHeading = field.type === "heading";
-
-                    return (
-                      <div
-                        key={field.id}
-                        onClick={() => setSelectedFieldId(field.id)}
-                        className={`group relative rounded-xl border p-4 transition-all cursor-pointer ${
-                          isSelected
-                            ? "border-primary bg-primary/[0.02] ring-2 ring-primary/20 shadow-xs"
-                            : "border-border/60 bg-card hover:border-border hover:shadow-xs"
-                        }`}
-                      >
-                        {/* Top action bar on hover/select */}
-                        <div
-                          className={`absolute -top-3 right-3 flex items-center gap-1 bg-background border border-border shadow-xs rounded-md px-1 py-0.5 z-10 transition-opacity ${
-                            isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                          }`}
-                        >
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleMoveField(idx, "up");
-                            }}
-                            disabled={idx === 0}
-                            className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
-                            title="Geser ke atas"
-                          >
-                            ▲
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleMoveField(idx, "down");
-                            }}
-                            disabled={idx === fields.length - 1}
-                            className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
-                            title="Geser ke bawah"
-                          >
-                            ▼
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDuplicateField(field.id);
-                            }}
-                            className="p-1 text-muted-foreground hover:text-primary"
-                            title="Duplikasi"
-                          >
-                            <Copy className="h-3 w-3" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteField(field.id);
-                            }}
-                            className="p-1 text-muted-foreground hover:text-destructive"
-                            title="Hapus"
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
-
-                        {/* Heading Special Rendering */}
-                        {isHeading ? (
-                          <div className="space-y-1">
-                            <h3 className="text-base font-bold text-foreground">{field.label}</h3>
-                            {field.sublabel && (
-                              <p className="text-xs text-muted-foreground">{field.sublabel}</p>
-                            )}
-                          </div>
-                        ) : (
-                          /* Standard Field Rendering */
-                          <div className="space-y-2">
-                            <div className="flex items-center justify-between">
-                              <label className="text-xs font-semibold text-foreground flex items-center gap-1">
-                                <span>{field.label}</span>
-                                {field.required && <span className="text-destructive">*</span>}
-                              </label>
-                              <Badge variant="outline" className="text-[9px] uppercase font-bold tracking-wider py-0 px-1 text-muted-foreground">
-                                {field.type}
-                              </Badge>
-                            </div>
-
-                            {field.sublabel && (
-                              <p className="text-[11px] text-muted-foreground">{field.sublabel}</p>
-                            )}
-
-                            {/* Visual Preview based on field type */}
-                            {field.type === "text" && (
-                              <Input disabled placeholder={field.placeholder || "Teks singkat..."} className="h-9 text-xs bg-muted/20" />
-                            )}
-                            {field.type === "textarea" && (
-                              <Textarea disabled placeholder={field.placeholder || "Teks panjang..."} rows={3} className="text-xs bg-muted/20" />
-                            )}
-                            {field.type === "email" && (
-                              <Input disabled placeholder={field.placeholder || "email@domain.com"} className="h-9 text-xs bg-muted/20" />
-                            )}
-                            {field.type === "phone" && (
-                              <Input disabled placeholder={field.placeholder || "+62 812..."} className="h-9 text-xs bg-muted/20" />
-                            )}
-                            {field.type === "number" && (
-                              <Input disabled placeholder={field.placeholder || "0"} type="number" className="h-9 text-xs bg-muted/20" />
-                            )}
-                            {field.type === "date" && (
-                              <Input disabled type="date" className="h-9 text-xs bg-muted/20" />
-                            )}
-                            {field.type === "url" && (
-                              <Input disabled placeholder={field.placeholder || "https://..."} className="h-9 text-xs bg-muted/20" />
-                            )}
-                            {field.type === "select" && (
-                              <Select disabled>
-                                <SelectTrigger className="h-9 text-xs bg-muted/20">
-                                  <SelectValue placeholder="Pilih opsi..." />
-                                </SelectTrigger>
-                              </Select>
-                            )}
-                            {field.type === "multiselect" && (
-                              <div className="space-y-1.5 pt-1">
-                                {(field.options || ["Pilihan 1", "Pilihan 2"]).map((opt, i) => (
-                                  <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
-                                    <div className="h-4 w-4 rounded border border-border bg-muted/30" />
-                                    <span>{opt}</span>
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                            {field.type === "file" && (
-                              <div className="border-2 border-dashed border-border/80 rounded-xl p-4 text-center bg-muted/10 space-y-1">
-                                <Paperclip className="h-5 w-5 mx-auto text-muted-foreground" />
-                                <p className="text-xs font-medium text-foreground">Klik atau drag file ke sini</p>
-                                <p className="text-[10px] text-muted-foreground">{field.acceptFiles || "Format yang didukung: PDF, PNG, ZIP"}</p>
-                              </div>
-                            )}
-                            {field.type === "signature" && (
-                              <div className="border border-border/80 rounded-xl p-4 text-center bg-muted/10 h-20 flex flex-col items-center justify-center space-y-1">
-                                <PenTool className="h-4 w-4 text-muted-foreground" />
-                                <p className="text-[11px] text-muted-foreground italic">Area Tanda Tangan Digital</p>
-                              </div>
-                            )}
-                            {field.type === "rating" && (
-                              <div className="flex items-center gap-1.5 pt-1">
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                  <Star key={star} className="h-5 w-5 text-amber-400 fill-amber-400/20" />
-                                ))}
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                {/* DnD Sortable Field List Canvas */}
+                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                  <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+                    <div className="space-y-4">
+                      {fields.map((field) => (
+                        <SortableCanvasField
+                          key={field.id}
+                          field={field}
+                          isSelected={field.id === selectedFieldId}
+                          onSelect={() => setSelectedFieldId(field.id)}
+                          onDuplicate={() => handleDuplicateField(field.id)}
+                          onDelete={() => handleDeleteField(field.id)}
+                        />
+                      ))}
+                    </div>
+                  </SortableContext>
+                </DndContext>
 
                 {/* Submit button preview */}
                 <div className="pt-4 border-t border-border/60">
