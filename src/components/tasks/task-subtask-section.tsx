@@ -48,8 +48,11 @@ export function TaskSubtaskSection({
     };
   }, [taskId]);
 
-  async function handleAdd(e: React.FormEvent) {
-    e.preventDefault();
+  async function handleAdd(e?: React.FormEvent) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     if (!newTitle.trim()) return;
     setAdding(true);
     try {
@@ -181,15 +184,23 @@ export function TaskSubtaskSection({
       </div>
 
       {/* Add subtask input */}
-      <form onSubmit={handleAdd} className="flex items-center gap-1.5 pt-1">
+      <div className="flex items-center gap-1.5 pt-1">
         <Input
           value={newTitle}
           onChange={(e) => setNewTitle(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              e.preventDefault();
+              e.stopPropagation();
+              handleAdd();
+            }
+          }}
           placeholder={t("+ Tambah langkah / subtask...", "+ Add step / subtask...")}
           className="h-8 text-xs bg-background"
         />
         <Button
-          type="submit"
+          type="button"
+          onClick={handleAdd}
           size="sm"
           variant="secondary"
           disabled={adding || !newTitle.trim()}
@@ -197,7 +208,7 @@ export function TaskSubtaskSection({
         >
           <Plus className="h-3.5 w-3.5" />
         </Button>
-      </form>
+      </div>
     </div>
   );
 }

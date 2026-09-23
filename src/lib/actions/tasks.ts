@@ -434,6 +434,7 @@ export async function addSubtask(taskId: string, title: string) {
     })
     .returning();
 
+  revalidatePath("/app/tasks");
   return subtask;
 }
 
@@ -452,6 +453,7 @@ export async function toggleSubtask(subtaskId: string, completed: boolean) {
     .where(and(eq(taskSubtasks.id, subtaskId), eq(taskSubtasks.workspaceId, workspaceId)))
     .returning();
 
+  revalidatePath("/app/tasks");
   return updated;
 }
 
@@ -465,6 +467,7 @@ export async function deleteSubtask(subtaskId: string) {
     .delete(taskSubtasks)
     .where(and(eq(taskSubtasks.id, subtaskId), eq(taskSubtasks.workspaceId, workspaceId)));
 
+  revalidatePath("/app/tasks");
   return { ok: true };
 }
 
@@ -482,6 +485,7 @@ export async function resetTaskSubtasks(taskId: string) {
     })
     .where(and(eq(taskSubtasks.taskId, taskId), eq(taskSubtasks.workspaceId, workspaceId)));
 
+  revalidatePath("/app/tasks");
   return { ok: true };
 }
 
