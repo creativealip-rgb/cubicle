@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useTransition, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,17 +17,14 @@ import { toast } from "sonner";
 import { submitQuestionnaire } from "@/lib/actions/questionnaires";
 import { useT } from "@/lib/i18n-client";
 import {
-  Upload,
   CheckCircle,
-  AlertCircle,
   Loader2,
   PenTool,
   Star,
-  Clock,
-  Calendar,
   Info,
-  ShieldCheck,
   Paperclip,
+  ArrowRight,
+  ArrowLeft,
 } from "lucide-react";
 import type { QuestionnaireField } from "@/lib/questionnaire-schema";
 
@@ -40,22 +36,46 @@ export function IntakeForm({
   fields: QuestionnaireField[];
 }) {
   const { t } = useT();
-  const router = useRouter();
   const [answers, setAnswers] = useState<Record<string, any>>({});
-  const [respondentName, setRespondentName] = useState("");
-  const [respondentEmail, setRespondentEmail] = useState("");
   const [submitted, setSubmitted] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  // Multi-Step / Multi-Page Splitting via 'page_break'
+  const pages = useMemo(() => {
+    const list: QuestionnaireField[][] = [];
+    let currentPage: QuestionnaireField[] = [];
+
+    for (const f of fields) {
+      if (f.type === "page_break") {
+        if (currentPage.length > 0) {
+          list.push(currentPage);
+          currentPage = [];
+        }
+      } else {
+        currentPage.push(f);
+      }
+    }
+    if (currentPage.length > 0 || list.length === 0) {
+      list.push(currentPage);
+    }
+    return list;
+  }, [fields]);
+
+  const [currentPageIndex, setCurrentPageIndex] = useState(0);
 
   function setFieldValue(id: string, value: any) {
     setAnswers((prev) => ({ ...prev, [id]: value }));
   }
 
-  function handleSubmit(e: React.FormEvent) {
+  const isLastPage = currentPageIndex === pages.length - 1;
+  const currentFields = pages[currentPageIndex] || [];
+  const progressPercent = Math.round(((currentPageIndex + 1) / pages.length) * 100);
+
+  function handleNextStep(e: React.FormEvent) {
     e.preventDefault();
 
-    // Check required fields
-    for (const f of fields) {
+    // Check required fields on the current page
+    for (const f of currentFields) {
       // Skip if hidden by conditional logic
       if (f.condition?.fieldId) {
         const triggerVal = answers[f.condition.fieldId];
@@ -65,7 +85,7 @@ export function IntakeForm({
         if (!match) continue;
       }
 
-      if (f.required && f.type !== "heading" && f.type !== "divider" && f.type !== "info") {
+      if (f.required && f.type !== "heading" && f.type !== "divider" && f.type !== "info" && f.type !== "page_break") {
         const val = answers[f.id];
         if (val === undefined || val === null || val === "" || (Array.isArray(val) && val.length === 0)) {
           toast.error(`Pertanyaan "${f.label}" wajib diisi`);
@@ -74,19 +94,31 @@ export function IntakeForm({
       }
     }
 
-    startTransition(async () => {
-      try {
-        await submitQuestionnaire({
-          token,
-          answers,
-        });
+    if (!isLastPage) {
+      setCurrentPageIndex((prev) => prev + 1);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      // Final Submit
+      startTransition(async () => {
+        try {
+          if (token === "preview_mode") {
+            setSubmitted(true);
+            toast.success("Mode Preview: Tanggapan berhasil disimulasikan!");
+            return;
+          }
 
-        setSubmitted(true);
-        toast.success("Tanggapan berhasil dikirimkan!");
-      } catch (err: any) {
-        toast.error(err?.message || "Terjadi kesalahan saat mengirim");
-      }
-    });
+          await submitQuestionnaire({
+            token,
+            answers,
+          });
+
+          setSubmitted(true);
+          toast.success("Tanggapan berhasil dikirimkan!");
+        } catch (err: any) {
+          toast.error(err?.message || "Terjadi kesalahan saat mengirim");
+        }
+      });
+    }
   }
 
   if (submitted) {
@@ -106,10 +138,28 @@ export function IntakeForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} aria-busy={pending} className="space-y-6">
+    <form onSubmit={handleNextStep} aria-busy={pending} className="space-y-6">
+      {/* Multi-Page Progress Bar (if more than 1 page) */}
+      {pages.length > 1 && (
+        <div className="space-y-1.5 pb-2">
+          <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
+            <span>
+              Langkah {currentPageIndex + 1} dari {pages.length}
+            </span>
+            <span className="font-mono text-primary font-bold">{progressPercent}%</span>
+          </div>
+          <div className="w-full h-2 bg-muted/60 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-primary transition-all duration-300 rounded-full"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
+        </div>
+      )}
+
       {/* 12-Column Responsive Grid */}
       <div className="grid grid-cols-12 gap-4 sm:gap-5">
-        {fields.map((f) => {
+        {currentFields.map((f) => {
           // Evaluate Conditional Logic
           if (f.condition?.fieldId) {
             const triggerVal = answers[f.condition.fieldId];
@@ -207,10 +257,7 @@ export function IntakeForm({
                 <Input
                   type="email"
                   value={answers[f.id] || ""}
-                  onChange={(e) => {
-                    setFieldValue(f.id, e.target.value);
-                    if (!respondentEmail) setRespondentEmail(e.target.value);
-                  }}
+                  onChange={(e) => setFieldValue(f.id, e.target.value)}
                   placeholder={f.placeholder || "email@perusahaan.com"}
                   className="h-10 text-xs sm:text-sm bg-background"
                 />
@@ -386,17 +433,34 @@ export function IntakeForm({
         })}
       </div>
 
-      {/* Submit Button Bar */}
+      {/* Navigation Buttons (Back, Next, Submit) */}
       <div className="pt-6 border-t border-border/60 flex items-center justify-between">
+        {currentPageIndex > 0 ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              setCurrentPageIndex((prev) => Math.max(0, prev - 1));
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="h-10 px-4 text-xs sm:text-sm font-semibold gap-1.5"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span>Sebelumnya</span>
+          </Button>
+        ) : (
+          <div />
+        )}
+
         <Button
           type="submit"
           disabled={pending}
           className="h-10 px-6 text-xs sm:text-sm font-semibold bg-primary text-primary-foreground shadow-sm gap-2"
         >
           {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          <span>Kirim Tanggapan</span>
+          <span>{isLastPage ? "Kirim Tanggapan" : "Selanjutnya"}</span>
+          {!isLastPage && <ArrowRight className="h-4 w-4" />}
         </Button>
-        <span className="text-[10px] text-muted-foreground">Privasi & Data Terenkripsi</span>
       </div>
     </form>
   );

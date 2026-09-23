@@ -51,6 +51,7 @@ import {
   Minus,
   Info,
   ShieldCheck,
+  SplitSquareVertical,
   Plus,
   Trash2,
   Copy,
@@ -77,6 +78,8 @@ import {
   Sparkles,
   LayoutTemplate,
   Lock,
+  Eye,
+  Play,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
@@ -84,6 +87,7 @@ import { useT } from "@/lib/i18n-client";
 import Link from "next/link";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import type { QuestionnaireField, QuestionnaireFieldType } from "@/lib/questionnaire-schema";
+import { IntakeForm } from "@/components/questionnaires/intake-form";
 
 function makeId() {
   return `f_${Math.random().toString(36).slice(2, 10)}`;
@@ -222,7 +226,15 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     },
   },
 
-  // Structural & Content
+  // Structural & Multi-Page
+  {
+    type: "page_break",
+    label: "Page Break (Multi-Step)",
+    description: "Bagi form jadi beberapa halaman/step",
+    icon: SplitSquareVertical,
+    category: "structure",
+    defaultConfig: { label: "Halaman Selanjutnya", colSpan: "full" },
+  },
   {
     type: "heading",
     label: "Section Heading",
@@ -257,14 +269,16 @@ const FORM_TEMPLATES = [
   {
     id: "web-dev",
     title: "Web Development Client Intake",
-    description: "Brief lengkap untuk project pembuatan website, landing page, atau web app.",
+    description: "Brief multi-step untuk project website, landing page, atau web app.",
     fields: [
       { id: makeId(), type: "text" as const, label: "Nama Lengkap / Perusahaan", required: true, placeholder: "PT Contoh Sukses", colSpan: "full" as const },
       { id: makeId(), type: "email" as const, label: "Email Bisnis", required: true, placeholder: "contact@contoh.com", colSpan: "half" as const },
       { id: makeId(), type: "phone" as const, label: "Nomor WhatsApp", required: true, placeholder: "+62 812-3456-7890", colSpan: "half" as const },
+      { id: makeId(), type: "page_break" as const, label: "Detail Kebutuhan & Fitur", required: false, colSpan: "full" as const },
       { id: makeId(), type: "select" as const, label: "Tipe Website yang Dibutuhkan", options: ["Company Profile / Landing Page", "E-Commerce / Toko Online", "Custom Web Application", "Redesign Website Lama"], required: true, colSpan: "full" as const },
       { id: makeId(), type: "textarea" as const, label: "Jelaskan Tujuan & Fitur Utama", required: true, placeholder: "Website untuk meningkatkan penjualan dan branding...", colSpan: "full" as const },
       { id: makeId(), type: "url" as const, label: "Website Referensi / Kompetitor", required: false, placeholder: "https://apple.com, https://stripe.com", colSpan: "full" as const },
+      { id: makeId(), type: "page_break" as const, label: "Dokumen & Deadline", required: false, colSpan: "full" as const },
       { id: makeId(), type: "file" as const, label: "Upload Asset / Dokumen Pendukung", acceptFiles: ".pdf,.doc,.docx,.png,.jpg,.zip", required: false, colSpan: "full" as const },
       { id: makeId(), type: "date" as const, label: "Target Tanggal Peluncuran", required: false, colSpan: "half" as const },
       { id: makeId(), type: "time" as const, label: "Waktu Hubungi Terbaik", required: false, colSpan: "half" as const },
@@ -341,6 +355,7 @@ function SortableCanvasField({
     opacity: isDragging ? 0.35 : 1,
   };
 
+  const isPageBreak = field.type === "page_break";
   const isHeading = field.type === "heading";
   const isDivider = field.type === "divider";
   const isInfo = field.type === "info";
@@ -352,7 +367,7 @@ function SortableCanvasField({
       style={style}
       onClick={onSelect}
       className={`group relative rounded-xl border p-4 sm:p-5 transition-all cursor-pointer ${
-        isHalf ? "col-span-12 md:col-span-6" : "col-span-12"
+        isPageBreak ? "col-span-12 border-dashed border-primary/60 bg-primary/[0.03]" : isHalf ? "col-span-12 md:col-span-6" : "col-span-12"
       } ${
         isSelected
           ? "border-primary bg-primary/[0.02] ring-2 ring-primary/20 shadow-xs"
@@ -416,8 +431,18 @@ function SortableCanvasField({
         </span>
       )}
 
-      {/* Heading Field */}
-      {isHeading ? (
+      {/* Page Break Field */}
+      {isPageBreak ? (
+        <div className="py-2 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider">
+            <SplitSquareVertical className="h-4 w-4" />
+            <span>─── Pemisah Halaman (Page Break) ───</span>
+          </div>
+          <Badge variant="outline" className="text-[10px] font-semibold text-primary border-primary/40 bg-primary/5">
+            Langkah Baru
+          </Badge>
+        </div>
+      ) : isHeading ? (
         <div className="space-y-1.5 pt-1">
           <input
             type="text"
@@ -565,6 +590,7 @@ export function QuestionnaireBuilder({
   // Navigation tab: "build" | "settings" | "publish"
   const [activeTab, setActiveTab] = useState<"build" | "settings" | "publish">("build");
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
+  const [livePreviewMode, setLivePreviewMode] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(!initial && !questionnaireId);
 
   // Form general state
@@ -658,15 +684,17 @@ export function QuestionnaireBuilder({
       id: makeId(),
       type: def.type,
       label:
-        def.type === "heading"
-          ? "Judul Bagian Baru"
-          : def.type === "divider"
-            ? "Divider"
-            : def.type === "info"
-              ? "Informasi Penting"
-              : `Pertanyaan ${def.label}`,
+        def.type === "page_break"
+          ? "Langkah Baru"
+          : def.type === "heading"
+            ? "Judul Bagian Baru"
+            : def.type === "divider"
+              ? "Divider"
+              : def.type === "info"
+                ? "Informasi Penting"
+                : `Pertanyaan ${def.label}`,
       sublabel: def.type === "heading" ? "Panduan singkat bagian ini..." : undefined,
-      required: def.type !== "heading" && def.type !== "divider" && def.type !== "info",
+      required: def.type !== "heading" && def.type !== "divider" && def.type !== "info" && def.type !== "page_break",
       colSpan: def.defaultConfig.colSpan || "full",
       ...def.defaultConfig,
     };
@@ -823,20 +851,35 @@ export function QuestionnaireBuilder({
           </button>
         </div>
 
-        {/* Action Right: Templates, Device Switcher, Drawers & Save */}
+        {/* Action Right: Templates, Live Preview, Drawers & Save */}
         <div className="flex items-center gap-1.5 sm:gap-2">
+          {/* Interactive Live Preview Switcher */}
+          <button
+            type="button"
+            onClick={() => setLivePreviewMode(!livePreviewMode)}
+            className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all ${
+              livePreviewMode
+                ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                : "bg-muted/40 text-muted-foreground hover:text-foreground border-border/70"
+            }`}
+            title="Uji coba langsung pengisian formulir interaktif"
+          >
+            <Eye className="h-3.5 w-3.5" />
+            <span>Preview Form</span>
+          </button>
+
           <Button
             type="button"
             variant="outline"
             size="sm"
             onClick={() => setTemplateDialogOpen(true)}
-            className="h-8 gap-1.5 text-xs font-semibold text-primary border-primary/30 hover:bg-primary/5"
+            className="h-8 gap-1.5 text-xs font-semibold text-primary border-primary/30 hover:bg-primary/5 hidden sm:inline-flex"
           >
             <LayoutTemplate className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Templates</span>
+            <span>Templates</span>
           </Button>
 
-          {activeTab === "build" && (
+          {activeTab === "build" && !livePreviewMode && (
             <>
               {/* Desktop / Mobile Switcher */}
               <div className="hidden lg:flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/60">
@@ -969,541 +1012,575 @@ export function QuestionnaireBuilder({
       {/* ─── TAB CONTENT: BUILD ─── */}
       {activeTab === "build" && (
         <div className="flex-1 flex min-h-0 overflow-hidden relative">
-          {/* PANEL KIRI: Element Catalog (Collapsible) */}
-          {elementsOpen && (
-            <aside className="w-60 sm:w-64 border-r border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-left-4 duration-150">
-              <div className="p-3 border-b border-border/60 flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Plus className="h-3.5 w-3.5 text-primary" />
-                  <span>Form Elements</span>
-                </h4>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setElementsOpen(false)}
-                  className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground md:hidden"
-                >
-                  <X className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-
-              <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
-                {/* Basic Fields */}
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                    Basic Fields
-                  </p>
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {ELEMENT_CATALOG.filter((e) => e.category === "basic").map((item) => (
-                      <button
-                        key={item.type}
-                        type="button"
-                        onClick={() => handleAddField(item)}
-                        className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
-                      >
-                        <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
-                          <item.icon className="h-3.5 w-3.5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
-                            {item.label}
-                          </p>
-                        </div>
-                        <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Choice Fields */}
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                    Choices & Selection
-                  </p>
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {ELEMENT_CATALOG.filter((e) => e.category === "choice").map((item) => (
-                      <button
-                        key={item.type}
-                        type="button"
-                        onClick={() => handleAddField(item)}
-                        className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
-                      >
-                        <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
-                          <item.icon className="h-3.5 w-3.5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
-                            {item.label}
-                          </p>
-                        </div>
-                        <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Advanced Fields */}
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                    Advanced & Interactive
-                  </p>
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {ELEMENT_CATALOG.filter((e) => e.category === "advanced").map((item) => (
-                      <button
-                        key={item.type}
-                        type="button"
-                        onClick={() => handleAddField(item)}
-                        className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
-                      >
-                        <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
-                          <item.icon className="h-3.5 w-3.5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
-                            {item.label}
-                          </p>
-                        </div>
-                        <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Structure Fields */}
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                    Structure & Notes
-                  </p>
-                  <div className="grid grid-cols-1 gap-1.5">
-                    {ELEMENT_CATALOG.filter((e) => e.category === "structure").map((item) => (
-                      <button
-                        key={item.type}
-                        type="button"
-                        onClick={() => handleAddField(item)}
-                        className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
-                      >
-                        <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
-                          <item.icon className="h-3.5 w-3.5" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
-                            {item.label}
-                          </p>
-                        </div>
-                        <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </aside>
-          )}
-
-          {/* PANEL TENGAH: Live Form Canvas (Lega & Centered) */}
-          <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex justify-center custom-scrollbar">
-            <div className={`w-full transition-all duration-200 ${previewDevice === "mobile" ? "max-w-sm" : "max-w-3xl"}`}>
-              {/* Form Paper Sheet */}
-              <div
-                className={`border border-border/80 bg-background shadow-md p-5 sm:p-8 space-y-6 ${
-                  cardRoundness === "normal"
-                    ? "rounded-md"
-                    : cardRoundness === "soft"
-                      ? "rounded-3xl"
-                      : "rounded-2xl"
-                }`}
-              >
-                {/* Optional Header Logo Banner */}
-                <div className="flex items-center justify-between pb-1">
-                  {logoUrl ? (
-                    <div className="relative group">
-                      <img src={logoUrl} alt="Logo" className="h-10 object-contain rounded" />
-                      <button
-                        type="button"
-                        onClick={() => setLogoUrl(null)}
-                        className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
-                        title="Hapus Logo"
-                      >
-                        <X className="h-3 w-3" />
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const url = window.prompt("Masukkan URL Logo / Gambar:");
-                        if (url) setLogoUrl(url);
-                      }}
-                      className="text-[11px] font-medium text-muted-foreground hover:text-primary flex items-center gap-1.5 py-1 px-2 rounded-lg border border-dashed border-border hover:border-primary/40 transition-all"
-                    >
-                      <ImageIcon className="h-3.5 w-3.5" />
-                      <span>+ Pasang Logo Brand</span>
-                    </button>
-                  )}
-                </div>
-
-                {/* Form Title & Header Area */}
-                <div className="space-y-1.5 border-b border-border/60 pb-5">
-                  <Input
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder="Judul Formulir..."
-                    className="text-xl sm:text-2xl font-extrabold tracking-tight border-none px-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground/40"
-                  />
-                  <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Tuliskan petunjuk atau deskripsi formulir untuk responden..."
-                    rows={2}
-                    className="text-xs text-muted-foreground border-none px-0 min-h-[40px] resize-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
-                  />
-                </div>
-
-                {/* DnD Sortable Field List Canvas with 12-Column Grid */}
-                <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                  <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
-                    <div className="grid grid-cols-12 gap-3.5">
-                      {fields.map((field) => (
-                        <SortableCanvasField
-                          key={field.id}
-                          field={field}
-                          isSelected={field.id === selectedFieldId}
-                          onSelect={() => {
-                            setSelectedFieldId(field.id);
-                            setPropertiesOpen(true);
-                          }}
-                          onOpenProperties={() => {
-                            setSelectedFieldId(field.id);
-                            setPropertiesOpen(true);
-                          }}
-                          onUpdateLabel={(val) => {
-                            setFields((prev) =>
-                              prev.map((f) => (f.id === field.id ? { ...f, label: val } : f)),
-                            );
-                          }}
-                          onDuplicate={() => handleDuplicateField(field.id)}
-                          onDelete={() => handleDeleteField(field.id)}
-                        />
-                      ))}
-                    </div>
-                  </SortableContext>
-                </DndContext>
-
-                {/* Add question bottom banner */}
-                <div className="pt-2 flex items-center justify-center">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setElementsOpen(true)}
-                    className="h-8.5 px-4 text-xs font-semibold gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    <span>Tambah Elemen Baru</span>
-                  </Button>
-                </div>
-
-                {/* Submit button preview */}
-                <div className="pt-5 border-t border-border/60 flex items-center justify-between">
-                  <Button disabled className="h-9.5 px-5 text-xs font-semibold bg-primary text-primary-foreground">
-                    Submit Form
-                  </Button>
-                  <span className="text-[10px] text-muted-foreground">Powered by Cubiqlo Forms</span>
-                </div>
-              </div>
-            </div>
-          </main>
-
-          {/* PANEL KANAN: Field Properties Drawer (Collapsible) */}
-          {propertiesOpen && (
-            <aside className="w-72 sm:w-80 border-l border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-right-4 duration-150">
-              <div className="p-3.5 border-b border-border/60 flex items-center justify-between">
-                <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <Settings className="h-3.5 w-3.5 text-primary" />
-                  <span>Field Properties</span>
-                </h4>
-                <div className="flex items-center gap-1">
-                  {selectedField && (
-                    <Badge variant="secondary" className="text-[9px] uppercase font-bold py-0 mr-1">
-                      {selectedField.type}
+          {livePreviewMode ? (
+            /* INTERACTIVE LIVE PREVIEW FRAME */
+            <main className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col items-center justify-start bg-slate-900/10 custom-scrollbar">
+              <div className="w-full max-w-2xl bg-card border border-border/80 rounded-2xl p-6 sm:p-10 shadow-xl space-y-6">
+                <div className="flex items-center justify-between border-b pb-4">
+                  <div>
+                    <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30 mb-1">
+                      Mode Pratinjau Interaktif
                     </Badge>
-                  )}
+                    <h2 className="text-xl font-bold">{name || "Formulir Tanpa Judul"}</h2>
+                    {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
+                  </div>
                   <Button
                     type="button"
                     variant="ghost"
-                    size="icon"
-                    onClick={() => setPropertiesOpen(false)}
-                    className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
-                    title="Tutup Panel"
+                    size="sm"
+                    onClick={() => setLivePreviewMode(false)}
+                    className="text-xs text-muted-foreground hover:text-foreground"
                   >
-                    <X className="h-3.5 w-3.5" />
+                    ✕ Tutup Preview
                   </Button>
                 </div>
-              </div>
 
-              <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
-                {selectedField ? (
-                  <div className="space-y-4">
-                    {/* Grid Column Layout (Shrink / Full) */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium flex items-center justify-between">
-                        <span>Lebar Kolom (Column Width)</span>
-                        <Badge variant="outline" className="text-[9px] font-mono">
-                          {selectedField.colSpan === "half" ? "50% (2 Kolom)" : "100% (Penuh)"}
-                        </Badge>
-                      </Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          type="button"
-                          onClick={() => updateSelectedField({ colSpan: "full" })}
-                          className={`p-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                            selectedField.colSpan !== "half"
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-border/70 hover:border-border text-muted-foreground"
-                          }`}
-                        >
-                          <Square className="h-3.5 w-3.5" />
-                          <span>100% Full</span>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => updateSelectedField({ colSpan: "half" })}
-                          className={`p-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                            selectedField.colSpan === "half"
-                              ? "border-primary bg-primary/10 text-primary"
-                              : "border-border/70 hover:border-border text-muted-foreground"
-                          }`}
-                        >
-                          <Columns className="h-3.5 w-3.5" />
-                          <span>50% Shrink</span>
-                        </button>
+                <IntakeForm token="preview_mode" fields={fields} />
+              </div>
+            </main>
+          ) : (
+            <>
+              {/* PANEL KIRI: Element Catalog (Collapsible) */}
+              {elementsOpen && (
+                <aside className="w-60 sm:w-64 border-r border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-left-4 duration-150">
+                  <div className="p-3 border-b border-border/60 flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <Plus className="h-3.5 w-3.5 text-primary" />
+                      <span>Form Elements</span>
+                    </h4>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setElementsOpen(false)}
+                      className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground md:hidden"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+
+                  <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
+                    {/* Basic Fields */}
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                        Basic Fields
+                      </p>
+                      <div className="grid grid-cols-1 gap-1.5">
+                        {ELEMENT_CATALOG.filter((e) => e.category === "basic").map((item) => (
+                          <button
+                            key={item.type}
+                            type="button"
+                            onClick={() => handleAddField(item)}
+                            className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                          >
+                            <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
+                              <item.icon className="h-3.5 w-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
+                                {item.label}
+                              </p>
+                            </div>
+                            <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </button>
+                        ))}
                       </div>
                     </div>
 
-                    {/* Field Label */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium">Question Label / Heading</Label>
+                    {/* Choice Fields */}
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                        Choices & Selection
+                      </p>
+                      <div className="grid grid-cols-1 gap-1.5">
+                        {ELEMENT_CATALOG.filter((e) => e.category === "choice").map((item) => (
+                          <button
+                            key={item.type}
+                            type="button"
+                            onClick={() => handleAddField(item)}
+                            className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                          >
+                            <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
+                              <item.icon className="h-3.5 w-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
+                                {item.label}
+                              </p>
+                            </div>
+                            <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Advanced Fields */}
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                        Advanced & Interactive
+                      </p>
+                      <div className="grid grid-cols-1 gap-1.5">
+                        {ELEMENT_CATALOG.filter((e) => e.category === "advanced").map((item) => (
+                          <button
+                            key={item.type}
+                            type="button"
+                            onClick={() => handleAddField(item)}
+                            className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                          >
+                            <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
+                              <item.icon className="h-3.5 w-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
+                                {item.label}
+                              </p>
+                            </div>
+                            <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Structure Fields */}
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                        Structure & Multi-Page
+                      </p>
+                      <div className="grid grid-cols-1 gap-1.5">
+                        {ELEMENT_CATALOG.filter((e) => e.category === "structure").map((item) => (
+                          <button
+                            key={item.type}
+                            type="button"
+                            onClick={() => handleAddField(item)}
+                            className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                          >
+                            <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
+                              <item.icon className="h-3.5 w-3.5" />
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
+                                {item.label}
+                              </p>
+                            </div>
+                            <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </aside>
+              )}
+
+              {/* PANEL TENGAH: Live Form Canvas (Lega & Centered) */}
+              <main className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 flex justify-center custom-scrollbar">
+                <div className={`w-full transition-all duration-200 ${previewDevice === "mobile" ? "max-w-sm" : "max-w-3xl"}`}>
+                  {/* Form Paper Sheet */}
+                  <div
+                    className={`border border-border/80 bg-background shadow-md p-5 sm:p-8 space-y-6 ${
+                      cardRoundness === "normal"
+                        ? "rounded-md"
+                        : cardRoundness === "soft"
+                          ? "rounded-3xl"
+                          : "rounded-2xl"
+                    }`}
+                  >
+                    {/* Optional Header Logo Banner */}
+                    <div className="flex items-center justify-between pb-1">
+                      {logoUrl ? (
+                        <div className="relative group">
+                          <img src={logoUrl} alt="Logo" className="h-10 object-contain rounded" />
+                          <button
+                            type="button"
+                            onClick={() => setLogoUrl(null)}
+                            className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                            title="Hapus Logo"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const url = window.prompt("Masukkan URL Logo / Gambar:");
+                            if (url) setLogoUrl(url);
+                          }}
+                          className="text-[11px] font-medium text-muted-foreground hover:text-primary flex items-center gap-1.5 py-1 px-2 rounded-lg border border-dashed border-border hover:border-primary/40 transition-all"
+                        >
+                          <ImageIcon className="h-3.5 w-3.5" />
+                          <span>+ Pasang Logo Brand</span>
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Form Title & Header Area */}
+                    <div className="space-y-1.5 border-b border-border/60 pb-5">
                       <Input
-                        value={selectedField.label}
-                        onChange={(e) => updateSelectedField({ label: e.target.value })}
-                        className="h-8.5 text-xs"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="Judul Formulir..."
+                        className="text-xl sm:text-2xl font-extrabold tracking-tight border-none px-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground/40"
+                      />
+                      <Textarea
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        placeholder="Tuliskan petunjuk atau deskripsi formulir untuk responden..."
+                        rows={2}
+                        className="text-xs text-muted-foreground border-none px-0 min-h-[40px] resize-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
                       />
                     </div>
 
-                    {/* Field Sublabel / Description */}
-                    {selectedField.type !== "divider" && (
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-medium">Sublabel / Help Text</Label>
-                        <Input
-                          value={selectedField.sublabel || ""}
-                          onChange={(e) => updateSelectedField({ sublabel: e.target.value })}
-                          placeholder="Petunjuk tambahan..."
-                          className="h-8.5 text-xs"
-                        />
-                      </div>
-                    )}
-
-                    {/* Content Text (For Info / Terms) */}
-                    {(selectedField.type === "info" || selectedField.type === "terms") && (
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-medium">Isi Teks / Penjelasan</Label>
-                        <Textarea
-                          value={selectedField.content || ""}
-                          onChange={(e) => updateSelectedField({ content: e.target.value })}
-                          rows={3}
-                          className="text-xs"
-                        />
-                      </div>
-                    )}
-
-                    {/* Placeholder (if applicable) */}
-                    {selectedField.type !== "heading" &&
-                      selectedField.type !== "divider" &&
-                      selectedField.type !== "info" &&
-                      selectedField.type !== "terms" &&
-                      selectedField.type !== "rating" &&
-                      selectedField.type !== "signature" && (
-                        <div className="space-y-1.5">
-                          <Label className="text-xs font-medium">Placeholder</Label>
-                          <Input
-                            value={selectedField.placeholder || ""}
-                            onChange={(e) => updateSelectedField({ placeholder: e.target.value })}
-                            placeholder="Teks placeholder..."
-                            className="h-8.5 text-xs"
-                          />
+                    {/* DnD Sortable Field List Canvas with 12-Column Grid */}
+                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                      <SortableContext items={fields.map((f) => f.id)} strategy={verticalListSortingStrategy}>
+                        <div className="grid grid-cols-12 gap-3.5">
+                          {fields.map((field) => (
+                            <SortableCanvasField
+                              key={field.id}
+                              field={field}
+                              isSelected={field.id === selectedFieldId}
+                              onSelect={() => {
+                                setSelectedFieldId(field.id);
+                                setPropertiesOpen(true);
+                              }}
+                              onOpenProperties={() => {
+                                setSelectedFieldId(field.id);
+                                setPropertiesOpen(true);
+                              }}
+                              onUpdateLabel={(val) => {
+                                setFields((prev) =>
+                                  prev.map((f) => (f.id === field.id ? { ...f, label: val } : f)),
+                                );
+                              }}
+                              onDuplicate={() => handleDuplicateField(field.id)}
+                              onDelete={() => handleDeleteField(field.id)}
+                            />
+                          ))}
                         </div>
-                      )}
+                      </SortableContext>
+                    </DndContext>
 
-                    {/* Required Switch */}
-                    {selectedField.type !== "heading" &&
-                      selectedField.type !== "divider" &&
-                      selectedField.type !== "info" && (
-                        <div className="flex items-center justify-between rounded-lg border p-2.5 bg-muted/10">
-                          <div>
-                            <p className="text-xs font-medium">Wajib Diisi (Required)</p>
-                            <p className="text-[10px] text-muted-foreground">Klien tidak bisa submit jika kosong</p>
-                          </div>
-                          <Checkbox
-                            checked={selectedField.required}
-                            onCheckedChange={(checked) => updateSelectedField({ required: Boolean(checked) })}
-                          />
-                        </div>
-                      )}
-
-                    {/* Rating Scale Max setting */}
-                    {selectedField.type === "rating" && (
-                      <div className="space-y-1.5 pt-2 border-t border-border/60">
-                        <Label className="text-xs font-medium">Skala Bintang Maksimal</Label>
-                        <Select
-                          value={String(selectedField.maxRating || 5)}
-                          onValueChange={(val) => updateSelectedField({ maxRating: Number(val) })}
-                        >
-                          <SelectTrigger className="h-8.5 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="5">5 Bintang (Standar)</SelectItem>
-                            <SelectItem value="10">10 Bintang (NPS Scale)</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    )}
-
-                    {/* Options Editor for Select & Multiselect */}
-                    {(selectedField.type === "select" || selectedField.type === "multiselect") && (
-                      <div className="space-y-2 pt-2 border-t border-border/60">
-                        <Label className="text-xs font-medium">Pilihan Opsi (Satu per baris)</Label>
-                        <Textarea
-                          value={(selectedField.options || []).join("\n")}
-                          onChange={(e) =>
-                            updateSelectedField({
-                              options: e.target.value.split("\n").filter((s) => s.trim().length > 0),
-                            })
-                          }
-                          rows={4}
-                          placeholder="Opsi 1&#10;Opsi 2&#10;Opsi 3"
-                          className="text-xs font-mono"
-                        />
-                      </div>
-                    )}
-
-                    {/* File Upload Settings */}
-                    {selectedField.type === "file" && (
-                      <div className="space-y-1.5 pt-2 border-t border-border/60">
-                        <Label className="text-xs font-medium">Tipe File Diterima</Label>
-                        <Input
-                          value={selectedField.acceptFiles || ""}
-                          onChange={(e) => updateSelectedField({ acceptFiles: e.target.value })}
-                          placeholder=".pdf,.doc,.docx,.png,.zip"
-                          className="h-8.5 text-xs"
-                        />
-                      </div>
-                    )}
-
-                    {/* Conditional Logic Setting */}
-                    <div className="space-y-2 pt-2 border-t border-border/60">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs font-medium flex items-center gap-1.5">
-                          <Sliders className="h-3.5 w-3.5 text-primary" />
-                          <span>Conditional Logic</span>
-                        </Label>
-                        {selectedField.condition && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => updateSelectedField({ condition: undefined })}
-                            className="h-6 px-1.5 text-[10px] text-destructive hover:bg-destructive/10"
-                          >
-                            Reset
-                          </Button>
-                        )}
-                      </div>
-
-                      {fields.filter((f) => f.id !== selectedField.id && f.type !== "heading" && f.type !== "divider").length > 0 ? (
-                        <div className="space-y-2 rounded-lg border p-2.5 bg-muted/10">
-                          <p className="text-[11px] text-muted-foreground">Tampilkan elemen ini hanya jika:</p>
-                          <Select
-                            value={selectedField.condition?.fieldId || "none"}
-                            onValueChange={(val) => {
-                              if (val === "none") {
-                                updateSelectedField({ condition: undefined });
-                              } else {
-                                updateSelectedField({
-                                  condition: {
-                                    fieldId: val,
-                                    operator: "equals",
-                                    value: "",
-                                  },
-                                });
-                              }
-                            }}
-                          >
-                            <SelectTrigger className="h-8 text-xs bg-background">
-                              <SelectValue placeholder="Pilih pertanyaan pemicu..." />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">Tanpa Kondisi (Selalu Tampil)</SelectItem>
-                              {fields
-                                .filter((f) => f.id !== selectedField.id && f.type !== "heading" && f.type !== "divider")
-                                .map((f) => (
-                                  <SelectItem key={f.id} value={f.id}>
-                                    {f.label}
-                                  </SelectItem>
-                                ))}
-                            </SelectContent>
-                          </Select>
-
-                          {selectedField.condition && (
-                            <div className="space-y-1.5 pt-1">
-                              <Label className="text-[10px] text-muted-foreground uppercase font-bold">
-                                Nilai yang Cocok (Value Equals):
-                              </Label>
-                              <Input
-                                value={selectedField.condition.value || ""}
-                                onChange={(e) =>
-                                  updateSelectedField({
-                                    condition: {
-                                      ...selectedField.condition!,
-                                      value: e.target.value,
-                                    },
-                                  })
-                                }
-                                placeholder="Misal: Web Development, Ya, dsb."
-                                className="h-8 text-xs bg-background"
-                              />
-                            </div>
-                          )}
-                        </div>
-                      ) : (
-                        <p className="text-[10px] text-muted-foreground italic">
-                          Tambahkan minimal 2 pertanyaan untuk mengaktifkan conditional logic.
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Quick Delete */}
-                    <div className="pt-3 border-t border-border/60">
+                    {/* Add question bottom banner */}
+                    <div className="pt-2 flex items-center justify-center">
                       <Button
                         type="button"
                         variant="outline"
                         size="sm"
-                        onClick={() => handleDeleteField(selectedField.id)}
-                        className="w-full h-8 text-xs text-destructive hover:bg-destructive/10 border-destructive/30"
+                        onClick={() => setElementsOpen(true)}
+                        className="h-8.5 px-4 text-xs font-semibold gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5"
                       >
-                        <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                        Hapus Elemen Ini
+                        <Plus className="h-3.5 w-3.5" />
+                        <span>Tambah Elemen Baru</span>
+                      </Button>
+                    </div>
+
+                    {/* Submit button preview */}
+                    <div className="pt-5 border-t border-border/60 flex items-center justify-between">
+                      <Button disabled className="h-9.5 px-5 text-xs font-semibold bg-primary text-primary-foreground">
+                        Submit Form
+                      </Button>
+                      <span className="text-[10px] text-muted-foreground">Powered by Cubiqlo Forms</span>
+                    </div>
+                  </div>
+                </div>
+              </main>
+
+              {/* PANEL KANAN: Field Properties Drawer (Collapsible) */}
+              {propertiesOpen && (
+                <aside className="w-72 sm:w-80 border-l border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-right-4 duration-150">
+                  <div className="p-3.5 border-b border-border/60 flex items-center justify-between">
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <Settings className="h-3.5 w-3.5 text-primary" />
+                      <span>Field Properties</span>
+                    </h4>
+                    <div className="flex items-center gap-1">
+                      {selectedField && (
+                        <Badge variant="secondary" className="text-[9px] uppercase font-bold py-0 mr-1">
+                          {selectedField.type}
+                        </Badge>
+                      )}
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setPropertiesOpen(false)}
+                        className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
+                        title="Tutup Panel"
+                      >
+                        <X className="h-3.5 w-3.5" />
                       </Button>
                     </div>
                   </div>
-                ) : (
-                  <div className="py-12 text-center text-muted-foreground">
-                    <Sliders className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                    <p className="text-xs">Klik salah satu pertanyaan di canvas untuk mengedit pengaturannya.</p>
+
+                  <div className="flex-1 overflow-y-auto p-4 space-y-4 custom-scrollbar">
+                    {selectedField ? (
+                      <div className="space-y-4">
+                        {/* Grid Column Layout (Shrink / Full) */}
+                        {selectedField.type !== "page_break" && (
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-medium flex items-center justify-between">
+                              <span>Lebar Kolom (Column Width)</span>
+                              <Badge variant="outline" className="text-[9px] font-mono">
+                                {selectedField.colSpan === "half" ? "50% (2 Kolom)" : "100% (Penuh)"}
+                              </Badge>
+                            </Label>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => updateSelectedField({ colSpan: "full" })}
+                                className={`p-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                                  selectedField.colSpan !== "half"
+                                    ? "border-primary bg-primary/10 text-primary"
+                                    : "border-border/70 hover:border-border text-muted-foreground"
+                                }`}
+                              >
+                                <Square className="h-3.5 w-3.5" />
+                                <span>100% Full</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => updateSelectedField({ colSpan: "half" })}
+                                className={`p-2 rounded-lg border text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
+                                  selectedField.colSpan === "half"
+                                    ? "border-primary bg-primary/10 text-primary"
+                                    : "border-border/70 hover:border-border text-muted-foreground"
+                                }`}
+                              >
+                                <Columns className="h-3.5 w-3.5" />
+                                <span>50% Shrink</span>
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Field Label */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-medium">Question Label / Heading</Label>
+                          <Input
+                            value={selectedField.label}
+                            onChange={(e) => updateSelectedField({ label: e.target.value })}
+                            className="h-8.5 text-xs"
+                          />
+                        </div>
+
+                        {/* Field Sublabel / Description */}
+                        {selectedField.type !== "divider" && selectedField.type !== "page_break" && (
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-medium">Sublabel / Help Text</Label>
+                            <Input
+                              value={selectedField.sublabel || ""}
+                              onChange={(e) => updateSelectedField({ sublabel: e.target.value })}
+                              placeholder="Petunjuk tambahan..."
+                              className="h-8.5 text-xs"
+                            />
+                          </div>
+                        )}
+
+                        {/* Content Text (For Info / Terms) */}
+                        {(selectedField.type === "info" || selectedField.type === "terms") && (
+                          <div className="space-y-1.5">
+                            <Label className="text-xs font-medium">Isi Teks / Penjelasan</Label>
+                            <Textarea
+                              value={selectedField.content || ""}
+                              onChange={(e) => updateSelectedField({ content: e.target.value })}
+                              rows={3}
+                              className="text-xs"
+                            />
+                          </div>
+                        )}
+
+                        {/* Placeholder (if applicable) */}
+                        {selectedField.type !== "heading" &&
+                          selectedField.type !== "divider" &&
+                          selectedField.type !== "page_break" &&
+                          selectedField.type !== "info" &&
+                          selectedField.type !== "terms" &&
+                          selectedField.type !== "rating" &&
+                          selectedField.type !== "signature" && (
+                            <div className="space-y-1.5">
+                              <Label className="text-xs font-medium">Placeholder</Label>
+                              <Input
+                                value={selectedField.placeholder || ""}
+                                onChange={(e) => updateSelectedField({ placeholder: e.target.value })}
+                                placeholder="Teks placeholder..."
+                                className="h-8.5 text-xs"
+                              />
+                            </div>
+                          )}
+
+                        {/* Required Switch */}
+                        {selectedField.type !== "heading" &&
+                          selectedField.type !== "divider" &&
+                          selectedField.type !== "page_break" &&
+                          selectedField.type !== "info" && (
+                            <div className="flex items-center justify-between rounded-lg border p-2.5 bg-muted/10">
+                              <div>
+                                <p className="text-xs font-medium">Wajib Diisi (Required)</p>
+                                <p className="text-[10px] text-muted-foreground">Klien tidak bisa submit jika kosong</p>
+                              </div>
+                              <Checkbox
+                                checked={selectedField.required}
+                                onCheckedChange={(checked) => updateSelectedField({ required: Boolean(checked) })}
+                              />
+                            </div>
+                          )}
+
+                        {/* Rating Scale Max setting */}
+                        {selectedField.type === "rating" && (
+                          <div className="space-y-1.5 pt-2 border-t border-border/60">
+                            <Label className="text-xs font-medium">Skala Bintang Maksimal</Label>
+                            <Select
+                              value={String(selectedField.maxRating || 5)}
+                              onValueChange={(val) => updateSelectedField({ maxRating: Number(val) })}
+                            >
+                              <SelectTrigger className="h-8.5 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="5">5 Bintang (Standar)</SelectItem>
+                                <SelectItem value="10">10 Bintang (NPS Scale)</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+
+                        {/* Options Editor for Select & Multiselect */}
+                        {(selectedField.type === "select" || selectedField.type === "multiselect") && (
+                          <div className="space-y-2 pt-2 border-t border-border/60">
+                            <Label className="text-xs font-medium">Pilihan Opsi (Satu per baris)</Label>
+                            <Textarea
+                              value={(selectedField.options || []).join("\n")}
+                              onChange={(e) =>
+                                updateSelectedField({
+                                  options: e.target.value.split("\n").filter((s) => s.trim().length > 0),
+                                })
+                              }
+                              rows={4}
+                              placeholder="Opsi 1&#10;Opsi 2&#10;Opsi 3"
+                              className="text-xs font-mono"
+                            />
+                          </div>
+                        )}
+
+                        {/* File Upload Settings */}
+                        {selectedField.type === "file" && (
+                          <div className="space-y-1.5 pt-2 border-t border-border/60">
+                            <Label className="text-xs font-medium">Tipe File Diterima</Label>
+                            <Input
+                              value={selectedField.acceptFiles || ""}
+                              onChange={(e) => updateSelectedField({ acceptFiles: e.target.value })}
+                              placeholder=".pdf,.doc,.docx,.png,.zip"
+                              className="h-8.5 text-xs"
+                            />
+                          </div>
+                        )}
+
+                        {/* Conditional Logic Setting */}
+                        <div className="space-y-2 pt-2 border-t border-border/60">
+                          <div className="flex items-center justify-between">
+                            <Label className="text-xs font-medium flex items-center gap-1.5">
+                              <Sliders className="h-3.5 w-3.5 text-primary" />
+                              <span>Conditional Logic</span>
+                            </Label>
+                            {selectedField.condition && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => updateSelectedField({ condition: undefined })}
+                                className="h-6 px-1.5 text-[10px] text-destructive hover:bg-destructive/10"
+                              >
+                                Reset
+                              </Button>
+                            )}
+                          </div>
+
+                          {fields.filter((f) => f.id !== selectedField.id && f.type !== "heading" && f.type !== "divider" && f.type !== "page_break").length > 0 ? (
+                            <div className="space-y-2 rounded-lg border p-2.5 bg-muted/10">
+                              <p className="text-[11px] text-muted-foreground">Tampilkan elemen ini hanya jika:</p>
+                              <Select
+                                value={selectedField.condition?.fieldId || "none"}
+                                onValueChange={(val) => {
+                                  if (val === "none") {
+                                    updateSelectedField({ condition: undefined });
+                                  } else {
+                                    updateSelectedField({
+                                      condition: {
+                                        fieldId: val,
+                                        operator: "equals",
+                                        value: "",
+                                      },
+                                    });
+                                  }
+                                }}
+                              >
+                                <SelectTrigger className="h-8 text-xs bg-background">
+                                  <SelectValue placeholder="Pilih pertanyaan pemicu..." />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="none">Tanpa Kondisi (Selalu Tampil)</SelectItem>
+                                  {fields
+                                    .filter((f) => f.id !== selectedField.id && f.type !== "heading" && f.type !== "divider" && f.type !== "page_break")
+                                    .map((f) => (
+                                      <SelectItem key={f.id} value={f.id}>
+                                        {f.label}
+                                      </SelectItem>
+                                    ))}
+                                </SelectContent>
+                              </Select>
+
+                              {selectedField.condition && (
+                                <div className="space-y-1.5 pt-1">
+                                  <Label className="text-[10px] text-muted-foreground uppercase font-bold">
+                                    Nilai yang Cocok (Value Equals):
+                                  </Label>
+                                  <Input
+                                    value={selectedField.condition.value || ""}
+                                    onChange={(e) =>
+                                      updateSelectedField({
+                                        condition: {
+                                          ...selectedField.condition!,
+                                          value: e.target.value,
+                                        },
+                                      })
+                                    }
+                                    placeholder="Misal: Web Development, Ya, dsb."
+                                    className="h-8 text-xs bg-background"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <p className="text-[10px] text-muted-foreground italic">
+                              Tambahkan minimal 2 pertanyaan untuk mengaktifkan conditional logic.
+                            </p>
+                          )}
+                        </div>
+
+                        {/* Quick Delete */}
+                        <div className="pt-3 border-t border-border/60">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteField(selectedField.id)}
+                            className="w-full h-8 text-xs text-destructive hover:bg-destructive/10 border-destructive/30"
+                          >
+                            <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                            Hapus Elemen Ini
+                          </Button>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="py-12 text-center text-muted-foreground">
+                        <Sliders className="h-8 w-8 mx-auto mb-2 opacity-40" />
+                        <p className="text-xs">Klik salah satu pertanyaan di canvas untuk mengedit pengaturannya.</p>
+                      </div>
+                    )}
                   </div>
-                )}
-              </div>
-            </aside>
+                </aside>
+              )}
+            </>
           )}
         </div>
       )}

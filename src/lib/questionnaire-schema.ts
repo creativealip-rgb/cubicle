@@ -24,6 +24,7 @@ export const questionnaireFieldTypeSchema = z.enum([
   "divider",
   "info",
   "terms",
+  "page_break",
 ]);
 
 export type QuestionnaireFieldType = z.infer<typeof questionnaireFieldTypeSchema>;
