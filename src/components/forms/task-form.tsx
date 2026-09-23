@@ -231,6 +231,7 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "
             <TaskSubtaskSection
               taskId={defaultValues.id}
               behavior={defaultValues.behavior}
+              members={members}
             />
           )}
         </div>

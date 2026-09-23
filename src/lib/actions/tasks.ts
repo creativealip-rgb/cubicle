@@ -457,6 +457,25 @@ export async function toggleSubtask(subtaskId: string, completed: boolean) {
   return updated;
 }
 
+export async function updateSubtaskAssignee(subtaskId: string, assigneeId: string | null) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [updated] = await db
+    .update(taskSubtasks)
+    .set({
+      assigneeId: assigneeId || null,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(taskSubtasks.id, subtaskId), eq(taskSubtasks.workspaceId, workspaceId)))
+    .returning();
+
+  revalidatePath("/app/tasks");
+  return updated;
+}
+
 export async function deleteSubtask(subtaskId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
