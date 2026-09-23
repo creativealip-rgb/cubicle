@@ -83,6 +83,7 @@ import {
   DollarSign,
   Eye,
   Play,
+  Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
@@ -735,6 +736,7 @@ export function QuestionnaireBuilder({
 
   // Panels visibility: Elements sidebar (left) & Properties drawer (right)
   const [elementsOpen, setElementsOpen] = useState(true);
+  const [elementSearch, setElementSearch] = useState("");
   const [propertiesOpen, setPropertiesOpen] = useState(true);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(fields[0]?.id ?? null);
   const [pending, startTransition] = useTransition();
@@ -882,8 +884,8 @@ export function QuestionnaireBuilder({
     });
   }
 
-  const shareUrl = questionnaireId ? `https://app.cubiqlo.com/app/questionnaires/${questionnaireId}` : "";
-  const embedCode = questionnaireId ? `<iframe src="https://app.cubiqlo.com/app/questionnaires/${questionnaireId}" width="100%" height="700px" frameborder="0" style="border:0;border-radius:12px;"></iframe>` : "";
+  const shareUrl = questionnaireId ? `https://app.cubiqlo.com/intake/${questionnaireId}` : "";
+  const embedCode = questionnaireId ? `<iframe src="https://app.cubiqlo.com/intake/${questionnaireId}" width="100%" height="700px" frameborder="0" style="border:0;border-radius:12px;"></iframe>` : "";
 
   return (
     <div className="flex flex-col h-[calc(100vh-56px)] w-full bg-slate-100/70 dark:bg-zinc-950 overflow-hidden select-none">
@@ -1138,130 +1140,176 @@ export function QuestionnaireBuilder({
               {/* PANEL KIRI: Element Catalog (Sticky & Independent Scroll) */}
               {elementsOpen && (
                 <aside className="w-60 sm:w-64 h-full border-r border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-left-4 duration-150 overflow-hidden">
-                  <div className="p-3 border-b border-border/60 flex items-center justify-between shrink-0">
-                    <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                      <Plus className="h-3.5 w-3.5 text-primary" />
-                      <span>Form Elements</span>
-                    </h4>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setElementsOpen(false)}
-                      className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground md:hidden"
-                    >
-                      <X className="h-3.5 w-3.5" />
-                    </Button>
+                  <div className="p-2.5 border-b border-border/60 flex flex-col gap-2 shrink-0">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                        <Plus className="h-3.5 w-3.5 text-primary" />
+                        <span>Form Elements</span>
+                      </h4>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setElementsOpen(false)}
+                        className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground md:hidden"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    {/* Element Search Input */}
+                    <div className="relative">
+                      <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        value={elementSearch}
+                        onChange={(e) => setElementSearch(e.target.value)}
+                        placeholder="Cari elemen..."
+                        className="h-7.5 pl-8 text-xs bg-muted/20"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
-                    {/* Basic Fields */}
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                        Basic Fields
-                      </p>
-                      <div className="grid grid-cols-1 gap-1.5">
-                        {ELEMENT_CATALOG.filter((e) => e.category === "basic").map((item) => (
-                          <button
-                            key={item.type}
-                            type="button"
-                            onClick={() => handleAddField(item)}
-                            className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
-                          >
-                            <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
-                              <item.icon className="h-3.5 w-3.5" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
-                                {item.label}
-                              </p>
-                            </div>
-                            <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </button>
-                        ))}
+                    {/* Filtered Search Results or Categorized List */}
+                    {elementSearch ? (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                          Hasil Pencarian ({ELEMENT_CATALOG.filter((e) => e.label.toLowerCase().includes(elementSearch.toLowerCase()) || e.description.toLowerCase().includes(elementSearch.toLowerCase())).length})
+                        </p>
+                        <div className="grid grid-cols-1 gap-1.5">
+                          {ELEMENT_CATALOG.filter((e) => e.label.toLowerCase().includes(elementSearch.toLowerCase()) || e.description.toLowerCase().includes(elementSearch.toLowerCase())).map((item) => (
+                            <button
+                              key={item.type}
+                              type="button"
+                              onClick={() => {
+                                handleAddField(item);
+                                setElementSearch("");
+                              }}
+                              className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                            >
+                              <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
+                                <item.icon className="h-3.5 w-3.5" />
+                              </div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
+                                  {item.label}
+                                </p>
+                              </div>
+                              <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <>
+                        {/* Basic Fields */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                            Basic Fields
+                          </p>
+                          <div className="grid grid-cols-1 gap-1.5">
+                            {ELEMENT_CATALOG.filter((e) => e.category === "basic").map((item) => (
+                              <button
+                                key={item.type}
+                                type="button"
+                                onClick={() => handleAddField(item)}
+                                className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                              >
+                                <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
+                                  <item.icon className="h-3.5 w-3.5" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
+                                    {item.label}
+                                  </p>
+                                </div>
+                                <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
 
-                    {/* Choice Fields */}
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                        Choices & Selection
-                      </p>
-                      <div className="grid grid-cols-1 gap-1.5">
-                        {ELEMENT_CATALOG.filter((e) => e.category === "choice").map((item) => (
-                          <button
-                            key={item.type}
-                            type="button"
-                            onClick={() => handleAddField(item)}
-                            className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
-                          >
-                            <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
-                              <item.icon className="h-3.5 w-3.5" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
-                                {item.label}
-                              </p>
-                            </div>
-                            <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                        {/* Choice Fields */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                            Choices & Selection
+                          </p>
+                          <div className="grid grid-cols-1 gap-1.5">
+                            {ELEMENT_CATALOG.filter((e) => e.category === "choice").map((item) => (
+                              <button
+                                key={item.type}
+                                type="button"
+                                onClick={() => handleAddField(item)}
+                                className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                              >
+                                <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
+                                  <item.icon className="h-3.5 w-3.5" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
+                                    {item.label}
+                                  </p>
+                                </div>
+                                <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
 
-                    {/* Advanced Fields */}
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                        Advanced & Interactive
-                      </p>
-                      <div className="grid grid-cols-1 gap-1.5">
-                        {ELEMENT_CATALOG.filter((e) => e.category === "advanced").map((item) => (
-                          <button
-                            key={item.type}
-                            type="button"
-                            onClick={() => handleAddField(item)}
-                            className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
-                          >
-                            <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
-                              <item.icon className="h-3.5 w-3.5" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
-                                {item.label}
-                              </p>
-                            </div>
-                            <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                        {/* Advanced & Interactive Fields */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                            Advanced & Special Fields
+                          </p>
+                          <div className="grid grid-cols-1 gap-1.5">
+                            {ELEMENT_CATALOG.filter((e) => e.category === "advanced").map((item) => (
+                              <button
+                                key={item.type}
+                                type="button"
+                                onClick={() => handleAddField(item)}
+                                className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                              >
+                                <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
+                                  <item.icon className="h-3.5 w-3.5" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
+                                    {item.label}
+                                  </p>
+                                </div>
+                                <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
 
-                    {/* Structure Fields */}
-                    <div>
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                        Structure & Multi-Page
-                      </p>
-                      <div className="grid grid-cols-1 gap-1.5">
-                        {ELEMENT_CATALOG.filter((e) => e.category === "structure").map((item) => (
-                          <button
-                            key={item.type}
-                            type="button"
-                            onClick={() => handleAddField(item)}
-                            className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
-                          >
-                            <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
-                              <item.icon className="h-3.5 w-3.5" />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
-                                {item.label}
-                              </p>
-                            </div>
-                            <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                        {/* Structure & Layout Fields */}
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
+                            Structure & Layout
+                          </p>
+                          <div className="grid grid-cols-1 gap-1.5">
+                            {ELEMENT_CATALOG.filter((e) => e.category === "structure").map((item) => (
+                              <button
+                                key={item.type}
+                                type="button"
+                                onClick={() => handleAddField(item)}
+                                className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                              >
+                                <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
+                                  <item.icon className="h-3.5 w-3.5" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-xs font-medium text-foreground group-hover:text-primary truncate">
+                                    {item.label}
+                                  </p>
+                                </div>
+                                <Plus className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 </aside>
               )}

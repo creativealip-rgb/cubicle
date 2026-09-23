@@ -32,9 +32,13 @@ import type { QuestionnaireField } from "@/lib/questionnaire-schema";
 export function IntakeForm({
   token,
   fields,
+  redirectUrl,
+  thankYouMessage,
 }: {
   token: string;
   fields: QuestionnaireField[];
+  redirectUrl?: string | null;
+  thankYouMessage?: string | null;
 }) {
   const { t } = useT();
   const [answers, setAnswers] = useState<Record<string, any>>({});
@@ -158,6 +162,12 @@ export function IntakeForm({
 
           setSubmitted(true);
           toast.success("Tanggapan berhasil dikirimkan!");
+
+          if (redirectUrl && typeof window !== "undefined") {
+            setTimeout(() => {
+              window.location.href = redirectUrl;
+            }, 1500);
+          }
         } catch (err: any) {
           toast.error(err?.message || "Terjadi kesalahan saat mengirim");
         }
@@ -175,8 +185,13 @@ export function IntakeForm({
           Terima Kasih!
         </h2>
         <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-          Tanggapan Anda telah berhasil kami terima. Tim kami akan segera meninjau brief Anda dan menghubungi kembali secepatnya.
+          {thankYouMessage || "Tanggapan Anda telah berhasil kami terima. Tim kami akan segera meninjau brief Anda dan menghubungi kembali secepatnya."}
         </p>
+        {redirectUrl && (
+          <p className="text-[11px] text-primary font-medium animate-pulse">
+            Mengarahkan Anda ke tujuan...
+          </p>
+        )}
       </div>
     );
   }

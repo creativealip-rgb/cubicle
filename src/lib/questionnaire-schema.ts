@@ -77,6 +77,20 @@ export type QuestionnaireField = z.infer<typeof questionnaireFieldSchema>;
 // Input validation for create/update payloads: at least one field, max 50.
 export const questionnaireSchemaInput = z.array(questionnaireFieldSchema).min(1).max(50);
 
+// Form Settings Schema (thank you page, redirect, theme, etc.)
+export const questionnaireSettingsSchema = z.object({
+  status: z.enum(["active", "disabled"]).default("active"),
+  password: z.string().optional(),
+  actionAfterSubmit: z.enum(["thank_you", "redirect"]).default("thank_you"),
+  thankYouMessage: z.string().optional(),
+  redirectUrl: z.string().url().optional().or(z.literal("")),
+  theme: z.string().default("purple"),
+  cardRoundness: z.enum(["normal", "rounded", "soft"]).default("rounded"),
+  coverUrl: z.string().optional(),
+});
+
+export type QuestionnaireSettings = z.infer<typeof questionnaireSettingsSchema>;
+
 // Safe reader for the stored JSONB `schema` column.
 // Corrupt/legacy data (null, object, string, bad entries) falls back to an
 // empty array so callers can safely iterate instead of crashing on `.map`.
