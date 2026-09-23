@@ -791,7 +791,7 @@ export function QuestionnaireBuilder({
   const embedCode = questionnaireId ? `<iframe src="https://app.cubiqlo.com/app/questionnaires/${questionnaireId}" width="100%" height="700px" frameborder="0" style="border:0;border-radius:12px;"></iframe>` : "";
 
   return (
-    <div className="flex flex-col h-full w-full bg-slate-100/70 dark:bg-zinc-950 overflow-hidden select-none">
+    <div className="flex flex-col h-[calc(100vh-56px)] w-full bg-slate-100/70 dark:bg-zinc-950 overflow-hidden select-none">
       {/* ─── Top Jotform Bar: Brand, Tabs, Device Switcher, Actions ─── */}
       <header className="h-13 border-b border-border/80 bg-background px-3 sm:px-4 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
@@ -1040,10 +1040,10 @@ export function QuestionnaireBuilder({
             </main>
           ) : (
             <>
-              {/* PANEL KIRI: Element Catalog (Collapsible) */}
+              {/* PANEL KIRI: Element Catalog (Sticky & Independent Scroll) */}
               {elementsOpen && (
-                <aside className="w-60 sm:w-64 border-r border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-left-4 duration-150">
-                  <div className="p-3 border-b border-border/60 flex items-center justify-between">
+                <aside className="w-60 sm:w-64 h-full border-r border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-left-4 duration-150 overflow-hidden">
+                  <div className="p-3 border-b border-border/60 flex items-center justify-between shrink-0">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <Plus className="h-3.5 w-3.5 text-primary" />
                       <span>Form Elements</span>
@@ -1285,10 +1285,10 @@ export function QuestionnaireBuilder({
                 </div>
               </main>
 
-              {/* PANEL KANAN: Field Properties Drawer (Collapsible) */}
+              {/* PANEL KANAN: Field Properties Drawer (Sticky & Independent Scroll) */}
               {propertiesOpen && (
-                <aside className="w-72 sm:w-80 border-l border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-right-4 duration-150">
-                  <div className="p-3.5 border-b border-border/60 flex items-center justify-between">
+                <aside className="w-72 sm:w-80 h-full border-l border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-right-4 duration-150 overflow-hidden">
+                  <div className="p-3.5 border-b border-border/60 flex items-center justify-between shrink-0">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <Settings className="h-3.5 w-3.5 text-primary" />
                       <span>Field Properties</span>
