@@ -182,14 +182,17 @@ export function IntakeForm({
           <CheckCircle className="h-8 w-8" />
         </div>
         <h2 className="text-xl sm:text-2xl font-bold text-foreground">
-          Terima Kasih!
+          {t("Terima Kasih!", "Thank You!")}
         </h2>
         <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-          {thankYouMessage || "Tanggapan Anda telah berhasil kami terima. Tim kami akan segera meninjau brief Anda dan menghubungi kembali secepatnya."}
+          {thankYouMessage || t(
+            "Tanggapan Anda telah berhasil kami terima. Tim kami akan segera meninjau brief Anda dan menghubungi kembali secepatnya.",
+            "Your response has been received successfully. Our team will review your submission and follow up shortly."
+          )}
         </p>
         {redirectUrl && (
           <p className="text-[11px] text-primary font-medium animate-pulse">
-            Mengarahkan Anda ke tujuan...
+            {t("Mengarahkan Anda ke tujuan...", "Redirecting to destination...")}
           </p>
         )}
       </div>
@@ -595,7 +598,7 @@ export function IntakeForm({
             className="h-10 px-4 text-xs sm:text-sm font-semibold gap-1.5"
           >
             <ArrowLeft className="h-4 w-4" />
-            <span>Sebelumnya</span>
+            <span>{t("Sebelumnya", "Previous")}</span>
           </Button>
         ) : (
           <div />
@@ -607,7 +610,7 @@ export function IntakeForm({
           className="h-10 px-6 text-xs sm:text-sm font-semibold bg-primary text-primary-foreground shadow-sm gap-2"
         >
           {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-          <span>{isLastPage ? "Kirim Tanggapan" : "Selanjutnya"}</span>
+          <span>{isLastPage ? t("Kirim Tanggapan", "Submit Response") : t("Selanjutnya", "Next")}</span>
           {!isLastPage && <ArrowRight className="h-4 w-4" />}
         </Button>
       </div>

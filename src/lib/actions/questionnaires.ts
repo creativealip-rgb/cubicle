@@ -564,8 +564,8 @@ export async function submitQuestionnaire(input: {
       const wsName = workspace?.name || "Cubiqlo";
       const clientName = inferredName || "Klien";
 
-      const subject = `Konfirmasi Formulir: ${qMaster.name} — ${wsName}`;
-      const text = `Halo ${clientName},\n\nTerima kasih telah mengisi formulir "${qMaster.name}".\n\nTanggapan Anda telah berhasil kami terima. Tim ${wsName} akan segera meninjau brief/data yang Anda kirimkan dan menghubungi Anda kembali secepatnya.\n\nJika ada pertanyaan tambahan, Anda dapat langsung membalas email ini.\n\nSalam hangat,\nTim ${wsName}`;
+      const subject = `Form Submission Confirmation: ${qMaster.name} — ${wsName}`;
+      const text = `Hello ${clientName},\n\nThank you for submitting the form "${qMaster.name}".\n\nYour response has been received successfully. The ${wsName} team will review your submission and follow up with you shortly.\n\nIf you have any questions in the meantime, feel free to reply directly to this email.\n\nBest regards,\n${wsName} Team`;
 
       await sendNotification({
         to: inferredEmail,
