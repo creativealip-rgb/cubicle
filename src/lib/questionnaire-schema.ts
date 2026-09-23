@@ -6,13 +6,34 @@ import { z } from "zod";
 // - app pages (edit/detail rendering)
 // - the public intake route + submit validation
 
+export const questionnaireFieldTypeSchema = z.enum([
+  "text",
+  "textarea",
+  "select",
+  "multiselect",
+  "number",
+  "date",
+  "email",
+  "url",
+  "phone",
+  "file",
+  "signature",
+  "rating",
+  "heading",
+]);
+
+export type QuestionnaireFieldType = z.infer<typeof questionnaireFieldTypeSchema>;
+
 export const questionnaireFieldSchema = z.object({
   id: z.string().min(1).max(100),
-  type: z.enum(["text", "textarea", "select", "multiselect", "number", "date", "email", "url"]),
+  type: questionnaireFieldTypeSchema,
   label: z.string().min(1).max(200),
+  sublabel: z.string().max(500).optional(),
   required: z.boolean().default(false),
   options: z.array(z.string()).optional(),
   placeholder: z.string().optional(),
+  acceptFiles: z.string().optional(),
+  maxRating: z.number().int().min(3).max(10).optional(),
 });
 
 export type QuestionnaireField = z.infer<typeof questionnaireFieldSchema>;

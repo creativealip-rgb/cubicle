@@ -4,15 +4,7 @@ import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ChevronDown, ChevronUp, ExternalLink } from "lucide-react";
-
-type Field = {
-  id: string;
-  type: "text" | "textarea" | "select" | "multiselect" | "number" | "date" | "email" | "url";
-  label: string;
-  required: boolean;
-  options?: string[];
-  placeholder?: string;
-};
+import type { QuestionnaireField } from "@/lib/questionnaire-schema";
 
 type Response = {
   id: string;
@@ -28,7 +20,7 @@ type Response = {
   projectName: string | null;
 };
 
-export function ResponseViewer({ response, fields }: { response: Response; fields: Field[] }) {
+export function ResponseViewer({ response, fields }: { response: Response; fields: QuestionnaireField[] }) {
   const [open, setOpen] = useState(false);
   const isSubmitted = response.status === "submitted";
   const answers: Record<string, string | string[] | number> = (response.answers as Record<string, string | string[] | number>) || {};
