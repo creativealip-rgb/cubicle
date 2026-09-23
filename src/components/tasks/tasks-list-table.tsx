@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { updateTask } from "@/lib/actions/tasks";
 import { useTransition } from "react";
 import { toast } from "sonner";
@@ -10,16 +10,12 @@ import { EmptyState } from "@/components/empty-state";
 import { useT } from "@/lib/i18n-client";
 import {
   taskPriorityColor,
-  taskStatusVariant,
   taskPriorityLabel,
 } from "@/lib/status-badge";
 import {
   Clock,
   CheckSquare2,
-  ChevronDown,
-  ChevronRight,
   Folder,
-  Briefcase,
 } from "lucide-react";
 
 export type TasksListItem = {
@@ -58,12 +54,23 @@ function dueDays(dueDate: string | null) {
 }
 
 function dueTone(task: TasksListItem) {
+  if (task.status === "done") return "text-muted-foreground";
   const days = dueDays(task.dueDate);
   if (days === null) return "text-muted-foreground";
-  if (days < 0) return task.status === "done" ? "text-green-700 font-medium" : "text-red-600 font-semibold";
-  if (days === 0) return task.status === "done" ? "text-muted-foreground" : "text-amber-700 font-semibold";
+  if (days < 0) return "text-red-600 font-semibold";
+  if (days === 0) return "text-amber-700 font-semibold";
   if (days <= 7) return "text-amber-700 font-medium";
   return "text-muted-foreground";
+}
+
+function getInitials(name?: string | null, email?: string | null): string {
+  if (name && name.trim()) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  if (email) return email.slice(0, 2).toUpperCase();
+  return "UN";
 }
 
 interface TasksListTableProps {
@@ -89,322 +96,205 @@ export function TasksListTable({
   const { t, lang } = useT();
   const [, startTransition] = useTransition();
 
-  // Collapsed state per Client and Project
-  const [collapsedClients, setCollapsedClients] = useState<Record<string, boolean>>({});
-  const [collapsedProjects, setCollapsedProjects] = useState<Record<string, boolean>>({});
-
-  const toggleClient = (clientKey: string) => {
-    setCollapsedClients((prev) => ({ ...prev, [clientKey]: !prev[clientKey] }));
-  };
-
-  const toggleProject = (projectKey: string) => {
-    setCollapsedProjects((prev) => ({ ...prev, [projectKey]: !prev[projectKey] }));
-  };
-
   const handleFastToggle = (
     taskId: string,
     currentStatus: string,
-    e: React.MouseEvent,
+    e: React.MouseEvent
   ) => {
     e.stopPropagation();
-    const nextStatus = currentStatus === "done" ? "todo" : "done";
+    e.preventDefault();
+    const newStatus = currentStatus === "done" ? "todo" : "done";
+
     startTransition(async () => {
       try {
-        await updateTask(taskId, { status: nextStatus });
+        await updateTask(taskId, { status: newStatus });
         toast.success(
-          nextStatus === "done"
+          newStatus === "done"
             ? t("Tugas selesai!", "Task completed!")
-            : t("Tugas dibuka kembali", "Task reopened"),
+            : t("Tugas dibuka kembali", "Task reopened")
         );
-      } catch (err: unknown) {
+      } catch (err) {
         toast.error(
-          err instanceof Error ? err.message : t("Gagal update status", "Failed to update status"),
+          err instanceof Error
+            ? err.message
+            : t("Gagal memperbarui status", "Failed to update status")
         );
       }
     });
   };
 
-  const formatDue = (task: TasksListItem) => {
+  const formatDueDate = (task: TasksListItem) => {
     if (!task.dueDate) return null;
-    const d = new Date(task.dueDate);
-    const formatted = d.toLocaleDateString(lang === "en" ? "en-US" : "id-ID", {
-      day: "numeric",
-      month: "short",
-    });
-    const days = dueDays(task.dueDate);
-    if (days === null) return formatted;
-    if (days < 0) return `${formatted} (${Math.abs(days)}h terlambat)`;
-    if (days === 0) return `${formatted} (hari ini)`;
-    if (days === 1) return `${formatted} (besok)`;
-    return formatted;
-  };
-
-  // Grouping Hierarchy: Client -> Projects -> Tasks
-  type ProjectGroup = {
-    projectId: string | null;
-    projectName: string;
-    tasks: TasksListItem[];
-  };
-
-  type ClientGroup = {
-    clientName: string;
-    projects: ProjectGroup[];
-    totalTasks: number;
-    activeTasks: number;
-    completedTasks: number;
-  };
-
-  const groupedData = useMemo(() => {
-    const clientMap = new Map<string, Map<string, TasksListItem[]>>();
-
-    for (const task of tasks) {
-      const cName = task.clientName || (task.projectId ? t("Klien Lain", "Other Client") : t("Tanpa Klien / Internal", "No Client / Internal"));
-      const pId = task.projectId || "__none__";
-
-      if (!clientMap.has(cName)) {
-        clientMap.set(cName, new Map());
-      }
-      const projectMap = clientMap.get(cName)!;
-      if (!projectMap.has(pId)) {
-        projectMap.set(pId, []);
-      }
-      projectMap.get(pId)!.push(task);
+    const dateStr = new Date(task.dueDate).toLocaleDateString(
+      lang === "id" ? "id-ID" : "en-US",
+      { month: "short", day: "numeric" }
+    );
+    if (task.status === "done") {
+      return dateStr;
     }
-
-    const result: ClientGroup[] = [];
-
-    clientMap.forEach((projectMap, clientName) => {
-      const projectGroups: ProjectGroup[] = [];
-      let totalTasks = 0;
-      let activeTasks = 0;
-      let completedTasks = 0;
-
-      projectMap.forEach((taskList, pId) => {
-        const pName = pId === "__none__" ? t("Tanpa Proyek", "No Project") : (taskList[0]?.projectName || t("Proyek", "Project"));
-        projectGroups.push({
-          projectId: pId === "__none__" ? null : pId,
-          projectName: pName,
-          tasks: taskList,
-        });
-
-        totalTasks += taskList.length;
-        activeTasks += taskList.filter((tk) => tk.status !== "done").length;
-        completedTasks += taskList.filter((tk) => tk.status === "done").length;
-      });
-
-      result.push({
-        clientName,
-        projects: projectGroups,
-        totalTasks,
-        activeTasks,
-        completedTasks,
-      });
-    });
-
-    return result;
-  }, [tasks, t]);
+    const days = dueDays(task.dueDate);
+    if (days === null) return dateStr;
+    if (days < 0) return `${dateStr} (${Math.abs(days)}h ${t("terlambat", "late")})`;
+    if (days === 0) return `${dateStr} (${t("hari ini", "today")})`;
+    return dateStr;
+  };
 
   if (tasks.length === 0) {
     return (
       <EmptyState
-        icon={Clock}
-        title={t("Belum ada tugas", "No tasks found")}
+        icon={CheckSquare2}
+        title={t("Tidak ada tugas ditemukan", "No tasks found")}
         description={t(
-          "Buat tugas pertama Anda untuk mulai mengatur pekerjaan proyek.",
-          "Create your first task to start organizing project work.",
+          "Coba sesuaikan kata kunci pencarian atau filter Anda.",
+          "Try adjusting your search keyword or filters."
         )}
       />
     );
   }
 
   return (
-    <div className="space-y-4">
-      {groupedData.map((clientGroup) => {
-        const isClientCollapsed = !!collapsedClients[clientGroup.clientName];
+    <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-sm">
+      {/* Table Header */}
+      <div className="hidden sm:grid sm:grid-cols-[1fr_13rem_7rem_6rem_8rem] items-center gap-3 border-b bg-muted/40 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+        <span>{t("Tugas", "Task")}</span>
+        <span>{t("Proyek & Klien", "Project & Client")}</span>
+        <span>{t("Petugas", "Assignee")}</span>
+        <span>{t("Prioritas", "Priority")}</span>
+        <span className="text-right">{t("Jatuh Tempo", "Due Date")}</span>
+      </div>
 
-        return (
-          <div
-            key={clientGroup.clientName}
-            className="overflow-hidden rounded-xl border bg-card shadow-sm transition-all"
-          >
-            {/* Level 1: Client Header */}
-            <div
-              onClick={() => toggleClient(clientGroup.clientName)}
-              className="flex cursor-pointer select-none items-center justify-between border-b bg-muted/40 px-4 py-3 hover:bg-muted/60 transition-colors"
+      {/* Flat Task Rows */}
+      <div className="divide-y divide-border/60">
+        {tasks.map((task) => {
+          const isFocus = focusId === task.id;
+
+          return (
+            <TaskDetailSheet
+              key={task.id}
+              task={{
+                ...task,
+                projectId: task.projectId ?? undefined,
+              }}
+              members={members}
+              projects={projects}
+              defaultOpen={isFocus}
+              className="block"
             >
-              <div className="flex items-center gap-2.5">
-                {isClientCollapsed ? (
-                  <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                  <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                )}
-                <Briefcase className="h-4 w-4 text-primary" />
-                <h3 className="text-sm font-bold text-foreground tracking-tight">
-                  {clientGroup.clientName}
-                </h3>
-              </div>
-              <div className="flex items-center gap-2 text-xs">
-                <span className="rounded-md bg-background px-2 py-0.5 font-medium text-foreground border shadow-xs">
-                  {clientGroup.projects.length} {t("Proyek", "Projects")}
-                </span>
-                <span className="rounded-md bg-primary/10 px-2 py-0.5 font-semibold text-primary">
-                  {clientGroup.activeTasks} {t("Aktif", "Active")}
-                </span>
-                {clientGroup.completedTasks > 0 && (
-                  <span className="rounded-md bg-emerald-500/10 px-2 py-0.5 font-semibold text-emerald-600">
-                    {clientGroup.completedTasks} {t("Selesai", "Done")}
-                  </span>
-                )}
-              </div>
-            </div>
+              <div
+                id={isFocus ? `task-${task.id}` : undefined}
+                className={`group flex flex-col sm:grid sm:grid-cols-[1fr_13rem_7rem_6rem_8rem] sm:items-center gap-2 sm:gap-3 px-4 py-3 hover:bg-muted/40 transition-colors cursor-pointer ${
+                  isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""
+                }`}
+              >
+                {/* 1. Checkbox & Title & Subtasks */}
+                <div className="min-w-0 flex items-center gap-2.5">
+                  <button
+                    type="button"
+                    onClick={(e) => handleFastToggle(task.id, task.status, e)}
+                    className={`flex h-4.5 w-4.5 shrink-0 items-center justify-center rounded border transition-colors ${
+                      task.status === "done"
+                        ? "bg-emerald-500 border-emerald-500 text-white"
+                        : "border-input bg-background hover:border-primary text-transparent"
+                    }`}
+                    title={
+                      task.status === "done"
+                        ? t("Tandai belum selesai", "Mark as uncompleted")
+                        : t("Tandai selesai", "Mark as completed")
+                    }
+                  >
+                    <CheckSquare2 className="h-3 w-3" />
+                  </button>
 
-            {/* Client Body (Projects List) */}
-            {!isClientCollapsed && (
-              <div className="divide-y divide-border/60">
-                {clientGroup.projects.map((projectGroup) => {
-                  const projectKey = `${clientGroup.clientName}-${projectGroup.projectName}`;
-                  const isProjectCollapsed = !!collapsedProjects[projectKey];
+                  <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
+                    <span
+                      className={`text-sm font-medium transition-colors ${
+                        task.status === "done"
+                          ? "line-through text-muted-foreground"
+                          : "text-foreground group-hover:text-primary"
+                      }`}
+                    >
+                      {task.title}
+                    </span>
 
-                  return (
-                    <div key={projectKey} className="bg-background">
-                      {/* Level 2: Project Header */}
-                      <div
-                        onClick={() => toggleProject(projectKey)}
-                        className="flex cursor-pointer select-none items-center justify-between bg-muted/15 px-4 py-2 hover:bg-muted/30 transition-colors pl-8"
+                    {task.templateName && (
+                      <span className="rounded bg-primary/10 px-1.5 py-0.2 text-[9px] font-medium text-primary">
+                        {task.templateName}
+                      </span>
+                    )}
+
+                    {(task.subtaskTotal ?? 0) > 0 && (
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
+                          task.subtaskDone === task.subtaskTotal
+                            ? "bg-emerald-500/10 text-emerald-600 border border-emerald-200/60"
+                            : "bg-muted text-muted-foreground border border-border/80"
+                        }`}
                       >
-                        <div className="flex items-center gap-2">
-                          {isProjectCollapsed ? (
-                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
-                          ) : (
-                            <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-                          )}
-                          <Folder className="h-3.5 w-3.5 text-muted-foreground" />
-                          <span className="text-xs font-semibold text-foreground">
-                            {projectGroup.projectName}
-                          </span>
-                        </div>
-                        <span className="text-[11px] text-muted-foreground font-medium">
-                          {projectGroup.tasks.length} {t("tugas", "tasks")}
-                        </span>
-                      </div>
+                        <CheckSquare2 className="h-3 w-3" />
+                        {task.subtaskDone}/{task.subtaskTotal}
+                      </span>
+                    )}
+                  </div>
+                </div>
 
-                      {/* Level 3: Tasks Rows */}
-                      {!isProjectCollapsed && (
-                        <div className="divide-y divide-border/40 pl-6 sm:pl-10">
-                          {projectGroup.tasks.map((task) => {
-                            const sb = taskStatusVariant(task.status, lang);
-                            const isFocus = focusId === task.id;
-
-                            return (
-                              <TaskDetailSheet
-                                key={task.id}
-                                task={{
-                                  ...task,
-                                  projectId: task.projectId ?? undefined,
-                                }}
-                                members={members}
-                                projects={projects}
-                                defaultOpen={isFocus}
-                                className="block"
-                              >
-                                <div
-                                  id={isFocus ? `task-${task.id}` : undefined}
-                                  className={`flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/40 transition-colors ${
-                                    isFocus ? "bg-primary/5 ring-1 ring-inset ring-primary/30" : ""
-                                  }`}
-                                >
-                                  {/* Checkbox & Title */}
-                                  <div className="min-w-0 flex-1 flex items-center gap-2.5">
-                                    <button
-                                      type="button"
-                                      onClick={(e) => handleFastToggle(task.id, task.status, e)}
-                                      className={`flex h-5 w-5 shrink-0 items-center justify-center rounded transition-colors ${
-                                        task.status === "done"
-                                          ? "bg-emerald-500/20 text-emerald-600 hover:bg-emerald-500/30"
-                                          : "border border-input text-transparent hover:border-primary hover:text-primary/40"
-                                      }`}
-                                      title={
-                                        task.status === "done"
-                                          ? t("Tandai belum selesai", "Mark as uncompleted")
-                                          : t("Tandai selesai", "Mark as completed")
-                                      }
-                                    >
-                                      <CheckSquare2 className="h-3.5 w-3.5" />
-                                    </button>
-                                    <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
-                                      <span
-                                        className={`text-sm font-medium transition-colors ${
-                                          task.status === "done"
-                                            ? "line-through text-muted-foreground"
-                                            : "text-foreground"
-                                        }`}
-                                      >
-                                        {task.title}
-                                      </span>
-                                      {task.templateName && (
-                                        <span className="rounded bg-primary/10 px-1.5 py-0.2 text-[9px] font-medium text-primary">
-                                          {task.templateName}
-                                        </span>
-                                      )}
-                                      {(task.subtaskTotal ?? 0) > 0 && (
-                                        <span className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
-                                          task.subtaskDone === task.subtaskTotal
-                                            ? "bg-emerald-500/10 text-emerald-600 border border-emerald-200/60"
-                                            : "bg-muted text-muted-foreground border border-border/80"
-                                        }`}>
-                                          <CheckSquare2 className="h-3 w-3" />
-                                          {task.subtaskDone}/{task.subtaskTotal}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-
-                                  {/* Right Meta: Assignee, Priority, Due Date, Status */}
-                                  <div className="flex items-center gap-3 shrink-0 text-xs">
-                                    {task.assigneeName ? (
-                                      <span className="text-muted-foreground hidden sm:inline max-w-24 truncate">
-                                        {task.assigneeName}
-                                      </span>
-                                    ) : (
-                                      <span className="text-muted-foreground/40 hidden sm:inline">—</span>
-                                    )}
-
-                                    <Badge
-                                      variant="outline"
-                                      className={`text-[10px] font-medium ${taskPriorityColor(task.priority)}`}
-                                    >
-                                      {taskPriorityLabel(task.priority, lang)}
-                                    </Badge>
-
-                                    {task.dueDate && (
-                                      <span
-                                        className={`hidden md:flex items-center gap-1 text-[11px] ${dueTone(
-                                          task,
-                                        )}`}
-                                      >
-                                        <Clock className="h-3 w-3" />
-                                        {formatDue(task)}
-                                      </span>
-                                    )}
-
-                                    <Badge variant={sb.variant} className="text-[10px] font-medium">
-                                      {sb.label}
-                                    </Badge>
-                                  </div>
-                                </div>
-                              </TaskDetailSheet>
-                            );
-                          })}
-                        </div>
+                {/* 2. Project & Client Pill */}
+                <div className="min-w-0 flex items-center gap-1.5 text-xs text-muted-foreground">
+                  {task.projectName ? (
+                    <div className="inline-flex items-center gap-1 max-w-full truncate rounded-md bg-muted/60 px-2 py-0.5 border border-border/50 text-[11px]">
+                      <Folder className="h-3 w-3 shrink-0 text-muted-foreground/70" />
+                      <span className="font-medium text-foreground truncate">{task.projectName}</span>
+                      {task.clientName && (
+                        <>
+                          <span className="text-muted-foreground/50">·</span>
+                          <span className="truncate text-muted-foreground">{task.clientName}</span>
+                        </>
                       )}
                     </div>
-                  );
-                })}
+                  ) : (
+                    <span className="text-muted-foreground/40 text-[11px]">—</span>
+                  )}
+                </div>
+
+                {/* 3. Assignee (Compact Avatar + Name) */}
+                <div className="flex items-center gap-1.5 min-w-0 text-xs">
+                  {task.assigneeName ? (
+                    <div className="flex items-center gap-1.5 truncate" title={task.assigneeName}>
+                      <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
+                        {getInitials(task.assigneeName)}
+                      </span>
+                      <span className="truncate text-muted-foreground text-xs">{task.assigneeName}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground/40 text-xs">—</span>
+                  )}
+                </div>
+
+                {/* 4. Priority */}
+                <div>
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] font-medium ${taskPriorityColor(task.priority)}`}
+                  >
+                    {taskPriorityLabel(task.priority, lang)}
+                  </Badge>
+                </div>
+
+                {/* 5. Due Date */}
+                <div className="sm:text-right">
+                  {task.dueDate ? (
+                    <div className={`inline-flex items-center gap-1 text-xs ${dueTone(task)}`}>
+                      <Clock className="h-3 w-3" />
+                      <span>{formatDueDate(task)}</span>
+                    </div>
+                  ) : (
+                    <span className="text-muted-foreground/40 text-xs">—</span>
+                  )}
+                </div>
               </div>
-            )}
-          </div>
-        );
-      })}
+            </TaskDetailSheet>
+          );
+        })}
+      </div>
     </div>
   );
 }

@@ -36,6 +36,15 @@ interface TasksBoardViewProps {
   members: Array<{ id: string; name: string | null; email: string | null }>;
 }
 
+function getInitials(name?: string | null): string {
+  if (name && name.trim()) {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return "UN";
+}
+
 function dueDays(dueDate: string | null) {
   if (!dueDate) return null;
   const today = new Date();
@@ -135,30 +144,36 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                             {task.subtaskDone}/{task.subtaskTotal}
                           </span>
                         )}
-                        <Badge variant="outline" className="text-[10px] font-normal">
-                          {task.mode === "reusable" ? "Reusable" : "Workflow"}
-                        </Badge>
+                        {task.mode === "reusable" && (
+                          <Badge variant="outline" className="text-[10px] font-normal">
+                            Reusable
+                          </Badge>
+                        )}
                       </div>
                       {task.projectName && (
                         <p className="truncate text-[11px] text-muted-foreground">{task.projectName}</p>
                       )}
-                      <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="outline" className={`text-[10px] ${taskPriorityColor(task.priority)}`}>
-                          {task.priority === "urgent" && <AlertTriangle className="mr-0.5 h-2.5 w-2.5" />}
-                          {taskPriorityLabel(task.priority, lang)}
-                        </Badge>
-                        {task.assigneeName && (
-                          <span className="max-w-[80px] truncate text-[10px] text-muted-foreground">
-                            {task.assigneeName}
+                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/40">
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className={`text-[10px] ${taskPriorityColor(task.priority)}`}>
+                            {task.priority === "urgent" && <AlertTriangle className="mr-0.5 h-2.5 w-2.5" />}
+                            {taskPriorityLabel(task.priority, lang)}
+                          </Badge>
+                          {task.dueDate && (
+                            <div className={`flex items-center gap-1 text-[10px] ${dueTone(task)}`}>
+                              <Clock className="h-3 w-3" />
+                              <span suppressHydrationWarning>{formatDue(task)}</span>
+                            </div>
+                          )}
+                        </div>
+                        {task.assigneeName ? (
+                          <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary" title={task.assigneeName}>
+                            {getInitials(task.assigneeName)}
                           </span>
+                        ) : (
+                          <span className="text-[10px] text-muted-foreground/40">—</span>
                         )}
                       </div>
-                      {task.dueDate && (
-                        <div className={`flex items-center gap-1 text-[10px] ${dueTone(task)}`}>
-                          <Clock className="h-3 w-3" />
-                          <span suppressHydrationWarning>{formatDue(task)}</span>
-                        </div>
-                      )}
                     </CardContent>
                   </Card>
                 </TaskDetailSheet>
