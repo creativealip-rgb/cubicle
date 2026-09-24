@@ -188,7 +188,7 @@ export function ProposalsListTable({
                       </div>
                       <div className="min-w-0">
                         <Link
-                          href={`/app/proposals/${p.id}`}
+                          href={`/app/proposals/${p.id}/edit`}
                           className="text-sm font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[15rem]"
                         >
                           {p.title}
@@ -241,7 +241,7 @@ export function ProposalsListTable({
                       />
                     ) : (
                       <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
-                        <Link href={`/app/proposals/${p.id}`}>
+                        <Link href={`/app/proposals/${p.id}/edit`}>
                           {t("Buka", "Open")}
                         </Link>
                       </Button>

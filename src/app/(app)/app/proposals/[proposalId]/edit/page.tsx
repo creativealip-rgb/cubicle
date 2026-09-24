@@ -35,7 +35,7 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
     status: proposals.status,
   })
     .from(proposals).where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, workspaceId))).limit(1);
-  if (!proposal || proposal.status !== "draft") notFound();
+  if (!proposal) notFound();
   const blocks = normalizeDocumentBlocks(proposal.contentBlocks, "proposal");
   const [workspace] = await db.select({ name: workspaces.name, billingAddress: workspaces.billingAddress }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
   const downPaymentAmount = Number(proposal.total) * Number(proposal.downPaymentPercent) / 100;
@@ -62,7 +62,7 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
       workspaceId={workspaceId}
       initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("proposal")}
       initialRevision={proposal.contentRevision}
-      backHref={`/app/proposals/${proposalId}`}
+      backHref="/app/proposals"
       placeholderValues={placeholderValues}
       saveBlocks={saveBlocks}
       proposalMeta={{

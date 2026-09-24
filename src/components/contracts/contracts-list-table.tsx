@@ -181,7 +181,7 @@ export function ContractsListTable({
                       </div>
                       <div className="min-w-0">
                         <Link
-                          href={`/app/contracts/${c.id}`}
+                          href={`/app/contracts/${c.id}/edit`}
                           className="text-sm font-semibold text-foreground hover:text-primary transition-colors block truncate max-w-[15rem]"
                         >
                           {c.title}
@@ -231,7 +231,7 @@ export function ContractsListTable({
                       />
                     ) : (
                       <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
-                        <Link href={`/app/contracts/${c.id}`}>
+                        <Link href={`/app/contracts/${c.id}/edit`}>
                           {t("Buka", "Open")}
                         </Link>
                       </Button>
