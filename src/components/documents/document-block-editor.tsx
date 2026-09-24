@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
@@ -20,8 +21,6 @@ import { useT } from "@/lib/i18n-client";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
-import { ContractPublicView } from "@/components/contracts/contract-public-view";
-import { ProposalPublicView } from "@/components/proposals/proposal-public-view";
 import {
   AlignCenter,
   AlignLeft,
@@ -37,7 +36,6 @@ import {
   GripVertical,
   Heading,
   Image as ImageIcon,
-  Info,
   LayoutTemplate,
   List,
   Loader2,
@@ -47,6 +45,7 @@ import {
   Plus,
   QrCode,
   Redo2,
+  Save,
   Search,
   Send,
   Settings,
@@ -54,15 +53,15 @@ import {
   ShieldCheck,
   Sliders,
   Smartphone,
-  SplitSquareVertical,
   Tablet,
   Table as TableIcon,
   Trash2,
   Type,
   Undo2,
-  Upload,
   X,
 } from "lucide-react";
+
+type LineItem = { description: string; quantity: number; unitPrice: number };
 
 type Props = {
   kind: "proposal" | "contract";
@@ -72,11 +71,13 @@ type Props = {
   backHref?: string;
   placeholderValues?: DocumentPlaceholderValues;
   saveBlocks: (blocks: DocumentBlock[], revision: number) => Promise<unknown>;
+  onUpdateMeta?: (meta: Record<string, unknown>) => Promise<unknown>;
   documentMeta?: {
     id?: string;
     title: string;
     clientName: string | null;
     clientEmail: string | null;
+    companyName?: string | null;
     validUntil: Date | string | null;
     contractNumber: string | null;
   };
@@ -85,8 +86,13 @@ type Props = {
     title: string;
     clientName: string | null;
     clientEmail: string | null;
+    companyName?: string | null;
     validUntil: Date | string | null;
     status: string;
+    downPaymentPercent?: number;
+    taxRate?: number;
+    currency?: string;
+    lineItems?: LineItem[];
   };
 };
 
@@ -214,6 +220,7 @@ export function DocumentBlockEditor({
   backHref,
   placeholderValues = {},
   saveBlocks,
+  onUpdateMeta,
   documentMeta,
   proposalMeta,
 }: Props) {
@@ -224,9 +231,29 @@ export function DocumentBlockEditor({
   const [pending, startTransition] = useTransition();
   useUnsavedChanges(dirty || saving);
 
-  // Workflow Tabs: BUILD (Canvas) | SETTINGS (Document Metadata) | PUBLISH (Share / Send)
+  // Workflow Tabs: BUILD (Canvas) | SETTINGS (Document Metadata & Pricing) | PUBLISH (Share / Send)
   const [activeTab, setActiveTab] = useState<"build" | "settings" | "publish">("build");
   const [livePreviewMode, setLivePreviewMode] = useState(false);
+
+  // Form Settings State (Live editable metadata & financial rules)
+  const [metaState, setMetaState] = useState({
+    title: proposalMeta?.title || documentMeta?.title || "",
+    clientName: proposalMeta?.clientName || documentMeta?.clientName || "",
+    clientEmail: proposalMeta?.clientEmail || documentMeta?.clientEmail || "",
+    companyName: proposalMeta?.companyName || documentMeta?.companyName || "",
+    contractNumber: documentMeta?.contractNumber || "",
+    validUntil: proposalMeta?.validUntil
+      ? new Date(proposalMeta.validUntil).toISOString().split("T")[0]
+      : documentMeta?.validUntil
+      ? new Date(documentMeta.validUntil).toISOString().split("T")[0]
+      : "",
+    taxRate: proposalMeta?.taxRate ?? 0,
+    downPaymentPercent: proposalMeta?.downPaymentPercent ?? 0,
+    lineItems: proposalMeta?.lineItems?.length
+      ? proposalMeta.lineItems
+      : [{ description: "Services Deliverable", quantity: 1, unitPrice: 0 }],
+  });
+  const [savingMeta, setSavingMeta] = useState(false);
 
   // Left & Right Panels
   const [elementsOpen, setElementsOpen] = useState(true);
@@ -244,7 +271,6 @@ export function DocumentBlockEditor({
   // Upload & UI Modals
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
-  const [showPreview, setShowPreview] = useState(false);
   const [showTemplateConfirm, setShowTemplateConfirm] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
@@ -257,10 +283,16 @@ export function DocumentBlockEditor({
   const blockRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const { lang, t } = useT();
 
-  const docTitle = proposalMeta?.title || documentMeta?.title || (kind === "proposal" ? "Proposal" : "Contract");
+  const docTitle = metaState.title || (kind === "proposal" ? "Proposal" : "Contract");
   const docId = proposalMeta?.id || documentMeta?.id;
   const sharePath = kind === "proposal" ? `/proposal/${docId || ""}` : `/contract/${docId || ""}`;
   const fullShareUrl = docId ? `https://app.cubiqlo.com${sharePath}` : "";
+
+  // Dynamic Price Calculations for Settings
+  const lineItemsSubtotal = metaState.lineItems.reduce((acc, item) => acc + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0), 0);
+  const lineItemsTax = lineItemsSubtotal * ((Number(metaState.taxRate) || 0) / 100);
+  const lineItemsTotal = lineItemsSubtotal + lineItemsTax;
+  const lineItemsDpAmount = lineItemsTotal * ((Number(metaState.downPaymentPercent) || 0) / 100);
 
   const blockLabel = (type: string) => {
     const labels: Record<string, [string, string]> = {
@@ -306,6 +338,40 @@ export function DocumentBlockEditor({
       if (timer.current) clearTimeout(timer.current);
     };
   }, [blocks, dirty, save]);
+
+  async function handleSaveSettings(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    if (!onUpdateMeta) return;
+    setSavingMeta(true);
+    try {
+      const payload: Record<string, unknown> = {
+        title: metaState.title,
+        clientName: metaState.clientName,
+        clientEmail: metaState.clientEmail || null,
+        companyName: metaState.companyName || null,
+        validUntil: metaState.validUntil || null,
+      };
+      if (kind === "proposal") {
+        payload.taxRate = Number(metaState.taxRate) || 0;
+        payload.downPaymentPercent = Number(metaState.downPaymentPercent) || 0;
+        payload.lineItems = metaState.lineItems.map((item) => ({
+          description: item.description,
+          quantity: Number(item.quantity) || 1,
+          unitPrice: Number(item.unitPrice) || 0,
+          amount: (Number(item.quantity) || 1) * (Number(item.unitPrice) || 0),
+        }));
+      }
+      if (kind === "contract" && metaState.contractNumber) {
+        payload.contractNumber = metaState.contractNumber;
+      }
+      await onUpdateMeta(payload);
+      toast.success(kind === "proposal" ? t("Pengaturan proposal berhasil disimpan", "Proposal settings saved") : t("Pengaturan kontrak berhasil disimpan", "Contract settings saved"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Gagal menyimpan pengaturan", "Failed to save settings"));
+    } finally {
+      setSavingMeta(false);
+    }
+  }
 
   function update(id: string, content: string) {
     setBlocks((current) => current.map((block) => (block.id === id ? { ...block, content } : block)));
@@ -556,6 +622,7 @@ export function DocumentBlockEditor({
             className={`flex items-center gap-1.5 px-3 sm:px-4 py-1 text-xs font-bold rounded-lg transition-all ${
               activeTab === "settings" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
             }`}
+            title={t("Pengaturan", "Settings")}
           >
             <Settings className="h-3.5 w-3.5" />
             <span>SETTINGS</span>
@@ -1156,70 +1223,254 @@ export function DocumentBlockEditor({
         </div>
       )}
 
-      {/* ── TAB 2: SETTINGS (Document Metadata & Controls) ── */}
+      {/* ── TAB 2: SETTINGS (Document Metadata & Pricing Rules) ── */}
       {activeTab === "settings" && (
         <div className="flex-1 overflow-y-auto bg-muted/30 p-4 sm:p-8">
-          <div className="mx-auto max-w-2xl space-y-6">
+          <form onSubmit={handleSaveSettings} className="mx-auto max-w-3xl space-y-6">
+            {/* Metadata Card */}
             <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
-              <div>
-                <h3 className="text-base font-bold text-foreground">
-                  {kind === "proposal" ? t("Pengaturan Proposal", "Proposal Settings") : t("Pengaturan Kontrak", "Contract Settings")}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("Kelola informasi dasar, status, dan data kepatuhan dokumen ini.", "Manage metadata, status, and compliance for this document.")}
-                </p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-base font-bold text-foreground">
+                    {kind === "proposal" ? t("Pengaturan & Metadata Proposal", "Proposal Settings & Metadata") : t("Pengaturan & Metadata Kontrak", "Contract Settings & Metadata")}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t("Kelola informasi klien, judul, dan masa berlaku dokumen ini.", "Manage client info, title, and validity for this document.")}
+                  </p>
+                </div>
+                <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-300 font-bold uppercase text-[11px]">
+                  {proposalMeta?.status || "Draft"}
+                </Badge>
               </div>
 
               <div className="space-y-4 pt-2">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-foreground">{t("Judul Dokumen", "Document Title")}</label>
-                  <Input value={docTitle} disabled className="bg-muted/40 font-medium text-xs sm:text-sm" />
+                  <Label className="text-xs font-semibold text-foreground">{t("Judul Dokumen", "Document Title")}</Label>
+                  <Input
+                    value={metaState.title}
+                    onChange={(e) => setMetaState((v) => ({ ...v, title: e.target.value }))}
+                    placeholder="e.g. Website Revamp & Maintenance"
+                    required
+                    className="text-xs sm:text-sm font-medium"
+                  />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-foreground">{t("Klien Tertuju", "Client Name")}</label>
+                    <Label className="text-xs font-semibold text-foreground">{t("Nama Klien", "Client Name")}</Label>
                     <Input
-                      value={proposalMeta?.clientName || documentMeta?.clientName || "-"}
-                      disabled
-                      className="bg-muted/40 text-xs sm:text-sm"
+                      value={metaState.clientName}
+                      onChange={(e) => setMetaState((v) => ({ ...v, clientName: e.target.value }))}
+                      placeholder="e.g. John Doe"
+                      required
+                      className="text-xs sm:text-sm"
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-foreground">{t("Email Klien", "Client Email")}</label>
+                    <Label className="text-xs font-semibold text-foreground">{t("Email Klien", "Client Email")}</Label>
                     <Input
-                      value={proposalMeta?.clientEmail || documentMeta?.clientEmail || "-"}
-                      disabled
-                      className="bg-muted/40 text-xs sm:text-sm"
+                      type="email"
+                      value={metaState.clientEmail}
+                      onChange={(e) => setMetaState((v) => ({ ...v, clientEmail: e.target.value }))}
+                      placeholder="e.g. client@example.com"
+                      className="text-xs sm:text-sm"
                     />
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-foreground">{t("Masa Berlaku (Valid Until)", "Valid Until")}</label>
+                    <Label className="text-xs font-semibold text-foreground">{t("Nama Perusahaan", "Company Name")}</Label>
                     <Input
-                      value={
-                        (proposalMeta?.validUntil || documentMeta?.validUntil)
-                          ? new Date(proposalMeta?.validUntil || documentMeta?.validUntil || "").toLocaleDateString()
-                          : "-"
+                      value={metaState.companyName}
+                      onChange={(e) => setMetaState((v) => ({ ...v, companyName: e.target.value }))}
+                      placeholder="e.g. Acme Corp"
+                      className="text-xs sm:text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-foreground">{t("Masa Berlaku (Valid Until)", "Valid Until")}</Label>
+                    <Input
+                      type="date"
+                      value={metaState.validUntil}
+                      onChange={(e) => setMetaState((v) => ({ ...v, validUntil: e.target.value }))}
+                      className="text-xs sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                {kind === "contract" && (
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-foreground">{t("Nomor Kontrak", "Contract Number")}</Label>
+                    <Input
+                      value={metaState.contractNumber}
+                      onChange={(e) => setMetaState((v) => ({ ...v, contractNumber: e.target.value }))}
+                      placeholder="CONT-2026-0001"
+                      className="text-xs sm:text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Proposal Financial / Line Items Card */}
+            {kind === "proposal" && (
+              <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-base font-bold text-foreground">{t("Rincian Harga & Pembayaran", "Pricing & Payment Terms")}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {t("Atur rincian item, kuantitas, pajak, dan ketentuan Down Payment (DP).", "Set line items, quantities, taxes, and down payment terms.")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-foreground">{t("Pajak / Tax (%)", "Tax Rate (%)")}</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="0.1"
+                      value={metaState.taxRate}
+                      onChange={(e) => setMetaState((v) => ({ ...v, taxRate: Number(e.target.value) || 0 }))}
+                      className="text-xs sm:text-sm"
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-foreground">{t("Down Payment / DP (%)", "Down Payment (%)")}</Label>
+                    <Input
+                      type="number"
+                      min="0"
+                      max="100"
+                      step="1"
+                      value={metaState.downPaymentPercent}
+                      onChange={(e) => setMetaState((v) => ({ ...v, downPaymentPercent: Number(e.target.value) || 0 }))}
+                      className="text-xs sm:text-sm"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-3 pt-3 border-t border-border/60">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("Daftar Item Proposal", "Proposal Line Items")}</Label>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant="outline"
+                      onClick={() =>
+                        setMetaState((v) => ({
+                          ...v,
+                          lineItems: [...v.lineItems, { description: "", quantity: 1, unitPrice: 0 }],
+                        }))
                       }
-                      disabled
-                      className="bg-muted/40 text-xs sm:text-sm"
-                    />
+                      className="h-7 text-xs font-semibold gap-1"
+                    >
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>{t("Tambah Baris", "Add Row")}</span>
+                    </Button>
                   </div>
-                  <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-foreground">{t("Status Saat Ini", "Current Status")}</label>
-                    <div>
-                      <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-300 font-bold uppercase text-[11px]">
-                        {proposalMeta?.status || "Draft"}
-                      </Badge>
+
+                  <div className="space-y-2">
+                    {metaState.lineItems.map((item, index) => (
+                      <div key={index} className="grid grid-cols-1 sm:grid-cols-[1fr_90px_140px_36px] gap-2 items-center bg-muted/20 p-2 rounded-xl border border-border/60">
+                        <Input
+                          placeholder={t("Deskripsi item / deliverable...", "Item description / deliverable...")}
+                          value={item.description}
+                          onChange={(e) => {
+                            const desc = e.target.value;
+                            setMetaState((v) => ({
+                              ...v,
+                              lineItems: v.lineItems.map((li, i) => (i === index ? { ...li, description: desc } : li)),
+                            }));
+                          }}
+                          className="h-8 text-xs bg-background"
+                          required
+                        />
+                        <Input
+                          type="number"
+                          min="0"
+                          step="0.5"
+                          placeholder="Qty"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const qty = Number(e.target.value) || 0;
+                            setMetaState((v) => ({
+                              ...v,
+                              lineItems: v.lineItems.map((li, i) => (i === index ? { ...li, quantity: qty } : li)),
+                            }));
+                          }}
+                          className="h-8 text-xs bg-background"
+                        />
+                        <Input
+                          type="number"
+                          min="0"
+                          placeholder="Harga Satuan"
+                          value={item.unitPrice}
+                          onChange={(e) => {
+                            const price = Number(e.target.value) || 0;
+                            setMetaState((v) => ({
+                              ...v,
+                              lineItems: v.lineItems.map((li, i) => (i === index ? { ...li, unitPrice: price } : li)),
+                            }));
+                          }}
+                          className="h-8 text-xs bg-background"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          disabled={metaState.lineItems.length <= 1}
+                          onClick={() =>
+                            setMetaState((v) => ({
+                              ...v,
+                              lineItems: v.lineItems.filter((_, i) => i !== index),
+                            }))
+                          }
+                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Calculations Summary Box */}
+                  <div className="p-4 rounded-xl border border-border/80 bg-muted/30 space-y-1.5 text-xs text-right mt-3">
+                    <div className="flex justify-between text-muted-foreground">
+                      <span>{t("Subtotal", "Subtotal")}</span>
+                      <span className="font-mono font-medium">{lineItemsSubtotal.toLocaleString("id-ID")}</span>
                     </div>
+                    {metaState.taxRate > 0 && (
+                      <div className="flex justify-between text-muted-foreground">
+                        <span>{t(`Pajak (${metaState.taxRate}%)`, `Tax (${metaState.taxRate}%)`)}</span>
+                        <span className="font-mono font-medium">{lineItemsTax.toLocaleString("id-ID")}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between text-sm font-bold text-foreground border-t border-border/60 pt-1.5">
+                      <span>{t("Total Proposal", "Total Proposal")}</span>
+                      <span className="font-mono text-primary font-bold">{lineItemsTotal.toLocaleString("id-ID")}</span>
+                    </div>
+                    {metaState.downPaymentPercent > 0 && (
+                      <div className="flex justify-between text-xs text-muted-foreground pt-0.5">
+                        <span>{t(`Down Payment (${metaState.downPaymentPercent}%)`, `Down Payment (${metaState.downPaymentPercent}%)`)}</span>
+                        <span className="font-mono font-bold text-foreground">{lineItemsDpAmount.toLocaleString("id-ID")}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
+            )}
+
+            {/* Bottom Save Settings Button */}
+            <div className="flex justify-end pt-2">
+              <Button type="submit" disabled={savingMeta} className="gap-1.5 text-xs font-semibold px-5">
+                {savingMeta ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                <span>{t("Simpan Pengaturan", "Save Settings")}</span>
+              </Button>
             </div>
-          </div>
+          </form>
         </div>
       )}
 

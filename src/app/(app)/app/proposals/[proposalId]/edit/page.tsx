@@ -27,6 +27,8 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
     subtotal: proposals.subtotal,
     tax: proposals.tax,
     total: proposals.total,
+    currency: proposals.currency,
+    lineItems: proposals.lineItems,
     downPaymentPercent: proposals.downPaymentPercent,
     contentBlocks: proposals.contentBlocks,
     contentRevision: proposals.contentRevision,
@@ -68,8 +70,22 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
         title: proposal.title,
         clientName: proposal.clientName,
         clientEmail: proposal.clientEmail,
+        companyName: proposal.companyName,
         validUntil: proposal.validUntil,
         status: proposal.status,
+        downPaymentPercent: Number(proposal.downPaymentPercent),
+        taxRate: Number(proposal.tax) / Number(proposal.subtotal || 1) * 100,
+        currency: proposal.currency,
+        lineItems: (proposal.lineItems as Array<{ description: string; quantity?: number; unitPrice?: number; amount?: number }> ?? []).map((li) => ({
+          description: li.description,
+          quantity: li.quantity ?? 1,
+          unitPrice: li.unitPrice ?? 0,
+        })),
+      }}
+      onUpdateMeta={async (meta) => {
+        "use server";
+        const { updateProposal } = await import("@/lib/actions/proposals");
+        return updateProposal(proposalId, meta);
       }}
     />
   );

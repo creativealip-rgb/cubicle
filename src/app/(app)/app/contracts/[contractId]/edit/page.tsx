@@ -40,8 +40,14 @@ export default async function ContractEditPage({ params }: { params: Promise<{ c
         title: contract.title,
         clientName: contract.clientName,
         clientEmail: contract.clientEmail,
+        companyName: contract.companyName,
         validUntil: contract.validUntil,
         contractNumber: contract.contractNumber,
+      }}
+      onUpdateMeta={async (meta) => {
+        "use server";
+        const { updateContract } = await import("@/lib/actions/contracts");
+        return updateContract(contractId, meta);
       }}
     />
   );
