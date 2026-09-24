@@ -641,7 +641,7 @@ export function DocumentBlockEditor({
 
         {/* Actions Right */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Live Preview Switcher */}
+          {/* Interactive Live Preview Switcher (Jotform Style) */}
           <button
             type="button"
             onClick={() => setLivePreviewMode(!livePreviewMode)}
@@ -653,7 +653,7 @@ export function DocumentBlockEditor({
             title={t("Pratinjau", "Preview")}
           >
             <Eye className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">{t("Pratinjau", "Preview")}</span>
+            <span>{kind === "proposal" ? t("Pratinjau Proposal", "Preview Proposal") : t("Pratinjau Kontrak", "Preview Contract")}</span>
           </button>
 
           <Button
@@ -669,22 +669,49 @@ export function DocumentBlockEditor({
 
           {activeTab === "build" && !livePreviewMode && (
             <>
+              {/* Desktop / Mobile Switcher (Jotform Builder Style) */}
+              <div className="hidden lg:flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/60">
+                <button
+                  type="button"
+                  onClick={() => setDevice("desktop")}
+                  className={`p-1 rounded-md transition-all ${
+                    device === "desktop" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Desktop Preview"
+                >
+                  <Monitor className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDevice("mobile")}
+                  className={`p-1 rounded-md transition-all ${
+                    device === "mobile" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="Mobile Preview"
+                >
+                  <Smartphone className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
               <Button
                 type="button"
-                variant={elementsOpen ? "default" : "outline"}
+                variant={elementsOpen ? "secondary" : "outline"}
                 size="sm"
                 onClick={() => setElementsOpen(!elementsOpen)}
-                className="h-8 gap-1 text-xs font-semibold hidden lg:inline-flex"
+                className="h-8 gap-1.5 text-xs font-medium hidden md:inline-flex"
+                title="Toggle Element Catalog"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Elements</span>
               </Button>
+
               <Button
                 type="button"
-                variant={propertiesOpen ? "default" : "outline"}
+                variant={propertiesOpen ? "secondary" : "outline"}
                 size="sm"
                 onClick={() => setPropertiesOpen(!propertiesOpen)}
-                className="h-8 gap-1 text-xs font-semibold hidden xl:inline-flex"
+                className="h-8 gap-1.5 text-xs font-medium hidden md:inline-flex"
+                title="Toggle Field Properties"
               >
                 <Sliders className="h-3.5 w-3.5" />
                 <span>Properties</span>
@@ -815,30 +842,8 @@ export function DocumentBlockEditor({
 
           {/* KANVAS TENGAH: WYSIWYG Document Paper */}
           <main ref={canvasScrollRef} className="flex-1 flex flex-col h-full overflow-y-auto bg-muted/30 p-4 sm:p-8">
-            {/* Device Switcher & Undo/Redo Floating Top Bar */}
-            <div className="mx-auto mb-4 flex items-center justify-between gap-3 max-w-3xl w-full">
-              <div className="flex items-center gap-1 rounded-xl border border-border/70 bg-background/90 backdrop-blur p-1 shadow-2xs">
-                {(
-                  [
-                    ["desktop", Monitor],
-                    ["tablet", Tablet],
-                    ["mobile", Smartphone],
-                  ] as const
-                ).map(([name, Icon]) => (
-                  <button
-                    key={name}
-                    type="button"
-                    onClick={() => setDevice(name)}
-                    className={`h-7 px-2.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                      device === name ? "bg-primary text-primary-foreground shadow-2xs" : "text-muted-foreground hover:text-foreground"
-                    }`}
-                  >
-                    <Icon className="h-3.5 w-3.5" />
-                    <span className="capitalize hidden sm:inline">{name}</span>
-                  </button>
-                ))}
-              </div>
-
+            {/* Undo/Redo & Canvas Actions Top Bar */}
+            <div className="mx-auto mb-4 flex items-center justify-end gap-3 max-w-3xl w-full">
               <div className="flex items-center gap-1 rounded-xl border border-border/70 bg-background/90 backdrop-blur p-1 shadow-2xs">
                 <Button
                   type="button"
