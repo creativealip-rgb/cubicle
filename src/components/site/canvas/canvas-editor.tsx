@@ -40,12 +40,19 @@ import {
   Search,
   Copy,
   ExternalLink,
+  Sliders,
+  Settings,
+  Globe,
+  Send,
+  QrCode,
 } from "lucide-react";
 import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, useDraggable, type DragStartEvent, type DragEndEvent } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CanvasRenderer, CANVAS_DEVICES, type CanvasDevice } from "./canvas-renderer";
 import { PropertiesPanel } from "./properties-panel";
@@ -259,8 +266,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   const [site, setSite] = useState<PersonalSiteInput>(() => ({ ...initialSite, pages: normalizePages(initialSite) }));
   const [activePageId, setActivePageId] = useState(() => normalizePages(initialSite).find((page) => page.isHome)?.id ?? normalizePages(initialSite)[0]?.id ?? "home");
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
-  // Phase 5: preview-only viewport width. Deliberately kept outside `site` so
-  // switching devices cannot dirty the document, enter history, or lose edits.
+  const [activeTab, setActiveTab] = useState<"build" | "settings" | "publish">("build");
   const [previewDevice, setPreviewDevice] = useState<CanvasDevice>("desktop");
   const [saving, setSaving] = useState(false);
   const [sidebarTab, setSidebarTab] = useState("insert");
@@ -275,6 +281,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   const [activeDrag, setActiveDrag] = useState<{ id: string; label: string } | null>(null);
 
   const [showPublishConfirm, setShowPublishConfirm] = useState<boolean | null>(null); // null=hidden, true=publish, false=unpublish
+  const [showQrModal, setShowQrModal] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -579,199 +586,431 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
       </div>
 
       {/* Desktop: DnD canvas + sidebar */}
-      <div className="hidden md:block">
-    <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      accessibility={{
-        screenReaderInstructions: {
-          draggable: t(
-            "Untuk mengambil item yang dapat diseret, tekan spasi. Gunakan tombol panah untuk memindahkan. Tekan spasi lagi untuk meletakkan, atau Escape untuk membatalkan.",
-            "To pick up a draggable item, press space. Use the arrow keys to move it. Press space again to drop it, or Escape to cancel.",
-          ),
-        },
-      }}
-    >
-      <div className="flex h-[calc(100vh-3.5rem)] overflow-hidden">
-        {/* Mobile sidebar toggle */}
-        <Button
-          type="button"
-          variant="outline"
-          size="icon"
-          className="fixed bottom-16 left-3 z-40 md:hidden shadow-lg"
-          onClick={() => setMobileSidebar(!mobileSidebar)}
-        >
-          <PanelLeft className="h-4 w-4" />
-        </Button>
+      <div className="hidden md:flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-background">
+        {/* Top Navbar Header (Standardized 3-Tab Workflow) */}
+        <header className="h-14 border-b border-border/80 bg-background/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-3 shrink-0 z-30">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
+              <Globe className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h1 className="text-sm font-bold text-foreground truncate max-w-[12rem] sm:max-w-[18rem]">
+                  {site.title || t("Landing Page", "Landing Page")}
+                </h1>
+                <Badge variant="outline" className={`text-[10px] font-bold uppercase tracking-wider ${
+                  site.published ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-muted text-muted-foreground"
+                }`}>
+                  {site.published ? t("Live", "Live") : t("Draft", "Draft")}
+                </Badge>
+              </div>
+              <p className="text-[11px] text-muted-foreground truncate">
+                {isDirty ? (
+                  <span className="text-amber-600 font-medium">● {t("Perubahan belum disimpan", "Unsaved changes")}</span>
+                ) : (
+                  <span className="text-emerald-600 font-medium">✓ {t("Semua perubahan tersimpan", "All changes saved")}</span>
+                )}
+              </p>
+            </div>
+          </div>
 
-        {/* Sidebar overlay (mobile) */}
-        {mobileSidebar && (
-          <div className="fixed inset-0 z-50 md:hidden" onClick={() => setMobileSidebar(false)}>
-            <div className="absolute inset-0 bg-black/50" />
-            <aside className="absolute left-0 top-0 bottom-0 w-72 bg-background overflow-y-auto pb-16" onClick={(e) => e.stopPropagation()}>
-              <SidebarContent
-                sidebarTab={sidebarTab}
-                setSidebarTab={setSidebarTab}
-                groupedWidgets={groupedWidgets}
-                addSection={(type) => { addSection(type); setMobileSidebar(false); }}
-                addSectionTemplate={(template) => { addSectionTemplate(template); setMobileSidebar(false); }}
-                site={{ ...site, sections: activeSections }}
-                activePageId={activePageId}
-                setActivePageId={setActivePageId}
-                updateSite={updateSite}
-                publicUrl={publicUrl}
-                onSelectSection={setSelectedSectionId}
-                selectedSectionId={selectedSectionId}
+          {/* 3 Main Workflow Tabs */}
+          <div className="flex items-center gap-1 bg-muted/70 p-0.5 sm:p-1 rounded-xl border border-border/70">
+            <button
+              type="button"
+              onClick={() => setActiveTab("build")}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1 text-xs font-bold rounded-lg transition-all ${
+                activeTab === "build" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Sliders className="h-3.5 w-3.5 text-primary" />
+              <span>BUILD</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("settings")}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1 text-xs font-bold rounded-lg transition-all ${
+                activeTab === "settings" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Settings className="h-3.5 w-3.5" />
+              <span>SETTINGS</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("publish")}
+              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1 text-xs font-bold rounded-lg transition-all ${
+                activeTab === "publish" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <Share2 className="h-3.5 w-3.5" />
+              <span>PUBLISH</span>
+            </button>
+          </div>
+
+          {/* Actions Right */}
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              asChild
+              className="h-8 gap-1.5 text-xs font-semibold"
+            >
+              <a href={previewUrl} target="_blank" rel="noopener noreferrer">
+                <Eye className="h-3.5 w-3.5" />
+                <span>{t("Preview Site", "Preview Site")}</span>
+              </a>
+            </Button>
+
+            {activeTab === "build" && (
+              <>
+                {/* Desktop / Tablet / Mobile Switcher */}
+                <div className="hidden lg:flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/60">
+                  {CANVAS_DEVICES.map((device) => {
+                    const DeviceIcon = device === "desktop" ? Monitor : device === "tablet" ? Tablet : Smartphone;
+                    const active = previewDevice === device;
+                    return (
+                      <button
+                        key={device}
+                        type="button"
+                        onClick={() => setPreviewDevice(device)}
+                        className={`p-1 rounded-md transition-all ${
+                          active ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                        }`}
+                        title={CANVAS_DEVICE_LABELS[device]}
+                      >
+                        <DeviceIcon className="h-3.5 w-3.5" />
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+
+            <Button
+              size="sm"
+              onClick={handleSave}
+              disabled={saving || !isDirty}
+              className="h-8 px-4 text-xs font-semibold bg-primary text-primary-foreground shadow-xs gap-1.5"
+            >
+              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              <span>{saving ? t("Menyimpan...", "Saving...") : t("Simpan", "Save")}</span>
+            </Button>
+          </div>
+        </header>
+
+        {/* ── TAB 1: BUILD ── */}
+        {activeTab === "build" && (
+          <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
+            accessibility={{
+              screenReaderInstructions: {
+                draggable: t(
+                  "Untuk mengambil item yang dapat diseret, tekan spasi. Gunakan tombol panah untuk memindahkan. Tekan spasi lagi untuk meletakkan, atau Escape untuk membatalkan.",
+                  "To pick up a draggable item, press space. Use the arrow keys to move it. Press space again to drop it, or Escape to cancel.",
+                ),
+              },
+            }}
+          >
+            <div className="flex flex-1 overflow-hidden">
+              {/* Left sidebar (desktop) */}
+              <aside className="hidden md:block w-64 shrink-0 border-r bg-background overflow-y-auto pb-16 custom-scrollbar">
+                <SidebarContent
+                  sidebarTab={sidebarTab}
+                  setSidebarTab={setSidebarTab}
+                  groupedWidgets={groupedWidgets}
+                  addSection={addSection}
+                  addSectionTemplate={addSectionTemplate}
+                  site={{ ...site, sections: activeSections }}
+                  activePageId={activePageId}
+                  setActivePageId={setActivePageId}
+                  updateSite={updateSite}
+                  publicUrl={publicUrl}
+                  onSelectSection={setSelectedSectionId}
+                  selectedSectionId={selectedSectionId}
+                />
+              </aside>
+
+              {/* Canvas area */}
+              <div className="flex-1 flex flex-col h-full overflow-y-auto overflow-x-hidden bg-muted/30 p-4 sm:p-6 custom-scrollbar">
+                {/* Floating Canvas Top Bar: Readiness, Undo, Redo */}
+                <div className="mx-auto mb-3 flex items-center justify-between gap-3 max-w-4xl w-full">
+                  <ReadinessBadge site={site} onSelectIssue={handleSelectReadinessIssue} t={(id, fallback) => t(id, fallback)} />
+
+                  <div className="flex items-center gap-1 rounded-xl border border-border/70 bg-background/90 backdrop-blur p-1 shadow-2xs">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={undo}
+                      disabled={historyIndex <= 0}
+                      title={t("Urungkan", "Undo")}
+                    >
+                      <Undo2 className="h-3.5 w-3.5" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7"
+                      onClick={redo}
+                      disabled={historyIndex >= history.length - 1}
+                      title={t("Ulangi", "Redo")}
+                    >
+                      <Redo2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex-1">
+                  <CanvasRenderer
+                    site={{ ...site, sections: activeSections }}
+                    device={previewDevice}
+                    selectedSectionId={selectedSectionId}
+                    onSelectSection={setSelectedSectionId}
+                    onUpdateSite={updateSite}
+                    onUpdateSection={updateSection}
+                    onAddSection={addSection}
+                    onMoveSection={moveSection}
+                    onDuplicateSection={duplicateSection}
+                    onDeleteSection={deleteSection}
+                    onReorderSections={reorderSections}
+                    readinessTarget={readinessTarget}
+                  />
+                </div>
+              </div>
+
+              {/* Properties panel */}
+              <PropertiesPanel
+                section={selectedSection}
+                onUpdate={(patch) => { if (selectedSectionId) updateSection(selectedSectionId, patch); }}
+                onClose={() => setSelectedSectionId(null)}
               />
-            </aside>
+            </div>
+
+            <DragOverlay dropAnimation={null}>
+              {activeDrag ? (
+                <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 shadow-lg text-sm font-medium">
+                  <Layers className="h-4 w-4 text-muted-foreground" />
+                  {activeDrag.label}
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+        )}
+
+        {/* ── TAB 2: SETTINGS (General, SEO, & Slug Config) ── */}
+        {activeTab === "settings" && (
+          <div className="flex-1 overflow-y-auto bg-muted/30 p-4 sm:p-8">
+            <div className="mx-auto max-w-3xl space-y-6">
+              {/* Site General & SEO Card */}
+              <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
+                <div>
+                  <h3 className="text-base font-bold text-foreground">{t("Informasi Umum & SEO", "General Info & SEO")}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t("Kelola judul website, deskripsi meta untuk Google, dan konfigurasi brand.", "Manage site title, meta description for Google, and brand configuration.")}
+                  </p>
+                </div>
+
+                <div className="space-y-4 pt-1">
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-foreground">{t("Judul Website / Nama Agensi", "Site Title / Agency Name")}</Label>
+                    <Input
+                      value={site.title || ""}
+                      onChange={(e) => updateSite({ title: e.target.value })}
+                      placeholder="e.g. Nggawe Web Studio"
+                      className="text-xs sm:text-sm font-medium"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-foreground">{t("Subheadline / Tagline", "Subheadline / Tagline")}</Label>
+                    <Input
+                      value={site.subtitle || ""}
+                      onChange={(e) => updateSite({ subtitle: e.target.value })}
+                      placeholder="e.g. Digital Agency & Web Development"
+                      className="text-xs sm:text-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-foreground">{t("Hero Headline Utama", "Hero Headline")}</Label>
+                    <Input
+                      value={site.hero || ""}
+                      onChange={(e) => updateSite({ hero: e.target.value })}
+                      placeholder="e.g. Kami Membangun Solusi Digital untuk Bisnis Anda"
+                      className="text-xs sm:text-sm"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label className="text-xs font-semibold text-foreground">{t("Tentang Agensi / About Bio", "About Agency Bio")}</Label>
+                    <Textarea
+                      value={site.about || ""}
+                      onChange={(e) => updateSite({ about: e.target.value })}
+                      placeholder="Tuliskan profil singkat agensi Anda..."
+                      rows={3}
+                      className="text-xs sm:text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Slug & URL Settings Card */}
+              <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
+                <div>
+                  <h3 className="text-base font-bold text-foreground">{t("Pengaturan URL & Slug", "URL & Slug Settings")}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t("Tentukan alamat slug unik untuk tautan landing page publik Anda.", "Define the unique URL slug for your public landing page.")}
+                  </p>
+                </div>
+
+                <div className="space-y-3 pt-1">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="desktop-personal-site-slug" className="text-xs font-semibold text-foreground">
+                      {t("Slug URL", "URL Slug")}
+                    </Label>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-muted-foreground bg-muted px-2.5 py-2 rounded-lg border border-border/60">
+                        {publicSiteBaseUrl.replace(/\/$/, "")}/site/
+                      </span>
+                      <Input
+                        id="desktop-personal-site-slug"
+                        data-testid="personal-site-slug-input"
+                        value={site.slug || ""}
+                        onChange={(event) => updateSite({ slug: normalizePersonalSiteSlug(event.target.value) })}
+                        disabled={!canEditSlug}
+                        readOnly={!canEditSlug}
+                        placeholder="nama-agensi"
+                        className="font-mono text-xs sm:text-sm"
+                      />
+                    </div>
+                    {!canEditSlug && (
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {t("Paket Free menggunakan slug workspace. Upgrade untuk memakai slug kustom.", "Free uses your workspace slug. Upgrade to use a custom slug.")} {" "}
+                        <a href="/app/billing" className="font-medium text-primary underline">Upgrade Plan</a>
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Save Settings Button */}
+              <div className="flex justify-end pt-2">
+                <Button onClick={handleSave} disabled={saving || !isDirty} className="gap-1.5 text-xs font-semibold px-5">
+                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  <span>{t("Simpan Pengaturan", "Save Settings")}</span>
+                </Button>
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Left sidebar (desktop) */}
-        <aside className="hidden md:block w-64 shrink-0 border-r bg-background overflow-y-auto pb-16">
-          <SidebarContent
-            sidebarTab={sidebarTab}
-            setSidebarTab={setSidebarTab}
-            groupedWidgets={groupedWidgets}
-            addSection={addSection}
-            addSectionTemplate={addSectionTemplate}
-            site={{ ...site, sections: activeSections }}
-            activePageId={activePageId}
-            setActivePageId={setActivePageId}
-            updateSite={updateSite}
-            publicUrl={publicUrl}
-            onSelectSection={setSelectedSectionId}
-            selectedSectionId={selectedSectionId}
-          />
-        </aside>
-
-        {/* Canvas area — centers the preview frame, scrolls vertically only; the
-            frame never exceeds the area width so no horizontal overflow appears. */}
-        <div className="flex-1 overflow-y-auto overflow-x-hidden bg-muted/30 p-6 pb-16">
-          <CanvasRenderer
-            site={{ ...site, sections: activeSections }}
-            device={previewDevice}
-            selectedSectionId={selectedSectionId}
-            onSelectSection={setSelectedSectionId}
-            onUpdateSite={updateSite}
-            onUpdateSection={updateSection}
-            onAddSection={addSection}
-            onMoveSection={moveSection}
-            onDuplicateSection={duplicateSection}
-            onDeleteSection={deleteSection}
-            onReorderSections={reorderSections}
-            readinessTarget={readinessTarget}
-          />
-        </div>
-
-        {/* Properties panel — desktop only, opens when a section is selected */}
-        <PropertiesPanel
-          section={selectedSection}
-          onUpdate={(patch) => { if (selectedSectionId) updateSection(selectedSectionId, patch); }}
-          onClose={() => setSelectedSectionId(null)}
-        />
-
-        {/* Bottom bar */}
-        <div className={`fixed bottom-0 left-0 md:left-[68px] right-0 z-30 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-2 backdrop-blur ${selectedSection ? "md:right-80" : ""}`} role="status" aria-live="polite">
-          <div className="flex min-w-0 flex-1 items-center gap-2 text-xs text-muted-foreground">
-            <span className="hidden truncate rounded-md bg-muted px-2 py-1 font-medium text-foreground sm:inline">{activePage?.title ?? t("Halaman", "Page")} · {activeSections.length} {t("bagian", "sections")}</span>
-            {saving ? (
-              <span className="flex items-center gap-1 text-primary"><Loader2 className="h-3 w-3 animate-spin" /> {t("Menyimpan...", "Saving...")}</span>
-            ) : isDirty ? (
-              <span className="flex items-center gap-1 text-amber-600"><Circle className="h-2 w-2 fill-current" /> {t("Belum tersimpan", "Unsaved")}</span>
-            ) : (
-              <span className="flex items-center gap-1 text-emerald-600"><Check className="h-3 w-3" /> {t("Tersimpan", "Saved")}</span>
-            )}
-          </div>
-
-          {/* Phase 6: Readiness status badge — clicks toggle accessible issue list */}
-          <ReadinessBadge site={site} onSelectIssue={handleSelectReadinessIssue} t={(id, fallback) => t(id, fallback)} />
-
-          {/* Publish toggle */}
-          <button
-            type="button"
-            onClick={() => {
-              if (site.published) {
-                setShowPublishConfirm(false);
-              } else {
-                if (!isReadyToPublish(getPersonalSiteReadiness(site))) return;
-                setShowPublishConfirm(true);
-              }
-            }}
-            className={`flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-medium transition-colors ${
-              site.published
-                ? "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                : isReadyToPublish(getPersonalSiteReadiness(site))
-                  ? "border-muted text-muted-foreground hover:border-primary/40 hover:text-primary"
-                  : "border-muted text-muted-foreground/50 cursor-not-allowed"
-            }`}
-            disabled={!site.published && !isReadyToPublish(getPersonalSiteReadiness(site))}
-            title={site.published ? t("Klik untuk unpublish", "Click to unpublish") : t("Belum siap publikasi", "Not ready to publish")}
-          >
-            <span className={`h-2 w-2 rounded-full ${site.published ? "bg-emerald-500" : "bg-muted-foreground/30"}`} />
-            {t("Edit URL", "Edit URL")}
-          </button>
-
-          <div className="flex shrink-0 items-center gap-1">
-            {/* Phase 5: device preview switcher — local state only, does not touch site data. */}
-            <div
-              role="group"
-              aria-label={t("Pratinjau perangkat", "Preview device")}
-              className="flex items-center rounded-md border bg-muted/40 p-0.5"
-            >
-              {CANVAS_DEVICES.map((device) => {
-                const DeviceIcon = device === "desktop" ? Monitor : device === "tablet" ? Tablet : Smartphone;
-                const active = previewDevice === device;
-                const label = CANVAS_DEVICE_LABELS[device];
-                return (
+        {/* ── TAB 3: PUBLISH (Publication Status, Share Links, QR Code) ── */}
+        {activeTab === "publish" && (
+          <div className="flex-1 overflow-y-auto bg-muted/30 p-4 sm:p-8">
+            <div className="mx-auto max-w-2xl space-y-6">
+              <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="text-base font-bold text-foreground">{t("Status Publikasi Landing Page", "Landing Page Publication")}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {site.published
+                        ? t("Landing page Anda saat ini AKTIF dan dapat diakses oleh publik.", "Your landing page is currently LIVE and publicly accessible.")
+                        : t("Landing page Anda saat ini berstatus DRAFT (hanya dapat dilihat oleh Anda).", "Your landing page is currently in DRAFT mode.")}
+                    </p>
+                  </div>
                   <Button
-                    key={device}
                     type="button"
-                    variant={active ? "default" : "ghost"}
-                    size="icon"
-                    className="h-7 w-7"
-                    onClick={() => setPreviewDevice(device)}
-                    aria-label={t(`Pratinjau ${label}`, `${label} preview`)}
-                    aria-pressed={active}
-                    title={t(`Pratinjau ${label}`, `${label} preview`)}
+                    onClick={() => {
+                      if (site.published) {
+                        setShowPublishConfirm(false);
+                      } else {
+                        if (!isReadyToPublish(getPersonalSiteReadiness(site))) {
+                          toast.error(t("Periksa kelengkapan konten sebelum mempublikasikan.", "Complete required content before publishing."));
+                          return;
+                        }
+                        setShowPublishConfirm(true);
+                      }
+                    }}
+                    variant={site.published ? "outline" : "default"}
+                    className={site.published ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50" : "bg-emerald-600 hover:bg-emerald-700 text-white"}
                   >
-                    <DeviceIcon className="h-3.5 w-3.5" />
+                    {site.published ? t("Unpublish / Sembunyikan", "Unpublish Page") : t("Publikasikan Sekarang", "Publish Now")}
                   </Button>
-                );
-              })}
-            </div>
-            <div className="w-px h-5 bg-border mx-1" />
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={undo} disabled={historyIndex <= 0} title={t("Urungkan (Ctrl+Z)", "Undo (Ctrl+Z)")}>
-              <Undo2 className="h-4 w-4" />
-            </Button>
-            <Button type="button" variant="ghost" size="icon" className="h-8 w-8" onClick={redo} disabled={historyIndex >= history.length - 1} title={t("Ulangi (Ctrl+Shift+Z)", "Redo (Ctrl+Shift+Z)")}>
-              <Redo2 className="h-4 w-4" />
-            </Button>
-            <div className="w-px h-5 bg-border mx-1" />
-            <Button type="button" variant="outline" size="sm" asChild>
-              <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-                <Eye className="h-4 w-4" /> <span className="hidden sm:inline">{t("Pratinjau", "Preview")}</span>
-              </a>
-            </Button>
-            <Button type="button" size="sm" variant={isDirty ? "default" : "outline"} className={!isDirty ? "bg-muted/40 text-muted-foreground shadow-none" : undefined} onClick={handleSave} disabled={saving || !isDirty}>
-              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-              {saving ? t("Menyimpan...", "Saving...") : t("Simpan", "Save")}
-            </Button>
-          </div>
-        </div>
-      </div>
+                </div>
 
-      <DragOverlay dropAnimation={null}>
-        {activeDrag ? (
-          <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 shadow-lg text-sm font-medium">
-            <Layers className="h-4 w-4 text-muted-foreground" />
-            {activeDrag.label}
+                {/* Direct Link Share Card */}
+                <div className="p-4 rounded-xl border border-border/80 bg-muted/20 space-y-3">
+                  <label className="text-xs font-bold text-foreground">{t("Link Publik Landing Page", "Public Website Link")}</label>
+                  <div className="flex items-center gap-2">
+                    <Input data-testid="personal-site-public-url" value={publicUrl} readOnly className="font-mono text-xs bg-background" />
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={async () => {
+                        await navigator.clipboard.writeText(publicUrl);
+                        toast.success(t("Link berhasil disalin ke clipboard!", "Link copied to clipboard!"));
+                      }}
+                      className="shrink-0 gap-1.5 text-xs font-semibold"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      <span>{t("Salin", "Copy")}</span>
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Action Buttons Grid: WhatsApp Web, QR Code, Open Site */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-auto py-3 flex-col gap-1.5 rounded-xl border-border/80 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-center"
+                    onClick={() => {
+                      const text = encodeURIComponent(
+                        `Halo, kunjungi website resmi kami di tautan berikut:\n${publicUrl}`
+                      );
+                      window.open(`https://wa.me/?text=${text}`, "_blank");
+                    }}
+                  >
+                    <Send className="h-4 w-4 text-emerald-600" />
+                    <span className="text-xs font-bold text-foreground">WhatsApp Share</span>
+                    <span className="text-[10px] text-muted-foreground">Kirim via WA Chat</span>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-auto py-3 flex-col gap-1.5 rounded-xl border-border/80 hover:border-primary/50 hover:bg-primary/5 transition-all text-center"
+                    onClick={() => setShowQrModal(true)}
+                  >
+                    <QrCode className="h-4 w-4 text-primary" />
+                    <span className="text-xs font-bold text-foreground">QR Code</span>
+                    <span className="text-[10px] text-muted-foreground">Scan via Smartphone</span>
+                  </Button>
+
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="h-auto py-3 flex-col gap-1.5 rounded-xl border-border/80 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-center"
+                    asChild
+                  >
+                    <a href={publicUrl} target="_blank" rel="noopener noreferrer">
+                      <ExternalLink className="h-4 w-4 text-blue-600" />
+                      <span className="text-xs font-bold text-foreground">Open Live Site</span>
+                      <span className="text-[10px] text-muted-foreground">Buka website publik</span>
+                    </a>
+                  </Button>
+                </div>
+              </div>
+            </div>
           </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+        )}
       </div>
 
     {/* Publish / Unpublish confirmation dialog */}
