@@ -6,7 +6,7 @@ import {
   availabilityRules,
   users,
 } from "@/db/schema";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, and } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { EmptyState } from "@/components/empty-state";
@@ -16,7 +16,9 @@ import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
 import { BookingSlugHeaderWidget } from "@/components/calendar/booking-slug-header-widget";
 import { AppointmentsListPanel } from "@/components/calendar/appointments-list-panel";
+import { PendingMeetingRequestsPanel } from "@/components/calendar/pending-meeting-requests-panel";
 import { DeleteAvailabilityRuleButton } from "@/components/calendar/calendar-item-actions";
+import { clients, portalRequests, projects } from "@/db/schema";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 
 export const dynamic = "force-dynamic";
@@ -93,6 +95,33 @@ export default async function CalendarPage() {
     });
   }
 
+  // Pending meeting requests from client portal
+  const pendingMeetingRequests = await db
+    .select({
+      id: portalRequests.id,
+      clientId: portalRequests.clientId,
+      clientName: clients.name,
+      clientEmail: clients.email,
+      projectName: projects.name,
+      title: portalRequests.title,
+      description: portalRequests.description,
+      preferredDate: portalRequests.dueDate,
+      meetingStartTime: portalRequests.meetingStartTime,
+      meetingDurationMinutes: portalRequests.meetingDurationMinutes,
+      createdAt: portalRequests.createdAt,
+    })
+    .from(portalRequests)
+    .innerJoin(clients, eq(clients.id, portalRequests.clientId))
+    .leftJoin(projects, eq(projects.id, portalRequests.projectId))
+    .where(
+      and(
+        eq(portalRequests.workspaceId, workspaceId),
+        eq(portalRequests.meetingStatus, "requested"),
+        eq(portalRequests.status, "pending"),
+      ),
+    )
+    .orderBy(desc(portalRequests.createdAt));
+
   return (
     <div className="space-y-4 sm:space-y-6">
       <PageHeader
@@ -112,6 +141,9 @@ export default async function CalendarPage() {
           />
         }
       />
+
+      {/* Pending Client Portal Meeting Requests */}
+      <PendingMeetingRequestsPanel requests={pendingMeetingRequests} locale={locale} />
 
       {/* 3 Unified KPI Metrik Cards */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

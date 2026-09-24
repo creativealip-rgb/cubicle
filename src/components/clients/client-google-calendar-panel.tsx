@@ -31,6 +31,7 @@ import {
 } from "@/lib/actions/client-google-calendar";
 import { useAppTransition } from "@/lib/transition-provider";
 import { useT } from "@/lib/i18n-client";
+import { PendingMeetingRequestsPanel } from "@/components/calendar/pending-meeting-requests-panel";
 
 export type ClientGcalEvent = {
   id: string;
@@ -62,6 +63,19 @@ type Props = {
     status: string;
     attendeeName: string | null;
     attendeeEmail: string | null;
+  }>;
+  pendingMeetingRequests?: Array<{
+    id: string;
+    clientId: string;
+    clientName: string;
+    clientEmail?: string | null;
+    projectName?: string | null;
+    title: string;
+    description?: string | null;
+    preferredDate?: string | null;
+    meetingStartTime?: Date | string | null;
+    meetingDurationMinutes?: number | null;
+    createdAt: Date | string;
   }>;
 };
 
@@ -149,11 +163,12 @@ export function ClientGoogleCalendarPanel({
   pendingInvite,
   email,
   status,
-  lastError: _lastError,
-  connectedAt: _connectedAt,
+  lastError,
+  connectedAt,
   events,
   eventsError,
   appointments,
+  pendingMeetingRequests,
 }: Props) {
   const { t } = useT();
   const { refresh } = useAppTransition();
@@ -285,6 +300,10 @@ export function ClientGoogleCalendarPanel({
 
   return (
     <div className="space-y-4">
+      {pendingMeetingRequests && pendingMeetingRequests.length > 0 && (
+        <PendingMeetingRequestsPanel requests={pendingMeetingRequests} />
+      )}
+
       <Card>
         <CardHeader className="pb-3">
           <div className="flex flex-wrap items-center justify-between gap-2">

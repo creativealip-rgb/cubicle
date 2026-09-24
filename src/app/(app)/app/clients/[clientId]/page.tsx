@@ -13,6 +13,7 @@ import {
   workspaceMembers,
   workspaceCurrencyRates,
   workspaces,
+  portalRequests,
 } from "@/db/schema";
 import { eq, desc, sql, inArray, and } from "drizzle-orm";
 import { requireUser, assertClientInWorkspace } from "@/lib/access";
@@ -236,6 +237,34 @@ export default async function ClientDetailPage({
     .from(appointments)
     .where(eq(appointments.clientId, clientId))
     .orderBy(desc(appointments.startTime));
+
+  // Pending meeting requests for this client
+  const clientPendingMeetingRequests = await db
+    .select({
+      id: portalRequests.id,
+      clientId: portalRequests.clientId,
+      clientName: clients.name,
+      clientEmail: clients.email,
+      projectName: projects.name,
+      title: portalRequests.title,
+      description: portalRequests.description,
+      preferredDate: portalRequests.dueDate,
+      meetingStartTime: portalRequests.meetingStartTime,
+      meetingDurationMinutes: portalRequests.meetingDurationMinutes,
+      createdAt: portalRequests.createdAt,
+    })
+    .from(portalRequests)
+    .innerJoin(clients, eq(clients.id, portalRequests.clientId))
+    .leftJoin(projects, eq(projects.id, portalRequests.projectId))
+    .where(
+      and(
+        eq(portalRequests.clientId, clientId),
+        eq(portalRequests.workspaceId, workspaceId),
+        eq(portalRequests.meetingStatus, "requested"),
+        eq(portalRequests.status, "pending"),
+      ),
+    )
+    .orderBy(desc(portalRequests.createdAt));
 
   // Notes — use internal notes field + comments on visible projects
   // (no direct client comments in schema)
@@ -569,6 +598,7 @@ export default async function ClientDetailPage({
               attendeeName: apt.attendeeName,
               attendeeEmail: apt.attendeeEmail,
             }))}
+            pendingMeetingRequests={clientPendingMeetingRequests}
           />
         }
       />
