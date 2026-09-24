@@ -28,6 +28,7 @@ export type NotificationType =
   | "invoice_paid"
   | "invoice_sent"
   | "proposal_viewed"
+  | "proposal_accepted"
   | "contract_signed"
   | "contract_viewed"
   | "questionnaire_answered"

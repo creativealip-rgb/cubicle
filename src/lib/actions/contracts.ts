@@ -12,7 +12,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable, assertClientInWorkspace, assertProjectInWorkspace, ForbiddenError } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
-import { sendNotification } from "@/lib/notifications";
+import { sendNotification, notifyContractSigned } from "@/lib/notifications";
 import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
@@ -728,6 +728,28 @@ export async function signContract(input: {
   }
 
   try {
+    const [workspace] = await db
+      .select({ name: workspaces.name, ownerId: workspaces.ownerId })
+      .from(workspaces)
+      .where(eq(workspaces.id, updated.workspaceId))
+      .limit(1);
+
+    const hostEmail = await resolveWorkspaceReplyTo(updated.workspaceId);
+
+    if (hostEmail) {
+      await notifyContractSigned({
+        hostEmail,
+        clientName: updated.clientName || input.signedName,
+        clientEmail: updated.clientEmail || input.signedEmail,
+        contractTitle: updated.title,
+        contractNumber: updated.contractNumber,
+        contractId: updated.id,
+        signedName: input.signedName,
+        signedEmail: input.signedEmail,
+        workspaceName: workspace?.name,
+      });
+    }
+
     await notifyWorkspaceMembers(updated.workspaceId, {
       type: "contract_signed",
       title: `${input.signedName.trim()} signed contract`,

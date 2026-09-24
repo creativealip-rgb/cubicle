@@ -2199,6 +2199,7 @@ export const notifications = pgTable("notifications", {
       "invoice_paid",       // invoice marked paid
       "invoice_sent",       // invoice sent to client
       "proposal_viewed",    // client viewed proposal
+      "proposal_accepted",  // client accepted proposal
       "contract_signed",    // client signed contract
       "contract_viewed",    // client viewed contract
       "questionnaire_answered", // client answered questionnaire

@@ -239,6 +239,122 @@ export async function notifyAppointmentCancelled(opts: {
   return clientRes;
 }
 
+export async function notifyProposalAccepted(opts: {
+  hostEmail: string;
+  clientName: string;
+  clientEmail?: string | null;
+  proposalTitle: string;
+  proposalId: string;
+  totalAmount: string;
+  currency?: string;
+  downPaymentAmount?: number;
+  workspaceName?: string;
+}) {
+  const wsName = opts.workspaceName || "Cubiqlo";
+  const currency = opts.currency || "IDR";
+  const formattedTotal = `${currency} ${Number(opts.totalAmount || 0).toLocaleString("en-US")}`;
+  const formattedDp = opts.downPaymentAmount
+    ? `${currency} ${Number(opts.downPaymentAmount).toLocaleString("en-US")}`
+    : null;
+
+  // English default + Indonesian bilingual structure
+  const text =
+    `Hello,\n\n` +
+    `Great news! Your proposal "${opts.proposalTitle}" has been accepted by ${opts.clientName} (${opts.clientEmail || "-"}).\n\n` +
+    `Proposal Summary:\n` +
+    `- Title: ${opts.proposalTitle}\n` +
+    `- Client: ${opts.clientName}\n` +
+    `- Total Value: ${formattedTotal}\n` +
+    (formattedDp ? `- Down Payment: ${formattedDp}\n` : "") +
+    `- Accepted Date: ${new Date().toLocaleDateString("en-US", { dateStyle: "long" })}\n\n` +
+    `View proposal details in your dashboard:\n` +
+    `https://app.cubiqlo.com/app/proposals/${opts.proposalId}\n\n` +
+    `---\n` +
+    `Kabar baik! Proposal "${opts.proposalTitle}" Anda telah disetujui oleh klien ${opts.clientName}. Project baru dan draft invoice DP otomatis dibuatkan di workspace Anda.\n\n` +
+    `Best regards,\n${wsName} Notification`;
+
+  const html =
+    `<div style="font-family:sans-serif;line-height:1.5;color:#1e293b;">` +
+    `<div style="display:inline-block;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em;">✓ Proposal Accepted / Disetujui</div>` +
+    `<h2 style="margin:0 0 14px;color:#0f172a;font-size:18px;">Proposal "${escapeHtml(opts.proposalTitle)}" has been accepted!</h2>` +
+    `<p style="margin:0 0 16px;color:#334155;font-size:14px;"><strong>${escapeHtml(opts.clientName)}</strong> has reviewed and accepted your proposal. A new project workspace and down payment invoice have been initialized automatically.</p>` +
+    `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:0 0 20px;">` +
+    `<p style="margin:0 0 8px;font-size:13px;"><strong>Proposal:</strong> ${escapeHtml(opts.proposalTitle)}</p>` +
+    `<p style="margin:0 0 8px;font-size:13px;"><strong>Client:</strong> ${escapeHtml(opts.clientName)} ${opts.clientEmail ? `(${escapeHtml(opts.clientEmail)})` : ""}</p>` +
+    `<p style="margin:0 0 8px;font-size:13px;"><strong>Total Value:</strong> <span style="color:#059669;font-weight:700;">${escapeHtml(formattedTotal)}</span></p>` +
+    (formattedDp ? `<p style="margin:0 0 8px;font-size:13px;"><strong>Down Payment:</strong> <span style="color:#2563eb;font-weight:600;">${escapeHtml(formattedDp)}</span></p>` : "") +
+    `<p style="margin:0;font-size:13px;"><strong>Accepted On:</strong> ${escapeHtml(new Date().toLocaleDateString("en-US", { dateStyle: "long" }))}</p>` +
+    `</div>` +
+    `<div style="margin:20px 0 0;">` +
+    `<a href="https://app.cubiqlo.com/app/proposals/${encodeURIComponent(opts.proposalId)}" style="display:inline-block;background:#059669;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Open Proposal in Dashboard</a>` +
+    `</div>` +
+    `</div>`;
+
+  return sendNotification({
+    to: opts.hostEmail,
+    subject: `[Accepted] Proposal "${opts.proposalTitle}" accepted by ${opts.clientName}`,
+    text,
+    html: wrapTemplate({ title: `Proposal Accepted: ${opts.proposalTitle}`, bodyHtml: html }),
+    type: "proposal_accepted",
+    replyTo: opts.clientEmail || undefined,
+  });
+}
+
+export async function notifyContractSigned(opts: {
+  hostEmail: string;
+  clientEmail?: string | null;
+  clientName: string;
+  contractTitle: string;
+  contractNumber?: string | null;
+  contractId: string;
+  signedName: string;
+  signedEmail: string;
+  workspaceName?: string;
+}) {
+  const wsName = opts.workspaceName || "Cubiqlo";
+  const numDisplay = opts.contractNumber ? `(${opts.contractNumber})` : "";
+
+  // English default + Indonesian bilingual structure
+  const text =
+    `Hello,\n\n` +
+    `Great news! Contract "${opts.contractTitle}" ${numDisplay} has been digitally signed by ${opts.signedName} (${opts.signedEmail}).\n\n` +
+    `Contract Summary:\n` +
+    `- Title: ${opts.contractTitle}\n` +
+    (opts.contractNumber ? `- Number: ${opts.contractNumber}\n` : "") +
+    `- Signer Name: ${opts.signedName}\n` +
+    `- Signer Email: ${opts.signedEmail}\n` +
+    `- Signed Date: ${new Date().toLocaleDateString("en-US", { dateStyle: "long" })}\n\n` +
+    `View contract audit trail and signed document:\n` +
+    `https://app.cubiqlo.com/app/contracts/${opts.contractId}\n\n` +
+    `---\n` +
+    `Kabar baik! Kontrak "${opts.contractTitle}" telah ditandatangani secara digital oleh ${opts.signedName}. Dokumen ini sekarang resmi dan terkunci.\n\n` +
+    `Best regards,\n${wsName} Notification`;
+
+  const html =
+    `<div style="font-family:sans-serif;line-height:1.5;color:#1e293b;">` +
+    `<div style="display:inline-block;background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;margin-bottom:12px;text-transform:uppercase;letter-spacing:0.05em;">✓ Contract Signed / Ditandatangani</div>` +
+    `<h2 style="margin:0 0 14px;color:#0f172a;font-size:18px;">Contract "${escapeHtml(opts.contractTitle)}" has been digitally signed!</h2>` +
+    `<p style="margin:0 0 16px;color:#334155;font-size:14px;"><strong>${escapeHtml(opts.signedName)}</strong> (${escapeHtml(opts.signedEmail)}) has digitally signed contract <strong>${escapeHtml(opts.contractTitle)}</strong> ${opts.contractNumber ? `(${escapeHtml(opts.contractNumber)})` : ""}.</p>` +
+    `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:0 0 20px;">` +
+    `<p style="margin:0 0 8px;font-size:13px;"><strong>Contract:</strong> ${escapeHtml(opts.contractTitle)} ${opts.contractNumber ? `(${escapeHtml(opts.contractNumber)})` : ""}</p>` +
+    `<p style="margin:0 0 8px;font-size:13px;"><strong>Signer:</strong> ${escapeHtml(opts.signedName)} (${escapeHtml(opts.signedEmail)})</p>` +
+    `<p style="margin:0;font-size:13px;"><strong>Signed On:</strong> ${escapeHtml(new Date().toLocaleDateString("en-US", { dateStyle: "long" }))}</p>` +
+    `</div>` +
+    `<div style="margin:20px 0 0;">` +
+    `<a href="https://app.cubiqlo.com/app/contracts/${encodeURIComponent(opts.contractId)}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">View Signed Contract</a>` +
+    `</div>` +
+    `</div>`;
+
+  return sendNotification({
+    to: opts.hostEmail,
+    subject: `[Signed] Contract "${opts.contractTitle}" signed by ${opts.signedName}`,
+    text,
+    html: wrapTemplate({ title: `Contract Signed: ${opts.contractTitle}`, bodyHtml: html }),
+    type: "contract_signed",
+    replyTo: opts.signedEmail || undefined,
+  });
+}
+
 function applyInvoiceEmailTemplate(
   template: string,
   vars: Record<string, string>,

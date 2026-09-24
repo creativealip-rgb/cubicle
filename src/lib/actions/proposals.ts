@@ -11,7 +11,8 @@ import crypto from "crypto";
 import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceWritable, assertClientInWorkspace } from "@/lib/access";
 import { writeActivityLog } from "@/lib/actions/activity";
-import { sendNotification } from "@/lib/notifications";
+import { sendNotification, notifyProposalAccepted } from "@/lib/notifications";
+import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import { assertPublicTokenLifecycle, PublicTokenError } from "@/lib/public-token-policy";
 import { enforceServerActionRateLimit } from "@/lib/distributed-rate-limit";
@@ -427,16 +428,14 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
   const tokenHash = hashToken(token);
   await enforceServerActionRateLimit("proposal:accept", tokenHash, { limit: 10, windowSec: 300 });
 
-  return db.transaction(async (tx) => {
-    const locked = await tx.execute(sql`
-      SELECT id FROM proposals
-      WHERE id = ${proposalId}
-      FOR UPDATE
-    `);
-    if (locked.rowCount === 0) throw new Error("Proposal not found");
+  const [initialProposal] = await db.select().from(proposals)
+    .where(eq(proposals.id, proposalId))
+    .limit(1);
 
+  const result = await db.transaction(async (tx) => {
     const [p] = await tx.select().from(proposals)
       .where(eq(proposals.id, proposalId))
+      .for("update")
       .limit(1);
     if (!p) throw new Error("Proposal not found");
     try {
@@ -546,7 +545,7 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
       })
       .where(and(eq(proposals.id, proposalId), eq(proposals.status, p.status)));
 
-    return {
+    const res = {
       id: proposalId,
       projectId,
       invoiceId,
@@ -554,7 +553,50 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
       downPaymentAmount: dpTotal,
       currency: p.currency,
     };
+
+    return res;
   });
+
+  // Post-transaction notifications (Email to host & in-app alerts)
+  try {
+    if (initialProposal) {
+      const [workspace] = await db
+        .select({ name: workspaces.name, ownerId: workspaces.ownerId })
+        .from(workspaces)
+        .where(eq(workspaces.id, initialProposal.workspaceId))
+        .limit(1);
+
+      const hostEmail = await resolveWorkspaceReplyTo(initialProposal.workspaceId);
+
+      if (hostEmail && "downPaymentAmount" in result) {
+        await notifyProposalAccepted({
+          hostEmail,
+          clientName: initialProposal.clientName || "Client",
+          clientEmail: initialProposal.clientEmail,
+          proposalTitle: initialProposal.title,
+          proposalId,
+          totalAmount: initialProposal.total,
+          currency: initialProposal.currency,
+          downPaymentAmount: result.downPaymentAmount,
+          workspaceName: workspace?.name,
+        });
+      }
+
+      await notifyWorkspaceMembers(initialProposal.workspaceId, {
+        type: "proposal_accepted",
+        title: `${initialProposal.clientName || "Client"} accepted proposal`,
+        body: initialProposal.title,
+        link: `/app/proposals/${proposalId}`,
+        entityType: "proposal",
+        entityId: proposalId,
+        actorId: null,
+      });
+    }
+  } catch {
+    // best-effort notification delivery
+  }
+
+  return result;
 }
 
 export async function declineProposalPublic(proposalId: string, token: string, reason?: string) {
