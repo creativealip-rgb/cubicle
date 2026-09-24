@@ -8,6 +8,7 @@ import {
   appointments,
   availabilityRules,
   workspaces,
+  users,
 } from "@/db/schema";
 import { eq, and, gte, lte, lt, gt, desc } from "drizzle-orm";
 import { z } from "zod";
@@ -222,12 +223,19 @@ export async function cancelAppointment(appointmentId: string) {
 
   if (apt.attendeeEmail) {
     const replyTo = await resolveWorkspaceReplyTo(workspaceId);
+    const [hostUser] = await db
+      .select({ email: users.email })
+      .from(users)
+      .where(eq(users.id, apt.userId))
+      .limit(1);
+
     await notifyAppointmentCancelled({
       attendeeEmail: apt.attendeeEmail,
       attendeeName: apt.attendeeName,
       appointmentTitle: apt.title,
       dateTime: apt.startTime.toISOString(),
       replyTo,
+      hostEmail: hostUser?.email ?? replyTo,
     });
   }
   return updated;
@@ -346,6 +354,14 @@ export async function createPublicAppointment(
   const replyTo = await resolveWorkspaceReplyTo(parsed.workspaceId);
   const formatCalendarDate = (date: Date) => date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
   const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(parsed.title)}&dates=${formatCalendarDate(startTime)}/${formatCalendarDate(endTime)}&details=${encodeURIComponent(parsed.notes || "Booked via Cubiqlo")}&location=${encodeURIComponent(ws.name)}`;
+
+  // Find host email for workspace owner notification
+  const [hostUser] = await db
+    .select({ email: users.email })
+    .from(users)
+    .where(eq(users.id, owner.userId))
+    .limit(1);
+
   // Notify attendee + workspace owner
   await notifyAppointmentBooked({
     attendeeEmail: parsed.attendeeEmail,
@@ -355,6 +371,8 @@ export async function createPublicAppointment(
     workspaceName: ws.name,
     replyTo,
     calendarUrl,
+    notes: parsed.notes || null,
+    hostEmail: hostUser?.email ?? replyTo,
   });
 
   try {

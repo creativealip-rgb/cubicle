@@ -105,6 +105,8 @@ export async function notifyAppointmentBooked(opts: {
   workspaceName?: string;
   replyTo?: string;
   calendarUrl?: string;
+  notes?: string | null;
+  hostEmail?: string;
 }) {
   const readableDateTime = new Intl.DateTimeFormat("en-GB", {
     timeZone: "Asia/Jakarta",
@@ -116,23 +118,73 @@ export async function notifyAppointmentBooked(opts: {
     hour12: false,
     timeZoneName: "short",
   }).format(new Date(opts.dateTime));
-  const text =
+
+  // 1. Email konfirmasi ke Klien (Attendee)
+  const clientText =
     `Hi ${opts.attendeeName},\n\n` +
     `Your appointment "${opts.appointmentTitle}" has been scheduled for ${readableDateTime}` +
     (opts.workspaceName ? ` with ${opts.workspaceName}` : "") +
     `.\n\nWe look forward to meeting with you!` +
     (opts.calendarUrl ? `\n\nAdd to Google Calendar: ${opts.calendarUrl}` : "");
+
   const calendarHtml = opts.calendarUrl
     ? `<p style="margin:24px 0 0;"><a href="${escapeHtml(opts.calendarUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 16px;border-radius:6px;text-decoration:none;font-weight:600;">Add to Google Calendar</a></p>`
     : "";
-  return sendNotification({
+
+  const clientPromise = sendNotification({
     to: opts.attendeeEmail,
     subject: `Appointment Confirmed: ${opts.appointmentTitle}`,
-    text,
-    html: wrapTemplate({ title: `Appointment Confirmed: ${opts.appointmentTitle}`, bodyHtml: `<p style="margin:0;">${escapeHtml(text).replace(/\n/g, "<br>")}</p>${calendarHtml}` }),
+    text: clientText,
+    html: wrapTemplate({ title: `Appointment Confirmed: ${opts.appointmentTitle}`, bodyHtml: `<p style="margin:0;">${escapeHtml(clientText).replace(/\n/g, "<br>")}</p>${calendarHtml}` }),
     type: "appointment_booked",
     replyTo: opts.replyTo,
   });
+
+  // 2. Email notifikasi ke Host / Owner Cubiqlo
+  let hostPromise: Promise<unknown> = Promise.resolve();
+  if (opts.hostEmail && opts.hostEmail.includes("@")) {
+    const wsName = opts.workspaceName || "Cubiqlo";
+    const hostText =
+      `Halo,\n\n` +
+      `Ada jadwal appointment baru yang telah dibooking oleh klien!\n\n` +
+      `Detail Appointment:\n` +
+      `- Judul: ${opts.appointmentTitle}\n` +
+      `- Nama Klien: ${opts.attendeeName}\n` +
+      `- Email Klien: ${opts.attendeeEmail}\n` +
+      `- Waktu Pertemuan: ${readableDateTime}\n` +
+      (opts.notes ? `- Catatan / Keperluan: ${opts.notes}\n` : "") +
+      `\nBuka kalender untuk melihat jadwal:\nhttps://app.cubiqlo.com/app/calendar\n\n` +
+      (opts.calendarUrl ? `Tambahkan ke Google Calendar: ${opts.calendarUrl}\n\n` : "") +
+      `Salam,\n${wsName} Notification`;
+
+    const hostHtml =
+      `<div style="font-family:sans-serif;line-height:1.5;color:#1e293b;">` +
+      `<h2 style="margin:0 0 16px;color:#0f172a;font-size:18px;">📅 Appointment Baru Diterima</h2>` +
+      `<p style="margin:0 0 16px;">Klien <strong>${escapeHtml(opts.attendeeName)}</strong> telah memesan jadwal meeting dengan Anda.</p>` +
+      `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:0 0 20px;">` +
+      `<p style="margin:0 0 8px;"><strong>Judul:</strong> ${escapeHtml(opts.appointmentTitle)}</p>` +
+      `<p style="margin:0 0 8px;"><strong>Nama Klien:</strong> ${escapeHtml(opts.attendeeName)} (${escapeHtml(opts.attendeeEmail)})</p>` +
+      `<p style="margin:0 0 8px;"><strong>Waktu:</strong> <span style="color:#2563eb;font-weight:600;">${escapeHtml(readableDateTime)}</span></p>` +
+      (opts.notes ? `<p style="margin:0;"><strong>Catatan:</strong> ${escapeHtml(opts.notes)}</p>` : "") +
+      `</div>` +
+      `<div style="margin:24px 0 0;display:flex;gap:12px;">` +
+      `<a href="https://app.cubiqlo.com/app/calendar" style="display:inline-block;background:#0f172a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Buka Kalender Cubiqlo</a>` +
+      (opts.calendarUrl ? ` &nbsp; <a href="${escapeHtml(opts.calendarUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Sync ke Google Calendar</a>` : "") +
+      `</div>` +
+      `</div>`;
+
+    hostPromise = sendNotification({
+      to: opts.hostEmail,
+      subject: `[Jadwal Baru] ${opts.attendeeName} memesan "${opts.appointmentTitle}" (${readableDateTime})`,
+      text: hostText,
+      html: wrapTemplate({ title: `Jadwal Baru: ${opts.appointmentTitle}`, bodyHtml: hostHtml }),
+      type: "appointment_booked",
+      replyTo: opts.attendeeEmail,
+    });
+  }
+
+  const [clientRes] = await Promise.all([clientPromise, hostPromise]);
+  return clientRes;
 }
 
 export async function notifyAppointmentCancelled(opts: {
@@ -141,17 +193,50 @@ export async function notifyAppointmentCancelled(opts: {
   appointmentTitle: string;
   dateTime: string;
   replyTo?: string;
+  hostEmail?: string;
+  workspaceName?: string;
 }) {
-  return sendNotification({
+  const readableDateTime = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Jakarta",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+    timeZoneName: "short",
+  }).format(new Date(opts.dateTime));
+
+  const clientText =
+    `Hi ${opts.attendeeName ?? "there"},\n\n` +
+    `Your appointment "${opts.appointmentTitle}" scheduled for ${readableDateTime} has been cancelled.\n\n` +
+    `If this was a mistake, please book a new slot.`;
+
+  const clientPromise = sendNotification({
     to: opts.attendeeEmail,
     subject: `Appointment Cancelled: ${opts.appointmentTitle}`,
-    text:
-      `Hi ${opts.attendeeName ?? "there"},\n\n` +
-      `Your appointment "${opts.appointmentTitle}" scheduled for ${opts.dateTime} has been cancelled.\n\n` +
-      `If this was a mistake, please book a new slot.`,
+    text: clientText,
     type: "appointment_cancelled",
     replyTo: opts.replyTo,
   });
+
+  let hostPromise: Promise<unknown> = Promise.resolve();
+  if (opts.hostEmail && opts.hostEmail.includes("@")) {
+    const hostText =
+      `Halo,\n\n` +
+      `Jadwal appointment "${opts.appointmentTitle}" bersama ${opts.attendeeName ?? opts.attendeeEmail} untuk ${readableDateTime} telah dibatalkan.\n\n` +
+      `Buka dashboard kalender:\nhttps://app.cubiqlo.com/app/calendar`;
+
+    hostPromise = sendNotification({
+      to: opts.hostEmail,
+      subject: `[Dibatalkan] Jadwal appointment "${opts.appointmentTitle}" dibatalkan`,
+      text: hostText,
+      type: "appointment_cancelled",
+    });
+  }
+
+  const [clientRes] = await Promise.all([clientPromise, hostPromise]);
+  return clientRes;
 }
 
 function applyInvoiceEmailTemplate(
