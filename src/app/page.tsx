@@ -144,10 +144,31 @@ export default async function HomePage() {
   const lang = await getCurrentLang(preferences.lang);
   const t = createT(lang);
   const tx = (id: string, en: string) => t(id, en);
-  const workflowCopy = [
-    ["Tangkap", "Capture", "Klien dan scope masuk rapi", "Clients and scope stay organized", "Kontak, brief, proposal, dan jadwal mulai dari konteks yang sama.", "Contacts, briefs, proposals, and schedules start from one shared context."],
-    ["Kerjakan", "Deliver", "Proyek bergerak tanpa kehilangan konteks", "Projects move without losing context", "Task, file, komentar, dan waktu kerja tetap terhubung ke klien.", "Tasks, files, comments, and tracked time stay connected to clients."],
-    ["Kirim & tagih", "Send & bill", "Hasil sampai, invoice ikut jalan", "Deliver results, get paid", "Bagikan portal, kirim deliverable, lalu ubah pekerjaan menjadi tagihan.", "Share the portal, send deliverables, and turn work into invoices."],
+const workflowCopy = [
+    [
+      "Tangkap & Sepakati",
+      "Scope & Intake",
+      "Klien, brief, dan proposal masuk rapi",
+      "Clients, briefs, and proposals stay aligned",
+      "Nggak perlu cari-cari brief tercecer di chat. Kontak, estimasi, dan jadwal mulai dari satu tempat.",
+      "No more lost briefs in messy chat threads. Contacts, scope estimates, and schedules start from one clean place.",
+    ],
+    [
+      "Kerjakan & Lacak",
+      "Deliver & Track",
+      "Proyek bergerak, waktu billable otomatis tercatat",
+      "Projects move forward, billable time tracked automatically",
+      "Task, file revisi, dan jam kerja langsung terhubung ke proyek. Siap dijadikan deliverable tanpa bolak-balik aplikasi.",
+      "Tasks, deliverable files, and logged hours connect directly to client projects without app juggling.",
+    ],
+    [
+      "Bagikan & Tagih",
+      "Portal & Invoicing",
+      "Klien terima hasil kerja, invoice langsung cair",
+      "Deliver results via portal, turn work into paid invoices",
+      "Klien cek progress dan unduh file lewat portal khusus. 1-klik ubah pekerjaan selesai jadi invoice siap bayar.",
+      "Give clients a dedicated portal to review files and pay invoices. Turn finished milestones into invoices with 1 click.",
+    ],
   ];
 
   return (
@@ -164,19 +185,30 @@ export default async function HomePage() {
             <a href="#compare" className="hover:text-[#6647F0]">{t("Perbandingan", "Compare")}</a>
             <a href="#pricing" className="hover:text-[#6647F0]">{t("Harga", "Pricing")}</a>
           </nav>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <LandingLanguageSwitch initialLang={lang} />
+            
+            {/* Direct visible Log in button on mobile & desktop */}
+            <Button asChild variant="ghost" size="sm" className="h-9 px-3 text-xs sm:text-sm font-semibold rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100">
+              <Link href="/login">{tx("Masuk", "Log in")}</Link>
+            </Button>
+
             <details className="relative md:hidden">
-              <summary aria-label="Buka menu" className="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-xl bg-white ring-1 ring-slate-200 [&::-webkit-details-marker]:hidden">
-                <Menu className="h-5 w-5" />
+              <summary aria-label="Buka menu" className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
+                <Menu className="h-4 w-4" />
               </summary>
-              <nav className="absolute right-0 top-12 w-52 rounded-2xl bg-white p-2 text-sm shadow-2xl ring-1 ring-slate-950/10">
-                {[[tx("Alur kerja", "Workflow"), "#workflow"], [tx("Portal", "Portal"), "#portal"], [tx("Harga", "Pricing"), "#pricing"]].map(([label, href]) => <a key={href} href={href} className="block rounded-xl px-3 py-2.5 hover:bg-violet-50">{label}</a>)}
-                <Link href="/login" className="block rounded-xl px-3 py-2.5 hover:bg-violet-50">{tx("Masuk", "Log in")}</Link>
+              <nav className="absolute right-0 top-11 w-52 rounded-2xl bg-white p-2 text-sm shadow-2xl ring-1 ring-slate-950/10 z-50">
+                {[[tx("Alur kerja", "Workflow"), "#workflow"], [tx("Portal", "Portal"), "#portal"], [tx("Perbandingan", "Compare"), "#compare"], [tx("Harga", "Pricing"), "#pricing"]].map(([label, href]) => (
+                  <a key={href} href={href} className="block rounded-xl px-3 py-2.5 font-medium hover:bg-violet-50">{label}</a>
+                ))}
+                <div className="my-1 border-t border-slate-100" />
+                <Link href="/signup" className="block rounded-xl px-3 py-2.5 font-semibold text-[#6647F0] hover:bg-violet-50">{tx("Buat akun gratis", "Create free account")}</Link>
               </nav>
             </details>
-            <Button asChild variant="ghost" className="hidden rounded-xl sm:inline-flex"><Link href="/login">{tx("Masuk", "Log in")}</Link></Button>
-            <Button asChild className="hidden rounded-xl bg-[#292D34] text-white hover:bg-[#17191E] min-[420px]:inline-flex"><Link href="/signup">{tx("Mulai gratis", "Start free")} <ArrowRight className="h-4 w-4" /></Link></Button>
+
+            <Button asChild className="hidden rounded-xl bg-[#292D34] text-white hover:bg-[#17191E] md:inline-flex">
+              <Link href="/signup">{tx("Mulai gratis", "Start free")} <ArrowRight className="h-4 w-4 ml-1" /></Link>
+            </Button>
           </div>
         </div>
       </header>
@@ -187,16 +219,22 @@ export default async function HomePage() {
           <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.82fr_1.18fr] lg:gap-10">
             <div className="min-w-0">
               <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#6647F0] shadow-sm ring-1 ring-[#6647F0]/15">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" /> {tx("Dibangun untuk bisnis berbasis klien", "Built for client-based businesses")}
+                <span className="h-2 w-2 rounded-full bg-emerald-500" /> {tx("Hub kerja klien all-in-one untuk freelancer & agensi", "All-in-one client hub for freelancers & agencies")}
               </div>
               <h1 className="mt-6 max-w-full text-[2.35rem] font-semibold leading-[1.04] tracking-[-0.04em] text-[#292D34] sm:max-w-[13ch] sm:text-6xl lg:text-[4.65rem]" style={{ fontWeight: 650 }}>
                 {tx("Lebih sedikit aplikasi. ", "Fewer apps. ")}<span className="text-[#6647F0] underline decoration-[#FF7657]/45 decoration-4 underline-offset-4">{tx("Lebih banyak pekerjaan selesai.", "More work delivered.")}</span>
               </h1>
+              <p className="mt-5 text-base sm:text-lg leading-relaxed text-slate-600 max-w-xl">
+                {tx(
+                  "Dari kirim proposal & brief, catat jam kerja, bagikan portal klien, hingga tagih pembayaran invoice — semuanya terhubung rapi tanpa tercecer di banyak aplikasi.",
+                  "From sending proposals & intake briefs, tracking billable hours, to sharing client portals and collecting invoice payments — all connected in one calm workspace."
+                )}
+              </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg" className="h-12 w-full rounded-xl bg-[#292D34] px-6 text-white shadow-[0_12px_30px_rgba(41,45,52,.18)] hover:-translate-y-0.5 hover:bg-[#17191E] sm:w-auto">
-                  <Link href="/signup">{tx("Buat workspace gratis", "Create free workspace")} <ArrowRight className="h-4 w-4" /></Link>
+                  <Link href="/signup">{tx("Buat workspace gratis", "Create free workspace")} <ArrowRight className="h-4 w-4 ml-1" /></Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="h-12 w-full rounded-xl border-slate-300 bg-white/80 px-6 sm:w-auto"><Link href="#workflow">{tx("Lihat cara kerja", "See how it works")}</Link></Button>
+                <Button asChild size="lg" variant="outline" className="h-12 w-full rounded-xl border-slate-300 bg-white/80 px-6 sm:w-auto"><Link href="#workflow">{tx("Lihat alur kerja", "See workflow")}</Link></Button>
               </div>
               <p className="mt-4 text-sm text-slate-500">{tx("Gratis selamanya · tanpa kartu kredit · langsung bisa dipakai", "Free forever · no credit card · ready to use")}</p>
               <div className="mt-8 grid grid-cols-3 gap-3 border-t border-slate-200/80 pt-6 text-xs text-slate-600 sm:flex sm:items-center sm:gap-5 sm:text-sm">
