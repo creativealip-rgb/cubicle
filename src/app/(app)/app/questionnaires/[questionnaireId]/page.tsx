@@ -87,9 +87,6 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
             <h1 className="text-lg sm:text-xl font-extrabold tracking-tight text-foreground truncate">
               {q.name}
             </h1>
-            <Badge variant="outline" className="text-[10px] font-semibold py-0 px-2 h-5 border-primary/30 bg-primary/5 text-primary">
-              Jotform Tables
-            </Badge>
           </div>
 
           <div className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground pl-6">
