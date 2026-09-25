@@ -29,7 +29,7 @@ export function GoogleAuthButton({ callbackURL }: { callbackURL: string }) {
     <div className="space-y-3">
       <div className="flex items-center gap-3" aria-hidden="true">
         <div className="h-px flex-1 bg-border" />
-        <span className="text-xs text-muted-foreground">atau</span>
+        <span className="text-xs text-muted-foreground">{t("atau", "or")}</span>
         <div className="h-px flex-1 bg-border" />
       </div>
       <Button type="button" variant="outline" className="w-full bg-white" onClick={continueWithGoogle} disabled={loading}>
