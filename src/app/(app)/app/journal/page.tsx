@@ -8,7 +8,7 @@ import {
   updatePersonalNote,
   updatePersonalNoteStatus,
 } from "@/lib/actions/personal-notes";
-import { requireWorkspaceOwnerOrRedirect } from "@/lib/require-workspace-owner";
+import { requireAppSession } from "@/lib/app-auth";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { PageHeader } from "@/components/ui/page-header";
@@ -39,7 +39,7 @@ export default async function JournalPage({
 }: {
   searchParams: Promise<{ tab?: string; page?: string }>;
 }) {
-  await requireWorkspaceOwnerOrRedirect();
+  await requireAppSession("/app/journal");
   const lang = await getCurrentLang();
   const t = createT(lang);
   const params = await searchParams;

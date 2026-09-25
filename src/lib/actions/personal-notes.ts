@@ -7,7 +7,7 @@ import { z } from "zod";
 import { db } from "@/db";
 import { personalNotes, projects, tasks } from "@/db/schema";
 import { auth } from "@/lib/auth";
-import { assertWorkspaceOwner, requireUser } from "@/lib/access";
+import { assertWorkspaceMember, requireUser } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { writeActivityLog } from "@/lib/actions/activity";
 
@@ -105,7 +105,7 @@ async function getContext() {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
-  await assertWorkspaceOwner(db, user.id, workspaceId);
+  await assertWorkspaceMember(db, user.id, workspaceId);
   return { user, workspaceId };
 }
 

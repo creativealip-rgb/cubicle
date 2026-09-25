@@ -5,7 +5,7 @@ import { PersonalReportSection } from "@/components/reports/personal-report-sect
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { getCurrentLang, createT } from "@/lib/i18n";
-import { requireWorkspaceOwnerOrRedirect } from "@/lib/require-workspace-owner";
+import { requireAppSession } from "@/lib/app-auth";
 
 function currentMonthKey(d = new Date()) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -14,7 +14,7 @@ function currentMonthKey(d = new Date()) {
 export default async function PlanningPage({ searchParams }: {
   searchParams: Promise<{ tab?: string; month?: string; page?: string }>;
 }) {
-  await requireWorkspaceOwnerOrRedirect();
+  await requireAppSession("/app/planning");
   const params = await searchParams;
   const lang = await getCurrentLang();
   const t = createT(lang);
