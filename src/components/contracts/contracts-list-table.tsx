@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,12 +12,21 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { SendContractButton } from "@/components/contracts/send-contract-button";
-import { FileSignature } from "lucide-react";
+import { updateContractStatus } from "@/lib/actions/contracts";
+import { toast } from "sonner";
+import { FileSignature, Loader2 } from "lucide-react";
 
 export type ContractListItem = {
   id: string;
@@ -107,6 +116,8 @@ export function ContractsListTable({
   canWrite: boolean;
 }) {
   const { t, lang } = useT();
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const getters = useMemo(
     () => ({
@@ -124,6 +135,23 @@ export function ContractsListTable({
     getters,
     orders,
   );
+
+  const handleStatusChange = (
+    contractId: string,
+    newStatus: "draft" | "sent" | "viewed" | "signed" | "declined" | "expired" | "revoked",
+  ) => {
+    setUpdatingId(contractId);
+    startTransition(async () => {
+      try {
+        await updateContractStatus(contractId, newStatus);
+        toast.success(t("Status kontrak berhasil diperbarui", "Contract status updated"));
+      } catch (err: any) {
+        toast.error(err?.message || t("Gagal memperbarui status", "Failed to update status"));
+      } finally {
+        setUpdatingId(null);
+      }
+    });
+  };
 
   return (
     <>
@@ -201,7 +229,38 @@ export function ContractsListTable({
                     {c.clientId ? <Link href={`/app/clients/${c.clientId}`} className="text-muted-foreground hover:text-primary hover:underline">{c.clientName}</Link> : <span className="text-muted-foreground">{c.clientName}</span>}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-[10px] px-2 py-0 h-5 rounded-full font-medium border-border/80 bg-muted/60 text-muted-foreground">{status.label}</Badge>
+                    {canWrite ? (
+                      <div className="flex items-center gap-1.5">
+                        <Select
+                          value={c.status}
+                          disabled={updatingId === c.id}
+                          onValueChange={(val) =>
+                            handleStatusChange(
+                              c.id,
+                              val as "draft" | "sent" | "viewed" | "signed" | "declined" | "expired" | "revoked",
+                            )
+                          }
+                        >
+                          <SelectTrigger className="h-6 w-auto min-w-[5.5rem] gap-1 rounded-full border-border/80 bg-muted/50 px-2 py-0 text-[10px] font-medium text-muted-foreground hover:bg-muted focus:ring-1 focus:ring-primary">
+                            {updatingId === c.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                            ) : null}
+                            <SelectValue>{status.label}</SelectValue>
+                          </SelectTrigger>
+                          <SelectContent align="start" className="min-w-[7rem]">
+                            <SelectItem value="draft" className="text-xs">{t("Draf", "Draft")}</SelectItem>
+                            <SelectItem value="sent" className="text-xs">{t("Terkirim", "Sent")}</SelectItem>
+                            <SelectItem value="viewed" className="text-xs">{t("Dilihat", "Viewed")}</SelectItem>
+                            <SelectItem value="signed" className="text-xs text-emerald-600 font-medium">{t("Ditandatangani", "Signed")}</SelectItem>
+                            <SelectItem value="declined" className="text-xs text-rose-600 font-medium">{t("Ditolak", "Declined")}</SelectItem>
+                            <SelectItem value="expired" className="text-xs text-muted-foreground">{t("Kedaluwarsa", "Expired")}</SelectItem>
+                            <SelectItem value="revoked" className="text-xs text-muted-foreground">{t("Dicabut", "Revoked")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] px-2 py-0 h-5 rounded-full font-medium border-border/80 bg-muted/60 text-muted-foreground">{status.label}</Badge>
+                    )}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground whitespace-nowrap">
                     {activityLabel(c, t, lang)}

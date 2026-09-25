@@ -527,6 +527,58 @@ export async function createClientFromSignedContract(contractId: string) {
   return { clientId: created.client.id, created: true };
 }
 
+export async function updateContractStatus(
+  contractId: string,
+  newStatus: "draft" | "sent" | "viewed" | "signed" | "declined" | "expired" | "revoked",
+) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [existing] = await db
+    .select()
+    .from(contracts)
+    .where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId)))
+    .limit(1);
+
+  if (!existing) throw new Error("Contract not found");
+
+  const now = new Date();
+  const updatePayload: Record<string, unknown> = {
+    status: newStatus,
+    updatedAt: now,
+  };
+
+  if (newStatus === "signed" && !existing.signedAt) {
+    updatePayload.signedAt = now;
+  } else if (newStatus === "declined" && !existing.declinedAt) {
+    updatePayload.declinedAt = now;
+  } else if (newStatus === "sent" && !existing.sentAt) {
+    updatePayload.sentAt = now;
+  } else if (newStatus === "viewed" && !existing.viewedAt) {
+    updatePayload.viewedAt = now;
+  } else if (newStatus === "revoked" && !existing.sharedTokenRevokedAt) {
+    updatePayload.sharedTokenRevokedAt = now;
+  }
+
+  const [updated] = await db
+    .update(contracts)
+    .set(updatePayload)
+    .where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId)))
+    .returning();
+
+  await writeActivityLog(workspaceId, user.id, `contract_status_${newStatus}`, "contract", contractId, {
+    from: existing.status,
+    to: newStatus,
+  });
+
+  revalidatePath("/app/contracts");
+  revalidatePath(`/app/contracts/${contractId}`);
+  revalidatePath(`/app/contracts/${contractId}/edit`);
+  return updated;
+}
+
 export async function revokeContract(contractId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);

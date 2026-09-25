@@ -268,6 +268,56 @@ export async function updateProposal(proposalId: string, input: z.infer<typeof u
   return proposal;
 }
 
+export async function updateProposalStatus(
+  proposalId: string,
+  newStatus: "draft" | "sent" | "viewed" | "accepted" | "declined" | "expired",
+) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [existing] = await db
+    .select()
+    .from(proposals)
+    .where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, workspaceId)))
+    .limit(1);
+
+  if (!existing) throw new Error("Proposal not found");
+
+  const now = new Date();
+  const updatePayload: Record<string, unknown> = {
+    status: newStatus,
+    updatedAt: now,
+  };
+
+  if (newStatus === "accepted" && !existing.acceptedAt) {
+    updatePayload.acceptedAt = now;
+  } else if (newStatus === "declined" && !existing.declinedAt) {
+    updatePayload.declinedAt = now;
+  } else if (newStatus === "sent" && !existing.sentAt) {
+    updatePayload.sentAt = now;
+  } else if (newStatus === "viewed" && !existing.viewedAt) {
+    updatePayload.viewedAt = now;
+  }
+
+  const [updated] = await db
+    .update(proposals)
+    .set(updatePayload)
+    .where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, workspaceId)))
+    .returning();
+
+  await writeActivityLog(workspaceId, user.id, `proposal_status_${newStatus}`, "proposal", proposalId, {
+    from: existing.status,
+    to: newStatus,
+  });
+
+  revalidatePath("/app/proposals");
+  revalidatePath(`/app/proposals/${proposalId}`);
+  revalidatePath(`/app/proposals/${proposalId}/edit`);
+  return updated;
+}
+
 export async function sendProposal(proposalId: string, customMessage?: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);

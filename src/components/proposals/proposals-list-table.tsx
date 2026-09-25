@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -12,13 +12,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { formatMoney } from "@/lib/utils";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { SendProposalButton } from "@/components/proposals/send-proposal-button";
-import { FileText } from "lucide-react";
+import { updateProposalStatus } from "@/lib/actions/proposals";
+import { toast } from "sonner";
+import { FileText, Loader2 } from "lucide-react";
 
 export type ProposalListItem = {
   id: string;
@@ -104,6 +113,8 @@ export function ProposalsListTable({
   canWrite: boolean;
 }) {
   const { t, lang } = useT();
+  const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const getters = useMemo(
     () => ({
@@ -122,6 +133,23 @@ export function ProposalsListTable({
     getters,
     orders,
   );
+
+  const handleStatusChange = (
+    proposalId: string,
+    newStatus: "draft" | "sent" | "viewed" | "accepted" | "declined" | "expired",
+  ) => {
+    setUpdatingId(proposalId);
+    startTransition(async () => {
+      try {
+        await updateProposalStatus(proposalId, newStatus);
+        toast.success(t("Status proposal berhasil diperbarui", "Proposal status updated"));
+      } catch (err: any) {
+        toast.error(err?.message || t("Gagal memperbarui status", "Failed to update status"));
+      } finally {
+        setUpdatingId(null);
+      }
+    });
+  };
 
   return (
     <>
@@ -208,7 +236,37 @@ export function ProposalsListTable({
                     {p.clientId ? <Link href={`/app/clients/${p.clientId}`} className="text-muted-foreground hover:text-primary hover:underline">{p.clientName}</Link> : <span className="text-muted-foreground">{p.clientName}</span>}
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="text-[10px] px-2 py-0 h-5 rounded-full font-medium border-border/80 bg-muted/60 text-muted-foreground">{status.label}</Badge>
+                    {canWrite ? (
+                      <div className="flex items-center gap-1.5">
+                        <Select
+                          value={p.status}
+                          disabled={updatingId === p.id}
+                          onValueChange={(val) =>
+                            handleStatusChange(
+                              p.id,
+                              val as "draft" | "sent" | "viewed" | "accepted" | "declined" | "expired",
+                            )
+                          }
+                        >
+                          <SelectTrigger className="h-6 w-auto min-w-[5.5rem] gap-1 rounded-full border-border/80 bg-muted/50 px-2 py-0 text-[10px] font-medium text-muted-foreground hover:bg-muted focus:ring-1 focus:ring-primary">
+                            {updatingId === p.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
+                            ) : null}
+                            <SelectValue>{status.label}</SelectValue>
+                          </SelectTrigger>
+                          <SelectContent align="start" className="min-w-[7rem]">
+                            <SelectItem value="draft" className="text-xs">{t("Draf", "Draft")}</SelectItem>
+                            <SelectItem value="sent" className="text-xs">{t("Terkirim", "Sent")}</SelectItem>
+                            <SelectItem value="viewed" className="text-xs">{t("Dilihat", "Viewed")}</SelectItem>
+                            <SelectItem value="accepted" className="text-xs text-emerald-600 font-medium">{t("Diterima", "Accepted")}</SelectItem>
+                            <SelectItem value="declined" className="text-xs text-rose-600 font-medium">{t("Ditolak", "Declined")}</SelectItem>
+                            <SelectItem value="expired" className="text-xs text-muted-foreground">{t("Kedaluwarsa", "Expired")}</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    ) : (
+                      <Badge variant="outline" className="text-[10px] px-2 py-0 h-5 rounded-full font-medium border-border/80 bg-muted/60 text-muted-foreground">{status.label}</Badge>
+                    )}
                   </TableCell>
                   <TableCell className="text-right tabular-nums text-sm font-semibold whitespace-nowrap">
                     {formatMoney(p.total, p.currency)}
