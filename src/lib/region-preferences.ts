@@ -11,9 +11,9 @@ export function languageToCurrency(lang: Lang): DisplayCurrency {
 }
 
 export function countryToDefaults(country?: string | null): VisitorPreferences {
-  return country?.trim().toLowerCase() === "id"
-    ? { lang: "id", currency: "IDR" }
-    : { lang: "en", currency: "USD" };
+  // Global product standard: Default language is English (en / USD) across all countries.
+  // Language switcher toggle (ID/EN) and user account settings allow instant localization.
+  return { lang: "en", currency: country?.trim().toLowerCase() === "id" ? "IDR" : "USD" };
 }
 
 const countryHeaders = ["cf-ipcountry", "x-vercel-ip-country", "x-country-code"] as const;
