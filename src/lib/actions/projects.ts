@@ -105,9 +105,9 @@ export async function createProject(input: z.input<typeof projectCreateSchema>) 
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
-  // Check plan limits (plan is per-user, not per-workspace)
-  const { getUserPlan, checkEntityLimit } = await import("@/lib/plan");
-  const plan = await getUserPlan(user.id);
+  // Check plan limits (plan authority is derived from workspace OWNER's plan)
+  const { getWorkspaceOwnerPlan, checkEntityLimit } = await import("@/lib/plan");
+  const { plan } = await getWorkspaceOwnerPlan(workspaceId);
   const projLimit = await checkEntityLimit(workspaceId, "projects", plan);
   if (!projLimit.allowed) {
     // Soft-fail so production doesn't hide the message behind a Next digest.

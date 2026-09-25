@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { aiUsageDaily, users, workspaceMembers } from "@/db/schema";
+import { aiUsageDaily, users, workspaceMembers, workspaces } from "@/db/schema";
 import { and, eq, gt, sql } from "drizzle-orm";
 
 export type PlanTier = "free" | "solo" | "team";
@@ -421,4 +421,40 @@ export async function getUserPlan(userId: string): Promise<string> {
     .where(eq(users.id, userId))
     .limit(1);
   return getEffectivePlan(user?.plan, user?.planExpiresAt);
+}
+
+/**
+ * Get workspace effective plan based on the workspace OWNER's plan.
+ * Team members share the owner's plan limits and entitlements.
+ */
+export async function getWorkspaceOwnerPlan(workspaceId: string): Promise<{
+  plan: string;
+  ownerId: string;
+  isOwner: (userId: string) => boolean;
+}> {
+  const [ws] = await db
+    .select({
+      ownerId: workspaces.ownerId,
+      ownerPlan: users.plan,
+      ownerPlanExpiresAt: users.planExpiresAt,
+    })
+    .from(workspaces)
+    .innerJoin(users, eq(users.id, workspaces.ownerId))
+    .where(eq(workspaces.id, workspaceId))
+    .limit(1);
+
+  if (!ws) {
+    return {
+      plan: "free",
+      ownerId: "",
+      isOwner: () => false,
+    };
+  }
+
+  const effectivePlan = getEffectivePlan(ws.ownerPlan, ws.ownerPlanExpiresAt);
+  return {
+    plan: effectivePlan,
+    ownerId: ws.ownerId,
+    isOwner: (userId: string) => userId === ws.ownerId,
+  };
 }

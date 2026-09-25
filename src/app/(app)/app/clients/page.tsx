@@ -22,6 +22,7 @@ import { ClientCreateDialog } from "@/components/clients/client-create-dialog";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { getPlanYearlyLabel } from "@/lib/billing-pricing";
 import { BILLING_PLANS } from "@/lib/billing-plans";
+import { getWorkspaceOwnerPlan, getPlanLimits } from "@/lib/plan";
 import { PaginationLinks } from "@/components/ui/pagination-links";
 
 const PAGE_SIZE = 10;
@@ -53,11 +54,13 @@ export default async function ClientsPage({
     .limit(1);
   const canWrite = member?.role === "owner" || member?.role === "member";
 
-  // Check plan for limit enforcement (plan is per-user)
-  const [userPlan] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, user.id)).limit(1);
-  const currentPlan = userPlan?.plan ?? "free";
+  // Check plan for limit enforcement (plan authority is derived from workspace OWNER's plan)
+  const { plan: currentPlan, isOwner } = await getWorkspaceOwnerPlan(workspaceId);
+  const isWorkspaceOwner = isOwner(user.id);
   const [{ clientCount }] = await db.select({ clientCount: sql<number>`count(*)::int` }).from(clients).where(eq(clients.workspaceId, workspaceId));
-  const isAtLimit = currentPlan === "free" && clientCount >= 3;
+  const planLimits = getPlanLimits(currentPlan);
+  const clientLimit = planLimits.maxClients;
+  const isAtLimit = currentPlan === "free" && clientCount >= clientLimit;
 
   const params = await searchParams;
   const search = params.search ?? "";
@@ -154,7 +157,7 @@ export default async function ClientsPage({
               </a>
             </Button>
             {canWrite && (
-              isAtLimit ? (
+              isAtLimit && isWorkspaceOwner ? (
                 <Button size="sm" className="h-8 gap-1.5 text-xs" disabled>
                   <Plus className="h-3.5 w-3.5" />
                   {t("Upgrade dulu", "Upgrade first")}
@@ -167,12 +170,12 @@ export default async function ClientsPage({
         }
       />
 
-      {isAtLimit && (
+      {isAtLimit && isWorkspaceOwner && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-sm font-medium text-amber-900">{t("Batas free plan tercapai", "Free plan limit reached")}</p>
-              <p className="text-sm text-amber-700 mt-1">{t(`Kamu punya ${clientCount}/3 klien. Upgrade ke Solo untuk unlimited klien.`, `You have ${clientCount}/3 clients. Upgrade to Solo for unlimited clients.`)}</p>
+              <p className="text-sm text-amber-700 mt-1">{t(`Kamu punya ${clientCount}/${clientLimit} klien. Upgrade ke Solo untuk unlimited klien.`, `You have ${clientCount}/${clientLimit} clients. Upgrade to Solo for unlimited clients.`)}</p>
             </div>
             <Button size="sm" className="bg-[#6647F0] hover:bg-[#5333DD] shrink-0" asChild>
               <Link href="/app/billing">

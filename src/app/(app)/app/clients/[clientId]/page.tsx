@@ -29,7 +29,7 @@ import { ClientGoogleCalendarPanel } from "@/components/clients/client-google-ca
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
 import { billingTypeLabel } from "@/lib/feature-access";
 import { getProposedInvoiceNumber } from "@/lib/actions/invoices";
-import { checkEntityLimit, getUserPlan } from "@/lib/plan";
+import { checkEntityLimit, getWorkspaceOwnerPlan } from "@/lib/plan";
 import {
   getClientGoogleConnectionStatus,
   listClientGoogleEvents,
@@ -104,10 +104,11 @@ export default async function ClientDetailPage({
     .limit(1);
   const canWrite = member?.role === "owner" || member?.role === "member";
 
+  const { plan: currentPlan } = await getWorkspaceOwnerPlan(workspaceId);
   const projectLimitState = await checkEntityLimit(
     workspaceId,
     "projects",
-    await getUserPlan(user.id),
+    currentPlan,
   );
 
   // Google Calendar client (separate from user calendar)

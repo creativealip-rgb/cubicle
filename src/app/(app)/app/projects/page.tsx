@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { getPlanYearlyLabel } from "@/lib/billing-pricing";
 import { BILLING_PLANS } from "@/lib/billing-plans";
+import { getWorkspaceOwnerPlan, getPlanLimits } from "@/lib/plan";
 import {
   PROJECT_STATUS_TABS,
   PROJECT_STATUS_TAB_VALUES,
@@ -85,14 +86,15 @@ export default async function ProjectsPage({
   const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
   const PAGE_SIZE = 10;
 
-  // Plan limit (per-user free plan: max 5 projects)
-  const [userPlan] = await db.select({ plan: users.plan }).from(users).where(eq(users.id, user.id)).limit(1);
-  const currentPlan = userPlan?.plan ?? "free";
+  // Plan limit (Workspace authority is derived from workspace OWNER's plan)
+  const { plan: currentPlan, isOwner } = await getWorkspaceOwnerPlan(workspaceId);
+  const isWorkspaceOwner = isOwner(user.id);
   const [{ projectCount }] = await db
     .select({ projectCount: sql<number>`count(*)::int` })
     .from(projects)
     .where(eq(projects.workspaceId, workspaceId));
-  const projectLimit = 5;
+  const planLimits = getPlanLimits(currentPlan);
+  const projectLimit = planLimits.maxProjects;
   const isAtLimit = currentPlan === "free" && projectCount >= projectLimit;
 
   const clientOptions = await db
@@ -198,7 +200,7 @@ export default async function ProjectsPage({
           canWrite ? (
             <ProjectCreateDialog
               clients={clientOptions}
-              isAtLimit={isAtLimit}
+              isAtLimit={isAtLimit && isWorkspaceOwner}
               projectCount={projectCount}
               projectLimit={projectLimit}
             />
@@ -233,7 +235,8 @@ export default async function ProjectsPage({
         </form>
       </div>
 
-      {isAtLimit && (
+      {/* Upgrade Banner only for Workspace Owner when Free plan limit reached */}
+      {isAtLimit && isWorkspaceOwner && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
           <div className="flex items-center justify-between gap-4">
             <div>

@@ -78,9 +78,9 @@ const clientStatusSchema = z.enum(["active", "inactive", "archived"]);
 async function assertCanCreateClient(workspaceId: string, userId: string) {
   await assertWorkspaceWritable(db, userId, workspaceId);
 
-  // Check plan limits (plan is per-user, not per-workspace)
-  const { getUserPlan, checkEntityLimit } = await import("@/lib/plan");
-  const plan = await getUserPlan(userId);
+  // Check plan limits (plan authority is derived from workspace OWNER's plan)
+  const { getWorkspaceOwnerPlan, checkEntityLimit } = await import("@/lib/plan");
+  const { plan } = await getWorkspaceOwnerPlan(workspaceId);
   const clientLimit = await checkEntityLimit(workspaceId, "clients", plan);
   if (!clientLimit.allowed) {
     return {
@@ -94,9 +94,9 @@ async function assertCanCreateClient(workspaceId: string, userId: string) {
   return { ok: true as const };
 }
 
-async function assertCanUseClientPortal(userId: string) {
-  const { getUserPlan, getPlanLimits } = await import("@/lib/plan");
-  const plan = await getUserPlan(userId);
+async function assertCanUseClientPortal(workspaceId: string) {
+  const { getWorkspaceOwnerPlan, getPlanLimits } = await import("@/lib/plan");
+  const { plan } = await getWorkspaceOwnerPlan(workspaceId);
   const limits = getPlanLimits(plan);
   if (!limits.hasClientPortal) {
     throw new Error("Client portal tidak tersedia di plan ini.");
@@ -247,7 +247,8 @@ export async function checkPortalSlugAvailability(
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
-  const plan = await getUserPlan(user.id);
+  const { getWorkspaceOwnerPlan } = await import("@/lib/plan");
+  const { plan } = await getWorkspaceOwnerPlan(workspaceId);
   const isPaid = plan === "solo" || plan === "team";
 
   const normalized = slug
@@ -281,7 +282,9 @@ export async function checkPortalSlugAvailability(
 export async function getCurrentUserPlanForPortal(): Promise<{ isPaid: boolean; plan: string }> {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
-  const plan = await getUserPlan(user.id);
+  const workspaceId = await getWorkspaceId();
+  const { getWorkspaceOwnerPlan } = await import("@/lib/plan");
+  const { plan } = await getWorkspaceOwnerPlan(workspaceId);
   return { isPaid: plan === "solo" || plan === "team", plan };
 }
 
@@ -295,7 +298,7 @@ export async function updateClient(clientId: string, input: Partial<z.infer<type
   const parsed = clientSchema.partial().parse(input);
 
   if (parsed.portalEnabled || parsed.portalSlugEnabled) {
-    await assertCanUseClientPortal(user.id);
+    await assertCanUseClientPortal(workspaceId);
   }
 
   const updateData: Record<string, unknown> = {};
