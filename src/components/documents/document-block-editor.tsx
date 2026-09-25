@@ -96,7 +96,7 @@ type Props = {
   };
 };
 
-type AddableBlock = "heading" | "text" | "placeholder" | "list" | "divider" | "table" | "image" | "attachment" | "signature";
+type AddableBlock = "heading" | "text" | "placeholder" | "list" | "divider" | "table" | "image" | "attachment" | "signature" | "logo";
 
 type TFunc = (id: string, en: string) => string;
 
@@ -303,6 +303,7 @@ export function DocumentBlockEditor({
       divider: ["Divider Line", "Divider Line"],
       table: ["Pricing / Data Table", "Pricing / Data Table"],
       image: ["Gambar / Logo", "Image / Logo"],
+      logo: ["Logo Brand", "Brand Logo"],
       attachment: ["Lampiran Dokumen", "File Attachment"],
       signature: ["Tanda Tangan Digital", "Digital Signature"],
     };
@@ -397,6 +398,14 @@ export function DocumentBlockEditor({
         ? { id: crypto.randomUUID(), type, rows: [["Item Description", "Qty", "Price"], ["Core Deliverables", "1", "{{total_amount}}"]] }
         : type === "signature"
         ? { id: crypto.randomUUID(), type }
+        : type === "logo"
+        ? {
+            id: crypto.randomUUID(),
+            type: "logo",
+            src: `/api/public/workspace-logo/${workspaceId}`,
+            align: "left",
+            logoSize: "md",
+          }
         : { id: crypto.randomUUID(), type, content: "" };
 
     const next = [...blocks, block];
@@ -566,6 +575,7 @@ export function DocumentBlockEditor({
     { type: "list", label: "Bullet / Numbered List", desc: "Itemized scope or deliverables", icon: List, category: "basic" },
     { type: "table", label: "Pricing & Data Table", desc: "Structured fee breakdown table", icon: TableIcon, category: "basic" },
     { type: "divider", label: "Divider Line", desc: "Horizontal separation line", icon: Minus, category: "basic" },
+    { type: "logo", label: "Brand Logo", desc: "Official header brand logo with alignment", icon: ImageIcon, category: "media" },
     { type: "image", label: "Image / Asset", desc: "Mockups, logos, diagrams", icon: ImageIcon, category: "media" },
     { type: "attachment", label: "File Attachment", desc: "Downloadable PDF / brief files", icon: Paperclip, category: "media" },
     { type: "placeholder", label: "Smart Variable Block", desc: "Dynamic client / project token", icon: ShieldCheck, category: "special" },
@@ -1017,6 +1027,23 @@ export function DocumentBlockEditor({
                             <div className="py-2">
                               <hr className="border-border/80" />
                             </div>
+                          ) : block.type === "logo" ? (
+                            <div className={`py-2 flex items-center ${block.align === "center" ? "justify-center" : block.align === "right" ? "justify-end" : "justify-start"}`}>
+                              <div className="relative group p-1 border border-dashed border-border/80 rounded-xl hover:border-primary/50 transition-all bg-background/50">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                  src={block.src || `/api/public/workspace-logo/${workspaceId}`}
+                                  alt="Logo"
+                                  className={`${block.logoSize === "sm" ? "h-8" : block.logoSize === "lg" ? "h-16" : "h-12"} object-contain rounded`}
+                                  onError={(e) => {
+                                    (e.target as HTMLElement).style.display = "none";
+                                  }}
+                                />
+                                <span className="absolute -top-2 left-2 bg-primary text-primary-foreground text-[9px] font-bold px-1.5 py-0.2 rounded-full uppercase tracking-wider">
+                                  Brand Logo
+                                </span>
+                              </div>
+                            </div>
                           ) : block.type === "image" ? (
                             <div className="space-y-2">
                               {uploadingId === block.id ? (
@@ -1147,6 +1174,55 @@ export function DocumentBlockEditor({
                                 />
                                 <span>{t("List Bernomor (1, 2, 3)", "Numbered List (1, 2, 3)")}</span>
                               </label>
+                            </div>
+                          )}
+
+                          {sel.type === "logo" && (
+                            <div className="mt-3 space-y-3">
+                              <div className="space-y-1">
+                                <label className="text-[11px] font-semibold text-muted-foreground">{t("Ukuran Logo", "Logo Size")}</label>
+                                <div className="grid grid-cols-3 gap-1">
+                                  {(["sm", "md", "lg"] as const).map((sz) => (
+                                    <button
+                                      key={sz}
+                                      type="button"
+                                      onClick={() => updateBlock(sel.id, { logoSize: sz })}
+                                      className={`py-1 text-xs font-bold rounded-md border transition-all ${
+                                        (sel.logoSize || "md") === sz
+                                          ? "bg-primary text-primary-foreground border-primary"
+                                          : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
+                                      }`}
+                                    >
+                                      {sz === "sm" ? "Small" : sz === "lg" ? "Large" : "Medium"}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="space-y-1">
+                                <label className="text-[11px] font-semibold text-muted-foreground">{t("Posisi Logo", "Logo Alignment")}</label>
+                                <div className="grid grid-cols-3 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
+                                  {(
+                                    [
+                                      ["left", AlignLeft],
+                                      ["center", AlignCenter],
+                                      ["right", AlignRight],
+                                    ] as const
+                                  ).map(([align, Icon]) => (
+                                    <button
+                                      key={align}
+                                      type="button"
+                                      onClick={() => updateBlock(sel.id, { align })}
+                                      className={`flex items-center justify-center py-1 rounded text-xs transition-colors ${
+                                        (sel.align || "left") === align ? "bg-primary text-primary-foreground font-bold" : "text-muted-foreground hover:bg-muted/50"
+                                      }`}
+                                      title={align}
+                                    >
+                                      <Icon className="h-3.5 w-3.5" />
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
                           )}
 

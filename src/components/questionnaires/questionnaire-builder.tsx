@@ -275,6 +275,19 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
 
   // Structural & Multi-Page
   {
+    type: "logo",
+    label: "Brand Logo",
+    description: "Header logo with position and size controls",
+    icon: ImageIcon,
+    category: "structure",
+    defaultConfig: {
+      label: "Brand Logo",
+      align: "left",
+      logoSize: "md",
+      colSpan: "full",
+    },
+  },
+  {
     type: "page_break",
     label: "Page Break (Multi-Step)",
     description: "Split form into multiple steps/pages",
@@ -405,6 +418,7 @@ function SortableCanvasField({
   const isPageBreak = field.type === "page_break";
   const isHeading = field.type === "heading";
   const isDivider = field.type === "divider";
+  const isLogo = field.type === "logo";
   const isInfo = field.type === "info";
   const isTerms = field.type === "terms";
 
@@ -498,6 +512,21 @@ function SortableCanvasField({
             className="w-full text-base sm:text-lg font-bold tracking-tight text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1"
           />
           {field.sublabel && <p className="text-xs text-muted-foreground px-1">{field.sublabel}</p>}
+        </div>
+      ) : isLogo ? (
+        <div className={`py-1 flex items-center ${field.align === "center" ? "justify-center" : field.align === "right" ? "justify-end" : "justify-start"}`}>
+          <div className="flex items-center gap-3 p-2 rounded-xl border border-dashed border-border/80 bg-muted/20">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={field.src || `/api/public/workspace-logo/${field.id ? "workspace" : ""}`}
+              alt="Logo"
+              className={`${field.logoSize === "sm" ? "h-8" : field.logoSize === "lg" ? "h-16" : "h-12"} object-contain rounded`}
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = "none";
+              }}
+            />
+            <span className="text-xs font-semibold text-muted-foreground">Header Logo Brand</span>
+          </div>
         </div>
       ) : isDivider ? (
         <div className="py-2">
@@ -1598,6 +1627,62 @@ export function QuestionnaireBuilder({
                                 <SelectItem value="10">10 Bintang (NPS Scale)</SelectItem>
                               </SelectContent>
                             </Select>
+                          </div>
+                        )}
+
+                        {/* Logo Settings */}
+                        {selectedField.type === "logo" && (
+                          <div className="space-y-3 pt-2 border-t border-border/60">
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Posisi Logo</Label>
+                              <div className="grid grid-cols-3 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
+                                {(["left", "center", "right"] as const).map((al) => (
+                                  <button
+                                    key={al}
+                                    type="button"
+                                    onClick={() => updateSelectedField({ align: al })}
+                                    className={`py-1 text-xs capitalize rounded font-medium transition-colors ${
+                                      (selectedField.align || "left") === al
+                                        ? "bg-primary text-primary-foreground font-bold"
+                                        : "text-muted-foreground hover:bg-muted/50"
+                                    }`}
+                                  >
+                                    {al}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Ukuran Logo</Label>
+                              <div className="grid grid-cols-3 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
+                                {(["sm", "md", "lg"] as const).map((sz) => (
+                                  <button
+                                    key={sz}
+                                    type="button"
+                                    onClick={() => updateSelectedField({ logoSize: sz })}
+                                    className={`py-1 text-xs uppercase rounded font-medium transition-colors ${
+                                      (selectedField.logoSize || "md") === sz
+                                        ? "bg-primary text-primary-foreground font-bold"
+                                        : "text-muted-foreground hover:bg-muted/50"
+                                    }`}
+                                  >
+                                    {sz}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+
+                            <div className="space-y-1">
+                              <Label className="text-xs font-medium">Kustom Logo URL (Opsional)</Label>
+                              <Input
+                                value={selectedField.src || ""}
+                                onChange={(e) => updateSelectedField({ src: e.target.value })}
+                                placeholder={`/api/public/workspace-logo/${workspaceId}`}
+                                className="h-8.5 text-xs font-mono"
+                              />
+                              <p className="text-[10px] text-muted-foreground">Kosongkan untuk otomatis menggunakan Logo Workspace.</p>
+                            </div>
                           </div>
                         )}
 

@@ -53,6 +53,29 @@ export function renderDocumentBlockHtml(
   if (block.type === "divider") {
     return <hr className="my-4 border-slate-200" />;
   }
+  if (block.type === "logo") {
+    const src = block.src;
+    if (!src) return null;
+    const sizeClass =
+      block.logoSize === "sm" ? "h-8" : block.logoSize === "lg" ? "h-16" : "h-12";
+    const justifyClass =
+      block.align === "center"
+        ? "justify-center"
+        : block.align === "right"
+        ? "justify-end"
+        : "justify-start";
+
+    return (
+      <div className={`my-3 flex w-full items-center ${justifyClass}`}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img
+          src={src}
+          alt={block.fileName ?? "Logo"}
+          className={`${sizeClass} object-contain rounded`}
+        />
+      </div>
+    );
+  }
   if (block.type === "image") {
     if (isSafeImageBlock(block)) {
       return (

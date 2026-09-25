@@ -28,6 +28,7 @@ export const questionnaireFieldTypeSchema = z.enum([
   "info",
   "terms",
   "page_break",
+  "logo",
 ]);
 
 export type QuestionnaireFieldType = z.infer<typeof questionnaireFieldTypeSchema>;
@@ -58,6 +59,12 @@ export const questionnaireFieldSchema = z.object({
   maxRating: z.number().int().min(3).max(10).optional(),
   // Layout Column: "full" (100%) or "half" (50% 2-column inline shrink)
   colSpan: z.enum(["full", "half"]).default("full").optional(),
+  // Alignment: "left" | "center" | "right"
+  align: z.enum(["left", "center", "right"]).default("left").optional(),
+  // Logo URL / Image Source
+  src: z.string().optional(),
+  // Logo size
+  logoSize: z.enum(["sm", "md", "lg"]).default("md").optional(),
   // Info text content (for 'info' type) or terms text (for 'terms' type)
   content: z.string().max(2000).optional(),
   // Currency symbol for calculation (e.g. "Rp", "$")

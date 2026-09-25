@@ -1,4 +1,4 @@
-export type DocumentBlockType = "heading" | "text" | "list" | "divider" | "placeholder" | "signature" | "image" | "attachment" | "table";
+export type DocumentBlockType = "heading" | "text" | "list" | "divider" | "placeholder" | "signature" | "image" | "attachment" | "table" | "logo";
 
 export type DocumentTableRow = string[];
 
@@ -18,11 +18,12 @@ export type DocumentBlock = {
   mimeType?: string;
   sizeBytes?: number;
   rows?: DocumentTableRow[];
+  logoSize?: "sm" | "md" | "lg";
 };
 
 const allowed: Record<"proposal" | "contract", DocumentBlockType[]> = {
-  proposal: ["heading", "text", "list", "divider", "placeholder", "image", "attachment", "table"],
-  contract: ["heading", "text", "list", "divider", "placeholder", "signature", "table"],
+  proposal: ["heading", "text", "list", "divider", "placeholder", "image", "attachment", "table", "logo"],
+  contract: ["heading", "text", "list", "divider", "placeholder", "signature", "table", "image", "logo"],
 };
 
 const KNOWN_TYPES = new Set(Object.values(allowed).flat());

@@ -243,6 +243,30 @@ export function IntakeForm({
             );
           }
 
+          if (f.type === "logo") {
+            const justifyClass =
+              f.align === "center"
+                ? "justify-center"
+                : f.align === "right"
+                ? "justify-end"
+                : "justify-start";
+            const sizeClass =
+              f.logoSize === "sm" ? "h-8" : f.logoSize === "lg" ? "h-16" : "h-12";
+            return (
+              <div key={f.id} className={`col-span-12 py-2 flex items-center ${justifyClass}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={f.src || `/api/public/workspace-logo/${token}`}
+                  alt="Brand Logo"
+                  className={`${sizeClass} object-contain rounded`}
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = "none";
+                  }}
+                />
+              </div>
+            );
+          }
+
           if (f.type === "divider") {
             return (
               <div key={f.id} className="col-span-12 py-2">
