@@ -146,13 +146,13 @@ export default async function ProposalsPage({
 
       <StatusFilterTabs
         activeValue={statusFilter}
-        hideEmpty={false}
+        hideEmpty={true}
         tabs={STATUS_TABS.map((s) => ({
           value: s,
           label: tabLabel[s],
           href: s === "all" ? "/app/proposals" : `/app/proposals?status=${s}`,
           count: counts[s] ?? 0,
-          alwaysShow: s === "all" || s === "draft" || s === "sent",
+          alwaysShow: s === "all" || s === "draft",
         }))}
       />
 

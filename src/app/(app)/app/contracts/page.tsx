@@ -135,13 +135,13 @@ export default async function ContractsPage({
 
       <StatusFilterTabs
         activeValue={statusFilter}
-        hideEmpty={false}
+        hideEmpty={true}
         tabs={STATUS_TABS.map((s) => ({
           value: s,
           label: tabLabel[s],
           href: s === "all" ? "/app/contracts" : `/app/contracts?status=${s}`,
           count: counts[s] ?? 0,
-          alwaysShow: s === "all" || s === "draft" || s === "sent" || s === "signed",
+          alwaysShow: s === "all" || s === "draft",
         }))}
       />
 
