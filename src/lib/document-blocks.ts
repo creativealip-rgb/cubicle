@@ -110,6 +110,7 @@ export function defaultDocumentBlocks(kind: "proposal" | "contract"): DocumentBl
  */
 export function buildProposalStarterBlocks(): DocumentBlock[] {
   return [
+    { id: crypto.randomUUID(), type: "logo", align: "center", logoSize: "md" },
     { id: crypto.randomUUID(), type: "heading", level: 1, content: "Project Proposal", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "{{workspace_name}}", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "Prepared for: {{client_name}}", align: "center" },
@@ -127,14 +128,45 @@ export function buildProposalStarterBlocks(): DocumentBlock[] {
   ];
 }
 
-/**
- * Starter blocks for a fresh contract: cover header, parties, scope, pricing
- * table, term, key clauses, and a signature block. Placeholder tokens
- * ({{workspace_name}}, {{contract_number}}, {{client_name}}, {{contract_date}},
- * {{valid_until}}) resolve through the shared {{key}} resolver.
- */
+export function buildMarketingProposalBlocks(): DocumentBlock[] {
+  return [
+    { id: crypto.randomUUID(), type: "logo", align: "center", logoSize: "md" },
+    { id: crypto.randomUUID(), type: "heading", level: 1, content: "Digital Marketing & Growth Proposal", align: "center" },
+    { id: crypto.randomUUID(), type: "text", content: "{{workspace_name}}", align: "center" },
+    { id: crypto.randomUUID(), type: "text", content: "Target Client: {{client_name}}", align: "center" },
+    { id: crypto.randomUUID(), type: "divider" },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Strategic Growth Objectives" },
+    { id: crypto.randomUUID(), type: "text", content: "Accelerate online engagement, customer acquisition, and brand visibility through targeted organic and performance campaigns." },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Campaign Channels & Execution" },
+    { id: crypto.randomUUID(), type: "list", items: ["Content marketing & social media management", "Search engine optimization (SEO & SEM)", "Paid performance ads & monthly reporting"], ordered: false },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Monthly Retainer & Budget" },
+    { id: crypto.randomUUID(), type: "table", rows: [["Package / Service", "Frequency", "Investment"], ["Growth Retainer Plan", "Monthly", "{{total_amount}}"]] },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Reporting & SLA" },
+    { id: crypto.randomUUID(), type: "text", content: "Monthly analytics reports with transparent KPIs delivered every end-of-month." },
+  ];
+}
+
+export function buildBrandDesignProposalBlocks(): DocumentBlock[] {
+  return [
+    { id: crypto.randomUUID(), type: "logo", align: "center", logoSize: "md" },
+    { id: crypto.randomUUID(), type: "heading", level: 1, content: "Brand Identity & UI/UX Design Proposal", align: "center" },
+    { id: crypto.randomUUID(), type: "text", content: "{{workspace_name}}", align: "center" },
+    { id: crypto.randomUUID(), type: "text", content: "Prepared for: {{client_name}}", align: "center" },
+    { id: crypto.randomUUID(), type: "divider" },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Design Vision & Creative Direction" },
+    { id: crypto.randomUUID(), type: "text", content: "Craft a distinct, high-impact visual identity and intuitive digital interface tailored for modern product positioning." },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Design Deliverables" },
+    { id: crypto.randomUUID(), type: "list", items: ["Brand Guidelines, Typography & Color Palette", "Figma Interactive Prototypes & UI Design System", "High-Resolution Design Assets & Iconography"], ordered: false },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Design Investment" },
+    { id: crypto.randomUUID(), type: "table", rows: [["Design Phase", "Revisions", "Fee"], ["Complete UI/UX & Brand Pack", "Up to 3 Rounds", "{{total_amount}}"]] },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Signatures" },
+    { id: crypto.randomUUID(), type: "signature" },
+  ];
+}
+
 export function buildContractStarterBlocks(): DocumentBlock[] {
   return [
+    { id: crypto.randomUUID(), type: "logo", align: "center", logoSize: "md" },
     { id: crypto.randomUUID(), type: "heading", level: 1, content: "Service Agreement", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "{{workspace_name}}", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "Contract No. {{contract_number}}", align: "center" },
@@ -143,24 +175,55 @@ export function buildContractStarterBlocks(): DocumentBlock[] {
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Parties" },
     { id: crypto.randomUUID(), type: "text", content: "This Service Agreement is entered into on {{contract_date}} between {{workspace_name}} (\u201cService Provider\u201d) and {{client_name}} (\u201cClient\u201d)." },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Background" },
-    { id: crypto.randomUUID(), type: "text", content: "" },
-    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Services" },
-    { id: crypto.randomUUID(), type: "list", items: ["", "", ""], ordered: false },
+    { id: crypto.randomUUID(), type: "text", content: "The Client desires to retain Service Provider to perform professional services as agreed." },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Services & Scope" },
+    { id: crypto.randomUUID(), type: "list", items: ["Execution of deliverables as specified in scope", "Ongoing communication and milestone approvals", "Handover of final working assets"], ordered: false },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Contract Value & Payment" },
-    { id: crypto.randomUUID(), type: "table", rows: [["Description", "Amount"], ["Services", "{{contract_value}}"]] },
+    { id: crypto.randomUUID(), type: "table", rows: [["Description", "Amount"], ["Professional Services", "{{contract_value}}"]] },
     { id: crypto.randomUUID(), type: "text", content: "A down payment of 50% is due upon signing; the remaining balance is due upon completion. Invoices are payable within 14 days of receipt." },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Term & Termination" },
     { id: crypto.randomUUID(), type: "text", content: "This Agreement begins on {{contract_date}} and remains in effect until {{valid_until}}." },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Confidentiality" },
-    { id: crypto.randomUUID(), type: "text", content: "" },
+    { id: crypto.randomUUID(), type: "text", content: "Both parties agree to treat all proprietary information and commercial terms as strictly confidential." },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Intellectual Property" },
-    { id: crypto.randomUUID(), type: "text", content: "" },
+    { id: crypto.randomUUID(), type: "text", content: "Upon full payment, all intellectual property rights for created deliverables transfer exclusively to the Client." },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Liability & Indemnification" },
-    { id: crypto.randomUUID(), type: "text", content: "" },
-    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Dispute Resolution" },
-    { id: crypto.randomUUID(), type: "text", content: "" },
-    { id: crypto.randomUUID(), type: "heading", level: 2, content: "General Provisions" },
-    { id: crypto.randomUUID(), type: "list", items: ["", "", ""], ordered: false },
+    { id: crypto.randomUUID(), type: "text", content: "Neither party shall be liable for indirect, incidental, or consequential damages arising from this agreement." },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Signatures" },
+    { id: crypto.randomUUID(), type: "signature" },
+  ];
+}
+
+export function buildNdaContractBlocks(): DocumentBlock[] {
+  return [
+    { id: crypto.randomUUID(), type: "logo", align: "center", logoSize: "md" },
+    { id: crypto.randomUUID(), type: "heading", level: 1, content: "Non-Disclosure Agreement (NDA)", align: "center" },
+    { id: crypto.randomUUID(), type: "text", content: "Ref: {{contract_number}}", align: "center" },
+    { id: crypto.randomUUID(), type: "divider" },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "1. The Parties" },
+    { id: crypto.randomUUID(), type: "text", content: "This Mutual Non-Disclosure Agreement is entered into between {{workspace_name}} and {{client_name}}." },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "2. Definition of Confidential Information" },
+    { id: crypto.randomUUID(), type: "text", content: "Confidential information includes all technical, commercial, financial, and strategic information disclosed by either party." },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "3. Non-Disclosure Obligations" },
+    { id: crypto.randomUUID(), type: "list", items: ["Maintain strict confidentiality using at least reasonable care", "Not disclose to third parties without prior written consent", "Use solely for evaluating potential business cooperation"], ordered: false },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "4. Duration" },
+    { id: crypto.randomUUID(), type: "text", content: "This NDA shall remain in effect for a period of 2 years from {{contract_date}}." },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "5. Signatures" },
+    { id: crypto.randomUUID(), type: "signature" },
+  ];
+}
+
+export function buildRetainerContractBlocks(): DocumentBlock[] {
+  return [
+    { id: crypto.randomUUID(), type: "logo", align: "center", logoSize: "md" },
+    { id: crypto.randomUUID(), type: "heading", level: 1, content: "Monthly Retainer & Support Agreement", align: "center" },
+    { id: crypto.randomUUID(), type: "text", content: "{{workspace_name}} & {{client_name}}", align: "center" },
+    { id: crypto.randomUUID(), type: "divider" },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Scope of Recurring Services" },
+    { id: crypto.randomUUID(), type: "list", items: ["Dedicated monthly engineering & maintenance hours", "Priority SLA response time (within 24 business hours)", "Periodic system health checks & optimization"], ordered: false },
+    { id: crypto.randomUUID(), type: "heading", level: 2, content: "Monthly Fee & Billing" },
+    { id: crypto.randomUUID(), type: "table", rows: [["Retainer Tier", "Monthly Hours", "Rate"], ["Dedicated Support Plan", "Monthly Recurring", "{{contract_value}}"]] },
+    { id: crypto.randomUUID(), type: "text", content: "Billed automatically at the beginning of each billing cycle with Net 7 payment terms." },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Signatures" },
     { id: crypto.randomUUID(), type: "signature" },
   ];

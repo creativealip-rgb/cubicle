@@ -12,11 +12,17 @@ import {
   buildContractStarterBlocks,
   buildDocumentMediaBlock,
   buildProposalStarterBlocks,
+  buildMarketingProposalBlocks,
+  buildBrandDesignProposalBlocks,
+  buildNdaContractBlocks,
+  buildRetainerContractBlocks,
   isSafeImageBlock,
   type DocumentBlock,
   type DocumentTableRow,
 } from "@/lib/document-blocks";
 import { uploadOneFile, MAX_UPLOAD_BYTES } from "@/lib/files-upload";
+import { listContractTemplates } from "@/lib/actions/contract-templates";
+import { listProposalTemplates } from "@/lib/actions/proposal-templates";
 import { useT } from "@/lib/i18n-client";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
@@ -273,6 +279,9 @@ export function DocumentBlockEditor({
   const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
   const [showTemplateConfirm, setShowTemplateConfirm] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [selectedTemplateBlocks, setSelectedTemplateBlocks] = useState<DocumentBlock[] | null>(null);
+  const [savedTemplates, setSavedTemplates] = useState<{ id: string; name: string; contentBlocks?: unknown; body?: string | null }[]>([]);
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
   const [qrModalOpen, setQrModalOpen] = useState(false);
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -433,13 +442,27 @@ export function DocumentBlockEditor({
     toast.success(t("Blok berhasil diduplikasi", "Block duplicated"));
   }
 
-  function applyStarterTemplate() {
-    const starter = kind === "contract" ? buildContractStarterBlocks() : buildProposalStarterBlocks();
+  useEffect(() => {
+    if (templateDialogOpen) {
+      setLoadingTemplates(true);
+      const fetchTpls = kind === "contract" ? listContractTemplates : listProposalTemplates;
+      fetchTpls()
+        .then((res) => {
+          if (Array.isArray(res)) setSavedTemplates(res as typeof savedTemplates);
+        })
+        .catch(() => {})
+        .finally(() => setLoadingTemplates(false));
+    }
+  }, [templateDialogOpen, kind]);
+
+  function applyStarterTemplate(customBlocks?: DocumentBlock[]) {
+    const starter = customBlocks || (kind === "contract" ? buildContractStarterBlocks() : buildProposalStarterBlocks());
     recordHistory(starter);
     setBlocks(starter);
     setDirty(true);
     setSelectedBlockId(starter[0]?.id ?? null);
     setShowTemplateConfirm(false);
+    setSelectedTemplateBlocks(null);
     setTemplateDialogOpen(false);
     toast.success(t("Template profesional berhasil dimuat", "Professional template applied"));
   }
@@ -908,7 +931,7 @@ export function DocumentBlockEditor({
                     <div className="py-20 text-center space-y-3">
                       <FileText className="h-10 w-10 text-muted-foreground/40 mx-auto" />
                       <p className="text-sm font-semibold text-muted-foreground">Dokumen masih kosong</p>
-                      <Button size="sm" variant="outline" onClick={applyStarterTemplate} className="gap-1.5 text-xs font-semibold">
+                      <Button size="sm" variant="outline" onClick={() => applyStarterTemplate()} className="gap-1.5 text-xs font-semibold">
                         <LayoutTemplate className="h-3.5 w-3.5" />
                         <span>Gunakan Starter Template</span>
                       </Button>
@@ -1641,8 +1664,8 @@ export function DocumentBlockEditor({
       {/* ── MODAL: STARTER TEMPLATES SELECTOR ── */}
       {templateDialogOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs animate-in fade-in-0 duration-200">
-          <div className="w-full max-w-md rounded-2xl border border-border/80 bg-background p-6 shadow-xl space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="w-full max-w-lg rounded-2xl border border-border/80 bg-background p-6 shadow-xl space-y-4 max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between shrink-0">
               <div className="flex items-center gap-2">
                 <LayoutTemplate className="h-5 w-5 text-primary" />
                 <h3 className="font-bold text-base text-foreground">{t("Pilih Starter Template", "Select Starter Template")}</h3>
@@ -1651,34 +1674,192 @@ export function DocumentBlockEditor({
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <p className="text-xs text-muted-foreground leading-relaxed shrink-0">
               {t(
-                "Gunakan struktur dokumen profesional standar yang sudah dilengkapi dengan pasal-pasal dan smart variable siap pakai.",
-                "Apply a standard professional document structure equipped with ready-to-use clauses and smart variables."
+                "Gunakan struktur dokumen profesional standar atau template custom workspace yang sudah dilengkapi pasal & smart variable siap pakai.",
+                "Apply standard professional document templates or custom workspace templates equipped with clauses & smart variables."
               )}
             </p>
 
-            <div className="space-y-2 pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  if (blocks.length > 0) setShowTemplateConfirm(true);
-                  else applyStarterTemplate();
-                }}
-                className="w-full p-3.5 rounded-xl border border-primary/40 bg-primary/5 hover:bg-primary/10 text-left transition-all flex items-center justify-between group"
-              >
-                <div>
-                  <p className="text-xs font-bold text-primary group-hover:underline">
-                    {kind === "proposal" ? "Standard Web & Tech Proposal" : "Standard Master Service Agreement (MSA)"}
+            <div className="space-y-2 pt-1 overflow-y-auto pr-1 flex-1 custom-scrollbar">
+              <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">
+                {t("Standard Industry Presets", "Standard Industry Presets")}
+              </p>
+
+              {kind === "proposal" ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tpl = buildProposalStarterBlocks();
+                      setSelectedTemplateBlocks(tpl);
+                      if (blocks.length > 0) setShowTemplateConfirm(true);
+                      else applyStarterTemplate(tpl);
+                    }}
+                    className="w-full p-3.5 rounded-xl border border-border/80 hover:border-primary/50 hover:bg-primary/5 bg-card text-left transition-all flex items-center justify-between group"
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-foreground group-hover:text-primary">
+                        Standard Web & Tech Development Proposal
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Brand header logo, executive summary, tech scope, investment table, milestones, & terms.
+                      </p>
+                    </div>
+                    <CheckCircle className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary shrink-0" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tpl = buildBrandDesignProposalBlocks();
+                      setSelectedTemplateBlocks(tpl);
+                      if (blocks.length > 0) setShowTemplateConfirm(true);
+                      else applyStarterTemplate(tpl);
+                    }}
+                    className="w-full p-3.5 rounded-xl border border-border/80 hover:border-primary/50 hover:bg-primary/5 bg-card text-left transition-all flex items-center justify-between group"
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-foreground group-hover:text-primary">
+                        Brand Identity & UI/UX Design Proposal
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Creative direction, Figma prototypes, design system deliverables, revision tiers & pricing.
+                      </p>
+                    </div>
+                    <CheckCircle className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary shrink-0" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tpl = buildMarketingProposalBlocks();
+                      setSelectedTemplateBlocks(tpl);
+                      if (blocks.length > 0) setShowTemplateConfirm(true);
+                      else applyStarterTemplate(tpl);
+                    }}
+                    className="w-full p-3.5 rounded-xl border border-border/80 hover:border-primary/50 hover:bg-primary/5 bg-card text-left transition-all flex items-center justify-between group"
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-foreground group-hover:text-primary">
+                        Digital Marketing & Growth Retainer
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Strategic growth objectives, social/ads execution, monthly retainer table & SLA metrics.
+                      </p>
+                    </div>
+                    <CheckCircle className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary shrink-0" />
+                  </button>
+                </>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tpl = buildContractStarterBlocks();
+                      setSelectedTemplateBlocks(tpl);
+                      if (blocks.length > 0) setShowTemplateConfirm(true);
+                      else applyStarterTemplate(tpl);
+                    }}
+                    className="w-full p-3.5 rounded-xl border border-border/80 hover:border-primary/50 hover:bg-primary/5 bg-card text-left transition-all flex items-center justify-between group"
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-foreground group-hover:text-primary">
+                        Master Service Agreement (MSA)
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Comprehensive parties, services, payment, confidentiality, IP transfer, liability & signatures.
+                      </p>
+                    </div>
+                    <CheckCircle className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary shrink-0" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tpl = buildNdaContractBlocks();
+                      setSelectedTemplateBlocks(tpl);
+                      if (blocks.length > 0) setShowTemplateConfirm(true);
+                      else applyStarterTemplate(tpl);
+                    }}
+                    className="w-full p-3.5 rounded-xl border border-border/80 hover:border-primary/50 hover:bg-primary/5 bg-card text-left transition-all flex items-center justify-between group"
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-foreground group-hover:text-primary">
+                        Mutual Non-Disclosure Agreement (NDA)
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Confidential information protection, disclosure limitations, duration clauses & signature.
+                      </p>
+                    </div>
+                    <CheckCircle className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary shrink-0" />
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const tpl = buildRetainerContractBlocks();
+                      setSelectedTemplateBlocks(tpl);
+                      if (blocks.length > 0) setShowTemplateConfirm(true);
+                      else applyStarterTemplate(tpl);
+                    }}
+                    className="w-full p-3.5 rounded-xl border border-border/80 hover:border-primary/50 hover:bg-primary/5 bg-card text-left transition-all flex items-center justify-between group"
+                  >
+                    <div>
+                      <p className="text-xs font-bold text-foreground group-hover:text-primary">
+                        Monthly Retainer & Support Agreement
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">
+                        Monthly recurring support hours, SLA response times, recurring billing terms & sign-off.
+                      </p>
+                    </div>
+                    <CheckCircle className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary shrink-0" />
+                  </button>
+                </>
+              )}
+
+              {/* Workspace Saved Custom Templates */}
+              {savedTemplates.length > 0 && (
+                <div className="pt-3 space-y-2">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t("Template Kustom Workspace", "Workspace Saved Templates")}
                   </p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">
-                    {kind === "proposal"
-                      ? "Executive summary, scope, investment table, milestones, & terms."
-                      : "Parties, services, pricing, confidentiality, IP, & signature."}
-                  </p>
+                  {savedTemplates.map((st) => (
+                    <button
+                      key={st.id}
+                      type="button"
+                      onClick={() => {
+                        let tpl: DocumentBlock[] = [];
+                        if (Array.isArray(st.contentBlocks) && st.contentBlocks.length > 0) {
+                          tpl = st.contentBlocks as DocumentBlock[];
+                        } else if (st.body) {
+                          tpl = [
+                            { id: crypto.randomUUID(), type: "logo", align: "center", logoSize: "md" },
+                            { id: crypto.randomUUID(), type: "heading", level: 1, content: st.name, align: "center" },
+                            { id: crypto.randomUUID(), type: "divider" },
+                            { id: crypto.randomUUID(), type: "text", content: st.body },
+                            { id: crypto.randomUUID(), type: "signature" },
+                          ];
+                        } else {
+                          tpl = kind === "contract" ? buildContractStarterBlocks() : buildProposalStarterBlocks();
+                        }
+                        setSelectedTemplateBlocks(tpl);
+                        if (blocks.length > 0) setShowTemplateConfirm(true);
+                        else applyStarterTemplate(tpl);
+                      }}
+                      className="w-full p-3.5 rounded-xl border border-border/80 hover:border-primary/50 hover:bg-primary/5 bg-card text-left transition-all flex items-center justify-between group"
+                    >
+                      <div className="min-w-0 pr-2">
+                        <p className="text-xs font-bold text-foreground group-hover:text-primary truncate">{st.name}</p>
+                        <p className="text-[10px] text-muted-foreground truncate mt-0.5">
+                          {t("Template kustom tersimpan di Template Center", "Saved custom template from Template Center")}
+                        </p>
+                      </div>
+                      <CheckCircle className="h-4 w-4 text-muted-foreground/40 group-hover:text-primary shrink-0" />
+                    </button>
+                  ))}
                 </div>
-                <CheckCircle className="h-4 w-4 text-primary shrink-0" />
-              </button>
+              )}
             </div>
           </div>
         </div>
@@ -1691,15 +1872,27 @@ export function DocumentBlockEditor({
             <h3 className="font-bold text-sm text-foreground">{t("Ganti dengan template?", "Replace with template?")}</h3>
             <p className="text-xs text-muted-foreground leading-relaxed">
               {t(
-                "Dokumen ini sudah berisi konten. Semua blok saat ini akan digantikan dengan template baru. Lanjutkan?",
-                "This document already has content. All current blocks will be replaced with the new template. Continue?"
+                "Dokumen ini sudah berisi konten. Semua blok saat ini akan digantikan dengan template yang dipilih. Lanjutkan?",
+                "This document already has content. All current blocks will be replaced with the chosen template. Continue?"
               )}
             </p>
             <div className="flex gap-2 pt-2">
-              <Button type="button" variant="outline" className="flex-1 text-xs" onClick={() => setShowTemplateConfirm(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                className="flex-1 text-xs"
+                onClick={() => {
+                  setShowTemplateConfirm(false);
+                  setSelectedTemplateBlocks(null);
+                }}
+              >
                 {t("Batal", "Cancel")}
               </Button>
-              <Button type="button" className="flex-1 text-xs font-semibold bg-primary text-primary-foreground" onClick={applyStarterTemplate}>
+              <Button
+                type="button"
+                className="flex-1 text-xs font-semibold bg-primary text-primary-foreground"
+                onClick={() => applyStarterTemplate(selectedTemplateBlocks || undefined)}
+              >
                 {t("Ganti Saja", "Replace Anyway")}
               </Button>
             </div>
