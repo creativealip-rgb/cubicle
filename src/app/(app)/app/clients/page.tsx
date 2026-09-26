@@ -230,7 +230,16 @@ export default async function ClientsPage({
           canWrite={canWrite}
           isAtLimit={isAtLimit}
         />
-        <PaginationLinks page={page} totalPages={totalPages} total={filtered.length} pageSize={PAGE_SIZE} href={clientPageHref} labels={{ previous: t("Sebelumnya", "Previous"), next: t("Berikutnya", "Next"), page: t("Halaman klien", "Client page") }} />
+        <PaginationLinks
+          page={page}
+          totalPages={totalPages}
+          href={clientPageHref}
+          labels={{
+            page: t("Halaman", "Page"),
+            previous: t("Sebelumnya", "Previous"),
+            next: t("Berikutnya", "Next"),
+          }}
+        />
       </div>
     </div>
   );

@@ -26,6 +26,7 @@ import {
 } from "@/lib/project-list-filters";
 import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
 import { StatusFilterDropdown } from "@/components/ui/status-filter-dropdown";
+import { PaginationLinks } from "@/components/ui/pagination-links";
 
 async function getWorkspaceId(): Promise<string> {
   return getWorkspaceForCurrentUser();
@@ -283,48 +284,16 @@ export default async function ProjectsPage({
       />
 
       {/* Pagination */}
-      {filteredTotal > 0 && (
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-muted-foreground sm:text-sm">
-            {t(
-              `Menampilkan ${fromItem}–${toItem} dari ${filteredTotal}`,
-              `Showing ${fromItem}–${toItem} of ${filteredTotal}`,
-            )}
-            {` · ${t(`${PAGE_SIZE}/halaman`, `${PAGE_SIZE}/page`)}`}
-          </p>
-          <div className="flex items-center gap-2">
-            {currentPage > 1 ? (
-              <Link href={buildProjectsHref({ ...filtersForHref, page: currentPage - 1 })}>
-                <Button variant="outline" size="sm" className="h-8 gap-1 text-xs">
-                  <ChevronLeft className="h-3.5 w-3.5" />
-                  {t("Sebelumnya", "Previous")}
-                </Button>
-              </Link>
-            ) : (
-              <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" disabled>
-                <ChevronLeft className="h-3.5 w-3.5" />
-                {t("Sebelumnya", "Previous")}
-              </Button>
-            )}
-            <span className="min-w-[4rem] text-center text-xs tabular-nums text-muted-foreground">
-              {currentPage}/{totalPages}
-            </span>
-            {currentPage < totalPages ? (
-              <Link href={buildProjectsHref({ ...filtersForHref, page: currentPage + 1 })}>
-                <Button variant="outline" size="sm" className="h-8 gap-1 text-xs">
-                  {t("Berikutnya", "Next")}
-                  <ChevronRight className="h-3.5 w-3.5" />
-                </Button>
-              </Link>
-            ) : (
-              <Button variant="outline" size="sm" className="h-8 gap-1 text-xs" disabled>
-                {t("Berikutnya", "Next")}
-                <ChevronRight className="h-3.5 w-3.5" />
-              </Button>
-            )}
-          </div>
-        </div>
-      )}
+      <PaginationLinks
+        page={currentPage}
+        totalPages={totalPages}
+        href={(p) => buildProjectsHref({ ...filtersForHref, page: p })}
+        labels={{
+          page: t("Halaman", "Page"),
+          previous: t("Sebelumnya", "Previous"),
+          next: t("Berikutnya", "Next"),
+        }}
+      />
     </div>
   );
 }

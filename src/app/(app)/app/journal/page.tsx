@@ -22,6 +22,7 @@ import { DailyQuoteCard } from "@/components/journal/daily-quote-card";
 import { getDailyQuote } from "@/lib/actions/daily-quote";
 import { calculateJournalSummary } from "@/lib/journal-dashboard";
 import { getCurrentLang, createT } from "@/lib/i18n";
+import { PaginationLinks } from "@/components/ui/pagination-links";
 import {
   buildJournalBody,
   parseJournalBody,
@@ -236,30 +237,16 @@ export default async function JournalPage({
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="mt-6 flex items-center justify-between border-t pt-4">
-              <span className="text-xs text-muted-foreground">
-                {t(
-                  `Halaman ${page} dari ${totalPages}`,
-                  `Page ${page} of ${totalPages}`,
-                )}
-              </span>
-              <div className="flex gap-2">
-                {page > 1 && (
-                  <Button variant="outline" size="sm" className="rounded-xl" asChild>
-                    <Link href={`/app/journal?tab=${tab}&page=${page - 1}`}>
-                      {t("Sebelumnya", "Previous")}
-                    </Link>
-                  </Button>
-                )}
-                {page < totalPages && (
-                  <Button variant="outline" size="sm" className="rounded-xl" asChild>
-                    <Link href={`/app/journal?tab=${tab}&page=${page + 1}`}>
-                      {t("Berikutnya", "Next")}
-                    </Link>
-                  </Button>
-                )}
-              </div>
-            </div>
+            <PaginationLinks
+              page={page}
+              totalPages={totalPages}
+              href={(p) => `/app/journal?tab=${tab}&page=${p}`}
+              labels={{
+                page: t("Halaman", "Page"),
+                previous: t("Sebelumnya", "Previous"),
+                next: t("Berikutnya", "Next"),
+              }}
+            />
           )}
         </CardContent>
       </Card>

@@ -36,6 +36,7 @@ import { InvoicePeriodControls } from "@/components/invoices/invoice-period-cont
 import { RecurringInvoiceManager } from "@/components/invoices/recurring-invoice-manager";
 import { InvoiceCreateDialog } from "@/components/invoices/invoice-create-dialog";
 import { getProposedInvoiceNumber } from "@/lib/actions/invoices";
+import { PaginationLinks } from "@/components/ui/pagination-links";
 
 const PAGE_SIZE = 10;
 
@@ -608,46 +609,16 @@ export default async function InvoicesPage({
           />
 
           {/* Pagination */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-muted-foreground sm:text-sm">
-              {t(
-                `Menampilkan ${fromItem}–${toItem} dari ${filteredTotal}`,
-                `Showing ${fromItem}–${toItem} of ${filteredTotal}`,
-              )}
-              {` · ${t(`${PAGE_SIZE}/halaman`, `${PAGE_SIZE}/page`)}`}
-            </p>
-            <div className="flex items-center gap-2">
-              {currentPage > 1 ? (
-                <Link href={buildInvoicesHref({ ...filtersForHref, page: currentPage - 1 })}>
-                  <Button variant="outline" size="sm" className="gap-1">
-                    <ChevronLeft className="h-4 w-4" />
-                    {t("Sebelumnya", "Previous")}
-                  </Button>
-                </Link>
-              ) : (
-                <Button variant="outline" size="sm" className="gap-1" disabled>
-                  <ChevronLeft className="h-4 w-4" />
-                  {t("Sebelumnya", "Previous")}
-                </Button>
-              )}
-              <span className="min-w-[4.5rem] text-center text-xs tabular-nums text-muted-foreground sm:text-sm">
-                {currentPage}/{totalPages}
-              </span>
-              {currentPage < totalPages ? (
-                <Link href={buildInvoicesHref({ ...filtersForHref, page: currentPage + 1 })}>
-                  <Button variant="outline" size="sm" className="gap-1">
-                    {t("Berikutnya", "Next")}
-                    <ChevronRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-              ) : (
-                <Button variant="outline" size="sm" className="gap-1" disabled>
-                  {t("Berikutnya", "Next")}
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
-              )}
-            </div>
-          </div>
+          <PaginationLinks
+            page={currentPage}
+            totalPages={totalPages}
+            href={(p) => buildInvoicesHref({ ...filtersForHref, page: p })}
+            labels={{
+              page: t("Halaman", "Page"),
+              previous: t("Sebelumnya", "Previous"),
+              next: t("Berikutnya", "Next"),
+            }}
+          />
         </>
       )}
 

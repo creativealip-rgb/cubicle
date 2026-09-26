@@ -31,6 +31,7 @@ import { CheckSquare, Search, LayoutTemplate } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import { PaginationLinks } from "@/components/ui/pagination-links";
 
 export const PAGE_SIZE = 10;
 
@@ -237,27 +238,18 @@ export default async function TasksPage({
             </>
           )}
 
-          {totalPages > 1 && (
-            <nav className="flex flex-wrap items-center justify-between gap-3" aria-label={t("Paginasi tugas", "Task pagination")}>
-              <span className="text-sm text-muted-foreground">
-                {t("Halaman", "Page")} {page} {t("dari", "of")} {totalPages}
-              </span>
-              <div className="flex gap-2">
-                <Link
-                  className={`rounded border px-3 py-2 text-sm ${page === 1 ? "pointer-events-none opacity-50" : ""}`}
-                  href={buildTaskPageHref(params, page - 1)}
-                >
-                  {t("Sebelumnya", "Previous")}
-                </Link>
-                <Link
-                  className={`rounded border px-3 py-2 text-sm ${page === totalPages ? "pointer-events-none opacity-50" : ""}`}
-                  href={buildTaskPageHref(params, page + 1)}
-                >
-                  {t("Berikutnya", "Next")}
-                </Link>
-              </div>
-            </nav>
-          )}
+              {totalPages > 1 && (
+                <PaginationLinks
+                  page={page}
+                  totalPages={totalPages}
+                  href={(p) => buildTaskPageHref(params, p)}
+                  labels={{
+                    page: t("Halaman", "Page"),
+                    previous: t("Sebelumnya", "Previous"),
+                    next: t("Berikutnya", "Next"),
+                  }}
+                />
+              )}
         </>
       )}
     </div>

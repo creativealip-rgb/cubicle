@@ -38,6 +38,7 @@ import { Button } from "@/components/ui/button";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { PageHeader } from "@/components/ui/page-header";
 import { Wallet } from "lucide-react";
+import { PaginationLinks } from "@/components/ui/pagination-links";
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import {
@@ -622,51 +623,16 @@ export default async function ExpensesPage({
                   />
 
                   {totalPages > 1 && (
-                    <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-                      <span className="text-xs sm:text-sm">
-                        {t(
-                          `Menampilkan ${rangeStart}–${rangeEnd} dari ${totalCount}`,
-                          `Showing ${rangeStart}–${rangeEnd} of ${totalCount}`,
-                        )}
-                      </span>
-                      <div className="flex items-center gap-1 self-end sm:self-auto">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={safePage <= 1}
-                          asChild={safePage > 1}
-                        >
-                          {safePage > 1 ? (
-                            <Link href={pageHref(safePage - 1)}>
-                              <ChevronLeft className="h-4 w-4" />
-                            </Link>
-                          ) : (
-                            <span>
-                              <ChevronLeft className="h-4 w-4" />
-                            </span>
-                          )}
-                        </Button>
-                        <span className="px-2 text-xs">
-                          {safePage} / {totalPages}
-                        </span>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          disabled={safePage >= totalPages}
-                          asChild={safePage < totalPages}
-                        >
-                          {safePage < totalPages ? (
-                            <Link href={pageHref(safePage + 1)}>
-                              <ChevronRight className="h-4 w-4" />
-                            </Link>
-                          ) : (
-                            <span>
-                              <ChevronRight className="h-4 w-4" />
-                            </span>
-                          )}
-                        </Button>
-                      </div>
-                    </div>
+                    <PaginationLinks
+                      page={safePage}
+                      totalPages={totalPages}
+                      href={pageHref}
+                      labels={{
+                        page: t("Halaman", "Page"),
+                        previous: t("Sebelumnya", "Previous"),
+                        next: t("Berikutnya", "Next"),
+                      }}
+                    />
                   )}
                 </>
               )}
