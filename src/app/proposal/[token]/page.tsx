@@ -97,57 +97,51 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8 px-4">
-      <div className="max-w-3xl mx-auto">
-        {expired && (
-          <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
-            This proposal link has expired. Please contact the sender for a new one.
+    <ProposalPublicView
+      proposal={{
+        title: proposal.title,
+        clientName: proposal.clientName,
+        clientEmail: proposal.clientEmail,
+        validUntil: proposal.validUntil,
+        status: proposal.status,
+        lineItems: (proposal.lineItems ?? []) as import("@/components/proposals/proposal-public-view").ProposalLineItem[],
+        subtotal: proposal.subtotal,
+        tax: proposal.tax,
+        total: proposal.total,
+        currency: proposal.currency || "IDR",
+        downPaymentPercent: proposal.downPaymentPercent,
+      }}
+      blocks={normalizeDocumentBlocks(proposal.contentBlocks, "proposal")}
+      placeholderValues={placeholderValues}
+      topBar={
+        expired ? (
+          <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-700 font-medium text-center">
+            Masa berlaku tautan proposal ini telah habis. Silakan hubungi pengirim untuk mendapatkan tautan baru.
           </div>
-        )}
-        {isDraft && (
-          <div className="mb-4 p-4 bg-slate-100 border border-slate-200 rounded-lg text-sm text-slate-700">
-            This proposal hasn&apos;t been sent yet.
+        ) : isDraft ? (
+          <div className="p-4 bg-muted/40 border border-border/80 rounded-xl text-xs text-muted-foreground font-medium text-center">
+            Proposal ini masih berstatus draft.
           </div>
-        )}
-        <ProposalPublicView
-          proposal={{
-            title: proposal.title,
-            clientName: proposal.clientName,
-            clientEmail: proposal.clientEmail,
-            validUntil: proposal.validUntil,
-            status: proposal.status,
-            lineItems: (proposal.lineItems ?? []) as import("@/components/proposals/proposal-public-view").ProposalLineItem[],
-            subtotal: proposal.subtotal,
-            tax: proposal.tax,
-            total: proposal.total,
-            currency: proposal.currency,
-            downPaymentPercent: proposal.downPaymentPercent,
-          }}
-          blocks={normalizeDocumentBlocks(proposal.contentBlocks, "proposal")}
-          placeholderValues={placeholderValues}
-          signatureSlot={
-            isActionable ? (
-              <AcceptDeclineButtons proposalId={proposal.id} token={token} />
-            ) : null
-          }
-        />
-        {isAccepted && (
-          <div className="mt-8 p-6 bg-emerald-50 border border-emerald-200 rounded-lg text-center">
-            <h2 className="text-lg font-semibold text-emerald-900">Proposal accepted</h2>
-            <p className="text-sm text-emerald-700 mt-1">
-              Thank you. We&apos;ve started the project and a down-payment invoice is on its way.
-            </p>
+        ) : null
+      }
+      signatureSlot={
+        isActionable ? (
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-xs text-muted-foreground">
+              Dengan menyetujui proposal ini, Anda menyetujui rincian scope, harga, dan ketentuan yang tercantum.
+            </div>
+            <AcceptDeclineButtons proposalId={proposal.id} token={token} />
           </div>
-        )}
-        {isDeclined && (
-          <div className="mt-8 p-6 bg-slate-100 border border-slate-200 rounded-lg text-center">
-            <h2 className="text-lg font-semibold text-slate-700">Proposal declined</h2>
-            {proposal.declineReason && (
-              <p className="text-sm text-slate-600 mt-1">Reason: {proposal.declineReason}</p>
-            )}
+        ) : isAccepted ? (
+          <div className="flex items-center justify-center gap-2 text-emerald-600 font-bold text-xs sm:text-sm py-2">
+            <span>✓ Proposal telah disetujui</span>
           </div>
-        )}
-      </div>
-    </div>
+        ) : isDeclined ? (
+          <div className="flex items-center justify-center gap-2 text-destructive font-bold text-xs sm:text-sm py-2">
+            <span>✕ Proposal telah ditolak</span>
+          </div>
+        ) : null
+      }
+    />
   );
 }
