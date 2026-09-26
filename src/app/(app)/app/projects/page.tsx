@@ -136,6 +136,7 @@ export default async function ProjectsPage({
   const [{ totalFiltered }] = await db
     .select({ totalFiltered: sql<number>`count(distinct ${projects.id})::int` })
     .from(projects)
+    .leftJoin(clients, eq(clients.id, projects.clientId))
     .leftJoin(tasks, eq(tasks.projectId, projects.id))
     .where(and(...whereClauses));
 
