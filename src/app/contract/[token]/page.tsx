@@ -60,10 +60,50 @@ export default async function ContractPage({ params }: { params: Promise<{ token
         clientEmail: client.email,
         validUntil: contract.validUntil,
         status: contract.status,
+        signedAt: contract.signedAt,
+        signedName: contract.signedName,
+        signatureDataUrl: contract.signatureDataUrl,
       }}
       blocks={normalizeDocumentBlocks(contract.contentBlocks, "contract")}
       placeholderValues={placeholderValues}
-      signatureSlot={<SignaturePad token={token} defaultName={client?.name || ""} defaultEmail={client?.email || ""} />}
+      signatureSlot={
+        contract.status === "signed" ? (
+          <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/5 p-5 space-y-3">
+            <div className="flex items-center gap-2 text-emerald-600 font-bold text-xs sm:text-sm">
+              <CheckCircle2 className="h-4 w-4" />
+              <span>Contract Digitally Signed</span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs pt-1">
+              <div>
+                <p className="text-muted-foreground font-medium">Signer Name & Email</p>
+                <p className="font-bold text-foreground mt-0.5">{contract.signedName || client.name}</p>
+                <p className="text-muted-foreground">{contract.signedEmail || client.email}</p>
+              </div>
+              <div>
+                <p className="text-muted-foreground font-medium">Signed Timestamp</p>
+                <p className="font-bold text-foreground mt-0.5">
+                  {contract.signedAt
+                    ? new Date(contract.signedAt).toLocaleString("en-US", {
+                        dateStyle: "medium",
+                        timeStyle: "short",
+                      })
+                    : "Recorded"}
+                </p>
+              </div>
+            </div>
+            {contract.signatureDataUrl && (
+              <div className="pt-2 border-t border-emerald-500/20">
+                <p className="text-[11px] text-muted-foreground mb-1.5 font-medium">Verified Signature Record</p>
+                <div className="inline-block bg-background rounded-lg border border-border/80 p-2 shadow-2xs">
+                  <img src={contract.signatureDataUrl} alt="Verified Signature" className="h-14 max-w-xs object-contain" />
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <SignaturePad token={token} defaultName={client?.name || ""} defaultEmail={client?.email || ""} />
+        )
+      }
     />
   );
 }

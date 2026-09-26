@@ -27,6 +27,9 @@ export interface ContractViewData {
   clientEmail: string | null;
   validUntil: Date | string | null;
   status: string;
+  signedAt?: Date | string | null;
+  signedName?: string | null;
+  signatureDataUrl?: string | null;
 }
 
 function statusBadge(status: string) {
