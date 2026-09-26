@@ -32,7 +32,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
-export const PAGE_SIZE = 50;
+export const PAGE_SIZE = 10;
 
 function buildTaskPageHref(params: Record<string, string | undefined>, page: number) {
   const next = new URLSearchParams();
@@ -234,28 +234,29 @@ export default async function TasksPage({
                   focusId={params.focus ?? null}
                 />
               )}
-              {totalPages > 1 && (
-                <nav className="flex flex-wrap items-center justify-between gap-3" aria-label={t("Paginasi tugas", "Task pagination")}>
-                  <span className="text-sm text-muted-foreground">
-                    {t("Halaman", "Page")} {page} {t("dari", "of")} {totalPages}
-                  </span>
-                  <div className="flex gap-2">
-                    <Link
-                      className={`rounded border px-3 py-2 text-sm ${page === 1 ? "pointer-events-none opacity-50" : ""}`}
-                      href={buildTaskPageHref(params, page - 1)}
-                    >
-                      {t("Sebelumnya", "Previous")}
-                    </Link>
-                    <Link
-                      className={`rounded border px-3 py-2 text-sm ${page === totalPages ? "pointer-events-none opacity-50" : ""}`}
-                      href={buildTaskPageHref(params, page + 1)}
-                    >
-                      {t("Berikutnya", "Next")}
-                    </Link>
-                  </div>
-                </nav>
-              )}
             </>
+          )}
+
+          {totalPages > 1 && (
+            <nav className="flex flex-wrap items-center justify-between gap-3" aria-label={t("Paginasi tugas", "Task pagination")}>
+              <span className="text-sm text-muted-foreground">
+                {t("Halaman", "Page")} {page} {t("dari", "of")} {totalPages}
+              </span>
+              <div className="flex gap-2">
+                <Link
+                  className={`rounded border px-3 py-2 text-sm ${page === 1 ? "pointer-events-none opacity-50" : ""}`}
+                  href={buildTaskPageHref(params, page - 1)}
+                >
+                  {t("Sebelumnya", "Previous")}
+                </Link>
+                <Link
+                  className={`rounded border px-3 py-2 text-sm ${page === totalPages ? "pointer-events-none opacity-50" : ""}`}
+                  href={buildTaskPageHref(params, page + 1)}
+                >
+                  {t("Berikutnya", "Next")}
+                </Link>
+              </div>
+            </nav>
           )}
         </>
       )}
