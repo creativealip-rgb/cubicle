@@ -45,11 +45,13 @@ function formatMoney(value: string | number | null | undefined): string {
 
 /** Shared financial placeholder values (today, subtotal, tax, total, down payment). */
 function financialPlaceholderValues(source: DocumentValueSource, now: Date): DocumentPlaceholderValues {
+  const formattedTotal = formatMoney(source.total);
   return {
     today: source.today instanceof Date ? formatIdDate(source.today, now) : source.today == null ? "" : String(source.today),
     subtotal: formatMoney(source.subtotal),
     tax: formatMoney(source.tax),
-    total_amount: formatMoney(source.total),
+    total_amount: formattedTotal,
+    contract_value: formattedTotal || "Rp 0",
     down_payment: formatMoney(source.downPaymentAmount),
   };
 }

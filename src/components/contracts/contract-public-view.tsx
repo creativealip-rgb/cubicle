@@ -82,58 +82,66 @@ export function ContractPublicView({
   }
 
   return (
-    <div className={embedded ? "space-y-6" : "min-h-screen bg-gradient-to-b from-slate-50 via-white to-white"}>
-      <div className={embedded ? "space-y-6" : "max-w-3xl mx-auto p-4 md:p-8 space-y-6"}>
+    <div className={embedded ? "space-y-6" : "min-h-screen bg-slate-100/70 dark:bg-zinc-950 py-8 px-4 sm:px-6"}>
+      <div className={embedded ? "space-y-6" : "max-w-3xl mx-auto space-y-6"}>
         {!embedded && (
-          <div className="text-center pt-4">
-            <Link href="/" className="inline-block text-xl font-semibold text-slate-900">
+          <div className="text-center">
+            <Link href="/" className="inline-block text-xl font-extrabold tracking-tight text-foreground">
               Cubiqlo
             </Link>
-            <p className="text-xs text-slate-500 mt-1">E-signature</p>
+            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mt-0.5">
+              E-SIGNATURE & LEGAL AGREEMENT
+            </p>
           </div>
         )}
 
         {topBar}
 
-        <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-          <div className="border-b bg-slate-50 px-6 py-4">
-            <div className="flex items-center gap-2 mb-1">
-              <FileText className="h-4 w-4 text-slate-500" />
-              <span className="text-xs text-slate-500 uppercase tracking-wider">Contract</span>
+        <div className="rounded-2xl border border-border/80 bg-background shadow-sm overflow-hidden">
+          <div className="border-b border-border/70 bg-muted/20 px-6 sm:px-8 py-5">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider px-2 py-0 h-5 border-primary/40 bg-primary/5 text-primary">
+                Contract Document
+              </Badge>
             </div>
-            <h1 className="text-2xl font-semibold tracking-tight">{contract.title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">{contract.title}</h1>
             {(contract.clientName || contract.clientEmail) && (
-              <p className="text-sm text-slate-500 mt-1">
-                For: <span className="font-medium text-slate-700">{contract.clientName}</span>
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1.5">
+                Prepared for: <span className="font-semibold text-foreground">{contract.clientName}</span>
                 {contract.clientEmail && ` · ${contract.clientEmail}`}
               </p>
             )}
             {contract.validUntil && (
-              <p className="text-xs text-slate-500 mt-1">
+              <p className="text-xs text-muted-foreground mt-1">
                 Valid until:{" "}
-                {new Date(contract.validUntil).toLocaleDateString("id-ID", {
-                  day: "numeric",
-                  month: "long",
-                  year: "numeric",
-                })}
+                <span className="font-medium text-foreground">
+                  {new Date(contract.validUntil).toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
               </p>
             )}
-            {statusBadge(contract.status) && <div className="mt-2">{statusBadge(contract.status)}</div>}
+            {statusBadge(contract.status) && <div className="mt-3">{statusBadge(contract.status)}</div>}
           </div>
 
-          <div className="px-6 py-6 space-y-4">{blocks.map(renderBlock)}</div>
+          <div className="px-6 sm:px-8 py-8 space-y-5 bg-background">{blocks.map(renderBlock)}</div>
 
-          <div className="border-t bg-slate-50 px-6 py-5">
+          <div className="border-t border-border/70 bg-muted/20 px-6 sm:px-8 py-6">
             {signatureSlot ?? (
-              <div className="rounded border border-dashed p-6 text-center text-sm text-muted-foreground">
+              <div className="rounded-xl border-2 border-dashed border-border/80 p-6 text-center text-xs text-muted-foreground">
                 Tempat tanda tangan client
               </div>
             )}
           </div>
         </div>
 
-        <p className={embedded ? "text-xs text-slate-400 text-center" : "text-center text-xs text-slate-400"}>
-          Powered by <Link href="/" className="hover:underline">Cubiqlo</Link>
+        <p className="text-center text-xs text-muted-foreground">
+          Dibuat secara aman menggunakan{" "}
+          <Link href="/" className="font-semibold text-primary hover:underline">
+            Cubiqlo Contracts
+          </Link>
         </p>
       </div>
     </div>
