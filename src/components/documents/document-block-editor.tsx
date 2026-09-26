@@ -1622,14 +1622,14 @@ export function DocumentBlockEditor({
                   className="h-auto py-3 flex-col gap-1.5 rounded-xl border-border/80 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-center"
                   onClick={() => {
                     const text = encodeURIComponent(
-                      `Halo, berikut tautan resmi dokumen "${docTitle}" untuk Anda tinjau dan tanda tangani:\n${fullShareUrl}`
+                      `Hello, here is the official link to review and sign "${docTitle}":\n${fullShareUrl}`
                     );
                     window.open(`https://wa.me/?text=${text}`, "_blank");
                   }}
                 >
                   <Send className="h-4 w-4 text-emerald-600" />
                   <span className="text-xs font-bold text-foreground">WhatsApp Share</span>
-                  <span className="text-[10px] text-muted-foreground">Kirim via WA Chat</span>
+                  <span className="text-[10px] text-muted-foreground">Send via WA Chat</span>
                 </Button>
 
                 <Button
@@ -1640,7 +1640,7 @@ export function DocumentBlockEditor({
                 >
                   <QrCode className="h-4 w-4 text-primary" />
                   <span className="text-xs font-bold text-foreground">QR Code</span>
-                  <span className="text-[10px] text-muted-foreground">Scan via Smartphone</span>
+                  <span className="text-[10px] text-muted-foreground">Scan on Mobile Device</span>
                 </Button>
 
                 <Button
@@ -1653,7 +1653,7 @@ export function DocumentBlockEditor({
                 >
                   <Download className="h-4 w-4 text-blue-600" />
                   <span className="text-xs font-bold text-foreground">Open / Print PDF</span>
-                  <span className="text-[10px] text-muted-foreground">Buka halaman cetak</span>
+                  <span className="text-[10px] text-muted-foreground">View printable page</span>
                 </Button>
               </div>
             </div>

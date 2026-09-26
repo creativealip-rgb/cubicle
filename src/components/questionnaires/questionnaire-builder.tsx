@@ -1938,21 +1938,21 @@ export function QuestionnaireBuilder({
       {/* ─── TAB CONTENT: SETTINGS ─── */}
       {activeTab === "settings" && (
         <div className="flex-1 overflow-y-auto p-4 sm:p-8 md:p-12 flex justify-center custom-scrollbar">
-          <div className="w-full max-w-2xl space-y-5">
-            {/* General Info */}
+          <div className="w-full max-w-2xl space-y-6">
+            {/* General Information Card */}
             <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Settings className="h-4 w-4 text-primary" />
-                <span>Pengaturan Formulir</span>
+                <span>Form Settings</span>
               </h3>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Nama Formulir</Label>
+                <Label className="text-xs font-semibold">Form Name</Label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} className="h-9 text-xs sm:text-sm" />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Deskripsi & Petunjuk</Label>
+                <Label className="text-xs font-semibold">Description & Instructions</Label>
                 <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="text-xs" />
               </div>
             </div>
@@ -1961,14 +1961,14 @@ export function QuestionnaireBuilder({
             <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Lock className="h-4 w-4 text-amber-500" />
-                <span>Kontrol Akses & Status</span>
+                <span>Access Control & Status</span>
               </h3>
 
               <div className="flex items-center justify-between rounded-xl border p-3 bg-muted/10">
                 <div>
-                  <p className="text-xs font-semibold">Status Formulir</p>
+                  <p className="text-xs font-semibold">Form Status</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {formStatus === "active" ? "Formulir aktif dan dapat menerima respon" : "Formulir dinonaktifkan (tutup penerimaan)"}
+                    {formStatus === "active" ? "Form is active and accepting responses" : "Form is disabled (closed for submissions)"}
                   </p>
                 </div>
                 <Select value={formStatus} onValueChange={(val: any) => setFormStatus(val)}>
@@ -1976,23 +1976,23 @@ export function QuestionnaireBuilder({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">🟢 Aktif</SelectItem>
-                    <SelectItem value="disabled">🔴 Ditutup</SelectItem>
+                    <SelectItem value="active">🟢 Active</SelectItem>
+                    <SelectItem value="disabled">🔴 Closed</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1.5 pt-1">
-                <Label className="text-xs font-medium">Password Protection (Opsional)</Label>
+                <Label className="text-xs font-semibold">Password Protection (Optional)</Label>
                 <Input
                   type="password"
                   value={passwordProtection}
                   onChange={(e) => setPasswordProtection(e.target.value)}
-                  placeholder="Kosongkan jika form publik tanpa password"
+                  placeholder="Leave empty for public access without password"
                   className="h-9 text-xs"
                 />
                 <p className="text-[10px] text-muted-foreground">
-                  Jika diisi, responden wajib memasukkan sandi ini sebelum dapat mengisi formulir.
+                  If set, respondents must enter this passcode before accessing the form.
                 </p>
               </div>
             </div>
@@ -2001,9 +2001,9 @@ export function QuestionnaireBuilder({
             <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Palette className="h-4 w-4 text-primary" />
-                <span>Tema, Warna & Sudut Card</span>
+                <span>Theme, Colors & Card Radius</span>
               </h3>
-              <p className="text-xs text-muted-foreground">Sesuaikan tampilan branding agar selaras dengan citra agensi Anda.</p>
+              <p className="text-xs text-muted-foreground">Customize branding visuals to match your agency and client identity.</p>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
                 {THEME_PRESETS.map((tPreset) => (
@@ -2030,7 +2030,7 @@ export function QuestionnaireBuilder({
 
               {/* Card Roundness Switcher */}
               <div className="space-y-2 pt-3 border-t border-border/60">
-                <Label className="text-xs font-medium">Bentuk Sudut Kartu (Card Roundness)</Label>
+                <Label className="text-xs font-semibold">Card Corner Radius</Label>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
@@ -2067,11 +2067,11 @@ export function QuestionnaireBuilder({
             <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <FileCheck className="h-4 w-4 text-emerald-500" />
-                <span>Aksi Setelah Submit (Thank You Page)</span>
+                <span>Post-Submission Action (Thank You Page)</span>
               </h3>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-medium">Pesan Sukses (Thank You Message)</Label>
+                <Label className="text-xs font-semibold">Thank You Message</Label>
                 <Textarea
                   value={thankYouMessage}
                   onChange={(e) => setThankYouMessage(e.target.value)}
@@ -2081,14 +2081,14 @@ export function QuestionnaireBuilder({
               </div>
 
               <div className="space-y-1.5 pt-2">
-                <Label className="text-xs font-medium">Redirect URL (Opsional)</Label>
+                <Label className="text-xs font-semibold">Redirect URL (Optional)</Label>
                 <Input
                   value={redirectUrl}
                   onChange={(e) => setRedirectUrl(e.target.value)}
-                  placeholder="https://wa.me/... atau https://website.com"
+                  placeholder="https://wa.me/... or https://yourdomain.com"
                   className="h-9 text-xs font-mono"
                 />
-                <p className="text-[10px] text-muted-foreground">Jika diisi, responden akan langsung diarahkan ke URL ini setelah submit.</p>
+                <p className="text-[10px] text-muted-foreground">If provided, respondents will automatically be redirected to this link after submission.</p>
               </div>
             </div>
           </div>
@@ -2102,13 +2102,13 @@ export function QuestionnaireBuilder({
             <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
-                <span>Bagikan Formulir</span>
+                <span>Share & Publish Form</span>
               </h3>
 
               {questionnaireId ? (
                 <div className="space-y-5">
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold">Tautan Langsung (Direct Link)</Label>
+                    <Label className="text-xs font-semibold">Direct Shareable Link</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         readOnly
@@ -2120,11 +2120,11 @@ export function QuestionnaireBuilder({
                         size="sm"
                         onClick={() => {
                           navigator.clipboard.writeText(shareUrl);
-                          toast.success("Tautan berhasil disalin!");
+                          toast.success("Link copied to clipboard!");
                         }}
                         className="h-9.5 px-4 text-xs font-semibold"
                       >
-                        Salin Link
+                        Copy Link
                       </Button>
                     </div>
                   </div>
@@ -2136,13 +2136,13 @@ export function QuestionnaireBuilder({
                       variant="outline"
                       size="sm"
                       onClick={() => {
-                        const text = `Halo, mohon bantu isi formulir brief ${name || "proyek"} melalui tautan berikut:\n${shareUrl}`;
+                        const text = `Hello, please help fill out the brief form for ${name || "our project"} via this link:\n${shareUrl}`;
                         window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
                       }}
                       className="h-9 gap-1.5 text-xs font-semibold border-emerald-500/40 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                     >
                       <MessageCircle className="h-4 w-4" />
-                      <span>Bagikan ke WhatsApp</span>
+                      <span>Share to WhatsApp</span>
                     </Button>
 
                     <Button
@@ -2158,14 +2158,14 @@ export function QuestionnaireBuilder({
                       className="h-9 gap-1.5 text-xs font-semibold"
                     >
                       <QrCode className="h-4 w-4 text-primary" />
-                      <span>Lihat QR Code</span>
+                      <span>View QR Code</span>
                     </Button>
                   </div>
 
                   <div className="space-y-2 pt-3 border-t border-border/60">
                     <Label className="text-xs font-semibold flex items-center gap-1.5">
                       <Code className="h-3.5 w-3.5 text-primary" />
-                      <span>Embed Formulir ke Website (iFrame)</span>
+                      <span>Embed Form on Website (iFrame)</span>
                     </Label>
                     <Textarea
                       readOnly
@@ -2179,11 +2179,11 @@ export function QuestionnaireBuilder({
                       size="sm"
                       onClick={() => {
                         navigator.clipboard.writeText(embedCode);
-                        toast.success("Kode Embed disalin ke clipboard!");
+                        toast.success("Embed code copied to clipboard!");
                       }}
                       className="h-8.5 px-3 text-xs"
                     >
-                      Salin Kode Embed
+                      Copy Embed Code
                     </Button>
                   </div>
                 </div>
@@ -2191,7 +2191,7 @@ export function QuestionnaireBuilder({
                 <div className="py-8 text-center space-y-2">
                   <Share2 className="h-8 w-8 mx-auto text-muted-foreground/50" />
                   <p className="text-xs text-muted-foreground">
-                    Klik tombol <strong>Simpan</strong> di kanan atas terlebih dahulu untuk menghasilkan link publik dan kode embed.
+                    Click <strong>Save</strong> in the top right header first to generate your shareable link and embed snippet.
                   </p>
                 </div>
               )}

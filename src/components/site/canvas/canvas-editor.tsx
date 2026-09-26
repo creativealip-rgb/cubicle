@@ -973,14 +973,14 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                     className="h-auto py-3 flex-col gap-1.5 rounded-xl border-border/80 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-center"
                     onClick={() => {
                       const text = encodeURIComponent(
-                        `Halo, kunjungi website resmi kami di tautan berikut:\n${publicUrl}`
+                        `Hello, visit our official website via this link:\n${publicUrl}`
                       );
                       window.open(`https://wa.me/?text=${text}`, "_blank");
                     }}
                   >
                     <Send className="h-4 w-4 text-emerald-600" />
                     <span className="text-xs font-bold text-foreground">WhatsApp Share</span>
-                    <span className="text-[10px] text-muted-foreground">Kirim via WA Chat</span>
+                    <span className="text-[10px] text-muted-foreground">Send via WA Chat</span>
                   </Button>
 
                   <Button
@@ -991,7 +991,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                   >
                     <QrCode className="h-4 w-4 text-primary" />
                     <span className="text-xs font-bold text-foreground">QR Code</span>
-                    <span className="text-[10px] text-muted-foreground">Scan via Smartphone</span>
+                    <span className="text-[10px] text-muted-foreground">Scan on Mobile Device</span>
                   </Button>
 
                   <Button
@@ -1003,7 +1003,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                     <a href={publicUrl} target="_blank" rel="noopener noreferrer">
                       <ExternalLink className="h-4 w-4 text-blue-600" />
                       <span className="text-xs font-bold text-foreground">Open Live Site</span>
-                      <span className="text-[10px] text-muted-foreground">Buka website publik</span>
+                      <span className="text-[10px] text-muted-foreground">Open live public website</span>
                     </a>
                   </Button>
                 </div>
