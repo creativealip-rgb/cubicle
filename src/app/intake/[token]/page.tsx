@@ -70,7 +70,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
         {/* Footer */}
         <div className="text-center">
           <p className="text-[11px] text-muted-foreground">
-            Dibuat secara aman menggunakan <span className="font-semibold text-foreground">Cubiqlo Forms</span>
+            Created securely using <span className="font-semibold text-foreground">Cubiqlo Forms</span>
           </p>
         </div>
       </div>

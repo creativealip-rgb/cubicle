@@ -197,71 +197,87 @@ export function SignaturePad({
   return (
     <div className="space-y-4">
       <div>
-        <div className="mb-3 inline-flex rounded-lg border p-1" role="group" aria-label="Signature method">
-          <Button type="button" size="sm" variant={signatureMode === "draw" ? "default" : "ghost"} onClick={() => setSignatureMode("draw")}>Gambar / Draw</Button>
-          <Button type="button" size="sm" variant={signatureMode === "type" ? "default" : "ghost"} onClick={() => setSignatureMode("type")}>Ketik nama / Type name</Button>
+        <div className="mb-3 inline-flex rounded-lg border border-border/80 bg-background p-1" role="group" aria-label="Signature method">
+          <Button type="button" size="sm" variant={signatureMode === "draw" ? "default" : "ghost"} onClick={() => setSignatureMode("draw")}>
+            Draw Signature
+          </Button>
+          <Button type="button" size="sm" variant={signatureMode === "type" ? "default" : "ghost"} onClick={() => setSignatureMode("type")}>
+            Type Name
+          </Button>
         </div>
         <div className="flex items-center justify-between mb-1.5">
-          <label htmlFor="contract-signature" className="text-sm font-medium">Tanda tangan / Sign here</label>
+          <label htmlFor="contract-signature" className="text-xs font-semibold text-foreground">Sign here</label>
           {hasSignature && (
-            <Button type="button" variant="ghost" size="sm" onClick={clearSignature}>
-              <Trash2 className="h-3 w-3" />
+            <Button type="button" variant="ghost" size="sm" onClick={clearSignature} className="h-7 text-xs text-muted-foreground hover:text-destructive">
+              <Trash2 className="h-3.5 w-3.5 mr-1" />
               Clear
             </Button>
           )}
         </div>
-        {signatureMode === "draw" ? <div className="border-2 border-dashed border-slate-300 rounded-lg bg-white">
-          <canvas
-            id="contract-signature"
-            role="img"
-            aria-label="Area tanda tangan. Gambar dengan mouse, trackpad, atau jari. / Signature area. Draw with mouse, trackpad, or finger."
-            tabIndex={0}
-            ref={canvasRef}
-            className="w-full h-32 touch-none cursor-crosshair"
-            onPointerDown={startDraw}
-            onPointerMove={draw}
-            onPointerUp={endDraw}
-            onPointerLeave={endDraw}
-          />
-        </div> : <div className="flex h-32 items-center justify-center rounded-lg border-2 border-dashed bg-white px-4 text-center font-serif text-3xl italic text-slate-800">{name.trim() || "Your name"}</div>}
-        <p className="text-xs text-slate-500 mt-1">{signatureMode === "draw" ? "Gambar dengan mouse, trackpad, atau jari. / Draw with your mouse, trackpad, or finger." : "Nama lengkap digunakan sebagai tanda tangan elektronik. / Your full name is used as your electronic signature."}</p>
+        {signatureMode === "draw" ? (
+          <div className="border-2 border-dashed border-border/80 rounded-xl bg-background overflow-hidden">
+            <canvas
+              id="contract-signature"
+              role="img"
+              aria-label="Signature area. Draw with mouse, trackpad, or finger."
+              tabIndex={0}
+              ref={canvasRef}
+              className="w-full h-32 touch-none cursor-crosshair bg-background"
+              onPointerDown={startDraw}
+              onPointerMove={draw}
+              onPointerUp={endDraw}
+              onPointerLeave={endDraw}
+            />
+          </div>
+        ) : (
+          <div className="flex h-32 items-center justify-center rounded-xl border-2 border-dashed border-border/80 bg-background px-4 text-center font-serif text-3xl italic text-foreground">
+            {name.trim() || "Your name"}
+          </div>
+        )}
+        <p className="text-[11px] text-muted-foreground mt-1.5">
+          {signatureMode === "draw"
+            ? "Draw your legal signature using your mouse, trackpad, or touch screen."
+            : "Your full legal name will be rendered as your verified digital signature."}
+        </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div>
-          <label htmlFor="contract-signer-name" className="text-sm font-medium block mb-1">Nama lengkap / Full name</label>
+          <label htmlFor="contract-signer-name" className="text-xs font-semibold text-foreground block mb-1">Full Name</label>
           <Input
             id="contract-signer-name"
-            placeholder="Nama lengkap / Full legal name"
+            placeholder="Full legal name"
             value={name}
             onChange={(e) => setName(e.target.value)}
+            className="h-10 text-xs sm:text-sm bg-background"
           />
         </div>
         <div>
-          <label htmlFor="contract-signer-email" className="text-sm font-medium block mb-1">Email</label>
+          <label htmlFor="contract-signer-email" className="text-xs font-semibold text-foreground block mb-1">Email Address</label>
           <Input
             id="contract-signer-email"
             type="email"
             placeholder="you@company.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
+            className="h-10 text-xs sm:text-sm bg-background"
           />
         </div>
       </div>
 
       {error && (
-        <div className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-md p-2">
+        <div className="text-xs text-destructive bg-destructive/10 border border-destructive/30 rounded-xl p-3">
           {error}
         </div>
       )}
 
-      <div className="flex items-center justify-between gap-2 pt-2">
-        <Button className="min-h-11" variant="ghost" onClick={() => setShowDecline(true)} disabled={pending}>
-          Tolak / Decline
+      <div className="flex items-center justify-between gap-3 pt-2">
+        <Button variant="ghost" className="text-xs text-muted-foreground hover:text-destructive" onClick={() => setShowDecline(true)} disabled={pending}>
+          Decline
         </Button>
-        <Button className="min-h-11" onClick={handleSign} disabled={pending || !name.trim() || !email.trim() || (signatureMode === "draw" && !hasSignature)}>
-          {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-          Tanda tangani / Sign contract
+        <Button onClick={handleSign} disabled={pending || !name.trim() || !email.trim() || (signatureMode === "draw" && !hasSignature)} className="text-xs font-semibold gap-1.5">
+          {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+          Sign Contract
         </Button>
       </div>
     </div>

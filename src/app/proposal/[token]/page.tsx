@@ -116,11 +116,11 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
       topBar={
         expired ? (
           <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-700 font-medium text-center">
-            Masa berlaku tautan proposal ini telah habis. Silakan hubungi pengirim untuk mendapatkan tautan baru.
+            This proposal link has expired. Please contact the sender for a new one.
           </div>
         ) : isDraft ? (
           <div className="p-4 bg-muted/40 border border-border/80 rounded-xl text-xs text-muted-foreground font-medium text-center">
-            Proposal ini masih berstatus draft.
+            This proposal is currently in draft status.
           </div>
         ) : null
       }
@@ -128,17 +128,17 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
         isActionable ? (
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="text-xs text-muted-foreground">
-              Dengan menyetujui proposal ini, Anda menyetujui rincian scope, harga, dan ketentuan yang tercantum.
+              By accepting this proposal, you agree to the deliverables, pricing, and project terms detailed above.
             </div>
             <AcceptDeclineButtons proposalId={proposal.id} token={token} />
           </div>
         ) : isAccepted ? (
           <div className="flex items-center justify-center gap-2 text-emerald-600 font-bold text-xs sm:text-sm py-2">
-            <span>✓ Proposal telah disetujui</span>
+            <span>✓ Proposal has been accepted</span>
           </div>
         ) : isDeclined ? (
           <div className="flex items-center justify-center gap-2 text-destructive font-bold text-xs sm:text-sm py-2">
-            <span>✕ Proposal telah ditolak</span>
+            <span>✕ Proposal was declined</span>
           </div>
         ) : null
       }

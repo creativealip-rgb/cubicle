@@ -103,23 +103,23 @@ export function ProposalPublicView({
   }
 
   return (
-    <div className={embedded ? "space-y-6" : "min-h-screen bg-slate-100/70 dark:bg-zinc-950 py-8 px-4 sm:px-6"}>
-      <div className={embedded ? "space-y-6" : "max-w-3xl mx-auto space-y-6"}>
+    <div className={embedded ? "space-y-6" : "min-h-screen bg-gradient-to-b from-primary/5 via-background to-background py-10 px-4 sm:px-6"}>
+      <div className={embedded ? "space-y-6" : "max-w-2xl mx-auto space-y-6"}>
         {!embedded && (
-          <div className="text-center">
-            <Link href="/" className="inline-block text-xl font-extrabold tracking-tight text-foreground">
+          <div className="text-center space-y-1">
+            <Link href="/" className="inline-block text-2xl font-black tracking-tight text-foreground">
               Cubiqlo
             </Link>
-            <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground mt-0.5">
-              PROPOSAL & SCOPE ESTIMATION
+            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+              Proposal & Scope Estimation
             </p>
           </div>
         )}
 
         {topBar}
 
-        <div className="rounded-2xl border border-border/80 bg-background shadow-sm overflow-hidden">
-          <div className="border-b border-border/70 bg-muted/20 px-6 sm:px-8 py-5">
+        <div className="bg-card rounded-2xl border border-border/80 shadow-lg overflow-hidden">
+          <div className="border-b border-border/60 bg-muted/10 px-6 sm:px-8 py-5">
             <div className="flex items-center gap-2 mb-1.5">
               <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider px-2 py-0 h-5 border-primary/40 bg-primary/5 text-primary">
                 Proposal Document
@@ -136,7 +136,7 @@ export function ProposalPublicView({
               <p className="text-xs text-muted-foreground mt-1">
                 Valid until:{" "}
                 <span className="font-medium text-foreground">
-                  {new Date(proposal.validUntil).toLocaleDateString("id-ID", {
+                  {new Date(proposal.validUntil).toLocaleDateString("en-US", {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
@@ -158,23 +158,23 @@ export function ProposalPublicView({
             )}
           </div>
 
-          <div className="px-6 sm:px-8 py-8 space-y-5 bg-background">
+          <div className="px-6 sm:px-8 py-8 space-y-5 bg-card">
             {blocks.map(renderBlock)}
           </div>
 
           {lineItems.length > 0 && (
-            <div className="border-t border-border/70 bg-muted/10 px-6 sm:px-8 py-6 space-y-4">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-foreground">
-                Rincian Biaya & Investasi
+            <div className="border-t border-border/60 bg-muted/10 px-6 sm:px-8 py-6 space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Itemized Scope & Pricing Breakdown
               </h3>
               <div className="rounded-xl border border-border/80 bg-background overflow-hidden shadow-2xs">
                 <Table>
                   <TableHeader>
-                    <TableRow className="bg-muted/40 text-muted-foreground text-xs uppercase font-bold">
-                      <TableHead>Deskripsi</TableHead>
+                    <TableRow className="bg-muted/40 text-muted-foreground text-[11px] uppercase font-bold">
+                      <TableHead>Description</TableHead>
                       <TableHead className="text-right w-20">Qty</TableHead>
-                      <TableHead className="text-right w-32">Harga Satuan</TableHead>
-                      <TableHead className="text-right w-32">Jumlah</TableHead>
+                      <TableHead className="text-right w-32">Unit Price</TableHead>
+                      <TableHead className="text-right w-32">Total</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -201,12 +201,12 @@ export function ProposalPublicView({
                 </div>
                 {Number(tax) > 0 && (
                   <div className="flex justify-between text-muted-foreground">
-                    <span>Pajak</span>
+                    <span>Tax</span>
                     <span className="font-mono font-medium">{formatMoney(tax, currency)}</span>
                   </div>
                 )}
                 <div className="flex justify-between text-sm font-bold text-foreground border-t border-border/60 pt-1.5">
-                  <span>Total Investasi</span>
+                  <span>Total Investment</span>
                   <span className="font-mono text-primary font-bold">{formatMoney(total, currency)}</span>
                 </div>
               </div>
@@ -215,9 +215,9 @@ export function ProposalPublicView({
                 <div className="rounded-xl border border-primary/30 bg-primary/5 p-4 flex items-center gap-3">
                   <CheckCircle2 className="h-5 w-5 text-primary shrink-0" />
                   <div className="text-xs">
-                    <p className="font-bold text-foreground">Ketentuan Uang Muka (Down Payment)</p>
+                    <p className="font-bold text-foreground">Down Payment Terms</p>
                     <p className="text-muted-foreground mt-0.5">
-                      {dpPercent}% ({formatMoney(Number(total) * (dpPercent / 100), currency)}) wajib dibayarkan saat persetujuan proposal untuk memulai pengerjaan proyek.
+                      {dpPercent}% ({formatMoney(Number(total) * (dpPercent / 100), currency)}) is due upon proposal acceptance to commence project execution.
                     </p>
                   </div>
                 </div>
@@ -226,16 +226,18 @@ export function ProposalPublicView({
           )}
 
           {signatureSlot ? (
-            <div className="border-t border-border/70 bg-muted/20 px-6 sm:px-8 py-6">{signatureSlot}</div>
+            <div className="border-t border-border/60 bg-muted/10 px-6 sm:px-8 py-6">{signatureSlot}</div>
           ) : null}
         </div>
 
-        <p className="text-center text-xs text-muted-foreground">
-          Dibuat secara aman menggunakan{" "}
-          <Link href="/" className="font-semibold text-primary hover:underline">
-            Cubiqlo Proposals
-          </Link>
-        </p>
+        <div className="text-center">
+          <p className="text-[11px] text-muted-foreground">
+            Created securely using{" "}
+            <Link href="/" className="font-semibold text-foreground hover:underline">
+              Cubiqlo Proposals
+            </Link>
+          </p>
+        </div>
       </div>
     </div>
   );
