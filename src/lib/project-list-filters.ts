@@ -5,7 +5,7 @@ export type ProjectBillingType = "fixed_price" | "hourly" | "retainer" | "packag
 
 /** Status values grouped under each tab. Legacy "draft"/"review" fold into "active". */
 export const PROJECT_STATUS_TAB_VALUES: Record<ProjectStatusTab, readonly string[]> = {
-  active: ["active", "draft", "review", "on_hold"],
+  active: ["active", "in_progress", "draft", "review", "on_hold"],
   completed: ["completed", "archived"],
 };
 
