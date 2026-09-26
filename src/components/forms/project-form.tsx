@@ -359,23 +359,6 @@ export function ProjectForm({
             </div>
           )}
 
-          {mode === "edit" && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium">{t("Status Proyek", "Project Status")}</Label>
-              <Select value={form.status} onValueChange={(val) => setForm((p) => ({ ...p, status: val }))}>
-                <SelectTrigger className="h-9 text-sm"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">{t("Aktif", "Active")}</SelectItem>
-                  <SelectItem value="in_progress">{t("Sedang Berjalan", "In Progress")}</SelectItem>
-                  <SelectItem value="review">{t("Review", "In Review")}</SelectItem>
-                  <SelectItem value="on_hold">{t("Ditunda", "On Hold")}</SelectItem>
-                  <SelectItem value="completed">{t("Selesai", "Completed")}</SelectItem>
-                  <SelectItem value="archived">{t("Arsipkan", "Archived")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-
           {mode === "edit" && <div className="grid gap-3 grid-cols-2">
             {field(t("Tanggal Mulai", "Start Date"), "startDate", "date")}
             {field(t("Target Selesai", "Target Finish Date"), "finishDate", "date")}
