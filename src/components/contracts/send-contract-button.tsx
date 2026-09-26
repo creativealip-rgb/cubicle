@@ -77,8 +77,16 @@ export function SendContractButton({
         );
         refresh();
       } catch (err: unknown) {
-        const msg = err instanceof Error ? err.message : "Gagal mengirim";
-        toast.error(msg);
+        const msg =
+          err instanceof Error
+            ? err.message === "Client email is missing"
+              ? t(
+                  "Email klien belum diisi. Lengkapi email klien di Settings kontrak atau gunakan opsi Share Link.",
+                  "Client email is missing. Add client email in Contract Settings or share the link directly."
+                )
+              : err.message
+            : t("Terjadi kesalahan saat mengirim kontrak", "An error occurred while sending contract");
+        toast.error(String(msg));
       }
     });
   }
@@ -187,6 +195,14 @@ export function SendContractButton({
                     ? [clientName, clientEmail].filter(Boolean).join(" · ")
                     : t("Belum ada penerima", "No recipient set")}
                 </span>
+                {!clientEmail && (
+                  <p className="text-xs text-amber-600 font-medium">
+                    ⚠️ {t(
+                      "Email klien kosong. Masukkan email di Settings kontrak atau gunakan opsi Share Link/WhatsApp.",
+                      "Client email is missing. Set it in Contract Settings or share via Link/WhatsApp."
+                    )}
+                  </p>
+                )}
               </div>
               <div className="space-y-1">
                 <span className="block text-xs font-medium uppercase tracking-wide text-muted-foreground">
