@@ -105,7 +105,7 @@ export function TimerTagPicker({
           setIsOpen(true);
           inputRef.current?.focus();
         }}
-        className="flex min-h-[40px] w-full flex-wrap items-center gap-1.5 rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-xs shadow-2xs cursor-text focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 transition-colors"
+        className="flex min-h-[40px] w-full flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs cursor-text focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors"
       >
         {selectedTags.map((tagName) => {
           const tagObj = tagsList.find((t) => t.name.toLowerCase() === tagName.toLowerCase());
@@ -113,11 +113,11 @@ export function TimerTagPicker({
             <Badge
               key={tagName}
               variant="secondary"
-              className="h-5 gap-1 px-1.5 text-[11px] font-medium border border-border/60"
+              className="h-6 gap-1.5 px-2 text-xs font-medium border border-border/70"
               style={tagObj?.color ? { borderColor: `${tagObj.color}40`, backgroundColor: `${tagObj.color}15`, color: tagObj.color } : {}}
             >
               {tagObj?.color && (
-                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tagObj.color }} />
+                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: tagObj.color }} />
               )}
               <span>{tagName}</span>
               <button
@@ -128,7 +128,7 @@ export function TimerTagPicker({
                 }}
                 className="rounded-full hover:bg-black/10 dark:hover:bg-white/20 p-0.5"
               >
-                <X className="h-2.5 w-2.5" />
+                <X className="h-3 w-3" />
               </button>
             </Badge>
           );
@@ -158,54 +158,58 @@ export function TimerTagPicker({
               handleToggleTag(lastTag);
             }
           }}
-          placeholder={selectedTags.length === 0 ? (placeholder || t("Ketik atau cari tag...", "Type or search tags...")) : ""}
-          className="flex-1 min-w-[120px] bg-transparent border-0 p-0 text-xs text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-0"
+          placeholder={selectedTags.length === 0 ? (placeholder || t("Cari atau ketik tag...", "Search or type tag...")) : ""}
+          className="flex-1 min-w-[120px] bg-transparent border-0 p-0 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0"
         />
       </div>
 
-      {/* Dropdown Options Only (No duplicate input) */}
+      {/* Dropdown Options (Matched with Project & Task dropdown style) */}
       {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-xl border border-border/80 bg-popover p-1 shadow-lg space-y-0.5">
-          {filteredTags.length > 0 ? (
-            filteredTags.map((tag) => {
-              const isSelected = selectedTags.includes(tag.name);
-              return (
-                <div
-                  key={tag.id}
-                  onClick={() => handleToggleTag(tag.name)}
-                  className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium cursor-pointer transition-colors ${
-                    isSelected ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted/60 text-foreground"
-                  }`}
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border/80 bg-popover p-1.5 shadow-lg space-y-1">
+          <div>
+            <p className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              {t("TAGS WORKSPACE", "WORKSPACE TAGS")}
+            </p>
+            {filteredTags.length > 0 ? (
+              filteredTags.map((tag) => {
+                const isSelected = selectedTags.includes(tag.name);
+                return (
+                  <button
+                    key={tag.id}
+                    type="button"
+                    onClick={() => handleToggleTag(tag.name)}
+                    className={`flex min-h-9 w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-accent transition-colors ${
+                      isSelected ? "bg-primary/10 text-primary font-semibold" : "text-foreground"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                      <span
+                        className="h-2.5 w-2.5 rounded-full shrink-0"
+                        style={{ backgroundColor: tag.color || "currentColor" }}
+                      />
+                      <span className="truncate">{tag.name}</span>
+                    </div>
+                    {isSelected && <Check className="h-4 w-4 shrink-0 text-primary" />}
+                  </button>
+                );
+              })
+            ) : search.trim() ? (
+              <div className="p-3 text-center text-xs text-muted-foreground">
+                <p className="mb-2">{t("Tag tidak ditemukan.", "Tag not found.")}</p>
+                <button
+                  type="button"
+                  disabled={creating}
+                  onClick={handleCreateNewTag}
+                  className="inline-flex items-center gap-1.5 rounded-lg bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <span
-                      className="h-2 w-2 rounded-full shrink-0"
-                      style={{ backgroundColor: tag.color || "currentColor" }}
-                    />
-                    <span>{tag.name}</span>
-                  </div>
-                  {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
-                </div>
-              );
-            })
-          ) : search.trim() ? (
-            <div className="p-2 text-center text-xs text-muted-foreground">
-              <p className="mb-1.5">{t("Tag tidak ditemukan.", "Tag not found.")}</p>
-              <button
-                type="button"
-                disabled={creating}
-                onClick={handleCreateNewTag}
-                className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1 font-medium text-primary hover:bg-primary/20 transition-colors"
-              >
-                <Plus className="h-3 w-3" />
-                {t(`Buat tag "${search.trim()}" (Enter)`, `Create tag "${search.trim()}" (Enter)`)}
-              </button>
-            </div>
-          ) : (
-            <div className="py-2.5 text-center text-xs text-muted-foreground">
-              {t("Belum ada tag.", "No tags yet.")}
-            </div>
-          )}
+                  <Plus className="h-3.5 w-3.5" />
+                  {t(`Buat tag "${search.trim()}" (Enter)`, `Create tag "${search.trim()}" (Enter)`)}
+                </button>
+              </div>
+            ) : (
+              <p className="p-3 text-xs text-muted-foreground">{t("Belum ada tag.", "No tags yet.")}</p>
+            )}
+          </div>
         </div>
       )}
     </div>
