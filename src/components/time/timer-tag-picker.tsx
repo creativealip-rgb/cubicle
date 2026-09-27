@@ -3,9 +3,7 @@
 import { useState, useMemo, useEffect, useRef } from "react";
 import { getTimerTags, createTimerTag } from "@/lib/actions/tags";
 import { useT } from "@/lib/i18n-client";
-import { Tag, Check, Plus, X, Search } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Check, Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 
@@ -36,6 +34,7 @@ export function TimerTagPicker({
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!initialTags) {
@@ -77,6 +76,8 @@ export function TimerTagPicker({
     } else {
       onChange([...selectedTags, tagName].join(", "));
     }
+    setSearch("");
+    inputRef.current?.focus();
   };
 
   const handleCreateNewTag = async () => {
@@ -88,7 +89,6 @@ export function TimerTagPicker({
       const created = await createTimerTag({ name: cleanName });
       setTagsList((prev) => [...prev, { id: created.id, name: created.name, color: created.color }]);
       handleToggleTag(created.name);
-      setSearch("");
       toast.success(t("Tag baru dibuat & dipilih", "New tag created & selected"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal membuat tag", "Failed to create tag"));
@@ -98,104 +98,114 @@ export function TimerTagPicker({
   };
 
   return (
-    <div className={`relative space-y-1.5 ${className}`}>
-      {/* Selected Tags Preview + Trigger Box */}
+    <div ref={containerRef} className={`relative space-y-1.5 ${className}`}>
+      {/* Unified Input + Chips Box */}
       <div
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex min-h-[38px] w-full flex-wrap items-center gap-1.5 rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-xs shadow-2xs cursor-pointer hover:border-primary/50 transition-colors"
+        onClick={() => {
+          setIsOpen(true);
+          inputRef.current?.focus();
+        }}
+        className="flex min-h-[40px] w-full flex-wrap items-center gap-1.5 rounded-lg border border-border/70 bg-background px-2.5 py-1.5 text-xs shadow-2xs cursor-text focus-within:border-primary focus-within:ring-1 focus-within:ring-primary/40 transition-colors"
       >
-        {selectedTags.length > 0 ? (
-          selectedTags.map((tagName) => {
-            const tagObj = tagsList.find((t) => t.name.toLowerCase() === tagName.toLowerCase());
-            return (
-              <Badge
-                key={tagName}
-                variant="secondary"
-                className="h-5 gap-1 px-1.5 text-[11px] font-medium border border-border/60"
-                style={tagObj?.color ? { borderColor: `${tagObj.color}40`, backgroundColor: `${tagObj.color}15`, color: tagObj.color } : {}}
+        {selectedTags.map((tagName) => {
+          const tagObj = tagsList.find((t) => t.name.toLowerCase() === tagName.toLowerCase());
+          return (
+            <Badge
+              key={tagName}
+              variant="secondary"
+              className="h-5 gap-1 px-1.5 text-[11px] font-medium border border-border/60"
+              style={tagObj?.color ? { borderColor: `${tagObj.color}40`, backgroundColor: `${tagObj.color}15`, color: tagObj.color } : {}}
+            >
+              {tagObj?.color && (
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tagObj.color }} />
+              )}
+              <span>{tagName}</span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleTag(tagName);
+                }}
+                className="rounded-full hover:bg-black/10 dark:hover:bg-white/20 p-0.5"
               >
-                {tagObj?.color && (
-                  <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: tagObj.color }} />
-                )}
-                <span>{tagName}</span>
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleToggleTag(tagName);
-                  }}
-                  className="rounded-full hover:bg-black/10 dark:hover:bg-white/20 p-0.5"
-                >
-                  <X className="h-2.5 w-2.5" />
-                </button>
-              </Badge>
-            );
-          })
-        ) : (
-          <span className="text-muted-foreground/70 text-xs">
-            {placeholder || t("Pilih atau cari tag...", "Select or search tags...")}
-          </span>
-        )}
+                <X className="h-2.5 w-2.5" />
+              </button>
+            </Badge>
+          );
+        })}
+
+        {/* Real Single Input field */}
+        <input
+          ref={inputRef}
+          type="text"
+          value={search}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setIsOpen(true);
+          }}
+          onFocus={() => setIsOpen(true)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" && search.trim()) {
+              e.preventDefault();
+              const exactMatch = filteredTags.find((t) => t.name.toLowerCase() === search.trim().toLowerCase());
+              if (exactMatch) {
+                handleToggleTag(exactMatch.name);
+              } else {
+                handleCreateNewTag();
+              }
+            } else if (e.key === "Backspace" && !search && selectedTags.length > 0) {
+              const lastTag = selectedTags[selectedTags.length - 1];
+              handleToggleTag(lastTag);
+            }
+          }}
+          placeholder={selectedTags.length === 0 ? (placeholder || t("Ketik atau cari tag...", "Type or search tags...")) : ""}
+          className="flex-1 min-w-[120px] bg-transparent border-0 p-0 text-xs text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-0"
+        />
       </div>
 
-      {/* Inline Dropdown Panel */}
+      {/* Dropdown Options Only (No duplicate input) */}
       {isOpen && (
-        <div className="rounded-xl border border-border/80 bg-card p-2 shadow-md space-y-2 mt-1">
-          {/* Search Bar */}
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              autoFocus
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder={t("Cari tag atau ketik baru...", "Search tags or type new...")}
-              className="h-8 pl-8 text-xs bg-background"
-            />
-          </div>
-
-          {/* Tags List */}
-          <div className="max-h-36 overflow-y-auto space-y-1 pr-1">
-            {filteredTags.length > 0 ? (
-              filteredTags.map((tag) => {
-                const isSelected = selectedTags.includes(tag.name);
-                return (
-                  <div
-                    key={tag.id}
-                    onClick={() => handleToggleTag(tag.name)}
-                    className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium cursor-pointer transition-colors ${
-                      isSelected ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted/60 text-foreground"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="h-2 w-2 rounded-full shrink-0"
-                        style={{ backgroundColor: tag.color || "currentColor" }}
-                      />
-                      <span>{tag.name}</span>
-                    </div>
-                    {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
-                  </div>
-                );
-              })
-            ) : search.trim() ? (
-              <div className="py-2 text-center text-xs text-muted-foreground">
-                <p className="mb-2">{t("Tag tidak ditemukan.", "Tag not found.")}</p>
-                <button
-                  type="button"
-                  disabled={creating}
-                  onClick={handleCreateNewTag}
-                  className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1 font-medium text-primary hover:bg-primary/20 transition-colors"
+        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-48 overflow-y-auto rounded-xl border border-border/80 bg-popover p-1 shadow-lg space-y-0.5">
+          {filteredTags.length > 0 ? (
+            filteredTags.map((tag) => {
+              const isSelected = selectedTags.includes(tag.name);
+              return (
+                <div
+                  key={tag.id}
+                  onClick={() => handleToggleTag(tag.name)}
+                  className={`flex items-center justify-between rounded-lg px-2.5 py-1.5 text-xs font-medium cursor-pointer transition-colors ${
+                    isSelected ? "bg-primary/10 text-primary font-semibold" : "hover:bg-muted/60 text-foreground"
+                  }`}
                 >
-                  <Plus className="h-3 w-3" />
-                  {t(`Buat tag "${search.trim()}"`, `Create tag "${search.trim()}"`)}
-                </button>
-              </div>
-            ) : (
-              <div className="py-2 text-center text-xs text-muted-foreground">
-                {t("Belum ada tag.", "No tags yet.")}
-              </div>
-            )}
-          </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="h-2 w-2 rounded-full shrink-0"
+                      style={{ backgroundColor: tag.color || "currentColor" }}
+                    />
+                    <span>{tag.name}</span>
+                  </div>
+                  {isSelected && <Check className="h-3.5 w-3.5 shrink-0 text-primary" />}
+                </div>
+              );
+            })
+          ) : search.trim() ? (
+            <div className="p-2 text-center text-xs text-muted-foreground">
+              <p className="mb-1.5">{t("Tag tidak ditemukan.", "Tag not found.")}</p>
+              <button
+                type="button"
+                disabled={creating}
+                onClick={handleCreateNewTag}
+                className="inline-flex items-center gap-1 rounded-lg bg-primary/10 px-2.5 py-1 font-medium text-primary hover:bg-primary/20 transition-colors"
+              >
+                <Plus className="h-3 w-3" />
+                {t(`Buat tag "${search.trim()}" (Enter)`, `Create tag "${search.trim()}" (Enter)`)}
+              </button>
+            </div>
+          ) : (
+            <div className="py-2.5 text-center text-xs text-muted-foreground">
+              {t("Belum ada tag.", "No tags yet.")}
+            </div>
+          )}
         </div>
       )}
     </div>
