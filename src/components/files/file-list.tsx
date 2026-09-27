@@ -1,14 +1,14 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useMemo, useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
-import { deleteFile, updateFileMeta, bulkDeleteFiles, bulkMoveFiles } from "@/lib/actions/files";
+import { deleteFile, bulkDeleteFiles, bulkMoveFiles } from "@/lib/actions/files";
+import Link from "next/link";
 
 import { useT } from "@/lib/i18n-client";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 
 import { Input } from "@/components/ui/input";
 import { EmptyState } from "@/components/empty-state";
@@ -52,7 +52,6 @@ import {
   Folder,
   Users,
   FolderKanban,
-  ArrowUpDown,
   MoreVertical,
   FolderInput,
   CheckSquare,
@@ -86,6 +85,7 @@ export interface FolderGridItem {
 interface FileListProps {
   files: FileItem[];
   folders?: FolderGridItem[];
+  crumbs?: { label: string; href: string }[];
   canWrite: boolean;
   lang: "id" | "en";
 }
@@ -102,12 +102,18 @@ function getFileIcon(mimeType: string | null) {
   return <FileText className="h-5 w-5 text-muted-foreground" />;
 }
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 30; // Google Drive style larger page size for continuous smooth scrolling
 
-export function FileList({ files, folders = [], canWrite, lang: _lang }: FileListProps) {
+export function FileList({
+  files,
+  folders = [],
+  crumbs = [],
+  canWrite,
+  lang: _lang,
+}: FileListProps) {
   const { refresh } = useAppTransition();
   const { t } = useT();
-  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("list"); // Default to clean Linear / Google Drive list
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "internal" | "client" | "deliverable">("all");
   const [sortBy, setSortBy] = useState<"name" | "date" | "size">("name");
@@ -271,95 +277,116 @@ export function FileList({ files, folders = [], canWrite, lang: _lang }: FileLis
   const workspaceFolders = folders.filter((f) => f.type === "workspace_folder");
 
   return (
-    <div className="space-y-4">
-      {/* Control Bar: Search, Filter, Sort, View Toggle */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-1 items-center gap-2 min-w-[240px] max-w-md">
-          <div className="relative w-full">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder={t("Cari folder dan file...", "Search folders and files...")}
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value);
+    <div className="flex flex-col h-full min-h-0 overflow-hidden space-y-3">
+      {/* Top Sticky Bar: Breadcrumb + Search + Filter + View Toggles */}
+      <div className="shrink-0 space-y-2.5 rounded-2xl border border-border/70 bg-card/70 p-3 shadow-xs backdrop-blur-xs">
+        {/* Breadcrumbs */}
+        {crumbs.length > 0 && (
+          <nav aria-label={t("Breadcrumb berkas", "File breadcrumb")} className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground pb-1 border-b border-border/40">
+            {crumbs.map((crumb, i) => (
+              <span key={`${crumb.href}-${i}`} className="flex items-center gap-1.5">
+                {i > 0 && <ChevronRight className="h-3 w-3 text-muted-foreground/60" aria-hidden />}
+                {i === crumbs.length - 1 ? (
+                  <span aria-current="page" className="font-bold text-foreground">{crumb.label}</span>
+                ) : (
+                  <Link href={crumb.href} scroll={false} className="transition-colors hover:text-foreground hover:underline">
+                    {crumb.label}
+                  </Link>
+                )}
+              </span>
+            ))}
+          </nav>
+        )}
+
+        {/* Toolbar Controls */}
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          <div className="flex flex-1 items-center gap-2 min-w-[200px] max-w-md">
+            <div className="relative w-full">
+              <Search className="absolute left-2.5 top-2.5 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder={t("Cari di folder & berkas...", "Search folders and files...")}
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setPage(1);
+                }}
+                className="pl-8 h-8 text-xs rounded-xl bg-background border-border/80"
+              />
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <Select
+              value={sortBy}
+              onValueChange={(val: "name" | "date" | "size") => setSortBy(val)}
+            >
+              <SelectTrigger className="h-8 w-[120px] text-xs rounded-xl bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="name">{t("Nama (A-Z)", "Name (A-Z)")}</SelectItem>
+                <SelectItem value="date">{t("Terbaru", "Date modified")}</SelectItem>
+                <SelectItem value="size">{t("Ukuran", "Size")}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select
+              value={filter}
+              onValueChange={(val: "all" | "internal" | "client" | "deliverable") => {
+                setFilter(val);
                 setPage(1);
               }}
-              className="pl-9 h-9 text-xs rounded-xl bg-muted/40"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Select
-            value={sortBy}
-            onValueChange={(val: "name" | "date" | "size") => setSortBy(val)}
-          >
-            <SelectTrigger className="h-9 w-[130px] text-xs rounded-xl">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="name">{t("Nama (A-Z)", "Name (A-Z)")}</SelectItem>
-              <SelectItem value="date">{t("Terbaru", "Date modified")}</SelectItem>
-              <SelectItem value="size">{t("Ukuran", "Size")}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <Select
-            value={filter}
-            onValueChange={(val: "all" | "internal" | "client" | "deliverable") => {
-              setFilter(val);
-              setPage(1);
-            }}
-          >
-            <SelectTrigger className="h-9 w-[120px] text-xs rounded-xl">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">{t("Semua", "All")}</SelectItem>
-              <SelectItem value="internal">{t("Internal", "Internal")}</SelectItem>
-              <SelectItem value="client">{t("Klien", "Client")}</SelectItem>
-              <SelectItem value="deliverable">{t("Deliverable", "Deliverable")}</SelectItem>
-            </SelectContent>
-          </Select>
-
-          <div className="flex items-center rounded-xl border bg-muted/30 p-0.5">
-            <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-8 w-8 rounded-lg"
-              onClick={() => setViewMode("grid")}
-              title={t("Tampilan Grid", "Grid view")}
             >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
-              size="icon"
-              className="h-8 w-8 rounded-lg"
-              onClick={() => setViewMode("list")}
-              title={t("Tampilan List", "List view")}
-            >
-              <ListIcon className="h-4 w-4" />
-            </Button>
+              <SelectTrigger className="h-8 w-[110px] text-xs rounded-xl bg-background">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t("Semua", "All")}</SelectItem>
+                <SelectItem value="internal">{t("Internal", "Internal")}</SelectItem>
+                <SelectItem value="client">{t("Klien", "Client")}</SelectItem>
+                <SelectItem value="deliverable">{t("Deliverable", "Deliverable")}</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="flex items-center rounded-xl border bg-background p-0.5 shadow-2xs">
+              <Button
+                variant={viewMode === "list" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-7 w-7 rounded-lg"
+                onClick={() => setViewMode("list")}
+                title={t("Tampilan List", "List view")}
+              >
+                <ListIcon className="h-3.5 w-3.5" />
+              </Button>
+              <Button
+                variant={viewMode === "grid" ? "secondary" : "ghost"}
+                size="icon"
+                className="h-7 w-7 rounded-lg"
+                onClick={() => setViewMode("grid")}
+                title={t("Tampilan Grid", "Grid view")}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Floating Multi-Select Action Bar */}
       {selectedIds.length > 0 && (
-        <div className="sticky top-2 z-20 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-background/95 p-3 shadow-xl backdrop-blur-md transition-all animate-in fade-in-50 slide-in-from-top-2">
+        <div className="shrink-0 flex items-center justify-between gap-3 rounded-2xl border border-primary/20 bg-background/95 p-2.5 shadow-lg backdrop-blur-md transition-all animate-in fade-in-50 slide-in-from-top-1">
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={handleSelectAllVisible}
-              className="h-8 gap-1.5 text-xs font-semibold rounded-lg"
+              className="h-7 gap-1.5 text-xs font-semibold rounded-lg"
             >
               {paginatedFiles.every((f) => selectedIds.includes(f.id)) ? (
-                <CheckSquare className="h-4 w-4 text-primary" />
+                <CheckSquare className="h-3.5 w-3.5 text-primary" />
               ) : (
-                <Square className="h-4 w-4 text-muted-foreground" />
+                <Square className="h-3.5 w-3.5 text-muted-foreground" />
               )}
               <span>
                 {t(
@@ -370,175 +397,172 @@ export function FileList({ files, folders = [], canWrite, lang: _lang }: FileLis
             </Button>
           </div>
 
-          <div className="flex items-center gap-2">
-            {/* Bulk Download */}
+          <div className="flex items-center gap-1.5">
             <Button
               variant="outline"
               size="sm"
               onClick={handleBulkDownload}
-              className="h-8 gap-1.5 text-xs font-semibold rounded-lg"
+              className="h-7 gap-1.5 text-xs font-semibold rounded-lg"
             >
-              <Download className="h-3.5 w-3.5" />
-              <span>{t("Unduh Terpilih", "Download Selected")}</span>
+              <Download className="h-3 w-3" />
+              <span>{t("Unduh", "Download")}</span>
             </Button>
 
-            {/* Bulk Move */}
             {canWrite && (
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setBulkMoveModalOpen(true)}
-                className="h-8 gap-1.5 text-xs font-semibold rounded-lg"
+                className="h-7 gap-1.5 text-xs font-semibold rounded-lg"
               >
-                <FolderInput className="h-3.5 w-3.5 text-blue-500" />
+                <FolderInput className="h-3 w-3 text-blue-500" />
                 <span>{t("Pindahkan", "Move")}</span>
               </Button>
             )}
 
-            {/* Bulk Delete */}
             {canWrite && (
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={() => setBulkDeleteConfirm(true)}
-                className="h-8 gap-1.5 text-xs font-semibold rounded-lg shadow-xs"
+                className="h-7 gap-1.5 text-xs font-semibold rounded-lg shadow-xs"
               >
-                <Trash2 className="h-3.5 w-3.5" />
-                <span>{t("Hapus Terpilih", "Delete Selected")}</span>
+                <Trash2 className="h-3 w-3" />
+                <span>{t("Hapus", "Delete")}</span>
               </Button>
             )}
 
-            {/* Clear Selection */}
             <Button
               variant="ghost"
               size="icon"
               onClick={() => setSelectedIds([])}
-              className="h-8 w-8 rounded-lg text-muted-foreground hover:text-foreground"
+              className="h-7 w-7 rounded-lg text-muted-foreground hover:text-foreground"
               title={t("Batalkan pilihan", "Clear selection")}
             >
-              <X className="h-4 w-4" />
+              <X className="h-3.5 w-3.5" />
             </Button>
           </div>
         </div>
       )}
 
-      {/* Main Files & Folders Container */}
-      {!hasItems ? (
-        <EmptyState
-          icon={Folder}
-          title={t("Tidak ada berkas", "No files found")}
-          description={
-            query
-              ? t("Tidak ada file atau folder yang cocok dengan pencarian", "No files match your query")
-              : t("Unggah file atau buat folder untuk memulai", "Upload a file or create a folder to get started")
-          }
-        />
-      ) : viewMode === "grid" ? (
-        /* GRID VIEW */
-        <div className="space-y-6">
-          {/* Folders Section */}
-          {filteredFolders.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                {t("Folder", "Folders")} ({filteredFolders.length})
-              </p>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-                {filteredFolders.map((f) => (
-                  <a
-                    key={f.id}
-                    href={f.href}
-                    className="group relative flex items-center gap-2.5 rounded-xl border border-border/80 bg-card p-3 shadow-xs hover:border-primary/50 hover:bg-accent/40 transition-all"
-                  >
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform">
-                      {f.type === "client" ? (
-                        <Users className="h-4 w-4" />
-                      ) : f.type === "project" ? (
-                        <FolderKanban className="h-4 w-4" />
+      {/* Scrollable File & Folder Content Viewport (Google Drive Scroll Style) */}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 pb-4">
+        {!hasItems ? (
+          <EmptyState
+            icon={Folder}
+            title={t("Tidak ada berkas", "No files found")}
+            description={
+              query
+                ? t("Tidak ada file atau folder yang cocok dengan pencarian", "No files match your query")
+                : t("Unggah file atau buat folder untuk memulai", "Upload a file or create a folder to get started")
+            }
+          />
+        ) : viewMode === "list" ? (
+          /* LIST VIEW (GOOGLE DRIVE STANDARD) */
+          <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-xs">
+            <table className="min-w-full divide-y divide-border/60 text-xs">
+              <thead className="bg-muted/40 font-bold uppercase text-[10px] tracking-wider text-muted-foreground sticky top-0 z-10 backdrop-blur-md">
+                <tr>
+                  <th className="w-8 px-3 py-2.5 text-left">
+                    <button
+                      type="button"
+                      onClick={handleSelectAllVisible}
+                      className="flex items-center cursor-pointer"
+                    >
+                      {paginatedFiles.length > 0 &&
+                      paginatedFiles.every((f) => selectedIds.includes(f.id)) ? (
+                        <CheckSquare className="h-3.5 w-3.5 text-primary" />
                       ) : (
-                        <Folder className="h-4 w-4" />
+                        <Square className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
                       )}
-                    </div>
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-xs font-semibold text-foreground group-hover:text-primary">
+                    </button>
+                  </th>
+                  <th className="px-3 py-2.5 text-left">{t("Nama", "Name")}</th>
+                  <th className="px-3 py-2.5 text-left hidden sm:table-cell">{t("Ukuran", "Size")}</th>
+                  <th className="px-3 py-2.5 text-left hidden md:table-cell">{t("Akses", "Visibility")}</th>
+                  <th className="px-3 py-2.5 text-right w-16">{t("Aksi", "Actions")}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border/40 font-normal">
+                {/* Folders in List */}
+                {filteredFolders.map((f) => (
+                  <tr
+                    key={`folder-${f.id}`}
+                    className="hover:bg-muted/30 transition-colors cursor-pointer group"
+                    onClick={() => (window.location.href = f.href)}
+                  >
+                    <td className="px-3 py-2"></td>
+                    <td className="px-3 py-2 flex items-center gap-2.5">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                        {f.type === "client" ? (
+                          <Users className="h-3.5 w-3.5" />
+                        ) : f.type === "project" ? (
+                          <FolderKanban className="h-3.5 w-3.5" />
+                        ) : (
+                          <Folder className="h-3.5 w-3.5" />
+                        )}
+                      </div>
+                      <span className="font-semibold text-foreground group-hover:text-primary truncate max-w-xs md:max-w-md">
                         {f.name}
-                      </p>
-                      {f.itemCount !== undefined && (
-                        <p className="text-[10px] text-muted-foreground">
-                          {f.itemCount} {t("item", "items")}
-                        </p>
-                      )}
-                    </div>
-                  </a>
+                      </span>
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell">
+                      {f.itemCount !== undefined ? `${f.itemCount} items` : "—"}
+                    </td>
+                    <td className="px-3 py-2 text-muted-foreground hidden md:table-cell">Folder</td>
+                    <td className="px-3 py-2 text-right">
+                      <ChevronRight className="h-3.5 w-3.5 inline-block text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+                    </td>
+                  </tr>
                 ))}
-              </div>
-            </div>
-          )}
 
-          {/* Files Section */}
-          {filteredFiles.length > 0 && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {t("Berkas", "Files")} ({filteredFiles.length})
-                </p>
-                <button
-                  type="button"
-                  onClick={handleSelectAllVisible}
-                  className="text-xs text-primary font-medium hover:underline cursor-pointer"
-                >
-                  {paginatedFiles.every((f) => selectedIds.includes(f.id))
-                    ? t("Batal Pilih Halaman Ini", "Deselect Page")
-                    : t("Pilih Halaman Ini", "Select Page")}
-                </button>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                {/* Files in List */}
                 {paginatedFiles.map((file) => {
                   const isSelected = selectedIds.includes(file.id);
                   return (
-                    <div
-                      key={file.id}
-                      onClick={() => setPreviewTarget(file)}
+                    <tr
+                      key={`file-${file.id}`}
                       className={cn(
-                        "group relative flex flex-col justify-between rounded-xl border p-3 shadow-xs transition-all cursor-pointer bg-card",
-                        isSelected
-                          ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-md"
-                          : "border-border/80 hover:border-primary/50 hover:bg-accent/40"
+                        "hover:bg-muted/30 transition-colors cursor-pointer group",
+                        isSelected && "bg-primary/5 font-medium"
                       )}
+                      onClick={() => setPreviewTarget(file)}
                     >
-                      {/* Top Bar inside Card: Icon + Checkbox + Dropdown */}
-                      <div className="flex items-start justify-between gap-1 mb-2">
-                        <div className="flex items-center gap-2">
-                          <button
-                            type="button"
-                            onClick={(e) => handleToggleSelect(file.id, e)}
-                            className={cn(
-                              "rounded p-0.5 transition-opacity",
-                              isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                            )}
-                          >
-                            {isSelected ? (
-                              <CheckSquare className="h-4 w-4 text-primary" />
-                            ) : (
-                              <Square className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                            )}
-                          </button>
-                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted group-hover:bg-background transition-colors">
-                            {getFileIcon(file.mimeType)}
-                          </div>
+                      <td className="px-3 py-2" onClick={(e) => e.stopPropagation()}>
+                        <button
+                          type="button"
+                          onClick={(e) => handleToggleSelect(file.id, e)}
+                          className="flex items-center cursor-pointer"
+                        >
+                          {isSelected ? (
+                            <CheckSquare className="h-3.5 w-3.5 text-primary" />
+                          ) : (
+                            <Square className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                          )}
+                        </button>
+                      </td>
+                      <td className="px-3 py-2 flex items-center gap-2.5">
+                        <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted">
+                          {getFileIcon(file.mimeType)}
                         </div>
-
+                        <span
+                          className="truncate text-foreground group-hover:text-primary font-medium max-w-xs md:max-w-md"
+                          title={file.name}
+                        >
+                          {file.name}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell font-mono">
+                        {formatFileSize(file.sizeBytes)}
+                      </td>
+                      <td className="px-3 py-2 text-muted-foreground hidden md:table-cell capitalize">
+                        {file.visibility}
+                      </td>
+                      <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
-                          <DropdownMenuTrigger
-                            asChild
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-6 w-6 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <MoreVertical className="h-3.5 w-3.5" />
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md">
+                              <MoreVertical className="h-3 w-3" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="text-xs">
@@ -565,174 +589,175 @@ export function FileList({ files, folders = [], canWrite, lang: _lang }: FileLis
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>
-                      </div>
-
-                      {/* File Name & Meta */}
-                      <div className="space-y-1">
-                        <p
-                          className="truncate text-xs font-semibold text-foreground group-hover:text-primary"
-                          title={file.name}
-                        >
-                          {file.name}
-                        </p>
-                        <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                          <span>{formatFileSize(file.sizeBytes)}</span>
-                          <span className="capitalize">{file.visibility}</span>
-                        </div>
-                      </div>
-                    </div>
+                      </td>
+                    </tr>
                   );
                 })}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          /* GRID VIEW */
+          <div className="space-y-6">
+            {/* Folders Section */}
+            {filteredFolders.length > 0 && (
+              <div className="space-y-2">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("Folder", "Folders")} ({filteredFolders.length})
+                </p>
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                  {filteredFolders.map((f) => (
+                    <a
+                      key={f.id}
+                      href={f.href}
+                      className="group relative flex items-center gap-2.5 rounded-xl border border-border/80 bg-card p-3 shadow-xs hover:border-primary/50 hover:bg-accent/40 transition-all"
+                    >
+                      <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary group-hover:scale-105 transition-transform">
+                        {f.type === "client" ? (
+                          <Users className="h-3.5 w-3.5" />
+                        ) : f.type === "project" ? (
+                          <FolderKanban className="h-3.5 w-3.5" />
+                        ) : (
+                          <Folder className="h-3.5 w-3.5" />
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-xs font-semibold text-foreground group-hover:text-primary">
+                          {f.name}
+                        </p>
+                        {f.itemCount !== undefined && (
+                          <p className="text-[10px] text-muted-foreground">
+                            {f.itemCount} {t("item", "items")}
+                          </p>
+                        )}
+                      </div>
+                    </a>
+                  ))}
+                </div>
               </div>
-            </div>
-          )}
-        </div>
-      ) : (
-        /* LIST VIEW */
-        <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-xs">
-          <table className="min-w-full divide-y divide-border/60 text-xs">
-            <thead className="bg-muted/40 font-semibold text-muted-foreground">
-              <tr>
-                <th className="w-8 px-3 py-2 text-left">
+            )}
+
+            {/* Files Section */}
+            {filteredFiles.length > 0 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t("Berkas", "Files")} ({filteredFiles.length})
+                  </p>
                   <button
                     type="button"
                     onClick={handleSelectAllVisible}
-                    className="flex items-center cursor-pointer"
+                    className="text-xs text-primary font-medium hover:underline cursor-pointer"
                   >
-                    {paginatedFiles.length > 0 &&
-                    paginatedFiles.every((f) => selectedIds.includes(f.id)) ? (
-                      <CheckSquare className="h-4 w-4 text-primary" />
-                    ) : (
-                      <Square className="h-4 w-4 text-muted-foreground hover:text-foreground" />
-                    )}
+                    {paginatedFiles.every((f) => selectedIds.includes(f.id))
+                      ? t("Batal Pilih Halaman Ini", "Deselect Page")
+                      : t("Pilih Halaman Ini", "Select Page")}
                   </button>
-                </th>
-                <th className="px-3 py-2 text-left">{t("Nama", "Name")}</th>
-                <th className="px-3 py-2 text-left hidden sm:table-cell">{t("Ukuran", "Size")}</th>
-                <th className="px-3 py-2 text-left hidden md:table-cell">{t("Akses", "Visibility")}</th>
-                <th className="px-3 py-2 text-right w-16">{t("Aksi", "Actions")}</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border/40">
-              {/* Folders in List */}
-              {filteredFolders.map((f) => (
-                <tr
-                  key={`folder-${f.id}`}
-                  className="hover:bg-muted/20 transition-colors cursor-pointer group"
-                  onClick={() => (window.location.href = f.href)}
-                >
-                  <td className="px-3 py-2.5"></td>
-                  <td className="px-3 py-2.5 flex items-center gap-2.5">
-                    <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
-                      {f.type === "client" ? (
-                        <Users className="h-3.5 w-3.5" />
-                      ) : f.type === "project" ? (
-                        <FolderKanban className="h-3.5 w-3.5" />
-                      ) : (
-                        <Folder className="h-3.5 w-3.5" />
-                      )}
-                    </div>
-                    <span className="font-semibold text-foreground group-hover:text-primary truncate">
-                      {f.name}
-                    </span>
-                  </td>
-                  <td className="px-3 py-2.5 text-muted-foreground hidden sm:table-cell">
-                    {f.itemCount !== undefined ? `${f.itemCount} items` : "—"}
-                  </td>
-                  <td className="px-3 py-2.5 text-muted-foreground hidden md:table-cell">Folder</td>
-                  <td className="px-3 py-2.5 text-right">
-                    <ChevronRight className="h-4 w-4 inline-block text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
-                  </td>
-                </tr>
-              ))}
+                </div>
 
-              {/* Files in List */}
-              {paginatedFiles.map((file) => {
-                const isSelected = selectedIds.includes(file.id);
-                return (
-                  <tr
-                    key={`file-${file.id}`}
-                    className={cn(
-                      "hover:bg-muted/20 transition-colors cursor-pointer group",
-                      isSelected && "bg-primary/5 font-medium"
-                    )}
-                    onClick={() => setPreviewTarget(file)}
-                  >
-                    <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
-                      <button
-                        type="button"
-                        onClick={(e) => handleToggleSelect(file.id, e)}
-                        className="flex items-center cursor-pointer"
-                      >
-                        {isSelected ? (
-                          <CheckSquare className="h-4 w-4 text-primary" />
-                        ) : (
-                          <Square className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+                  {paginatedFiles.map((file) => {
+                    const isSelected = selectedIds.includes(file.id);
+                    return (
+                      <div
+                        key={file.id}
+                        onClick={() => setPreviewTarget(file)}
+                        className={cn(
+                          "group relative flex flex-col justify-between rounded-xl border p-3 shadow-xs transition-all cursor-pointer bg-card",
+                          isSelected
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/20 shadow-md"
+                            : "border-border/80 hover:border-primary/50 hover:bg-accent/40"
                         )}
-                      </button>
-                    </td>
-                    <td className="px-3 py-2.5 flex items-center gap-2.5">
-                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-muted">
-                        {getFileIcon(file.mimeType)}
-                      </div>
-                      <span
-                        className="truncate text-foreground group-hover:text-primary font-medium max-w-xs md:max-w-md"
-                        title={file.name}
                       >
-                        {file.name}
-                      </span>
-                    </td>
-                    <td className="px-3 py-2.5 text-muted-foreground hidden sm:table-cell font-mono">
-                      {formatFileSize(file.sizeBytes)}
-                    </td>
-                    <td className="px-3 py-2.5 text-muted-foreground hidden md:table-cell capitalize">
-                      {file.visibility}
-                    </td>
-                    <td className="px-3 py-2.5 text-right" onClick={(e) => e.stopPropagation()}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 rounded-md">
-                            <MoreVertical className="h-3.5 w-3.5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="text-xs">
-                          <DropdownMenuItem onClick={() => setPreviewTarget(file)}>
-                            <Eye className="h-3.5 w-3.5 mr-2" />
-                            {t("Pratinjau", "Preview")}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              window.open(`/api/files/${file.id}/download`, "_blank");
-                            }}
-                          >
-                            <Download className="h-3.5 w-3.5 mr-2" />
-                            {t("Unduh", "Download")}
-                          </DropdownMenuItem>
-                          {canWrite && (
-                            <DropdownMenuItem
-                              onClick={() => setDeleteTarget(file)}
-                              className="text-destructive focus:text-destructive"
+                        {/* Top Bar inside Card: Icon + Checkbox + Dropdown */}
+                        <div className="flex items-start justify-between gap-1 mb-2">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={(e) => handleToggleSelect(file.id, e)}
+                              className={cn(
+                                "rounded p-0.5 transition-opacity",
+                                isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                              )}
                             >
-                              <Trash2 className="h-3.5 w-3.5 mr-2" />
-                              {t("Hapus", "Delete")}
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                              {isSelected ? (
+                                <CheckSquare className="h-3.5 w-3.5 text-primary" />
+                              ) : (
+                                <Square className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                              )}
+                            </button>
+                            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-muted group-hover:bg-background transition-colors">
+                              {getFileIcon(file.mimeType)}
+                            </div>
+                          </div>
 
-      {/* Pagination Controls */}
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              asChild
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+                              >
+                                <MoreVertical className="h-3 w-3" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="text-xs">
+                              <DropdownMenuItem onClick={() => setPreviewTarget(file)}>
+                                <Eye className="h-3.5 w-3.5 mr-2" />
+                                {t("Pratinjau", "Preview")}
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  window.open(`/api/files/${file.id}/download`, "_blank");
+                                }}
+                              >
+                                <Download className="h-3.5 w-3.5 mr-2" />
+                                {t("Unduh", "Download")}
+                              </DropdownMenuItem>
+                              {canWrite && (
+                                <DropdownMenuItem
+                                  onClick={() => setDeleteTarget(file)}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5 mr-2" />
+                                  {t("Hapus", "Delete")}
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+
+                        {/* File Name & Meta */}
+                        <div className="space-y-1">
+                          <p
+                            className="truncate text-xs font-semibold text-foreground group-hover:text-primary"
+                            title={file.name}
+                          >
+                            {file.name}
+                          </p>
+                          <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                            <span>{formatFileSize(file.sizeBytes)}</span>
+                            <span className="capitalize">{file.visibility}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Bottom Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between pt-2">
-          <p className="text-xs text-muted-foreground">
-            {t("Halaman", "Page")} {currentPage} {t("dari", "of")} {totalPages}
+        <div className="shrink-0 flex items-center justify-between pt-1 border-t border-border/40 text-xs text-muted-foreground">
+          <p>
+            {t("Halaman", "Page")} {currentPage} {t("dari", "of")} {totalPages} ({filteredFiles.length} {t("berkas", "files")})
           </p>
           <div className="flex items-center gap-1">
             <Button
@@ -740,7 +765,7 @@ export function FileList({ files, folders = [], canWrite, lang: _lang }: FileLis
               size="sm"
               disabled={currentPage <= 1}
               onClick={() => setPage((p) => Math.max(1, p - 1))}
-              className="h-8 text-xs gap-1 rounded-lg"
+              className="h-7 text-xs gap-1 rounded-lg"
             >
               <ChevronLeft className="h-3.5 w-3.5" />
               <span>{t("Sebelumnya", "Previous")}</span>
@@ -750,7 +775,7 @@ export function FileList({ files, folders = [], canWrite, lang: _lang }: FileLis
               size="sm"
               disabled={currentPage >= totalPages}
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-              className="h-8 text-xs gap-1 rounded-lg"
+              className="h-7 text-xs gap-1 rounded-lg"
             >
               <span>{t("Berikutnya", "Next")}</span>
               <ChevronRight className="h-3.5 w-3.5" />

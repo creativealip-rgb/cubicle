@@ -7,7 +7,7 @@ import { eq, desc, and, isNull } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { FileList } from "@/components/files/file-list";
 import { FileDropZone } from "@/components/files/file-drop-zone";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Folder } from "lucide-react";
 import Link from "next/link";
 
 import { getCurrentLang, createT } from "@/lib/i18n";
@@ -73,8 +73,6 @@ export default async function FilesPage({
         .limit(1)
     : [];
 
-
-
   const folderList = await db
     .select({
       id: foldersTable.id,
@@ -119,10 +117,10 @@ export default async function FilesPage({
     }
   }
 
-  // Build root folder cards for Google Drive experience when at root or inside client/project
+  // Build root folder cards for Google Drive experience
   let folderGridItems: { id: string; name: string; type: "workspace_folder" | "client" | "project"; href: string }[] = [];
   if (!clientId && !projectId && !folderId) {
-    // 1. Workspace root folders
+    // 1. Workspace root custom folders ONLY (Clean Drive-style: clients are cleanly accessed via sidebar or specific nav)
     const rootWorkspaceFolders = folderList
       .filter((f) => !f.parentId && !f.clientId && !f.projectId)
       .map((f) => ({
@@ -132,23 +130,9 @@ export default async function FilesPage({
         href: `/app/files?folderId=${f.id}`,
       }));
 
-    // 2. Client folders (show all clients so archived clients' files remain accessible)
-    const allClients = await db
-      .select({ id: clients.id, name: clients.name })
-      .from(clients)
-      .where(eq(clients.workspaceId, workspaceId))
-      .orderBy(clients.name);
-
-    const clientFolders = allClients.map((c) => ({
-      id: c.id,
-      name: c.name,
-      type: "client" as const,
-      href: `/app/files?clientId=${c.id}`,
-    }));
-
-    folderGridItems = [...rootWorkspaceFolders, ...clientFolders];
+    folderGridItems = rootWorkspaceFolders;
   } else if (clientId && !projectId && !folderId) {
-    // Inside client: show custom client folders (projects are not automatically folders; users can create folders manually)
+    // Inside client: show custom client folders
     const clientSubFolders = folderList
       .filter((f) => f.clientId === clientId && !f.projectId && !f.parentId)
       .map((f) => ({
@@ -194,22 +178,7 @@ export default async function FilesPage({
   }
 
   return (
-    <>
-      <nav aria-label={t("Breadcrumb berkas", "File breadcrumb")} className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
-        {crumbs.map((crumb, i) => (
-          <span key={`${crumb.href}-${i}`} className="flex items-center gap-1">
-            {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-border" aria-hidden />}
-            {i === crumbs.length - 1 ? (
-              <span aria-current="page" className="font-medium text-foreground">{crumb.label}</span>
-            ) : (
-              <Link href={crumb.href} scroll={false} className="rounded-sm transition-colors hover:text-foreground hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                {crumb.label}
-              </Link>
-            )}
-          </span>
-        ))}
-      </nav>
-
+    <div className="flex flex-col h-full min-h-0">
       <FileDropZone
         scope={{ workspaceId, clientId, projectId, folderId }}
         canWrite={canWrite}
@@ -217,10 +186,11 @@ export default async function FilesPage({
         <FileList
           files={finalFiles}
           folders={folderGridItems}
+          crumbs={crumbs}
           canWrite={canWrite}
           lang={lang}
         />
       </FileDropZone>
-    </>
+    </div>
   );
 }
