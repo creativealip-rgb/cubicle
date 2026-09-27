@@ -171,16 +171,28 @@ export function ReusableTaskWorkspace({
                     </span>
 
                     {(task.subtaskTotal ?? 0) > 0 && (
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
-                          task.subtaskDone === task.subtaskTotal
-                            ? "bg-emerald-500/10 text-emerald-600 border border-emerald-200/60"
-                            : "bg-muted text-muted-foreground border border-border/80"
-                        }`}
-                      >
-                        <CheckSquare2 className="h-3 w-3" />
-                        {task.subtaskDone}/{task.subtaskTotal}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
+                            task.subtaskDone === task.subtaskTotal
+                              ? "bg-emerald-500/10 text-emerald-600 border border-emerald-200/60"
+                              : "bg-muted text-muted-foreground border border-border/80"
+                          }`}
+                        >
+                          <CheckSquare2 className="h-3 w-3" />
+                          SOP: {task.subtaskDone}/{task.subtaskTotal}
+                        </span>
+                        <div className="h-1.5 w-12 rounded-full bg-muted overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${
+                              task.subtaskDone === task.subtaskTotal ? "bg-emerald-500" : "bg-primary"
+                            }`}
+                            style={{
+                              width: `${Math.round(((task.subtaskDone ?? 0) / (task.subtaskTotal || 1)) * 100)}%`,
+                            }}
+                          />
+                        </div>
+                      </div>
                     )}
                   </div>
                 </div>

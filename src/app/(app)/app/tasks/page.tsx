@@ -87,9 +87,9 @@ export default async function TasksPage({
   const [{ filteredTaskCount }] = await db.select({ filteredTaskCount: sql<number>`count(${tasks.id})::int` }).from(tasks).where(and(...whereClauses));
   const totalPages = Math.max(1, Math.ceil(filteredTaskCount / PAGE_SIZE));
   const page = Math.min(requestedPage, totalPages);
-  const isBoardView = view === "board";
-  const limit = isBoardView ? 200 : PAGE_SIZE;
-  const offset = isBoardView ? 0 : (page - 1) * PAGE_SIZE;
+  const isNoPagination = tab === "workflow" && view === "board";
+  const limit = isNoPagination ? 200 : PAGE_SIZE;
+  const offset = isNoPagination ? 0 : (page - 1) * PAGE_SIZE;
 
   const taskList = await db.select({
     id: tasks.id,
@@ -136,7 +136,7 @@ export default async function TasksPage({
         description={t("Kelola pekerjaan proyek, prioritas, dan template tugas reusable.", "Manage project work, priorities, and reusable task templates.")}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            {tab !== "templates" && <TaskViewToggle current={view} />}
+            {tab === "workflow" && <TaskViewToggle current={view} />}
             <Button
               variant={tab === "templates" ? "default" : "outline"}
               size="sm"
@@ -242,7 +242,7 @@ export default async function TasksPage({
             </>
           )}
 
-              {totalPages > 1 && view !== "board" && (
+              {totalPages > 1 && !isNoPagination && (
                 <PaginationLinks
                   page={page}
                   totalPages={totalPages}
