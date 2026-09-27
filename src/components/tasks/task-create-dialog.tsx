@@ -22,7 +22,7 @@ export function TaskCreateDialog({
 }: {
   projectId?: string;
   members?: Array<{ id: string; name: string | null; email: string | null }>;
-  projects?: Array<{ id: string; name: string; defaultBehavior?: "one_time" | "recurring" }>;
+  projects?: Array<{ id: string; name: string; clientName?: string | null; defaultBehavior?: "one_time" | "recurring" }>;
   templates?: Array<{ id: string; name: string; items?: Array<{ id: string; title: string }> }>;
   defaultTaskMode?: "workflow" | "reusable";
 }) {

@@ -32,7 +32,7 @@ interface TaskFormProps {
     behavior?: "one_time" | "recurring";
   };
   members?: Array<{ id: string; name: string | null; email: string | null }>;
-  projects?: Array<{ id: string; name: string; defaultBehavior?: "one_time" | "recurring" }>;
+  projects?: Array<{ id: string; name: string; clientName?: string | null; defaultBehavior?: "one_time" | "recurring" }>;
   templates?: Array<{ id: string; name: string; items?: Array<{ id: string; title: string }> }>;
   onSuccess?: () => void;
 }
@@ -61,8 +61,23 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "
   const filteredProjects = useMemo(() => {
     const term = projectSearch.toLowerCase().trim();
     if (!term) return projects;
-    return projects.filter((p) => p.name.toLowerCase().includes(term));
+    return projects.filter(
+      (p) =>
+        p.name.toLowerCase().includes(term) ||
+        (p.clientName && p.clientName.toLowerCase().includes(term)) ||
+        `${p.clientName || ""} — ${p.name}`.toLowerCase().includes(term)
+    );
   }, [projects, projectSearch]);
+
+  const groupedProjects = useMemo(() => {
+    const groups = new Map<string, typeof filteredProjects>();
+    for (const p of filteredProjects) {
+      const groupKey = p.clientName || t("Tanpa Klien", "No Client");
+      if (!groups.has(groupKey)) groups.set(groupKey, []);
+      groups.get(groupKey)!.push(p);
+    }
+    return Array.from(groups.entries());
+  }, [filteredProjects, t]);
 
   const [form, setForm] = useState({
     title: defaultValues?.title ?? "",
@@ -203,39 +218,50 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "
               <Label className="text-xs font-medium">{t("Proyek", "Project")} *</Label>
               <div ref={projectContainerRef} className="relative">
                 <Input
-                  placeholder={t("Cari proyek...", "Search project...")}
+                  placeholder={t("Cari proyek atau klien...", "Search project or client...")}
                   value={projectSearch}
                   onChange={(e) => {
                     const val = e.target.value;
                     setProjectSearch(val);
                     setProjectSearchOpen(true);
                   }}
+                  onClick={() => setProjectSearchOpen(true)}
                   onFocus={() => {
                     const currentProject = projects.find((p) => p.id === form.projectId);
                     if (projectSearch.trim() !== currentProject?.name.trim()) {
                       setProjectSearchOpen(true);
                     }
                   }}
-                  className="h-9 text-sm"
+                  className="h-10 text-sm"
                 />
                 {projectSearchOpen && (
-                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-md border bg-popover p-1 shadow-md">
-                    {filteredProjects.length === 0 ? (
-                      <p className="p-2 text-xs text-muted-foreground">{t("Proyek tidak ditemukan", "No project found")}</p>
+                  <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-64 overflow-y-auto rounded-xl border border-border/80 bg-popover p-1.5 shadow-lg space-y-1">
+                    {groupedProjects.length === 0 ? (
+                      <p className="p-3 text-xs text-muted-foreground">{t("Proyek atau klien tidak ditemukan", "No project or client found")}</p>
                     ) : (
-                      filteredProjects.map((p) => (
-                        <button
-                          key={p.id}
-                          type="button"
-                          className={`flex w-full items-center justify-between rounded px-2 py-1.5 text-left text-xs hover:bg-accent ${form.projectId === p.id ? "bg-accent font-medium" : ""}`}
-                          onClick={() => {
-                            setForm((prev) => ({ ...prev, projectId: p.id, behavior: p.defaultBehavior ?? "one_time" }));
-                            setProjectSearch(p.name);
-                            setProjectSearchOpen(false);
-                          }}
-                        >
-                          <span>{p.name}</span>
-                        </button>
+                      groupedProjects.map(([clientName, projs]) => (
+                        <div key={clientName} className="py-1">
+                          <p className="px-3 py-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            {clientName}
+                          </p>
+                          {projs.map((p) => (
+                            <button
+                              key={p.id}
+                              type="button"
+                              className={`flex min-h-9 w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-accent transition-colors ${
+                                form.projectId === p.id ? "bg-primary/10 text-primary font-semibold" : "text-foreground"
+                              }`}
+                              onClick={() => {
+                                setForm((prev) => ({ ...prev, projectId: p.id, behavior: p.defaultBehavior ?? "one_time" }));
+                                setProjectSearch(p.clientName ? `${p.clientName} — ${p.name}` : p.name);
+                                setProjectSearchOpen(false);
+                              }}
+                            >
+                              <span className="truncate">{p.name}</span>
+                              {form.projectId === p.id && <span className="text-primary font-bold">✓</span>}
+                            </button>
+                          ))}
+                        </div>
                       ))
                     )}
                   </div>
