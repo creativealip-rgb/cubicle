@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { createManualEntry } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TimerTagPicker } from "@/components/time/timer-tag-picker";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -264,43 +265,11 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
             <Label className="text-xs">
               {t("Tag (opsional)", "Tags (optional)")}
             </Label>
-            <Input
+            <TimerTagPicker
               value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder={t("Riset, Cold Calling, Follow Up", "Research, Cold Calling, Follow Up")}
-              className="h-9"
+              onChange={setTags}
+              placeholder={t("Pilih atau cari tag...", "Select or search tags...")}
             />
-            <div className="flex flex-wrap gap-1.5">
-              {[
-                "Research",
-                "Cold Calling",
-                "Follow Up - Phone",
-                "Follow Up - Text",
-                "Task Reporting",
-              ].map((preset) => (
-                <button
-                  key={preset}
-                  type="button"
-                  className="rounded-full border bg-background px-2 py-0.5 text-[10px] text-muted-foreground hover:border-primary hover:text-foreground"
-                  onClick={() => {
-                    const parts = tags
-                      .split(",")
-                      .map((s) => s.trim())
-                      .filter(Boolean);
-                    if (parts.includes(preset)) return;
-                    setTags([...parts, preset].join(", "));
-                  }}
-                >
-                  + {preset}
-                </button>
-              ))}
-            </div>
-            <p className="text-[11px] text-muted-foreground">
-              {t(
-                "Opsional. Pisahkan dengan koma. Dipakai filter timesheet.",
-                "Optional. Comma-separated. Used in timesheet filters.",
-              )}
-            </p>
           </div>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">

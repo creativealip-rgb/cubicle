@@ -6,6 +6,7 @@ import { stopTimer } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { TimerTagPicker } from "@/components/time/timer-tag-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog,
@@ -230,11 +231,10 @@ export function StopTimerDialog({
 
           <div className="space-y-2">
             <Label className="text-xs">{t("Tag (opsional)", "Tags (optional)")}</Label>
-            <Input
+            <TimerTagPicker
               value={tags}
-              onChange={(e) => setTags(e.target.value)}
-              placeholder={t("Riset, Follow Up", "Research, Follow Up")}
-              className="h-9"
+              onChange={setTags}
+              placeholder={t("Pilih atau cari tag...", "Select or search tags...")}
             />
           </div>
 

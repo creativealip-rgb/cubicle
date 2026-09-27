@@ -20,6 +20,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/empty-state";
+import { TimerTagPicker } from "@/components/time/timer-tag-picker";
 import {
   Briefcase,
   CheckSquare,
@@ -558,15 +559,11 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                 {/* Tags */}
                 <div className="space-y-1.5">
                   <Label className="text-xs">{t("Tag", "Tags")}</Label>
-                  <div className="relative flex items-center">
-                    <TagIcon className="absolute left-3 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder={t("Pisahkan dengan koma (mis: dev, meeting)", "Separate with comma (e.g. dev, meeting)")}
-                      value={editTags}
-                      onChange={(e) => setEditTags(e.target.value)}
-                      className="h-10 pl-9 text-xs"
-                    />
-                  </div>
+                  <TimerTagPicker
+                    value={editTags}
+                    onChange={setEditTags}
+                    placeholder={t("Pilih atau cari tag...", "Select or search tags...")}
+                  />
                 </div>
               </div>
 
