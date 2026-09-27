@@ -5,6 +5,7 @@ import { getTimerTags, createTimerTag } from "@/lib/actions/tags";
 import { useT } from "@/lib/i18n-client";
 import { Check, Plus, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
 import { toast } from "sonner";
 
 interface TimerTag {
@@ -33,7 +34,6 @@ export function TimerTagPicker({
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
   const [creating, setCreating] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -45,16 +45,6 @@ export function TimerTagPicker({
       setTagsList(initialTags);
     }
   }, [initialTags]);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
-        setIsOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, []);
 
   const selectedTags = useMemo(() => {
     return value
@@ -98,75 +88,82 @@ export function TimerTagPicker({
   };
 
   return (
-    <div ref={containerRef} className={`relative space-y-1.5 ${className}`}>
-      {/* Unified Input + Chips Box */}
-      <div
-        onClick={() => {
-          setIsOpen(true);
-          inputRef.current?.focus();
-        }}
-        className="flex min-h-[40px] w-full flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs cursor-text focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors"
-      >
-        {selectedTags.map((tagName) => {
-          const tagObj = tagsList.find((t) => t.name.toLowerCase() === tagName.toLowerCase());
-          return (
-            <Badge
-              key={tagName}
-              variant="secondary"
-              className="h-6 gap-1.5 px-2 text-xs font-medium border border-border/70"
-              style={tagObj?.color ? { borderColor: `${tagObj.color}40`, backgroundColor: `${tagObj.color}15`, color: tagObj.color } : {}}
-            >
-              {tagObj?.color && (
-                <span className="h-2 w-2 rounded-full" style={{ backgroundColor: tagObj.color }} />
-              )}
-              <span>{tagName}</span>
-              <button
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleToggleTag(tagName);
-                }}
-                className="rounded-full hover:bg-black/10 dark:hover:bg-white/20 p-0.5"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
-          );
-        })}
+    <div className={`relative space-y-1.5 ${className}`}>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <PopoverAnchor asChild>
+          {/* Unified Input + Chips Box */}
+          <div
+            onClick={() => {
+              setIsOpen(true);
+              inputRef.current?.focus();
+            }}
+            className="flex min-h-[40px] w-full flex-wrap items-center gap-1.5 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs cursor-text focus-within:border-primary focus-within:ring-1 focus-within:ring-primary transition-colors"
+          >
+            {selectedTags.map((tagName) => {
+              const tagObj = tagsList.find((t) => t.name.toLowerCase() === tagName.toLowerCase());
+              return (
+                <Badge
+                  key={tagName}
+                  variant="secondary"
+                  className="h-6 gap-1.5 px-2 text-xs font-medium border border-border/70"
+                  style={tagObj?.color ? { borderColor: `${tagObj.color}40`, backgroundColor: `${tagObj.color}15`, color: tagObj.color } : {}}
+                >
+                  {tagObj?.color && (
+                    <span className="h-2 w-2 rounded-full shrink-0" style={{ backgroundColor: tagObj.color }} />
+                  )}
+                  <span>{tagName}</span>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleToggleTag(tagName);
+                    }}
+                    className="rounded-full hover:bg-black/10 dark:hover:bg-white/20 p-0.5"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              );
+            })}
 
-        {/* Real Single Input field */}
-        <input
-          ref={inputRef}
-          type="text"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setIsOpen(true);
-          }}
-          onFocus={() => setIsOpen(true)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" && search.trim()) {
-              e.preventDefault();
-              const exactMatch = filteredTags.find((t) => t.name.toLowerCase() === search.trim().toLowerCase());
-              if (exactMatch) {
-                handleToggleTag(exactMatch.name);
-              } else {
-                handleCreateNewTag();
-              }
-            } else if (e.key === "Backspace" && !search && selectedTags.length > 0) {
-              const lastTag = selectedTags[selectedTags.length - 1];
-              handleToggleTag(lastTag);
-            }
-          }}
-          placeholder={selectedTags.length === 0 ? (placeholder || t("Cari atau ketik tag...", "Search or type tag...")) : ""}
-          className="flex-1 min-w-[120px] bg-transparent border-0 p-0 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0"
-        />
-      </div>
+            {/* Real Single Input field */}
+            <input
+              ref={inputRef}
+              type="text"
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setIsOpen(true);
+              }}
+              onFocus={() => setIsOpen(true)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && search.trim()) {
+                  e.preventDefault();
+                  const exactMatch = filteredTags.find((t) => t.name.toLowerCase() === search.trim().toLowerCase());
+                  if (exactMatch) {
+                    handleToggleTag(exactMatch.name);
+                  } else {
+                    handleCreateNewTag();
+                  }
+                } else if (e.key === "Backspace" && !search && selectedTags.length > 0) {
+                  const lastTag = selectedTags[selectedTags.length - 1];
+                  handleToggleTag(lastTag);
+                }
+              }}
+              placeholder={selectedTags.length === 0 ? (placeholder || t("Cari atau ketik tag...", "Search or type tag...")) : ""}
+              className="flex-1 min-w-[120px] bg-transparent border-0 p-0 text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-0"
+            />
+          </div>
+        </PopoverAnchor>
 
-      {/* Dropdown Options (Matched with Project & Task dropdown style) */}
-      {isOpen && (
-        <div className="absolute left-0 right-0 top-full z-50 mt-1 max-h-60 overflow-y-auto rounded-xl border border-border/80 bg-popover p-1.5 shadow-lg space-y-1">
-          <div>
+        {/* Portaled Popover Menu (Matching Project & Task dropdowns 100%) */}
+        <PopoverContent
+          align="start"
+          sideOffset={5}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          className="w-[var(--radix-popover-trigger-width)] p-1.5 shadow-lg border border-border/80 rounded-xl"
+        >
+          <div className="max-h-60 touch-pan-y overflow-y-auto overscroll-contain space-y-1">
             <p className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               {t("TAGS WORKSPACE", "WORKSPACE TAGS")}
             </p>
@@ -210,8 +207,8 @@ export function TimerTagPicker({
               <p className="p-3 text-xs text-muted-foreground">{t("Belum ada tag.", "No tags yet.")}</p>
             )}
           </div>
-        </div>
-      )}
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
