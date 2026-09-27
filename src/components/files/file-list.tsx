@@ -32,18 +32,18 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FilePreviewModal } from "@/components/files/file-preview-modal";
 import {
   ChevronLeft,
   ChevronRight,
   Download,
-
+  Eye,
   FileArchive,
   FileCode,
   FileSpreadsheet,
   FileText,
   Image as ImageIcon,
   Loader2,
-
   Search,
   Trash2,
   LayoutGrid,
@@ -110,6 +110,7 @@ export function FileList({ files, folders = [], canWrite, lang: _lang }: FileLis
   const [page, setPage] = useState(1);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
+  const [previewTarget, setPreviewTarget] = useState<FileItem | null>(null);
 
   const filteredFolders = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -359,10 +360,16 @@ export function FileList({ files, folders = [], canWrite, lang: _lang }: FileLis
                 </DropdownMenu>
               </div>
             );
-          })() : (() => { const file=item.file; const busy=busyId === file.id; return <div key={`file-${file.id}`} className="group flex h-14 items-center gap-3 rounded-xl bg-muted/60 px-3 transition-colors hover:bg-muted"><div className="shrink-0">{getFileIcon(file.mimeType)}</div><span className="min-w-0 flex-1 truncate text-sm font-medium" title={file.name}>{file.name}</span><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-8 shrink-0 rounded-full" disabled={busy} aria-label={t(`Aksi ${file.name}`, `${file.name} actions`)}><MoreVertical className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => window.open(`/api/files/${file.id}/download`, "_blank")}><Download className="size-4" />{t("Unduh", "Download")}</DropdownMenuItem>{canWrite && <><DropdownMenuItem onSelect={() => handleVisibility(file.id, file.visibility === "internal" ? "client" : "internal")}>{file.visibility === "internal" ? t("Tampilkan ke klien", "Make client-visible") : t("Jadikan internal", "Make internal")}</DropdownMenuItem><DropdownMenuItem onSelect={() => handleFileType(file.id, file.fileType === "deliverable" ? "working_file" : "deliverable")}>{file.fileType === "deliverable" ? t("Jadikan berkas kerja", "Mark as working file") : t("Tandai hasil kerja", "Mark as deliverable")}</DropdownMenuItem><DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeleteTarget(file)}><Trash2 className="size-4" />{t("Hapus", "Delete")}</DropdownMenuItem></>}</DropdownMenuContent></DropdownMenu></div>; })())}
-        </div> : <div className="overflow-hidden rounded-2xl border bg-card"><div className="divide-y">{paginatedItems.map((item) => item.kind === "folder" ? <a key={`folder-${item.folder.id}`} href={item.folder.href} className="flex h-11 items-center justify-between px-4 hover:bg-muted/30"><span className="flex min-w-0 items-center gap-3"><Folder className="size-4 shrink-0 text-amber-500" /><span className="truncate text-sm font-medium">{item.folder.name}</span></span><span className="text-xs text-muted-foreground">{t("Folder", "Folder")}</span></a> : <div key={`file-${item.file.id}`} className="flex h-11 items-center justify-between gap-3 px-4"><span className="flex min-w-0 items-center gap-3">{getFileIcon(item.file.mimeType)}<span className="truncate text-sm font-medium">{item.file.name}</span></span><Button variant="ghost" size="icon" className="size-8" onClick={() => window.open(`/api/files/${item.file.id}/download`, "_blank")} aria-label={t(`Buka / Unduh ${item.file.name}`, `Open / Download ${item.file.name}`)}><Download className="size-4" /></Button></div>)}</div></div>}
+          })() : (() => { const file=item.file; const busy=busyId === file.id; return <div key={`file-${file.id}`} className="group flex h-14 items-center gap-3 rounded-xl bg-muted/60 px-3 transition-colors hover:bg-muted"><div className="shrink-0 cursor-pointer" onClick={() => setPreviewTarget(file)}>{getFileIcon(file.mimeType)}</div><span className="min-w-0 flex-1 truncate text-sm font-medium cursor-pointer hover:text-primary transition-colors" onClick={() => setPreviewTarget(file)} title={file.name}>{file.name}</span><DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-8 shrink-0 rounded-full" disabled={busy} aria-label={t(`Aksi ${file.name}`, `${file.name} actions`)}><MoreVertical className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => setPreviewTarget(file)}><Eye className="size-4" />{t("Buka Pratinjau", "Preview")}</DropdownMenuItem><DropdownMenuItem onSelect={() => window.open(`/api/files/${file.id}/download`, "_blank")}><Download className="size-4" />{t("Unduh", "Download")}</DropdownMenuItem>{canWrite && <><DropdownMenuItem onSelect={() => handleVisibility(file.id, file.visibility === "internal" ? "client" : "internal")}>{file.visibility === "internal" ? t("Tampilkan ke klien", "Make client-visible") : t("Jadikan internal", "Make internal")}</DropdownMenuItem><DropdownMenuItem onSelect={() => handleFileType(file.id, file.fileType === "deliverable" ? "working_file" : "deliverable")}>{file.fileType === "deliverable" ? t("Jadikan berkas kerja", "Mark as working file") : t("Tandai hasil kerja", "Mark as deliverable")}</DropdownMenuItem><DropdownMenuItem className="text-destructive focus:text-destructive" onSelect={() => setDeleteTarget(file)}><Trash2 className="size-4" />{t("Hapus", "Delete")}</DropdownMenuItem></>}</DropdownMenuContent></DropdownMenu></div>; })())}
+        </div> : <div className="overflow-hidden rounded-2xl border bg-card"><div className="divide-y">{paginatedItems.map((item) => item.kind === "folder" ? <a key={`folder-${item.folder.id}`} href={item.folder.href} className="flex h-11 items-center justify-between px-4 hover:bg-muted/30"><span className="flex min-w-0 items-center gap-3"><Folder className="size-4 shrink-0 text-amber-500" /><span className="truncate text-sm font-medium">{item.folder.name}</span></span><span className="text-xs text-muted-foreground">{t("Folder", "Folder")}</span></a> : <div key={`file-${item.file.id}`} className="flex h-11 items-center justify-between gap-3 px-4"><span className="flex min-w-0 items-center gap-3 cursor-pointer hover:text-primary transition-colors flex-1" onClick={() => setPreviewTarget(item.file)}>{getFileIcon(item.file.mimeType)}<span className="truncate text-sm font-medium">{item.file.name}</span></span><div className="flex items-center gap-1"><Button variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-foreground" onClick={() => setPreviewTarget(item.file)} title={t("Buka Pratinjau", "Preview")}><Eye className="size-4" /></Button><Button variant="ghost" size="icon" className="size-8 text-muted-foreground hover:text-foreground" onClick={() => window.open(`/api/files/${item.file.id}/download`, "_blank")} aria-label={t(`Unduh ${item.file.name}`, `Download ${item.file.name}`)}><Download className="size-4" /></Button></div></div>)}</div></div>}
         {totalPages > 1 && <div className="flex items-center justify-between border-t pt-3"><Button variant="outline" size="sm" disabled={safePage <= 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft className="size-4" />{t("Sebelumnya", "Previous")}</Button><span className="text-xs text-muted-foreground">{t("Halaman", "Page")} {safePage} / {totalPages}</span><Button variant="outline" size="sm" disabled={safePage >= totalPages} onClick={() => setPage((value) => value + 1)}>{t("Berikutnya", "Next")}<ChevronRight className="size-4" /></Button></div>}
       </>}
+
+      <FilePreviewModal
+        file={previewTarget}
+        open={Boolean(previewTarget)}
+        onOpenChange={(open) => !open && setPreviewTarget(null)}
+      />
 
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
         <DialogContent>
