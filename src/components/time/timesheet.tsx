@@ -451,7 +451,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
               <DialogTitle>{t("Edit Log Waktu", "Edit time log")}</DialogTitle>
             </DialogHeader>
 
-            <div className="grid min-h-0 grid-cols-1 gap-6 overflow-y-auto px-5 py-5 pb-24 md:grid-cols-12">
+            <div className="grid min-h-0 grid-cols-1 gap-6 overflow-y-auto px-5 py-5 pb-52 md:grid-cols-12">
               {/* Left Column - Track on */}
               <div className="space-y-4 md:col-span-7">
                 <div className="space-y-1">
