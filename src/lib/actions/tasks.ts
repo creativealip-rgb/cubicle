@@ -720,8 +720,46 @@ export async function addTaskComment({ taskId, content }: { taskId: string; cont
     })
     .returning();
 
-  // Notify assignee if someone else comments
-  if (task.assigneeId && task.assigneeId !== user.id) {
+  // 1. Detect mentions (@Name or @email) and notify mentioned team members
+  const mentionedUserIds = new Set<string>();
+  const allMembers = await db
+    .select({
+      id: users.id,
+      name: users.name,
+      email: users.email,
+    })
+    .from(workspaceMembers)
+    .innerJoin(users, eq(users.id, workspaceMembers.userId))
+    .where(eq(workspaceMembers.workspaceId, workspaceId));
+
+  for (const member of allMembers) {
+    if (member.id === user.id) continue;
+    const nameMatch = member.name && cleanContent.toLowerCase().includes(`@${member.name.toLowerCase()}`);
+    const emailPrefix = member.email ? member.email.split("@")[0].toLowerCase() : "";
+    const emailMatch = emailPrefix && cleanContent.toLowerCase().includes(`@${emailPrefix}`);
+    
+    if (nameMatch || emailMatch) {
+      mentionedUserIds.add(member.id);
+      try {
+        await createNotification({
+          workspaceId,
+          userId: member.id,
+          type: "task_commented",
+          title: `${user.email} me-mention Anda di tugas: ${task.title}`,
+          body: cleanContent.slice(0, 100),
+          link: `/app/tasks?focus=${taskId}`,
+          entityType: "task",
+          entityId: taskId,
+          actorId: user.id,
+        });
+      } catch {
+        // best-effort
+      }
+    }
+  }
+
+  // 2. Notify task assignee if someone else comments (and not already notified via mention)
+  if (task.assigneeId && task.assigneeId !== user.id && !mentionedUserIds.has(task.assigneeId)) {
     try {
       await createNotification({
         workspaceId,

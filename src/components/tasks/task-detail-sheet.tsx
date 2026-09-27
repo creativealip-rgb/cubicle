@@ -29,6 +29,7 @@ import {
   Edit2,
   Check,
   X,
+  AtSign,
 } from "lucide-react";
 import {
   updateTask,
@@ -111,6 +112,12 @@ export function TaskDetailSheet({
   const [newComment, setNewComment] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
   const commentScrollRef = useRef<HTMLDivElement>(null);
+  const commentInputRef = useRef<HTMLTextAreaElement>(null);
+
+  // Mention Autocomplete State
+  const [mentionOpen, setMentionOpen] = useState(false);
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [mentionIndex, setMentionIndex] = useState(0);
 
   // Load Subtasks & Comments when modal opens
   useEffect(() => {
@@ -313,8 +320,50 @@ export function TaskDetailSheet({
   };
 
   // Comments Handlers
-  const handleAddComment = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const val = e.target.value;
+    setNewComment(val);
+
+    const cursorPos = e.target.selectionStart;
+    const textBeforeCursor = val.slice(0, cursorPos);
+    const match = textBeforeCursor.match(/@([a-zA-Z0-9_-]*)$/);
+
+    if (match) {
+      setMentionOpen(true);
+      setMentionQuery(match[1].toLowerCase());
+      setMentionIndex(0);
+    } else {
+      setMentionOpen(false);
+    }
+  };
+
+  const filteredMentionMembers = members.filter((m) => {
+    const name = (m.name || "").toLowerCase();
+    const email = (m.email || "").toLowerCase();
+    return name.includes(mentionQuery) || email.includes(mentionQuery);
+  });
+
+  const insertMention = (member: { id: string; name: string | null; email: string | null }) => {
+    const displayName = member.name || member.email?.split("@")[0] || "member";
+    const cursorPos = commentInputRef.current?.selectionStart || newComment.length;
+    const textBeforeCursor = newComment.slice(0, cursorPos);
+    const textAfterCursor = newComment.slice(cursorPos);
+    
+    const newTextBefore = textBeforeCursor.replace(/@([a-zA-Z0-9_-]*)$/, `@${displayName} `);
+    setNewComment(newTextBefore + textAfterCursor);
+    setMentionOpen(false);
+
+    setTimeout(() => {
+      if (commentInputRef.current) {
+        commentInputRef.current.focus();
+        const nextPos = newTextBefore.length;
+        commentInputRef.current.setSelectionRange(nextPos, nextPos);
+      }
+    }, 10);
+  };
+
+  const handleAddComment = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     if (!newComment.trim() || commentLoading) return;
     setCommentLoading(true);
     try {
@@ -331,6 +380,7 @@ export function TaskDetailSheet({
         },
       ]);
       setNewComment("");
+      setMentionOpen(false);
       toast.success(t("Komentar terkirim", "Comment posted"));
       setTimeout(() => {
         if (commentScrollRef.current) {
@@ -352,6 +402,21 @@ export function TaskDetailSheet({
     } catch {
       toast.error(t("Gagal menghapus komentar", "Failed to delete comment"));
     }
+  };
+
+  // Helper to render text with highlighted @mentions
+  const renderCommentContent = (content: string) => {
+    const parts = content.split(/(@[a-zA-Z0-9_.-]+)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith("@")) {
+        return (
+          <span key={i} className="inline-flex items-center font-bold text-primary bg-primary/10 rounded px-1 py-0.5 text-[11px] mx-0.5">
+            {part}
+          </span>
+        );
+      }
+      return part;
+    });
   };
 
   const subtaskDone = subtasks.filter((s) => s.completed).length;
@@ -698,7 +763,7 @@ export function TaskDetailSheet({
             </div>
           </div>
 
-          {/* Right Column: Activity Feed & Comments (ClickUp / Asana Style) */}
+          {/* Right Column: Activity Feed & Comments with @Mentions (ClickUp / Asana Style) */}
           <div className="min-h-0 flex flex-col overflow-hidden p-5 md:col-span-4 bg-muted/10 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-border/60">
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -716,7 +781,7 @@ export function TaskDetailSheet({
                 <div className="flex flex-col items-center justify-center h-full text-center p-4 text-xs text-muted-foreground space-y-1">
                   <Sparkles className="h-6 w-6 text-muted-foreground/40 mb-1" />
                   <p className="font-medium">{t("Belum ada komentar", "No comments yet")}</p>
-                  <p className="text-[11px] text-muted-foreground/70">{t("Tinggalkan update pengerjaan atau catatan tim di sini.", "Leave work updates or team notes here.")}</p>
+                  <p className="text-[11px] text-muted-foreground/70">{t("Ketik @ untuk me-mention anggota tim.", "Type @ to mention team members.")}</p>
                 </div>
               ) : (
                 comments.map((c) => (
@@ -734,40 +799,84 @@ export function TaskDetailSheet({
                         </button>
                       </div>
                     </div>
-                    <p className="text-xs text-foreground/90 leading-relaxed whitespace-pre-wrap">{c.content}</p>
+                    <p className="text-xs text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                      {renderCommentContent(c.content)}
+                    </p>
                   </div>
                 ))
               )}
             </div>
 
-            {/* Comment Input Composer */}
-            <form onSubmit={handleAddComment} className="pt-2 border-t border-border/60 space-y-2">
-              <Textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey && newComment.trim()) {
-                    e.preventDefault();
-                    handleAddComment(e);
-                  }
-                }}
-                placeholder={t("Tulis komentar atau update tim (Enter untuk kirim)...", "Write a comment or team update (Enter to send)...")}
-                rows={2}
-                className="w-full min-h-[65px] resize-none rounded-lg border border-border/80 p-2 text-xs leading-relaxed bg-background"
-                disabled={commentLoading}
-              />
-              <div className="flex justify-end">
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={commentLoading || !newComment.trim()}
-                  className="h-7 gap-1.5 px-3 text-xs font-semibold"
-                >
-                  {commentLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
-                  {t("Kirim", "Send")}
-                </Button>
-              </div>
-            </form>
+            {/* Comment Input Composer with @Mention Autocomplete */}
+            <div className="relative pt-2 border-t border-border/60">
+              {/* Mention Suggestion Popover */}
+              {mentionOpen && filteredMentionMembers.length > 0 && (
+                <div className="absolute bottom-full left-0 mb-2 w-full max-h-44 overflow-y-auto rounded-xl border border-border bg-popover shadow-lg z-50 p-1 divide-y divide-border/40">
+                  <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <AtSign className="h-3 w-3" />
+                    <span>{t("Mention Anggota Tim", "Mention Team Member")}</span>
+                  </div>
+                  <div className="py-0.5">
+                    {filteredMentionMembers.map((m) => (
+                      <button
+                        key={m.id}
+                        type="button"
+                        onClick={() => insertMention(m)}
+                        className="w-full text-left px-2 py-1.5 text-xs rounded-md hover:bg-accent flex items-center justify-between transition-colors cursor-pointer"
+                      >
+                        <span className="font-semibold text-foreground">{m.name || m.email}</span>
+                        <span className="text-[10px] text-muted-foreground">{m.email}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleAddComment} className="space-y-2">
+                <Textarea
+                  ref={commentInputRef}
+                  value={newComment}
+                  onChange={handleCommentChange}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey && !mentionOpen && newComment.trim()) {
+                      e.preventDefault();
+                      handleAddComment();
+                    }
+                  }}
+                  placeholder={t("Tulis komentar (@ untuk mention tim, Enter kirim)...", "Write a comment (@ to mention team, Enter to send)...")}
+                  rows={2}
+                  className="w-full min-h-[65px] resize-none rounded-lg border border-border/80 p-2 text-xs leading-relaxed bg-background"
+                  disabled={commentLoading}
+                />
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewComment((prev) => prev + "@");
+                        setMentionOpen(true);
+                        setMentionQuery("");
+                        commentInputRef.current?.focus();
+                      }}
+                      className="inline-flex items-center gap-1 rounded hover:bg-muted px-1.5 py-0.5 transition-colors"
+                      title={t("Mention anggota tim", "Mention team member")}
+                    >
+                      <AtSign className="h-3.5 w-3.5 text-primary" />
+                      <span>Mention</span>
+                    </button>
+                  </div>
+                  <Button
+                    type="submit"
+                    size="sm"
+                    disabled={commentLoading || !newComment.trim()}
+                    className="h-7 gap-1.5 px-3 text-xs font-semibold"
+                  >
+                    {commentLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                    {t("Kirim", "Send")}
+                  </Button>
+                </div>
+              </form>
+            </div>
           </div>
         </div>
       </DialogContent>
