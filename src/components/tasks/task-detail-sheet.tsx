@@ -43,6 +43,9 @@ import {
   Download,
   Eye,
   X,
+  CheckSquare,
+  AlignLeft,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -50,7 +53,7 @@ import {
   getTaskSubtasks,
   addSubtask,
   toggleSubtask,
-  updateSubtaskTitle,
+  updateSubtaskDetails,
   updateSubtaskAssignee,
   deleteSubtask,
   getTaskComments,
@@ -142,14 +145,19 @@ export function TaskDetailSheet({
     Array<{
       id: string;
       title: string;
+      description?: string | null;
       completed: boolean;
       assigneeId: string | null;
+      dueDate?: string | null;
     }>
   >([]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [subtaskLoading, setSubtaskLoading] = useState(false);
-  const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
-  const [editingSubtaskTitle, setEditingSubtaskTitle] = useState("");
+  const [expandedSubtaskId, setExpandedSubtaskId] = useState<string | null>(null);
+
+  // Subtask Edit Draft
+  const [subtaskTitleDraft, setSubtaskTitleDraft] = useState("");
+  const [subtaskDescDraft, setSubtaskDescDraft] = useState("");
 
   // Comments State
   const [comments, setComments] = useState<TaskCommentItem[]>([]);
@@ -169,7 +177,7 @@ export function TaskDetailSheet({
   // Mention Autocomplete State
   const [mentionOpen, setMentionOpen] = useState(false);
   const [mentionQuery, setMentionQuery] = useState("");
-  const [mentionIndex, setMentionIndex] = useState(0);
+  const [mentionType, setMentionType] = useState<"member" | "subtask">("member");
 
   // Load Subtasks & Comments when modal opens
   useEffect(() => {
@@ -179,8 +187,10 @@ export function TaskDetailSheet({
           items.map((it) => ({
             id: it.id,
             title: it.title,
+            description: it.description,
             completed: it.completed,
             assigneeId: it.assigneeId,
+            dueDate: it.dueDate,
           }))
         );
       });
@@ -309,7 +319,13 @@ export function TaskDetailSheet({
       const created = await addSubtask(task.id, newSubtaskTitle.trim());
       setSubtasks((prev) => [
         ...prev,
-        { id: created.id, title: created.title, completed: created.completed, assigneeId: created.assigneeId },
+        {
+          id: created.id,
+          title: created.title,
+          description: created.description,
+          completed: created.completed,
+          assigneeId: created.assigneeId,
+        },
       ]);
       setNewSubtaskTitle("");
       toast.success(t("Subtask ditambahkan", "Subtask added"));
@@ -333,17 +349,30 @@ export function TaskDetailSheet({
     }
   };
 
-  const handleSaveSubtaskTitle = async (subtaskId: string) => {
-    if (!editingSubtaskTitle.trim()) return;
-    const title = editingSubtaskTitle.trim();
-    setSubtasks((prev) => prev.map((s) => (s.id === subtaskId ? { ...s, title } : s)));
-    setEditingSubtaskId(null);
+  const handleOpenSubtaskDetails = (st: (typeof subtasks)[0]) => {
+    if (expandedSubtaskId === st.id) {
+      setExpandedSubtaskId(null);
+    } else {
+      setExpandedSubtaskId(st.id);
+      setSubtaskTitleDraft(st.title);
+      setSubtaskDescDraft(st.description || "");
+    }
+  };
+
+  const handleSaveSubtaskDetails = async (subtaskId: string) => {
+    if (!subtaskTitleDraft.trim()) return;
+    const title = subtaskTitleDraft.trim();
+    const description = subtaskDescDraft.trim();
+
+    setSubtasks((prev) =>
+      prev.map((s) => (s.id === subtaskId ? { ...s, title, description } : s))
+    );
     try {
-      await updateSubtaskTitle(subtaskId, title);
-      toast.success(t("Subtask diperbarui", "Subtask updated"));
+      await updateSubtaskDetails({ subtaskId, title, description });
+      toast.success(t("Rincian subtask disimpan", "Subtask details saved"));
       router.refresh();
     } catch {
-      toast.error(t("Gagal memperbarui subtask", "Failed to update subtask"));
+      toast.error(t("Gagal menyimpan rincian subtask", "Failed to save subtask details"));
     }
   };
 
@@ -363,6 +392,7 @@ export function TaskDetailSheet({
     setSubtasks((prev) => prev.filter((s) => s.id !== subtaskId));
     try {
       await deleteSubtask(subtaskId);
+      if (expandedSubtaskId === subtaskId) setExpandedSubtaskId(null);
       toast.success(t("Subtask dihapus", "Subtask deleted"));
       router.refresh();
     } catch {
@@ -405,19 +435,25 @@ export function TaskDetailSheet({
     }
   };
 
-  // Comments Handlers
+  // Comments Handlers with @Member and #Subtask Autocomplete
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
     setNewComment(val);
 
     const cursorPos = e.target.selectionStart;
     const textBeforeCursor = val.slice(0, cursorPos);
-    const match = textBeforeCursor.match(/@([a-zA-Z0-9_-]*)$/);
 
-    if (match) {
+    const memberMatch = textBeforeCursor.match(/@([a-zA-Z0-9_-]*)$/);
+    const subtaskMatch = textBeforeCursor.match(/#([a-zA-Z0-9_\s-]*)$/);
+
+    if (memberMatch) {
       setMentionOpen(true);
-      setMentionQuery(match[1].toLowerCase());
-      setMentionIndex(0);
+      setMentionType("member");
+      setMentionQuery(memberMatch[1].toLowerCase());
+    } else if (subtaskMatch) {
+      setMentionOpen(true);
+      setMentionType("subtask");
+      setMentionQuery(subtaskMatch[1].toLowerCase());
     } else {
       setMentionOpen(false);
     }
@@ -429,13 +465,35 @@ export function TaskDetailSheet({
     return name.includes(mentionQuery) || email.includes(mentionQuery);
   });
 
-  const insertMention = (member: { id: string; name: string | null; email: string | null }) => {
+  const filteredMentionSubtasks = subtasks.filter((st) =>
+    st.title.toLowerCase().includes(mentionQuery)
+  );
+
+  const insertMemberMention = (member: { id: string; name: string | null; email: string | null }) => {
     const displayName = member.name || member.email?.split("@")[0] || "member";
     const cursorPos = commentInputRef.current?.selectionStart || newComment.length;
     const textBeforeCursor = newComment.slice(0, cursorPos);
     const textAfterCursor = newComment.slice(cursorPos);
-    
+
     const newTextBefore = textBeforeCursor.replace(/@([a-zA-Z0-9_-]*)$/, `@${displayName} `);
+    setNewComment(newTextBefore + textAfterCursor);
+    setMentionOpen(false);
+
+    setTimeout(() => {
+      if (commentInputRef.current) {
+        commentInputRef.current.focus();
+        const nextPos = newTextBefore.length;
+        commentInputRef.current.setSelectionRange(nextPos, nextPos);
+      }
+    }, 10);
+  };
+
+  const insertSubtaskMention = (subtask: (typeof subtasks)[0]) => {
+    const cursorPos = commentInputRef.current?.selectionStart || newComment.length;
+    const textBeforeCursor = newComment.slice(0, cursorPos);
+    const textAfterCursor = newComment.slice(cursorPos);
+
+    const newTextBefore = textBeforeCursor.replace(/#([a-zA-Z0-9_\s-]*)$/, `[#${subtask.title}] `);
     setNewComment(newTextBefore + textAfterCursor);
     setMentionOpen(false);
 
@@ -497,14 +555,26 @@ export function TaskDetailSheet({
     }
   };
 
-  // Helper to render text with highlighted @mentions
+  // Helper to render text with highlighted @mentions and #subtasks
   const renderCommentContent = (content: string) => {
-    const parts = content.split(/(@[a-zA-Z0-9_.-]+)/g);
+    const parts = content.split(/(@[a-zA-Z0-9_.-]+|\[#[^\]]+\])/g);
     return parts.map((part, i) => {
       if (part.startsWith("@")) {
         return (
-          <span key={i} className="inline-flex items-center font-bold text-primary bg-primary/10 rounded px-1 py-0.5 text-[11px] mx-0.5">
+          <span key={i} className="inline-flex items-center font-bold text-primary bg-primary/10 rounded px-1.5 py-0.5 text-[11px] mx-0.5">
             {part}
+          </span>
+        );
+      }
+      if (part.startsWith("[#") && part.endsWith("]")) {
+        const subtaskName = part.slice(2, -1);
+        return (
+          <span
+            key={i}
+            className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 rounded px-1.5 py-0.5 text-[11px] mx-0.5"
+          >
+            <CheckSquare className="h-3 w-3" />
+            {subtaskName}
           </span>
         );
       }
@@ -697,7 +767,7 @@ export function TaskDetailSheet({
               />
             </div>
 
-            {/* Interactive Subtasks Checklist Table */}
+            {/* Interactive Subtasks Checklist Table with Expandable Detail Panel */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -727,75 +797,109 @@ export function TaskDetailSheet({
                     {t("Belum ada langkah kerja. Tambahkan subtask di bawah.", "No subtasks yet. Add one below.")}
                   </div>
                 ) : (
-                  subtasks.map((st) => (
-                    <div
-                      key={st.id}
-                      className="group flex items-center justify-between gap-3 p-2.5 hover:bg-muted/40 transition-colors"
-                    >
-                      <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                        <Checkbox
-                          checked={st.completed}
-                          onCheckedChange={() => handleToggleSubtask(st.id, st.completed)}
-                          className="rounded-md"
-                        />
-                        {editingSubtaskId === st.id ? (
-                          <Input
-                            autoFocus
-                            value={editingSubtaskTitle}
-                            onChange={(e) => setEditingSubtaskTitle(e.target.value)}
-                            onBlur={() => handleSaveSubtaskTitle(st.id)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") handleSaveSubtaskTitle(st.id);
-                              if (e.key === "Escape") setEditingSubtaskId(null);
-                            }}
-                            className="h-7 text-xs py-0"
-                          />
-                        ) : (
-                          <span
-                            onClick={() => {
-                              setEditingSubtaskId(st.id);
-                              setEditingSubtaskTitle(st.title);
-                            }}
-                            className={`text-xs cursor-pointer truncate ${
-                              st.completed ? "line-through text-muted-foreground" : "text-foreground font-medium"
-                            }`}
-                          >
-                            {st.title}
-                          </span>
+                  subtasks.map((st) => {
+                    const isExpanded = expandedSubtaskId === st.id;
+                    return (
+                      <div key={st.id} className="transition-colors bg-card">
+                        {/* Main Subtask Row */}
+                        <div className="group flex items-center justify-between gap-3 p-2.5 hover:bg-muted/40 transition-colors">
+                          <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                            <Checkbox
+                              checked={st.completed}
+                              onCheckedChange={() => handleToggleSubtask(st.id, st.completed)}
+                              className="rounded-md"
+                            />
+                            <div
+                              onClick={() => handleOpenSubtaskDetails(st)}
+                              className="flex items-center gap-1.5 flex-1 min-w-0 cursor-pointer"
+                            >
+                              <span
+                                className={`text-xs truncate ${
+                                  st.completed ? "line-through text-muted-foreground" : "text-foreground font-medium"
+                                }`}
+                              >
+                                {st.title}
+                              </span>
+                              {st.description && (
+                                <AlignLeft className="h-3 w-3 text-muted-foreground shrink-0" />
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Subtask Assignee, Expand Toggle & Delete */}
+                          <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                            <Select
+                              value={st.assigneeId ?? "__unassigned__"}
+                              onValueChange={(val) => handleSubtaskAssigneeChange(st.id, val)}
+                            >
+                              <SelectTrigger className="h-6 w-24 text-[10px] rounded-md border-border/60 px-1.5 bg-background">
+                                <SelectValue placeholder="Assignee" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__unassigned__">{t("Pilih...", "None")}</SelectItem>
+                                {members.map((m) => (
+                                  <SelectItem key={m.id} value={m.id}>
+                                    {m.name || m.email}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenSubtaskDetails(st)}
+                              className="h-6 w-6 text-muted-foreground rounded-md"
+                              title={t("Buka rincian subtask", "Open subtask details")}
+                            >
+                              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isExpanded ? "rotate-180 text-primary" : ""}`} />
+                            </Button>
+
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDeleteSubtask(st.id)}
+                              className="h-6 w-6 text-muted-foreground hover:text-destructive rounded-md"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        {/* Inline Expandable Subtask Details Box */}
+                        {isExpanded && (
+                          <div className="p-3 bg-muted/30 border-t border-border/60 space-y-2.5 animate-in fade-in-50 duration-150">
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                {t("Judul Subtask", "Subtask Title")}
+                              </span>
+                              <Input
+                                value={subtaskTitleDraft}
+                                onChange={(e) => setSubtaskTitleDraft(e.target.value)}
+                                onBlur={() => handleSaveSubtaskDetails(st.id)}
+                                className="h-7 text-xs bg-background"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                {t("Deskripsi & Catatan Subtask", "Subtask Description & Notes")}
+                              </span>
+                              <Textarea
+                                value={subtaskDescDraft}
+                                onChange={(e) => setSubtaskDescDraft(e.target.value)}
+                                onBlur={() => handleSaveSubtaskDetails(st.id)}
+                                placeholder={t("Masukkan petunjuk spesifik subtask ini...", "Add specific instructions for this subtask...")}
+                                rows={2}
+                                className="text-xs bg-background resize-none leading-relaxed"
+                              />
+                            </div>
+                          </div>
                         )}
                       </div>
-
-                      {/* Subtask Assignee & Delete */}
-                      <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
-                        <Select
-                          value={st.assigneeId ?? "__unassigned__"}
-                          onValueChange={(val) => handleSubtaskAssigneeChange(st.id, val)}
-                        >
-                          <SelectTrigger className="h-6 w-24 text-[10px] rounded-md border-border/60 px-1.5">
-                            <SelectValue placeholder="Assignee" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="__unassigned__">{t("Pilih...", "None")}</SelectItem>
-                            {members.map((m) => (
-                              <SelectItem key={m.id} value={m.id}>
-                                {m.name || m.email}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteSubtask(st.id)}
-                          className="h-6 w-6 text-muted-foreground hover:text-destructive rounded-md"
-                        >
-                          <Trash2 className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
 
@@ -824,7 +928,7 @@ export function TaskDetailSheet({
             </div>
           </div>
 
-          {/* Right Column: Activity Feed & Comments with @Mentions & Attachments */}
+          {/* Right Column: Activity Feed & Comments with @Mentions, #Subtasks & Attachments */}
           <div className="min-h-0 flex flex-col overflow-hidden p-5 md:col-span-4 bg-muted/10 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-border/60">
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -842,7 +946,7 @@ export function TaskDetailSheet({
                 <div className="flex flex-col items-center justify-center h-full text-center p-4 text-xs text-muted-foreground space-y-1">
                   <Sparkles className="h-6 w-6 text-muted-foreground/40 mb-1" />
                   <p className="font-medium">{t("Belum ada komentar", "No comments yet")}</p>
-                  <p className="text-[11px] text-muted-foreground/70">{t("Ketik @ untuk mention & lampirkan file 📎", "Type @ to mention & attach files 📎")}</p>
+                  <p className="text-[11px] text-muted-foreground/70">{t("Ketik @ mention tim, # mention subtask 📎", "Type @ for team, # for subtasks 📎")}</p>
                 </div>
               ) : (
                 comments.map((c) => (
@@ -916,28 +1020,54 @@ export function TaskDetailSheet({
               )}
             </div>
 
-            {/* Comment Input Composer with @Mention Autocomplete & Paperclip */}
+            {/* Comment Input Composer with @Mention Autocomplete & #Subtask Selector */}
             <div className="relative pt-2 border-t border-border/60 space-y-2">
               {/* Mention Suggestion Popover */}
-              {mentionOpen && filteredMentionMembers.length > 0 && (
-                <div className="absolute bottom-full left-0 mb-2 w-full max-h-44 overflow-y-auto rounded-xl border border-border bg-popover shadow-lg z-50 p-1 divide-y divide-border/40">
-                  <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <AtSign className="h-3 w-3" />
-                    <span>{t("Mention Anggota Tim", "Mention Team Member")}</span>
-                  </div>
-                  <div className="py-0.5">
-                    {filteredMentionMembers.map((m) => (
-                      <button
-                        key={m.id}
-                        type="button"
-                        onClick={() => insertMention(m)}
-                        className="w-full text-left px-2 py-1.5 text-xs rounded-md hover:bg-accent flex items-center justify-between transition-colors cursor-pointer"
-                      >
-                        <span className="font-semibold text-foreground">{m.name || m.email}</span>
-                        <span className="text-[10px] text-muted-foreground">{m.email}</span>
-                      </button>
-                    ))}
-                  </div>
+              {mentionOpen && (
+                <div className="absolute bottom-full left-0 mb-2 w-full max-h-48 overflow-y-auto rounded-xl border border-border bg-popover shadow-lg z-50 p-1 divide-y divide-border/40">
+                  {mentionType === "member" && filteredMentionMembers.length > 0 && (
+                    <>
+                      <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                        <AtSign className="h-3 w-3 text-primary" />
+                        <span>{t("Mention Anggota Tim", "Mention Team Member")}</span>
+                      </div>
+                      <div className="py-0.5">
+                        {filteredMentionMembers.map((m) => (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => insertMemberMention(m)}
+                            className="w-full text-left px-2 py-1.5 text-xs rounded-md hover:bg-accent flex items-center justify-between transition-colors cursor-pointer"
+                          >
+                            <span className="font-semibold text-foreground">{m.name || m.email}</span>
+                            <span className="text-[10px] text-muted-foreground">{m.email}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+
+                  {mentionType === "subtask" && filteredMentionSubtasks.length > 0 && (
+                    <>
+                      <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                        <CheckSquare className="h-3 w-3 text-emerald-500" />
+                        <span>{t("Tautkan Langkah / Subtask", "Link Subtask")}</span>
+                      </div>
+                      <div className="py-0.5">
+                        {filteredMentionSubtasks.map((st) => (
+                          <button
+                            key={st.id}
+                            type="button"
+                            onClick={() => insertSubtaskMention(st)}
+                            className="w-full text-left px-2 py-1.5 text-xs rounded-md hover:bg-accent flex items-center justify-between transition-colors cursor-pointer"
+                          >
+                            <span className="font-semibold text-foreground truncate">{st.title}</span>
+                            <span className="text-[10px] text-muted-foreground">{st.completed ? "✓ Selesai" : "Pending"}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
@@ -974,7 +1104,7 @@ export function TaskDetailSheet({
                       handleAddComment();
                     }
                   }}
-                  placeholder={t("Tulis komentar / lampirkan file (Enter kirim)...", "Write a comment / attach file (Enter to send)...")}
+                  placeholder={t("Tulis komentar (@ tim, # subtask, 📎 file)...", "Write a comment (@ team, # subtask, 📎 file)...")}
                   rows={2}
                   className="w-full min-h-[60px] resize-none rounded-lg border border-border/80 p-2 text-xs leading-relaxed bg-background"
                   disabled={commentLoading}
@@ -991,12 +1121,13 @@ export function TaskDetailSheet({
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                    {/* Mention trigger */}
+                    {/* Mention member trigger */}
                     <button
                       type="button"
                       onClick={() => {
                         setNewComment((prev) => prev + "@");
                         setMentionOpen(true);
+                        setMentionType("member");
                         setMentionQuery("");
                         commentInputRef.current?.focus();
                       }}
@@ -1004,7 +1135,24 @@ export function TaskDetailSheet({
                       title={t("Mention anggota tim", "Mention team member")}
                     >
                       <AtSign className="h-3.5 w-3.5 text-primary" />
-                      <span>Mention</span>
+                      <span>Team</span>
+                    </button>
+
+                    {/* Mention subtask trigger */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setNewComment((prev) => prev + "#");
+                        setMentionOpen(true);
+                        setMentionType("subtask");
+                        setMentionQuery("");
+                        commentInputRef.current?.focus();
+                      }}
+                      className="inline-flex items-center gap-1 rounded hover:bg-muted px-1.5 py-0.5 transition-colors cursor-pointer"
+                      title={t("Tautkan subtask", "Link subtask")}
+                    >
+                      <CheckSquare className="h-3.5 w-3.5 text-emerald-500" />
+                      <span>Subtask</span>
                     </button>
 
                     {/* Paperclip attach file trigger */}

@@ -537,6 +537,44 @@ export async function updateSubtaskTitle(subtaskId: string, title: string) {
   return updated;
 }
 
+export async function updateSubtaskDetails({
+  subtaskId,
+  title,
+  description,
+  dueDate,
+  assigneeId,
+}: {
+  subtaskId: string;
+  title?: string;
+  description?: string | null;
+  dueDate?: string | null;
+  assigneeId?: string | null;
+}) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const updates: Record<string, any> = { updatedAt: new Date() };
+  if (title !== undefined) {
+    const cleanTitle = title.trim();
+    if (!cleanTitle) throw new Error("Judul subtask tidak boleh kosong");
+    updates.title = cleanTitle;
+  }
+  if (description !== undefined) updates.description = description ? description.trim() : null;
+  if (dueDate !== undefined) updates.dueDate = dueDate || null;
+  if (assigneeId !== undefined) updates.assigneeId = assigneeId || null;
+
+  const [updated] = await db
+    .update(taskSubtasks)
+    .set(updates)
+    .where(and(eq(taskSubtasks.id, subtaskId), eq(taskSubtasks.workspaceId, workspaceId)))
+    .returning();
+
+  revalidatePath("/app/tasks");
+  return updated;
+}
+
 export async function deleteSubtask(subtaskId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
