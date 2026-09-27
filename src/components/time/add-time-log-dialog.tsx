@@ -188,7 +188,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
           <DialogTitle>{t("Tambah Log Waktu", "Add time log")}</DialogTitle>
         </DialogHeader>
 
-        <form id="create-time-entry-form" onSubmit={submit} className="grid min-h-0 grid-cols-1 gap-6 overflow-y-auto px-5 py-5 md:grid-cols-12">
+        <form id="create-time-entry-form" onSubmit={submit} className="grid min-h-0 grid-cols-1 gap-6 overflow-y-auto px-5 py-5 pb-24 md:grid-cols-12">
           {/* Left Column - Track on */}
           <div className="space-y-4 md:col-span-7">
             <div className="space-y-1">
