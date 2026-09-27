@@ -416,22 +416,22 @@ export function TaskDetailSheet({
         {/* 2-Column Workspace Body (ClickUp Style) */}
         <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden md:grid-cols-12 divide-y md:divide-y-0 md:divide-x">
           {/* Left Column: Canvas Document, Title, Metadata, Subtasks */}
-          <div className="min-h-0 overflow-y-auto p-6 md:col-span-8 space-y-5 pb-16">
+          <div className="min-h-0 overflow-y-auto p-5 md:col-span-8 space-y-3.5 pb-20">
             {/* Editable Title */}
             <div>
               <Input
                 value={titleDraft}
                 onChange={(e) => setTitleDraft(e.target.value)}
                 onBlur={handleTitleBlur}
-                className="border-transparent hover:border-border/80 focus:border-primary font-bold text-lg md:text-xl px-2.5 py-1.5 h-auto -ml-2 rounded-lg bg-transparent tracking-tight text-foreground transition-all focus-visible:ring-0 focus-visible:ring-offset-0"
+                className="border-transparent hover:border-border/80 focus:border-primary font-bold text-lg md:text-xl px-2 py-1 h-auto -ml-2 rounded-lg bg-transparent tracking-tight text-foreground transition-all focus-visible:ring-0 focus-visible:ring-offset-0"
                 placeholder={t("Judul tugas...", "Task title...")}
               />
             </div>
 
             {/* ClickUp-style Metadata Attributes Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl border border-border/70 bg-muted/20 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2.5 rounded-xl border border-border/70 bg-muted/20 text-xs">
               {/* Status Selector */}
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <CheckCircle2 className="h-3 w-3 text-muted-foreground/80" />
                   Status
@@ -449,7 +449,7 @@ export function TaskDetailSheet({
               </div>
 
               {/* Priority Selector */}
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <AlertCircle className="h-3 w-3 text-muted-foreground/80" />
                   {t("Prioritas", "Priority")}
@@ -467,7 +467,7 @@ export function TaskDetailSheet({
               </div>
 
               {/* Assignee Selector */}
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <User className="h-3 w-3 text-muted-foreground/80" />
                   {t("Petugas", "Assignee")}
@@ -487,7 +487,7 @@ export function TaskDetailSheet({
               </div>
 
               {/* Client Portal Visibility Toggle */}
-              <div className="space-y-1">
+              <div className="space-y-0.5">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                   <Eye className="h-3 w-3 text-muted-foreground/80" />
                   Portal
@@ -507,7 +507,7 @@ export function TaskDetailSheet({
             </div>
 
             {/* Description Document Canvas */}
-            <div className="space-y-1.5">
+            <div className="space-y-1">
               <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                 <span>{t("Deskripsi & Brief Kerja", "Description & Work Brief")}</span>
                 {isPending && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
@@ -520,13 +520,13 @@ export function TaskDetailSheet({
                   "Tambahkan catatan detail, instruksi pengerjaan, atau link referensi (auto-save saat klik luar)...",
                   "Add detail notes, instructions, or reference links (auto-saves on blur)..."
                 )}
-                rows={3}
-                className="w-full min-h-[85px] resize-y rounded-xl border border-border/80 bg-background p-3 text-xs md:text-sm leading-relaxed placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs"
+                rows={2}
+                className="w-full min-h-[64px] resize-y rounded-xl border border-border/80 bg-background p-2.5 text-xs md:text-sm leading-relaxed placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs"
               />
             </div>
 
             {/* Subtasks Section (ClickUp Detailed System) */}
-            <div className="space-y-3 pt-2 border-t border-border/60">
+            <div className="space-y-2.5 pt-1.5 border-t border-border/60">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ListTodo className="h-4 w-4 text-primary" />
@@ -566,7 +566,7 @@ export function TaskDetailSheet({
                     return (
                       <div
                         key={s.id}
-                        className="group flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 hover:bg-muted/30 transition-colors"
+                        className="group flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 hover:bg-muted/30 transition-colors"
                       >
                         {/* Checkbox & Title */}
                         <div className="flex items-center gap-2.5 flex-1 min-w-0">
@@ -675,14 +675,14 @@ export function TaskDetailSheet({
                   value={newSubtaskTitle}
                   onChange={(e) => setNewSubtaskTitle(e.target.value)}
                   placeholder={t("+ Tambah subtask / langkah kerja (tekan Enter)...", "+ Add subtask / action step (press Enter)...")}
-                  className="h-9 text-xs bg-background shadow-2xs"
+                  className="h-8 text-xs bg-background shadow-2xs"
                   disabled={subtaskLoading}
                 />
                 <Button
                   type="submit"
                   size="sm"
                   variant="outline"
-                  className="h-9 px-3 text-xs gap-1.5 shrink-0 font-medium"
+                  className="h-8 px-3 text-xs gap-1.5 shrink-0 font-medium"
                   disabled={subtaskLoading || !newSubtaskTitle.trim()}
                 >
                   {subtaskLoading ? (
