@@ -338,6 +338,7 @@ export function TasksListTable({
                 task={{
                   ...task,
                   projectId: task.projectId ?? undefined,
+                  clientName: task.clientName,
                 }}
                 members={members}
                 projects={projects}
