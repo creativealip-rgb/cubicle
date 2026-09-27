@@ -17,11 +17,13 @@ export function TaskCreateDialog({
   projectId,
   members,
   projects,
+  templates,
   defaultTaskMode = "workflow",
 }: {
   projectId?: string;
   members?: Array<{ id: string; name: string | null; email: string | null }>;
   projects?: Array<{ id: string; name: string; defaultBehavior?: "one_time" | "recurring" }>;
+  templates?: Array<{ id: string; name: string; items?: Array<{ id: string; title: string }> }>;
   defaultTaskMode?: "workflow" | "reusable";
 }) {
   const { t } = useT();
@@ -44,6 +46,7 @@ export function TaskCreateDialog({
             projectId={projectId}
             members={members}
             projects={projects}
+            templates={templates}
             taskMode={defaultTaskMode}
             onSuccess={() => setOpen(false)}
           />

@@ -58,6 +58,21 @@ export function TimeHeader({ actions }: { actions?: React.ReactNode }) {
               {t("Mingguan (Weekly)", "Weekly")}
             </Link>
           </Button>
+
+          <Button
+            asChild
+            size="sm"
+            variant="ghost"
+            className={`h-8 rounded-lg px-4 text-xs font-semibold transition-all ${
+              currentView === "tags"
+                ? "bg-background text-foreground shadow-sm hover:bg-background"
+                : "text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Link href="/app/time?view=tags">
+              {t("Tag Timer", "Timer Tags")}
+            </Link>
+          </Button>
         </div>
       </div>
     </header>

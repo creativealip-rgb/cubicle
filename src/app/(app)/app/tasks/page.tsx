@@ -20,7 +20,7 @@ import { TasksListTable } from "@/components/tasks/tasks-list-table";
 import { TasksWeeklyTracker } from "@/components/tasks/tasks-weekly-tracker";
 import { TaskPageTabs } from "@/components/tasks/task-page-tabs";
 import { TaskViewToggle } from "@/components/tasks/task-view-toggle";
-import { TemplatesAndTagsWorkspace } from "@/components/tasks/templates-and-tags-workspace";
+import { TaskTemplateWorkspace } from "@/components/tasks/task-template-workspace";
 import { ReusableTaskWorkspace } from "@/components/tasks/reusable-task-workspace";
 import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
 import { resolveBillingModel } from "@/lib/billing-model";
@@ -139,23 +139,22 @@ export default async function TasksPage({
               className="gap-1.5 h-8 text-xs font-medium"
               asChild
             >
-              <Link href={tab === "templates" ? "/app/tasks" : "/app/tasks?tab=templates"}>
+              <Link href="/app/tasks?tab=templates">
                 <LayoutTemplate className="h-3.5 w-3.5" />
-                {t("Template & Tags", "Templates & Tags")}
+                {t("Template Tugas", "Task Templates")}
               </Link>
             </Button>
             {tab !== "templates" && (
-              <TaskCreateDialog projectId={params.projectId} members={members} projects={taskProjects} defaultTaskMode={tab} />
+              <TaskCreateDialog projectId={params.projectId} members={members} projects={taskProjects} templates={templates.map((t) => ({ id: t.id, name: t.name, items: t.items }))} defaultTaskMode={tab} />
             )}
           </div>
         }
       />
 
       {tab === "templates" ? (
-        <TemplatesAndTagsWorkspace
+        <TaskTemplateWorkspace
           templates={templates}
           projects={taskProjects}
-          tags={tags}
         />
       ) : (
         <>

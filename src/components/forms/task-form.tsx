@@ -33,10 +33,11 @@ interface TaskFormProps {
   };
   members?: Array<{ id: string; name: string | null; email: string | null }>;
   projects?: Array<{ id: string; name: string; defaultBehavior?: "one_time" | "recurring" }>;
+  templates?: Array<{ id: string; name: string; items?: Array<{ id: string; title: string }> }>;
   onSuccess?: () => void;
 }
 
-export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "active", defaultValues, members = [], projects = [], onSuccess }: TaskFormProps) {
+export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "active", defaultValues, members = [], projects = [], templates = [], onSuccess }: TaskFormProps) {
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
@@ -139,15 +140,43 @@ export function TaskForm({ mode, projectId, taskMode = "workflow", lifecycle = "
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       {mode === "create" && (
-        <div className="space-y-1.5">
-          <Label className="text-xs font-medium">{t("Jenis Tugas", "Task Type")}</Label>
-          <Select name="taskMode" value={selectedTaskMode} onValueChange={(value) => setSelectedTaskMode(value as "workflow" | "reusable")}>
-            <SelectTrigger><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="workflow">{t("Sekali", "One-time")}</SelectItem>
-              <SelectItem value="reusable">{t("Berulang", "Recurring")}</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium">{t("Jenis Tugas", "Task Type")}</Label>
+            <Select name="taskMode" value={selectedTaskMode} onValueChange={(value) => setSelectedTaskMode(value as "workflow" | "reusable")}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="workflow">{t("Sekali", "One-time")}</SelectItem>
+                <SelectItem value="reusable">{t("Berulang", "Recurring")}</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {templates.length > 0 && (
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">{t("Isi dari Template (Opsional)", "Fill from Template (Optional)")}</Label>
+              <Select
+                onValueChange={(templateId) => {
+                  const tmpl = templates.find((t) => t.id === templateId);
+                  if (tmpl) {
+                    setForm((prev) => ({
+                      ...prev,
+                      title: prev.title || tmpl.name,
+                    }));
+                  }
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder={t("Pilih template...", "Select template...")} /></SelectTrigger>
+                <SelectContent>
+                  {templates.map((tmpl) => (
+                    <SelectItem key={tmpl.id} value={tmpl.id}>
+                      {tmpl.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
       )}
       <div className="grid gap-5 sm:grid-cols-2">

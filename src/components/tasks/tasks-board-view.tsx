@@ -150,6 +150,18 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                           </Badge>
                         )}
                       </div>
+                      {(task.subtaskTotal ?? 0) > 0 && (
+                        <div className="h-1 w-full rounded-full bg-muted/80 overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${
+                              task.subtaskDone === task.subtaskTotal ? "bg-emerald-500" : "bg-primary"
+                            }`}
+                            style={{
+                              width: `${Math.round(((task.subtaskDone ?? 0) / (task.subtaskTotal || 1)) * 100)}%`,
+                            }}
+                          />
+                        </div>
+                      )}
                       {task.projectName && (
                         <p className="truncate text-[11px] text-muted-foreground">{task.projectName}</p>
                       )}
