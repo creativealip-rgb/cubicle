@@ -15,7 +15,7 @@ export default async function Page({ searchParams }: { searchParams: Promise<{ v
     const tags = await getTimerTags();
     return (
       <TimePageShell>
-        <div className="max-w-2xl">
+        <div className="w-full">
           <TimerTagsManager initialTags={tags} />
         </div>
       </TimePageShell>
