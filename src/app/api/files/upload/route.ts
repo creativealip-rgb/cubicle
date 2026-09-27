@@ -48,7 +48,11 @@ export async function POST(req: NextRequest) {
     const user = requireUser(session?.user);
     const form = await req.formData();
     const file = form.get("file");
-    const workspaceId = String(form.get("workspaceId") ?? "");
+    let workspaceId = String(form.get("workspaceId") ?? "");
+    if (!workspaceId) {
+      const { getWorkspaceForCurrentUser } = await import("@/lib/workspace");
+      workspaceId = await getWorkspaceForCurrentUser();
+    }
     const idempotencyKey = String(form.get("idempotencyKey") ?? "");
     const clientId = String(form.get("clientId") ?? "") || undefined;
     const projectId = String(form.get("projectId") ?? "") || undefined;
