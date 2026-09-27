@@ -53,9 +53,29 @@ function contentDisposition(filename?: string) {
   return `attachment; filename="${safe}"`;
 }
 
-export async function getSignedDownloadUrl(storageKey: string, expiresIn = 300, filename?: string) {
+export async function getSignedDownloadUrl(
+  storageKey: string,
+  expiresIn = 300,
+  filename?: string,
+  options?: { inline?: boolean; contentType?: string }
+) {
   assertR2Configured();
-  return getSignedUrl(r2, new GetObjectCommand({ Bucket: R2_BUCKET, Key: storageKey, ResponseContentDisposition: contentDisposition(filename) }), { expiresIn });
+  const disposition = options?.inline
+    ? filename
+      ? `inline; filename="${filename.replace(/[\r\n"\\/]/g, "_").slice(0, 180)}"`
+      : "inline"
+    : contentDisposition(filename);
+
+  return getSignedUrl(
+    r2,
+    new GetObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: storageKey,
+      ResponseContentDisposition: disposition,
+      ResponseContentType: options?.contentType || undefined,
+    }),
+    { expiresIn }
+  );
 }
 
 export async function getSignedUploadUrl(storageKey: string, contentType: string, expiresIn = 300) {

@@ -30,8 +30,11 @@ export async function GET(
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Generate signed temporary URL for direct streaming/preview
-  const downloadUrl = await getSignedDownloadUrl(file.storageKey, 3600, file.name);
+  // Generate signed temporary URL for direct streaming/preview (inline disposition for video/audio/pdf streaming)
+  const downloadUrl = await getSignedDownloadUrl(file.storageKey, 3600, file.name, {
+    inline: true,
+    contentType: file.mimeType || undefined,
+  });
 
   // If text / json / markdown / csv, fetch content directly for instant inline rendering
   const isText =
