@@ -1,9 +1,17 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Plus, Trash2, Tag as TagIcon, Loader2, Edit2, Check, X, Search } from "lucide-react";
+import { Plus, Trash2, Tag as TagIcon, Loader2, Edit2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { createTimerTag, updateTimerTag, deleteTimerTag } from "@/lib/actions/tags";
 import { useT } from "@/lib/i18n-client";
@@ -26,8 +34,8 @@ export function TimerTagsManager({
   const [search, setSearch] = useState("");
   const [isPending, startTransition] = useTransition();
 
-  // Edit State
-  const [editingId, setEditingId] = useState<string | null>(null);
+  // Edit Modal State
+  const [editingTag, setEditingTag] = useState<TagItem | null>(null);
   const [editName, setEditName] = useState("");
   const [editColor, setEditColor] = useState("#6366f1");
 
@@ -57,26 +65,26 @@ export function TimerTagsManager({
     });
   };
 
-  const startEdit = (tag: TagItem) => {
-    setEditingId(tag.id);
+  const openEditModal = (tag: TagItem) => {
+    setEditingTag(tag);
     setEditName(tag.name);
     setEditColor(tag.color || "#6366f1");
   };
 
-  const cancelEdit = () => {
-    setEditingId(null);
+  const closeEditModal = () => {
+    setEditingTag(null);
     setEditName("");
   };
 
-  const handleSaveEdit = (id: string) => {
-    if (!editName.trim()) return;
+  const handleSaveEdit = () => {
+    if (!editingTag || !editName.trim()) return;
     startTransition(async () => {
       try {
-        const updated = await updateTimerTag({ id, name: editName.trim(), color: editColor });
+        const updated = await updateTimerTag({ id: editingTag.id, name: editName.trim(), color: editColor });
         setTags((prev) =>
-          prev.map((t) => (t.id === id ? { ...t, name: updated.name, color: updated.color } : t)).sort((a, b) => a.name.localeCompare(b.name))
+          prev.map((t) => (t.id === editingTag.id ? { ...t, name: updated.name, color: updated.color } : t)).sort((a, b) => a.name.localeCompare(b.name))
         );
-        setEditingId(null);
+        closeEditModal();
         toast.success(t("Tag berhasil diperbarui", "Tag updated successfully"));
       } catch (err: unknown) {
         toast.error(err instanceof Error ? err.message : t("Gagal memperbarui tag", "Failed to update tag"));
@@ -201,75 +209,12 @@ export function TimerTagsManager({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 pt-1">
             {filteredTags.map((tag) => {
-              const isEditing = editingId === tag.id;
               const tagColor = tag.color || "#6366f1";
-
-              if (isEditing) {
-                return (
-                  <div
-                    key={tag.id}
-                    className="flex flex-col gap-2.5 rounded-xl border border-primary/50 bg-primary/5 p-3 shadow-xs"
-                  >
-                    <Input
-                      autoFocus
-                      value={editName}
-                      onChange={(e) => setEditName(e.target.value)}
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          e.preventDefault();
-                          handleSaveEdit(tag.id);
-                        } else if (e.key === "Escape") {
-                          cancelEdit();
-                        }
-                      }}
-                      className="h-8 text-xs bg-background"
-                    />
-                    <div className="flex items-center justify-between pt-1">
-                      <div className="flex items-center gap-1">
-                        {colorPresets.map((c) => (
-                          <button
-                            key={c.value}
-                            type="button"
-                            onClick={() => setEditColor(c.value)}
-                            className={`h-3.5 w-3.5 rounded-full border transition-transform ${
-                              editColor === c.value
-                                ? "scale-125 ring-2 ring-primary ring-offset-1"
-                                : "hover:scale-110"
-                            }`}
-                            style={{ backgroundColor: c.value }}
-                            title={c.label}
-                          />
-                        ))}
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Button
-                          type="button"
-                          size="icon"
-                          className="h-7 w-7 rounded-md"
-                          disabled={isPending || !editName.trim()}
-                          onClick={() => handleSaveEdit(tag.id)}
-                        >
-                          {isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 rounded-md text-muted-foreground hover:bg-muted"
-                          onClick={cancelEdit}
-                        >
-                          <X className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              }
 
               return (
                 <div
                   key={tag.id}
-                  className="group flex items-center justify-between rounded-xl border border-border/70 bg-card hover:border-primary/50 px-3.5 py-2.5 text-xs font-medium shadow-2xs transition-all hover:shadow-xs"
+                  className="group flex items-center justify-between rounded-xl border border-border/70 bg-card hover:border-primary/50 px-3.5 py-3 text-xs font-medium shadow-2xs transition-all hover:shadow-xs"
                   style={{ borderLeftWidth: "4px", borderLeftColor: tagColor }}
                 >
                   <div className="flex items-center gap-2.5 min-w-0 pr-2">
@@ -277,14 +222,14 @@ export function TimerTagsManager({
                       className="h-2 w-2 rounded-full shrink-0"
                       style={{ backgroundColor: tagColor }}
                     />
-                    <span className="truncate font-semibold text-foreground">{tag.name}</span>
+                    <span className="truncate font-semibold text-foreground text-sm">{tag.name}</span>
                   </div>
 
-                  <div className="flex items-center gap-0.5 opacity-60 group-hover:opacity-100 transition-opacity">
+                  <div className="flex items-center gap-1 opacity-60 group-hover:opacity-100 transition-opacity">
                     <button
                       type="button"
-                      onClick={() => startEdit(tag)}
-                      className="rounded-md p-1.5 hover:bg-black/5 dark:hover:bg-white/10 text-muted-foreground hover:text-foreground transition-colors"
+                      onClick={() => openEditModal(tag)}
+                      className="rounded-lg p-1.5 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
                       title={t("Edit tag", "Edit tag")}
                     >
                       <Edit2 className="h-3.5 w-3.5" />
@@ -292,7 +237,7 @@ export function TimerTagsManager({
                     <button
                       type="button"
                       onClick={() => handleDelete(tag.id, tag.name)}
-                      className="rounded-md p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                      className="rounded-lg p-1.5 hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
                       title={t("Hapus tag", "Delete tag")}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
@@ -304,6 +249,64 @@ export function TimerTagsManager({
           </div>
         )}
       </div>
+
+      {/* Clean Edit Tag Dialog */}
+      <Dialog open={Boolean(editingTag)} onOpenChange={(open) => !open && closeEditModal()}>
+        <DialogContent className="sm:max-w-md rounded-2xl p-6">
+          <DialogHeader>
+            <DialogTitle className="text-base font-semibold">{t("Edit Tag Timer", "Edit Timer Tag")}</DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label className="text-xs">{t("Nama Tag", "Tag Name")}</Label>
+              <Input
+                autoFocus
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder={t("Nama tag...", "Tag name...")}
+                className="h-9.5 text-sm"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleSaveEdit();
+                  }
+                }}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-xs">{t("Pilih Warna", "Select Color")}</Label>
+              <div className="flex items-center gap-2 pt-1">
+                {colorPresets.map((c) => (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setEditColor(c.value)}
+                    className={`h-6 w-6 rounded-full border transition-transform ${
+                      editColor === c.value
+                        ? "scale-125 ring-2 ring-primary ring-offset-2"
+                        : "hover:scale-110 opacity-80 hover:opacity-100"
+                    }`}
+                    style={{ backgroundColor: c.value }}
+                    title={c.label}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0 pt-2">
+            <Button type="button" variant="outline" onClick={closeEditModal} disabled={isPending}>
+              {t("Batal", "Cancel")}
+            </Button>
+            <Button type="button" onClick={handleSaveEdit} disabled={isPending || !editName.trim()} className="gap-1.5">
+              {isPending && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+              {t("Simpan Perubahan", "Save Changes")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
