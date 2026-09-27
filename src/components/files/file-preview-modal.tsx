@@ -416,9 +416,11 @@ export function FilePreviewModal({
               {isVideo && (
                 <div className="w-full h-full flex items-center justify-center p-4">
                   <video
-                    src={previewData.downloadUrl}
+                    src={`/api/files/${file.id}/stream${token ? `?token=${encodeURIComponent(token)}` : ""}`}
                     controls
                     autoPlay
+                    playsInline
+                    preload="metadata"
                     className="max-h-full max-w-full rounded-xl shadow-lg border border-border/80 bg-black"
                   >
                     Your browser does not support the video tag.
@@ -436,7 +438,13 @@ export function FilePreviewModal({
                     <p className="font-bold text-sm text-foreground">{file.name}</p>
                     <p className="text-xs text-muted-foreground">{formatFileSize(file.sizeBytes)}</p>
                   </div>
-                  <audio src={previewData.downloadUrl} controls className="w-full" autoPlay />
+                  <audio
+                    src={`/api/files/${file.id}/stream${token ? `?token=${encodeURIComponent(token)}` : ""}`}
+                    controls
+                    preload="metadata"
+                    className="w-full"
+                    autoPlay
+                  />
                 </div>
               )}
 
