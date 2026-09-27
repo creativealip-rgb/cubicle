@@ -47,6 +47,8 @@ import {
   AlignLeft,
   Calendar,
   UserPlus,
+  ArrowUpRight,
+  GripVertical,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -55,6 +57,8 @@ import {
   addSubtask,
   toggleSubtask,
   updateSubtaskDetails,
+  convertSubtaskToTask,
+  reorderSubtasks,
   deleteSubtask,
   getTaskComments,
   addTaskComment,
@@ -160,8 +164,9 @@ export function TaskDetailSheet({
   >([]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [subtaskLoading, setSubtaskLoading] = useState(false);
+  const [draggedSubtaskIdx, setDraggedSubtaskIdx] = useState<number | null>(null);
 
-  // Subtask Focused Mini-Modal (Option 3 UX)
+  // Subtask Focused Mini-Modal State
   const [activeSubtask, setActiveSubtask] = useState<{
     id: string;
     title: string;
@@ -172,7 +177,9 @@ export function TaskDetailSheet({
   } | null>(null);
   const [subtaskTitleDraft, setSubtaskTitleDraft] = useState("");
   const [subtaskDescDraft, setSubtaskDescDraft] = useState("");
+  const [subtaskDueDateDraft, setSubtaskDueDateDraft] = useState("");
   const [subtaskSaving, setSubtaskSaving] = useState(false);
+  const [convertingSubtask, setConvertingSubtask] = useState(false);
 
   // Comments State
   const [comments, setComments] = useState<TaskCommentItem[]>([]);
@@ -340,6 +347,7 @@ export function TaskDetailSheet({
           description: created.description,
           completed: created.completed,
           assigneeId: created.assigneeId,
+          dueDate: created.dueDate,
         },
       ]);
       setNewSubtaskTitle("");
@@ -364,11 +372,12 @@ export function TaskDetailSheet({
     }
   };
 
-  // Open Subtask Focus Mini-Modal (Option 3)
+  // Open Subtask Focus Mini-Modal
   const handleOpenSubtaskModal = (st: (typeof subtasks)[0]) => {
     setActiveSubtask(st);
     setSubtaskTitleDraft(st.title);
     setSubtaskDescDraft(st.description || "");
+    setSubtaskDueDateDraft(st.dueDate ? st.dueDate.split("T")[0] : "");
   };
 
   const handleSaveSubtaskModal = async () => {
@@ -376,13 +385,14 @@ export function TaskDetailSheet({
     setSubtaskSaving(true);
     const title = subtaskTitleDraft.trim();
     const description = subtaskDescDraft.trim();
+    const dueDate = subtaskDueDateDraft || null;
     const subtaskId = activeSubtask.id;
 
     setSubtasks((prev) =>
-      prev.map((s) => (s.id === subtaskId ? { ...s, title, description } : s))
+      prev.map((s) => (s.id === subtaskId ? { ...s, title, description, dueDate } : s))
     );
     try {
-      await updateSubtaskDetails({ subtaskId, title, description });
+      await updateSubtaskDetails({ subtaskId, title, description, dueDate });
       toast.success(t("Rincian subtask disimpan", "Subtask details saved"));
       setActiveSubtask(null);
       router.refresh();
@@ -390,6 +400,48 @@ export function TaskDetailSheet({
       toast.error(t("Gagal menyimpan subtask", "Failed to save subtask"));
     } finally {
       setSubtaskSaving(false);
+    }
+  };
+
+  const handleConvertToTask = async () => {
+    if (!activeSubtask) return;
+    setConvertingSubtask(true);
+    const subtaskId = activeSubtask.id;
+    try {
+      await convertSubtaskToTask(subtaskId);
+      setSubtasks((prev) => prev.filter((s) => s.id !== subtaskId));
+      setActiveSubtask(null);
+      toast.success(t("Subtask berhasil diubah menjadi Task utama", "Subtask converted to standalone task"));
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Gagal mengubah subtask", "Failed to convert subtask"));
+    } finally {
+      setConvertingSubtask(false);
+    }
+  };
+
+  // Drag and drop reorder subtasks
+  const handleDragStart = (idx: number) => {
+    setDraggedSubtaskIdx(idx);
+  };
+
+  const handleDragOver = (e: React.DragEvent, targetIdx: number) => {
+    e.preventDefault();
+    if (draggedSubtaskIdx === null || draggedSubtaskIdx === targetIdx) return;
+
+    const updated = [...subtasks];
+    const [moved] = updated.splice(draggedSubtaskIdx, 1);
+    updated.splice(targetIdx, 0, moved);
+    setSubtasks(updated);
+    setDraggedSubtaskIdx(targetIdx);
+  };
+
+  const handleDragEnd = async () => {
+    setDraggedSubtaskIdx(null);
+    try {
+      await reorderSubtasks(task.id, subtasks.map((s) => s.id));
+    } catch {
+      toast.error(t("Gagal menyimpan urutan subtask", "Failed to save subtask order"));
     }
   };
 
@@ -788,7 +840,7 @@ export function TaskDetailSheet({
               />
             </div>
 
-            {/* Ultra-Clean Linear-Style Subtasks Checklist Table */}
+            {/* Ultra-Clean Linear-Style Subtasks Checklist Table with Drag & Drop Reorder */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -811,22 +863,31 @@ export function TaskDetailSheet({
                 </div>
               )}
 
-              {/* Subtasks List */}
+              {/* Subtasks List with Drag Handle */}
               <div className="divide-y divide-border/50 rounded-xl border border-border/70 bg-card overflow-hidden">
                 {subtasks.length === 0 ? (
                   <div className="p-4 text-center text-xs text-muted-foreground">
                     {t("Belum ada langkah kerja. Tambahkan subtask di bawah.", "No subtasks yet. Add one below.")}
                   </div>
                 ) : (
-                  subtasks.map((st) => {
+                  subtasks.map((st, idx) => {
                     const assignedMember = members.find((m) => m.id === st.assigneeId);
                     return (
                       <div
                         key={st.id}
-                        className="group flex items-center justify-between gap-2.5 px-3 py-2 hover:bg-muted/30 transition-colors"
+                        draggable
+                        onDragStart={() => handleDragStart(idx)}
+                        onDragOver={(e) => handleDragOver(e, idx)}
+                        onDragEnd={handleDragEnd}
+                        className={`group flex items-center justify-between gap-2 px-2.5 py-2 hover:bg-muted/30 transition-colors ${
+                          draggedSubtaskIdx === idx ? "opacity-50 bg-muted/60" : ""
+                        }`}
                       >
-                        {/* Checkbox + Title with Hover Action */}
-                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                        {/* Drag Handle + Checkbox + Title with Hover Action */}
+                        <div className="flex items-center gap-2 flex-1 min-w-0">
+                          <span className="text-muted-foreground/40 group-hover:text-muted-foreground cursor-grab active:cursor-grabbing">
+                            <GripVertical className="h-3.5 w-3.5" />
+                          </span>
                           <Checkbox
                             checked={st.completed}
                             onCheckedChange={() => handleToggleSubtask(st.id, st.completed)}
@@ -848,6 +909,12 @@ export function TaskDetailSheet({
                             </span>
                             {st.description && (
                               <AlignLeft className="h-3 w-3 text-muted-foreground/70 shrink-0" />
+                            )}
+                            {st.dueDate && (
+                              <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1 py-0.2 rounded font-mono">
+                                <Calendar className="h-2.5 w-2.5" />
+                                {new Date(st.dueDate).toLocaleDateString([], { month: "numeric", day: "numeric" })}
+                              </span>
                             )}
                           </button>
                         </div>
@@ -1178,7 +1245,7 @@ export function TaskDetailSheet({
         </div>
       </DialogContent>
 
-      {/* Option 3: Dedicated Subtask Focus Mini-Modal */}
+      {/* Dedicated Subtask Focus Mini-Modal with Due Date & Convert to Task Action */}
       {activeSubtask && (
         <Dialog open={!!activeSubtask} onOpenChange={(op) => !op && setActiveSubtask(null)}>
           <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden rounded-2xl border-border/80 shadow-2xl bg-background z-[65]">
@@ -1190,9 +1257,23 @@ export function TaskDetailSheet({
                     {t("Rincian Subtask", "Subtask Details")}
                   </DialogTitle>
                 </div>
-                <Badge variant={activeSubtask.completed ? "default" : "outline"} className="text-[10px] uppercase font-bold">
-                  {activeSubtask.completed ? t("Selesai", "Completed") : t("Pending", "Pending")}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleConvertToTask}
+                    disabled={convertingSubtask}
+                    className="h-6 text-[11px] gap-1 px-2 rounded-lg text-primary border-primary/30 hover:bg-primary/10"
+                    title={t("Jadikan tugas utama mandiri di proyek ini", "Convert to standalone task")}
+                  >
+                    {convertingSubtask ? <Loader2 className="h-3 w-3 animate-spin" /> : <ArrowUpRight className="h-3 w-3" />}
+                    <span>{t("Jadikan Task", "Convert to Task")}</span>
+                  </Button>
+                  <Badge variant={activeSubtask.completed ? "default" : "outline"} className="text-[10px] uppercase font-bold">
+                    {activeSubtask.completed ? t("Selesai", "Completed") : t("Pending", "Pending")}
+                  </Badge>
+                </div>
               </div>
             </DialogHeader>
 
@@ -1210,28 +1291,45 @@ export function TaskDetailSheet({
                 />
               </div>
 
-              {/* Assignee Selector in Mini Modal */}
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <User className="h-3 w-3 text-blue-500" />
-                  {t("Petugas Subtask", "Subtask Assignee")}
-                </span>
-                <Select
-                  value={activeSubtask.assigneeId ?? "__unassigned__"}
-                  onValueChange={handleSubtaskAssigneeChangeInModal}
-                >
-                  <SelectTrigger className="h-8 text-xs rounded-xl bg-background">
-                    <SelectValue placeholder={t("Pilih anggota tim...", "Select team member...")} />
-                  </SelectTrigger>
-                  <SelectContent className="z-[75]">
-                    <SelectItem value="__unassigned__">{t("Belum Ditugaskan", "Unassigned")}</SelectItem>
-                    {members.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.name || m.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Assignee & Due Date Row */}
+              <div className="grid grid-cols-2 gap-3">
+                {/* Assignee Selector in Mini Modal */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <User className="h-3 w-3 text-blue-500" />
+                    {t("Petugas Subtask", "Subtask Assignee")}
+                  </span>
+                  <Select
+                    value={activeSubtask.assigneeId ?? "__unassigned__"}
+                    onValueChange={handleSubtaskAssigneeChangeInModal}
+                  >
+                    <SelectTrigger className="h-8 text-xs rounded-xl bg-background">
+                      <SelectValue placeholder={t("Pilih anggota tim...", "Select team member...")} />
+                    </SelectTrigger>
+                    <SelectContent className="z-[75]">
+                      <SelectItem value="__unassigned__">{t("Belum Ditugaskan", "Unassigned")}</SelectItem>
+                      {members.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.name || m.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {/* Due Date */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <Calendar className="h-3 w-3 text-amber-500" />
+                    {t("Tenggat Waktu", "Due Date")}
+                  </span>
+                  <Input
+                    type="date"
+                    value={subtaskDueDateDraft}
+                    onChange={(e) => setSubtaskDueDateDraft(e.target.value)}
+                    className="h-8 text-xs rounded-xl bg-background font-mono"
+                  />
+                </div>
               </div>
 
               {/* Subtask Description */}

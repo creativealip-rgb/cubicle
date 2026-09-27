@@ -575,6 +575,80 @@ export async function updateSubtaskDetails({
   return updated;
 }
 
+export async function convertSubtaskToTask(subtaskId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [subtask] = await db
+    .select()
+    .from(taskSubtasks)
+    .where(and(eq(taskSubtasks.id, subtaskId), eq(taskSubtasks.workspaceId, workspaceId)))
+    .limit(1);
+
+  if (!subtask) throw new Error("Subtask tidak ditemukan");
+
+  const [parentTask] = await db
+    .select()
+    .from(tasks)
+    .where(and(eq(tasks.id, subtask.taskId), eq(tasks.workspaceId, workspaceId)))
+    .limit(1);
+
+  const insertValues: any = {
+    workspaceId,
+    title: subtask.title,
+    description: subtask.description || null,
+    status: subtask.completed ? "done" : parentTask?.status || "todo",
+    priority: parentTask?.priority || "medium",
+    dueDate: subtask.dueDate || null,
+    assigneeId: subtask.assigneeId || user.id,
+    clientVisible: parentTask?.clientVisible || false,
+    mode: parentTask?.mode || "workflow",
+    behavior: parentTask?.behavior || "one_time",
+    position: (parentTask?.position ?? 0) + 1,
+    createdBy: user.id,
+  };
+  if (parentTask?.projectId) insertValues.projectId = parentTask.projectId;
+
+  const [newTask] = await db
+    .insert(tasks)
+    .values(insertValues)
+    .returning();
+
+  await db
+    .delete(taskSubtasks)
+    .where(and(eq(taskSubtasks.id, subtaskId), eq(taskSubtasks.workspaceId, workspaceId)));
+
+  revalidatePath("/app/tasks");
+  return newTask;
+}
+
+export async function reorderSubtasks(taskId: string, subtaskIds: string[]) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  await db.transaction(async (tx) => {
+    for (let i = 0; i < subtaskIds.length; i++) {
+      await tx
+        .update(taskSubtasks)
+        .set({ position: i, updatedAt: new Date() })
+        .where(
+          and(
+            eq(taskSubtasks.id, subtaskIds[i]),
+            eq(taskSubtasks.taskId, taskId),
+            eq(taskSubtasks.workspaceId, workspaceId)
+          )
+        );
+    }
+  });
+
+  revalidatePath("/app/tasks");
+  return { success: true };
+}
+
 export async function deleteSubtask(subtaskId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
