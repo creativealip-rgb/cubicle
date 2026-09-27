@@ -4,7 +4,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { tasks, taskSubtasks, timeEntries, users, workspaceMembers, projects } from "@/db/schema";
+import { tasks, taskSubtasks, taskComments, timeEntries, users, workspaceMembers, projects } from "@/db/schema";
 import { eq, and, sql, inArray, asc, desc } from "drizzle-orm";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
@@ -643,4 +643,100 @@ export async function respondPortalTask(input: z.infer<typeof respondPortalTaskS
     description: task.description,
     decision: parsed.decision,
   };
+}
+
+export async function getTaskComments(taskId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+
+  await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
+
+  const rows = await db
+    .select({
+      id: taskComments.id,
+      content: taskComments.content,
+      createdAt: taskComments.createdAt,
+      userId: taskComments.userId,
+      userName: users.name,
+      userEmail: users.email,
+      userImage: users.image,
+    })
+    .from(taskComments)
+    .innerJoin(users, eq(users.id, taskComments.userId))
+    .where(and(eq(taskComments.taskId, taskId), eq(taskComments.workspaceId, workspaceId)))
+    .orderBy(asc(taskComments.createdAt));
+
+  return rows;
+}
+
+export async function addTaskComment({ taskId, content }: { taskId: string; content: string }) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
+
+  const cleanContent = content.trim();
+  if (!cleanContent) throw new Error("Komentar tidak boleh kosong");
+
+  const [task] = await db
+    .select({ id: tasks.id, title: tasks.title, assigneeId: tasks.assigneeId })
+    .from(tasks)
+    .where(and(eq(tasks.id, taskId), eq(tasks.workspaceId, workspaceId)))
+    .limit(1);
+
+  if (!task) throw new Error("Task tidak ditemukan");
+
+  const [created] = await db
+    .insert(taskComments)
+    .values({
+      workspaceId,
+      taskId,
+      userId: user.id,
+      content: cleanContent,
+    })
+    .returning();
+
+  // Notify assignee if someone else comments
+  if (task.assigneeId && task.assigneeId !== user.id) {
+    try {
+      await createNotification({
+        workspaceId,
+        userId: task.assigneeId,
+        type: "task_commented",
+        title: `${user.email} mengomentari tugas: ${task.title}`,
+        body: cleanContent.slice(0, 100),
+        link: `/app/tasks?focus=${taskId}`,
+        entityType: "task",
+        entityId: taskId,
+        actorId: user.id,
+      });
+    } catch {
+      // best-effort
+    }
+  }
+
+  revalidatePath("/app/tasks");
+  return created;
+}
+
+export async function deleteTaskComment(commentId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [existing] = await db
+    .select({ id: taskComments.id, userId: taskComments.userId })
+    .from(taskComments)
+    .where(and(eq(taskComments.id, commentId), eq(taskComments.workspaceId, workspaceId)))
+    .limit(1);
+
+  if (!existing) throw new Error("Komentar tidak ditemukan");
+  if (existing.userId !== user.id) throw new Error("Hanya pembuat komentar yang dapat menghapus komentar ini");
+
+  await db.delete(taskComments).where(eq(taskComments.id, commentId));
+  revalidatePath("/app/tasks");
+  return { success: true };
 }
