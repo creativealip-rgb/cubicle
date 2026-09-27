@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { TimerTagPicker } from "@/components/time/timer-tag-picker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { localDateIso } from "@/lib/effective-work-date";
 import { useT } from "@/lib/i18n-client";
@@ -340,16 +341,11 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
             {/* Tag Input */}
             <div className="space-y-1.5">
               <Label htmlFor="manual-time-tags" className="text-xs">{t("Tag", "Tag")}</Label>
-              <div className="relative flex items-center">
-                <TagIcon className="absolute left-3 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="manual-time-tags"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                  placeholder={t("Tambah tag...", "Add a tag...")}
-                  className="h-10 pl-9 text-sm"
-                />
-              </div>
+              <TimerTagPicker
+                value={tags}
+                onChange={setTags}
+                placeholder={t("Pilih atau cari tag...", "Select or search tags...")}
+              />
             </div>
           </div>
 
