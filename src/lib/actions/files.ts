@@ -5,8 +5,8 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
-import { files, uploadIntents, users } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { files, uploadIntents, users, folders } from "@/db/schema";
+import { eq, and, desc, inArray } from "drizzle-orm";
 import { z } from "zod";
 import {
   requireUser,
@@ -238,6 +238,77 @@ export async function deleteFile(fileId: string) {
   await writeActivityLog(workspaceId, user.id, "deleted_file", "file", fileId);
   revalidatePath("/app/files");
   return { success: true };
+}
+
+export async function bulkDeleteFiles(fileIds: string[]) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  if (!fileIds || fileIds.length === 0) return { success: true, count: 0 };
+
+  const targetFiles = await db
+    .select()
+    .from(files)
+    .where(and(inArray(files.id, fileIds), eq(files.workspaceId, workspaceId)));
+
+  if (targetFiles.length === 0) return { success: true, count: 0 };
+
+  for (const f of targetFiles) {
+    try {
+      await deleteStoredFile(f.storageKey);
+    } catch (e) {
+      console.error("Error deleting stored file:", e);
+    }
+  }
+
+  const ids = targetFiles.map((f) => f.id);
+  await db.transaction(async (tx) => {
+    await tx.delete(uploadIntents).where(and(inArray(uploadIntents.finalFileId, ids), eq(uploadIntents.workspaceId, workspaceId)));
+    await tx.delete(files).where(and(inArray(files.id, ids), eq(files.workspaceId, workspaceId)));
+  });
+
+  await writeActivityLog(workspaceId, user.id, "bulk_deleted_files", "file", ids[0], {
+    count: ids.length,
+    fileIds: ids,
+  });
+
+  revalidatePath("/app/files");
+  return { success: true, count: ids.length };
+}
+
+export async function bulkMoveFiles(fileIds: string[], targetFolderId: string | null) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  if (!fileIds || fileIds.length === 0) return { success: true, count: 0 };
+
+  if (targetFolderId) {
+    const [targetFolder] = await db
+      .select({ id: folders.id })
+      .from(folders)
+      .where(and(eq(folders.id, targetFolderId), eq(folders.workspaceId, workspaceId)))
+      .limit(1);
+
+    if (!targetFolder) throw new Error("Target folder not found");
+  }
+
+  const updated = await db
+    .update(files)
+    .set({ folderId: targetFolderId })
+    .where(and(inArray(files.id, fileIds), eq(files.workspaceId, workspaceId)))
+    .returning({ id: files.id });
+
+  await writeActivityLog(workspaceId, user.id, "bulk_moved_files", "file", updated[0]?.id || "", {
+    count: updated.length,
+    targetFolderId,
+  });
+
+  revalidatePath("/app/files");
+  return { success: true, count: updated.length };
 }
 
 export async function listFiles(workspaceId: string, clientId?: string, projectId?: string) {
