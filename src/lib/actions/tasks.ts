@@ -515,6 +515,28 @@ export async function updateSubtaskAssignee(subtaskId: string, assigneeId: strin
   return updated;
 }
 
+export async function updateSubtaskTitle(subtaskId: string, title: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const cleanTitle = title.trim();
+  if (!cleanTitle) throw new Error("Judul subtask tidak boleh kosong");
+
+  const [updated] = await db
+    .update(taskSubtasks)
+    .set({
+      title: cleanTitle,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(taskSubtasks.id, subtaskId), eq(taskSubtasks.workspaceId, workspaceId)))
+    .returning();
+
+  revalidatePath("/app/tasks");
+  return updated;
+}
+
 export async function deleteSubtask(subtaskId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);

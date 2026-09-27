@@ -1,12 +1,11 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import { useT } from "@/lib/i18n-client";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,7 +14,6 @@ import { Input } from "@/components/ui/input";
 import {
   Play,
   CheckCircle2,
-  Clock,
   Calendar,
   User,
   AlertCircle,
@@ -25,9 +23,12 @@ import {
   MessageSquare,
   Send,
   Loader2,
-  ExternalLink,
   ChevronRight,
+  ListTodo,
   Sparkles,
+  Edit2,
+  Check,
+  X,
 } from "lucide-react";
 import {
   updateTask,
@@ -35,6 +36,8 @@ import {
   addSubtask,
   toggleSubtask,
   deleteSubtask,
+  updateSubtaskTitle,
+  updateSubtaskAssignee,
   getTaskComments,
   addTaskComment,
   deleteTaskComment,
@@ -86,9 +89,13 @@ export function TaskDetailSheet({
   const [isPending, startTransition] = useTransition();
 
   // Subtasks State
-  const [subtasks, setSubtasks] = useState<Array<{ id: string; title: string; completed: boolean }>>([]);
+  const [subtasks, setSubtasks] = useState<
+    Array<{ id: string; title: string; completed: boolean; assigneeId: string | null }>
+  >([]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [subtaskLoading, setSubtaskLoading] = useState(false);
+  const [editingSubtaskId, setEditingSubtaskId] = useState<string | null>(null);
+  const [editingSubtaskTitle, setEditingSubtaskTitle] = useState("");
 
   // Comments State
   const [comments, setComments] = useState<
@@ -104,11 +111,18 @@ export function TaskDetailSheet({
   const [newComment, setNewComment] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
 
-  // Load Subtasks & Comments when open
+  // Load Subtasks & Comments when modal opens
   useEffect(() => {
     if (open && task.id) {
       getTaskSubtasks(task.id).then((items) => {
-        setSubtasks(items.map((it) => ({ id: it.id, title: it.title, completed: it.completed })));
+        setSubtasks(
+          items.map((it) => ({
+            id: it.id,
+            title: it.title,
+            completed: it.completed,
+            assigneeId: it.assigneeId,
+          }))
+        );
       });
       getTaskComments(task.id).then((items) => {
         setComments(items);
@@ -124,7 +138,7 @@ export function TaskDetailSheet({
         await updateTask(task.id, { status: nextStatus });
         toast.success(t("Status tugas diperbarui", "Task status updated"));
         router.refresh();
-      } catch (err) {
+      } catch {
         toast.error(t("Gagal memperbarui status", "Failed to update status"));
       }
     });
@@ -166,7 +180,11 @@ export function TaskDetailSheet({
     startTransition(async () => {
       try {
         await updateTask(task.id, { clientVisible: nextVal });
-        toast.success(nextVal ? t("Tampil di Client Portal", "Visible in client portal") : t("Disembunyikan dari Portal", "Hidden from portal"));
+        toast.success(
+          nextVal
+            ? t("Tampil di Client Portal", "Visible in client portal")
+            : t("Disembunyikan dari Portal", "Hidden from portal")
+        );
         router.refresh();
       } catch {
         toast.error(t("Gagal mengubah visibilitas", "Failed to toggle visibility"));
@@ -230,7 +248,10 @@ export function TaskDetailSheet({
     setSubtaskLoading(true);
     try {
       const created = await addSubtask(task.id, newSubtaskTitle.trim());
-      setSubtasks((prev) => [...prev, { id: created.id, title: created.title, completed: created.completed }]);
+      setSubtasks((prev) => [
+        ...prev,
+        { id: created.id, title: created.title, completed: created.completed, assigneeId: created.assigneeId },
+      ]);
       setNewSubtaskTitle("");
       toast.success(t("Subtask ditambahkan", "Subtask added"));
       router.refresh();
@@ -250,6 +271,32 @@ export function TaskDetailSheet({
       router.refresh();
     } catch {
       toast.error(t("Gagal mengubah status subtask", "Failed to toggle subtask"));
+    }
+  };
+
+  const handleSaveSubtaskTitle = async (subtaskId: string) => {
+    if (!editingSubtaskTitle.trim()) return;
+    const title = editingSubtaskTitle.trim();
+    setSubtasks((prev) => prev.map((s) => (s.id === subtaskId ? { ...s, title } : s)));
+    setEditingSubtaskId(null);
+    try {
+      await updateSubtaskTitle(subtaskId, title);
+      toast.success(t("Subtask diperbarui", "Subtask updated"));
+      router.refresh();
+    } catch {
+      toast.error(t("Gagal memperbarui subtask", "Failed to update subtask"));
+    }
+  };
+
+  const handleSubtaskAssigneeChange = async (subtaskId: string, assigneeId: string) => {
+    const val = assigneeId === "__unassigned__" ? null : assigneeId;
+    setSubtasks((prev) => prev.map((s) => (s.id === subtaskId ? { ...s, assigneeId: val } : s)));
+    try {
+      await updateSubtaskAssignee(subtaskId, val);
+      toast.success(t("Petugas subtask diperbarui", "Subtask assignee updated"));
+      router.refresh();
+    } catch {
+      toast.error(t("Gagal menetapkan petugas subtask", "Failed to assign subtask"));
     }
   };
 
@@ -310,15 +357,15 @@ export function TaskDetailSheet({
         {children}
       </div>
 
-      <DialogContent className="flex h-[90vh] max-h-[860px] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl">
+      <DialogContent className="flex h-[92vh] max-h-[880px] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl shadow-2xl rounded-2xl border-border/80">
         {/* Top Header / Breadcrumb & Actions Bar */}
-        <DialogHeader className="shrink-0 border-b bg-muted/20 px-6 py-3.5 pr-14">
+        <DialogHeader className="shrink-0 border-b bg-muted/30 px-6 py-3.5 pr-14">
           <div className="flex flex-wrap items-center justify-between gap-3">
             {/* Breadcrumb */}
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               {task.clientName && (
                 <>
-                  <span className="font-semibold text-foreground uppercase tracking-wider text-[11px]">
+                  <span className="font-bold text-foreground uppercase tracking-wider text-[11px]">
                     {task.clientName}
                   </span>
                   <ChevronRight className="h-3.5 w-3.5" />
@@ -335,7 +382,7 @@ export function TaskDetailSheet({
                   <ChevronRight className="h-3.5 w-3.5" />
                 </>
               )}
-              <Badge variant="outline" className="text-[10px] font-semibold tracking-wide uppercase h-5">
+              <Badge variant="outline" className="text-[10px] font-semibold tracking-wide uppercase h-5 bg-background">
                 {task.mode === "reusable" ? t("SOP / Template", "SOP / Template") : t("Task", "Task")}
               </Badge>
             </div>
@@ -370,7 +417,7 @@ export function TaskDetailSheet({
                 value={titleDraft}
                 onChange={(e) => setTitleDraft(e.target.value)}
                 onBlur={handleTitleBlur}
-                className="border-transparent hover:border-border focus:border-primary font-bold text-xl md:text-2xl px-2 py-1 h-auto -ml-2 rounded-lg bg-transparent transition-all"
+                className="border-transparent hover:border-border focus:border-primary font-bold text-xl md:text-2xl px-2 py-1.5 h-auto -ml-2 rounded-lg bg-transparent transition-all"
                 placeholder={t("Judul tugas...", "Task title...")}
               />
             </div>
@@ -467,21 +514,22 @@ export function TaskDetailSheet({
                   "Tambahkan catatan detail, instruksi pengerjaan, atau link referensi (auto-save saat klik luar)...",
                   "Add detail notes, instructions, or reference links (auto-saves on blur)..."
                 )}
-                rows={6}
-                className="w-full min-h-[140px] resize-y rounded-xl border border-border/80 bg-background p-3.5 text-sm leading-relaxed placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary"
+                rows={5}
+                className="w-full min-h-[120px] resize-y rounded-xl border border-border/80 bg-background p-3.5 text-sm leading-relaxed placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs"
               />
             </div>
 
-            {/* Subtasks Section */}
-            <div className="space-y-3 pt-2">
+            {/* Subtasks Section (ClickUp Detailed System) */}
+            <div className="space-y-3.5 pt-2 border-t border-border/60">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  <ListTodo className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-bold uppercase tracking-wider text-foreground">
                     {t("Subtasks / Checklist", "Subtasks / Checklist")}
                   </span>
                   {subtasks.length > 0 && (
-                    <Badge variant="secondary" className="text-[10px] font-bold px-1.5 h-4">
-                      {subtaskDone}/{subtasks.length} ({subtaskPct}%)
+                    <Badge variant="secondary" className="text-[10px] font-bold px-2 py-0.5 h-5 bg-muted">
+                      {subtaskDone} of {subtasks.length} completed ({subtaskPct}%)
                     </Badge>
                   )}
                 </div>
@@ -489,54 +537,157 @@ export function TaskDetailSheet({
 
               {/* Progress Bar */}
               {subtasks.length > 0 && (
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/60">
                   <div
-                    className="h-full bg-primary transition-all duration-300"
+                    className={`h-full transition-all duration-300 ${
+                      subtaskPct === 100 ? "bg-emerald-500" : "bg-primary"
+                    }`}
                     style={{ width: `${subtaskPct}%` }}
                   />
                 </div>
               )}
 
-              {/* Subtask Items */}
-              <div className="space-y-1.5">
-                {subtasks.map((s) => (
-                  <div
-                    key={s.id}
-                    className="group flex items-center justify-between rounded-lg border border-border/60 bg-background px-3 py-2 text-sm hover:border-border hover:bg-muted/30 transition-colors"
-                  >
-                    <label className="flex items-center gap-2.5 cursor-pointer flex-1 min-w-0 pr-2">
-                      <input
-                        type="checkbox"
-                        checked={s.completed}
-                        onChange={() => handleToggleSubtask(s.id, s.completed)}
-                        className="h-4 w-4 rounded border-border text-primary focus:ring-primary/40 cursor-pointer"
-                      />
-                      <span className={`truncate text-xs ${s.completed ? "line-through text-muted-foreground" : "text-foreground font-medium"}`}>
-                        {s.title}
-                      </span>
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteSubtask(s.id)}
-                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive p-1 transition-opacity"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
+              {/* Subtask Table / List */}
+              <div className="rounded-xl border border-border/80 bg-card/60 divide-y divide-border/60 overflow-hidden shadow-2xs">
+                {subtasks.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-muted-foreground">
+                    {t("Belum ada subtask. Tambahkan subtask di bawah untuk membagi pengerjaan tugas.", "No subtasks yet. Add subtasks below to break down work.")}
                   </div>
-                ))}
+                ) : (
+                  subtasks.map((s, idx) => {
+                    const isEditing = editingSubtaskId === s.id;
+                    const assignedMember = members.find((m) => m.id === s.assigneeId);
+
+                    return (
+                      <div
+                        key={s.id}
+                        className="group flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2.5 hover:bg-muted/30 transition-colors"
+                      >
+                        {/* Checkbox & Title */}
+                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={s.completed}
+                            onChange={() => handleToggleSubtask(s.id, s.completed)}
+                            className="h-4 w-4 rounded border-border text-primary focus:ring-primary/40 cursor-pointer shrink-0"
+                          />
+
+                          {isEditing ? (
+                            <div className="flex items-center gap-1.5 flex-1">
+                              <Input
+                                autoFocus
+                                value={editingSubtaskTitle}
+                                onChange={(e) => setEditingSubtaskTitle(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") handleSaveSubtaskTitle(s.id);
+                                  if (e.key === "Escape") setEditingSubtaskId(null);
+                                }}
+                                className="h-7 text-xs py-1"
+                              />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleSaveSubtaskTitle(s.id)}
+                                className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700"
+                              >
+                                <Check className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setEditingSubtaskId(null)}
+                                className="h-7 w-7 p-0 text-muted-foreground"
+                              >
+                                <X className="h-3.5 w-3.5" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <span
+                              onClick={() => {
+                                setEditingSubtaskId(s.id);
+                                setEditingSubtaskTitle(s.title);
+                              }}
+                              className={`text-xs cursor-pointer truncate flex-1 ${
+                                s.completed
+                                  ? "line-through text-muted-foreground"
+                                  : "text-foreground font-medium hover:text-primary transition-colors"
+                              }`}
+                              title={t("Klik untuk mengedit judul subtask", "Click to edit subtask title")}
+                            >
+                              {s.title}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Assignee & Actions */}
+                        <div className="flex items-center gap-2 pl-6 sm:pl-0 shrink-0">
+                          {/* Subtask Assignee Selector */}
+                          <select
+                            value={s.assigneeId || "__unassigned__"}
+                            onChange={(e) => handleSubtaskAssigneeChange(s.id, e.target.value)}
+                            className="h-6 max-w-[130px] rounded border border-border/70 bg-background px-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer truncate"
+                          >
+                            <option value="__unassigned__">{t("Unassigned", "Unassigned")}</option>
+                            {members.map((m) => (
+                              <option key={m.id} value={m.id}>
+                                {m.name || m.email}
+                              </option>
+                            ))}
+                          </select>
+
+                          {/* Edit Title Button */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setEditingSubtaskId(s.id);
+                              setEditingSubtaskTitle(s.title);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground p-1 transition-opacity"
+                            title={t("Edit nama", "Edit title")}
+                          >
+                            <Edit2 className="h-3 w-3" />
+                          </button>
+
+                          {/* Delete Button */}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSubtask(s.id)}
+                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive p-1 transition-opacity"
+                            title={t("Hapus subtask", "Delete subtask")}
+                          >
+                            <Trash2 className="h-3 w-3" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
               </div>
 
-              {/* Add Subtask Input */}
+              {/* Add Subtask Form */}
               <form onSubmit={handleAddSubtask} className="flex items-center gap-2">
                 <Input
                   value={newSubtaskTitle}
                   onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                  placeholder={t("+ Tambah subtask (tekan Enter)...", "+ Add subtask (press Enter)...")}
-                  className="h-9 text-xs"
+                  placeholder={t("+ Tambah subtask / langkah kerja (tekan Enter)...", "+ Add subtask / action step (press Enter)...")}
+                  className="h-9 text-xs bg-background shadow-2xs"
                   disabled={subtaskLoading}
                 />
-                <Button type="submit" size="sm" variant="outline" className="h-9 px-3 text-xs" disabled={subtaskLoading || !newSubtaskTitle.trim()}>
-                  {subtaskLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Plus className="h-3.5 w-3.5" />}
+                <Button
+                  type="submit"
+                  size="sm"
+                  variant="outline"
+                  className="h-9 px-3 text-xs gap-1.5 shrink-0"
+                  disabled={subtaskLoading || !newSubtaskTitle.trim()}
+                >
+                  {subtaskLoading ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <>
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>{t("Tambah", "Add")}</span>
+                    </>
+                  )}
                 </Button>
               </form>
             </div>
@@ -546,10 +697,10 @@ export function TaskDetailSheet({
           <div className="min-h-0 flex flex-col overflow-hidden p-5 md:col-span-4 bg-muted/10 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-border/60">
               <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                <MessageSquare className="h-3.5 w-3.5" />
+                <MessageSquare className="h-3.5 w-3.5 text-primary" />
                 {t("Activity & Comments", "Activity & Comments")}
               </span>
-              <Badge variant="outline" className="text-[10px] font-bold h-4 px-1.5">
+              <Badge variant="outline" className="text-[10px] font-bold h-4 px-1.5 bg-background">
                 {comments.length}
               </Badge>
             </div>
@@ -595,9 +746,9 @@ export function TaskDetailSheet({
                     handleAddComment(e);
                   }
                 }}
-                placeholder={t("Tulis komentar atau update tim...", "Write a comment or team update...")}
+                placeholder={t("Tulis komentar atau update tim (Enter untuk kirim)...", "Write a comment or team update (Enter to send)...")}
                 rows={2}
-                className="w-full min-h-[60px] resize-none rounded-lg border border-border/80 p-2 text-xs leading-relaxed"
+                className="w-full min-h-[65px] resize-none rounded-lg border border-border/80 p-2 text-xs leading-relaxed bg-background"
                 disabled={commentLoading}
               />
               <div className="flex justify-end">
