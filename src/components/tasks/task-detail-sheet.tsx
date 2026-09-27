@@ -45,7 +45,8 @@ import {
   X,
   CheckSquare,
   AlignLeft,
-  ChevronDown,
+  Calendar,
+  UserPlus,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -54,7 +55,6 @@ import {
   addSubtask,
   toggleSubtask,
   updateSubtaskDetails,
-  updateSubtaskAssignee,
   deleteSubtask,
   getTaskComments,
   addTaskComment,
@@ -123,6 +123,13 @@ function getAttachmentIcon(mimeType?: string | null) {
   return <FileText className="h-4 w-4 text-muted-foreground" />;
 }
 
+function getUserInitials(nameOrEmail?: string | null) {
+  if (!nameOrEmail) return "?";
+  const parts = nameOrEmail.trim().split(/\s+/);
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return nameOrEmail.slice(0, 2).toUpperCase();
+}
+
 export function TaskDetailSheet({
   children,
   defaultOpen = false,
@@ -153,11 +160,19 @@ export function TaskDetailSheet({
   >([]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [subtaskLoading, setSubtaskLoading] = useState(false);
-  const [expandedSubtaskId, setExpandedSubtaskId] = useState<string | null>(null);
 
-  // Subtask Edit Draft
+  // Subtask Focused Mini-Modal (Option 3 UX)
+  const [activeSubtask, setActiveSubtask] = useState<{
+    id: string;
+    title: string;
+    description?: string | null;
+    completed: boolean;
+    assigneeId: string | null;
+    dueDate?: string | null;
+  } | null>(null);
   const [subtaskTitleDraft, setSubtaskTitleDraft] = useState("");
   const [subtaskDescDraft, setSubtaskDescDraft] = useState("");
+  const [subtaskSaving, setSubtaskSaving] = useState(false);
 
   // Comments State
   const [comments, setComments] = useState<TaskCommentItem[]>([]);
@@ -349,20 +364,19 @@ export function TaskDetailSheet({
     }
   };
 
-  const handleOpenSubtaskDetails = (st: (typeof subtasks)[0]) => {
-    if (expandedSubtaskId === st.id) {
-      setExpandedSubtaskId(null);
-    } else {
-      setExpandedSubtaskId(st.id);
-      setSubtaskTitleDraft(st.title);
-      setSubtaskDescDraft(st.description || "");
-    }
+  // Open Subtask Focus Mini-Modal (Option 3)
+  const handleOpenSubtaskModal = (st: (typeof subtasks)[0]) => {
+    setActiveSubtask(st);
+    setSubtaskTitleDraft(st.title);
+    setSubtaskDescDraft(st.description || "");
   };
 
-  const handleSaveSubtaskDetails = async (subtaskId: string) => {
-    if (!subtaskTitleDraft.trim()) return;
+  const handleSaveSubtaskModal = async () => {
+    if (!activeSubtask || !subtaskTitleDraft.trim()) return;
+    setSubtaskSaving(true);
     const title = subtaskTitleDraft.trim();
     const description = subtaskDescDraft.trim();
+    const subtaskId = activeSubtask.id;
 
     setSubtasks((prev) =>
       prev.map((s) => (s.id === subtaskId ? { ...s, title, description } : s))
@@ -370,29 +384,36 @@ export function TaskDetailSheet({
     try {
       await updateSubtaskDetails({ subtaskId, title, description });
       toast.success(t("Rincian subtask disimpan", "Subtask details saved"));
+      setActiveSubtask(null);
       router.refresh();
     } catch {
-      toast.error(t("Gagal menyimpan rincian subtask", "Failed to save subtask details"));
+      toast.error(t("Gagal menyimpan subtask", "Failed to save subtask"));
+    } finally {
+      setSubtaskSaving(false);
     }
   };
 
-  const handleSubtaskAssigneeChange = async (subtaskId: string, assigneeId: string) => {
+  const handleSubtaskAssigneeChangeInModal = async (assigneeId: string) => {
+    if (!activeSubtask) return;
     const val = assigneeId === "__unassigned__" ? null : assigneeId;
+    const subtaskId = activeSubtask.id;
+
+    setActiveSubtask((prev) => (prev ? { ...prev, assigneeId: val } : null));
     setSubtasks((prev) => prev.map((s) => (s.id === subtaskId ? { ...s, assigneeId: val } : s)));
     try {
-      await updateSubtaskAssignee(subtaskId, val);
+      await updateSubtaskDetails({ subtaskId, assigneeId: val });
       toast.success(t("Petugas subtask diperbarui", "Subtask assignee updated"));
       router.refresh();
     } catch {
-      toast.error(t("Gagal menetapkan petugas subtask", "Failed to assign subtask"));
+      toast.error(t("Gagal memperbarui petugas subtask", "Failed to update subtask assignee"));
     }
   };
 
   const handleDeleteSubtask = async (subtaskId: string) => {
     setSubtasks((prev) => prev.filter((s) => s.id !== subtaskId));
+    if (activeSubtask?.id === subtaskId) setActiveSubtask(null);
     try {
       await deleteSubtask(subtaskId);
-      if (expandedSubtaskId === subtaskId) setExpandedSubtaskId(null);
       toast.success(t("Subtask dihapus", "Subtask deleted"));
       router.refresh();
     } catch {
@@ -767,7 +788,7 @@ export function TaskDetailSheet({
               />
             </div>
 
-            {/* Interactive Subtasks Checklist Table with Expandable Detail Panel */}
+            {/* Ultra-Clean Linear-Style Subtasks Checklist Table */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -791,112 +812,81 @@ export function TaskDetailSheet({
               )}
 
               {/* Subtasks List */}
-              <div className="divide-y divide-border/60 rounded-xl border border-border/80 bg-card overflow-hidden">
+              <div className="divide-y divide-border/50 rounded-xl border border-border/70 bg-card overflow-hidden">
                 {subtasks.length === 0 ? (
                   <div className="p-4 text-center text-xs text-muted-foreground">
                     {t("Belum ada langkah kerja. Tambahkan subtask di bawah.", "No subtasks yet. Add one below.")}
                   </div>
                 ) : (
                   subtasks.map((st) => {
-                    const isExpanded = expandedSubtaskId === st.id;
+                    const assignedMember = members.find((m) => m.id === st.assigneeId);
                     return (
-                      <div key={st.id} className="transition-colors bg-card">
-                        {/* Main Subtask Row */}
-                        <div className="group flex items-center justify-between gap-3 p-2.5 hover:bg-muted/40 transition-colors">
-                          <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                            <Checkbox
-                              checked={st.completed}
-                              onCheckedChange={() => handleToggleSubtask(st.id, st.completed)}
-                              className="rounded-md"
-                            />
-                            <div
-                              onClick={() => handleOpenSubtaskDetails(st)}
-                              className="flex items-center gap-1.5 flex-1 min-w-0 cursor-pointer"
+                      <div
+                        key={st.id}
+                        className="group flex items-center justify-between gap-2.5 px-3 py-2 hover:bg-muted/30 transition-colors"
+                      >
+                        {/* Checkbox + Title with Hover Action */}
+                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                          <Checkbox
+                            checked={st.completed}
+                            onCheckedChange={() => handleToggleSubtask(st.id, st.completed)}
+                            className="rounded-md h-4 w-4"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleOpenSubtaskModal(st)}
+                            className="flex items-center gap-1.5 flex-1 min-w-0 text-left group/btn cursor-pointer"
+                          >
+                            <span
+                              className={`text-xs truncate transition-colors ${
+                                st.completed
+                                  ? "line-through text-muted-foreground"
+                                  : "text-foreground font-medium group-hover/btn:text-primary"
+                              }`}
                             >
-                              <span
-                                className={`text-xs truncate ${
-                                  st.completed ? "line-through text-muted-foreground" : "text-foreground font-medium"
-                                }`}
-                              >
-                                {st.title}
-                              </span>
-                              {st.description && (
-                                <AlignLeft className="h-3 w-3 text-muted-foreground shrink-0" />
-                              )}
-                            </div>
-                          </div>
-
-                          {/* Subtask Assignee, Expand Toggle & Delete */}
-                          <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
-                            <Select
-                              value={st.assigneeId ?? "__unassigned__"}
-                              onValueChange={(val) => handleSubtaskAssigneeChange(st.id, val)}
-                            >
-                              <SelectTrigger className="h-6 w-24 text-[10px] rounded-md border-border/60 px-1.5 bg-background">
-                                <SelectValue placeholder="Assignee" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__unassigned__">{t("Pilih...", "None")}</SelectItem>
-                                {members.map((m) => (
-                                  <SelectItem key={m.id} value={m.id}>
-                                    {m.name || m.email}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleOpenSubtaskDetails(st)}
-                              className="h-6 w-6 text-muted-foreground rounded-md"
-                              title={t("Buka rincian subtask", "Open subtask details")}
-                            >
-                              <ChevronDown className={`h-3.5 w-3.5 transition-transform ${isExpanded ? "rotate-180 text-primary" : ""}`} />
-                            </Button>
-
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleDeleteSubtask(st.id)}
-                              className="h-6 w-6 text-muted-foreground hover:text-destructive rounded-md"
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
+                              {st.title}
+                            </span>
+                            {st.description && (
+                              <AlignLeft className="h-3 w-3 text-muted-foreground/70 shrink-0" />
+                            )}
+                          </button>
                         </div>
 
-                        {/* Inline Expandable Subtask Details Box */}
-                        {isExpanded && (
-                          <div className="p-3 bg-muted/30 border-t border-border/60 space-y-2.5 animate-in fade-in-50 duration-150">
-                            <div className="space-y-1">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                {t("Judul Subtask", "Subtask Title")}
+                        {/* Right Clean Controls: Avatar Badge + Details Trigger + Delete */}
+                        <div className="flex items-center gap-2 shrink-0">
+                          {/* Assignee Avatar / Pill */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenSubtaskModal(st)}
+                            className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted/60 hover:bg-muted border border-border/60 transition-colors cursor-pointer"
+                            title={assignedMember ? assignedMember.name || assignedMember.email || "Assignee" : "Tugaskan anggota"}
+                          >
+                            {assignedMember ? (
+                              <>
+                                <span className="h-4 w-4 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-[9px]">
+                                  {getUserInitials(assignedMember.name || assignedMember.email)}
+                                </span>
+                                <span className="max-w-[70px] truncate text-muted-foreground text-[10px]">
+                                  {assignedMember.name?.split(" ")[0] || assignedMember.email?.split("@")[0]}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="text-muted-foreground/60 flex items-center gap-0.5 px-0.5">
+                                <UserPlus className="h-3 w-3" />
                               </span>
-                              <Input
-                                value={subtaskTitleDraft}
-                                onChange={(e) => setSubtaskTitleDraft(e.target.value)}
-                                onBlur={() => handleSaveSubtaskDetails(st.id)}
-                                className="h-7 text-xs bg-background"
-                              />
-                            </div>
-                            <div className="space-y-1">
-                              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                                {t("Deskripsi & Catatan Subtask", "Subtask Description & Notes")}
-                              </span>
-                              <Textarea
-                                value={subtaskDescDraft}
-                                onChange={(e) => setSubtaskDescDraft(e.target.value)}
-                                onBlur={() => handleSaveSubtaskDetails(st.id)}
-                                placeholder={t("Masukkan petunjuk spesifik subtask ini...", "Add specific instructions for this subtask...")}
-                                rows={2}
-                                className="text-xs bg-background resize-none leading-relaxed"
-                              />
-                            </div>
-                          </div>
-                        )}
+                            )}
+                          </button>
+
+                          {/* Quick Delete */}
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteSubtask(st.id)}
+                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive p-1 rounded transition-opacity cursor-pointer"
+                            title={t("Hapus subtask", "Delete subtask")}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
                       </div>
                     );
                   })
@@ -1187,6 +1177,116 @@ export function TaskDetailSheet({
           </div>
         </div>
       </DialogContent>
+
+      {/* Option 3: Dedicated Subtask Focus Mini-Modal */}
+      {activeSubtask && (
+        <Dialog open={!!activeSubtask} onOpenChange={(op) => !op && setActiveSubtask(null)}>
+          <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden rounded-2xl border-border/80 shadow-2xl bg-background z-[65]">
+            <DialogHeader className="px-5 py-3 border-b bg-muted/30">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <CheckSquare className="h-4 w-4 text-emerald-500" />
+                  <DialogTitle className="text-sm font-bold">
+                    {t("Rincian Subtask", "Subtask Details")}
+                  </DialogTitle>
+                </div>
+                <Badge variant={activeSubtask.completed ? "default" : "outline"} className="text-[10px] uppercase font-bold">
+                  {activeSubtask.completed ? t("Selesai", "Completed") : t("Pending", "Pending")}
+                </Badge>
+              </div>
+            </DialogHeader>
+
+            <div className="p-5 space-y-4 text-xs">
+              {/* Subtask Title */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("Nama Langkah / Subtask", "Subtask Name")}
+                </span>
+                <Input
+                  value={subtaskTitleDraft}
+                  onChange={(e) => setSubtaskTitleDraft(e.target.value)}
+                  placeholder={t("Nama subtask...", "Subtask name...")}
+                  className="h-9 text-xs font-medium rounded-xl bg-background"
+                />
+              </div>
+
+              {/* Assignee Selector in Mini Modal */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                  <User className="h-3 w-3 text-blue-500" />
+                  {t("Petugas Subtask", "Subtask Assignee")}
+                </span>
+                <Select
+                  value={activeSubtask.assigneeId ?? "__unassigned__"}
+                  onValueChange={handleSubtaskAssigneeChangeInModal}
+                >
+                  <SelectTrigger className="h-8 text-xs rounded-xl bg-background">
+                    <SelectValue placeholder={t("Pilih anggota tim...", "Select team member...")} />
+                  </SelectTrigger>
+                  <SelectContent className="z-[75]">
+                    <SelectItem value="__unassigned__">{t("Belum Ditugaskan", "Unassigned")}</SelectItem>
+                    {members.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name || m.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Subtask Description */}
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                  {t("Deskripsi & Petunjuk Pengerjaan", "Description & Instructions")}
+                </span>
+                <Textarea
+                  value={subtaskDescDraft}
+                  onChange={(e) => setSubtaskDescDraft(e.target.value)}
+                  placeholder={t("Tulis instruksi atau catatan khusus untuk subtask ini...", "Write instructions or notes for this subtask...")}
+                  rows={4}
+                  className="resize-none rounded-xl border border-border/80 p-3 text-xs leading-relaxed bg-background"
+                />
+              </div>
+            </div>
+
+            {/* Modal Footer */}
+            <div className="flex items-center justify-between px-5 py-3 border-t bg-muted/20">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDeleteSubtask(activeSubtask.id)}
+                className="h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
+              >
+                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
+                {t("Hapus", "Delete")}
+              </Button>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setActiveSubtask(null)}
+                  className="h-8 text-xs rounded-xl"
+                >
+                  {t("Batal", "Cancel")}
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleSaveSubtaskModal}
+                  disabled={subtaskSaving || !subtaskTitleDraft.trim()}
+                  className="h-8 text-xs font-semibold rounded-xl gap-1.5 px-4"
+                >
+                  {subtaskSaving && <Loader2 className="h-3 w-3 animate-spin" />}
+                  {t("Simpan", "Save")}
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
 
       {/* In-App File Preview Modal for Clicked Attachments */}
       <FilePreviewModal
