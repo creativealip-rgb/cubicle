@@ -363,7 +363,7 @@ export function TaskDetailSheet({
         {children}
       </div>
 
-      <DialogContent className="flex h-[92vh] max-h-[860px] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl shadow-2xl rounded-2xl border-border/80 bg-background">
+      <DialogContent className="flex h-[94vh] max-h-[920px] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl shadow-2xl rounded-2xl border-border/80 bg-background">
         {/* Top Header / Breadcrumb & Actions Bar */}
         <DialogHeader className="shrink-0 border-b bg-muted/20 px-6 py-3 pr-14">
           <div className="flex flex-wrap items-center justify-between gap-3">
