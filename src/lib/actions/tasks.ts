@@ -458,6 +458,44 @@ export async function toggleSubtask(subtaskId: string, completed: boolean) {
   return updated;
 }
 
+export async function bulkUpdateTasksStatus(taskIds: string[], status: "todo" | "in_progress" | "review" | "done") {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  if (!taskIds.length) return { count: 0 };
+
+  const updated = await db
+    .update(tasks)
+    .set({
+      status,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(tasks.workspaceId, workspaceId), inArray(tasks.id, taskIds)))
+    .returning({ id: tasks.id });
+
+  revalidatePath("/app/tasks");
+  return { count: updated.length };
+}
+
+export async function bulkDeleteTasks(taskIds: string[]) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  if (!taskIds.length) return { count: 0 };
+
+  const deleted = await db
+    .delete(tasks)
+    .where(and(eq(tasks.workspaceId, workspaceId), inArray(tasks.id, taskIds)))
+    .returning({ id: tasks.id });
+
+  revalidatePath("/app/tasks");
+  return { count: deleted.length };
+}
+
 export async function updateSubtaskAssignee(subtaskId: string, assigneeId: string | null) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);

@@ -224,6 +224,7 @@ export default async function TasksPage({
                   tasks={taskList}
                   members={members}
                   projects={taskProjects}
+                  workspaceId={workspaceId}
                   currentUserId={user.id}
                   currentFilters={{
                     status: params.status,

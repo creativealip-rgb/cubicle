@@ -28,6 +28,14 @@ export interface PortalTaskTimeEntry {
   userName: string | null;
 }
 
+export interface PortalTaskSubtask {
+  id: string;
+  title: string;
+  description: string | null;
+  completed: boolean;
+  position: number;
+}
+
 interface Task {
   id: string;
   title: string;
@@ -38,6 +46,7 @@ interface Task {
   updatedAt: string;
   hoursMinutes?: number;
   timeEntries?: PortalTaskTimeEntry[];
+  subtasks?: PortalTaskSubtask[];
 }
 
 function cleanDescription(description: string | null): string | null {
@@ -204,6 +213,49 @@ export function PortalTaskList({
                       )}
                     </span>
                   )}
+                  {task.subtasks && task.subtasks.length > 0 && (
+                    <div className="mt-3 space-y-1.5 rounded-lg border border-border/60 bg-muted/30 p-2.5">
+                      <div className="flex items-center justify-between text-[11px] font-semibold text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                          {t("Checklist Subtask", "Subtask Checklist")}
+                        </span>
+                        <span>
+                          {task.subtasks.filter((s) => s.completed).length}/{task.subtasks.length}
+                        </span>
+                      </div>
+                      <div className="space-y-1 pt-1 divide-y divide-border/40">
+                        {task.subtasks.map((st) => (
+                          <div key={st.id} className="pt-1 first:pt-0 flex items-start gap-2 text-xs">
+                            <span
+                              className={`mt-0.5 flex h-3.5 w-3.5 shrink-0 items-center justify-center rounded border ${
+                                st.completed
+                                  ? "bg-emerald-500 border-emerald-500 text-white"
+                                  : "border-muted-foreground/30 bg-background text-transparent"
+                              }`}
+                            >
+                              <CheckCircle2 className="h-2.5 w-2.5" />
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <p
+                                className={`text-xs ${
+                                  st.completed ? "line-through text-muted-foreground" : "text-foreground font-medium"
+                                }`}
+                              >
+                                {st.title}
+                              </p>
+                              {st.description && (
+                                <p className="text-[11px] text-muted-foreground/80 mt-0.5 whitespace-pre-wrap">
+                                  {st.description}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
                   {hasEntries && (
                     <button
                       type="button"

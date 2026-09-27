@@ -144,6 +144,7 @@ interface ProjectAccordionProps {
   taskHoursMap?: Map<string, number>;
   /** Time entries grouped by taskId — shown under each task (no project-level recent list). */
   taskEntriesMap?: Map<string, TaskTimeEntry[]>;
+  taskSubtasksMap?: Map<string, Array<{ id: string; title: string; description: string | null; completed: boolean; position: number }>>;
   projectInvoicesMap: Map<string, Invoice[]>;
   selectedPackageMap: Map<string, SelectedPackage>;
   projectPackagesMap: Map<string, PackageItem[]>;
@@ -347,6 +348,7 @@ function ProjectExpandedContent({
   hoursSummary,
   taskHoursMap,
   taskEntriesMap,
+  taskSubtasksMap,
   invoices: _invoices,
   selectedPkg,
   packages,
@@ -366,6 +368,7 @@ function ProjectExpandedContent({
   hoursSummary: HoursSummary | undefined;
   taskHoursMap?: Map<string, number>;
   taskEntriesMap?: Map<string, TaskTimeEntry[]>;
+  taskSubtasksMap?: Map<string, Array<{ id: string; title: string; description: string | null; completed: boolean; position: number }>>;
   invoices: Invoice[] | undefined;
   selectedPkg: SelectedPackage | undefined;
   packages: PackageItem[];
@@ -763,6 +766,7 @@ function ProjectExpandedContent({
               updatedAt: String(t.updatedAt),
               hoursMinutes: taskHoursMap?.get(t.id) ?? 0,
               timeEntries: taskEntriesMap?.get(t.id) ?? [],
+              subtasks: taskSubtasksMap?.get(t.id) ?? [],
             }))}
           />
         </div>
@@ -862,6 +866,7 @@ export function ProjectAccordion({
   projectHoursMap,
   taskHoursMap,
   taskEntriesMap,
+  taskSubtasksMap,
   projectInvoicesMap,
   selectedPackageMap,
   projectPackagesMap,
@@ -1007,6 +1012,7 @@ export function ProjectAccordion({
               hoursSummary={hoursSummary}
               taskHoursMap={taskHoursMap}
               taskEntriesMap={taskEntriesMap}
+              taskSubtasksMap={taskSubtasksMap}
               invoices={invoices}
               selectedPkg={selectedPkg}
               packages={packages}

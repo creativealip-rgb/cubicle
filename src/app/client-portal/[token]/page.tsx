@@ -5,6 +5,7 @@ import { db } from "@/db";
 import {
   projects,
   tasks,
+  taskSubtasks,
   files,
   folders,
   invoices,
@@ -18,7 +19,7 @@ import {
   portalVisits,
   clients,
 } from "@/db/schema";
-import { eq, and, sql, desc, inArray, ne, or, isNull } from "drizzle-orm";
+import { eq, and, sql, desc, inArray, ne, or, isNull, asc } from "drizzle-orm";
 import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
 import { pickReplyTo } from "@/lib/workspace-reply-to";
 import { Suspense } from "react";
@@ -237,7 +238,7 @@ export default async function ClientPortalPage({
         description: tasks.description,
         status: tasks.status,
         priority: tasks.priority,
-        dueDate: tasks.dueDate,
+        dueDate: tasks.dueDate ? sql<string | null>`${tasks.dueDate}::text` : sql<string | null>`null`,
         updatedAt: tasks.updatedAt,
         projectId: tasks.projectId,
       })
@@ -249,6 +250,46 @@ export default async function ClientPortalPage({
         ),
       )
       .limit(500);
+  }
+
+  // Fetch subtasks for all visible tasks in client portal
+  const visibleTaskIds = allVisibleTasks.map((t) => t.id);
+  const taskSubtasksMap = new Map<
+    string,
+    Array<{
+      id: string;
+      title: string;
+      description: string | null;
+      completed: boolean;
+      position: number;
+    }>
+  >();
+
+  if (visibleTaskIds.length > 0) {
+    const rawSubtasks = await db
+      .select({
+        id: taskSubtasks.id,
+        taskId: taskSubtasks.taskId,
+        title: taskSubtasks.title,
+        description: taskSubtasks.description,
+        completed: taskSubtasks.completed,
+        position: taskSubtasks.position,
+      })
+      .from(taskSubtasks)
+      .where(and(eq(taskSubtasks.workspaceId, client.workspaceId), inArray(taskSubtasks.taskId, visibleTaskIds)))
+      .orderBy(asc(taskSubtasks.position), asc(taskSubtasks.createdAt));
+
+    for (const sub of rawSubtasks) {
+      const existing = taskSubtasksMap.get(sub.taskId) ?? [];
+      existing.push({
+        id: sub.id,
+        title: sub.title,
+        description: sub.description,
+        completed: sub.completed,
+        position: sub.position,
+      });
+      taskSubtasksMap.set(sub.taskId, existing);
+    }
   }
 
   const projectTasksMap = groupByProjectId(allVisibleTasks);
@@ -1052,6 +1093,7 @@ export default async function ClientPortalPage({
                           ]),
                         )
                       }
+                      taskSubtasksMap={taskSubtasksMap}
                       projectInvoicesMap={projectInvoicesMap}
                       selectedPackageMap={selectedPackageMap}
                       projectPackagesMap={projectPackagesMap}
