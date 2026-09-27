@@ -8,6 +8,7 @@ import { useT } from "@/lib/i18n-client";
 import { Clock, AlertTriangle, CheckSquare2 } from "lucide-react";
 import { updateTask } from "@/lib/actions/tasks";
 import { useEffect, useState, useTransition } from "react";
+import { TaskInlineQuickAdd } from "@/components/tasks/task-inline-quick-add";
 
 interface Task {
   id: string;
@@ -34,6 +35,7 @@ interface Task {
 interface TasksBoardViewProps {
   tasks: Task[];
   members: Array<{ id: string; name: string | null; email: string | null }>;
+  projects?: Array<{ id: string; name: string }>;
 }
 
 function getInitials(name?: string | null): string {
@@ -62,7 +64,7 @@ function dueTone(task: Task) {
   return "text-muted-foreground";
 }
 
-export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
+export function TasksBoardView({ tasks, members, projects = [] }: TasksBoardViewProps) {
   const { t, lang, locale } = useT();
   const [boardTasks, setBoardTasks] = useState(tasks);
   const [draggedId, setDraggedId] = useState<string | null>(null);
@@ -132,6 +134,14 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                 });
               }}
             >
+              {projects.length > 0 && (
+                <TaskInlineQuickAdd
+                  projects={projects}
+                  status={col.id as "todo" | "in_progress" | "review" | "done"}
+                  placeholder={t(`+ Tambah ke ${col.label}...`, `+ Add to ${col.label}...`)}
+                  className="mb-1"
+                />
+              )}
               {colTasks.map((task) => (
                 <TaskDetailSheet key={task.id} task={task} members={members}>
                   <Card draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/task-id", task.id); setDraggedId(task.id); }} onDragEnd={() => setDraggedId(null)} className="cursor-grab border-border/80 bg-card transition-all hover:shadow-md hover:border-primary/40 active:cursor-grabbing rounded-xl shadow-xs">

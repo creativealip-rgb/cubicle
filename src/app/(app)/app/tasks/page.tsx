@@ -22,6 +22,8 @@ import { TaskPageTabs } from "@/components/tasks/task-page-tabs";
 import { TaskViewToggle } from "@/components/tasks/task-view-toggle";
 import { TaskTemplateWorkspace } from "@/components/tasks/task-template-workspace";
 import { ReusableTaskWorkspace } from "@/components/tasks/reusable-task-workspace";
+import { TaskQuickFilterChips } from "@/components/tasks/task-quick-filter-chips";
+import { TaskInlineQuickAdd } from "@/components/tasks/task-inline-quick-add";
 import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
 import { resolveBillingModel } from "@/lib/billing-model";
 import { defaultTaskWorkMode } from "@/lib/task-work-mode";
@@ -163,7 +165,10 @@ export default async function TasksPage({
       ) : (
         <>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <TaskPageTabs current={tab} />
+            <div className="flex items-center gap-3 flex-wrap">
+              <TaskPageTabs current={tab} />
+              {tab === "workflow" && <TaskQuickFilterChips />}
+            </div>
 
             <form className="relative w-full sm:w-64">
               <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -222,6 +227,7 @@ export default async function TasksPage({
                 <TasksBoardView
                   tasks={taskList.map((task) => ({ ...task, projectId: task.projectId ?? undefined }))}
                   members={members}
+                  projects={taskProjects}
                 />
               ) : (
                 <TasksListTable
