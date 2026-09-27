@@ -678,6 +678,7 @@ export async function getTaskComments(taskId: string) {
     .select({
       id: taskComments.id,
       content: taskComments.content,
+      attachments: taskComments.attachments,
       createdAt: taskComments.createdAt,
       userId: taskComments.userId,
       userName: users.name,
@@ -692,7 +693,20 @@ export async function getTaskComments(taskId: string) {
   return rows;
 }
 
-export async function addTaskComment({ taskId, content }: { taskId: string; content: string }) {
+export async function addTaskComment({
+  taskId,
+  content,
+  attachments = [],
+}: {
+  taskId: string;
+  content: string;
+  attachments?: Array<{
+    fileId: string;
+    name: string;
+    sizeBytes?: number | null;
+    mimeType?: string | null;
+  }>;
+}) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -700,7 +714,9 @@ export async function addTaskComment({ taskId, content }: { taskId: string; cont
   await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
 
   const cleanContent = content.trim();
-  if (!cleanContent) throw new Error("Komentar tidak boleh kosong");
+  if (!cleanContent && attachments.length === 0) {
+    throw new Error("Komentar atau lampiran tidak boleh kosong");
+  }
 
   const [task] = await db
     .select({ id: tasks.id, title: tasks.title, assigneeId: tasks.assigneeId })
@@ -716,7 +732,8 @@ export async function addTaskComment({ taskId, content }: { taskId: string; cont
       workspaceId,
       taskId,
       userId: user.id,
-      content: cleanContent,
+      content: cleanContent || "Mengunggah lampiran berkas",
+      attachments,
     })
     .returning();
 

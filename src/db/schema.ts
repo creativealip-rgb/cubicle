@@ -1115,6 +1115,12 @@ export const taskComments = pgTable("task_comments", {
   taskId: uuid("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
+  attachments: jsonb("attachments").$type<Array<{
+    fileId: string;
+    name: string;
+    sizeBytes?: number | null;
+    mimeType?: string | null;
+  }>>().default([]),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [

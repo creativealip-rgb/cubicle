@@ -1,97 +1,150 @@
 "use client";
 
 import { useState, useTransition, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { useT } from "@/lib/i18n-client";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
-  Play,
-  CheckCircle2,
-  Calendar,
-  User,
-  AlertCircle,
-  Eye,
-  Plus,
-  Trash2,
-  MessageSquare,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Sparkles,
+  ChevronRight,
   Send,
   Loader2,
-  ChevronRight,
-  ListTodo,
-  Sparkles,
-  Edit2,
-  Check,
-  X,
+  Trash2,
+  Plus,
+  Play,
+  CheckCircle2,
+  Clock,
+  User,
+  Shield,
+  MessageSquare,
   AtSign,
+  Paperclip,
+  FileText,
+  Image as ImageIcon,
+  FileSpreadsheet,
+  FileArchive,
+  Download,
+  Eye,
+  X,
 } from "lucide-react";
+import { toast } from "sonner";
 import {
   updateTask,
   getTaskSubtasks,
   addSubtask,
   toggleSubtask,
-  deleteSubtask,
   updateSubtaskTitle,
   updateSubtaskAssignee,
+  deleteSubtask,
   getTaskComments,
   addTaskComment,
   deleteTaskComment,
 } from "@/lib/actions/tasks";
 import { startTimerFromTask } from "@/lib/actions/time";
-import { toast } from "sonner";
+import { uploadOneFile } from "@/lib/files-upload";
+import { FilePreviewModal } from "@/components/files/file-preview-modal";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
-interface Task {
+interface MemberOption {
   id: string;
-  title: string;
-  description: string | null;
-  status: string;
-  priority: string;
-  assigneeId: string | null;
-  assigneeName: string | null;
-  dueDate: string | null;
-  position: number;
-  clientVisible: boolean;
-  projectId?: string;
-  projectName?: string | null;
-  clientName?: string | null;
-  timeTrackingMode?: "off" | "internal" | "billable" | null;
-  mode?: "workflow" | "reusable";
-  lifecycle?: "active" | "archived";
+  name: string | null;
+  email: string | null;
+}
+
+interface TaskCommentAttachment {
+  fileId: string;
+  name: string;
+  sizeBytes?: number | null;
+  mimeType?: string | null;
+}
+
+interface TaskCommentItem {
+  id: string;
+  content: string;
+  attachments?: TaskCommentAttachment[] | null;
+  createdAt: Date | string;
+  userId: string;
+  userName: string | null;
+  userEmail: string | null;
 }
 
 interface TaskDetailSheetProps {
-  task: Task;
-  members?: Array<{ id: string; name: string | null; email: string | null }>;
-  projects?: Array<{ id: string; name: string }>;
-  children: React.ReactNode;
+  children?: React.ReactNode;
   defaultOpen?: boolean;
+  projects?: Array<{ id: string; name: string }>;
+  task: {
+    id: string;
+    workspaceId?: string;
+    title: string;
+    description: string | null;
+    status: any;
+    priority: any;
+    mode?: "reusable" | "one_time" | string;
+    clientVisible?: boolean;
+    dueDate?: string | null;
+    assigneeId?: string | null;
+    assigneeName?: string | null;
+    clientId?: string | null;
+    clientName?: string | null;
+    projectId?: string | null;
+    projectName?: string | null;
+  };
+  members?: MemberOption[];
   className?: string;
 }
 
+function getAttachmentIcon(mimeType?: string | null) {
+  if (!mimeType) return <FileText className="h-4 w-4 text-muted-foreground" />;
+  if (mimeType.startsWith("image/")) return <ImageIcon className="h-4 w-4 text-blue-500" />;
+  if (mimeType.includes("spreadsheet") || mimeType.includes("excel") || mimeType.includes("csv"))
+    return <FileSpreadsheet className="h-4 w-4 text-emerald-500" />;
+  if (mimeType.includes("zip") || mimeType.includes("rar"))
+    return <FileArchive className="h-4 w-4 text-amber-500" />;
+  return <FileText className="h-4 w-4 text-muted-foreground" />;
+}
+
 export function TaskDetailSheet({
-  task: initialTask,
-  members = [],
   children,
   defaultOpen = false,
+  projects = [],
+  task: initialTask,
+  members = [],
   className,
 }: TaskDetailSheetProps) {
   const { t } = useT();
   const router = useRouter();
   const [open, setOpen] = useState(defaultOpen);
-  const [task, setTask] = useState<Task>(initialTask);
-  const [isPending, startTransition] = useTransition();
+  const [task, setTask] = useState(initialTask);
+  const [, startTransition] = useTransition();
+
+  // Timer State
+  const [timerStarting, setTimerStarting] = useState(false);
 
   // Subtasks State
   const [subtasks, setSubtasks] = useState<
-    Array<{ id: string; title: string; completed: boolean; assigneeId: string | null }>
+    Array<{
+      id: string;
+      title: string;
+      completed: boolean;
+      assigneeId: string | null;
+    }>
   >([]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [subtaskLoading, setSubtaskLoading] = useState(false);
@@ -99,20 +152,19 @@ export function TaskDetailSheet({
   const [editingSubtaskTitle, setEditingSubtaskTitle] = useState("");
 
   // Comments State
-  const [comments, setComments] = useState<
-    Array<{
-      id: string;
-      content: string;
-      createdAt: Date | string;
-      userId: string;
-      userName: string | null;
-      userEmail: string | null;
-    }>
-  >([]);
+  const [comments, setComments] = useState<TaskCommentItem[]>([]);
   const [newComment, setNewComment] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
   const commentScrollRef = useRef<HTMLDivElement>(null);
   const commentInputRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Attachments in new comment composer
+  const [pendingAttachments, setPendingAttachments] = useState<TaskCommentAttachment[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+
+  // File Preview Modal in Task
+  const [previewFile, setPreviewFile] = useState<any | null>(null);
 
   // Mention Autocomplete State
   const [mentionOpen, setMentionOpen] = useState(false);
@@ -132,7 +184,7 @@ export function TaskDetailSheet({
           }))
         );
       });
-      getTaskComments(task.id).then((items) => {
+      getTaskComments(task.id).then((items: any) => {
         setComments(items);
       });
     }
@@ -225,17 +277,16 @@ export function TaskDetailSheet({
       startTransition(async () => {
         try {
           await updateTask(task.id, { title: titleDraft.trim() });
-          toast.success(t("Judul tugas disimpan", "Task title saved"));
+          toast.success(t("Judul tugas diperbarui", "Task title updated"));
           router.refresh();
         } catch {
-          toast.error(t("Gagal menyimpan judul", "Failed to save title"));
+          toast.error(t("Gagal memperbarui judul", "Failed to update title"));
         }
       });
     }
   };
 
-  // 1-Click Start Timer
-  const [timerStarting, setTimerStarting] = useState(false);
+  // 1-Click Timer Start
   const handleStartTimer = async () => {
     setTimerStarting(true);
     try {
@@ -319,6 +370,41 @@ export function TaskDetailSheet({
     }
   };
 
+  // Upload Attachment Handler
+  const handleFileUpload = async (filesToUpload: FileList | null) => {
+    if (!filesToUpload || filesToUpload.length === 0) return;
+    setUploadingFiles(true);
+
+    try {
+      for (let i = 0; i < filesToUpload.length; i++) {
+        const file = filesToUpload[i];
+        const res = await uploadOneFile(file, {
+          workspaceId: task.workspaceId || "",
+          clientId: task.clientId || undefined,
+          projectId: task.projectId || undefined,
+          visibility: "internal",
+          fileType: "working_file",
+        });
+
+        setPendingAttachments((prev) => [
+          ...prev,
+          {
+            fileId: res.id,
+            name: file.name,
+            sizeBytes: file.size,
+            mimeType: file.type || "application/octet-stream",
+          },
+        ]);
+      }
+      toast.success(t("Berkas berhasil dilampirkan", "File attached successfully"));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Gagal mengunggah lampiran", "Failed to upload attachment"));
+    } finally {
+      setUploadingFiles(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   // Comments Handlers
   const handleCommentChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const val = e.target.value;
@@ -364,15 +450,21 @@ export function TaskDetailSheet({
 
   const handleAddComment = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
-    if (!newComment.trim() || commentLoading) return;
+    if ((!newComment.trim() && pendingAttachments.length === 0) || commentLoading) return;
     setCommentLoading(true);
     try {
-      const created = await addTaskComment({ taskId: task.id, content: newComment.trim() });
+      const created = await addTaskComment({
+        taskId: task.id,
+        content: newComment.trim(),
+        attachments: pendingAttachments,
+      });
+
       setComments((prev) => [
         ...prev,
         {
           id: created.id,
           content: created.content,
+          attachments: pendingAttachments,
           createdAt: created.createdAt,
           userId: created.userId,
           userName: "You",
@@ -380,6 +472,7 @@ export function TaskDetailSheet({
         },
       ]);
       setNewComment("");
+      setPendingAttachments([]);
       setMentionOpen(false);
       toast.success(t("Komentar terkirim", "Comment posted"));
       setTimeout(() => {
@@ -417,6 +510,13 @@ export function TaskDetailSheet({
       }
       return part;
     });
+  };
+
+  const formatFileSize = (bytes?: number | null) => {
+    if (!bytes) return "";
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
   const subtaskDone = subtasks.filter((s) => s.completed).length;
@@ -478,292 +578,253 @@ export function TaskDetailSheet({
           </div>
         </DialogHeader>
 
-        {/* 2-Column Workspace Body (ClickUp Style) */}
-        <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden md:grid-cols-12 divide-y md:divide-y-0 md:divide-x">
-          {/* Left Column: Canvas Document, Title, Metadata, Subtasks */}
-          <div className="min-h-0 overflow-y-auto p-5 md:col-span-8 space-y-3.5 pb-20">
-            {/* Editable Title */}
-            <div>
-              <Input
+        {/* Main 2-Column Split Workspace */}
+        <div className="grid grid-cols-1 md:grid-cols-12 flex-1 min-h-0 divide-y md:divide-y-0 md:divide-x divide-border/60 overflow-hidden">
+          {/* Left Column: Task Overview, Description, Metadata & Subtasks */}
+          <div className="min-h-0 flex flex-col overflow-y-auto p-6 md:col-span-8 space-y-6">
+            {/* Task Title Input */}
+            <div className="space-y-1">
+              <input
+                type="text"
                 value={titleDraft}
                 onChange={(e) => setTitleDraft(e.target.value)}
                 onBlur={handleTitleBlur}
-                className="border-transparent hover:border-border/80 focus:border-primary font-bold text-lg md:text-xl px-2 py-1 h-auto -ml-2 rounded-lg bg-transparent tracking-tight text-foreground transition-all focus-visible:ring-0 focus-visible:ring-offset-0"
-                placeholder={t("Judul tugas...", "Task title...")}
+                className="w-full text-lg font-bold tracking-tight bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 -mx-1 text-foreground"
+                placeholder={t("Nama tugas...", "Task name...")}
               />
             </div>
 
-            {/* ClickUp-style Metadata Attributes Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 p-2.5 rounded-xl border border-border/70 bg-muted/20 text-xs">
-              {/* Status Selector */}
-              <div className="space-y-0.5">
+            {/* Attributes Grid (Status, Priority, Assignee, Portal Toggle) */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-xl bg-muted/30 border border-border/60 text-xs">
+              {/* Status */}
+              <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3 text-muted-foreground/80" />
-                  Status
+                  <CheckCircle2 className="h-3 w-3 text-primary" />
+                  {t("Status", "Status")}
                 </span>
-                <select
+                <Select
                   value={task.status}
-                  onChange={(e) => handleStatusChange(e.target.value as any)}
-                  className="w-full bg-background border border-border/70 rounded-md px-2 py-1 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer transition-colors"
+                  onValueChange={(val: any) => handleStatusChange(val)}
                 >
-                  <option value="todo">{t("TO DO", "TO DO")}</option>
-                  <option value="in_progress">{t("IN PROGRESS", "IN PROGRESS")}</option>
-                  <option value="review">{t("REVIEW", "REVIEW")}</option>
-                  <option value="done">{t("DONE", "DONE")}</option>
-                </select>
+                  <SelectTrigger className="h-7 text-xs font-semibold rounded-lg bg-background border-border/80">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todo">🟡 To Do</SelectItem>
+                    <SelectItem value="in_progress">🔵 In Progress</SelectItem>
+                    <SelectItem value="review">🟣 Review</SelectItem>
+                    <SelectItem value="done">🟢 Done</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Priority Selector */}
-              <div className="space-y-0.5">
+              {/* Priority */}
+              <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3 text-muted-foreground/80" />
+                  <Clock className="h-3 w-3 text-amber-500" />
                   {t("Prioritas", "Priority")}
                 </span>
-                <select
+                <Select
                   value={task.priority}
-                  onChange={(e) => handlePriorityChange(e.target.value as any)}
-                  className="w-full bg-background border border-border/70 rounded-md px-2 py-1 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer transition-colors"
+                  onValueChange={(val: any) => handlePriorityChange(val)}
                 >
-                  <option value="low">{t("Low", "Low")}</option>
-                  <option value="medium">{t("Medium", "Medium")}</option>
-                  <option value="high">{t("High", "High")}</option>
-                  <option value="urgent">{t("Urgent", "Urgent")}</option>
-                </select>
+                  <SelectTrigger className="h-7 text-xs font-semibold rounded-lg bg-background border-border/80 capitalize">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">🟢 Low</SelectItem>
+                    <SelectItem value="medium">🟡 Medium</SelectItem>
+                    <SelectItem value="high">🟠 High</SelectItem>
+                    <SelectItem value="urgent">🔴 Urgent</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Assignee Selector */}
-              <div className="space-y-0.5">
+              {/* Assignee */}
+              <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <User className="h-3 w-3 text-muted-foreground/80" />
+                  <User className="h-3 w-3 text-blue-500" />
                   {t("Petugas", "Assignee")}
                 </span>
-                <select
-                  value={task.assigneeId || "__unassigned__"}
-                  onChange={(e) => handleAssigneeChange(e.target.value)}
-                  className="w-full bg-background border border-border/70 rounded-md px-2 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer truncate transition-colors"
+                <Select
+                  value={task.assigneeId ?? "__unassigned__"}
+                  onValueChange={(val) => handleAssigneeChange(val)}
                 >
-                  <option value="__unassigned__">{t("Unassigned", "Unassigned")}</option>
-                  {members.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name || m.email}
-                    </option>
-                  ))}
-                </select>
+                  <SelectTrigger className="h-7 text-xs font-semibold rounded-lg bg-background border-border/80 truncate">
+                    <SelectValue placeholder={t("Pilih...", "Select...")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__unassigned__">{t("Belum Ditugaskan", "Unassigned")}</SelectItem>
+                    {members.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name || m.email}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
-              {/* Client Portal Visibility Toggle */}
-              <div className="space-y-0.5">
+              {/* Portal Visibility */}
+              <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <Eye className="h-3 w-3 text-muted-foreground/80" />
-                  Portal
+                  <Shield className="h-3 w-3 text-purple-500" />
+                  {t("Client Portal", "Client Portal")}
                 </span>
-                <button
+                <Button
                   type="button"
+                  variant={task.clientVisible ? "default" : "outline"}
+                  size="sm"
                   onClick={handleToggleClientVisible}
-                  className={`w-full h-[26px] rounded-md px-2 text-[11px] font-semibold flex items-center justify-center transition-colors ${
-                    task.clientVisible
-                      ? "bg-primary/10 text-primary border border-primary/30 font-bold"
-                      : "bg-muted text-muted-foreground border border-border/60 hover:bg-muted/80"
-                  }`}
+                  className="h-7 w-full text-[11px] font-semibold rounded-lg justify-center"
                 >
-                  {task.clientVisible ? t("Visible", "Visible") : t("Hidden", "Hidden")}
-                </button>
+                  {task.clientVisible ? t("Tampil", "Visible") : t("Sembunyi", "Hidden")}
+                </Button>
               </div>
             </div>
 
-            {/* Description Document Canvas */}
-            <div className="space-y-1">
-              <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
-                <span>{t("Deskripsi & Brief Kerja", "Description & Work Brief")}</span>
-                {isPending && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
-              </label>
+            {/* Task Description */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                {t("Deskripsi & Petunjuk", "Description & Instructions")}
+              </span>
               <Textarea
                 value={descriptionDraft}
                 onChange={(e) => setDescriptionDraft(e.target.value)}
                 onBlur={handleDescriptionBlur}
-                placeholder={t(
-                  "Tambahkan catatan detail, instruksi pengerjaan, atau link referensi (auto-save saat klik luar)...",
-                  "Add detail notes, instructions, or reference links (auto-saves on blur)..."
-                )}
-                rows={2}
-                className="w-full min-h-[64px] resize-y rounded-xl border border-border/80 bg-background p-2.5 text-xs md:text-sm leading-relaxed placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs"
+                placeholder={t("Tambahkan catatan atau instruksi pengerjaan tugas...", "Add instructions or notes...")}
+                rows={3}
+                className="resize-none rounded-xl border border-border/80 p-3 text-xs leading-relaxed bg-muted/10 focus:bg-background"
               />
             </div>
 
-            {/* Subtasks Section (ClickUp Detailed System) */}
-            <div className="space-y-2.5 pt-1.5 border-t border-border/60">
+            {/* Interactive Subtasks Checklist Table */}
+            <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <ListTodo className="h-4 w-4 text-primary" />
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-foreground">
-                    {t("Subtasks / Checklist", "Subtasks / Checklist")}
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t("Langkah & Subtasks", "Steps & Subtasks")}
                   </span>
-                  {subtasks.length > 0 && (
-                    <Badge variant="secondary" className="text-[10px] font-bold px-2 py-0.5 h-5 bg-muted/80 text-foreground">
-                      {subtaskDone} of {subtasks.length} completed ({subtaskPct}%)
-                    </Badge>
-                  )}
+                  <Badge variant="secondary" className="text-[10px] font-bold h-4 px-1.5">
+                    {subtaskDone}/{subtasks.length} ({subtaskPct}%)
+                  </Badge>
                 </div>
               </div>
 
               {/* Progress Bar */}
               {subtasks.length > 0 && (
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/60">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
                   <div
-                    className={`h-full transition-all duration-300 ${
-                      subtaskPct === 100 ? "bg-emerald-500" : "bg-primary"
-                    }`}
+                    className="h-full rounded-full bg-emerald-500 transition-all duration-300"
                     style={{ width: `${subtaskPct}%` }}
                   />
                 </div>
               )}
 
-              {/* Subtask Table / List */}
-              <div className="rounded-xl border border-border/80 bg-card divide-y divide-border/60 overflow-hidden shadow-2xs">
+              {/* Subtasks List */}
+              <div className="divide-y divide-border/60 rounded-xl border border-border/80 bg-card overflow-hidden">
                 {subtasks.length === 0 ? (
                   <div className="p-4 text-center text-xs text-muted-foreground">
-                    {t("Belum ada subtask. Tambahkan subtask di bawah untuk membagi pengerjaan tugas.", "No subtasks yet. Add subtasks below to break down work.")}
+                    {t("Belum ada langkah kerja. Tambahkan subtask di bawah.", "No subtasks yet. Add one below.")}
                   </div>
                 ) : (
-                  subtasks.map((s) => {
-                    const isEditing = editingSubtaskId === s.id;
-
-                    return (
-                      <div
-                        key={s.id}
-                        className="group flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-2 hover:bg-muted/30 transition-colors"
-                      >
-                        {/* Checkbox & Title */}
-                        <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                          <input
-                            type="checkbox"
-                            checked={s.completed}
-                            onChange={() => handleToggleSubtask(s.id, s.completed)}
-                            className="h-4 w-4 rounded border-border text-primary focus:ring-primary/40 cursor-pointer shrink-0"
-                          />
-
-                          {isEditing ? (
-                            <div className="flex items-center gap-1.5 flex-1">
-                              <Input
-                                autoFocus
-                                value={editingSubtaskTitle}
-                                onChange={(e) => setEditingSubtaskTitle(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === "Enter") handleSaveSubtaskTitle(s.id);
-                                  if (e.key === "Escape") setEditingSubtaskId(null);
-                                }}
-                                className="h-7 text-xs py-1"
-                              />
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleSaveSubtaskTitle(s.id)}
-                                className="h-7 w-7 p-0 text-emerald-600 hover:text-emerald-700"
-                              >
-                                <Check className="h-3.5 w-3.5" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => setEditingSubtaskId(null)}
-                                className="h-7 w-7 p-0 text-muted-foreground"
-                              >
-                                <X className="h-3.5 w-3.5" />
-                              </Button>
-                            </div>
-                          ) : (
-                            <span
-                              onClick={() => {
-                                setEditingSubtaskId(s.id);
-                                setEditingSubtaskTitle(s.title);
-                              }}
-                              className={`text-xs cursor-pointer truncate flex-1 ${
-                                s.completed
-                                  ? "line-through text-muted-foreground"
-                                  : "text-foreground font-medium hover:text-primary transition-colors"
-                              }`}
-                              title={t("Klik untuk mengedit judul subtask", "Click to edit subtask title")}
-                            >
-                              {s.title}
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Assignee & Actions */}
-                        <div className="flex items-center gap-2 pl-6 sm:pl-0 shrink-0">
-                          {/* Subtask Assignee Selector */}
-                          <select
-                            value={s.assigneeId || "__unassigned__"}
-                            onChange={(e) => handleSubtaskAssigneeChange(s.id, e.target.value)}
-                            className="h-6 max-w-[130px] rounded border border-border/70 bg-background px-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer truncate"
-                          >
-                            <option value="__unassigned__">{t("Unassigned", "Unassigned")}</option>
-                            {members.map((m) => (
-                              <option key={m.id} value={m.id}>
-                                {m.name || m.email}
-                              </option>
-                            ))}
-                          </select>
-
-                          {/* Edit Title Button */}
-                          <button
-                            type="button"
-                            onClick={() => {
-                              setEditingSubtaskId(s.id);
-                              setEditingSubtaskTitle(s.title);
+                  subtasks.map((st) => (
+                    <div
+                      key={st.id}
+                      className="group flex items-center justify-between gap-3 p-2.5 hover:bg-muted/40 transition-colors"
+                    >
+                      <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                        <Checkbox
+                          checked={st.completed}
+                          onCheckedChange={() => handleToggleSubtask(st.id, st.completed)}
+                          className="rounded-md"
+                        />
+                        {editingSubtaskId === st.id ? (
+                          <Input
+                            autoFocus
+                            value={editingSubtaskTitle}
+                            onChange={(e) => setEditingSubtaskTitle(e.target.value)}
+                            onBlur={() => handleSaveSubtaskTitle(st.id)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleSaveSubtaskTitle(st.id);
+                              if (e.key === "Escape") setEditingSubtaskId(null);
                             }}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground p-1 transition-opacity"
-                            title={t("Edit nama", "Edit title")}
+                            className="h-7 text-xs py-0"
+                          />
+                        ) : (
+                          <span
+                            onClick={() => {
+                              setEditingSubtaskId(st.id);
+                              setEditingSubtaskTitle(st.title);
+                            }}
+                            className={`text-xs cursor-pointer truncate ${
+                              st.completed ? "line-through text-muted-foreground" : "text-foreground font-medium"
+                            }`}
                           >
-                            <Edit2 className="h-3 w-3" />
-                          </button>
-
-                          {/* Delete Button */}
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteSubtask(s.id)}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive p-1 transition-opacity"
-                            title={t("Hapus subtask", "Delete subtask")}
-                          >
-                            <Trash2 className="h-3 w-3" />
-                          </button>
-                        </div>
+                            {st.title}
+                          </span>
+                        )}
                       </div>
-                    );
-                  })
+
+                      {/* Subtask Assignee & Delete */}
+                      <div className="flex items-center gap-1.5 opacity-80 group-hover:opacity-100 transition-opacity">
+                        <Select
+                          value={st.assigneeId ?? "__unassigned__"}
+                          onValueChange={(val) => handleSubtaskAssigneeChange(st.id, val)}
+                        >
+                          <SelectTrigger className="h-6 w-24 text-[10px] rounded-md border-border/60 px-1.5">
+                            <SelectValue placeholder="Assignee" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="__unassigned__">{t("Pilih...", "None")}</SelectItem>
+                            {members.map((m) => (
+                              <SelectItem key={m.id} value={m.id}>
+                                {m.name || m.email}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteSubtask(st.id)}
+                          className="h-6 w-6 text-muted-foreground hover:text-destructive rounded-md"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))
                 )}
               </div>
 
-              {/* Add Subtask Form */}
+              {/* Add Subtask Input Form */}
               <form onSubmit={handleAddSubtask} className="flex items-center gap-2">
                 <Input
                   value={newSubtaskTitle}
                   onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                  placeholder={t("+ Tambah subtask / langkah kerja (tekan Enter)...", "+ Add subtask / action step (press Enter)...")}
-                  className="h-8 text-xs bg-background shadow-2xs"
+                  placeholder={t("+ Tambah langkah atau subtask baru...", "+ Add new step or subtask...")}
+                  className="h-8 text-xs rounded-xl bg-muted/20 border-border/80"
                   disabled={subtaskLoading}
                 />
                 <Button
                   type="submit"
                   size="sm"
-                  variant="outline"
-                  className="h-8 px-3 text-xs gap-1.5 shrink-0 font-medium"
                   disabled={subtaskLoading || !newSubtaskTitle.trim()}
+                  className="h-8 px-3 text-xs font-semibold rounded-xl"
                 >
                   {subtaskLoading ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    <Loader2 className="h-3 w-3 animate-spin" />
                   ) : (
-                    <>
-                      <Plus className="h-3.5 w-3.5" />
-                      <span>{t("Tambah", "Add")}</span>
-                    </>
+                    <Plus className="h-3.5 w-3.5" />
                   )}
                 </Button>
               </form>
             </div>
           </div>
 
-          {/* Right Column: Activity Feed & Comments with @Mentions (ClickUp / Asana Style) */}
+          {/* Right Column: Activity Feed & Comments with @Mentions & Attachments */}
           <div className="min-h-0 flex flex-col overflow-hidden p-5 md:col-span-4 bg-muted/10 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-border/60">
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
@@ -781,11 +842,11 @@ export function TaskDetailSheet({
                 <div className="flex flex-col items-center justify-center h-full text-center p-4 text-xs text-muted-foreground space-y-1">
                   <Sparkles className="h-6 w-6 text-muted-foreground/40 mb-1" />
                   <p className="font-medium">{t("Belum ada komentar", "No comments yet")}</p>
-                  <p className="text-[11px] text-muted-foreground/70">{t("Ketik @ untuk me-mention anggota tim.", "Type @ to mention team members.")}</p>
+                  <p className="text-[11px] text-muted-foreground/70">{t("Ketik @ untuk mention & lampirkan file 📎", "Type @ to mention & attach files 📎")}</p>
                 </div>
               ) : (
                 comments.map((c) => (
-                  <div key={c.id} className="group rounded-xl border border-border/70 bg-card p-3 text-xs space-y-1.5 shadow-2xs">
+                  <div key={c.id} className="group rounded-xl border border-border/70 bg-card p-3 text-xs space-y-2 shadow-2xs">
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                       <span className="font-semibold text-foreground">{c.userName || c.userEmail || "Member"}</span>
                       <div className="flex items-center gap-1.5">
@@ -793,22 +854,70 @@ export function TaskDetailSheet({
                         <button
                           type="button"
                           onClick={() => handleDeleteComment(c.id)}
-                          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity"
+                          className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity cursor-pointer"
                         >
                           <Trash2 className="h-3 w-3" />
                         </button>
                       </div>
                     </div>
-                    <p className="text-xs text-foreground/90 leading-relaxed whitespace-pre-wrap">
-                      {renderCommentContent(c.content)}
-                    </p>
+                    {c.content && (
+                      <p className="text-xs text-foreground/90 leading-relaxed whitespace-pre-wrap">
+                        {renderCommentContent(c.content)}
+                      </p>
+                    )}
+
+                    {/* Render Attachments inside Bubble */}
+                    {c.attachments && c.attachments.length > 0 && (
+                      <div className="pt-1.5 space-y-1.5">
+                        {c.attachments.map((att, attIdx) => (
+                          <div
+                            key={`${att.fileId}-${attIdx}`}
+                            onClick={() => setPreviewFile({ id: att.fileId, name: att.name, mimeType: att.mimeType, sizeBytes: att.sizeBytes })}
+                            className="flex items-center justify-between gap-2 p-2 rounded-lg border border-border/80 bg-muted/40 hover:bg-muted transition-colors cursor-pointer group/att"
+                          >
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
+                              <div className="shrink-0">{getAttachmentIcon(att.mimeType)}</div>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-xs font-semibold truncate group-hover/att:text-primary transition-colors">
+                                  {att.name}
+                                </p>
+                                {att.sizeBytes ? (
+                                  <p className="text-[10px] text-muted-foreground font-mono">
+                                    {formatFileSize(att.sizeBytes)}
+                                  </p>
+                                ) : null}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 rounded-md hover:bg-background"
+                                title={t("Buka Pratinjau", "Open Preview")}
+                              >
+                                <Eye className="h-3 w-3 text-primary" />
+                              </Button>
+                              <a
+                                href={`/api/files/${att.fileId}/download`}
+                                download
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex h-6 w-6 items-center justify-center rounded-md hover:bg-background text-muted-foreground hover:text-foreground"
+                                title={t("Unduh", "Download")}
+                              >
+                                <Download className="h-3 w-3" />
+                              </a>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))
               )}
             </div>
 
-            {/* Comment Input Composer with @Mention Autocomplete */}
-            <div className="relative pt-2 border-t border-border/60">
+            {/* Comment Input Composer with @Mention Autocomplete & Paperclip */}
+            <div className="relative pt-2 border-t border-border/60 space-y-2">
               {/* Mention Suggestion Popover */}
               {mentionOpen && filteredMentionMembers.length > 0 && (
                 <div className="absolute bottom-full left-0 mb-2 w-full max-h-44 overflow-y-auto rounded-xl border border-border bg-popover shadow-lg z-50 p-1 divide-y divide-border/40">
@@ -832,24 +941,57 @@ export function TaskDetailSheet({
                 </div>
               )}
 
+              {/* Pending Attachments Pill Bar */}
+              {pendingAttachments.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5 p-1.5 rounded-lg bg-muted/40 border border-border/60">
+                  {pendingAttachments.map((att, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center gap-1 rounded-md bg-background px-2 py-1 text-[11px] font-medium border border-border/80 shadow-2xs max-w-[200px]"
+                    >
+                      {getAttachmentIcon(att.mimeType)}
+                      <span className="truncate">{att.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => setPendingAttachments((prev) => prev.filter((_, i) => i !== idx))}
+                        className="text-muted-foreground hover:text-destructive ml-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <form onSubmit={handleAddComment} className="space-y-2">
                 <Textarea
                   ref={commentInputRef}
                   value={newComment}
                   onChange={handleCommentChange}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey && !mentionOpen && newComment.trim()) {
+                    if (e.key === "Enter" && !e.shiftKey && !mentionOpen && (newComment.trim() || pendingAttachments.length > 0)) {
                       e.preventDefault();
                       handleAddComment();
                     }
                   }}
-                  placeholder={t("Tulis komentar (@ untuk mention tim, Enter kirim)...", "Write a comment (@ to mention team, Enter to send)...")}
+                  placeholder={t("Tulis komentar / lampirkan file (Enter kirim)...", "Write a comment / attach file (Enter to send)...")}
                   rows={2}
-                  className="w-full min-h-[65px] resize-none rounded-lg border border-border/80 p-2 text-xs leading-relaxed bg-background"
+                  className="w-full min-h-[60px] resize-none rounded-lg border border-border/80 p-2 text-xs leading-relaxed bg-background"
                   disabled={commentLoading}
                 />
+
+                {/* Hidden File Input */}
+                <input
+                  type="file"
+                  multiple
+                  ref={fileInputRef}
+                  onChange={(e) => handleFileUpload(e.target.files)}
+                  className="hidden"
+                />
+
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                  <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
+                    {/* Mention trigger */}
                     <button
                       type="button"
                       onClick={() => {
@@ -858,18 +1000,35 @@ export function TaskDetailSheet({
                         setMentionQuery("");
                         commentInputRef.current?.focus();
                       }}
-                      className="inline-flex items-center gap-1 rounded hover:bg-muted px-1.5 py-0.5 transition-colors"
+                      className="inline-flex items-center gap-1 rounded hover:bg-muted px-1.5 py-0.5 transition-colors cursor-pointer"
                       title={t("Mention anggota tim", "Mention team member")}
                     >
                       <AtSign className="h-3.5 w-3.5 text-primary" />
                       <span>Mention</span>
                     </button>
+
+                    {/* Paperclip attach file trigger */}
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      disabled={uploadingFiles}
+                      className="inline-flex items-center gap-1 rounded hover:bg-muted px-1.5 py-0.5 transition-colors cursor-pointer"
+                      title={t("Lampirkan berkas", "Attach files")}
+                    >
+                      {uploadingFiles ? (
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-primary" />
+                      ) : (
+                        <Paperclip className="h-3.5 w-3.5 text-primary" />
+                      )}
+                      <span>{uploadingFiles ? t("Mengunggah...", "Uploading...") : t("Lampirkan", "Attach")}</span>
+                    </button>
                   </div>
+
                   <Button
                     type="submit"
                     size="sm"
-                    disabled={commentLoading || !newComment.trim()}
-                    className="h-7 gap-1.5 px-3 text-xs font-semibold"
+                    disabled={commentLoading || uploadingFiles || (!newComment.trim() && pendingAttachments.length === 0)}
+                    className="h-7 gap-1.5 px-3 text-xs font-semibold rounded-lg"
                   >
                     {commentLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
                     {t("Kirim", "Send")}
@@ -880,6 +1039,13 @@ export function TaskDetailSheet({
           </div>
         </div>
       </DialogContent>
+
+      {/* In-App File Preview Modal for Clicked Attachments */}
+      <FilePreviewModal
+        file={previewFile}
+        open={!!previewFile}
+        onOpenChange={(op) => !op && setPreviewFile(null)}
+      />
     </Dialog>
   );
 }
