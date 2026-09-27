@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect, useRef } from "react";
+import { useState, useTransition, useEffect } from "react";
 import { useT } from "@/lib/i18n-client";
 import {
   Dialog,
@@ -410,7 +410,7 @@ export function TaskDetailSheet({
         {/* 2-Column Workspace Body (ClickUp Style) */}
         <div className="grid min-h-0 flex-1 grid-cols-1 overflow-hidden md:grid-cols-12 divide-y md:divide-y-0 md:divide-x">
           {/* Left Column: Canvas Document, Title, Metadata, Subtasks */}
-          <div className="min-h-0 overflow-y-auto p-6 md:col-span-8 space-y-6">
+          <div className="min-h-0 overflow-y-auto p-6 md:col-span-8 space-y-5 pb-16">
             {/* Editable Title */}
             <div>
               <Input
@@ -501,7 +501,7 @@ export function TaskDetailSheet({
             </div>
 
             {/* Description Document Canvas */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                 <span>{t("Deskripsi & Brief Kerja", "Description & Work Brief")}</span>
                 {isPending && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
@@ -514,13 +514,13 @@ export function TaskDetailSheet({
                   "Tambahkan catatan detail, instruksi pengerjaan, atau link referensi (auto-save saat klik luar)...",
                   "Add detail notes, instructions, or reference links (auto-saves on blur)..."
                 )}
-                rows={5}
-                className="w-full min-h-[120px] resize-y rounded-xl border border-border/80 bg-background p-3.5 text-sm leading-relaxed placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs"
+                rows={3}
+                className="w-full min-h-[90px] resize-y rounded-xl border border-border/80 bg-background p-3 text-sm leading-relaxed placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs"
               />
             </div>
 
             {/* Subtasks Section (ClickUp Detailed System) */}
-            <div className="space-y-3.5 pt-2 border-t border-border/60">
+            <div className="space-y-3 pt-2 border-t border-border/60">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ListTodo className="h-4 w-4 text-primary" />
@@ -554,9 +554,8 @@ export function TaskDetailSheet({
                     {t("Belum ada subtask. Tambahkan subtask di bawah untuk membagi pengerjaan tugas.", "No subtasks yet. Add subtasks below to break down work.")}
                   </div>
                 ) : (
-                  subtasks.map((s, idx) => {
+                  subtasks.map((s) => {
                     const isEditing = editingSubtaskId === s.id;
-                    const assignedMember = members.find((m) => m.id === s.assigneeId);
 
                     return (
                       <div
