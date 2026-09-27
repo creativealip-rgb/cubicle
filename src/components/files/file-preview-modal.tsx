@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useT } from "@/lib/i18n-client";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
 import {
   Download,
   FileText,
@@ -27,7 +28,16 @@ import {
   AlertCircle,
   ExternalLink,
   ChevronRight,
+  Edit3,
+  Save,
+  Plus,
+  Trash2,
+  Check,
+  X,
 } from "lucide-react";
+import { saveFileContent } from "@/lib/actions/files";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
 interface FileItem {
   id: string;
@@ -52,13 +62,22 @@ export function FilePreviewModal({
   token,
 }: FilePreviewModalProps) {
   const { t } = useT();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [previewData, setPreviewData] = useState<{
     downloadUrl: string;
     textContent?: string | null;
     excelData?: Array<{ sheetName: string; rows: Array<Array<string | number | boolean | null>> }> | null;
   } | null>(null);
+
+  // Edit Mode State
+  const [isEditing, setIsEditing] = useState(false);
+  const [textDraft, setTextDraft] = useState("");
+  const [excelDraft, setExcelDraft] = useState<
+    Array<{ sheetName: string; rows: Array<Array<string | number | boolean | null>> }>
+  >([]);
 
   const [activeSheetIndex, setActiveSheetIndex] = useState(0);
   const [zoom, setZoom] = useState(100);
@@ -69,6 +88,10 @@ export function FilePreviewModal({
       setPreviewData(null);
       setError(null);
       setLoading(true);
+      setSaving(false);
+      setIsEditing(false);
+      setTextDraft("");
+      setExcelDraft([]);
       setZoom(100);
       setRotation(0);
       setActiveSheetIndex(0);
@@ -77,6 +100,7 @@ export function FilePreviewModal({
 
     setLoading(true);
     setError(null);
+    setIsEditing(false);
 
     const url = `/api/files/${file.id}/preview${token ? `?token=${encodeURIComponent(token)}` : ""}`;
     fetch(url)
@@ -88,6 +112,12 @@ export function FilePreviewModal({
       })
       .then((data) => {
         setPreviewData(data);
+        if (data.textContent !== undefined && data.textContent !== null) {
+          setTextDraft(data.textContent);
+        }
+        if (data.excelData) {
+          setExcelDraft(JSON.parse(JSON.stringify(data.excelData)));
+        }
         setLoading(false);
       })
       .catch((err) => {
@@ -145,6 +175,8 @@ export function FilePreviewModal({
     fileName.endsWith(".html") ||
     fileName.endsWith(".css");
 
+  const canEdit = !token && (isText || isExcel);
+
   const formatFileSize = (bytes: number | null | undefined) => {
     if (!bytes) return "0 B";
     if (bytes < 1024) return `${bytes} B`;
@@ -152,11 +184,71 @@ export function FilePreviewModal({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
+  const handleSave = async () => {
+    if (!file || saving) return;
+    setSaving(true);
+    try {
+      if (isExcel) {
+        await saveFileContent({
+          fileId: file.id,
+          excelData: excelDraft,
+        });
+      } else if (isText) {
+        await saveFileContent({
+          fileId: file.id,
+          content: textDraft,
+        });
+      }
+      toast.success(t("Perubahan berkas berhasil disimpan!", "File changes saved successfully!"));
+      setIsEditing(false);
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Gagal menyimpan perubahan", "Failed to save changes"));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Spreadsheet Cell Editing Handlers
+  const handleCellChange = (rIdx: number, cIdx: number, val: string) => {
+    setExcelDraft((prev) => {
+      const next = JSON.parse(JSON.stringify(prev));
+      const targetSheet = next[activeSheetIndex];
+      if (targetSheet && targetSheet.rows[rIdx]) {
+        targetSheet.rows[rIdx][cIdx] = val;
+      }
+      return next;
+    });
+  };
+
+  const handleAddRow = () => {
+    setExcelDraft((prev) => {
+      const next = JSON.parse(JSON.stringify(prev));
+      const targetSheet = next[activeSheetIndex];
+      if (targetSheet) {
+        const colCount = targetSheet.rows[0]?.length || 4;
+        targetSheet.rows.push(new Array(colCount).fill(""));
+      }
+      return next;
+    });
+  };
+
+  const handleDeleteRow = (rIdx: number) => {
+    setExcelDraft((prev) => {
+      const next = JSON.parse(JSON.stringify(prev));
+      const targetSheet = next[activeSheetIndex];
+      if (targetSheet && targetSheet.rows.length > 1) {
+        targetSheet.rows.splice(rIdx, 1);
+      }
+      return next;
+    });
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[92vh] max-h-[900px] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl shadow-2xl rounded-2xl border-border/80 bg-background">
+      <DialogContent className="flex h-[94vh] max-h-[920px] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl shadow-2xl rounded-2xl border-border/80 bg-background">
         {/* Top Header */}
-        <DialogHeader className="shrink-0 border-b bg-muted/20 px-6 py-3.5 pr-14">
+        <DialogHeader className="shrink-0 border-b bg-muted/20 px-6 py-3 pr-14">
           <div className="flex flex-wrap items-center justify-between gap-3">
             {/* File Info */}
             <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -166,10 +258,16 @@ export function FilePreviewModal({
               <Badge variant="outline" className="text-[10px] font-semibold tracking-wide shrink-0">
                 {formatFileSize(file.sizeBytes)}
               </Badge>
+              {isEditing && (
+                <Badge variant="secondary" className="text-[10px] font-bold tracking-wider bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0">
+                  EDITING MODE
+                </Badge>
+              )}
             </div>
 
-            {/* Quick Controls & Download Button */}
+            {/* Quick Controls & Action Buttons */}
             <div className="flex items-center gap-1.5 shrink-0">
+              {/* Image Controls */}
               {isImage && previewData?.downloadUrl && (
                 <>
                   <Button
@@ -202,6 +300,47 @@ export function FilePreviewModal({
                   >
                     <RotateCw className="h-3.5 w-3.5" />
                   </Button>
+                </>
+              )}
+
+              {/* Edit Mode Toggle & Save Button */}
+              {canEdit && !loading && (
+                <>
+                  {isEditing ? (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="h-8 text-xs font-semibold px-2.5 rounded-lg"
+                        onClick={() => setIsEditing(false)}
+                      >
+                        <X className="h-3.5 w-3.5 mr-1" />
+                        {t("Batal", "Cancel")}
+                      </Button>
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={saving}
+                        className="h-8 gap-1.5 px-3 text-xs font-semibold rounded-lg shadow-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                        onClick={handleSave}
+                      >
+                        {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                        <span>{t("Simpan", "Save")}</span>
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 gap-1.5 px-3 text-xs font-semibold rounded-lg"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit3 className="h-3.5 w-3.5 text-primary" />
+                      <span>{t("Edit Berkas", "Edit File")}</span>
+                    </Button>
+                  )}
                 </>
               )}
 
@@ -301,13 +440,13 @@ export function FilePreviewModal({
                 </div>
               )}
 
-              {/* EXCEL / SPREADSHEET TABLE VIEWER */}
-              {isExcel && previewData.excelData && previewData.excelData.length > 0 && (
+              {/* EXCEL / SPREADSHEET TABLE VIEWER & EDITOR */}
+              {isExcel && excelDraft.length > 0 && (
                 <div className="w-full h-full flex flex-col rounded-xl border border-border/80 bg-card overflow-hidden shadow-xs">
-                  {/* Sheets tabs */}
-                  {previewData.excelData.length > 1 && (
-                    <div className="flex items-center gap-1 border-b bg-muted/40 px-3 py-1.5 overflow-x-auto shrink-0">
-                      {previewData.excelData.map((sheet, idx) => (
+                  {/* Sheets tabs & Table Action Bar */}
+                  <div className="flex items-center justify-between border-b bg-muted/40 px-3 py-1.5 overflow-x-auto shrink-0 gap-2">
+                    <div className="flex items-center gap-1">
+                      {excelDraft.map((sheet, idx) => (
                         <button
                           key={sheet.sheetName || idx}
                           type="button"
@@ -322,29 +461,64 @@ export function FilePreviewModal({
                         </button>
                       ))}
                     </div>
-                  )}
+
+                    {isEditing && (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={handleAddRow}
+                        className="h-7 px-2 text-xs font-medium gap-1"
+                      >
+                        <Plus className="h-3 w-3" />
+                        <span>{t("Tambah Baris", "Add Row")}</span>
+                      </Button>
+                    )}
+                  </div>
 
                   {/* Grid table */}
                   <div className="flex-1 overflow-auto p-2">
                     <table className="min-w-full border-collapse text-xs font-mono">
                       <tbody>
-                        {previewData.excelData[activeSheetIndex]?.rows.map((row, rIdx) => (
+                        {excelDraft[activeSheetIndex]?.rows.map((row, rIdx) => (
                           <tr
                             key={rIdx}
-                            className={`border-b border-border/50 ${
-                              rIdx === 0 ? "bg-muted/60 font-bold sticky top-0" : "hover:bg-muted/20"
+                            className={`border-b border-border/50 group ${
+                              rIdx === 0 && !isEditing ? "bg-muted/60 font-bold sticky top-0" : "hover:bg-muted/20"
                             }`}
                           >
                             <td className="border-r border-border/40 px-2 py-1.5 text-[10px] text-muted-foreground/60 select-none text-right bg-muted/30 w-8">
-                              {rIdx + 1}
+                              <div className="flex items-center justify-between gap-1">
+                                <span>{rIdx + 1}</span>
+                                {isEditing && rIdx > 0 && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteRow(rIdx)}
+                                    className="opacity-0 group-hover:opacity-100 text-destructive hover:scale-110 transition-all p-0.5"
+                                    title={t("Hapus baris", "Delete row")}
+                                  >
+                                    <Trash2 className="h-2.5 w-2.5" />
+                                  </button>
+                                )}
+                              </div>
                             </td>
                             {row.map((cell, cIdx) => (
                               <td
                                 key={cIdx}
-                                className="border-r border-border/40 px-3 py-1.5 whitespace-nowrap text-foreground/90 max-w-xs truncate"
-                                title={String(cell ?? "")}
+                                className="border-r border-border/40 p-0 whitespace-nowrap text-foreground/90 max-w-xs"
                               >
-                                {String(cell ?? "")}
+                                {isEditing ? (
+                                  <input
+                                    type="text"
+                                    value={String(cell ?? "")}
+                                    onChange={(e) => handleCellChange(rIdx, cIdx, e.target.value)}
+                                    className="w-full bg-transparent px-2.5 py-1.5 text-xs font-mono text-foreground focus:bg-background focus:outline-none focus:ring-1 focus:ring-primary"
+                                  />
+                                ) : (
+                                  <div className="px-3 py-1.5 truncate" title={String(cell ?? "")}>
+                                    {String(cell ?? "")}
+                                  </div>
+                                )}
                               </td>
                             ))}
                           </tr>
@@ -355,14 +529,25 @@ export function FilePreviewModal({
                 </div>
               )}
 
-              {/* TEXT / CODE / MARKDOWN VIEWER */}
-              {isText && previewData.textContent !== undefined && (
+              {/* TEXT / CODE / MARKDOWN VIEWER & EDITOR */}
+              {isText && (
                 <div className="w-full h-full flex flex-col rounded-xl border border-border/80 bg-card overflow-hidden shadow-xs">
-                  <div className="flex-1 overflow-auto p-4 bg-muted/20">
-                    <pre className="text-xs font-mono leading-relaxed text-foreground whitespace-pre-wrap break-all">
-                      {previewData.textContent}
-                    </pre>
-                  </div>
+                  {isEditing ? (
+                    <div className="flex-1 p-3 flex flex-col">
+                      <Textarea
+                        value={textDraft}
+                        onChange={(e) => setTextDraft(e.target.value)}
+                        placeholder={t("Ketik isi file di sini...", "Type file content here...")}
+                        className="w-full flex-1 resize-none rounded-lg border border-border/80 p-3 text-xs md:text-sm font-mono leading-relaxed bg-background"
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex-1 overflow-auto p-4 bg-muted/20">
+                      <pre className="text-xs font-mono leading-relaxed text-foreground whitespace-pre-wrap break-all">
+                        {textDraft || previewData.textContent}
+                      </pre>
+                    </div>
+                  )}
                 </div>
               )}
 

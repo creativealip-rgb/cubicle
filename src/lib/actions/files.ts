@@ -141,6 +141,81 @@ export async function updateFileMeta(input: z.infer<typeof updateFileMetaSchema>
   return updated;
 }
 
+export async function saveFileContent({
+  fileId,
+  content,
+  excelData,
+}: {
+  fileId: string;
+  content?: string;
+  excelData?: Array<{ sheetName: string; rows: Array<Array<string | number | boolean | null>> }>;
+}) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [file] = await db
+    .select()
+    .from(files)
+    .where(and(eq(files.id, fileId), eq(files.workspaceId, workspaceId)))
+    .limit(1);
+
+  if (!file) throw new Error("File not found");
+
+  let buffer: Buffer;
+  let newMime = file.mimeType;
+
+  if (excelData && excelData.length > 0) {
+    const ExcelJS = await import("exceljs");
+    const workbook = new ExcelJS.Workbook();
+
+    excelData.forEach((sheetData) => {
+      const sheet = workbook.addWorksheet(sheetData.sheetName || "Sheet 1");
+      sheetData.rows.forEach((row) => {
+        sheet.addRow(row);
+      });
+    });
+
+    const uint8 = await workbook.xlsx.writeBuffer();
+    buffer = Buffer.from(uint8);
+  } else if (content !== undefined) {
+    buffer = Buffer.from(content, "utf-8");
+  } else {
+    throw new Error("No content to save");
+  }
+
+  // Upload updated buffer to R2
+  const { PutObjectCommand } = await import("@aws-sdk/client-s3");
+  const { r2, R2_BUCKET } = await import("@/lib/r2");
+
+  await r2.send(
+    new PutObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: file.storageKey,
+      Body: buffer,
+      ContentType: newMime || undefined,
+    })
+  );
+
+  const newSizeBytes = buffer.length;
+
+  const [updated] = await db
+    .update(files)
+    .set({
+      sizeBytes: newSizeBytes,
+    })
+    .where(and(eq(files.id, fileId), eq(files.workspaceId, workspaceId)))
+    .returning();
+
+  await writeActivityLog(workspaceId, user.id, "updated_file_content", "file", fileId, {
+    sizeBytes: newSizeBytes,
+  });
+
+  revalidatePath("/app/files");
+  return updated;
+}
+
 export async function deleteFile(fileId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
