@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { tasks, taskSubtasks, taskComments, timeEntries, users, workspaceMembers, projects } from "@/db/schema";
-import { eq, and, sql, inArray, asc, desc } from "drizzle-orm";
+import { eq, and, sql, inArray, asc, desc, isNull } from "drizzle-orm";
 import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceWritable, assertTaskInWorkspace, assertProjectInWorkspace } from "@/lib/access";
@@ -801,12 +801,16 @@ export async function respondPortalTask(input: z.infer<typeof respondPortalTaskS
   };
 }
 
-export async function getTaskComments(taskId: string) {
+export async function getTaskComments(taskId: string, subtaskId?: string | null) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
 
   await assertTaskInWorkspace(db, user.id, workspaceId, taskId);
+
+  const whereClause = subtaskId
+    ? and(eq(taskComments.taskId, taskId), eq(taskComments.subtaskId, subtaskId), eq(taskComments.workspaceId, workspaceId))
+    : and(eq(taskComments.taskId, taskId), isNull(taskComments.subtaskId), eq(taskComments.workspaceId, workspaceId));
 
   const rows = await db
     .select({
@@ -821,7 +825,7 @@ export async function getTaskComments(taskId: string) {
     })
     .from(taskComments)
     .innerJoin(users, eq(users.id, taskComments.userId))
-    .where(and(eq(taskComments.taskId, taskId), eq(taskComments.workspaceId, workspaceId)))
+    .where(whereClause)
     .orderBy(asc(taskComments.createdAt));
 
   return rows;
@@ -829,10 +833,12 @@ export async function getTaskComments(taskId: string) {
 
 export async function addTaskComment({
   taskId,
+  subtaskId,
   content,
   attachments = [],
 }: {
   taskId: string;
+  subtaskId?: string | null;
   content: string;
   attachments?: Array<{
     fileId: string;
@@ -865,6 +871,7 @@ export async function addTaskComment({
     .values({
       workspaceId,
       taskId,
+      subtaskId: subtaskId || null,
       userId: user.id,
       content: cleanContent || "Mengunggah lampiran berkas",
       attachments,

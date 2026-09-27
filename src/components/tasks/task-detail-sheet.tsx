@@ -7,7 +7,6 @@ import {
   Dialog,
   DialogContent,
   DialogHeader,
-  DialogTitle,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -48,7 +47,8 @@ import {
   UserPlus,
   ArrowUpRight,
   GripVertical,
-  CircleDot,
+  ArrowLeft,
+  CornerDownRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -91,6 +91,16 @@ interface TaskCommentItem {
   userId: string;
   userName: string | null;
   userEmail: string | null;
+}
+
+interface SubtaskItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  status: "todo" | "in_progress" | "done" | string;
+  completed: boolean;
+  assigneeId: string | null;
+  dueDate?: string | null;
 }
 
 interface TaskDetailSheetProps {
@@ -159,44 +169,21 @@ export function TaskDetailSheet({
   const [task, setTask] = useState(initialTask);
   const [, startTransition] = useTransition();
 
+  // Asana Drill-Down Navigation State: 'parent' or active SubtaskItem
+  const [activeDrillDownSubtask, setActiveDrillDownSubtask] = useState<SubtaskItem | null>(null);
+
   // Timer State
   const [timerStarting, setTimerStarting] = useState(false);
 
   // Subtasks State
-  const [subtasks, setSubtasks] = useState<
-    Array<{
-      id: string;
-      title: string;
-      description?: string | null;
-      status: "todo" | "in_progress" | "done" | string;
-      completed: boolean;
-      assigneeId: string | null;
-      dueDate?: string | null;
-    }>
-  >([]);
+  const [subtasks, setSubtasks] = useState<SubtaskItem[]>([]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [subtaskLoading, setSubtaskLoading] = useState(false);
   const [draggedSubtaskIdx, setDraggedSubtaskIdx] = useState<number | null>(null);
 
-  // Subtask Focused Mini-Modal State
-  const [activeSubtask, setActiveSubtask] = useState<{
-    id: string;
-    title: string;
-    description?: string | null;
-    status: "todo" | "in_progress" | "done" | string;
-    completed: boolean;
-    assigneeId: string | null;
-    dueDate?: string | null;
-  } | null>(null);
-  const [subtaskTitleDraft, setSubtaskTitleDraft] = useState("");
-  const [subtaskDescDraft, setSubtaskDescDraft] = useState("");
-  const [subtaskDueDateDraft, setSubtaskDueDateDraft] = useState("");
-  const [subtaskStatusDraft, setSubtaskStatusDraft] = useState<"todo" | "in_progress" | "done">("todo");
-  const [subtaskSaving, setSubtaskSaving] = useState(false);
-  const [convertingSubtask, setConvertingSubtask] = useState(false);
-
-  // Comments State
+  // Comments State (Separate for Parent vs Subtask)
   const [comments, setComments] = useState<TaskCommentItem[]>([]);
+  const [subtaskComments, setSubtaskComments] = useState<TaskCommentItem[]>([]);
   const [newComment, setNewComment] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
   const commentScrollRef = useRef<HTMLDivElement>(null);
@@ -215,29 +202,46 @@ export function TaskDetailSheet({
   const [mentionQuery, setMentionQuery] = useState("");
   const [mentionType, setMentionType] = useState<"member" | "subtask">("member");
 
-  // Load Subtasks & Comments when modal opens
+  // Load Subtasks & Parent Comments
+  const refreshSubtasks = async () => {
+    if (!task.id) return;
+    const items = await getTaskSubtasks(task.id);
+    setSubtasks(
+      items.map((it) => ({
+        id: it.id,
+        title: it.title,
+        description: it.description,
+        status: (it as any).status || (it.completed ? "done" : "todo"),
+        completed: it.completed,
+        assigneeId: it.assigneeId,
+        dueDate: it.dueDate,
+      }))
+    );
+  };
+
   useEffect(() => {
     if (open && task.id) {
-      getTaskSubtasks(task.id).then((items) => {
-        setSubtasks(
-          items.map((it) => ({
-            id: it.id,
-            title: it.title,
-            description: it.description,
-            status: (it as any).status || (it.completed ? "done" : "todo"),
-            completed: it.completed,
-            assigneeId: it.assigneeId,
-            dueDate: it.dueDate,
-          }))
-        );
-      });
+      refreshSubtasks();
       getTaskComments(task.id).then((items: any) => {
         setComments(items);
       });
+    } else {
+      setActiveDrillDownSubtask(null);
     }
   }, [open, task.id]);
 
-  // Fast Status Auto-Save
+  // Load Subtask Comments when drilling down
+  useEffect(() => {
+    if (activeDrillDownSubtask && task.id) {
+      getTaskComments(task.id, activeDrillDownSubtask.id).then((items: any) => {
+        setSubtaskComments(items);
+      });
+      setNewComment("");
+      setPendingAttachments([]);
+    }
+  }, [activeDrillDownSubtask?.id, task.id]);
+
+  // Fast Status Auto-Save for Main Task
   const handleStatusChange = (nextStatus: "todo" | "in_progress" | "review" | "done") => {
     setTask((prev) => ({ ...prev, status: nextStatus }));
     startTransition(async () => {
@@ -251,7 +255,7 @@ export function TaskDetailSheet({
     });
   };
 
-  // Fast Priority Auto-Save
+  // Fast Priority Auto-Save for Main Task
   const handlePriorityChange = (nextPriority: "low" | "medium" | "high" | "urgent") => {
     setTask((prev) => ({ ...prev, priority: nextPriority }));
     startTransition(async () => {
@@ -265,7 +269,7 @@ export function TaskDetailSheet({
     });
   };
 
-  // Fast Assignee Auto-Save
+  // Fast Assignee Auto-Save for Main Task
   const handleAssigneeChange = (assigneeId: string) => {
     const mem = members.find((m) => m.id === assigneeId);
     setTask((prev) => ({ ...prev, assigneeId, assigneeName: mem?.name ?? null }));
@@ -299,7 +303,7 @@ export function TaskDetailSheet({
     });
   };
 
-  // Description Auto-Save on Blur
+  // Description Auto-Save on Blur (Main Task)
   const [descriptionDraft, setDescriptionDraft] = useState(task.description ?? "");
   const handleDescriptionBlur = () => {
     if (descriptionDraft !== (task.description ?? "")) {
@@ -316,7 +320,7 @@ export function TaskDetailSheet({
     }
   };
 
-  // Title Auto-Save on Blur
+  // Title Auto-Save on Blur (Main Task)
   const [titleDraft, setTitleDraft] = useState(task.title);
   const handleTitleBlur = () => {
     if (titleDraft.trim() && titleDraft !== task.title) {
@@ -330,6 +334,123 @@ export function TaskDetailSheet({
           toast.error(t("Gagal memperbarui judul", "Failed to update title"));
         }
       });
+    }
+  };
+
+  // Subtask Edit Drafts (When drilled down)
+  const [subtaskTitleDraft, setSubtaskTitleDraft] = useState("");
+  const [subtaskDescDraft, setSubtaskDescDraft] = useState("");
+  const [subtaskDueDateDraft, setSubtaskDueDateDraft] = useState("");
+
+  const handleOpenDrillDownSubtask = (st: SubtaskItem) => {
+    setActiveDrillDownSubtask(st);
+    setSubtaskTitleDraft(st.title);
+    setSubtaskDescDraft(st.description || "");
+    setSubtaskDueDateDraft(st.dueDate ? st.dueDate.split("T")[0] : "");
+  };
+
+  const handleSubtaskTitleBlur = async () => {
+    if (!activeDrillDownSubtask || !subtaskTitleDraft.trim() || subtaskTitleDraft.trim() === activeDrillDownSubtask.title) return;
+    const cleanTitle = subtaskTitleDraft.trim();
+    const stId = activeDrillDownSubtask.id;
+    setActiveDrillDownSubtask((prev) => (prev ? { ...prev, title: cleanTitle } : null));
+    setSubtasks((prev) => prev.map((s) => (s.id === stId ? { ...s, title: cleanTitle } : s)));
+    try {
+      await updateSubtaskDetails({ subtaskId: stId, title: cleanTitle });
+      toast.success(t("Judul subtask diperbarui", "Subtask title updated"));
+      router.refresh();
+    } catch {
+      toast.error(t("Gagal memperbarui judul subtask", "Failed to update subtask title"));
+    }
+  };
+
+  const handleSubtaskDescBlur = async () => {
+    if (!activeDrillDownSubtask) return;
+    const cleanDesc = subtaskDescDraft.trim();
+    if (cleanDesc === (activeDrillDownSubtask.description || "")) return;
+    const stId = activeDrillDownSubtask.id;
+    setActiveDrillDownSubtask((prev) => (prev ? { ...prev, description: cleanDesc } : null));
+    setSubtasks((prev) => prev.map((s) => (s.id === stId ? { ...s, description: cleanDesc } : s)));
+    try {
+      await updateSubtaskDetails({ subtaskId: stId, description: cleanDesc });
+      toast.success(t("Deskripsi subtask disimpan", "Subtask description saved"));
+      router.refresh();
+    } catch {
+      toast.error(t("Gagal menyimpan deskripsi subtask", "Failed to save subtask description"));
+    }
+  };
+
+  const handleSubtaskDueDateChange = async (dateStr: string) => {
+    if (!activeDrillDownSubtask) return;
+    setSubtaskDueDateDraft(dateStr);
+    const stId = activeDrillDownSubtask.id;
+    const dueDateVal = dateStr || null;
+    setActiveDrillDownSubtask((prev) => (prev ? { ...prev, dueDate: dueDateVal } : null));
+    setSubtasks((prev) => prev.map((s) => (s.id === stId ? { ...s, dueDate: dueDateVal } : s)));
+    try {
+      await updateSubtaskDetails({ subtaskId: stId, dueDate: dueDateVal });
+      toast.success(t("Tenggat waktu subtask disimpan", "Subtask due date saved"));
+      router.refresh();
+    } catch {
+      toast.error(t("Gagal menyimpan tenggat waktu", "Failed to save due date"));
+    }
+  };
+
+  const handleDrillDownSubtaskStatusChange = async (status: "todo" | "in_progress" | "done") => {
+    if (!activeDrillDownSubtask) return;
+    const stId = activeDrillDownSubtask.id;
+    const completed = status === "done";
+    setActiveDrillDownSubtask((prev) => (prev ? { ...prev, status, completed } : null));
+    setSubtasks((prev) => prev.map((s) => (s.id === stId ? { ...s, status, completed } : s)));
+    try {
+      await setSubtaskStatus(stId, status);
+      toast.success(t("Status subtask diperbarui", "Subtask status updated"));
+      router.refresh();
+    } catch {
+      toast.error(t("Gagal memperbarui status", "Failed to update status"));
+    }
+  };
+
+  const handleDrillDownSubtaskAssigneeChange = async (assigneeId: string) => {
+    if (!activeDrillDownSubtask) return;
+    const val = assigneeId === "__unassigned__" ? null : assigneeId;
+    const stId = activeDrillDownSubtask.id;
+    setActiveDrillDownSubtask((prev) => (prev ? { ...prev, assigneeId: val } : null));
+    setSubtasks((prev) => prev.map((s) => (s.id === stId ? { ...s, assigneeId: val } : s)));
+    try {
+      await updateSubtaskDetails({ subtaskId: stId, assigneeId: val });
+      toast.success(t("Petugas subtask diperbarui", "Subtask assignee updated"));
+      router.refresh();
+    } catch {
+      toast.error(t("Gagal memperbarui petugas", "Failed to update assignee"));
+    }
+  };
+
+  const handleDrillDownConvertToTask = async () => {
+    if (!activeDrillDownSubtask) return;
+    const subtaskId = activeDrillDownSubtask.id;
+    try {
+      await convertSubtaskToTask(subtaskId);
+      setSubtasks((prev) => prev.filter((s) => s.id !== subtaskId));
+      setActiveDrillDownSubtask(null);
+      toast.success(t("Subtask berhasil diubah menjadi Task utama", "Subtask converted to standalone task"));
+      router.refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Gagal mengubah subtask", "Failed to convert subtask"));
+    }
+  };
+
+  const handleDrillDownDeleteSubtask = async () => {
+    if (!activeDrillDownSubtask) return;
+    const subtaskId = activeDrillDownSubtask.id;
+    setSubtasks((prev) => prev.filter((s) => s.id !== subtaskId));
+    setActiveDrillDownSubtask(null);
+    try {
+      await deleteSubtask(subtaskId);
+      toast.success(t("Subtask dihapus", "Subtask deleted"));
+      router.refresh();
+    } catch {
+      toast.error(t("Gagal menghapus subtask", "Failed to delete subtask"));
     }
   };
 
@@ -347,7 +468,7 @@ export function TaskDetailSheet({
     }
   };
 
-  // Subtask Handlers
+  // Subtask Quick Add
   const handleAddSubtask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newSubtaskTitle.trim() || subtaskLoading) return;
@@ -376,8 +497,7 @@ export function TaskDetailSheet({
     }
   };
 
-  const handleCycleSubtaskStatus = async (st: (typeof subtasks)[0]) => {
-    // Cycle status: todo -> in_progress -> done -> todo
+  const handleCycleSubtaskStatus = async (st: SubtaskItem) => {
     let nextStatus: "todo" | "in_progress" | "done" = "in_progress";
     if (st.status === "in_progress") nextStatus = "done";
     else if (st.status === "done") nextStatus = "todo";
@@ -392,58 +512,6 @@ export function TaskDetailSheet({
       router.refresh();
     } catch {
       toast.error(t("Gagal mengubah status subtask", "Failed to update subtask status"));
-    }
-  };
-
-  // Open Subtask Focus Mini-Modal
-  const handleOpenSubtaskModal = (st: (typeof subtasks)[0]) => {
-    setActiveSubtask(st);
-    setSubtaskTitleDraft(st.title);
-    setSubtaskDescDraft(st.description || "");
-    setSubtaskDueDateDraft(st.dueDate ? st.dueDate.split("T")[0] : "");
-    setSubtaskStatusDraft((st.status as any) || (st.completed ? "done" : "todo"));
-  };
-
-  const handleSaveSubtaskModal = async () => {
-    if (!activeSubtask || !subtaskTitleDraft.trim()) return;
-    setSubtaskSaving(true);
-    const title = subtaskTitleDraft.trim();
-    const description = subtaskDescDraft.trim();
-    const dueDate = subtaskDueDateDraft || null;
-    const status = subtaskStatusDraft;
-    const completed = status === "done";
-    const subtaskId = activeSubtask.id;
-
-    setSubtasks((prev) =>
-      prev.map((s) => (s.id === subtaskId ? { ...s, title, description, dueDate, status, completed } : s))
-    );
-    try {
-      await updateSubtaskDetails({ subtaskId, title, description, dueDate });
-      await setSubtaskStatus(subtaskId, status);
-      toast.success(t("Rincian subtask disimpan", "Subtask details saved"));
-      setActiveSubtask(null);
-      router.refresh();
-    } catch {
-      toast.error(t("Gagal menyimpan subtask", "Failed to save subtask"));
-    } finally {
-      setSubtaskSaving(false);
-    }
-  };
-
-  const handleConvertToTask = async () => {
-    if (!activeSubtask) return;
-    setConvertingSubtask(true);
-    const subtaskId = activeSubtask.id;
-    try {
-      await convertSubtaskToTask(subtaskId);
-      setSubtasks((prev) => prev.filter((s) => s.id !== subtaskId));
-      setActiveSubtask(null);
-      toast.success(t("Subtask berhasil diubah menjadi Task utama", "Subtask converted to standalone task"));
-      router.refresh();
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("Gagal mengubah subtask", "Failed to convert subtask"));
-    } finally {
-      setConvertingSubtask(false);
     }
   };
 
@@ -472,25 +540,9 @@ export function TaskDetailSheet({
     }
   };
 
-  const handleSubtaskAssigneeChangeInModal = async (assigneeId: string) => {
-    if (!activeSubtask) return;
-    const val = assigneeId === "__unassigned__" ? null : assigneeId;
-    const subtaskId = activeSubtask.id;
-
-    setActiveSubtask((prev) => (prev ? { ...prev, assigneeId: val } : null));
-    setSubtasks((prev) => prev.map((s) => (s.id === subtaskId ? { ...s, assigneeId: val } : s)));
-    try {
-      await updateSubtaskDetails({ subtaskId, assigneeId: val });
-      toast.success(t("Petugas subtask diperbarui", "Subtask assignee updated"));
-      router.refresh();
-    } catch {
-      toast.error(t("Gagal memperbarui petugas subtask", "Failed to update subtask assignee"));
-    }
-  };
-
   const handleDeleteSubtask = async (subtaskId: string) => {
     setSubtasks((prev) => prev.filter((s) => s.id !== subtaskId));
-    if (activeSubtask?.id === subtaskId) setActiveSubtask(null);
+    if (activeDrillDownSubtask?.id === subtaskId) setActiveDrillDownSubtask(null);
     try {
       await deleteSubtask(subtaskId);
       toast.success(t("Subtask dihapus", "Subtask deleted"));
@@ -550,7 +602,7 @@ export function TaskDetailSheet({
       setMentionOpen(true);
       setMentionType("member");
       setMentionQuery(memberMatch[1].toLowerCase());
-    } else if (subtaskMatch) {
+    } else if (subtaskMatch && !activeDrillDownSubtask) {
       setMentionOpen(true);
       setMentionType("subtask");
       setMentionQuery(subtaskMatch[1].toLowerCase());
@@ -588,7 +640,7 @@ export function TaskDetailSheet({
     }, 10);
   };
 
-  const insertSubtaskMention = (subtask: (typeof subtasks)[0]) => {
+  const insertSubtaskMention = (subtask: SubtaskItem) => {
     const cursorPos = commentInputRef.current?.selectionStart || newComment.length;
     const textBeforeCursor = newComment.slice(0, cursorPos);
     const textAfterCursor = newComment.slice(cursorPos);
@@ -610,25 +662,32 @@ export function TaskDetailSheet({
     if (e) e.preventDefault();
     if ((!newComment.trim() && pendingAttachments.length === 0) || commentLoading) return;
     setCommentLoading(true);
+    const targetSubtaskId = activeDrillDownSubtask?.id || null;
+
     try {
       const created = await addTaskComment({
         taskId: task.id,
+        subtaskId: targetSubtaskId,
         content: newComment.trim(),
         attachments: pendingAttachments,
       });
 
-      setComments((prev) => [
-        ...prev,
-        {
-          id: created.id,
-          content: created.content,
-          attachments: pendingAttachments,
-          createdAt: created.createdAt,
-          userId: created.userId,
-          userName: "You",
-          userEmail: null,
-        },
-      ]);
+      const newItem: TaskCommentItem = {
+        id: created.id,
+        content: created.content,
+        attachments: pendingAttachments,
+        createdAt: created.createdAt,
+        userId: created.userId,
+        userName: "You",
+        userEmail: null,
+      };
+
+      if (targetSubtaskId) {
+        setSubtaskComments((prev) => [...prev, newItem]);
+      } else {
+        setComments((prev) => [...prev, newItem]);
+      }
+
       setNewComment("");
       setPendingAttachments([]);
       setMentionOpen(false);
@@ -646,7 +705,11 @@ export function TaskDetailSheet({
   };
 
   const handleDeleteComment = async (commentId: string) => {
-    setComments((prev) => prev.filter((c) => c.id !== commentId));
+    if (activeDrillDownSubtask) {
+      setSubtaskComments((prev) => prev.filter((c) => c.id !== commentId));
+    } else {
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    }
     try {
       await deleteTaskComment(commentId);
       toast.success(t("Komentar dihapus", "Comment deleted"));
@@ -692,6 +755,8 @@ export function TaskDetailSheet({
   const subtaskDone = subtasks.filter((s) => s.completed || s.status === "done").length;
   const subtaskPct = subtasks.length > 0 ? Math.round((subtaskDone / subtasks.length) * 100) : 0;
 
+  const currentCommentsList = activeDrillDownSubtask ? subtaskComments : comments;
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <div onClick={() => setOpen(true)} className={className ?? "cursor-pointer"}>
@@ -702,354 +767,554 @@ export function TaskDetailSheet({
         {/* Top Header / Breadcrumb & Actions Bar */}
         <DialogHeader className="shrink-0 border-b bg-muted/20 px-6 py-3 pr-14">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-              {task.clientName && (
+            {/* Breadcrumb Navigation & Asana-Style Back Button */}
+            <div className="flex items-center gap-2 text-xs text-muted-foreground min-w-0">
+              {activeDrillDownSubtask ? (
                 <>
-                  <span className="font-bold text-foreground uppercase tracking-wider text-[11px]">
-                    {task.clientName}
-                  </span>
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
-                </>
-              )}
-              {task.projectName && (
-                <>
-                  <Link
-                    href={`/app/projects/${task.projectId}`}
-                    className="font-medium hover:text-primary hover:underline transition-colors"
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setActiveDrillDownSubtask(null)}
+                    className="h-7 px-2 -ml-2 text-xs font-semibold gap-1 text-foreground hover:bg-muted/80 rounded-lg cursor-pointer"
                   >
-                    {task.projectName}
-                  </Link>
-                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    <span>{t("Kembali", "Back")}</span>
+                  </Button>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
+                  <span className="font-semibold text-foreground truncate max-w-[140px] sm:max-w-[200px]" title={task.title}>
+                    {task.title}
+                  </span>
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
+                  <Badge variant="default" className="text-[10px] font-bold tracking-wide uppercase h-5 bg-purple-600 hover:bg-purple-600 text-white gap-1">
+                    <CornerDownRight className="h-3 w-3" />
+                    {t("Subtask", "Subtask")}
+                  </Badge>
+                </>
+              ) : (
+                <>
+                  {task.clientName && (
+                    <>
+                      <span className="font-bold text-foreground uppercase tracking-wider text-[11px]">
+                        {task.clientName}
+                      </span>
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+                    </>
+                  )}
+                  {task.projectName && (
+                    <>
+                      <Link
+                        href={`/app/projects/${task.projectId}`}
+                        className="font-medium hover:text-primary hover:underline transition-colors truncate max-w-[160px]"
+                      >
+                        {task.projectName}
+                      </Link>
+                      <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
+                    </>
+                  )}
+                  <Badge variant="outline" className="text-[10px] font-semibold tracking-wide uppercase h-5 bg-background text-muted-foreground">
+                    {task.mode === "reusable" ? t("SOP / Template", "SOP / Template") : t("Task", "Task")}
+                  </Badge>
                 </>
               )}
-              <Badge variant="outline" className="text-[10px] font-semibold tracking-wide uppercase h-5 bg-background text-muted-foreground">
-                {task.mode === "reusable" ? t("SOP / Template", "SOP / Template") : t("Task", "Task")}
-              </Badge>
             </div>
 
-            {/* Quick Actions (1-Click Play Timer) */}
+            {/* Quick Actions Bar */}
             <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                size="sm"
-                onClick={handleStartTimer}
-                disabled={timerStarting}
-                className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-xs rounded-lg px-3"
-              >
-                {timerStarting ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                ) : (
-                  <Play className="h-3.5 w-3.5 fill-current" />
-                )}
-                {t("Start Timer", "Start Timer")}
-              </Button>
+              {activeDrillDownSubtask ? (
+                <>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleDrillDownConvertToTask}
+                    className="h-8 text-xs font-semibold gap-1.5 px-3 rounded-lg text-primary border-primary/30 hover:bg-primary/10 shadow-2xs"
+                    title={t("Jadikan subtask ini task mandiri", "Convert to standalone task")}
+                  >
+                    <ArrowUpRight className="h-3.5 w-3.5" />
+                    <span>{t("Jadikan Task", "Convert to Task")}</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleDrillDownDeleteSubtask}
+                    className="h-8 text-xs text-destructive hover:bg-destructive/10 rounded-lg px-2"
+                    title={t("Hapus subtask ini", "Delete subtask")}
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleStartTimer}
+                  disabled={timerStarting}
+                  className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-xs rounded-lg px-3"
+                >
+                  {timerStarting ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Play className="h-3.5 w-3.5 fill-current" />
+                  )}
+                  {t("Start Timer", "Start Timer")}
+                </Button>
+              )}
             </div>
           </div>
         </DialogHeader>
 
-        {/* Main 2-Column Split Workspace */}
+        {/* Main 2-Column Split Workspace (Transforms dynamically for Parent Task or Subtask) */}
         <div className="grid grid-cols-1 md:grid-cols-12 flex-1 min-h-0 divide-y md:divide-y-0 md:divide-x divide-border/60 overflow-hidden">
-          {/* Left Column: Task Overview, Description, Metadata & Subtasks */}
+          
+          {/* LEFT COLUMN */}
           <div className="min-h-0 flex flex-col overflow-y-auto p-6 md:col-span-8 space-y-6">
-            {/* Task Title Input */}
-            <div className="space-y-1">
-              <input
-                type="text"
-                value={titleDraft}
-                onChange={(e) => setTitleDraft(e.target.value)}
-                onBlur={handleTitleBlur}
-                className="w-full text-lg font-bold tracking-tight bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 -mx-1 text-foreground"
-                placeholder={t("Nama tugas...", "Task name...")}
-              />
-            </div>
-
-            {/* Attributes Grid (Status, Priority, Assignee, Portal Toggle) */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-xl bg-muted/30 border border-border/60 text-xs">
-              {/* Status */}
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3 text-primary" />
-                  {t("Status", "Status")}
-                </span>
-                <Select
-                  value={task.status}
-                  onValueChange={(val: any) => handleStatusChange(val)}
-                >
-                  <SelectTrigger className="h-7 text-xs font-semibold rounded-lg bg-background border-border/80">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="todo">🟡 To Do</SelectItem>
-                    <SelectItem value="in_progress">🔵 In Progress</SelectItem>
-                    <SelectItem value="review">🟣 Review</SelectItem>
-                    <SelectItem value="done">🟢 Done</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Priority */}
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <Clock className="h-3 w-3 text-amber-500" />
-                  {t("Prioritas", "Priority")}
-                </span>
-                <Select
-                  value={task.priority}
-                  onValueChange={(val: any) => handlePriorityChange(val)}
-                >
-                  <SelectTrigger className="h-7 text-xs font-semibold rounded-lg bg-background border-border/80 capitalize">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">🟢 Low</SelectItem>
-                    <SelectItem value="medium">🟡 Medium</SelectItem>
-                    <SelectItem value="high">🟠 High</SelectItem>
-                    <SelectItem value="urgent">🔴 Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Assignee */}
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <User className="h-3 w-3 text-blue-500" />
-                  {t("Petugas", "Assignee")}
-                </span>
-                <Select
-                  value={task.assigneeId ?? "__unassigned__"}
-                  onValueChange={(val) => handleAssigneeChange(val)}
-                >
-                  <SelectTrigger className="h-7 text-xs font-semibold rounded-lg bg-background border-border/80 truncate">
-                    <SelectValue placeholder={t("Pilih...", "Select...")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="__unassigned__">{t("Belum Ditugaskan", "Unassigned")}</SelectItem>
-                    {members.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.name || m.email}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Portal Visibility */}
-              <div className="space-y-1">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <Shield className="h-3 w-3 text-purple-500" />
-                  {t("Client Portal", "Client Portal")}
-                </span>
-                <Button
-                  type="button"
-                  variant={task.clientVisible ? "default" : "outline"}
-                  size="sm"
-                  onClick={handleToggleClientVisible}
-                  className="h-7 w-full text-[11px] font-semibold rounded-lg justify-center"
-                >
-                  {task.clientVisible ? t("Tampil", "Visible") : t("Sembunyi", "Hidden")}
-                </Button>
-              </div>
-            </div>
-
-            {/* Task Description */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                {t("Deskripsi & Petunjuk", "Description & Instructions")}
-              </span>
-              <Textarea
-                value={descriptionDraft}
-                onChange={(e) => setDescriptionDraft(e.target.value)}
-                onBlur={handleDescriptionBlur}
-                placeholder={t("Tambahkan catatan atau instruksi pengerjaan tugas...", "Add instructions or notes...")}
-                rows={3}
-                className="resize-none rounded-xl border border-border/80 p-3 text-xs leading-relaxed bg-muted/10 focus:bg-background"
-              />
-            </div>
-
-            {/* Ultra-Clean Linear-Style Subtasks Checklist Table with 3-State Cycle & Drag/Drop */}
-            <div className="space-y-3 pt-2">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-                    {t("Langkah & Subtasks", "Steps & Subtasks")}
-                  </span>
-                  <Badge variant="secondary" className="text-[10px] font-bold h-4 px-1.5">
-                    {subtaskDone}/{subtasks.length} ({subtaskPct}%)
-                  </Badge>
-                </div>
-              </div>
-
-              {/* Progress Bar */}
-              {subtasks.length > 0 && (
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-emerald-500 transition-all duration-300"
-                    style={{ width: `${subtaskPct}%` }}
+            {activeDrillDownSubtask ? (
+              /* === ASANA DRILL-DOWN SUBTASK VIEW === */
+              <>
+                {/* Subtask Title Input */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">
+                      {t("Subtask Langkah", "Subtask Step")}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {t("dari tugas", "of task")} <strong className="text-foreground">{task.title}</strong>
+                    </span>
+                  </div>
+                  <input
+                    type="text"
+                    value={subtaskTitleDraft}
+                    onChange={(e) => setSubtaskTitleDraft(e.target.value)}
+                    onBlur={handleSubtaskTitleBlur}
+                    className="w-full text-lg font-bold tracking-tight bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 -mx-1 text-foreground"
+                    placeholder={t("Nama subtask...", "Subtask name...")}
                   />
                 </div>
-              )}
 
-              {/* Subtasks List with 3-State Status Cycle + Drag Handle */}
-              <div className="divide-y divide-border/50 rounded-xl border border-border/70 bg-card overflow-hidden">
-                {subtasks.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-muted-foreground">
-                    {t("Belum ada langkah kerja. Tambahkan subtask di bawah.", "No subtasks yet. Add one below.")}
+                {/* Subtask Attributes Grid (Status, Assignee, Due Date) */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 p-3.5 rounded-xl bg-muted/30 border border-border/60 text-xs">
+                  {/* Status */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-primary" />
+                      {t("Status Subtask", "Subtask Status")}
+                    </span>
+                    <Select
+                      value={activeDrillDownSubtask.status}
+                      onValueChange={(val: any) => handleDrillDownSubtaskStatusChange(val)}
+                    >
+                      <SelectTrigger className="h-8 text-xs font-semibold rounded-lg bg-background border-border/80">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todo">🟡 To Do</SelectItem>
+                        <SelectItem value="in_progress">🔵 In Progress</SelectItem>
+                        <SelectItem value="done">🟢 Done</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
-                ) : (
-                  subtasks.map((st, idx) => {
-                    const assignedMember = members.find((m) => m.id === st.assigneeId);
-                    const isDone = st.status === "done" || st.completed;
-                    const isInProgress = st.status === "in_progress";
 
-                    return (
-                      <div
-                        key={st.id}
-                        draggable
-                        onDragStart={() => handleDragStart(idx)}
-                        onDragOver={(e) => handleDragOver(e, idx)}
-                        onDragEnd={handleDragEnd}
-                        className={`group flex items-center justify-between gap-2 px-2.5 py-2 hover:bg-muted/30 transition-colors ${
-                          draggedSubtaskIdx === idx ? "opacity-50 bg-muted/60" : ""
-                        }`}
-                      >
-                        {/* Drag Handle + 3-State Status Button + Title with Hover Action */}
-                        <div className="flex items-center gap-2 flex-1 min-w-0">
-                          <span className="text-muted-foreground/40 group-hover:text-muted-foreground cursor-grab active:cursor-grabbing">
-                            <GripVertical className="h-3.5 w-3.5" />
-                          </span>
+                  {/* Assignee */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <User className="h-3 w-3 text-blue-500" />
+                      {t("Petugas Subtask", "Subtask Assignee")}
+                    </span>
+                    <Select
+                      value={activeDrillDownSubtask.assigneeId ?? "__unassigned__"}
+                      onValueChange={handleDrillDownSubtaskAssigneeChange}
+                    >
+                      <SelectTrigger className="h-8 text-xs font-semibold rounded-lg bg-background border-border/80 truncate">
+                        <SelectValue placeholder={t("Pilih...", "Select...")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__unassigned__">{t("Belum Ditugaskan", "Unassigned")}</SelectItem>
+                        {members.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.name || m.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-                          {/* 1-Click 3-State Status Toggle (To Do -> In Progress -> Done) */}
-                          <button
-                            type="button"
-                            onClick={() => handleCycleSubtaskStatus(st)}
-                            className="shrink-0 flex items-center justify-center cursor-pointer"
-                            title={`Status: ${st.status}. Klik untuk ganti (To Do → In Progress → Done)`}
-                          >
-                            {getSubtaskStatusIcon(st.status)}
-                          </button>
+                  {/* Due Date */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <Calendar className="h-3 w-3 text-amber-500" />
+                      {t("Tenggat Waktu", "Due Date")}
+                    </span>
+                    <Input
+                      type="date"
+                      value={subtaskDueDateDraft}
+                      onChange={(e) => handleSubtaskDueDateChange(e.target.value)}
+                      className="h-8 text-xs rounded-lg bg-background font-mono"
+                    />
+                  </div>
+                </div>
 
-                          <button
-                            type="button"
-                            onClick={() => handleOpenSubtaskModal(st)}
-                            className="flex items-center gap-1.5 flex-1 min-w-0 text-left group/btn cursor-pointer"
-                          >
-                            <span
-                              className={`text-xs truncate transition-colors ${
-                                isDone
-                                  ? "line-through text-muted-foreground"
-                                  : isInProgress
-                                  ? "text-blue-600 dark:text-blue-400 font-semibold"
-                                  : "text-foreground font-medium group-hover/btn:text-primary"
-                              }`}
-                            >
-                              {st.title}
-                            </span>
-                            {isInProgress && (
-                              <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-1 py-0.2 rounded">
-                                In Progress
-                              </span>
-                            )}
-                            {st.description && (
-                              <AlignLeft className="h-3 w-3 text-muted-foreground/70 shrink-0" />
-                            )}
-                            {st.dueDate && (
-                              <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1 py-0.2 rounded font-mono">
-                                <Calendar className="h-2.5 w-2.5" />
-                                {new Date(st.dueDate).toLocaleDateString([], { month: "numeric", day: "numeric" })}
-                              </span>
-                            )}
-                          </button>
-                        </div>
+                {/* Subtask Description & Instructions */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <AlignLeft className="h-3 w-3 text-muted-foreground" />
+                    {t("Deskripsi & Petunjuk Subtask", "Subtask Description & Instructions")}
+                  </span>
+                  <Textarea
+                    value={subtaskDescDraft}
+                    onChange={(e) => setSubtaskDescDraft(e.target.value)}
+                    onBlur={handleSubtaskDescBlur}
+                    placeholder={t("Tuliskan instruksi atau catatan pengerjaan subtask ini...", "Write instructions or notes for this subtask...")}
+                    rows={6}
+                    className="resize-none rounded-xl border border-border/80 p-3 text-xs leading-relaxed bg-muted/10 focus:bg-background"
+                  />
+                </div>
 
-                        {/* Right Clean Controls: Avatar Badge + Delete */}
-                        <div className="flex items-center gap-2 shrink-0">
-                          {/* Assignee Avatar / Pill */}
-                          <button
-                            type="button"
-                            onClick={() => handleOpenSubtaskModal(st)}
-                            className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted/60 hover:bg-muted border border-border/60 transition-colors cursor-pointer"
-                            title={assignedMember ? assignedMember.name || assignedMember.email || "Assignee" : "Tugaskan anggota"}
-                          >
-                            {assignedMember ? (
-                              <>
-                                <span className="h-4 w-4 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-[9px]">
-                                  {getUserInitials(assignedMember.name || assignedMember.email)}
-                                </span>
-                                <span className="max-w-[70px] truncate text-muted-foreground text-[10px]">
-                                  {assignedMember.name?.split(" ")[0] || assignedMember.email?.split("@")[0]}
-                                </span>
-                              </>
-                            ) : (
-                              <span className="text-muted-foreground/60 flex items-center gap-0.5 px-0.5">
-                                <UserPlus className="h-3 w-3" />
-                              </span>
-                            )}
-                          </button>
-
-                          {/* Quick Delete */}
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteSubtask(st.id)}
-                            className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive p-1 rounded transition-opacity cursor-pointer"
-                            title={t("Hapus subtask", "Delete subtask")}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-
-              {/* Add Subtask Input Form */}
-              <form onSubmit={handleAddSubtask} className="flex items-center gap-2">
-                <Input
-                  value={newSubtaskTitle}
-                  onChange={(e) => setNewSubtaskTitle(e.target.value)}
-                  placeholder={t("+ Tambah langkah atau subtask baru...", "+ Add new step or subtask...")}
-                  className="h-8 text-xs rounded-xl bg-muted/20 border-border/80"
-                  disabled={subtaskLoading}
-                />
-                <Button
-                  type="submit"
-                  size="sm"
-                  disabled={subtaskLoading || !newSubtaskTitle.trim()}
-                  className="h-8 px-3 text-xs font-semibold rounded-xl"
+                {/* Parent Task Context Banner */}
+                <div
+                  onClick={() => setActiveDrillDownSubtask(null)}
+                  className="flex items-center justify-between p-3 rounded-xl bg-card border border-border/70 hover:border-primary/50 transition-colors cursor-pointer group"
                 >
-                  {subtaskLoading ? (
-                    <Loader2 className="h-3 w-3 animate-spin" />
-                  ) : (
-                    <Plus className="h-3.5 w-3.5" />
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0">
+                      <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {t("Tugas Utama", "Parent Task")}
+                      </p>
+                      <p className="text-xs font-semibold text-foreground truncate group-hover:text-primary transition-colors">
+                        {task.title}
+                      </p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="text-[10px] font-medium h-5">
+                    {subtaskDone}/{subtasks.length} {t("Langkah Selesai", "Steps Done")}
+                  </Badge>
+                </div>
+              </>
+            ) : (
+              /* === MAIN TASK VIEW === */
+              <>
+                {/* Task Title Input */}
+                <div className="space-y-1">
+                  <input
+                    type="text"
+                    value={titleDraft}
+                    onChange={(e) => setTitleDraft(e.target.value)}
+                    onBlur={handleTitleBlur}
+                    className="w-full text-lg font-bold tracking-tight bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 -mx-1 text-foreground"
+                    placeholder={t("Nama tugas...", "Task name...")}
+                  />
+                </div>
+
+                {/* Attributes Grid (Status, Priority, Assignee, Portal Toggle) */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-xl bg-muted/30 border border-border/60 text-xs">
+                  {/* Status */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-primary" />
+                      {t("Status", "Status")}
+                    </span>
+                    <Select
+                      value={task.status}
+                      onValueChange={(val: any) => handleStatusChange(val)}
+                    >
+                      <SelectTrigger className="h-7 text-xs font-semibold rounded-lg bg-background border-border/80">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todo">🟡 To Do</SelectItem>
+                        <SelectItem value="in_progress">🔵 In Progress</SelectItem>
+                        <SelectItem value="review">🟣 Review</SelectItem>
+                        <SelectItem value="done">🟢 Done</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Priority */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-amber-500" />
+                      {t("Prioritas", "Priority")}
+                    </span>
+                    <Select
+                      value={task.priority}
+                      onValueChange={(val: any) => handlePriorityChange(val)}
+                    >
+                      <SelectTrigger className="h-7 text-xs font-semibold rounded-lg bg-background border-border/80 capitalize">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">🟢 Low</SelectItem>
+                        <SelectItem value="medium">🟡 Medium</SelectItem>
+                        <SelectItem value="high">🟠 High</SelectItem>
+                        <SelectItem value="urgent">🔴 Urgent</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Assignee */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <User className="h-3 w-3 text-blue-500" />
+                      {t("Petugas", "Assignee")}
+                    </span>
+                    <Select
+                      value={task.assigneeId ?? "__unassigned__"}
+                      onValueChange={(val) => handleAssigneeChange(val)}
+                    >
+                      <SelectTrigger className="h-7 text-xs font-semibold rounded-lg bg-background border-border/80 truncate">
+                        <SelectValue placeholder={t("Pilih...", "Select...")} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="__unassigned__">{t("Belum Ditugaskan", "Unassigned")}</SelectItem>
+                        {members.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.name || m.email}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Portal Visibility */}
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                      <Shield className="h-3 w-3 text-purple-500" />
+                      {t("Client Portal", "Client Portal")}
+                    </span>
+                    <Button
+                      type="button"
+                      variant={task.clientVisible ? "default" : "outline"}
+                      size="sm"
+                      onClick={handleToggleClientVisible}
+                      className="h-7 w-full text-[11px] font-semibold rounded-lg justify-center"
+                    >
+                      {task.clientVisible ? t("Tampil", "Visible") : t("Sembunyi", "Hidden")}
+                    </Button>
+                  </div>
+                </div>
+
+                {/* Task Description */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                    {t("Deskripsi & Petunjuk", "Description & Instructions")}
+                  </span>
+                  <Textarea
+                    value={descriptionDraft}
+                    onChange={(e) => setDescriptionDraft(e.target.value)}
+                    onBlur={handleDescriptionBlur}
+                    placeholder={t("Tambahkan catatan atau instruksi pengerjaan tugas...", "Add instructions or notes...")}
+                    rows={3}
+                    className="resize-none rounded-xl border border-border/80 p-3 text-xs leading-relaxed bg-muted/10 focus:bg-background"
+                  />
+                </div>
+
+                {/* Asana-Style Subtasks Checklist Table with Drill-Down Action */}
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {t("Langkah & Subtasks", "Steps & Subtasks")}
+                      </span>
+                      <Badge variant="secondary" className="text-[10px] font-bold h-4 px-1.5">
+                        {subtaskDone}/{subtasks.length} ({subtaskPct}%)
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  {subtasks.length > 0 && (
+                    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                      <div
+                        className="h-full rounded-full bg-emerald-500 transition-all duration-300"
+                        style={{ width: `${subtaskPct}%` }}
+                      />
+                    </div>
                   )}
-                </Button>
-              </form>
-            </div>
+
+                  {/* Subtasks List */}
+                  <div className="divide-y divide-border/50 rounded-xl border border-border/70 bg-card overflow-hidden">
+                    {subtasks.length === 0 ? (
+                      <div className="p-4 text-center text-xs text-muted-foreground">
+                        {t("Belum ada langkah kerja. Tambahkan subtask di bawah.", "No subtasks yet. Add one below.")}
+                      </div>
+                    ) : (
+                      subtasks.map((st, idx) => {
+                        const assignedMember = members.find((m) => m.id === st.assigneeId);
+                        const isDone = st.status === "done" || st.completed;
+                        const isInProgress = st.status === "in_progress";
+
+                        return (
+                          <div
+                            key={st.id}
+                            draggable
+                            onDragStart={() => handleDragStart(idx)}
+                            onDragOver={(e) => handleDragOver(e, idx)}
+                            onDragEnd={handleDragEnd}
+                            className={`group flex items-center justify-between gap-2 px-2.5 py-2 hover:bg-muted/30 transition-colors ${
+                              draggedSubtaskIdx === idx ? "opacity-50 bg-muted/60" : ""
+                            }`}
+                          >
+                            {/* Drag Handle + 3-State Status Button + Title with Drill Down Trigger */}
+                            <div className="flex items-center gap-2 flex-1 min-w-0">
+                              <span className="text-muted-foreground/40 group-hover:text-muted-foreground cursor-grab active:cursor-grabbing">
+                                <GripVertical className="h-3.5 w-3.5" />
+                              </span>
+
+                              {/* 1-Click Status Cycle */}
+                              <button
+                                type="button"
+                                onClick={() => handleCycleSubtaskStatus(st)}
+                                className="shrink-0 flex items-center justify-center cursor-pointer"
+                                title={`Status: ${st.status}. Klik untuk ganti (To Do → In Progress → Done)`}
+                              >
+                                {getSubtaskStatusIcon(st.status)}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => handleOpenDrillDownSubtask(st)}
+                                className="flex items-center gap-1.5 flex-1 min-w-0 text-left group/btn cursor-pointer"
+                              >
+                                <span
+                                  className={`text-xs truncate transition-colors ${
+                                    isDone
+                                      ? "line-through text-muted-foreground"
+                                      : isInProgress
+                                      ? "text-blue-600 dark:text-blue-400 font-semibold"
+                                      : "text-foreground font-medium group-hover/btn:text-primary"
+                                  }`}
+                                >
+                                  {st.title}
+                                </span>
+                                {isInProgress && (
+                                  <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-1 py-0.2 rounded">
+                                    In Progress
+                                  </span>
+                                )}
+                                {st.description && (
+                                  <AlignLeft className="h-3 w-3 text-muted-foreground/70 shrink-0" />
+                                )}
+                                {st.dueDate && (
+                                  <span className="inline-flex items-center gap-0.5 text-[10px] text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1 py-0.2 rounded font-mono">
+                                    <Calendar className="h-2.5 w-2.5" />
+                                    {new Date(st.dueDate).toLocaleDateString([], { month: "numeric", day: "numeric" })}
+                                  </span>
+                                )}
+                              </button>
+                            </div>
+
+                            {/* Right Clean Controls: Assignee Avatar + Drill-Down Arrow + Delete */}
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {/* Assignee Avatar / Pill */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenDrillDownSubtask(st)}
+                                className="flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[10px] font-medium bg-muted/60 hover:bg-muted border border-border/60 transition-colors cursor-pointer"
+                                title={assignedMember ? assignedMember.name || assignedMember.email || "Assignee" : "Tugaskan anggota"}
+                              >
+                                {assignedMember ? (
+                                  <>
+                                    <span className="h-4 w-4 rounded-full bg-primary/20 text-primary font-bold flex items-center justify-center text-[9px]">
+                                      {getUserInitials(assignedMember.name || assignedMember.email)}
+                                    </span>
+                                    <span className="max-w-[70px] truncate text-muted-foreground text-[10px]">
+                                      {assignedMember.name?.split(" ")[0] || assignedMember.email?.split("@")[0]}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span className="text-muted-foreground/60 flex items-center gap-0.5 px-0.5">
+                                    <UserPlus className="h-3 w-3" />
+                                  </span>
+                                )}
+                              </button>
+
+                              {/* Drill-down Arrow Icon */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenDrillDownSubtask(st)}
+                                className="text-muted-foreground/50 hover:text-primary p-1 rounded transition-colors cursor-pointer"
+                                title={t("Buka rincian subtask", "Open subtask details")}
+                              >
+                                <ChevronRight className="h-3.5 w-3.5" />
+                              </button>
+
+                              {/* Quick Delete */}
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSubtask(st.id)}
+                                className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive p-1 rounded transition-opacity cursor-pointer"
+                                title={t("Hapus subtask", "Delete subtask")}
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+
+                  {/* Add Subtask Input Form */}
+                  <form onSubmit={handleAddSubtask} className="flex items-center gap-2">
+                    <Input
+                      value={newSubtaskTitle}
+                      onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                      placeholder={t("+ Tambah langkah atau subtask baru...", "+ Add new step or subtask...")}
+                      className="h-8 text-xs rounded-xl bg-muted/20 border-border/80"
+                      disabled={subtaskLoading}
+                    />
+                    <Button
+                      type="submit"
+                      size="sm"
+                      disabled={subtaskLoading || !newSubtaskTitle.trim()}
+                      className="h-8 px-3 text-xs font-semibold rounded-xl"
+                    >
+                      {subtaskLoading ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : (
+                        <Plus className="h-3.5 w-3.5" />
+                      )}
+                    </Button>
+                  </form>
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Right Column: Activity Feed & Comments with @Mentions, #Subtasks & Attachments */}
+          {/* RIGHT COLUMN: Activity Feed & Comments (Dedicated for Main Task or Subtask) */}
           <div className="min-h-0 flex flex-col overflow-hidden p-5 md:col-span-4 bg-muted/10 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-border/60">
               <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <MessageSquare className="h-3.5 w-3.5 text-primary" />
-                {t("Activity & Comments", "Activity & Comments")}
+                {activeDrillDownSubtask
+                  ? t("Diskusi Subtask", "Subtask Discussion")
+                  : t("Activity & Comments", "Activity & Comments")}
               </span>
               <Badge variant="outline" className="text-[10px] font-bold h-4 px-1.5 bg-background">
-                {comments.length}
+                {currentCommentsList.length}
               </Badge>
             </div>
 
             {/* Comment Stream */}
             <div ref={commentScrollRef} className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[220px]">
-              {comments.length === 0 ? (
+              {currentCommentsList.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center p-4 text-xs text-muted-foreground space-y-1">
                   <Sparkles className="h-6 w-6 text-muted-foreground/40 mb-1" />
-                  <p className="font-medium">{t("Belum ada komentar", "No comments yet")}</p>
-                  <p className="text-[11px] text-muted-foreground/70">{t("Ketik @ mention tim, # mention subtask 📎", "Type @ for team, # for subtasks 📎")}</p>
+                  <p className="font-medium">
+                    {activeDrillDownSubtask
+                      ? t("Belum ada komentar di subtask ini", "No comments on this subtask yet")
+                      : t("Belum ada komentar", "No comments yet")}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground/70">
+                    {t("Ketik @ mention tim, 📎 lampirkan berkas", "Type @ for team, 📎 attach files")}
+                  </p>
                 </div>
               ) : (
-                comments.map((c) => (
+                currentCommentsList.map((c) => (
                   <div key={c.id} className="group rounded-xl border border-border/70 bg-card p-3 text-xs space-y-2 shadow-2xs">
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                       <span className="font-semibold text-foreground">{c.userName || c.userEmail || "Member"}</span>
@@ -1147,7 +1412,7 @@ export function TaskDetailSheet({
                     </>
                   )}
 
-                  {mentionType === "subtask" && filteredMentionSubtasks.length > 0 && (
+                  {mentionType === "subtask" && !activeDrillDownSubtask && filteredMentionSubtasks.length > 0 && (
                     <>
                       <div className="px-2 py-1 text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                         <CheckSquare className="h-3 w-3 text-emerald-500" />
@@ -1204,7 +1469,11 @@ export function TaskDetailSheet({
                       handleAddComment();
                     }
                   }}
-                  placeholder={t("Tulis komentar (@ tim, # subtask, 📎 file)...", "Write a comment (@ team, # subtask, 📎 file)...")}
+                  placeholder={
+                    activeDrillDownSubtask
+                      ? t("Komentar di subtask ini (@ tim, 📎 file)...", "Comment on this subtask (@ team, 📎 file)...")
+                      : t("Tulis komentar (@ tim, # subtask, 📎 file)...", "Write a comment (@ team, # subtask, 📎 file)...")
+                  }
                   rows={2}
                   className="w-full min-h-[60px] resize-none rounded-lg border border-border/80 p-2 text-xs leading-relaxed bg-background"
                   disabled={commentLoading}
@@ -1238,22 +1507,24 @@ export function TaskDetailSheet({
                       <span>Team</span>
                     </button>
 
-                    {/* Mention subtask trigger */}
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setNewComment((prev) => prev + "#");
-                        setMentionOpen(true);
-                        setMentionType("subtask");
-                        setMentionQuery("");
-                        commentInputRef.current?.focus();
-                      }}
-                      className="inline-flex items-center gap-1 rounded hover:bg-muted px-1.5 py-0.5 transition-colors cursor-pointer"
-                      title={t("Tautkan subtask", "Link subtask")}
-                    >
-                      <CheckSquare className="h-3.5 w-3.5 text-emerald-500" />
-                      <span>Subtask</span>
-                    </button>
+                    {/* Mention subtask trigger (only for parent task) */}
+                    {!activeDrillDownSubtask && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNewComment((prev) => prev + "#");
+                          setMentionOpen(true);
+                          setMentionType("subtask");
+                          setMentionQuery("");
+                          commentInputRef.current?.focus();
+                        }}
+                        className="inline-flex items-center gap-1 rounded hover:bg-muted px-1.5 py-0.5 transition-colors cursor-pointer"
+                        title={t("Tautkan subtask", "Link subtask")}
+                      >
+                        <CheckSquare className="h-3.5 w-3.5 text-emerald-500" />
+                        <span>Subtask</span>
+                      </button>
+                    )}
 
                     {/* Paperclip attach file trigger */}
                     <button
@@ -1287,165 +1558,6 @@ export function TaskDetailSheet({
           </div>
         </div>
       </DialogContent>
-
-      {/* Dedicated Subtask Focus Mini-Modal with Status, Due Date & Convert to Task Action */}
-      {activeSubtask && (
-        <Dialog open={!!activeSubtask} onOpenChange={(op) => !op && setActiveSubtask(null)}>
-          <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden rounded-2xl border-border/80 shadow-2xl bg-background z-[65]">
-            <DialogHeader className="px-5 py-3 border-b bg-muted/30">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <CheckSquare className="h-4 w-4 text-emerald-500" />
-                  <DialogTitle className="text-sm font-bold">
-                    {t("Rincian Subtask", "Subtask Details")}
-                  </DialogTitle>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleConvertToTask}
-                    disabled={convertingSubtask}
-                    className="h-6 text-[11px] gap-1 px-2 rounded-lg text-primary border-primary/30 hover:bg-primary/10"
-                    title={t("Jadikan tugas utama mandiri di proyek ini", "Convert to standalone task")}
-                  >
-                    {convertingSubtask ? <Loader2 className="h-3 w-3 animate-spin" /> : <ArrowUpRight className="h-3 w-3" />}
-                    <span>{t("Jadikan Task", "Convert to Task")}</span>
-                  </Button>
-                </div>
-              </div>
-            </DialogHeader>
-
-            <div className="p-5 space-y-4 text-xs">
-              {/* Subtask Title */}
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {t("Nama Langkah / Subtask", "Subtask Name")}
-                </span>
-                <Input
-                  value={subtaskTitleDraft}
-                  onChange={(e) => setSubtaskTitleDraft(e.target.value)}
-                  placeholder={t("Nama subtask...", "Subtask name...")}
-                  className="h-9 text-xs font-medium rounded-xl bg-background"
-                />
-              </div>
-
-              {/* Status & Assignee & Due Date Row */}
-              <div className="grid grid-cols-3 gap-2.5">
-                {/* Status Selector */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3 text-primary" />
-                    {t("Status", "Status")}
-                  </span>
-                  <Select
-                    value={subtaskStatusDraft}
-                    onValueChange={(val: any) => setSubtaskStatusDraft(val)}
-                  >
-                    <SelectTrigger className="h-8 text-xs rounded-xl bg-background">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="z-[75]">
-                      <SelectItem value="todo">🟡 To Do</SelectItem>
-                      <SelectItem value="in_progress">🔵 In Progress</SelectItem>
-                      <SelectItem value="done">🟢 Done</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Assignee Selector in Mini Modal */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <User className="h-3 w-3 text-blue-500" />
-                    {t("Petugas", "Assignee")}
-                  </span>
-                  <Select
-                    value={activeSubtask.assigneeId ?? "__unassigned__"}
-                    onValueChange={handleSubtaskAssigneeChangeInModal}
-                  >
-                    <SelectTrigger className="h-8 text-xs rounded-xl bg-background">
-                      <SelectValue placeholder={t("Pilih...", "Select...")} />
-                    </SelectTrigger>
-                    <SelectContent className="z-[75]">
-                      <SelectItem value="__unassigned__">{t("Belum Ditugaskan", "Unassigned")}</SelectItem>
-                      {members.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {m.name || m.email}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Due Date */}
-                <div className="space-y-1.5">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                    <Calendar className="h-3 w-3 text-amber-500" />
-                    {t("Deadline", "Due Date")}
-                  </span>
-                  <Input
-                    type="date"
-                    value={subtaskDueDateDraft}
-                    onChange={(e) => setSubtaskDueDateDraft(e.target.value)}
-                    className="h-8 text-xs rounded-xl bg-background font-mono px-2"
-                  />
-                </div>
-              </div>
-
-              {/* Subtask Description */}
-              <div className="space-y-1.5">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                  {t("Deskripsi & Petunjuk Pengerjaan", "Description & Instructions")}
-                </span>
-                <Textarea
-                  value={subtaskDescDraft}
-                  onChange={(e) => setSubtaskDescDraft(e.target.value)}
-                  placeholder={t("Tulis instruksi atau catatan khusus untuk subtask ini...", "Write instructions or notes for this subtask...")}
-                  rows={4}
-                  className="resize-none rounded-xl border border-border/80 p-3 text-xs leading-relaxed bg-background"
-                />
-              </div>
-            </div>
-
-            {/* Modal Footer */}
-            <div className="flex items-center justify-between px-5 py-3 border-t bg-muted/20">
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                onClick={() => handleDeleteSubtask(activeSubtask.id)}
-                className="h-8 text-xs text-destructive hover:text-destructive hover:bg-destructive/10 rounded-xl"
-              >
-                <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                {t("Hapus", "Delete")}
-              </Button>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setActiveSubtask(null)}
-                  className="h-8 text-xs rounded-xl"
-                >
-                  {t("Batal", "Cancel")}
-                </Button>
-                <Button
-                  type="button"
-                  size="sm"
-                  onClick={handleSaveSubtaskModal}
-                  disabled={subtaskSaving || !subtaskTitleDraft.trim()}
-                  className="h-8 text-xs font-semibold rounded-xl gap-1.5 px-4"
-                >
-                  {subtaskSaving && <Loader2 className="h-3 w-3 animate-spin" />}
-                  {t("Simpan", "Save")}
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-      )}
 
       {/* In-App File Preview Modal for Clicked Attachments */}
       <FilePreviewModal
