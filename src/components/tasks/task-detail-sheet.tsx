@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useRef } from "react";
 import { useT } from "@/lib/i18n-client";
 import {
   Dialog,
@@ -110,6 +110,7 @@ export function TaskDetailSheet({
   >([]);
   const [newComment, setNewComment] = useState("");
   const [commentLoading, setCommentLoading] = useState(false);
+  const commentScrollRef = useRef<HTMLDivElement>(null);
 
   // Load Subtasks & Comments when modal opens
   useEffect(() => {
@@ -331,6 +332,11 @@ export function TaskDetailSheet({
       ]);
       setNewComment("");
       toast.success(t("Komentar terkirim", "Comment posted"));
+      setTimeout(() => {
+        if (commentScrollRef.current) {
+          commentScrollRef.current.scrollTop = commentScrollRef.current.scrollHeight;
+        }
+      }, 50);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal mengirim komentar", "Failed to post comment"));
     } finally {
@@ -357,9 +363,9 @@ export function TaskDetailSheet({
         {children}
       </div>
 
-      <DialogContent className="flex h-[92vh] max-h-[880px] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl shadow-2xl rounded-2xl border-border/80">
+      <DialogContent className="flex h-[92vh] max-h-[860px] max-w-[calc(100%-1.5rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-5xl shadow-2xl rounded-2xl border-border/80 bg-background">
         {/* Top Header / Breadcrumb & Actions Bar */}
-        <DialogHeader className="shrink-0 border-b bg-muted/30 px-6 py-3.5 pr-14">
+        <DialogHeader className="shrink-0 border-b bg-muted/20 px-6 py-3 pr-14">
           <div className="flex flex-wrap items-center justify-between gap-3">
             {/* Breadcrumb */}
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -368,7 +374,7 @@ export function TaskDetailSheet({
                   <span className="font-bold text-foreground uppercase tracking-wider text-[11px]">
                     {task.clientName}
                   </span>
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
                 </>
               )}
               {task.projectName && (
@@ -379,10 +385,10 @@ export function TaskDetailSheet({
                   >
                     {task.projectName}
                   </Link>
-                  <ChevronRight className="h-3.5 w-3.5" />
+                  <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60" />
                 </>
               )}
-              <Badge variant="outline" className="text-[10px] font-semibold tracking-wide uppercase h-5 bg-background">
+              <Badge variant="outline" className="text-[10px] font-semibold tracking-wide uppercase h-5 bg-background text-muted-foreground">
                 {task.mode === "reusable" ? t("SOP / Template", "SOP / Template") : t("Task", "Task")}
               </Badge>
             </div>
@@ -394,7 +400,7 @@ export function TaskDetailSheet({
                 size="sm"
                 onClick={handleStartTimer}
                 disabled={timerStarting}
-                className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-xs"
+                className="h-8 gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs shadow-xs rounded-lg px-3"
               >
                 {timerStarting ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -417,23 +423,23 @@ export function TaskDetailSheet({
                 value={titleDraft}
                 onChange={(e) => setTitleDraft(e.target.value)}
                 onBlur={handleTitleBlur}
-                className="border-transparent hover:border-border focus:border-primary font-bold text-xl md:text-2xl px-2 py-1.5 h-auto -ml-2 rounded-lg bg-transparent transition-all"
+                className="border-transparent hover:border-border/80 focus:border-primary font-bold text-lg md:text-xl px-2.5 py-1.5 h-auto -ml-2 rounded-lg bg-transparent tracking-tight text-foreground transition-all focus-visible:ring-0 focus-visible:ring-offset-0"
                 placeholder={t("Judul tugas...", "Task title...")}
               />
             </div>
 
             {/* ClickUp-style Metadata Attributes Bar */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 rounded-xl border border-border/70 bg-muted/20 text-xs">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl border border-border/70 bg-muted/20 text-xs">
               {/* Status Selector */}
               <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <CheckCircle2 className="h-3 w-3" />
+                  <CheckCircle2 className="h-3 w-3 text-muted-foreground/80" />
                   Status
                 </span>
                 <select
                   value={task.status}
                   onChange={(e) => handleStatusChange(e.target.value as any)}
-                  className="w-full bg-background border border-border/70 rounded-md px-2 py-1 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                  className="w-full bg-background border border-border/70 rounded-md px-2 py-1 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer transition-colors"
                 >
                   <option value="todo">{t("TO DO", "TO DO")}</option>
                   <option value="in_progress">{t("IN PROGRESS", "IN PROGRESS")}</option>
@@ -445,13 +451,13 @@ export function TaskDetailSheet({
               {/* Priority Selector */}
               <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <AlertCircle className="h-3 w-3" />
+                  <AlertCircle className="h-3 w-3 text-muted-foreground/80" />
                   {t("Prioritas", "Priority")}
                 </span>
                 <select
                   value={task.priority}
                   onChange={(e) => handlePriorityChange(e.target.value as any)}
-                  className="w-full bg-background border border-border/70 rounded-md px-2 py-1 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                  className="w-full bg-background border border-border/70 rounded-md px-2 py-1 text-xs font-semibold focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer transition-colors"
                 >
                   <option value="low">{t("Low", "Low")}</option>
                   <option value="medium">{t("Medium", "Medium")}</option>
@@ -463,13 +469,13 @@ export function TaskDetailSheet({
               {/* Assignee Selector */}
               <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <User className="h-3 w-3" />
+                  <User className="h-3 w-3 text-muted-foreground/80" />
                   {t("Petugas", "Assignee")}
                 </span>
                 <select
                   value={task.assigneeId || "__unassigned__"}
                   onChange={(e) => handleAssigneeChange(e.target.value)}
-                  className="w-full bg-background border border-border/70 rounded-md px-2 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer truncate"
+                  className="w-full bg-background border border-border/70 rounded-md px-2 py-1 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary cursor-pointer truncate transition-colors"
                 >
                   <option value="__unassigned__">{t("Unassigned", "Unassigned")}</option>
                   {members.map((m) => (
@@ -483,7 +489,7 @@ export function TaskDetailSheet({
               {/* Client Portal Visibility Toggle */}
               <div className="space-y-1">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                  <Eye className="h-3 w-3" />
+                  <Eye className="h-3 w-3 text-muted-foreground/80" />
                   Portal
                 </span>
                 <button
@@ -491,7 +497,7 @@ export function TaskDetailSheet({
                   onClick={handleToggleClientVisible}
                   className={`w-full h-[26px] rounded-md px-2 text-[11px] font-semibold flex items-center justify-center transition-colors ${
                     task.clientVisible
-                      ? "bg-primary/10 text-primary border border-primary/30"
+                      ? "bg-primary/10 text-primary border border-primary/30 font-bold"
                       : "bg-muted text-muted-foreground border border-border/60 hover:bg-muted/80"
                   }`}
                 >
@@ -502,7 +508,7 @@ export function TaskDetailSheet({
 
             {/* Description Document Canvas */}
             <div className="space-y-1.5">
-              <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center justify-between">
                 <span>{t("Deskripsi & Brief Kerja", "Description & Work Brief")}</span>
                 {isPending && <Loader2 className="h-3 w-3 animate-spin text-primary" />}
               </label>
@@ -515,7 +521,7 @@ export function TaskDetailSheet({
                   "Add detail notes, instructions, or reference links (auto-saves on blur)..."
                 )}
                 rows={3}
-                className="w-full min-h-[90px] resize-y rounded-xl border border-border/80 bg-background p-3 text-sm leading-relaxed placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs"
+                className="w-full min-h-[85px] resize-y rounded-xl border border-border/80 bg-background p-3 text-xs md:text-sm leading-relaxed placeholder:text-muted-foreground/60 focus:border-primary focus:ring-1 focus:ring-primary shadow-2xs"
               />
             </div>
 
@@ -524,11 +530,11 @@ export function TaskDetailSheet({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <ListTodo className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-bold uppercase tracking-wider text-foreground">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-foreground">
                     {t("Subtasks / Checklist", "Subtasks / Checklist")}
                   </span>
                   {subtasks.length > 0 && (
-                    <Badge variant="secondary" className="text-[10px] font-bold px-2 py-0.5 h-5 bg-muted">
+                    <Badge variant="secondary" className="text-[10px] font-bold px-2 py-0.5 h-5 bg-muted/80 text-foreground">
                       {subtaskDone} of {subtasks.length} completed ({subtaskPct}%)
                     </Badge>
                   )}
@@ -548,7 +554,7 @@ export function TaskDetailSheet({
               )}
 
               {/* Subtask Table / List */}
-              <div className="rounded-xl border border-border/80 bg-card/60 divide-y divide-border/60 overflow-hidden shadow-2xs">
+              <div className="rounded-xl border border-border/80 bg-card divide-y divide-border/60 overflow-hidden shadow-2xs">
                 {subtasks.length === 0 ? (
                   <div className="p-4 text-center text-xs text-muted-foreground">
                     {t("Belum ada subtask. Tambahkan subtask di bawah untuk membagi pengerjaan tugas.", "No subtasks yet. Add subtasks below to break down work.")}
@@ -676,7 +682,7 @@ export function TaskDetailSheet({
                   type="submit"
                   size="sm"
                   variant="outline"
-                  className="h-9 px-3 text-xs gap-1.5 shrink-0"
+                  className="h-9 px-3 text-xs gap-1.5 shrink-0 font-medium"
                   disabled={subtaskLoading || !newSubtaskTitle.trim()}
                 >
                   {subtaskLoading ? (
@@ -695,7 +701,7 @@ export function TaskDetailSheet({
           {/* Right Column: Activity Feed & Comments (ClickUp / Asana Style) */}
           <div className="min-h-0 flex flex-col overflow-hidden p-5 md:col-span-4 bg-muted/10 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-border/60">
-              <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                 <MessageSquare className="h-3.5 w-3.5 text-primary" />
                 {t("Activity & Comments", "Activity & Comments")}
               </span>
@@ -705,7 +711,7 @@ export function TaskDetailSheet({
             </div>
 
             {/* Comment Stream */}
-            <div className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[220px]">
+            <div ref={commentScrollRef} className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[220px]">
               {comments.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center p-4 text-xs text-muted-foreground space-y-1">
                   <Sparkles className="h-6 w-6 text-muted-foreground/40 mb-1" />
@@ -718,7 +724,7 @@ export function TaskDetailSheet({
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                       <span className="font-semibold text-foreground">{c.userName || c.userEmail || "Member"}</span>
                       <div className="flex items-center gap-1.5">
-                        <span>{new Date(c.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
+                        <span className="text-[10px]">{new Date(c.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span>
                         <button
                           type="button"
                           onClick={() => handleDeleteComment(c.id)}
