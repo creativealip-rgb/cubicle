@@ -12,6 +12,7 @@ export type TemplateImportItem = {
 
 export type TemplateImportTemplate = {
   id: string;
+  parentName?: string;
   items: TemplateImportItem[];
 };
 
@@ -36,8 +37,6 @@ export function previewTemplateImport(input: {
   existingProjectTitles: string[];
   templates: TemplateImportTemplate[];
 }): ImportPreviewItem[] {
-  const existingTitles = new Set(input.existingProjectTitles.map(normalizeTaskTitle));
-
   return input.templates
     .flatMap((template, templatePosition) =>
       [...template.items]
@@ -46,11 +45,10 @@ export function previewTemplateImport(input: {
         .map((item) => ({ template, templatePosition, item })),
     )
     .map(({ template, templatePosition, item }) => {
-      const normalizedTitle = normalizeTaskTitle(item.title);
-      const duplicate = existingTitles.has(normalizedTitle);
+      const duplicate = false;
       const duplicateAction = duplicate ? (item.duplicateAction ?? "skip") : "keep";
       const included = !duplicate || duplicateAction === "keep";
-      if (included) existingTitles.add(normalizedTitle);
+
       return {
         templateId: template.id,
         itemId: item.id,

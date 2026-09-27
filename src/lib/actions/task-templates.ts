@@ -3,7 +3,7 @@
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { projects, taskTemplateImports, taskTemplateItems, taskTemplates, tasks, workspaceMembers } from "@/db/schema";
+import { projects, taskSubtasks, taskTemplateImports, taskTemplateItems, taskTemplates, tasks, workspaceMembers } from "@/db/schema";
 import { and, asc, desc, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
@@ -45,6 +45,7 @@ const importSelectionSchema = z.object({
 const taskTemplateImportSchema = z.object({
   projectId: idSchema,
   templateIds: z.array(idSchema).min(1),
+  parentNames: z.record(idSchema, z.string().trim().min(1).max(500)).default({}),
   selectedItems: z.array(importSelectionSchema).default([]),
   allowIncompatibleTarget: z.boolean().default(false),
   idempotencyKey: z.string().uuid().optional(),
@@ -328,6 +329,7 @@ async function loadTaskTemplateImportContext(database: typeof db | Transaction, 
     existingProjectTitles: existing.map((item) => item.title),
     templates: templatesWithItems.map(({ template, items }) => ({
       id: template.id,
+      parentName: input.parentNames[template.id] ?? template.name,
       items: items.map((item) => ({
         id: item.id, title: item.title, position: item.position,
         selected: previewAllWhenUnselected && selected.size === 0 ? undefined : selected.has(item.id),
@@ -351,6 +353,7 @@ export async function importTaskTemplates(inputValue: unknown) {
   const fingerprintPayload = {
     projectId: input.projectId,
     templateIds: input.templateIds,
+    parentNames: input.parentNames,
     selectedItems: input.selectedItems,
     allowIncompatibleTarget: input.allowIncompatibleTarget,
   };
@@ -374,17 +377,21 @@ export async function importTaskTemplates(inputValue: unknown) {
     const [{ maxPosition }] = await tx.select({ maxPosition: sql<number>`coalesce(max(${tasks.position}), -1)` }).from(tasks).where(and(
       eq(tasks.workspaceId, workspaceId), eq(tasks.projectId, input.projectId),
     ));
-    const sourceItems = new Map(context.templatesWithItems.flatMap(({ items }) => items.map((item) => [item.id, item] as const)));
-    const inserted = included.length ? await tx.insert(tasks).values(included.map((item, index) => {
-      const source = sourceItems.get(item.itemId)!;
-      return {
-        workspaceId, projectId: input.projectId, title: source.title, description: source.description,
-        assigneeId: source.defaultAssigneeId, mode: context.mode, lifecycle: "active" as const,
-        status: "todo" as const, priority: "medium" as const, clientVisible: true, position: Number(maxPosition) + 1 + index,
-        templateItemSourceId: source.id, createdBy: user.id,
+    const sourceItems = new Map<string, { title: string; description: string | null; defaultAssigneeId: string | null; position: number }>(context.templatesWithItems.flatMap(({ items }) => items.map((item) => [item.id, item] as const)));
+    const inserted = [];
+    for (const { template } of context.templatesWithItems) {
+      const chosen = included.filter((item) => item.templateId === template.id);
+      if (!chosen.length) continue;
+      const [parent]: Array<{ id: string; title: string; position: number }> = await tx.insert(tasks).values({
+        workspaceId, projectId: input.projectId, title: input.parentNames[template.id] ?? template.name,
+        description: template.description, assigneeId: null, mode: context.mode, lifecycle: "active" as const,
+        status: "todo" as const, priority: "medium" as const, clientVisible: true,
+        position: Number(maxPosition) + 1 + inserted.length, createdBy: user.id,
         behavior: context.mode === "workflow" ? "one_time" as const : "recurring" as const,
-      };
-    })).returning({ id: tasks.id, title: tasks.title, position: tasks.position }) : [];
+      }).returning({ id: tasks.id, title: tasks.title, position: tasks.position });
+      inserted.push(parent);
+      await tx.insert(taskSubtasks).values(chosen.map((item) => { const source = sourceItems.get(item.itemId)!; return { workspaceId, taskId: parent.id, title: source.title, assigneeId: source.defaultAssigneeId, position: source.position }; }));
+    }
     const result = { projectId: input.projectId, created: inserted, skipped: context.preview.filter((item) => !item.included).map((item) => item.itemId) };
     await tx.update(taskTemplateImports).set({ result, completedAt: new Date(), updatedAt: new Date() }).where(and(
       eq(taskTemplateImports.workspaceId, workspaceId), eq(taskTemplateImports.projectId, input.projectId), eq(taskTemplateImports.idempotencyKey, input.idempotencyKey),

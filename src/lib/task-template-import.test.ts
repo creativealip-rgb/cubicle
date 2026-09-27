@@ -6,13 +6,13 @@ describe("task template import policy", () => {
     expect(normalizeTaskTitle("  QA  Review  ")).toBe("qa  review");
   });
 
-  it("detects duplicates against existing project task titles and skips them by default", () => {
+  it("does not compare child titles with standalone project tasks", () => {
     const [item] = previewTemplateImport({
       mode: "workflow",
       existingProjectTitles: ["  QA Review "],
       templates: [{ id: "template-1", items: [{ id: "item-1", title: "qa review", position: 0 }] }],
     });
-    expect(item).toMatchObject({ duplicate: true, duplicateAction: "skip", included: false });
+    expect(item).toMatchObject({ duplicate: false, duplicateAction: "keep", included: true });
   });
 
   it("retains duplicate keep overrides", () => {
@@ -21,10 +21,10 @@ describe("task template import policy", () => {
       existingProjectTitles: ["QA"],
       templates: [{ id: "template-1", items: [{ id: "item-1", title: " qa ", position: 0, duplicateAction: "keep" }] }],
     });
-    expect(item).toMatchObject({ duplicate: true, duplicateAction: "keep", included: true });
+    expect(item).toMatchObject({ duplicate: false, duplicateAction: "keep", included: true });
   });
 
-  it("detects same-template and cross-template duplicates sequentially", () => {
+  it("includes same child titles because each becomes a separate subtask", () => {
     const preview = previewTemplateImport({
       mode: "workflow",
       existingProjectTitles: [],
@@ -36,14 +36,10 @@ describe("task template import policy", () => {
         { id: "second", items: [{ id: "cross-template", title: "QA REVIEW", position: 0 }] },
       ],
     });
-    expect(preview.map(({ itemId, duplicate, duplicateAction, included }) => ({ itemId, duplicate, duplicateAction, included }))).toEqual([
-      { itemId: "original", duplicate: false, duplicateAction: "keep", included: true },
-      { itemId: "same-template", duplicate: true, duplicateAction: "skip", included: false },
-      { itemId: "cross-template", duplicate: true, duplicateAction: "skip", included: false },
-    ]);
+    expect(preview.every(({ duplicate, included }) => !duplicate && included)).toBe(true);
   });
 
-  it("keeps duplicate titles known through keep and skip overrides", () => {
+  it("ignores duplicate actions for standalone-title comparisons", () => {
     const preview = previewTemplateImport({
       mode: "workflow",
       existingProjectTitles: ["Deploy"],
@@ -55,8 +51,8 @@ describe("task template import policy", () => {
     });
     expect(preview.map(({ itemId, duplicateAction, included }) => ({ itemId, duplicateAction, included }))).toEqual([
       { itemId: "kept", duplicateAction: "keep", included: true },
-      { itemId: "skipped", duplicateAction: "skip", included: false },
-      { itemId: "later", duplicateAction: "skip", included: false },
+      { itemId: "skipped", duplicateAction: "keep", included: true },
+      { itemId: "later", duplicateAction: "keep", included: true },
     ]);
   });
 

@@ -33,6 +33,7 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
   const [projectSearchOpen, setProjectSearchOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selectedTemplateIds, setSelectedTemplateIds] = useState<string[]>([]);
+  const [parentNames, setParentNames] = useState<Record<string, string>>({});
   const [selectedItems, setSelectedItems] = useState<Array<{ itemId: string; duplicateAction?: "skip" | "keep" }>>([]);
   const [preview, setPreview] = useState<PreviewItem[]>([]);
   const [previewFingerprint, setPreviewFingerprint] = useState("");
@@ -43,6 +44,7 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
     setSelectedTemplateIds(selectedTemplateId ? [selectedTemplateId] : []);
     setPreview([]);
     setSelectedItems([]);
+    setParentNames({});
     setPreviewFingerprint("");
   }, [selectedTemplateId]);
 
@@ -81,7 +83,7 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
   async function submit() {
     setLoading(true);
     try {
-      const importPayload = { projectId, templateIds: selectedTemplateIds, selectedItems, allowIncompatibleTarget };
+      const importPayload = { projectId, templateIds: selectedTemplateIds, parentNames, selectedItems, allowIncompatibleTarget };
       // Item/duplicate decisions change after preview. Refresh fingerprint from exact
       // submit payload so server compares identical canonical data.
       const freshPreview = await previewTaskTemplateImport(importPayload);
@@ -126,7 +128,7 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
         setProjectId(""); setProjectSearch(""); setProjectSearchOpen(false); setPreview([]); setSelectedItems([]); setPreviewFingerprint("");
       }
     }}>
-      <DialogTrigger asChild><Button variant="outline">{t("Import Template", "Import Template")}</Button></DialogTrigger>
+      <DialogTrigger asChild><Button variant="outline">{t("Gunakan Template", "Use Template")}</Button></DialogTrigger>
       <DialogContent className="max-h-[min(90dvh,720px)] w-[calc(100%-2rem)] max-w-[calc(100%-2rem)] overflow-y-auto p-4 sm:max-w-lg sm:p-6">
         <DialogHeader><DialogTitle>{t("Import Template Tugas", "Import Task Template")}</DialogTitle></DialogHeader>
         <div className="space-y-4">
@@ -154,7 +156,7 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
           </div>
           <label className="flex items-start gap-2 text-sm"><input type="checkbox" checked={allowIncompatibleTarget} onChange={(event) => {setAllowIncompatibleTarget(event.target.checked);setPreview([]);setSelectedItems([]);setPreviewFingerprint("");}} /><span>{t("Izinkan template tidak cocok", "Allow incompatible template")}</span></label>
           {preview.length === 0 && <Button variant="outline" onClick={() => void loadPreview()} disabled={loading || !projectId || selectedTemplateIds.length === 0}>{t("Lihat Preview", "View Preview")}</Button>}
-          {preview.length ? <div className="overflow-hidden rounded-md border">
+          {preview.length ? <div className="space-y-2"><div className="space-y-2 rounded-md border p-3"><p className="text-sm font-medium">{t("Nama tugas induk", "Parent task name")}</p>{selectedTemplateIds.map((id) => { const template = visibleTemplates.find((item) => item.id === id); return <Input key={id} aria-label={`${t("Nama tugas induk", "Parent task name")}: ${template?.name ?? id}`} value={parentNames[id] ?? template?.name ?? ""} onChange={(event) => setParentNames((current) => ({ ...current, [id]: event.target.value }))} placeholder={template?.name} />; })}</div><div className="overflow-hidden rounded-md border">
             <label className="flex items-center gap-2 border-b bg-muted/30 px-3 py-2 text-sm font-medium">
               <input type="checkbox" checked={allItemsSelected} onChange={(event) => toggleAllItems(event.target.checked)} />
               <span>{t("Pilih semua task", "Select all tasks")}</span>
@@ -167,8 +169,8 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
                 {item.duplicate ? <div className="flex gap-1"><Button size="sm" variant={decision?.duplicateAction === "skip" ? "default" : "outline"} onClick={() => setDuplicate(item.itemId, "skip")}>Lewati</Button><Button size="sm" variant={decision?.duplicateAction === "keep" ? "default" : "outline"} onClick={() => setDuplicate(item.itemId, "keep")}>Tetap tambahkan</Button></div> : null}
               </div>;
             })}
-          </div> : null}
-          <Button className="w-full" onClick={submit} disabled={loading || !projectId || preview.length === 0 || selectedItems.length === 0 || !previewFingerprint}>{t("Import Subtask Terpilih", "Import Selected Subtasks")}</Button>
+          </div></div> : null}
+          <Button className="w-full" onClick={submit} disabled={loading || !projectId || preview.length === 0 || selectedItems.length === 0 || !previewFingerprint}>{t("Gunakan Template", "Use Template")}</Button>
         </div>
       </DialogContent>
     </Dialog>
