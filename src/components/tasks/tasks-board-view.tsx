@@ -95,11 +95,11 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 items-start">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 items-stretch">
       {columns.map((col) => {
         const colTasks = grouped[col.id];
         return (
-          <div key={col.id} className="flex flex-col rounded-xl border border-border/80 bg-muted/30 max-h-[calc(100vh-14rem)] overflow-hidden">
+          <div key={col.id} className="flex flex-col rounded-xl border border-border/80 bg-muted/30 h-[calc(100vh-14rem)] min-h-[500px] overflow-hidden">
             {/* Column Header Sticky */}
             <div className="flex items-center justify-between p-3 border-b bg-background/70 backdrop-blur-xs shrink-0">
               <div className="flex items-center gap-2">
@@ -113,7 +113,7 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
 
             {/* Scrollable Column Content */}
             <div
-              className="flex-1 overflow-y-auto p-2.5 space-y-2.5 min-h-32 focus:outline-none"
+              className="flex-1 overflow-y-auto p-2.5 space-y-2.5 focus:outline-none"
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => {
                 event.preventDefault();
