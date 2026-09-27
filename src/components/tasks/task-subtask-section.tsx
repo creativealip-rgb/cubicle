@@ -27,6 +27,7 @@ interface Subtask {
   id: string;
   taskId: string;
   title: string;
+  description?: string | null;
   completed: boolean;
   position: number;
   assigneeId?: string | null;
@@ -213,7 +214,9 @@ export function TaskSubtaskSection({
                   >
                     {st.title}
                   </span>
+                  {st.description && <span className="sr-only">{t("Deskripsi", "Description")}: {st.description}</span>}
                 </label>
+                {st.description && <p className="max-w-[260px] whitespace-pre-wrap break-words text-[11px] leading-4 text-muted-foreground">{st.description}</p>}
 
                 {/* Right: Subtask Assignee Selector & Delete */}
                 <div className="flex items-center gap-1.5 shrink-0">

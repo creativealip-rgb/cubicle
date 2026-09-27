@@ -1097,6 +1097,7 @@ export const taskSubtasks = pgTable("task_subtasks", {
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   taskId: uuid("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
+  description: text("description"),
   completed: boolean("completed").notNull().default(false),
   position: integer("position").notNull().default(0),
   assigneeId: text("assignee_id").references(() => users.id, { onDelete: "set null" }),

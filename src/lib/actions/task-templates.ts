@@ -33,6 +33,11 @@ const itemSchema = z.object({
   position: z.number().int().nonnegative(),
 });
 const itemUpdateSchema = itemSchema.partial().refine((value) => Object.keys(value).length > 0, "No changes supplied");
+
+export async function importedSubtaskValues(source: { title: string; description?: string | null; defaultAssigneeId?: string | null; position: number }, workspaceId: string, taskId: string) {
+  return { workspaceId, taskId, title: source.title, description: source.description, assigneeId: source.defaultAssigneeId, position: source.position };
+}
+
 const idSchema = z.string().uuid();
 const getTaskTemplatesOptionsSchema = z.object({
   includeArchived: z.boolean().default(false),
@@ -390,7 +395,7 @@ export async function importTaskTemplates(inputValue: unknown) {
         behavior: context.mode === "workflow" ? "one_time" as const : "recurring" as const,
       }).returning({ id: tasks.id, title: tasks.title, position: tasks.position });
       inserted.push(parent);
-      await tx.insert(taskSubtasks).values(chosen.map((item) => { const source = sourceItems.get(item.itemId)!; return { workspaceId, taskId: parent.id, title: source.title, assigneeId: source.defaultAssigneeId, position: source.position }; }));
+      await tx.insert(taskSubtasks).values(await Promise.all(chosen.map((item) => importedSubtaskValues(sourceItems.get(item.itemId)!, workspaceId, parent.id))));
     }
     const result = { projectId: input.projectId, created: inserted, skipped: context.preview.filter((item) => !item.included).map((item) => item.itemId) };
     await tx.update(taskTemplateImports).set({ result, completedAt: new Date(), updatedAt: new Date() }).where(and(

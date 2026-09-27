@@ -397,6 +397,7 @@ export async function getTaskSubtasks(taskId: string) {
       id: taskSubtasks.id,
       taskId: taskSubtasks.taskId,
       title: taskSubtasks.title,
+      description: taskSubtasks.description,
       completed: taskSubtasks.completed,
       position: taskSubtasks.position,
       assigneeId: taskSubtasks.assigneeId,
