@@ -95,20 +95,25 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4 items-start">
       {columns.map((col) => {
         const colTasks = grouped[col.id];
         return (
-          <div key={col.id} className="rounded-lg border bg-muted/30 p-3">
-            <div className="mb-3 flex items-center gap-2">
-              <div className={`h-2 w-2 rounded-full ${col.color}`} />
-              <h3 className="text-sm font-semibold">{col.label}</h3>
-              <Badge variant="secondary" className="h-5 px-1.5 text-[10px]">
+          <div key={col.id} className="flex flex-col rounded-xl border border-border/80 bg-muted/30 max-h-[calc(100vh-14rem)] overflow-hidden">
+            {/* Column Header Sticky */}
+            <div className="flex items-center justify-between p-3 border-b bg-background/70 backdrop-blur-xs shrink-0">
+              <div className="flex items-center gap-2">
+                <div className={`h-2.5 w-2.5 rounded-full ${col.color}`} />
+                <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">{col.label}</h3>
+              </div>
+              <Badge variant="secondary" className="h-5 px-1.5 text-[11px] font-bold">
                 {colTasks.length}
               </Badge>
             </div>
+
+            {/* Scrollable Column Content */}
             <div
-              className="min-h-24 space-y-2"
+              className="flex-1 overflow-y-auto p-2.5 space-y-2.5 min-h-32 focus:outline-none"
               onDragOver={(event) => event.preventDefault()}
               onDrop={(event) => {
                 event.preventDefault();
@@ -129,11 +134,11 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
             >
               {colTasks.map((task) => (
                 <TaskDetailSheet key={task.id} task={task} members={members}>
-                  <Card draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/task-id", task.id); setDraggedId(task.id); }} onDragEnd={() => setDraggedId(null)} className="cursor-grab border-border transition-shadow hover:shadow-md active:cursor-grabbing">
+                  <Card draggable onDragStart={(event) => { event.dataTransfer.effectAllowed = "move"; event.dataTransfer.setData("text/task-id", task.id); setDraggedId(task.id); }} onDragEnd={() => setDraggedId(null)} className="cursor-grab border-border/80 bg-card transition-all hover:shadow-md hover:border-primary/40 active:cursor-grabbing rounded-xl shadow-xs">
                     <CardContent className="space-y-2 p-3">
-                      <p className="text-sm font-medium leading-snug">{task.title}</p>
+                      <p className="text-xs font-semibold leading-snug text-foreground">{task.title}</p>
                       <div className="flex flex-wrap items-center gap-1.5">
-                        {task.templateName && <Badge variant="outline" className="border-primary/30 bg-primary/5 text-[10px] text-primary">{task.templateName}</Badge>}
+                        {task.templateName && <Badge variant="outline" className="border-primary/30 bg-primary/5 text-[9px] font-medium text-primary px-1.5 py-0">{task.templateName}</Badge>}
                         {(task.subtaskTotal ?? 0) > 0 && (
                           <span className={`inline-flex items-center gap-1 rounded px-1.5 py-0.2 text-[9px] font-medium ${
                             task.subtaskDone === task.subtaskTotal
@@ -145,7 +150,7 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                           </span>
                         )}
                         {task.mode === "reusable" && (
-                          <Badge variant="outline" className="text-[10px] font-normal">
+                          <Badge variant="outline" className="text-[9px] font-normal px-1.5 py-0">
                             Reusable
                           </Badge>
                         )}
@@ -163,17 +168,17 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                         </div>
                       )}
                       {task.projectName && (
-                        <p className="truncate text-[11px] text-muted-foreground">{task.projectName}</p>
+                        <p className="truncate text-[11px] font-medium text-foreground/80">{task.projectName}</p>
                       )}
-                      <div className="flex items-center justify-between gap-2 pt-1 border-t border-border/40">
-                        <div className="flex items-center gap-2">
-                          <Badge variant="outline" className={`text-[10px] ${taskPriorityColor(task.priority)}`}>
+                      <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-border/40">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <Badge variant="outline" className={`text-[9px] h-4.5 px-1.5 ${taskPriorityColor(task.priority)}`}>
                             {task.priority === "urgent" && <AlertTriangle className="mr-0.5 h-2.5 w-2.5" />}
                             {taskPriorityLabel(task.priority, lang)}
                           </Badge>
                           {task.dueDate && (
-                            <div className={`flex items-center gap-1 text-[10px] ${dueTone(task)}`}>
-                              <Clock className="h-3 w-3" />
+                            <div className={`flex items-center gap-1 text-[9px] font-medium ${dueTone(task)}`}>
+                              <Clock className="h-2.5 w-2.5" />
                               <span suppressHydrationWarning>{formatDue(task)}</span>
                             </div>
                           )}
@@ -191,7 +196,7 @@ export function TasksBoardView({ tasks, members }: TasksBoardViewProps) {
                 </TaskDetailSheet>
               ))}
               {colTasks.length === 0 && (
-                <div className="rounded-lg border-2 border-dashed py-6 text-center text-xs text-muted-foreground">
+                <div className="rounded-lg border-2 border-dashed border-border/60 py-6 text-center text-xs text-muted-foreground/70">
                   {t("Tidak ada tugas", "No tasks")}
                 </div>
               )}

@@ -87,6 +87,10 @@ export default async function TasksPage({
   const [{ filteredTaskCount }] = await db.select({ filteredTaskCount: sql<number>`count(${tasks.id})::int` }).from(tasks).where(and(...whereClauses));
   const totalPages = Math.max(1, Math.ceil(filteredTaskCount / PAGE_SIZE));
   const page = Math.min(requestedPage, totalPages);
+  const isBoardView = view === "board";
+  const limit = isBoardView ? 200 : PAGE_SIZE;
+  const offset = isBoardView ? 0 : (page - 1) * PAGE_SIZE;
+
   const taskList = await db.select({
     id: tasks.id,
     title: tasks.title,
@@ -111,7 +115,7 @@ export default async function TasksPage({
     subtaskDone: sql<number>`(select count(*)::int from task_subtasks ts where ts.task_id = ${tasks.id} and ts.workspace_id = ${workspaceId} and ts.completed = true)`,
     monthMinutes: sql<number>`coalesce((select sum(coalesce(te.manual_minutes, te.duration_minutes, 0)) from time_entries te where te.task_id = ${tasks.id} and te.workspace_id = ${workspaceId} and te.work_date >= date_trunc('month', current_date)), 0)::int`,
     lastUsedAt: sql<string | null>`(select max(te.work_date)::text from time_entries te where te.task_id = ${tasks.id} and te.workspace_id = ${workspaceId})`,
-  }).from(tasks).leftJoin(projects, eq(projects.id, tasks.projectId)).leftJoin(clients, eq(clients.id, projects.clientId)).leftJoin(users, eq(users.id, tasks.assigneeId)).where(and(...whereClauses)).orderBy(desc(tasks.createdAt)).limit(PAGE_SIZE).offset((page - 1) * PAGE_SIZE);
+  }).from(tasks).leftJoin(projects, eq(projects.id, tasks.projectId)).leftJoin(clients, eq(clients.id, projects.clientId)).leftJoin(users, eq(users.id, tasks.assigneeId)).where(and(...whereClauses)).orderBy(desc(tasks.createdAt)).limit(limit).offset(offset);
 
   const projectRows = await db.select({ id: projects.id, name: projects.name, clientName: clients.name, billingModel: projects.billingModel, billingType: projects.billingType }).from(projects).leftJoin(clients, eq(clients.id, projects.clientId)).where(eq(projects.workspaceId, workspaceId));
   const writableProjectRows = projectRows.filter((project) => resolveBillingModel(project) !== "legacy_package");
@@ -238,7 +242,7 @@ export default async function TasksPage({
             </>
           )}
 
-              {totalPages > 1 && (
+              {totalPages > 1 && view !== "board" && (
                 <PaginationLinks
                   page={page}
                   totalPages={totalPages}
