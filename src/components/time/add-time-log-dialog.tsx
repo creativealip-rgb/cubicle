@@ -257,8 +257,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
             {/* Task Input */}
             <div className="space-y-1.5">
               <Label className="text-xs">{t("Tugas (Opsional)", "Task (Optional)")}</Label>
-              <Popover open={taskSearchOpen} onOpenChange={setTaskSearchOpen}>
-                <PopoverAnchor asChild>
+              <div className="relative">
                 <div className="relative flex items-center">
                   <CheckSquare className="absolute left-3 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -266,63 +265,77 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
                     aria-label={projectId ? t("Cari tugas...", "Search task...") : t("Pilih klien & proyek dulu", "Select client & project first")}
                     placeholder={projectId ? t("Pilih/buat tugas...", "Select/create a task...") : t("Pilih klien & proyek dulu", "Select client & project first")}
                     value={taskSearch}
-
+                    disabled={!projectId}
                     onChange={(e) => {
                       const val = e.target.value;
                       setTaskSearch(val);
                       setTaskSearchOpen(true);
                     }}
-                    onClick={() => setTaskSearchOpen(true)}
+                    onClick={() => {
+                      if (projectId) setTaskSearchOpen(true);
+                    }}
+                    onFocus={() => {
+                      if (projectId) setTaskSearchOpen(true);
+                    }}
                     className={`h-10 pl-9 pr-9 text-sm ${taskError ? "border-destructive" : ""}`}
                   />
-                  <button type="button" aria-label={t("Buka daftar tugas", "Toggle task list")} onClick={() => setTaskSearchOpen((current) => !current)} className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground">
+                  <button
+                    type="button"
+                    aria-label={t("Buka daftar tugas", "Toggle task list")}
+                    onClick={() => {
+                      if (projectId) setTaskSearchOpen((current) => !current);
+                    }}
+                    className="absolute inset-y-0 right-0 flex w-9 items-center justify-center text-muted-foreground"
+                  >
                     <ChevronDown className={`h-4 w-4 transition-transform ${taskSearchOpen ? "rotate-180" : ""}`} />
                   </button>
                 </div>
-                </PopoverAnchor>
-                <PopoverContent align="start" sideOffset={5} className="flex max-h-[min(22rem,55dvh)] w-[var(--radix-popover-trigger-width)] flex-col overflow-hidden p-0">
-                  <div className="min-h-0 flex-1 touch-pan-y overflow-y-auto overscroll-contain p-1" onTouchMove={(event) => event.stopPropagation()} onWheel={(event) => event.stopPropagation()}>
-                    {!projectId ? <p className="p-3 text-sm text-muted-foreground">{t("Pilih proyek terlebih dahulu", "Please select a project first")}</p> : <>
-                    {projectTasks.length === 0 && <button
-                      type="button"
-                      className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${taskId === "__none__" ? "bg-accent font-medium" : ""}`}
-                      onClick={() => {
-                        setTaskId("__none__");
-                        setTaskSearch("");
-                        setTaskSearchOpen(false);
-                      }}
-                    >
-                      {t("Tidak ada", "None")}
-                    </button>}
-                    {filteredTaskOptions.length === 0 ? (
+
+                {taskSearchOpen && projectId && (
+                  <div className="rounded-xl border border-border/80 bg-card p-1 shadow-md space-y-1 mt-1 max-h-48 overflow-y-auto">
+                    {projectTasks.length === 0 && (
+                      <button
+                        type="button"
+                        className={`min-h-9 w-full rounded-md px-3 py-1.5 text-left text-xs hover:bg-accent ${taskId === "__none__" ? "bg-accent font-medium" : ""}`}
+                        onClick={() => {
+                          setTaskId("__none__");
+                          setTaskSearch("");
+                          setTaskSearchOpen(false);
+                        }}
+                      >
+                        {t("Tidak ada", "None")}
+                      </button>
+                    )}
+                    {filteredTaskOptions.length === 0 && projectTasks.length > 0 ? (
                       <p className="p-2 text-xs text-muted-foreground">{t("Tugas tidak ditemukan", "No task found")}</p>
-                    ) : groupedTaskOptions.map(([templateName, group]) => (
-                      <div key={templateName} className="py-1">
-                        <p className="px-3 py-1.5 text-xs font-semibold text-foreground">{templateName}</p>
-                        {(group ?? []).map((tk) => (
-                          <button
-                            key={tk.id}
-                            type="button"
-                            className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${taskId === tk.id ? "bg-accent font-medium" : ""}`}
-                            onClick={() => {
-                              setTaskId(tk.id);
-                              setTaskSearch(tk.title);
-                              setTaskSearchOpen(false);
-                            }}
-                          >
-                            {tk.title}
-                          </button>
-                        ))}
-                      </div>
-                    ))}</>}
+                    ) : (
+                      groupedTaskOptions.map(([templateName, group]) => (
+                        <div key={templateName} className="py-1">
+                          <p className="px-2.5 py-1 text-[11px] font-semibold text-muted-foreground uppercase">{templateName}</p>
+                          {(group ?? []).map((tk) => (
+                            <button
+                              key={tk.id}
+                              type="button"
+                              className={`min-h-8 w-full rounded-md px-2.5 py-1 text-left text-xs hover:bg-accent flex items-center justify-between ${
+                                taskId === tk.id ? "bg-primary/10 text-primary font-semibold" : ""
+                              }`}
+                              onClick={() => {
+                                setTaskId(tk.id);
+                                setTaskSearch(tk.title);
+                                setTaskSearchOpen(false);
+                              }}
+                            >
+                              <span>{tk.title}</span>
+                              {taskId === tk.id && <span className="text-primary font-bold">✓</span>}
+                            </button>
+                          ))}
+                        </div>
+                      ))
+                    )}
                   </div>
-                  {projectId && <div className="shrink-0 space-y-0.5 border-t bg-popover p-1.5 shadow-[0_-4px_10px_rgba(0,0,0,0.04)]">
-                    <Button asChild size="sm" variant="ghost" className="min-h-10 w-full justify-start gap-2 px-2.5 text-sm"><Link href={`/app/tasks?tab=workflow&projectId=${projectId}`}><Plus className="size-4" />{t("Buat task baru", "Create new task")}</Link></Button>
-                    <Button asChild size="sm" variant="ghost" className="min-h-10 w-full justify-start gap-2 px-2.5 text-sm"><Link href="/app/tasks?tab=templates"><ListPlus className="size-4" />{t("Import dari template", "Import from template")}</Link></Button>
-                  </div>}
-                </PopoverContent>
-              </Popover>
-              {taskError ? <p className="text-xs text-destructive">{t("Tugas wajib dipilih untuk proyek ini", "Task is required for this project")}</p> : null}
+                )}
+              </div>
+              {taskError ? <p className="text-xs text-destructive">{t("Task wajib dipilih", "Task is required")}</p> : null}
             </div>
 
             {/* Description Input */}
