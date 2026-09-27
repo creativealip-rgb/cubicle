@@ -492,9 +492,12 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                         ) : (
                           groupedEditProjectOptions.map(([clientName, group]) => (
                             <div key={clientName} className="py-1">
-                              <p className="px-3 py-1.5 text-xs font-semibold text-foreground">{clientName}</p>
+                              <p className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{clientName}</p>
                               {(group ?? []).map((opt) => (
-                                <button key={opt.projectId} type="button" className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${editProjectId === opt.projectId ? "bg-accent font-medium" : ""}`} onClick={() => { setEditClientId(opt.clientId); setEditProjectId(opt.projectId); setEditProjectSearch(`${opt.clientName} — ${opt.projectName}`); setEditProjectSearchOpen(false); setEditTaskId("__none__"); setEditTaskSearch(""); }}><span>{opt.projectName}</span></button>
+                                <button key={opt.projectId} type="button" className={`min-h-9 w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center justify-between ${editProjectId === opt.projectId ? "bg-primary/10 text-primary font-semibold" : "text-foreground"}`} onClick={() => { setEditClientId(opt.clientId); setEditProjectId(opt.projectId); setEditProjectSearch(`${opt.clientName} — ${opt.projectName}`); setEditProjectSearchOpen(false); setEditTaskId("__none__"); setEditTaskSearch(""); }}>
+                                  <span className="truncate">{opt.projectName}</span>
+                                  {editProjectId === opt.projectId && <span className="text-primary font-bold">✓</span>}
+                                </button>
                               ))}
                             </div>
                           ))
@@ -1044,9 +1047,12 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                       ) : (
                         groupedEditProjectOptions.map(([clientName, group]) => (
                           <div key={clientName} className="py-1">
-                            <p className="px-3 py-1.5 text-xs font-semibold text-foreground">{clientName}</p>
+                            <p className="px-3 py-1 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{clientName}</p>
                             {(group ?? []).map((opt) => (
-                              <button key={opt.projectId} type="button" className={`min-h-10 w-full rounded-md px-3 py-2 text-left text-sm hover:bg-accent ${editProjectId === opt.projectId ? "bg-accent font-medium" : ""}`} onClick={() => { setEditClientId(opt.clientId); setEditProjectId(opt.projectId); setEditProjectSearch(`${opt.clientName} — ${opt.projectName}`); setEditProjectSearchOpen(false); setEditTaskId("__none__"); setEditTaskSearch(""); }}><span>{opt.projectName}</span></button>
+                              <button key={opt.projectId} type="button" className={`min-h-9 w-full rounded-lg px-3 py-2 text-left text-sm hover:bg-accent transition-colors flex items-center justify-between ${editProjectId === opt.projectId ? "bg-primary/10 text-primary font-semibold" : "text-foreground"}`} onClick={() => { setEditClientId(opt.clientId); setEditProjectId(opt.projectId); setEditProjectSearch(`${opt.clientName} — ${opt.projectName}`); setEditProjectSearchOpen(false); setEditTaskId("__none__"); setEditTaskSearch(""); }}>
+                                <span className="truncate">{opt.projectName}</span>
+                                {editProjectId === opt.projectId && <span className="text-primary font-bold">✓</span>}
+                              </button>
                             ))}
                           </div>
                         ))
