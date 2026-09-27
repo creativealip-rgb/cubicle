@@ -511,7 +511,7 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                     <div className="relative flex items-center">
                       <CheckSquare className="absolute left-3 h-4 w-4 text-muted-foreground" />
                       <Input
-                        placeholder={t("Cari atau pilih tugas...", "Search or select task...")}
+                        placeholder={editProjectId ? t("Cari atau pilih tugas...", "Search or select task...") : t("Pilih klien & proyek dulu", "Select client & project first")}
                         value={editTaskSearch}
                         disabled={!editProjectId}
                         onChange={(e) => {
@@ -519,11 +519,11 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                           setEditTaskSearch(val);
                           setEditTaskSearchOpen(true);
                         }}
+                        onClick={() => {
+                          if (editProjectId) setEditTaskSearchOpen(true);
+                        }}
                         onFocus={() => {
-                          const currentTask = tasks.find((tk) => tk.id === editTaskId);
-                          if (editProjectId && editTaskSearch.trim() !== currentTask?.title.trim()) {
-                            setEditTaskSearchOpen(true);
-                          }
+                          if (editProjectId) setEditTaskSearchOpen(true);
                         }}
                         className="h-10 pl-9 text-sm"
                       />
@@ -1070,10 +1070,13 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
                       onChange={(e) => {
                         const val = e.target.value;
                         setEditTaskSearch(val);
-                        setEditTaskSearchOpen(Boolean(val.trim()));
+                        setEditTaskSearchOpen(true);
+                      }}
+                      onClick={() => {
+                        if (editProjectId) setEditTaskSearchOpen(true);
                       }}
                       onFocus={() => {
-                        if (editTaskSearch.trim() && editProjectId) setEditTaskSearchOpen(true);
+                        if (editProjectId) setEditTaskSearchOpen(true);
                       }}
                       className={`h-10 pl-9 text-sm ${editTaskError ? "border-destructive" : ""}`}
                     />
@@ -1109,15 +1112,11 @@ export function Timesheet({ entries, clients, projects, tasks = [], activities: 
               {/* Tag Input */}
               <div className="space-y-1.5">
                 <Label className="text-xs">{t("Tag", "Tag")}</Label>
-                <div className="relative flex items-center">
-                  <TagIcon className="absolute left-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    value={editTags}
-                    onChange={(e) => setEditTags(e.target.value)}
-                    placeholder={t("Tambah tag...", "Add a tag...")}
-                    className="h-10 pl-9 text-sm"
-                  />
-                </div>
+                <TimerTagPicker
+                  value={editTags}
+                  onChange={setEditTags}
+                  placeholder={t("Pilih atau cari tag...", "Select or search tags...")}
+                />
               </div>
             </div>
 
