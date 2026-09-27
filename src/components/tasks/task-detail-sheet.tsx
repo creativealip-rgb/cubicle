@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -49,6 +48,7 @@ import {
   UserPlus,
   ArrowUpRight,
   GripVertical,
+  CircleDot,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -56,6 +56,7 @@ import {
   getTaskSubtasks,
   addSubtask,
   toggleSubtask,
+  setSubtaskStatus,
   updateSubtaskDetails,
   convertSubtaskToTask,
   reorderSubtasks,
@@ -134,6 +135,16 @@ function getUserInitials(nameOrEmail?: string | null) {
   return nameOrEmail.slice(0, 2).toUpperCase();
 }
 
+function getSubtaskStatusIcon(status: "todo" | "in_progress" | "done" | string) {
+  if (status === "done") {
+    return <span className="h-4 w-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">✓</span>;
+  }
+  if (status === "in_progress") {
+    return <span className="h-4 w-4 rounded-full border-2 border-blue-500 bg-blue-500/20 text-blue-500 flex items-center justify-center text-[9px] font-bold">●</span>;
+  }
+  return <span className="h-4 w-4 rounded-full border-2 border-muted-foreground/40 hover:border-muted-foreground transition-colors" />;
+}
+
 export function TaskDetailSheet({
   children,
   defaultOpen = false,
@@ -157,6 +168,7 @@ export function TaskDetailSheet({
       id: string;
       title: string;
       description?: string | null;
+      status: "todo" | "in_progress" | "done" | string;
       completed: boolean;
       assigneeId: string | null;
       dueDate?: string | null;
@@ -171,6 +183,7 @@ export function TaskDetailSheet({
     id: string;
     title: string;
     description?: string | null;
+    status: "todo" | "in_progress" | "done" | string;
     completed: boolean;
     assigneeId: string | null;
     dueDate?: string | null;
@@ -178,6 +191,7 @@ export function TaskDetailSheet({
   const [subtaskTitleDraft, setSubtaskTitleDraft] = useState("");
   const [subtaskDescDraft, setSubtaskDescDraft] = useState("");
   const [subtaskDueDateDraft, setSubtaskDueDateDraft] = useState("");
+  const [subtaskStatusDraft, setSubtaskStatusDraft] = useState<"todo" | "in_progress" | "done">("todo");
   const [subtaskSaving, setSubtaskSaving] = useState(false);
   const [convertingSubtask, setConvertingSubtask] = useState(false);
 
@@ -210,6 +224,7 @@ export function TaskDetailSheet({
             id: it.id,
             title: it.title,
             description: it.description,
+            status: (it as any).status || (it.completed ? "done" : "todo"),
             completed: it.completed,
             assigneeId: it.assigneeId,
             dueDate: it.dueDate,
@@ -345,6 +360,7 @@ export function TaskDetailSheet({
           id: created.id,
           title: created.title,
           description: created.description,
+          status: "todo",
           completed: created.completed,
           assigneeId: created.assigneeId,
           dueDate: created.dueDate,
@@ -360,15 +376,22 @@ export function TaskDetailSheet({
     }
   };
 
-  const handleToggleSubtask = async (subtaskId: string, currentCompleted: boolean) => {
+  const handleCycleSubtaskStatus = async (st: (typeof subtasks)[0]) => {
+    // Cycle status: todo -> in_progress -> done -> todo
+    let nextStatus: "todo" | "in_progress" | "done" = "in_progress";
+    if (st.status === "in_progress") nextStatus = "done";
+    else if (st.status === "done") nextStatus = "todo";
+    else nextStatus = "in_progress";
+
+    const nextCompleted = nextStatus === "done";
     setSubtasks((prev) =>
-      prev.map((s) => (s.id === subtaskId ? { ...s, completed: !currentCompleted } : s))
+      prev.map((s) => (s.id === st.id ? { ...s, status: nextStatus, completed: nextCompleted } : s))
     );
     try {
-      await toggleSubtask(subtaskId, !currentCompleted);
+      await setSubtaskStatus(st.id, nextStatus);
       router.refresh();
     } catch {
-      toast.error(t("Gagal mengubah status subtask", "Failed to toggle subtask"));
+      toast.error(t("Gagal mengubah status subtask", "Failed to update subtask status"));
     }
   };
 
@@ -378,6 +401,7 @@ export function TaskDetailSheet({
     setSubtaskTitleDraft(st.title);
     setSubtaskDescDraft(st.description || "");
     setSubtaskDueDateDraft(st.dueDate ? st.dueDate.split("T")[0] : "");
+    setSubtaskStatusDraft((st.status as any) || (st.completed ? "done" : "todo"));
   };
 
   const handleSaveSubtaskModal = async () => {
@@ -386,13 +410,16 @@ export function TaskDetailSheet({
     const title = subtaskTitleDraft.trim();
     const description = subtaskDescDraft.trim();
     const dueDate = subtaskDueDateDraft || null;
+    const status = subtaskStatusDraft;
+    const completed = status === "done";
     const subtaskId = activeSubtask.id;
 
     setSubtasks((prev) =>
-      prev.map((s) => (s.id === subtaskId ? { ...s, title, description, dueDate } : s))
+      prev.map((s) => (s.id === subtaskId ? { ...s, title, description, dueDate, status, completed } : s))
     );
     try {
       await updateSubtaskDetails({ subtaskId, title, description, dueDate });
+      await setSubtaskStatus(subtaskId, status);
       toast.success(t("Rincian subtask disimpan", "Subtask details saved"));
       setActiveSubtask(null);
       router.refresh();
@@ -662,7 +689,7 @@ export function TaskDetailSheet({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const subtaskDone = subtasks.filter((s) => s.completed).length;
+  const subtaskDone = subtasks.filter((s) => s.completed || s.status === "done").length;
   const subtaskPct = subtasks.length > 0 ? Math.round((subtaskDone / subtasks.length) * 100) : 0;
 
   return (
@@ -840,7 +867,7 @@ export function TaskDetailSheet({
               />
             </div>
 
-            {/* Ultra-Clean Linear-Style Subtasks Checklist Table with Drag & Drop Reorder */}
+            {/* Ultra-Clean Linear-Style Subtasks Checklist Table with 3-State Cycle & Drag/Drop */}
             <div className="space-y-3 pt-2">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -863,7 +890,7 @@ export function TaskDetailSheet({
                 </div>
               )}
 
-              {/* Subtasks List with Drag Handle */}
+              {/* Subtasks List with 3-State Status Cycle + Drag Handle */}
               <div className="divide-y divide-border/50 rounded-xl border border-border/70 bg-card overflow-hidden">
                 {subtasks.length === 0 ? (
                   <div className="p-4 text-center text-xs text-muted-foreground">
@@ -872,6 +899,9 @@ export function TaskDetailSheet({
                 ) : (
                   subtasks.map((st, idx) => {
                     const assignedMember = members.find((m) => m.id === st.assigneeId);
+                    const isDone = st.status === "done" || st.completed;
+                    const isInProgress = st.status === "in_progress";
+
                     return (
                       <div
                         key={st.id}
@@ -883,16 +913,22 @@ export function TaskDetailSheet({
                           draggedSubtaskIdx === idx ? "opacity-50 bg-muted/60" : ""
                         }`}
                       >
-                        {/* Drag Handle + Checkbox + Title with Hover Action */}
+                        {/* Drag Handle + 3-State Status Button + Title with Hover Action */}
                         <div className="flex items-center gap-2 flex-1 min-w-0">
                           <span className="text-muted-foreground/40 group-hover:text-muted-foreground cursor-grab active:cursor-grabbing">
                             <GripVertical className="h-3.5 w-3.5" />
                           </span>
-                          <Checkbox
-                            checked={st.completed}
-                            onCheckedChange={() => handleToggleSubtask(st.id, st.completed)}
-                            className="rounded-md h-4 w-4"
-                          />
+
+                          {/* 1-Click 3-State Status Toggle (To Do -> In Progress -> Done) */}
+                          <button
+                            type="button"
+                            onClick={() => handleCycleSubtaskStatus(st)}
+                            className="shrink-0 flex items-center justify-center cursor-pointer"
+                            title={`Status: ${st.status}. Klik untuk ganti (To Do → In Progress → Done)`}
+                          >
+                            {getSubtaskStatusIcon(st.status)}
+                          </button>
+
                           <button
                             type="button"
                             onClick={() => handleOpenSubtaskModal(st)}
@@ -900,13 +936,20 @@ export function TaskDetailSheet({
                           >
                             <span
                               className={`text-xs truncate transition-colors ${
-                                st.completed
+                                isDone
                                   ? "line-through text-muted-foreground"
+                                  : isInProgress
+                                  ? "text-blue-600 dark:text-blue-400 font-semibold"
                                   : "text-foreground font-medium group-hover/btn:text-primary"
                               }`}
                             >
                               {st.title}
                             </span>
+                            {isInProgress && (
+                              <span className="text-[9px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-1 py-0.2 rounded">
+                                In Progress
+                              </span>
+                            )}
                             {st.description && (
                               <AlignLeft className="h-3 w-3 text-muted-foreground/70 shrink-0" />
                             )}
@@ -919,7 +962,7 @@ export function TaskDetailSheet({
                           </button>
                         </div>
 
-                        {/* Right Clean Controls: Avatar Badge + Details Trigger + Delete */}
+                        {/* Right Clean Controls: Avatar Badge + Delete */}
                         <div className="flex items-center gap-2 shrink-0">
                           {/* Assignee Avatar / Pill */}
                           <button
@@ -1119,7 +1162,7 @@ export function TaskDetailSheet({
                             className="w-full text-left px-2 py-1.5 text-xs rounded-md hover:bg-accent flex items-center justify-between transition-colors cursor-pointer"
                           >
                             <span className="font-semibold text-foreground truncate">{st.title}</span>
-                            <span className="text-[10px] text-muted-foreground">{st.completed ? "✓ Selesai" : "Pending"}</span>
+                            <span className="text-[10px] text-muted-foreground capitalize">{st.status}</span>
                           </button>
                         ))}
                       </div>
@@ -1245,7 +1288,7 @@ export function TaskDetailSheet({
         </div>
       </DialogContent>
 
-      {/* Dedicated Subtask Focus Mini-Modal with Due Date & Convert to Task Action */}
+      {/* Dedicated Subtask Focus Mini-Modal with Status, Due Date & Convert to Task Action */}
       {activeSubtask && (
         <Dialog open={!!activeSubtask} onOpenChange={(op) => !op && setActiveSubtask(null)}>
           <DialogContent className="max-w-lg p-0 gap-0 overflow-hidden rounded-2xl border-border/80 shadow-2xl bg-background z-[65]">
@@ -1270,9 +1313,6 @@ export function TaskDetailSheet({
                     {convertingSubtask ? <Loader2 className="h-3 w-3 animate-spin" /> : <ArrowUpRight className="h-3 w-3" />}
                     <span>{t("Jadikan Task", "Convert to Task")}</span>
                   </Button>
-                  <Badge variant={activeSubtask.completed ? "default" : "outline"} className="text-[10px] uppercase font-bold">
-                    {activeSubtask.completed ? t("Selesai", "Completed") : t("Pending", "Pending")}
-                  </Badge>
                 </div>
               </div>
             </DialogHeader>
@@ -1291,20 +1331,41 @@ export function TaskDetailSheet({
                 />
               </div>
 
-              {/* Assignee & Due Date Row */}
-              <div className="grid grid-cols-2 gap-3">
+              {/* Status & Assignee & Due Date Row */}
+              <div className="grid grid-cols-3 gap-2.5">
+                {/* Status Selector */}
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 text-primary" />
+                    {t("Status", "Status")}
+                  </span>
+                  <Select
+                    value={subtaskStatusDraft}
+                    onValueChange={(val: any) => setSubtaskStatusDraft(val)}
+                  >
+                    <SelectTrigger className="h-8 text-xs rounded-xl bg-background">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="z-[75]">
+                      <SelectItem value="todo">🟡 To Do</SelectItem>
+                      <SelectItem value="in_progress">🔵 In Progress</SelectItem>
+                      <SelectItem value="done">🟢 Done</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 {/* Assignee Selector in Mini Modal */}
                 <div className="space-y-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                     <User className="h-3 w-3 text-blue-500" />
-                    {t("Petugas Subtask", "Subtask Assignee")}
+                    {t("Petugas", "Assignee")}
                   </span>
                   <Select
                     value={activeSubtask.assigneeId ?? "__unassigned__"}
                     onValueChange={handleSubtaskAssigneeChangeInModal}
                   >
                     <SelectTrigger className="h-8 text-xs rounded-xl bg-background">
-                      <SelectValue placeholder={t("Pilih anggota tim...", "Select team member...")} />
+                      <SelectValue placeholder={t("Pilih...", "Select...")} />
                     </SelectTrigger>
                     <SelectContent className="z-[75]">
                       <SelectItem value="__unassigned__">{t("Belum Ditugaskan", "Unassigned")}</SelectItem>
@@ -1321,13 +1382,13 @@ export function TaskDetailSheet({
                 <div className="space-y-1.5">
                   <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
                     <Calendar className="h-3 w-3 text-amber-500" />
-                    {t("Tenggat Waktu", "Due Date")}
+                    {t("Deadline", "Due Date")}
                   </span>
                   <Input
                     type="date"
                     value={subtaskDueDateDraft}
                     onChange={(e) => setSubtaskDueDateDraft(e.target.value)}
-                    className="h-8 text-xs rounded-xl bg-background font-mono"
+                    className="h-8 text-xs rounded-xl bg-background font-mono px-2"
                   />
                 </div>
               </div>

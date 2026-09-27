@@ -445,9 +445,31 @@ export async function toggleSubtask(subtaskId: string, completed: boolean) {
   const workspaceId = await getWorkspaceForCurrentUser();
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
-  const [updated] = await db
+  const [subtask] = await db
     .update(taskSubtasks)
     .set({
+      completed,
+      status: completed ? "done" : "todo",
+      updatedAt: new Date(),
+    })
+    .where(and(eq(taskSubtasks.id, subtaskId), eq(taskSubtasks.workspaceId, workspaceId)))
+    .returning();
+
+  revalidatePath("/app/tasks");
+  return subtask;
+}
+
+export async function setSubtaskStatus(subtaskId: string, status: "todo" | "in_progress" | "done") {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const completed = status === "done";
+  const [subtask] = await db
+    .update(taskSubtasks)
+    .set({
+      status,
       completed,
       updatedAt: new Date(),
     })
@@ -455,7 +477,7 @@ export async function toggleSubtask(subtaskId: string, completed: boolean) {
     .returning();
 
   revalidatePath("/app/tasks");
-  return updated;
+  return subtask;
 }
 
 export async function bulkUpdateTasksStatus(taskIds: string[], status: "todo" | "in_progress" | "review" | "done") {
