@@ -46,6 +46,37 @@ export async function createTimerTag({ name, color }: { name: string; color?: st
   return created;
 }
 
+export async function updateTimerTag({ id, name, color }: { id: string; name: string; color?: string }) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceForCurrentUser();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const cleanName = name.trim();
+  if (!cleanName) throw new Error("Nama tag tidak boleh kosong");
+
+  const [existing] = await db
+    .select()
+    .from(timerTags)
+    .where(and(eq(timerTags.workspaceId, workspaceId), eq(timerTags.name, cleanName)))
+    .limit(1);
+
+  if (existing && existing.id !== id) {
+    throw new Error("Tag dengan nama ini sudah ada");
+  }
+
+  const [updated] = await db
+    .update(timerTags)
+    .set({
+      name: cleanName,
+      color: color?.trim() || null,
+    })
+    .where(and(eq(timerTags.id, id), eq(timerTags.workspaceId, workspaceId)))
+    .returning();
+
+  return updated;
+}
+
 export async function deleteTimerTag(id: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
