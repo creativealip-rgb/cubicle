@@ -159,7 +159,7 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
           {preview.length ? <div className="space-y-2"><div className="space-y-2 rounded-md border p-3"><p className="text-sm font-medium">{t("Nama tugas induk", "Parent task name")}</p>{selectedTemplateIds.map((id) => { const template = visibleTemplates.find((item) => item.id === id); return <Input key={id} aria-label={`${t("Nama tugas induk", "Parent task name")}: ${template?.name ?? id}`} value={parentNames[id] ?? template?.name ?? ""} onChange={(event) => setParentNames((current) => ({ ...current, [id]: event.target.value }))} placeholder={template?.name} />; })}</div><div className="overflow-hidden rounded-md border">
             <label className="flex items-center gap-2 border-b bg-muted/30 px-3 py-2 text-sm font-medium">
               <input type="checkbox" checked={allItemsSelected} onChange={(event) => toggleAllItems(event.target.checked)} />
-              <span>{t("Pilih semua task", "Select all tasks")}</span>
+              <span>{t("Pilih semua subtask", "Select all subtasks")}</span>
             </label>
             {preview.map((item) => {
               const decision = selectedItems.find((candidate) => candidate.itemId === item.itemId);
