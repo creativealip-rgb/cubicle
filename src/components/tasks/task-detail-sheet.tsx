@@ -124,6 +124,7 @@ interface TaskDetailSheetProps {
     clientName?: string | null;
     projectId?: string | null;
     projectName?: string | null;
+    timeTrackingMode?: "off" | "internal" | "billable" | null;
   };
   members?: MemberOption[];
   className?: string;
@@ -846,7 +847,7 @@ export function TaskDetailSheet({
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </>
-              ) : (
+              ) : task.timeTrackingMode !== "off" && (
                 <Button
                   type="button"
                   size="sm"

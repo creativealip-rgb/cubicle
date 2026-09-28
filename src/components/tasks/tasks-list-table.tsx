@@ -385,7 +385,7 @@ export function TasksListTable({
                       <CheckSquare2 className="h-3 w-3" />
                     </button>
 
-                    {task.projectId && task.status !== "done" && (
+                    {task.projectId && task.status !== "done" && task.timeTrackingMode !== "off" && (
                       <button
                         type="button"
                         onClick={(e) => handleStartTimer(task, e)}
