@@ -10,21 +10,12 @@ import {
   Bell,
   MessageCircle,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n-client";
 import { PortalActionButtons } from "./portal-action-buttons";
 
-export type PortalTabKey = "projects" | "files" | "invoices" | "requests";
+export type PortalTabKey = "projects" | "files" | "invoices" | "requests" | "contact";
 
-const TAB_KEYS: PortalTabKey[] = ["projects", "files", "invoices", "requests"];
+const TAB_KEYS: PortalTabKey[] = ["projects", "files", "invoices", "requests", "contact"];
 
 function normalizeTab(raw: string | null | undefined): PortalTabKey {
   if (raw && (TAB_KEYS as string[]).includes(raw)) {
@@ -120,6 +111,11 @@ export function PortalTabs({
       icon: <Bell className="h-3.5 w-3.5" />,
       badge: counts?.requests,
     },
+    {
+      key: "contact",
+      label: t("Kontak", "Contact"),
+      icon: <MessageCircle className="h-3.5 w-3.5" />,
+    },
   ];
 
   const panelClass =
@@ -148,30 +144,6 @@ export function PortalTabs({
                 ) : null}
               </TabsTrigger>
             ))}
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="min-h-9 gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold hover:bg-background/80"
-                >
-                  <MessageCircle className="h-3.5 w-3.5" />
-                  {t("Kontak", "Contact")}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="w-[calc(100%-2rem)] max-w-sm gap-5 overflow-hidden rounded-2xl p-0">
-                <DialogHeader className="border-b bg-muted/30 px-6 pb-5 pt-6 text-left">
-                  <DialogTitle>{t("Hubungi tim", "Contact team")}</DialogTitle>
-                  <DialogDescription>
-                    {t(
-                      "Pilih kanal komunikasi yang paling nyaman untuk menghubungi tim.",
-                      "Choose your preferred channel to contact the team.",
-                    )}
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="px-6 pb-6">{contact}</div>
-              </DialogContent>
-            </Dialog>
           </TabsList>
         </div>
 
@@ -199,6 +171,10 @@ export function PortalTabs({
 
       <TabsContent value="requests" className={panelClass}>
         {requests}
+      </TabsContent>
+
+      <TabsContent value="contact" className={panelClass}>
+        {contact}
       </TabsContent>
     </Tabs>
   );
