@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/lib/i18n-client";
+import { allowsTimeTrackingProject } from "@/lib/billing-model";
 import {
   Dialog,
   DialogContent,
@@ -125,6 +126,8 @@ interface TaskDetailSheetProps {
     projectId?: string | null;
     projectName?: string | null;
     timeTrackingMode?: "off" | "internal" | "billable" | null;
+    billingModel?: string | null;
+    billingType?: string | null;
   };
   members?: MemberOption[];
   className?: string;
@@ -847,7 +850,7 @@ export function TaskDetailSheet({
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </>
-              ) : task.timeTrackingMode !== "off" && (
+              ) : allowsTimeTrackingProject(task) && task.timeTrackingMode !== "off" && (
                 <Button
                   type="button"
                   size="sm"

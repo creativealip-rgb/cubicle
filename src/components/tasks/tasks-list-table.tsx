@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAppTransition } from "@/lib/transition-provider";
+import { allowsTimeTrackingProject } from "@/lib/billing-model";
 
 export type TasksListItem = {
   id: string;
@@ -40,6 +41,8 @@ export type TasksListItem = {
   projectId: string | null;
   projectName: string | null;
   timeTrackingMode: "off" | "internal" | "billable" | null;
+  billingModel?: string | null;
+  billingType?: string | null;
   clientName: string | null;
   assigneeId: string | null;
   assigneeName: string | null;
@@ -385,7 +388,7 @@ export function TasksListTable({
                       <CheckSquare2 className="h-3 w-3" />
                     </button>
 
-                    {task.projectId && task.status !== "done" && task.timeTrackingMode !== "off" && (
+                    {task.projectId && task.status !== "done" && allowsTimeTrackingProject(task) && task.timeTrackingMode !== "off" && (
                       <button
                         type="button"
                         onClick={(e) => handleStartTimer(task, e)}

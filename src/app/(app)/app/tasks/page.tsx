@@ -105,6 +105,8 @@ export default async function TasksPage({
     projectId: tasks.projectId,
     projectName: projects.name,
     timeTrackingMode: projects.timeTrackingMode,
+    billingModel: projects.billingModel,
+    billingType: projects.billingType,
     clientName: clients.name,
     assigneeId: tasks.assigneeId,
     assigneeName: users.name,
