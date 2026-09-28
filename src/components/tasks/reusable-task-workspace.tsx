@@ -10,7 +10,6 @@ import {
   Play,
   RotateCcw,
   Repeat,
-  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { resetTaskSubtasks } from "@/lib/actions/tasks";
@@ -70,6 +69,22 @@ function getCadenceBadge(title: string, t: (id: string, en: string) => string) {
     label: t("Rutin / SOP", "Recurring SOP"),
     className: "bg-muted text-muted-foreground border-border/80",
   };
+}
+
+function formatTaskDuration(minutes: number, t: (id: string, en: string) => string): string {
+  if (!minutes || minutes <= 0) return `0 ${t("jam", "hr")}`;
+  const hours = Math.floor(minutes / 60);
+  const remainingMins = minutes % 60;
+  const hLabel = t("j", "h");
+  const mLabel = t("m", "m");
+
+  if (hours === 0) {
+    return `${remainingMins}${mLabel}`;
+  }
+  if (remainingMins === 0) {
+    return `${hours} ${t("jam", "hr")}`;
+  }
+  return `${hours}${hLabel} ${remainingMins}${mLabel}`;
 }
 
 export function ReusableTaskWorkspace({
@@ -148,7 +163,7 @@ export function ReusableTaskWorkspace({
         <span>{t("Tugas Rutin / SOP", "Recurring Task / SOP")}</span>
         <span>{t("Proyek & Klien", "Project & Client")}</span>
         <span>{t("Petugas", "Assignee")}</span>
-        <span>{t("Jam Bulan Ini", "Hours / Mo")}</span>
+        <span>{t("Durasi Bulan Ini", "Time / Mo")}</span>
         <span>{t("Terakhir Dipakai", "Last Used")}</span>
         <span className="text-right">{t("Aksi", "Action")}</span>
       </div>
@@ -174,7 +189,7 @@ export function ReusableTaskWorkspace({
             lifecycle: task.lifecycle,
           };
 
-          const hours = ((task.monthMinutes ?? 0) / 60).toFixed(1);
+          const durationDisplay = formatTaskDuration(task.monthMinutes ?? 0, t);
           const cadence = getCadenceBadge(task.title, t);
 
           return (
@@ -262,9 +277,9 @@ export function ReusableTaskWorkspace({
                   )}
                 </div>
 
-                {/* 4. Hours this month */}
+                {/* 4. Duration this month (Smart Formatting: 15m, 1h 30m, etc.) */}
                 <div className="text-xs font-mono font-bold text-foreground">
-                  {hours} <span className="text-[11px] font-normal text-muted-foreground">{t("jam", "hr")}</span>
+                  {durationDisplay}
                 </div>
 
                 {/* 5. Last Used */}
