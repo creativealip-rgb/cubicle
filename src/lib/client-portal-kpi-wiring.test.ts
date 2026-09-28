@@ -7,22 +7,23 @@ const source = readFileSync(
 );
 
 describe("client portal KPI strip", () => {
-  it("shows six client-focused KPIs with separate fixed and hourly cards", () => {
+  it("shows five compact client-focused KPIs", () => {
     expect(source).toContain('t("Tugas Aktif", "Active Tasks")');
     expect(source).toContain('t("Butuh Review", "Needs Review")');
-    expect(source).toContain('t("Harga Tetap", "Fixed Price")');
-    expect(source).toContain('t("Per Jam", "Hourly")');
+    expect(source).toContain('t("Proyek", "Projects")');
     expect(source).toContain('t("Invoice Terbuka", "Open Invoices")');
     expect(source).toContain('t("Permintaan", "Requests")');
   });
 
-  it("does not render retainer or a combined projects KPI", () => {
+  it("summarizes fixed and hourly projects without retainer", () => {
     expect(source).not.toContain('t("Retainer", "Retainer")');
-    expect(source).not.toContain('t("Proyek", "Projects")');
-    expect(source).not.toContain("Fixed ·");
+    expect(source).not.toContain('t("Harga Tetap", "Fixed Price")');
+    expect(source).not.toContain('t("Per Jam", "Hourly")');
+    expect(source).toContain("{byProjectCount} Fixed · {byHoursCount} Hourly");
   });
 
-  it("uses a responsive 2-column mobile and 3-column desktop grid", () => {
-    expect(source).toContain("grid grid-cols-2 gap-3 lg:grid-cols-3");
+  it("uses one desktop row and horizontal mobile overflow", () => {
+    expect(source).toContain("grid min-w-[760px] grid-cols-5 gap-3");
+    expect(source).toContain("overflow-x-auto");
   });
 });
