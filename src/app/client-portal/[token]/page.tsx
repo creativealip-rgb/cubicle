@@ -1168,19 +1168,15 @@ export default async function ClientPortalPage({
                 </section>
               }
               contact={
-                <div className="max-w-2xl mx-auto">
-                  <Card className="rounded-2xl border border-border/80 bg-card shadow-xs overflow-hidden">
-                    <CardContent className="p-6 sm:p-8">
-                      <PortalContactButtons
-                        phone={workspaceContact?.phone}
-                        email={portalContactEmail}
-                        ownerName={workspaceContact?.name}
-                        clientName={client.companyName || client.name}
-                        compact
-                      />
-                    </CardContent>
-                  </Card>
-                </div>
+                <section className="space-y-3.5">
+                  <PortalContactButtons
+                    phone={workspaceContact?.phone}
+                    email={portalContactEmail}
+                    ownerName={workspaceContact?.name}
+                    clientName={client.companyName || client.name}
+                    billingAddress={workspaceContact?.billingAddress}
+                  />
+                </section>
               }
             />
           </Suspense>
