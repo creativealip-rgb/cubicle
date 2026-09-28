@@ -403,7 +403,7 @@ export async function generatePortalToken(clientId: string) {
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertClientInWorkspace(db, user.id, workspaceId, clientId);
-  await assertCanUseClientPortal(user.id);
+  await assertCanUseClientPortal(workspaceId);
 
   const rawToken = randomBytes(32).toString("hex");
   const tokenHash = createHash("sha256").update(rawToken).digest("hex");
@@ -450,7 +450,7 @@ export async function setClientPortalPassword(clientId: string, password: string
   const workspaceId = await getWorkspaceId();
   await assertWorkspaceWritable(db, user.id, workspaceId);
   await assertClientInWorkspace(db, user.id, workspaceId, clientId);
-  await assertCanUseClientPortal(user.id);
+  await assertCanUseClientPortal(workspaceId);
   const value = z.string().min(8, "Password minimal 8 karakter").max(128).parse(password);
   const [current] = await db.select({ slug: clients.portalSlug }).from(clients)
     .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)));
