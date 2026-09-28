@@ -9,6 +9,8 @@ import {
   Folder,
   Play,
   RotateCcw,
+  Repeat,
+  Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { resetTaskSubtasks } from "@/lib/actions/tasks";
@@ -42,6 +44,32 @@ function getInitials(name?: string | null): string {
     return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
   }
   return "UN";
+}
+
+function getCadenceBadge(title: string, t: (id: string, en: string) => string) {
+  const lower = title.toLowerCase();
+  if (lower.includes("daily") || lower.includes("harian") || lower.includes("tiap hari") || lower.includes("standup")) {
+    return {
+      label: t("Harian", "Daily"),
+      className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
+    };
+  }
+  if (lower.includes("weekly") || lower.includes("mingguan") || lower.includes("tiap minggu") || lower.includes("sprint")) {
+    return {
+      label: t("Mingguan", "Weekly"),
+      className: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
+    };
+  }
+  if (lower.includes("monthly") || lower.includes("bulanan") || lower.includes("tiap bulan") || lower.includes("rekap")) {
+    return {
+      label: t("Bulanan", "Monthly"),
+      className: "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
+    };
+  }
+  return {
+    label: t("Rutin / SOP", "Recurring SOP"),
+    className: "bg-muted text-muted-foreground border-border/80",
+  };
 }
 
 export function ReusableTaskWorkspace({
@@ -93,7 +121,7 @@ export function ReusableTaskWorkspace({
     e.preventDefault();
     try {
       await resetTaskSubtasks(taskId);
-      toast.success(t("Checklist SOP di-reset", "SOP checklist reset"));
+      toast.success(t("Checklist SOP berhasil di-reset!", "SOP checklist reset successfully!"));
       refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal reset checklist", "Failed to reset checklist"));
@@ -103,20 +131,20 @@ export function ReusableTaskWorkspace({
   if (tasks.length === 0) {
     return (
       <EmptyState
-        icon={CheckSquare2}
+        icon={Repeat}
         title={t("Tidak ada tugas rutin", "No recurring tasks found")}
         description={t(
-          "Tugas rutin (SOP / Retainer / Hourly) untuk tracking waktu dan checklist berulang akan muncul di sini.",
-          "Recurring tasks (SOP / Retainer / Hourly) for time tracking and recurring checklists will appear here."
+          "Tugas rutin (SOP / Aktivitas Berulang / Hourly) untuk tracking waktu dan checklist terstruktur akan muncul di sini.",
+          "Recurring tasks (SOP / Repeating Activities / Hourly) for time tracking and structured checklists will appear here."
         )}
       />
     );
   }
 
   return (
-    <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-sm">
+    <div className="rounded-xl border border-border/80 bg-card overflow-hidden shadow-xs">
       {/* Table Header */}
-      <div className="hidden sm:grid sm:grid-cols-[1fr_13rem_7rem_7rem_8rem_6rem] items-center gap-3 border-b bg-muted/40 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+      <div className="hidden sm:grid sm:grid-cols-[1fr_13rem_7rem_7rem_8rem_7rem] items-center gap-3 border-b bg-muted/40 px-4 py-2.5 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
         <span>{t("Tugas Rutin / SOP", "Recurring Task / SOP")}</span>
         <span>{t("Proyek & Klien", "Project & Client")}</span>
         <span>{t("Petugas", "Assignee")}</span>
@@ -147,6 +175,7 @@ export function ReusableTaskWorkspace({
           };
 
           const hours = ((task.monthMinutes ?? 0) / 60).toFixed(1);
+          const cadence = getCadenceBadge(task.title, t);
 
           return (
             <TaskDetailSheet
@@ -157,32 +186,36 @@ export function ReusableTaskWorkspace({
               className="block"
             >
               <div
-                className="group flex flex-col sm:grid sm:grid-cols-[1fr_13rem_7rem_7rem_8rem_6rem] sm:items-center gap-2 sm:gap-3 px-4 py-3 hover:bg-muted/40 transition-colors cursor-pointer"
+                className="group flex flex-col sm:grid sm:grid-cols-[1fr_13rem_7rem_7rem_8rem_7rem] sm:items-center gap-2.5 sm:gap-3 px-4 py-3 hover:bg-muted/40 transition-colors cursor-pointer"
               >
-                {/* 1. Title & SOP Subtask Checklist */}
+                {/* 1. Title & Cadence & SOP Subtask Checklist */}
                 <div className="min-w-0 flex items-center gap-2.5">
-                  <div className="flex h-5 w-5 shrink-0 items-center justify-center rounded-md bg-amber-500/10 text-amber-600 font-bold text-xs">
-                    ∞
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg border border-amber-500/20 bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold text-xs shadow-2xs">
+                    <Repeat className="h-3.5 w-3.5" />
                   </div>
 
                   <div className="min-w-0 flex-1 flex items-center gap-2 flex-wrap">
-                    <span className="text-sm font-medium text-foreground group-hover:text-primary transition-colors">
+                    <span className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
                       {task.title}
+                    </span>
+
+                    <span className={`inline-flex items-center rounded-md border px-1.5 py-0.2 text-[10px] font-bold ${cadence.className}`}>
+                      {cadence.label}
                     </span>
 
                     {(task.subtaskTotal ?? 0) > 0 && (
                       <div className="flex items-center gap-1.5">
                         <span
-                          className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-medium ${
+                          className={`inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold ${
                             task.subtaskDone === task.subtaskTotal
-                              ? "bg-emerald-500/10 text-emerald-600 border border-emerald-200/60"
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
                               : "bg-muted text-muted-foreground border border-border/80"
                           }`}
                         >
                           <CheckSquare2 className="h-3 w-3" />
                           SOP: {task.subtaskDone}/{task.subtaskTotal}
                         </span>
-                        <div className="h-1.5 w-12 rounded-full bg-muted overflow-hidden">
+                        <div className="h-1.5 w-12 rounded-full bg-muted overflow-hidden border border-border/40">
                           <div
                             className={`h-full transition-all ${
                               task.subtaskDone === task.subtaskTotal ? "bg-emerald-500" : "bg-primary"
@@ -200,9 +233,9 @@ export function ReusableTaskWorkspace({
                 {/* 2. Project & Client */}
                 <div className="min-w-0 flex items-center gap-1.5 text-xs text-muted-foreground">
                   {task.projectName ? (
-                    <div className="inline-flex items-center gap-1 max-w-full truncate rounded-md bg-muted/60 px-2 py-0.5 border border-border/50 text-[11px]">
+                    <div className="inline-flex items-center gap-1 max-w-full truncate rounded-lg bg-muted/60 px-2 py-0.5 border border-border/60 text-[11px]">
                       <Folder className="h-3 w-3 shrink-0 text-muted-foreground/70" />
-                      <span className="font-medium text-foreground truncate">{task.projectName}</span>
+                      <span className="font-semibold text-foreground truncate">{task.projectName}</span>
                       {task.clientName && (
                         <>
                           <span className="text-muted-foreground/50">·</span>
@@ -222,7 +255,7 @@ export function ReusableTaskWorkspace({
                       <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[9px] font-bold text-primary">
                         {getInitials(task.assigneeName)}
                       </span>
-                      <span className="truncate text-muted-foreground text-xs">{task.assigneeName}</span>
+                      <span className="truncate text-foreground text-xs font-medium">{task.assigneeName}</span>
                     </div>
                   ) : (
                     <span className="text-muted-foreground/40 text-xs">—</span>
@@ -230,7 +263,7 @@ export function ReusableTaskWorkspace({
                 </div>
 
                 {/* 4. Hours this month */}
-                <div className="text-xs font-mono font-semibold text-foreground">
+                <div className="text-xs font-mono font-bold text-foreground">
                   {hours} <span className="text-[11px] font-normal text-muted-foreground">{t("jam", "hr")}</span>
                 </div>
 
@@ -245,15 +278,15 @@ export function ReusableTaskWorkspace({
                 </div>
 
                 {/* 6. Quick Action (Start Timer & Reset Checklist) */}
-                <div className="flex items-center justify-end gap-1">
+                <div className="flex items-center justify-end gap-1.5">
                   {(task.subtaskTotal ?? 0) > 0 && (
                     <Button
                       type="button"
-                      variant="ghost"
+                      variant="outline"
                       size="sm"
                       onClick={(e) => handleResetChecklist(task.id, e)}
                       title={t("Reset Checklist SOP", "Reset SOP Checklist")}
-                      className="h-7 w-7 p-0 text-muted-foreground hover:text-foreground"
+                      className="h-7.5 w-7.5 rounded-lg p-0 text-muted-foreground hover:text-foreground hover:bg-muted"
                     >
                       <RotateCcw className="h-3.5 w-3.5" />
                     </Button>
@@ -261,11 +294,10 @@ export function ReusableTaskWorkspace({
                   {task.projectId && (
                     <Button
                       type="button"
-                      variant="secondary"
                       size="sm"
                       onClick={(e) => handleStartTimer(task, e)}
                       title={t("Mulai Timer", "Start Timer")}
-                      className="h-7 w-7 p-0 text-primary hover:bg-primary/10"
+                      className="h-7.5 w-7.5 rounded-lg p-0 bg-primary text-primary-foreground shadow-2xs hover:bg-primary/90"
                     >
                       <Play className="h-3.5 w-3.5 fill-current" />
                     </Button>
