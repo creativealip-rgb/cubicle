@@ -496,16 +496,187 @@ export async function notifyTaskAssigned(opts: {
   taskTitle: string;
   taskId: string;
   assignerName: string;
+  projectName?: string | null;
   dueDate?: string | null;
+  description?: string | null;
 }) {
+  const taskUrl = `${appUrl.replace(/\/$/, "")}/app/tasks?taskId=${opts.taskId}`;
+  const html = wrapTemplate({
+    title: `You were assigned: ${opts.taskTitle}`,
+    bodyHtml: `
+      <p style="margin:0 0 16px;font-size:16px;font-weight:600;color:#111827;">
+        Hi ${escapeHtml(opts.assigneeName)},
+      </p>
+      <p style="margin:0 0 16px;color:#374151;">
+        <strong>${escapeHtml(opts.assignerName)}</strong> assigned you to a task:
+      </p>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:700;color:#111827;margin-bottom:6px;">
+          ${escapeHtml(opts.taskTitle)}
+        </div>
+        ${opts.projectName ? `<div style="font-size:13px;color:#6b7280;margin-bottom:6px;">📁 Project: <strong>${escapeHtml(opts.projectName)}</strong></div>` : ""}
+        ${opts.dueDate ? `<div style="font-size:13px;color:#d97706;margin-bottom:6px;">🗓 Due Date: <strong>${escapeHtml(opts.dueDate)}</strong></div>` : ""}
+        ${opts.description ? `<div style="font-size:13px;color:#4b5563;margin-top:10px;padding-top:10px;border-top:1px dashed #e5e7eb;white-space:pre-wrap;">${escapeHtml(opts.description)}</div>` : ""}
+      </div>
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${taskUrl}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:10px 24px;border-radius:6px;font-weight:600;font-size:14px;display:inline-block;">
+          Open Task in Cubiqlo →
+        </a>
+      </div>
+    `,
+  });
+
   return sendNotification({
     to: opts.assigneeEmail,
-    subject: `You were assigned: ${opts.taskTitle}`,
+    subject: `📋 Task Assigned: ${opts.taskTitle}`,
+    html,
     text:
       `Hi ${opts.assigneeName},\n\n` +
-      `${opts.assignerName} assigned you a new task: "${opts.taskTitle}".\n\n` +
-      (opts.dueDate ? `Due: ${opts.dueDate}\n\n` : ``) +
-      `Open in Cubiqlo: /app/tasks?assignee=me`,
+      `${opts.assignerName} assigned you to "${opts.taskTitle}".\n\n` +
+      (opts.dueDate ? `Due Date: ${opts.dueDate}\n\n` : "") +
+      `Open in Cubiqlo: ${taskUrl}`,
     type: "task_assigned",
   });
 }
+
+export async function notifySubtaskAssigned(opts: {
+  assigneeEmail: string;
+  assigneeName: string;
+  subtaskTitle: string;
+  parentTaskTitle: string;
+  taskId: string;
+  assignerName: string;
+  dueDate?: string | null;
+  description?: string | null;
+}) {
+  const taskUrl = `${appUrl.replace(/\/$/, "")}/app/tasks?taskId=${opts.taskId}`;
+  const html = wrapTemplate({
+    title: `Subtask assigned: ${opts.subtaskTitle}`,
+    bodyHtml: `
+      <p style="margin:0 0 16px;font-size:16px;font-weight:600;color:#111827;">
+        Hi ${escapeHtml(opts.assigneeName)},
+      </p>
+      <p style="margin:0 0 16px;color:#374151;">
+        <strong>${escapeHtml(opts.assignerName)}</strong> assigned you to a subtask step under <strong>${escapeHtml(opts.parentTaskTitle)}</strong>:
+      </p>
+      <div style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:16px;margin-bottom:20px;">
+        <div style="font-size:15px;font-weight:700;color:#111827;margin-bottom:6px;">
+          ✓ ${escapeHtml(opts.subtaskTitle)}
+        </div>
+        <div style="font-size:13px;color:#6b7280;margin-bottom:6px;">📋 Parent Task: <strong>${escapeHtml(opts.parentTaskTitle)}</strong></div>
+        ${opts.dueDate ? `<div style="font-size:13px;color:#d97706;margin-bottom:6px;">🗓 Due Date: <strong>${escapeHtml(opts.dueDate)}</strong></div>` : ""}
+        ${opts.description ? `<div style="font-size:13px;color:#4b5563;margin-top:10px;padding-top:10px;border-top:1px dashed #e5e7eb;white-space:pre-wrap;">${escapeHtml(opts.description)}</div>` : ""}
+      </div>
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${taskUrl}" style="background:#7c3aed;color:#ffffff;text-decoration:none;padding:10px 24px;border-radius:6px;font-weight:600;font-size:14px;display:inline-block;">
+          Open Subtask in Cubiqlo →
+        </a>
+      </div>
+    `,
+  });
+
+  return sendNotification({
+    to: opts.assigneeEmail,
+    subject: `📋 Subtask Assigned: ${opts.subtaskTitle}`,
+    html,
+    text:
+      `Hi ${opts.assigneeName},\n\n` +
+      `${opts.assignerName} assigned you to subtask "${opts.subtaskTitle}" under "${opts.parentTaskTitle}".\n\n` +
+      (opts.dueDate ? `Due Date: ${opts.dueDate}\n\n` : "") +
+      `Open in Cubiqlo: ${taskUrl}`,
+    type: "subtask_assigned",
+  });
+}
+
+export async function notifyCommentMention(opts: {
+  mentionedEmail: string;
+  mentionedName: string;
+  authorName: string;
+  taskTitle: string;
+  taskId: string;
+  subtaskTitle?: string | null;
+  commentSnippet: string;
+}) {
+  const taskUrl = `${appUrl.replace(/\/$/, "")}/app/tasks?taskId=${opts.taskId}`;
+  const targetName = opts.subtaskTitle ? `subtask "${opts.subtaskTitle}"` : `task "${opts.taskTitle}"`;
+  
+  const html = wrapTemplate({
+    title: `${opts.authorName} mentioned you`,
+    bodyHtml: `
+      <p style="margin:0 0 16px;font-size:16px;font-weight:600;color:#111827;">
+        Hi ${escapeHtml(opts.mentionedName)},
+      </p>
+      <p style="margin:0 0 16px;color:#374151;">
+        <strong>${escapeHtml(opts.authorName)}</strong> mentioned you in a comment on ${escapeHtml(targetName)}:
+      </p>
+      <div style="background:#f3f4f6;border-left:4px solid #4f46e5;border-radius:4px 8px 8px 4px;padding:16px;margin-bottom:20px;font-style:italic;color:#1f2937;white-space:pre-wrap;">
+        "${escapeHtml(opts.commentSnippet)}"
+      </div>
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${taskUrl}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:10px 24px;border-radius:6px;font-weight:600;font-size:14px;display:inline-block;">
+          Reply to Comment →
+        </a>
+      </div>
+    `,
+  });
+
+  return sendNotification({
+    to: opts.mentionedEmail,
+    subject: `💬 ${opts.authorName} mentioned you on ${opts.taskTitle}`,
+    html,
+    text:
+      `Hi ${opts.mentionedName},\n\n` +
+      `${opts.authorName} mentioned you in a comment on ${targetName}:\n\n` +
+      `"${opts.commentSnippet}"\n\n` +
+      `Reply in Cubiqlo: ${taskUrl}`,
+    type: "task_comment_mention",
+  });
+}
+
+export async function notifyTaskDueReminder(opts: {
+  assigneeEmail: string;
+  assigneeName: string;
+  taskTitle: string;
+  taskId: string;
+  dueDate: string;
+  daysRemaining: number;
+  projectName?: string | null;
+}) {
+  const taskUrl = `${appUrl.replace(/\/$/, "")}/app/tasks?taskId=${opts.taskId}`;
+  const dueLabel = opts.daysRemaining === 0 ? "Today" : opts.daysRemaining === 1 ? "Tomorrow" : `in ${opts.daysRemaining} days`;
+
+  const html = wrapTemplate({
+    title: `Reminder: Task due ${dueLabel}`,
+    bodyHtml: `
+      <p style="margin:0 0 16px;font-size:16px;font-weight:600;color:#111827;">
+        Hi ${escapeHtml(opts.assigneeName)},
+      </p>
+      <p style="margin:0 0 16px;color:#374151;">
+        Friendly reminder that your assigned task is due <strong>${escapeHtml(dueLabel)}</strong> (${escapeHtml(opts.dueDate)}):
+      </p>
+      <div style="background:#fffbeb;border:1px solid #fef3c7;border-left:4px solid #f59e0b;border-radius:4px 8px 8px 4px;padding:16px;margin-bottom:20px;">
+        <div style="font-size:16px;font-weight:700;color:#92400e;margin-bottom:4px;">
+          ${escapeHtml(opts.taskTitle)}
+        </div>
+        ${opts.projectName ? `<div style="font-size:13px;color:#b45309;">📁 Project: ${escapeHtml(opts.projectName)}</div>` : ""}
+      </div>
+      <div style="text-align:center;margin:24px 0;">
+        <a href="${taskUrl}" style="background:#f59e0b;color:#ffffff;text-decoration:none;padding:10px 24px;border-radius:6px;font-weight:600;font-size:14px;display:inline-block;">
+          View & Complete Task →
+        </a>
+      </div>
+    `,
+  });
+
+  return sendNotification({
+    to: opts.assigneeEmail,
+    subject: `⏰ Due Reminder: ${opts.taskTitle} (due ${dueLabel})`,
+    html,
+    text:
+      `Hi ${opts.assigneeName},\n\n` +
+      `Your task "${opts.taskTitle}" is due ${dueLabel} (${opts.dueDate}).\n\n` +
+      `Open in Cubiqlo: ${taskUrl}`,
+    type: "task_due_reminder",
+  });
+}
+

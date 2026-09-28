@@ -11,7 +11,7 @@ import { revalidatePath } from "next/cache";
 import { requireUser, assertWorkspaceWritable, assertTaskInWorkspace, assertProjectInWorkspace } from "@/lib/access";
 import { assertWorkspaceUserReference } from "@/lib/tenant-reference-rules";
 import { writeActivityLog } from "@/lib/actions/activity";
-import { notifyTaskAssigned } from "@/lib/notifications";
+import { notifyTaskAssigned, notifySubtaskAssigned, notifyCommentMention } from "@/lib/notifications";
 import { createNotification, notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 import { resolveBillingModel } from "@/lib/billing-model";
 import { resolveProjectTaskMode } from "@/lib/task-work-mode";
@@ -577,6 +577,21 @@ export async function updateSubtaskDetails({
   const workspaceId = await getWorkspaceForCurrentUser();
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
+  const [existingSubtask] = await db
+    .select({
+      id: taskSubtasks.id,
+      taskId: taskSubtasks.taskId,
+      title: taskSubtasks.title,
+      assigneeId: taskSubtasks.assigneeId,
+      dueDate: taskSubtasks.dueDate,
+      description: taskSubtasks.description,
+    })
+    .from(taskSubtasks)
+    .where(and(eq(taskSubtasks.id, subtaskId), eq(taskSubtasks.workspaceId, workspaceId)))
+    .limit(1);
+
+  if (!existingSubtask) throw new Error("Subtask tidak ditemukan");
+
   const updates: Record<string, any> = { updatedAt: new Date() };
   if (title !== undefined) {
     const cleanTitle = title.trim();
@@ -592,6 +607,55 @@ export async function updateSubtaskDetails({
     .set(updates)
     .where(and(eq(taskSubtasks.id, subtaskId), eq(taskSubtasks.workspaceId, workspaceId)))
     .returning();
+
+  // Send Email & In-App Notification if assignee changed
+  if (assigneeId && assigneeId !== existingSubtask.assigneeId && assigneeId !== user.id) {
+    const [parentTask] = await db
+      .select({ id: tasks.id, title: tasks.title })
+      .from(tasks)
+      .where(and(eq(tasks.id, existingSubtask.taskId), eq(tasks.workspaceId, workspaceId)))
+      .limit(1);
+
+    const [targetUser] = await db
+      .select({ id: users.id, name: users.name, email: users.email })
+      .from(users)
+      .where(eq(users.id, assigneeId))
+      .limit(1);
+
+    if (targetUser?.email && parentTask) {
+      const assignerName = (user as any).name || user.email || "Someone";
+      try {
+        await notifySubtaskAssigned({
+          assigneeEmail: targetUser.email,
+          assigneeName: targetUser.name || targetUser.email,
+          subtaskTitle: updated.title,
+          parentTaskTitle: parentTask.title,
+          taskId: parentTask.id,
+          assignerName,
+          dueDate: updated.dueDate,
+          description: updated.description,
+        });
+      } catch {
+        // best-effort email
+      }
+
+      try {
+        await createNotification({
+          workspaceId,
+          userId: targetUser.id,
+          type: "task_assigned",
+          title: `${assignerName} menugaskan subtask: ${updated.title}`,
+          body: `Pada tugas "${parentTask.title}"`,
+          link: `/app/tasks?focus=${parentTask.id}`,
+          entityType: "task",
+          entityId: parentTask.id,
+          actorId: user.id,
+        });
+      } catch {
+        // best-effort
+      }
+    }
+  }
 
   revalidatePath("/app/tasks");
   return updated;
@@ -903,7 +967,7 @@ export async function addTaskComment({
           workspaceId,
           userId: member.id,
           type: "task_commented",
-          title: `${user.email} me-mention Anda di tugas: ${task.title}`,
+          title: `${(user as any).name || user.email} me-mention Anda di tugas: ${task.title}`,
           body: cleanContent.slice(0, 100),
           link: `/app/tasks?focus=${taskId}`,
           entityType: "task",
@@ -912,6 +976,22 @@ export async function addTaskComment({
         });
       } catch {
         // best-effort
+      }
+
+      // Send Instant Email for Mention
+      if (member.email) {
+        try {
+          await notifyCommentMention({
+            mentionedEmail: member.email,
+            mentionedName: member.name || member.email,
+            authorName: (user as any).name || user.email || "Someone",
+            taskTitle: task.title,
+            taskId: task.id,
+            commentSnippet: cleanContent.slice(0, 250),
+          });
+        } catch {
+          // best-effort email
+        }
       }
     }
   }

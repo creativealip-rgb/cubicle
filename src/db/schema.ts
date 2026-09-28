@@ -1114,6 +1114,7 @@ export const taskComments = pgTable("task_comments", {
   id: uuid("id").defaultRandom().primaryKey(),
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   taskId: uuid("task_id").notNull().references(() => tasks.id, { onDelete: "cascade" }),
+  subtaskId: uuid("subtask_id").references(() => taskSubtasks.id, { onDelete: "cascade" }),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   attachments: jsonb("attachments").$type<Array<{
