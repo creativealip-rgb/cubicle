@@ -115,6 +115,7 @@ interface TaskDetailSheetProps {
     status: any;
     priority: any;
     mode?: "reusable" | "one_time" | string;
+    behavior?: "one_time" | "recurring" | string | null;
     clientVisible?: boolean;
     dueDate?: string | null;
     assigneeId?: string | null;
@@ -1010,28 +1011,34 @@ export function TaskDetailSheet({
                 </div>
 
                 {/* Attributes Grid (Status, Priority, Assignee, Portal Toggle) */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3 rounded-xl bg-muted/30 border border-border/60 text-xs">
-                  {/* Status */}
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                      <CheckCircle2 className="h-3 w-3 text-primary" />
-                      {t("Status", "Status")}
-                    </span>
-                    <Select
-                      value={task.status}
-                      onValueChange={(val: any) => handleStatusChange(val)}
-                    >
-                      <SelectTrigger className="h-7 text-xs font-semibold rounded-lg bg-background border-border/80">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="todo">🟡 To Do</SelectItem>
-                        <SelectItem value="in_progress">🔵 In Progress</SelectItem>
-                        <SelectItem value="review">🟣 Review</SelectItem>
-                        <SelectItem value="done">🟢 Done</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className={`grid gap-3 p-3 rounded-xl bg-muted/30 border border-border/60 text-xs ${
+                  task.mode === "reusable" || task.behavior === "recurring"
+                    ? "grid-cols-2 sm:grid-cols-3"
+                    : "grid-cols-2 sm:grid-cols-4"
+                }`}>
+                  {/* Status (Only for one-time/workflow tasks — SOP/recurring tasks have no end status) */}
+                  {task.mode !== "reusable" && task.behavior !== "recurring" && (
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
+                        <CheckCircle2 className="h-3 w-3 text-primary" />
+                        {t("Status", "Status")}
+                      </span>
+                      <Select
+                        value={task.status}
+                        onValueChange={(val: any) => handleStatusChange(val)}
+                      >
+                        <SelectTrigger className="h-7 text-xs font-semibold rounded-lg bg-background border-border/80">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="todo">🟡 To Do</SelectItem>
+                          <SelectItem value="in_progress">🔵 In Progress</SelectItem>
+                          <SelectItem value="review">🟣 Review</SelectItem>
+                          <SelectItem value="done">🟢 Done</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                   {/* Priority */}
                   <div className="space-y-1">
