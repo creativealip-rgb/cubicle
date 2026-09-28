@@ -2232,6 +2232,7 @@ export const notifications = pgTable("notifications", {
       "mention",            // @mentioned in comment
       "portal_report_request",  // client requested report via portal
       "portal_meeting_request", // client requested meeting via portal
+      "portal_request_created", // client created task/deliverable request via portal
     ],
   }).notNull(),
   title: text("title").notNull(),

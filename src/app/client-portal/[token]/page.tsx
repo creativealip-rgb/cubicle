@@ -37,6 +37,7 @@ import {
   Sparkles,
   FolderKanban,
   Receipt,
+  CheckCircle2,
 } from "lucide-react";
 import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
@@ -811,7 +812,8 @@ export default async function ClientPortalPage({
   const billingModels = clientProjects.map((p) => resolveBillingModel(p));
   const byProjectCount = billingModels.filter((model) => model === "fixed_price").length;
   const byHoursCount = billingModels.filter((model) => model === "hourly").length;
-  const retainerCount = billingModels.filter((model) => model === "retainer").length;
+  const activeTasksCount = allVisibleTasks.filter((t) => t.status !== "done").length;
+  const reviewTasksCount = allVisibleTasks.filter((t) => t.status === "review").length;
   const dueInvoiceCount = clientInvoices.filter((inv) =>
     ["sent", "viewed", "overdue", "partial"].includes(inv.status),
   ).length;
@@ -908,54 +910,54 @@ export default async function ClientPortalPage({
             </div>
           </div>
 
-          {/* ─── 1. Top summary + actions (Standard Executive 5-KPI Strip) ─── */}
+          {/* ─── 1. Top summary + actions (Client Executive 5-KPI Strip) ─── */}
           <div className="space-y-4">
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-              {/* 1. Fixed Price */}
+              {/* 1. Active Tasks */}
               <div className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
-                    <DollarSign className="h-4 w-4" />
+                    <CheckCircle2 className="h-4 w-4" />
                   </div>
                   <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400">
-                    {byProjectCount}
+                    {activeTasksCount}
                   </span>
                 </div>
                 <div className="mt-2.5">
-                  <p className="text-xs font-bold text-foreground">{t("Fixed Price", "Fixed Price")}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Proyek tetap", "Fixed scope")}</p>
+                  <p className="text-xs font-bold text-foreground">{t("Tugas Aktif", "Active Tasks")}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Sedang dikerjakan", "In progress")}</p>
                 </div>
               </div>
 
-              {/* 2. Hourly */}
+              {/* 2. Needs Review */}
               <div className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
                     <Clock className="h-4 w-4" />
                   </div>
                   <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">
-                    {byHoursCount}
+                    {reviewTasksCount}
                   </span>
                 </div>
                 <div className="mt-2.5">
-                  <p className="text-xs font-bold text-foreground">{t("Hourly", "Hourly")}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Berbasis jam", "Time & material")}</p>
+                  <p className="text-xs font-bold text-foreground">{t("Butuh Review", "Needs Review")}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Menunggu persetujuan", "Awaiting approval")}</p>
                 </div>
               </div>
 
-              {/* 3. Retainer */}
+              {/* 3. Projects Count (Fixed & Hourly) */}
               <div className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
-                    <Layers className="h-4 w-4" />
+                    <FolderKanban className="h-4 w-4" />
                   </div>
                   <span className="rounded-full border border-purple-500/30 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-600 dark:text-purple-400">
-                    {retainerCount}
+                    {clientProjects.length}
                   </span>
                 </div>
                 <div className="mt-2.5">
-                  <p className="text-xs font-bold text-foreground">{t("Retainer", "Retainer")}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Langganan aktif", "Active retainer")}</p>
+                  <p className="text-xs font-bold text-foreground">{t("Proyek", "Projects")}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{byProjectCount} Fixed · {byHoursCount} Hourly</p>
                 </div>
               </div>
 

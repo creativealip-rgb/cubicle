@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
-import { Calendar, Loader2 } from "lucide-react";
+import { Calendar, PlusCircle, Loader2, Send } from "lucide-react";
 import { createClientPortalRequest } from "@/lib/actions/portal-requests";
 import { useT } from "@/lib/i18n-client";
 import { Button } from "@/components/ui/button";
@@ -37,9 +37,10 @@ export function PortalActionButtons({
 }) {
   const { refresh } = useAppTransition();
   const { t } = useT();
-  const [kind, setKind] = useState<"meeting" | null>(null);
+  const [kind, setKind] = useState<"meeting" | "task_request" | null>(null);
   const [loading, setLoading] = useState(false);
   const [projectId, setProjectId] = useState<string>("");
+  const [title, setTitle] = useState("");
   const [message, setMessage] = useState("");
   const [preferredDate, setPreferredDate] = useState("");
   const [preferredTime, setPreferredTime] = useState("");
@@ -51,6 +52,7 @@ export function PortalActionButtons({
   function close() {
     if (loading) return;
     setKind(null);
+    setTitle("");
     setMessage("");
     setProjectId("");
     setPreferredDate("");
@@ -65,14 +67,19 @@ export function PortalActionButtons({
       await createClientPortalRequest({
         token,
         kind,
+        title: kind === "task_request" ? title || null : null,
         message: message || null,
         projectId: projectId || null,
-        preferredDate: kind === "meeting" ? preferredDate || null : null,
+        preferredDate: preferredDate || null,
         preferredTime: kind === "meeting" ? preferredTime || null : null,
         durationMinutes: kind === "meeting" ? Number(durationMinutes) : null,
         timezone: kind === "meeting" ? timezone : null,
       });
-      toast.success(t("Permintaan pertemuan terkirim ke tim", "Meeting request sent to the team"));
+      toast.success(
+        kind === "task_request"
+          ? t("Permintaan tugas baru terkirim ke tim", "New task request sent to the team")
+          : t("Permintaan pertemuan terkirim ke tim", "Meeting request sent to the team")
+      );
       close();
       refresh();
     } catch (err) {
@@ -88,10 +95,19 @@ export function PortalActionButtons({
 
   return (
     <>
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
-          className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs"
+          variant="outline"
+          className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs border-primary/30 text-primary hover:bg-primary/10"
+          onClick={() => setKind("task_request")}
+        >
+          <PlusCircle className="h-3.5 w-3.5" />
+          {t("Ajukan Request Baru", "New Request")}
+        </Button>
+        <Button
+          type="button"
+          className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs bg-purple-600 hover:bg-purple-700 text-white"
           onClick={() => setKind("meeting")}
         >
           <Calendar className="h-3.5 w-3.5" />
@@ -99,36 +115,31 @@ export function PortalActionButtons({
         </Button>
       </div>
 
-      <Dialog open={kind !== null} onOpenChange={(open) => !open && close()}>
+      {/* Schedule Meeting Dialog */}
+      <Dialog open={kind === "meeting"} onOpenChange={(o) => !o && close()}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              {t("Ajukan Pertemuan", "Schedule Meeting")}
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Calendar className="h-4 w-4 text-purple-600" />
+              {t("Ajukan Jadwal Pertemuan", "Schedule Meeting")}
             </DialogTitle>
-            <DialogDescription>
-              {t("Klik request untuk mengajukan meeting ke tim.", "Click request to ask the team for a meeting.")}
+            <DialogDescription className="text-xs">
+              {t(
+                "Pilih jadwal yang kamu inginkan. Tim akan mengonfirmasi atau menawarkan waktu alternatif.",
+                "Pick your preferred time. The team will confirm or offer an alternative slot.",
+              )}
             </DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-3">
+          <div className="space-y-3 py-2 text-xs">
             {projects.length > 0 && (
-              <div className="space-y-1.5">
-                <Label className="text-xs">
-                  {t("Proyek (opsional)", "Project (optional)")}
-                </Label>
-                <Select
-                  value={projectId || "none"}
-                  onValueChange={(v) => setProjectId(v === "none" ? "" : v)}
-                >
-                  <SelectTrigger>
-                    <SelectValue
-                      placeholder={t("Semua proyek", "All projects")}
-                    />
+              <div className="space-y-1">
+                <Label htmlFor="req-proj" className="text-xs">{t("Terkait Proyek (opsional)", "Related Project (optional)")}</Label>
+                <Select value={projectId} onValueChange={setProjectId}>
+                  <SelectTrigger id="req-proj" className="h-8 text-xs">
+                    <SelectValue placeholder={t("Pilih proyek...", "Select project...")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">
-                      {t("Semua proyek", "All projects")}
-                    </SelectItem>
+                    <SelectItem value="__none__">{t("Umum (tanpa proyek)", "General (no project)")}</SelectItem>
                     {projects.map((p) => (
                       <SelectItem key={p.id} value={p.id}>
                         {p.name}
@@ -138,77 +149,157 @@ export function PortalActionButtons({
                 </Select>
               </div>
             )}
-
-            {kind === "meeting" && (
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1.5">
-                <Label htmlFor="preferred-date" className="text-xs">
-                  {t("Tanggal", "Date")} *
-                </Label>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <Label htmlFor="req-date" className="text-xs">{t("Tanggal Pilihan", "Preferred Date")}</Label>
                 <Input
-                  id="preferred-date"
+                  id="req-date"
                   type="date"
+                  className="h-8 text-xs"
                   value={preferredDate}
                   onChange={(e) => setPreferredDate(e.target.value)}
-                  required
+                  min={new Date().toISOString().slice(0, 10)}
                 />
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="preferred-time" className="text-xs">{t("Jam mulai", "Start time")} *</Label>
-                  <Input id="preferred-time" type="time" value={preferredTime} onChange={(e) => setPreferredTime(e.target.value)} required />
-                </div>
-                <div className="space-y-1.5">
-                  <Label className="text-xs">{t("Durasi", "Duration")} *</Label>
-                  <Select value={durationMinutes} onValueChange={setDurationMinutes}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>{[30,45,60,90,120].map((minutes) => <SelectItem key={minutes} value={String(minutes)}>{minutes} menit</SelectItem>)}</SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-1.5">
-                  <Label htmlFor="meeting-timezone" className="text-xs">{t("Zona waktu", "Timezone")} *</Label>
-                  <Input id="meeting-timezone" value={timezone} onChange={(e) => setTimezone(e.target.value)} required />
-                </div>
               </div>
-            )}
-
-            <div className="space-y-1.5">
-              <Label htmlFor="request-message" className="text-xs">
-                {kind === "meeting" ? t("Agenda", "Agenda") : t("Catatan", "Notes")} {kind === "meeting" ? "*" : ""}
-              </Label>
+              <div className="space-y-1">
+                <Label htmlFor="req-time" className="text-xs">{t("Jam (WIB)", "Preferred Time")}</Label>
+                <Input
+                  id="req-time"
+                  type="time"
+                  className="h-8 text-xs"
+                  value={preferredTime}
+                  onChange={(e) => setPreferredTime(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="req-msg" className="text-xs">{t("Agenda / Topik Pembahasan", "Meeting Agenda")}</Label>
               <Textarea
-                id="request-message"
+                id="req-msg"
+                placeholder={t(
+                  "Contoh: Pembahasan revisi mockup landing page dan persiapan peluncuran.",
+                  "E.g., Review landing page mockups and launch preparation.",
+                )}
+                className="min-h-[72px] text-xs resize-none"
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
-                placeholder={
-                  t(
-                    "Mis. topik meeting, zona waktu, jam preferensi…",
-                    "E.g. meeting topic, time zone, preferred time…",
-                  )
-                }
-                rows={3}
-                required={kind === "meeting"}
               />
             </div>
           </div>
-
-          <DialogFooter className="gap-2">
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               type="button"
               variant="outline"
+              size="sm"
               onClick={close}
               disabled={loading}
+              className="text-xs h-8"
             >
               {t("Batal", "Cancel")}
             </Button>
-            <Button type="button" onClick={submit} disabled={loading || (kind === "meeting" && (!preferredDate || !preferredTime || !timezone || !message.trim()))}>
-              {loading ? (
-                <>
-                  <Loader2 className="h-4 w-4 animate-spin" />
-                  {t("Mengirim…", "Sending…")}
-                </>
-              ) : (
-                t("Kirim permintaan", "Send request")
+            <Button
+              type="button"
+              size="sm"
+              onClick={submit}
+              disabled={loading || !message.trim()}
+              className="text-xs h-8 bg-purple-600 hover:bg-purple-700 text-white gap-1"
+            >
+              {loading && <Loader2 className="h-3 w-3 animate-spin" />}
+              {t("Kirim Pengajuan", "Send Request")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* New Task / Deliverable Request Dialog */}
+      <Dialog open={kind === "task_request"} onOpenChange={(o) => !o && close()}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <PlusCircle className="h-4 w-4 text-primary" />
+              {t("Ajukan Permintaan / Tugas Baru", "Submit New Task Request")}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {t(
+                "Sampaikan permintaan pekerjaan atau revisi baru ke tim workspace.",
+                "Submit a new deliverable, task, or revision request to the workspace team.",
               )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2 text-xs">
+            {projects.length > 0 && (
+              <div className="space-y-1">
+                <Label htmlFor="task-proj" className="text-xs">{t("Terkait Proyek (opsional)", "Related Project (optional)")}</Label>
+                <Select value={projectId} onValueChange={setProjectId}>
+                  <SelectTrigger id="task-proj" className="h-8 text-xs">
+                    <SelectValue placeholder={t("Pilih proyek...", "Select project...")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">{t("Umum (tanpa proyek)", "General (no project)")}</SelectItem>
+                    {projects.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="space-y-1">
+              <Label htmlFor="task-title" className="text-xs">{t("Judul Permintaan *", "Request Title *")}</Label>
+              <Input
+                id="task-title"
+                placeholder={t("Contoh: Tambah halaman About Us & Form Kontak", "E.g., Add About Us page & Contact Form")}
+                className="h-8 text-xs"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="task-due" className="text-xs">{t("Target Selesai (opsional)", "Target Date (optional)")}</Label>
+              <Input
+                id="task-due"
+                type="date"
+                className="h-8 text-xs"
+                value={preferredDate}
+                onChange={(e) => setPreferredDate(e.target.value)}
+                min={new Date().toISOString().slice(0, 10)}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label htmlFor="task-msg" className="text-xs">{t("Rincian Instruksi / Catatan", "Details & Instructions")}</Label>
+              <Textarea
+                id="task-msg"
+                placeholder={t(
+                  "Jelaskan secara singkat apa yang perlu dikerjakan atau diubah...",
+                  "Briefly describe what needs to be done or revised...",
+                )}
+                className="min-h-[80px] text-xs resize-none"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={close}
+              disabled={loading}
+              className="text-xs h-8"
+            >
+              {t("Batal", "Cancel")}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              onClick={submit}
+              disabled={loading || !title.trim()}
+              className="text-xs h-8 gap-1.5"
+            >
+              {loading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+              {t("Kirim Request", "Submit Request")}
             </Button>
           </DialogFooter>
         </DialogContent>

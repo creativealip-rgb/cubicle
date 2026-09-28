@@ -96,7 +96,8 @@ export async function createPortalRequest(
 
 const createClientPortalRequestSchema = z.object({
   token: z.string().min(1),
-  kind: z.literal("meeting"),
+  kind: z.enum(["meeting", "task_request"]),
+  title: z.string().max(200).optional().nullable(),
   message: z.string().max(2000).optional().nullable(),
   projectId: z.string().uuid().optional().nullable(),
   preferredDate: z.string().optional().nullable(),
@@ -131,15 +132,25 @@ export async function createClientPortalRequest(
     if (!project) throw new Error("Project not found");
   }
 
-  const schedule = (await import("@/lib/meeting-schedule")).buildMeetingSchedule({
-    date: parsed.preferredDate || "",
-    time: parsed.preferredTime || "",
-    durationMinutes: parsed.durationMinutes || 0,
-    timezone: parsed.timezone || "",
-  });
-  if (!parsed.message?.trim()) throw new Error("Agenda meeting wajib diisi");
-  const title = "Request Meeting";
-  const type = "other" as const;
+  const schedule =
+    parsed.kind === "meeting"
+      ? (await import("@/lib/meeting-schedule")).buildMeetingSchedule({
+          date: parsed.preferredDate || "",
+          time: parsed.preferredTime || "",
+          durationMinutes: parsed.durationMinutes || 0,
+          timezone: parsed.timezone || "",
+        })
+      : null;
+
+  if (parsed.kind === "meeting" && !parsed.message?.trim()) {
+    throw new Error("Agenda meeting wajib diisi");
+  }
+  if (parsed.kind === "task_request" && !parsed.title?.trim()) {
+    throw new Error("Judul permintaan tugas wajib diisi");
+  }
+
+  const title = parsed.kind === "task_request" ? parsed.title!.trim() : "Request Meeting";
+  const type = parsed.kind === "task_request" ? ("other" as const) : ("other" as const);
 
   const lines: string[] = [];
   lines.push(`[CLIENT_ORIGIN ${parsed.kind}]`);
@@ -176,19 +187,21 @@ export async function createClientPortalRequest(
     const { notifyWorkspaceMembers } =
       await import("@/lib/in-app-notifications");
     const clientLabel = client.companyName || client.name || "Client";
+    const notifTitle =
+      parsed.kind === "task_request"
+        ? `${clientLabel} mengajukan permintaan tugas baru: ${title}`
+        : `${clientLabel} mengajukan pertemuan: ${title}`;
+
     await notifyWorkspaceMembers(client.workspaceId, {
-      type: "portal_meeting_request",
-      title: `${clientLabel} minta meeting`,
-      body:
-        parsed.message?.trim() ||
-        "Request meeting dari portal",
-      link: `/app/clients/${client.id}?tab=portal`,
+      type: "portal_request_created",
+      title: notifTitle,
+      body: parsed.message || (parsed.preferredDate ? `Tanggal pilihan: ${parsed.preferredDate}` : undefined),
+      link: `/app/clients/${client.id}`,
       entityType: "portal_request",
       entityId: row.id,
-      actorId: null,
     });
   } catch {
-    // non-critical
+    // Non-blocking
   }
 
   revalidatePath(`/client-portal/${parsed.token}`);

@@ -38,7 +38,8 @@ export type NotificationType =
   | "invoice_overdue"
   | "mention"
   | "portal_report_request"
-  | "portal_meeting_request";
+  | "portal_meeting_request"
+  | "portal_request_created";
 
 export interface CreateNotificationInput {
   workspaceId: string;
