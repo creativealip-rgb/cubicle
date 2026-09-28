@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient, generatePortalToken, checkPortalSlugAvailability, getCurrentUserPlanForPortal, setClientPortalPassword, updateClient } from "@/lib/actions/clients";
@@ -71,11 +71,11 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
   const [portalPassword, setPortalPassword] = useState("");
 
   // Load user plan info on mount
-  useState(() => {
+  useEffect(() => {
     getCurrentUserPlanForPortal().then((res) => {
       setIsPaidPlan(res.isPaid);
     }).catch(() => {});
-  });
+  }, []);
 
   async function handleCheckSlug() {
     const slug = form.portalSlug.trim();
