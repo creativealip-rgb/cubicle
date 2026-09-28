@@ -8,11 +8,15 @@ import {
   ChevronRight,
   Clock,
   FileText,
+  Inbox,
   ThumbsDown,
   ThumbsUp,
   XCircle,
+  PlusCircle,
+  Calendar,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import { useT } from "@/lib/i18n-client";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -24,7 +28,6 @@ import {
   cleanPortalRequestDescription,
   partitionPortalRequests,
 } from "@/lib/portal-presentation";
-import { quotaBlockMessage } from "@/lib/upload-quota-messages";
 
 interface PortalRequest {
   id: string;
@@ -48,6 +51,7 @@ function parseDecision(
   if (description.includes("[Client REJECTED")) return "rejected";
   return null;
 }
+
 export function PortalRequestList({
   requests,
   token,
@@ -56,17 +60,12 @@ export function PortalRequestList({
   token: string;
 }) {
   const { lang, t } = useT();
-  const typeLabels: Record<string, string> = {
-    document: t("Dokumen", "Document"),
-    approval: t("Persetujuan", "Approval"),
-    info: t("Informasi", "Information"),
-    other: t("Lainnya", "Other"),
-  };
   const [items, setItems] = useState(requests);
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [noteById, setNoteById] = useState<Record<string, string>>({});
   const [showHistory, setShowHistory] = useState(false);
   const fileInputs = useRef<Record<string, HTMLInputElement | null>>({});
+
   async function markDone(id: string) {
     setLoadingId(id);
     try {
@@ -81,15 +80,31 @@ export function PortalRequestList({
       setLoadingId(null);
     }
   }
+
   async function acceptMeeting(id: string) {
     setLoadingId(id);
     try {
       await acceptMeetingCounterProposal(token, id);
-      setItems((p) => p.map((r) => r.id === id ? { ...r, status: "completed", meetingStatus: "approved" } : r));
-      toast.success(t("Jadwal disetujui dan masuk kalender", "Schedule approved and added to calendar"));
-    } catch (e) { toast.error(e instanceof Error ? e.message : t("Gagal", "Failed")); }
-    finally { setLoadingId(null); }
+      setItems((p) =>
+        p.map((r) =>
+          r.id === id
+            ? { ...r, status: "completed", meetingStatus: "approved" }
+            : r,
+        ),
+      );
+      toast.success(
+        t(
+          "Jadwal disetujui dan masuk kalender",
+          "Schedule approved and added to calendar",
+        ),
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t("Gagal", "Failed"));
+    } finally {
+      setLoadingId(null);
+    }
   }
+
   async function decide(id: string, decision: "approved" | "rejected") {
     setLoadingId(id);
     try {
@@ -121,27 +136,27 @@ export function PortalRequestList({
       setLoadingId(null);
     }
   }
-  async function uploadFile(id: string, file?: File) {
+
+  async function uploadFile(id: string, file: File | undefined) {
     if (!file) return;
     setLoadingId(id);
     try {
-      const form = new FormData();
-      form.append("token", token);
-      form.append("requestId", id);
-      form.append("file", file);
-      const res = await fetch("/api/client-portal/requests/upload", {
+      const fd = new FormData();
+      fd.append("file", file);
+      fd.append("token", token);
+      fd.append("requestId", id);
+      const res = await fetch("/api/portal-requests/upload", {
         method: "POST",
-        body: form,
+        body: fd,
       });
-      const data = await res.json();
-      if (!res.ok) {
-        const error = data.error ?? t("Upload gagal", "Upload failed");
-        throw new Error(quotaBlockMessage(error, lang) ?? error);
-      }
+      if (!res.ok) throw new Error(t("Upload gagal", "Upload failed"));
+      await completePortalRequest({ token, requestId: id });
       setItems((p) =>
         p.map((r) => (r.id === id ? { ...r, status: "completed" } : r)),
       );
-      toast.success(t("File berhasil diunggah", "File uploaded successfully"));
+      toast.success(
+        t("File berhasil diunggah", "File uploaded successfully"),
+      );
     } catch (e) {
       toast.error(
         e instanceof Error ? e.message : t("Upload gagal", "Upload failed"),
@@ -151,16 +166,30 @@ export function PortalRequestList({
       if (fileInputs.current[id]) fileInputs.current[id]!.value = "";
     }
   }
-  if (!items.length)
+
+  if (!items.length) {
     return (
-      <p className="text-sm text-muted-foreground">
-        {t(
-          "Tidak ada request atau pengingat aktif.",
-          "No active requests or reminders.",
-        )}
-      </p>
+      <Card className="border-dashed border-border/80 bg-card/60 shadow-none">
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400 mb-3.5">
+            <Inbox className="h-6 w-6" />
+          </div>
+          <h3 className="text-sm font-bold text-foreground">
+            {t("Belum Ada Permintaan Aktif", "No Active Requests")}
+          </h3>
+          <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+            {t(
+              "Semua permintaan selesai atau belum ada pengajuan baru. Gunakan tombol di atas untuk mengajukan kebutuhan tugas atau meeting.",
+              "All requests are completed or none submitted yet. Use the action buttons above to submit a task request or schedule a meeting.",
+            )}
+          </p>
+        </CardContent>
+      </Card>
     );
+  }
+
   const { open, history } = partitionPortalRequests(items);
+
   const render = (request: PortalRequest) => {
     const done = request.status === "completed",
       decision = parseDecision(request.description),
@@ -172,101 +201,145 @@ export function PortalRequestList({
         ),
         lang,
       );
+
     return (
       <div
         key={request.id}
-        className="flex flex-col gap-3 rounded-lg border bg-background p-3 sm:flex-row sm:items-start"
+        className="flex flex-col gap-3 rounded-xl border border-border/80 bg-card p-4 shadow-2xs sm:flex-row sm:items-start"
       >
         <div className="flex min-w-0 flex-1 gap-3">
           <div
-            className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${decision === "rejected" ? "bg-red-50 text-red-600" : decision === "approved" ? "bg-emerald-50 text-emerald-600" : "bg-blue-50 text-blue-600"}`}
+            className={`mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl ${
+              decision === "rejected"
+                ? "bg-red-500/10 text-red-600 dark:text-red-400"
+                : decision === "approved"
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                : "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+            }`}
           >
             {decision === "approved" ? (
               <ThumbsUp className="h-4 w-4" />
             ) : decision === "rejected" ? (
-              <XCircle className="h-4 w-4" />
+              <ThumbsDown className="h-4 w-4" />
             ) : done ? (
-              <CheckCircle2 className="h-4 w-4" />
+              <CheckCircle2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            ) : approval ? (
+              <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
             ) : (
               <FileText className="h-4 w-4" />
             )}
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
-              <p className="text-sm font-medium">
-                {request.title === "Request Meeting"
-                  ? t("Permintaan Pertemuan", "Meeting Request")
-                  : request.title}
-              </p>
-              <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">
+              <span className="font-semibold text-sm text-foreground">
+                {request.title}
+              </span>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                  done
+                    ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                    : "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                }`}
+              >
                 {done
-                  ? decision === "approved"
-                    ? t("Disetujui", "Approved")
-                    : decision === "rejected"
-                      ? t("Revisi diminta", "Revision requested")
-                      : t("Selesai", "Completed")
-                  : (typeLabels[request.type] ?? request.type)}
+                  ? t("Selesai", "Completed")
+                  : t("Menunggu", "Pending")}
               </span>
             </div>
             {description && (
-              <p className="mt-1 whitespace-pre-wrap text-sm text-muted-foreground">
+              <p className="mt-1 text-xs text-muted-foreground whitespace-pre-wrap">
                 {description}
               </p>
             )}
-            {request.dueDate && (
-              <p className="mt-1 flex items-center gap-1 text-xs text-muted-foreground">
-                <Clock className="h-3 w-3" /> {t("Tenggat", "Due")}{" "}
-                {request.dueDate}
+            {request.dueDate && !done && (
+              <p className="mt-1 text-[11px] font-medium text-amber-600 dark:text-amber-400">
+                {t("Batas waktu:", "Due date:")} {request.dueDate}
               </p>
             )}
+
+            {/* Meeting Schedule Status Box */}
             {request.meetingStartTime && (
-              <div className="mt-2 rounded-md bg-muted/40 p-2 text-xs">
-                <p className="font-medium">{new Intl.DateTimeFormat(lang === "id" ? "id-ID" : "en-US", { dateStyle: "medium", timeStyle: "short", timeZone: request.meetingTimezone || undefined }).format(new Date(request.meetingStartTime))}</p>
-                <p className="text-muted-foreground">{request.meetingDurationMinutes} menit · {request.meetingTimezone}</p>
-                {request.meetingResponseNote && <p className="mt-1 text-muted-foreground">{request.meetingResponseNote}</p>}
+              <div className="mt-2.5 rounded-xl border border-border/80 bg-muted/30 p-3 text-xs">
+                <p className="font-medium text-foreground">
+                  {t("Jadwal:", "Schedule:")}{" "}
+                  {new Date(request.meetingStartTime).toLocaleString(lang === "id" ? "id-ID" : "en-US", {
+                    dateStyle: "full",
+                    timeStyle: "short",
+                  })}{" "}
+                  ({request.meetingDurationMinutes || 30} min)
+                </p>
+                {request.meetingStatus === "counter_proposed" && (
+                  <div className="mt-2 space-y-2">
+                    <p className="text-amber-600 dark:text-amber-400 font-semibold">
+                      {t("Tim menyarankan jadwal baru:", "Team suggested a new time:")}
+                    </p>
+                    {request.meetingResponseNote && (
+                      <p className="italic text-muted-foreground">
+                        &ldquo;{request.meetingResponseNote}&rdquo;
+                      </p>
+                    )}
+                    <Button
+                      size="sm"
+                      disabled={loadingId === request.id}
+                      onClick={() => acceptMeeting(request.id)}
+                      className="rounded-lg h-8 text-xs font-semibold"
+                    >
+                      {t("Setujui Jadwal Baru", "Accept New Time")}
+                    </Button>
+                  </div>
+                )}
+                {request.meetingStatus === "rejected" && request.meetingResponseNote && (
+                  <p className="mt-1 text-red-600 dark:text-red-400">
+                    {t("Ditolak:", "Declined:")} {request.meetingResponseNote}
+                  </p>
+                )}
               </div>
             )}
-            {!done && request.meetingStatus === "counter_proposed" && (
-              <Button className="mt-3 min-h-11" disabled={loadingId === request.id} onClick={() => acceptMeeting(request.id)}>
-                {t("Setujui jadwal", "Approve schedule")}
-              </Button>
-            )}
+
+            {/* Approval Decision Form */}
             {!done && approval && (
               <div className="mt-3 space-y-2">
                 <Textarea
+                  placeholder={t(
+                    "Catatan / alasan (opsional)",
+                    "Notes / reason (optional)",
+                  )}
                   value={noteById[request.id] || ""}
                   onChange={(e) =>
-                    setNoteById((p) => ({ ...p, [request.id]: e.target.value }))
+                    setNoteById((p) => ({
+                      ...p,
+                      [request.id]: e.target.value,
+                    }))
                   }
-                  placeholder={t(
-                    "Catatan opsional atau detail revisi…",
-                    "Optional notes or revision details…",
-                  )}
+                  className="text-xs"
                   rows={2}
                 />
-                <div className="flex flex-wrap gap-2">
+                <div className="flex gap-2">
                   <Button
-                    className="min-h-11 gap-1.5"
+                    size="sm"
                     disabled={loadingId === request.id}
                     onClick={() => decide(request.id, "approved")}
+                    className="rounded-lg h-8 text-xs font-semibold"
                   >
-                    <ThumbsUp className="h-3.5 w-3.5" />
+                    <ThumbsUp className="mr-1.5 h-3.5 w-3.5" />
                     {t("Setujui", "Approve")}
                   </Button>
                   <Button
-                    className="min-h-11 gap-1.5 text-red-600"
+                    size="sm"
                     variant="outline"
                     disabled={loadingId === request.id}
                     onClick={() => decide(request.id, "rejected")}
+                    className="rounded-lg h-8 text-xs font-semibold"
                   >
-                    <ThumbsDown className="h-3.5 w-3.5" />
-                    {t("Minta revisi", "Request revision")}
+                    <ThumbsDown className="mr-1.5 h-3.5 w-3.5" />
+                    {t("Minta Revisi", "Request Revision")}
                   </Button>
                 </div>
               </div>
             )}
           </div>
         </div>
+
         {!done && !approval && request.meetingStatus !== "counter_proposed" && (
           <div className="flex shrink-0 flex-wrap gap-2 sm:flex-col">
             {request.type === "document" && (
@@ -280,19 +353,21 @@ export function PortalRequestList({
                   onChange={(e) => uploadFile(request.id, e.target.files?.[0])}
                 />
                 <Button
-                  className="min-h-11"
+                  size="sm"
                   disabled={loadingId === request.id}
                   onClick={() => fileInputs.current[request.id]?.click()}
+                  className="rounded-lg h-8 text-xs font-semibold"
                 >
                   {t("Unggah file", "Upload file")}
                 </Button>
               </>
             )}
             <Button
-              className="min-h-11"
+              size="sm"
               variant="outline"
               disabled={loadingId === request.id}
               onClick={() => markDone(request.id)}
+              className="rounded-lg h-8 text-xs font-semibold"
             >
               {t("Tandai selesai", "Mark complete")}
             </Button>
@@ -301,31 +376,51 @@ export function PortalRequestList({
       </div>
     );
   };
+
   return (
     <div className="space-y-3">
       {open.length ? (
-        <div className="space-y-2">{open.map(render)}</div>
+        <div className="space-y-2.5">{open.map(render)}</div>
       ) : (
-        <p className="text-sm text-muted-foreground">
-          {t("Semua request sudah selesai.", "All requests are complete.")}
-        </p>
+        <Card className="border-dashed border-border/80 bg-card/60 shadow-none">
+          <CardContent className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mb-2.5">
+              <CheckCircle2 className="h-5 w-5" />
+            </div>
+            <p className="text-xs font-bold text-foreground">
+              {t("Semua Request Selesai", "All Requests Completed")}
+            </p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              {t(
+                "Tidak ada permintaan yang menunggu tindakan kamu saat ini.",
+                "No requests currently pending your action.",
+              )}
+            </p>
+          </CardContent>
+        </Card>
       )}
+
       {history.length > 0 && (
-        <div>
+        <div className="pt-1">
           <button
             type="button"
             onClick={() => setShowHistory((v) => !v)}
-            className="flex min-h-11 w-full items-center gap-2 rounded-lg border border-dashed px-3 text-sm text-muted-foreground hover:bg-muted/30"
+            className="flex min-h-9 w-full items-center justify-between rounded-xl border border-border/80 bg-card/60 px-3.5 py-2 text-xs font-medium text-muted-foreground hover:bg-muted/40 transition-colors"
           >
-            {showHistory ? (
-              <ChevronDown className="h-4 w-4" />
-            ) : (
-              <ChevronRight className="h-4 w-4" />
-            )}
-            {t("Riwayat permintaan", "Request history")} ({history.length})
+            <span className="flex items-center gap-2">
+              {showHistory ? (
+                <ChevronDown className="h-3.5 w-3.5" />
+              ) : (
+                <ChevronRight className="h-3.5 w-3.5" />
+              )}
+              {t("Riwayat permintaan", "Request history")}
+            </span>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold">
+              {history.length}
+            </span>
           </button>
           {showHistory && (
-            <div className="mt-2 space-y-2">{history.map(render)}</div>
+            <div className="mt-2.5 space-y-2.5">{history.map(render)}</div>
           )}
         </div>
       )}

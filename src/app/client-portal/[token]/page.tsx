@@ -1011,30 +1011,19 @@ export default async function ClientPortalPage({
               }}
               projects={
                 <section className="space-y-3.5">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
-                      <FolderKanban className="h-3.5 w-3.5" />
-                    </div>
-                    <div>
-                      <h2 className="text-base sm:text-lg font-bold text-foreground leading-tight">
-                        {t("Proyek Aktif", "Active Projects")}
-                      </h2>
-                      <p className="text-xs text-muted-foreground">
-                        {t(
-                          "Pantau progres pengerjaan tugas, jadwal, dan status proyek kamu.",
-                          "Track task progress, schedule, and your project status.",
-                        )}
-                      </p>
-                    </div>
-                  </div>
                   {clientProjects.length === 0 ? (
-                    <Card>
-                      <CardContent className="py-8 text-center text-muted-foreground">
-                        <FolderOpen className="h-12 w-12 mx-auto mb-3 opacity-30" />
-                        <p>
+                    <Card className="border-dashed border-border/80 bg-card/60 shadow-none">
+                      <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+                        <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-primary mb-3.5">
+                          <FolderOpen className="h-6 w-6" />
+                        </div>
+                        <h3 className="text-sm font-bold text-foreground">
+                          {t("Belum Ada Proyek", "No Projects Yet")}
+                        </h3>
+                        <p className="mt-1 max-w-sm text-xs text-muted-foreground">
                           {t(
-                            "Belum ada proyek yang dibagikan. Hubungi pengelola workspace jika kamu membutuhkan akses.",
-                            "No projects have been shared yet. Contact the workspace manager if you need access.",
+                            "Belum ada proyek yang dibagikan ke portal ini.",
+                            "No projects have been shared to this portal yet.",
                           )}
                         </p>
                       </CardContent>
@@ -1139,22 +1128,6 @@ export default async function ClientPortalPage({
               }
               invoices={
                 <section className="space-y-3.5">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                      <Receipt className="h-3.5 w-3.5" />
-                    </div>
-                    <div>
-                      <h2 className="text-base sm:text-lg font-bold text-foreground leading-tight">
-                        {t("Daftar Invoice", "Invoices")}
-                      </h2>
-                      <p className="text-xs text-muted-foreground">
-                        {t(
-                          "Riwayat tagihan, status pembayaran, dan unduh dokumen invoice.",
-                          "Billing history, payment status, and download invoice documents.",
-                        )}
-                      </p>
-                    </div>
-                  </div>
                   <PortalInvoices
                     invoices={clientInvoices.map((inv) => ({
                       id: inv.id,
@@ -1182,22 +1155,6 @@ export default async function ClientPortalPage({
               }
               requests={
                 <section className="space-y-3.5">
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-600 dark:text-rose-400">
-                      <Bell className="h-3.5 w-3.5" />
-                    </div>
-                    <div>
-                      <h2 className="text-base sm:text-lg font-bold text-foreground leading-tight">
-                        {t("Permintaan Meeting", "Meeting Requests")}
-                      </h2>
-                      <p className="text-xs text-muted-foreground">
-                        {t(
-                          "Jika ingin meeting, klik tombol request lalu isi agenda dan waktu yang diinginkan.",
-                          "Need a meeting? Click the request button, then enter your agenda and preferred time.",
-                        )}
-                      </p>
-                    </div>
-                  </div>
                   <PortalRequestList
                     requests={clientPortalRequests.map((request) => ({
                       ...request,

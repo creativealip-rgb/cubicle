@@ -1,22 +1,15 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { useMemo, useState, useRef, useCallback } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import {
-
   FolderKanban,
   FolderOpen,
-  Bell,
   Receipt,
+  Bell,
   MessageCircle,
 } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -31,30 +24,24 @@ import { PortalActionButtons } from "./portal-action-buttons";
 
 export type PortalTabKey = "projects" | "files" | "invoices" | "requests";
 
-const TAB_KEYS: PortalTabKey[] = [
+const TAB_KEYS: PortalTabKey[] = ["projects", "files", "invoices", "requests"];
 
-  "projects",
-  "files",
-  "invoices",
-  "requests",
-];
-
-function normalizeTab(tab?: string | null): PortalTabKey {
-  if (tab && (TAB_KEYS as string[]).includes(tab)) {
-    return tab as PortalTabKey;
+function normalizeTab(raw: string | null | undefined): PortalTabKey {
+  if (raw && (TAB_KEYS as string[]).includes(raw)) {
+    return raw as PortalTabKey;
   }
   return "projects";
 }
 
-type PortalTabsProps = {
-  initialTab?: string | null;
+export type PortalTabsProps = {
+  initialTab?: string;
   token?: string;
   projectOptions?: Array<{ id: string; name: string }>;
-  projects: ReactNode;
-  files: ReactNode;
-  invoices: ReactNode;
-  requests: ReactNode;
-  contact: ReactNode;
+  projects: React.ReactNode;
+  files: React.ReactNode;
+  invoices: React.ReactNode;
+  requests: React.ReactNode;
+  contact?: React.ReactNode;
   counts?: {
     projects?: number;
     files?: number;
@@ -63,12 +50,6 @@ type PortalTabsProps = {
   };
 };
 
-/**
- * Client portal tabs.
- * - Soft URL update (history.replaceState) so page shell tidak remount / loncat tinggi.
- * - Render hanya tab aktif agar DOM mobile tetap ringan.
- * - min-h panel: tinggi area konten lebih stabil antar tab.
- */
 export function PortalTabs({
   initialTab,
   token,
@@ -89,25 +70,12 @@ export function PortalTabs({
     Partial<Record<PortalTabKey, HTMLButtonElement | null>>
   >({});
 
-  useEffect(() => {
-    setActiveTab(urlTab);
-  }, [urlTab]);
-
-  useEffect(() => {
-    tabRefs.current[activeTab]?.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "center",
-    });
-  }, [activeTab]);
-
   const changeTab = useCallback(
     (tab: string) => {
       const next = normalizeTab(tab);
       setActiveTab(next);
 
       const params = new URLSearchParams(searchParams.toString());
-      // Keep file-manager params only on files tab.
       if (next !== "files") {
         params.delete("projectId");
         params.delete("folderId");
@@ -117,7 +85,6 @@ export function PortalTabs({
 
       const qs = params.toString();
       const url = qs ? `${pathname}?${qs}` : pathname;
-      // Soft URL — no Next.js navigation / RSC remount / height flash.
       window.history.replaceState(window.history.state, "", url);
     },
     [pathname, searchParams],
@@ -126,10 +93,9 @@ export function PortalTabs({
   const tabs: Array<{
     key: PortalTabKey;
     label: string;
-    icon: ReactNode;
+    icon: React.ReactNode;
     badge?: number;
   }> = [
-
     {
       key: "projects",
       label: t("Proyek", "Projects"),
@@ -160,10 +126,10 @@ export function PortalTabs({
     "mt-0 space-y-6 focus-visible:outline-none data-[state=inactive]:hidden data-[state=active]:portal-fade-in";
 
   return (
-    <Tabs value={activeTab} onValueChange={changeTab} className="space-y-5">
+    <Tabs value={activeTab} onValueChange={changeTab} className="space-y-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="relative w-full sm:w-auto overflow-x-auto">
-          <TabsList className="h-auto min-w-max justify-start gap-1 bg-muted/60 p-1">
+          <TabsList className="h-auto min-w-max justify-start gap-1 bg-muted/60 p-1 rounded-2xl border border-border/80">
             {tabs.map((tab) => (
               <TabsTrigger
                 key={tab.key}
@@ -171,12 +137,12 @@ export function PortalTabs({
                   tabRefs.current[tab.key] = node;
                 }}
                 value={tab.key}
-                className="min-h-9 gap-1.5 px-3 py-1.5 text-xs font-semibold transition-all data-[state=active]:shadow-sm"
+                className="min-h-9 gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold transition-all data-[state=active]:shadow-xs"
               >
                 {tab.icon}
                 <span>{tab.label}</span>
                 {typeof tab.badge === "number" && tab.badge > 0 ? (
-                  <span className="rounded-full bg-background px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground">
+                  <span className="rounded-full bg-background px-1.5 py-0.2 text-[10px] font-bold text-muted-foreground border border-border/60">
                     {tab.badge}
                   </span>
                 ) : null}
@@ -187,7 +153,7 @@ export function PortalTabs({
                 <Button
                   type="button"
                   variant="ghost"
-                  className="min-h-9 gap-1.5 px-3 py-1.5 text-xs font-semibold"
+                  className="min-h-9 gap-1.5 rounded-xl px-3 py-1.5 text-xs font-semibold hover:bg-background/80"
                 >
                   <MessageCircle className="h-3.5 w-3.5" />
                   {t("Kontak", "Contact")}
@@ -222,12 +188,15 @@ export function PortalTabs({
       <TabsContent value="projects" className={panelClass}>
         {projects}
       </TabsContent>
+
       <TabsContent value="files" className={panelClass}>
         {files}
       </TabsContent>
+
       <TabsContent value="invoices" className={panelClass}>
         {invoices}
       </TabsContent>
+
       <TabsContent value="requests" className={panelClass}>
         {requests}
       </TabsContent>

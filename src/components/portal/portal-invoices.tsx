@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Download, ChevronDown, ChevronRight, FileText } from "lucide-react";
+import { Download, ChevronDown, ChevronRight, FileText, Receipt } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
 import { portalLocale, portalStatusLabel } from "@/lib/portal-i18n";
 
@@ -264,10 +264,20 @@ export function PortalInvoices({
 
   if (invoices.length === 0) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center text-muted-foreground">
-          <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
-          <p>{t("Belum ada invoice.", "No invoices yet.")}</p>
+      <Card className="border-dashed border-border/80 bg-card/60 shadow-none">
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center">
+          <div className="flex h-12 w-12 items-center justify-center rounded-2xl border border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 mb-3.5">
+            <Receipt className="h-6 w-6" />
+          </div>
+          <h3 className="text-sm font-bold text-foreground">
+            {t("Belum Ada Invoice", "No Invoices Yet")}
+          </h3>
+          <p className="mt-1 max-w-sm text-xs text-muted-foreground">
+            {t(
+              "Riwayat tagihan proyek, status pembayaran, dan dokumen invoice akan tampil di sini.",
+              "Project billing history, payment statuses, and invoice documents will appear here.",
+            )}
+          </p>
         </CardContent>
       </Card>
     );
