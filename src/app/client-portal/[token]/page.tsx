@@ -910,9 +910,9 @@ export default async function ClientPortalPage({
             </div>
           </div>
 
-          {/* ─── 1. Top summary + actions (Client Executive 5-KPI Strip) ─── */}
+          {/* ─── 1. Client-focused 6-KPI summary ─── */}
           <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            <div className="grid grid-cols-2 gap-3 lg:grid-cols-3">
               {/* 1. Active Tasks */}
               <div className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
                 <div className="flex items-start justify-between gap-2">
@@ -945,23 +945,39 @@ export default async function ClientPortalPage({
                 </div>
               </div>
 
-              {/* 3. Projects Count (Fixed & Hourly) */}
+              {/* 3. Fixed Price Projects */}
               <div className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
                     <FolderKanban className="h-4 w-4" />
                   </div>
                   <span className="rounded-full border border-purple-500/30 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-600 dark:text-purple-400">
-                    {clientProjects.length}
+                    {byProjectCount}
                   </span>
                 </div>
                 <div className="mt-2.5">
-                  <p className="text-xs font-bold text-foreground">{t("Proyek", "Projects")}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{byProjectCount} Fixed · {byHoursCount} Hourly</p>
+                  <p className="text-xs font-bold text-foreground">{t("Harga Tetap", "Fixed Price")}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Cakupan tetap", "Fixed scope")}</p>
                 </div>
               </div>
 
-              {/* 4. Invoices */}
+              {/* 4. Hourly Projects */}
+              <div className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400">
+                    <Clock className="h-4 w-4" />
+                  </div>
+                  <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-600 dark:text-cyan-400">
+                    {byHoursCount}
+                  </span>
+                </div>
+                <div className="mt-2.5">
+                  <p className="text-xs font-bold text-foreground">{t("Per Jam", "Hourly")}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Waktu dan material", "Time & material")}</p>
+                </div>
+              </div>
+
+              {/* 5. Open Invoices */}
               <div className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
@@ -972,13 +988,13 @@ export default async function ClientPortalPage({
                   </span>
                 </div>
                 <div className="mt-2.5">
-                  <p className="text-xs font-bold text-foreground">{t("Invoice", "Invoice")}</p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Perlu bayar / aktif", "Open / active")}</p>
+                  <p className="text-xs font-bold text-foreground">{t("Invoice Terbuka", "Open Invoices")}</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">{t("Perlu pembayaran", "Payment required")}</p>
                 </div>
               </div>
 
-              {/* 5. Reminders / Requests */}
-              <div className="col-span-2 sm:col-span-1 rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
+              {/* 6. Requests */}
+              <div className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-rose-500/10 text-rose-600 dark:text-rose-400">
                     <Bell className="h-4 w-4" />
