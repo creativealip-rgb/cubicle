@@ -74,8 +74,8 @@ export default async function TasksPage({
   const requestedPage = Math.max(1, Number(params.page) || 1);
 
   const whereClauses = [eq(tasks.workspaceId, workspaceId), eq(tasks.mode, tab === "templates" ? "workflow" : tab)];
-  if (tab === "workflow" && params.status && params.status !== "all") whereClauses.push(eq(tasks.status, params.status as typeof tasks.status.enumValues[number]));
-  if (tab === "workflow" && params.priority && params.priority !== "all") whereClauses.push(eq(tasks.priority, params.priority as typeof tasks.priority.enumValues[number]));
+  if (params.status && params.status !== "all") whereClauses.push(eq(tasks.status, params.status as typeof tasks.status.enumValues[number]));
+  if (params.priority && params.priority !== "all") whereClauses.push(eq(tasks.priority, params.priority as typeof tasks.priority.enumValues[number]));
   if (params.projectId) whereClauses.push(eq(tasks.projectId, params.projectId));
   if (params.assignee === "me") whereClauses.push(eq(tasks.assigneeId, user.id));
   else if (params.assignee === "unassigned") whereClauses.push(sql`${tasks.assigneeId} IS NULL`);
@@ -169,7 +169,7 @@ export default async function TasksPage({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3 flex-wrap">
               <TaskPageTabs current={tab} />
-              {tab === "workflow" && <TaskQuickFilterChips />}
+              <TaskQuickFilterChips />
             </div>
 
             <form className="relative w-full sm:w-64">
