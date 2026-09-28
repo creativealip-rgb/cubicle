@@ -116,7 +116,7 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
   } = {};
   let rawPortalToken: string | null = null;
   if (parsed.portalEnabled) {
-    await assertCanUseClientPortal(userId);
+    await assertCanUseClientPortal(workspaceId);
     rawPortalToken = randomBytes(32).toString("hex");
     portalFields = {
       portalEnabled: true,
