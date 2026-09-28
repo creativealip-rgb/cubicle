@@ -169,7 +169,9 @@ export default async function TasksPage({
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3 flex-wrap">
               <TaskPageTabs current={tab} />
-              <TaskQuickFilterChips />
+              <div className="flex items-center gap-1.5 flex-wrap">
+                <TaskQuickFilterChips />
+              </div>
             </div>
 
             <form className="relative w-full sm:w-64">
