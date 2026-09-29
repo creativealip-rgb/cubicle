@@ -351,6 +351,7 @@ export default async function ClientDetailPage({
 
           <ClientHeaderActions
             clientId={client.id}
+            portalEnabled={client.portalEnabled}
             editAction={<ClientEditDialog trigger={<button id="client-edit" type="button" />} defaultValues={clientDefaults} />}
             deleteAction={<PermanentDeleteButton trigger={<button id="client-delete" type="button" />} entityType="client" entityId={client.id} entityName={client.name} redirectTo="/app/clients" />}
           />

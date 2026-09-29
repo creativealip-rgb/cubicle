@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createClient, generatePortalToken, checkPortalSlugAvailability, getCurrentUserPlanForPortal, setClientPortalPassword, updateClient } from "@/lib/actions/clients";
+import { createClient, generatePortalToken, checkPortalSlugAvailability, getCurrentUserPlanForPortal, setClientPortalPassword, updateClient, revokePortalToken } from "@/lib/actions/clients";
 import { isStaleServerActionError } from "@/lib/client-errors";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -55,6 +55,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
   const [slugStatus, setSlugStatus] = useState<"idle" | "available" | "taken" | "empty">("idle");
   const [isPaidPlan, setIsPaidPlan] = useState<boolean>(true);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
+  const [revokingPortal, setRevokingPortal] = useState(false);
   const [form, setForm] = useState({
     clientNumber: defaultValues?.clientNumber ?? "",
     name: defaultValues?.name ?? "",
@@ -180,6 +181,24 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
   function set(k: keyof typeof form, v: string | boolean) {
     setForm((prev) => ({ ...prev, [k]: v }));
   }
+
+  const handleRevokePortal = async () => {
+    if (!defaultValues?.id) return;
+    if (!window.confirm(t("Cabut akses Client Portal untuk klien ini? Klien tidak akan bisa membuka link portal lagi.", "Revoke Client Portal access for this client? The client will no longer be able to access the portal."))) {
+      return;
+    }
+    setRevokingPortal(true);
+    try {
+      await revokePortalToken(defaultValues.id);
+      set("portalEnabled", false);
+      toast.success(t("Akses Client Portal berhasil dicabut", "Client Portal access revoked successfully"));
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Gagal mencabut akses portal", "Failed to revoke portal access"));
+    } finally {
+      setRevokingPortal(false);
+    }
+  };
 
   if (mode === "create") {
     return (
@@ -368,13 +387,27 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
           </div>
 
           <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
-            <div>
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Portal Klien", "Client Portal")}</h3>
-              <p className="text-[11px] text-muted-foreground">
-                {isPaidPlan
-                  ? t("Slug kustom portal klien.", "Custom portal URL slug.")
-                  : t("Slug portal di-generate otomatis untuk akun gratis (upgrade ke Solo/Team untuk kustomisasi).", "Portal slug is auto-generated on free plan (upgrade to customize).")}
-              </p>
+            <div className="flex items-center justify-between gap-2">
+              <div>
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Portal Klien", "Client Portal")}</h3>
+                <p className="text-[11px] text-muted-foreground">
+                  {isPaidPlan
+                    ? t("Slug kustom portal klien.", "Custom portal URL slug.")
+                    : t("Slug portal di-generate otomatis untuk akun gratis (upgrade ke Solo/Team untuk kustomisasi).", "Portal slug is auto-generated on free plan (upgrade to customize).")}
+                </p>
+              </div>
+              {form.portalEnabled && defaultValues?.id && (
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleRevokePortal}
+                  disabled={revokingPortal}
+                  className="h-7 text-xs font-semibold shrink-0"
+                >
+                  {revokingPortal ? t("Mencabut...", "Revoking...") : t("Cabut Akses", "Revoke Access")}
+                </Button>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="portalSlug" className="text-xs font-medium">{t("Slug Portal", "Portal Slug")}</Label>
