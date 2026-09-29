@@ -126,9 +126,11 @@ export async function activateCompletedPakasirPayment(
 
     if (aiAddon) {
       const { activateAiAddonTx } = await import("@/lib/ai-addons");
+      const rawRef = current.entitlementRef ?? "ai_1000";
+      const quota = rawRef === "ai_500" ? 500 : 1000;
       const activated = await activateAiAddonTx(tx, {
         userId: workspace.ownerId,
-        requestsQuota: 1000,
+        requestsQuota: quota,
         amount: Number(current.amount),
         billingPeriod: current.billingPeriod as "monthly" | "yearly",
         paidAt,

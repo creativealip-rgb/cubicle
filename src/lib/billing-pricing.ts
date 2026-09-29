@@ -102,12 +102,12 @@ export function getExtraWorkspacePeriodLabel(period: BillingPeriod): string {
   return formatRupiah(getExtraWorkspaceAmount(period));
 }
 
-export function getAiRequestsAddonAmount(): number {
-  return 10_000;
+export function getAiRequestsAddonAmount(tier: 500 | 1000 = 1000): number {
+  return tier === 500 ? 50_000 : 100_000;
 }
 
-export function getAiRequestsAddonPeriodLabel(): string {
-  return formatRupiah(10_000);
+export function getAiRequestsAddonPeriodLabel(tier: 500 | 1000 = 1000): string {
+  return formatRupiah(getAiRequestsAddonAmount(tier));
 }
 
 export { BILLING_PLANS };

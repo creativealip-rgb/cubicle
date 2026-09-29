@@ -36,7 +36,22 @@ export const STORAGE_ADDONS = {
 
 export const EXTRA_WORKSPACE_ADDON = { monthlyAmount: 30_000 } as const;
 
-export const AI_REQUESTS_ADDON = { requestsQuota: 1000, amount: 10_000 } as const;
+export const AI_REQUESTS_ADDONS = {
+  500: { requestsQuota: 500, amount: 50_000, label: "500 AI Requests/bln" },
+  1000: { requestsQuota: 1000, amount: 100_000, label: "1.000 AI Requests/bln" },
+} as const;
+
+export type AiRequestsAddonKey = keyof typeof AI_REQUESTS_ADDONS;
+
+export const AI_REQUESTS_ADDON = AI_REQUESTS_ADDONS[1000];
+
+export function isAiRequestsAddonKey(value: unknown): value is AiRequestsAddonKey {
+  return value === 500 || value === 1000 || value === "500" || value === "1000";
+}
+
+export function getAiRequestsAddonAmount(tier: AiRequestsAddonKey = 1000): number {
+  return AI_REQUESTS_ADDONS[tier]?.amount ?? 100_000;
+}
 
 export type StorageAddonKey = keyof typeof STORAGE_ADDONS;
 

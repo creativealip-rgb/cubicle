@@ -9,7 +9,7 @@ import { createPakasirTransaction, isPakasirConfigured, pakasirPaymentUrl } from
 import { assertSameOrigin } from "@/lib/same-origin";
 import { getEffectivePlan } from "@/lib/plan";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
-import { AI_REQUESTS_ADDON } from "@/lib/billing-plans";
+import { AI_REQUESTS_ADDONS, isAiRequestsAddonKey, type AiRequestsAddonKey } from "@/lib/billing-plans";
 
 export async function POST(request: Request) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -67,9 +67,13 @@ export async function POST(request: Request) {
     );
   }
 
-  const amount = AI_REQUESTS_ADDON.amount;
+  const body = (await request.json().catch(() => ({}))) as { tier?: unknown };
+  const rawTier = body?.tier ?? 1000;
+  const tier: AiRequestsAddonKey = isAiRequestsAddonKey(rawTier) ? (Number(rawTier) as AiRequestsAddonKey) : 1000;
+  const selectedAddon = AI_REQUESTS_ADDONS[tier] ?? AI_REQUESTS_ADDONS[1000];
+  const amount = selectedAddon.amount;
   const shortWs = workspaceId.replace(/-/g, "").slice(0, 10).toUpperCase();
-  const orderId = `CUB-${shortWs}-AI-${Date.now()}-${randomBytes(3).toString("hex").toUpperCase()}`;
+  const orderId = `CUB-${shortWs}-AI${tier}-${Date.now()}-${randomBytes(3).toString("hex").toUpperCase()}`;
 
   try {
     const payment = await createPakasirTransaction({ orderId, amount, method: "qris" });
@@ -88,7 +92,7 @@ export async function POST(request: Request) {
       plan: effectivePlan === "free" ? "solo" : (effectivePlan as "solo" | "team"),
       billingPeriod: "yearly",
       paymentType: "ai_addon",
-      entitlementRef: "ai_1000",
+      entitlementRef: `ai_${tier}`,
       amount: String(amount),
       status: "pending",
       rawPayload: payment,
@@ -96,7 +100,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      data: { orderId, addon: "ai_1000", amount, paymentUrl },
+      data: { orderId, addon: `ai_${tier}`, amount, requestsQuota: selectedAddon.requestsQuota, paymentUrl },
     });
   } catch (error) {
     return NextResponse.json(

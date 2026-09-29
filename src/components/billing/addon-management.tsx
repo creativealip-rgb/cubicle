@@ -119,10 +119,10 @@ export function AddonManagement({
                     +{Math.round(addon.storageBytes / 1024 ** 3)} GB Cloud Storage
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    {t("Berakhir", "Ends")}: {new Date(addon.endsAt).toLocaleDateString("id-ID", { dateStyle: "medium" })}
+                    {t("Berakhir", "Ends")}: {addon.endsAt.toLocaleDateString()}
                     {addon.status === "cancel_scheduled" && (
                       <span className="ml-1.5 text-amber-600 font-medium">
-                        ({t("aktif sampai akhir periode", "active until period end")})
+                        ({t("aktif hingga akhir periode", "active until period end")})
                       </span>
                     )}
                   </p>
@@ -155,11 +155,10 @@ export function AddonManagement({
                     +{addon.requestsQuota.toLocaleString("id-ID")} AI Requests
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    {formatAmount(addon.amount)} · {t("Berakhir", "Ends")}:{" "}
-                    {new Date(addon.endsAt).toLocaleDateString("id-ID", { dateStyle: "medium" })}
+                    {formatAmount(addon.amount)} · {t("Berakhir", "Ends")}: {addon.endsAt.toLocaleDateString()}
                     {addon.status === "cancel_scheduled" && (
                       <span className="ml-1.5 text-amber-600 font-medium">
-                        ({t("aktif sampai akhir periode", "active until period end")})
+                        ({t("aktif hingga akhir periode", "active until period end")})
                       </span>
                     )}
                   </p>
@@ -183,11 +182,10 @@ export function AddonManagement({
                     +{entitlement.quantity} Extra Workspace
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    {formatAmount(entitlement.amount)} · {t("Berakhir", "Ends")}:{" "}
-                    {new Date(entitlement.endsAt).toLocaleDateString("id-ID", { dateStyle: "medium" })}
+                    {formatAmount(entitlement.amount)} · {t("Berakhir", "Ends")}: {entitlement.endsAt.toLocaleDateString()}
                     {entitlement.status === "cancel_scheduled" && (
                       <span className="ml-1.5 text-amber-600 font-medium">
-                        ({t("aktif sampai akhir periode", "active until period end")})
+                        ({t("aktif hingga akhir periode", "active until period end")})
                       </span>
                     )}
                   </p>

@@ -10,11 +10,12 @@ import {
   getAiRequestsAddonPeriodLabel,
   type BillingPeriod,
 } from "@/lib/billing-pricing";
-import { type StorageAddonKey } from "@/lib/billing-plans";
+import { type StorageAddonKey, type AiRequestsAddonKey } from "@/lib/billing-plans";
 
 const STORAGE_OPTIONS: StorageAddonKey[] = [5, 10, 15];
+const AI_OPTIONS: AiRequestsAddonKey[] = [500, 1000];
 
-type PendingKey = `storage:${StorageAddonKey}` | "workspace" | "ai" | null;
+type PendingKey = `storage:${StorageAddonKey}` | `ai:${AiRequestsAddonKey}` | "workspace" | null;
 
 export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string }) {
   const { t } = useT();
@@ -22,6 +23,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
   const [pending, setPending] = useState<PendingKey>(null);
   const [error, setError] = useState<string | null>(null);
   const [selectedStorage, setSelectedStorage] = useState<StorageAddonKey>(5);
+  const [selectedAi, setSelectedAi] = useState<AiRequestsAddonKey>(1000);
 
   async function startCheckout(path: string, body: Record<string, unknown>, pendingKey: PendingKey) {
     setPending(pendingKey);
@@ -62,8 +64,8 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
           <h3 className="text-sm font-semibold text-foreground">{t("Beli Add-on Tambahan", "Purchase Add-ons")}</h3>
           <p className="text-xs text-muted-foreground">
             {t(
-              "Tingkatkan kapasitas penyimpanan, kuota AI, atau workspace sesuai kebutuhan tokomu.",
-              "Expand storage, AI request quota, or workspace capacity as your team scales."
+              "Tingkatkan kapasitas penyimpanan, kuota AI bulanan, atau workspace sesuai kebutuhan tokomu.",
+              "Expand storage, monthly AI quota, or workspace capacity as your team scales."
             )}
           </p>
         </div>
@@ -139,30 +141,43 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
                 <Sparkles className="h-4.5 w-4.5" />
               </div>
               <span className="rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-600 dark:text-purple-400">
-                Best Value
+                {selectedAi === 1000 ? "Best Value" : "Starter AI"}
               </span>
             </div>
 
             <div>
-              <h4 className="text-sm font-bold text-foreground">+1.000 AI Requests</h4>
+              <h4 className="text-sm font-bold text-foreground">
+                +{selectedAi.toLocaleString("id-ID")} AI Requests / {t("bln", "mo")}
+              </h4>
               <p className="text-[11px] text-muted-foreground">
                 {t(
-                  "Kuota AI Assistant & Prompt Studio untuk generate proposal, task, & copy.",
-                  "Extra requests for AI Assistant, auto proposals, & Prompt Studio."
+                  "Tambahan kuota AI bulanan aktif setahun untuk Assistant & Prompt Studio.",
+                  "Extra monthly AI quota valid for 1 full year for Assistant & Prompts."
                 )}
               </p>
             </div>
 
-            <div className="rounded-xl border border-purple-500/20 bg-purple-500/5 px-2.5 py-1.5 text-xs">
-              <div className="flex items-center gap-1.5 text-purple-700 dark:text-purple-300 font-medium text-[11px]">
-                <Zap className="h-3 w-3 shrink-0" />
-                <span>{t("Bebas pakai setahun penuh", "Valid for 1 full year")}</span>
-              </div>
+            {/* AI Tier Selector: 500 vs 1.000 */}
+            <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-muted/60 p-1">
+              {AI_OPTIONS.map((quota) => (
+                <button
+                  key={quota}
+                  type="button"
+                  onClick={() => setSelectedAi(quota)}
+                  className={`rounded-lg py-1 text-xs font-semibold transition-all ${
+                    selectedAi === quota
+                      ? "bg-purple-600 text-white shadow-2xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  +{quota.toLocaleString("id-ID")}/bln
+                </button>
+              ))}
             </div>
 
             <div className="pt-1">
               <div className="text-lg font-mono font-bold text-foreground">
-                {getAiRequestsAddonPeriodLabel()}
+                {getAiRequestsAddonPeriodLabel(selectedAi)}
                 <span className="text-xs font-normal text-muted-foreground">/{t("tahun", "yr")}</span>
               </div>
             </div>
@@ -171,11 +186,15 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
           <Button
             size="sm"
             disabled={busy}
-            aria-busy={pending === "ai" || undefined}
-            onClick={() => startCheckout("/api/billing/checkout-ai-addon", { period }, "ai")}
+            aria-busy={pending === `ai:${selectedAi}` || undefined}
+            onClick={() =>
+              startCheckout("/api/billing/checkout-ai-addon", { tier: selectedAi, period }, `ai:${selectedAi}`)
+            }
             className="mt-4 w-full h-8.5 rounded-xl text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white shadow-xs"
           >
-            {pending === "ai" ? t("Memproses...", "Processing...") : t("Beli +1.000 AI", "Buy +1,000 AI")}
+            {pending === `ai:${selectedAi}`
+              ? t("Memproses...", "Processing...")
+              : t(`Beli +${selectedAi.toLocaleString("id-ID")} AI/bln`, `Buy +${selectedAi.toLocaleString("id-ID")} AI/mo`)}
           </Button>
         </div>
 
