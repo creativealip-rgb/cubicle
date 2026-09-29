@@ -17,6 +17,7 @@ import { AddonPurchaseControls } from "@/components/billing/addon-purchase-contr
 import { getWorkspaceRecordForUser } from "@/lib/workspace";
 import { getCheckoutStatusForWorkspaceOwner, type CheckoutStatus } from "@/lib/billing-checkout-status";
 import { getEffectivePlan } from "@/lib/plan";
+import { Check, Crown, Zap, Shield, Sparkles, Calendar } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 
@@ -26,19 +27,44 @@ const plans = [
     name: "Free Forever",
     price: "Rp 0",
     description: ["Coba dulu buat client work kecil.", "Try it for small client work."],
-    features: [["1 pengguna", "1 user"], ["1 workspace", "1 workspace"], ["3 klien", "3 clients"], ["5 proyek", "5 projects"], ["10 invoice/bulan", "10 invoices/month"], ["Client portal + AI", "Client portal + AI"], ["15 AI request/bulan", "15 AI requests/month"], ["Penyimpanan file aman", "Secure file storage"]],
+    features: [
+      ["1 pengguna", "1 user"],
+      ["1 workspace", "1 workspace"],
+      ["3 klien", "3 clients"],
+      ["5 proyek", "5 projects"],
+      ["10 invoice/bulan", "10 invoices/month"],
+      ["Client portal + AI", "Client portal + AI"],
+      ["15 AI request/bulan", "15 AI requests/month"],
+      ["Penyimpanan file aman", "Secure file storage"],
+    ],
   },
   {
     key: "solo",
     name: "Solo",
     description: ["Untuk freelancer yang punya banyak klien.", "For freelancers with many clients."],
-    features: [["1 pengguna", "1 user"], ["3 workspace", "3 workspaces"], ["Klien, proyek, proposal, kontrak, dan invoice unlimited", "Unlimited clients, projects, proposals, contracts, and invoices"], ["Client portal + AI", "Client portal + AI"], ["150 AI request/bulan", "150 AI requests/month"], ["Kelola dan bagikan file klien", "Manage and share client files"]],
+    features: [
+      ["1 pengguna", "1 user"],
+      ["3 workspace", "3 workspaces"],
+      ["Klien, proyek, proposal, kontrak, dan invoice unlimited", "Unlimited clients, projects, proposals, contracts, and invoices"],
+      ["Client portal + AI", "Client portal + AI"],
+      ["150 AI request/bulan", "150 AI requests/month"],
+      ["Kelola dan bagikan file klien", "Manage and share client files"],
+    ],
   },
   {
     key: "team",
     name: "Team",
     description: ["Untuk team kecil yang handle banyak client bareng.", "For small teams handling many clients together."],
-    features: [["Maksimal 5 member/workspace", "Up to 5 members/workspace"], ["Maksimal 3 workspace", "Up to 3 workspaces"], ["Klien, proyek, proposal, kontrak, dan invoice unlimited", "Unlimited clients, projects, proposals, contracts, and invoices"], ["Client portal + AI", "Client portal + AI"], ["Peran tim", "Team roles"], ["1.000 AI request/bulan", "1,000 AI requests/month"], ["5 GB/workspace", "5 GB/workspace"], ["Penyimpanan bersama untuk tim", "Shared storage for your team"]],
+    features: [
+      ["Maksimal 5 member/workspace", "Up to 5 members/workspace"],
+      ["Maksimal 3 workspace", "Up to 3 workspaces"],
+      ["Klien, proyek, proposal, kontrak, dan invoice unlimited", "Unlimited clients, projects, proposals, contracts, and invoices"],
+      ["Client portal + AI", "Client portal + AI"],
+      ["Peran tim", "Team roles"],
+      ["1.000 AI request/bulan", "1,000 AI requests/month"],
+      ["5 GB/workspace", "5 GB/workspace"],
+      ["Penyimpanan bersama untuk tim", "Shared storage for your team"],
+    ],
   },
 ] as const;
 
@@ -67,14 +93,9 @@ export default async function BillingPage({
     : null;
 
   const currentPlan = user?.plan ?? "free";
-  // Effective plan after expiry/grace — drives the Team-only extra-workspace
-  // purchase gate on the client (the server re-checks and returns 409).
   const effectivePlan = getEffectivePlan(user?.plan, user?.planExpiresAt);
   const addons = userId ? await listActiveAddOns() : { storageAddons: [], extraWorkspaceEntitlements: [], aiAddons: [] };
 
-  // Checkout status: only shown to the current workspace OWNER and only when
-  // the order id belongs to that workspace. Members/viewers and foreign order
-  // ids get `null` here, so the pakasir_payments lookup is never run for them.
   const { checkout: checkoutOrderId } = await searchParams;
   let checkoutStatus: { status: CheckoutStatus; amount: string | null } | null = null;
   if (userId && checkoutOrderId) {
@@ -86,12 +107,14 @@ export default async function BillingPage({
     });
   }
 
+  const sub = user ? getSubscriptionStatus(user.planExpiresAt, currentPlan, lang) : null;
+
   return (
     <div className="space-y-6">
       {showHeader && (
         <div>
           <h1 className="app-page-title">{t("Billing", "Billing")}</h1>
-          <p className="mt-2 text-slate-600">
+          <p className="mt-1 text-xs text-muted-foreground">
             {t(
               "Bayar bulanan atau tahunan via Pakasir QRIS, tanpa pajak. Plan aktif otomatis setelah webhook payment diterima.",
               "Pay monthly or yearly via Pakasir QRIS, tax-free. Plan activates automatically after payment webhook is received.",
@@ -108,84 +131,168 @@ export default async function BillingPage({
         />
       )}
 
-      <Tabs defaultValue="plans">
-        <TabsList>
-          <TabsTrigger value="plans">{t("Paket", "Plans")}</TabsTrigger>
-          <TabsTrigger value="addons">{t("Add-on", "Add-ons")}</TabsTrigger>
+      <Tabs defaultValue="plans" className="space-y-5">
+        <TabsList className="bg-muted/80 p-1">
+          <TabsTrigger value="plans" className="text-xs font-semibold px-4">{t("Paket", "Plans")}</TabsTrigger>
+          <TabsTrigger value="addons" className="text-xs font-semibold px-4">{t("Add-on", "Add-ons")}</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="plans" className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle>{t("Plan saat ini", "Current Plan")}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-slate-600">
-              <p><span className="font-medium text-slate-950">{t("Plan aktif", "Active plan")}:</span> {effectivePlan.toUpperCase()}</p>
-              {currentPlan !== effectivePlan && (
-                <p><span className="font-medium text-slate-950">{t("Plan terakhir", "Previous plan")}:</span> {currentPlan.toUpperCase()}</p>
-              )}
-              {user?.planExpiresAt && (
-                <p><span className="font-medium text-slate-950">{t("Berlaku hingga", "Valid until")}:</span> {user.planExpiresAt.toLocaleDateString(lang === "en" ? "en-US" : "id-ID")}</p>
-              )}
-              {user && (() => {
-                const sub = getSubscriptionStatus(user.planExpiresAt, currentPlan, lang);
-                const badgeClass = sub.status === "active" ? "bg-emerald-50 text-emerald-800" :
-                  sub.status === "expiring" ? "bg-amber-50 text-amber-800" :
-                  sub.status === "grace" ? "bg-orange-50 text-orange-800" :
-                  "bg-red-50 text-red-800";
-                return <p className={`mt-2 rounded-lg px-3 py-2 text-sm ${badgeClass}`}>{sub.message}</p>;
-              })()}
-            </CardContent>
-          </Card>
+        <TabsContent value="plans" className="space-y-5">
+          {/* Streamlined Subscription Status Banner */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-border/80 bg-gradient-to-r from-card via-card to-purple-500/[0.04] p-4 shadow-xs">
+            <div className="flex items-center gap-3.5">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-600/10 text-purple-600 dark:text-purple-400">
+                {effectivePlan === "team" ? (
+                  <Crown className="h-5 w-5" />
+                ) : effectivePlan === "solo" ? (
+                  <Zap className="h-5 w-5" />
+                ) : (
+                  <Shield className="h-5 w-5" />
+                )}
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                    {t("Plan Saat Ini", "Current Plan")}
+                  </span>
+                  <span className="inline-flex items-center rounded-full bg-purple-600/10 px-2.5 py-0.5 text-xs font-bold text-purple-700 dark:text-purple-300 uppercase">
+                    {effectivePlan}
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {user?.planExpiresAt ? (
+                    <span className="flex items-center gap-1">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {t("Berlaku hingga", "Valid until")}{" "}
+                      <span className="font-semibold text-foreground">
+                        {user.planExpiresAt.toLocaleDateString(lang === "en" ? "en-US" : "id-ID", { dateStyle: "long" })}
+                      </span>
+                    </span>
+                  ) : (
+                    t("Akses gratis tanpa batas waktu kedaluwarsa.", "Free tier with no expiration date.")
+                  )}
+                </p>
+              </div>
+            </div>
 
-          <div className="grid gap-5 lg:grid-cols-3">
+            {sub && sub.status !== "active" && (
+              <div
+                className={`rounded-xl px-3 py-1.5 text-xs font-medium ${
+                  sub.status === "expiring"
+                    ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/20"
+                    : sub.status === "grace"
+                      ? "bg-orange-500/10 text-orange-700 dark:text-orange-400 border border-orange-500/20"
+                      : "bg-destructive/10 text-destructive border border-destructive/20"
+                }`}
+              >
+                {sub.message}
+              </div>
+            )}
+          </div>
+
+          {/* 3-Column Modern Pricing Cards */}
+          <div className="grid gap-4 lg:grid-cols-3">
             {plans.map((plan) => {
               const isCurrent = effectivePlan === plan.key;
               const paid = plan.key === "solo" || plan.key === "team";
               const planConfig = paid ? BILLING_PLANS[plan.key] : null;
+
               return (
-                <Card key={plan.key} className={plan.key === "solo" ? "border-[#6647F0] shadow-lg" : ""}>
-                  <CardHeader>
-                    <CardTitle className="flex items-center justify-between">
-                      {plan.name}
-                      {isCurrent && <span className="rounded-full bg-slate-100 px-2 py-1 text-xs text-slate-600">{t("Aktif", "Active")}</span>}
-                    </CardTitle>
-                    {paid && planConfig ? (
+                <div
+                  key={plan.key}
+                  className={`flex flex-col justify-between rounded-2xl border p-5 shadow-xs transition-all relative ${
+                    isCurrent
+                      ? "border-purple-600 bg-gradient-to-b from-purple-500/[0.04] to-card ring-1 ring-purple-600/50"
+                      : "border-border/80 bg-card hover:border-border hover:shadow-sm"
+                  }`}
+                >
+                  <div className="space-y-4">
+                    {/* Header */}
+                    <div className="flex items-center justify-between">
                       <div>
-                        <p className="text-2xl font-semibold text-slate-950">
-                          {lang === "en" ? (plan.key === "solo" ? "$6" : "$12") : getPlanPeriodLabel(plan.key, "monthly")}
-                          <span className="text-sm font-normal text-slate-500">/{t("bulan", "month")}</span>
-                        </p>
-                        <p className="mt-1 text-xs text-slate-500">
-                          {t("Ditagih tahunan", "Billed yearly")} · {lang === "en" ? (plan.key === "solo" ? "$72" : "$144") : getPlanPeriodLabel(plan.key, "yearly")}/{t("tahun", "year")}
+                        <h3 className="text-base font-bold text-foreground">{plan.name}</h3>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {t(plan.description[0], plan.description[1])}
                         </p>
                       </div>
-                    ) : (
-                      <p className="text-2xl font-semibold text-slate-950">{lang === "en" ? "$0" : "Rp 0"}</p>
-                    )}
-                    <p className="text-sm text-slate-600">{t(plan.description[0], plan.description[1])}</p>
-                  </CardHeader>
-                  <CardContent className="space-y-5">
-                    <ul className="space-y-2 text-sm text-slate-600">
-                      {plan.features.map((feature) => <li key={feature[0]}>✓ {t(feature[0], feature[1])}</li>)}
-                    </ul>
+                      {isCurrent && (
+                        <span className="rounded-full bg-purple-600 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-xs">
+                          {t("Aktif", "Active")}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Price Tag */}
+                    <div className="pt-1 pb-2 border-b border-border/50">
+                      {paid && planConfig ? (
+                        <div>
+                          <div className="text-2xl font-mono font-bold text-foreground">
+                            {lang === "en" ? (plan.key === "solo" ? "$6" : "$12") : getPlanPeriodLabel(plan.key, "monthly")}
+                            <span className="text-xs font-normal text-muted-foreground">/{t("bulan", "month")}</span>
+                          </div>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            {t("Ditagih tahunan", "Billed yearly")} ·{" "}
+                            {lang === "en" ? (plan.key === "solo" ? "$72" : "$144") : getPlanPeriodLabel(plan.key, "yearly")}
+                            /{t("tahun", "year")}
+                          </p>
+                        </div>
+                      ) : (
+                        <div>
+                          <div className="text-2xl font-mono font-bold text-foreground">
+                            {lang === "en" ? "$0" : "Rp 0"}
+                          </div>
+                          <p className="mt-0.5 text-[11px] text-muted-foreground">
+                            {t("Tanpa biaya berlangganan", "Free forever, no credit card")}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Features List */}
+                    <div className="space-y-2.5">
+                      <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+                        {t("Fitur Termasuk", "Features Included")}
+                      </p>
+                      <ul className="space-y-2 text-xs text-foreground/90">
+                        {plan.features.map((feature) => (
+                          <li key={feature[0]} className="flex items-start gap-2">
+                            <div className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">
+                              <Check className="h-2.5 w-2.5 stroke-[3]" />
+                            </div>
+                            <span className="leading-tight">{t(feature[0], feature[1])}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  {/* Action CTA */}
+                  <div className="mt-6 pt-3">
                     {paid ? (
                       <CheckoutButton plan={plan.key} showPeriodToggle={false} disabled={isCurrent}>
-                        {isCurrent ? t("Plan aktif", "Active plan") : plan.key === "solo" ? t("Bayar Solo QRIS", "Pay Solo QRIS") : t("Bayar Team QRIS", "Pay Team QRIS")}
+                        {isCurrent
+                          ? t("Plan Aktif", "Active Plan")
+                          : plan.key === "solo"
+                            ? t("Bayar Solo QRIS", "Pay Solo QRIS")
+                            : t("Bayar Team QRIS", "Pay Team QRIS")}
                       </CheckoutButton>
                     ) : (
-                      <div className="rounded-lg bg-slate-100 px-4 py-2 text-center text-sm font-medium text-slate-600">{t("Plan default", "Default plan")}</div>
+                      <div className="rounded-xl bg-muted/60 px-4 py-2.5 text-center text-xs font-semibold text-muted-foreground">
+                        {t("Plan Default", "Default Plan")}
+                      </div>
                     )}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               );
             })}
           </div>
         </TabsContent>
 
         <TabsContent value="addons">
-          <Card>
-            <CardHeader><CardTitle>{t("Storage & add-on", "Storage & add-ons")}</CardTitle></CardHeader>
+          <Card className="rounded-2xl border-border/80 shadow-xs">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-bold">{t("Storage & Add-on", "Storage & Add-ons")}</CardTitle>
+            </CardHeader>
             <CardContent className="space-y-5">
               <AddonPurchaseControls effectivePlan={effectivePlan} />
               <AddonManagement
