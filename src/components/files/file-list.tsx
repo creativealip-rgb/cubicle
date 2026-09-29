@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
-import { deleteFile, bulkDeleteFiles, bulkMoveFiles } from "@/lib/actions/files";
+import { deleteFile, bulkDeleteFiles, bulkMoveFiles, updateFileMeta } from "@/lib/actions/files";
 import Link from "next/link";
 
 import { useT } from "@/lib/i18n-client";
@@ -57,6 +57,8 @@ import {
   CheckSquare,
   Square,
   X,
+  Globe,
+  Lock,
 } from "lucide-react";
 
 interface FileItem {
@@ -130,6 +132,28 @@ export function FileList({
   const [bulkMoveModalOpen, setBulkMoveModalOpen] = useState(false);
   const [targetMoveFolder, setTargetMoveFolder] = useState<string>("root");
   const [bulkMoving, setBulkMoving] = useState(false);
+  const [updatingVisibilityId, setUpdatingVisibilityId] = useState<string | null>(null);
+
+  async function handleToggleVisibility(file: FileItem) {
+    const nextVisibility = file.visibility === "client" ? "internal" : "client";
+    setUpdatingVisibilityId(file.id);
+    try {
+      await updateFileMeta({
+        fileId: file.id,
+        visibility: nextVisibility,
+      });
+      toast.success(
+        nextVisibility === "client"
+          ? t("Visibilitas diubah ke Client (terlihat di portal)", "Visibility changed to Client (visible in portal)")
+          : t("Visibilitas diubah ke Internal saja", "Visibility changed to Internal only")
+      );
+      refresh();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Gagal mengubah visibilitas", "Could not change visibility"));
+    } finally {
+      setUpdatingVisibilityId(null);
+    }
+  }
 
   const filteredFolders = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -555,8 +579,22 @@ export function FileList({
                       <td className="px-3 py-2 text-muted-foreground hidden sm:table-cell font-mono">
                         {formatFileSize(file.sizeBytes)}
                       </td>
-                      <td className="px-3 py-2 text-muted-foreground hidden md:table-cell capitalize">
-                        {file.visibility}
+                      <td className="px-3 py-2 text-muted-foreground hidden md:table-cell">
+                        <span
+                          className={cn(
+                            "inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold capitalize",
+                            file.visibility === "client"
+                              ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20"
+                              : "bg-muted text-muted-foreground"
+                          )}
+                        >
+                          {file.visibility === "client" ? (
+                            <Globe className="h-3 w-3" />
+                          ) : (
+                            <Lock className="h-3 w-3" />
+                          )}
+                          {file.visibility === "client" ? t("Klien", "Client") : t("Internal", "Internal")}
+                        </span>
                       </td>
                       <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
@@ -578,6 +616,24 @@ export function FileList({
                               <Download className="h-3.5 w-3.5 mr-2" />
                               {t("Unduh", "Download")}
                             </DropdownMenuItem>
+                            {canWrite && (
+                              <DropdownMenuItem
+                                onClick={() => handleToggleVisibility(file)}
+                                disabled={updatingVisibilityId === file.id}
+                              >
+                                {file.visibility === "client" ? (
+                                  <>
+                                    <Lock className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                                    {t("Jadikan Internal Saja", "Make Internal Only")}
+                                  </>
+                                ) : (
+                                  <>
+                                    <Globe className="h-3.5 w-3.5 mr-2 text-emerald-600" />
+                                    {t("Bagikan ke Klien (Portal)", "Share to Client (Portal)")}
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                            )}
                             {canWrite && (
                               <DropdownMenuItem
                                 onClick={() => setDeleteTarget(file)}
@@ -716,8 +772,26 @@ export function FileList({
                               >
                                 <Download className="h-3.5 w-3.5 mr-2" />
                                 {t("Unduh", "Download")}
-                              </DropdownMenuItem>
-                              {canWrite && (
+                                </DropdownMenuItem>
+                                {canWrite && (
+                                <DropdownMenuItem
+                                  onClick={() => handleToggleVisibility(file)}
+                                  disabled={updatingVisibilityId === file.id}
+                                >
+                                  {file.visibility === "client" ? (
+                                    <>
+                                      <Lock className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                                      {t("Jadikan Internal Saja", "Make Internal Only")}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Globe className="h-3.5 w-3.5 mr-2 text-emerald-600" />
+                                      {t("Bagikan ke Klien (Portal)", "Share to Client (Portal)")}
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                )}
+                                {canWrite && (
                                 <DropdownMenuItem
                                   onClick={() => setDeleteTarget(file)}
                                   className="text-destructive focus:text-destructive"
