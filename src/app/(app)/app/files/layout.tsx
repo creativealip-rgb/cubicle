@@ -60,7 +60,7 @@ export default async function FilesLayout({
     .orderBy(foldersTable.name);
 
   return (
-    <div className="flex flex-col h-[calc(100vh-8.5rem)] md:h-[calc(100vh-7.5rem)] overflow-hidden">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
       {/* Top Fixed Header */}
       <div className="shrink-0 pb-3">
         <Suspense
