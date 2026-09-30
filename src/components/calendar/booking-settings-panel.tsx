@@ -194,16 +194,16 @@ export function BookingSettingsPanel({
           <button
             type="button"
             onClick={() => setActiveTab("platforms")}
-            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer whitespace-nowrap ${
               activeTab === "platforms"
                 ? "bg-background text-foreground shadow-xs ring-1 ring-border/80"
                 : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Video className={`h-3.5 w-3.5 ${activeTab === "platforms" ? "text-primary" : ""}`} />
-            <span>{t("Platform Meeting", "Meeting Platforms")}</span>
+            <Video className={`h-3.5 w-3.5 shrink-0 ${activeTab === "platforms" ? "text-primary" : ""}`} />
+            <span>{t("Platform", "Platforms")}</span>
             <span
-              className={`rounded-full px-1.5 py-0.2 text-[10px] font-mono font-bold ${
+              className={`rounded-full px-1.5 py-0.2 text-[10px] font-mono font-bold shrink-0 ${
                 activeTab === "platforms" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
               }`}
             >
@@ -282,18 +282,16 @@ export function BookingSettingsPanel({
                     </p>
                   </div>
                 ) : (
-                  /* 1-Row Full-Width Time Slots Stack */
-                  <div className="space-y-1.5">
+                  /* 2 Slots per Row Grid */
+                  <div className="grid grid-cols-2 gap-2">
                     {activeDaySlots.map((slot) => (
                       <div
                         key={slot.id}
-                        className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-border/80 bg-muted/20 hover:bg-muted/40 transition-colors"
+                        className="flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-lg border border-border/80 bg-muted/20 hover:bg-muted/40 transition-colors"
                       >
-                        <div className="flex items-center gap-2.5">
-                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary">
-                            <Clock className="h-3.5 w-3.5" />
-                          </div>
-                          <span className="text-xs font-mono font-bold text-foreground tracking-tight">
+                        <div className="flex items-center gap-1.5 min-w-0">
+                          <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
+                          <span className="text-[11px] sm:text-xs font-mono font-bold text-foreground tracking-tight truncate">
                             {slot.startTime.substring(0, 5)} – {slot.endTime.substring(0, 5)}
                           </span>
                         </div>
