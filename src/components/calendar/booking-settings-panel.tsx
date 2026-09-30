@@ -11,7 +11,7 @@ import {
   Phone,
   Users,
   Link as LinkIcon,
-  Plus,
+  Sparkles,
 } from "lucide-react";
 import { updateWorkspaceBookingSlug } from "@/lib/actions/workspace";
 import { Card, CardContent } from "@/components/ui/card";
@@ -171,31 +171,25 @@ export function BookingSettingsPanel({
 
   return (
     <Card className="rounded-2xl border shadow-none bg-card flex flex-col h-full overflow-hidden">
-      {/* Header with Linear-style Navigation Tab Bar */}
-      <div className="border-b bg-muted/20 px-4 pt-3 pb-0">
-        <div className="mb-3">
-          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-            {t("Pengaturan Sesi", "Session Setup")}
-          </p>
-          <h3 className="text-sm font-bold text-foreground mt-0.5">
-            {activeTab === "hours" ? t("Jadwal Jam Kerja", "Availability & Hours") : t("Pilihan Platform", "Meeting Platforms")}
-          </h3>
-        </div>
-
-        {/* Clean Pill Sub-Nav (Linear/Cal.com style) */}
-        <div className="flex items-center gap-4 border-b border-transparent -mb-px">
+      {/* Sleek Segmented Control Header */}
+      <div className="border-b bg-muted/30 px-4 py-3">
+        <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-muted/80 border border-border/60">
           <button
             type="button"
             onClick={() => setActiveTab("hours")}
-            className={`flex items-center gap-1.5 pb-2.5 px-1 text-xs font-semibold transition-all border-b-2 cursor-pointer ${
+            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "hours"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                ? "bg-background text-foreground shadow-xs ring-1 ring-border/80"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Clock className="h-3.5 w-3.5" />
+            <Clock className={`h-3.5 w-3.5 ${activeTab === "hours" ? "text-primary" : ""}`} />
             <span>{t("Jam Kerja", "Working Hours")}</span>
-            <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px] font-mono text-muted-foreground">
+            <span
+              className={`rounded-full px-1.5 py-0.2 text-[10px] font-mono font-bold ${
+                activeTab === "hours" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+              }`}
+            >
               {rules.length}
             </span>
           </button>
@@ -203,15 +197,19 @@ export function BookingSettingsPanel({
           <button
             type="button"
             onClick={() => setActiveTab("platforms")}
-            className={`flex items-center gap-1.5 pb-2.5 px-1 text-xs font-semibold transition-all border-b-2 cursor-pointer ${
+            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "platforms"
-                ? "border-primary text-primary"
-                : "border-transparent text-muted-foreground hover:text-foreground"
+                ? "bg-background text-foreground shadow-xs ring-1 ring-border/80"
+                : "text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Video className="h-3.5 w-3.5" />
-            <span>{t("Platform", "Platforms")}</span>
-            <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px] font-mono text-muted-foreground">
+            <Video className={`h-3.5 w-3.5 ${activeTab === "platforms" ? "text-primary" : ""}`} />
+            <span>{t("Platform Meeting", "Meeting Platforms")}</span>
+            <span
+              className={`rounded-full px-1.5 py-0.2 text-[10px] font-mono font-bold ${
+                activeTab === "platforms" ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground"
+              }`}
+            >
               {allowedPlatforms.length}
             </span>
           </button>
@@ -322,12 +320,17 @@ export function BookingSettingsPanel({
           /* TAB 2: MEETING PLATFORMS */
           <form onSubmit={handleSavePlatforms} className="space-y-4 flex-1 flex flex-col justify-between">
             <div className="space-y-3.5">
-              <p className="text-xs text-muted-foreground">
-                {t(
-                  "Pilih platform pertemuan yang ingin Anda sediakan pada halaman booking:",
-                  "Select the meeting platform options to offer on your booking link:"
-                )}
-              </p>
+              <div>
+                <p className="text-xs font-semibold text-foreground">
+                  {t("Platform yang Ditawarkan", "Offered Platforms")}
+                </p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  {t(
+                    "Pilih opsi platform yang dapat dipilih oleh klien saat membuat janji temu:",
+                    "Choose platform options that clients can select during booking:"
+                  )}
+                </p>
+              </div>
 
               {/* 2-Column Clean Interactive Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -374,28 +377,33 @@ export function BookingSettingsPanel({
                 })}
               </div>
 
-              {/* Custom Link Section with icon badge */}
+              {/* Refined Minimalist Fixed Meeting Link Container */}
               {(allowedPlatforms.includes("zoom") ||
                 allowedPlatforms.includes("teams") ||
                 allowedPlatforms.includes("custom")) && (
-                <div className="rounded-xl border border-border/80 bg-muted/20 p-3 space-y-1.5">
-                  <div className="flex items-center gap-1.5">
-                    <LinkIcon className="h-3.5 w-3.5 text-primary" />
-                    <Label className="text-xs font-semibold text-foreground">
-                      {t("Link Ruang Meeting Tetap / Catatan", "Fixed Meeting Link / Note")}
+                <div className="space-y-1.5 pt-1">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                      <LinkIcon className="h-3.5 w-3.5 text-primary" />
+                      {t("Link Ruang Meeting Tetap", "Fixed Meeting Link")}
                     </Label>
+                    <span className="text-[10px] text-muted-foreground font-medium">
+                      {t("Opsional", "Optional")}
+                    </span>
                   </div>
-                  <Input
-                    value={customLink}
-                    disabled={!canEdit}
-                    onChange={(e) => setCustomLink(e.target.value)}
-                    placeholder="https://zoom.us/j/... atau https://teams.microsoft.com/..."
-                    className="h-8 text-xs font-mono bg-background"
-                  />
+                  <div className="relative">
+                    <Input
+                      value={customLink}
+                      disabled={!canEdit}
+                      onChange={(e) => setCustomLink(e.target.value)}
+                      placeholder="https://zoom.us/j/... atau https://teams.microsoft.com/..."
+                      className="h-9 text-xs font-mono bg-muted/20 border-border/80 focus:bg-background rounded-xl"
+                    />
+                  </div>
                   <p className="text-[10px] text-muted-foreground leading-normal">
                     {t(
-                      "Link ini otomatis diberikan kepada klien saat konfirmasi booking berhasil.",
-                      "This link is automatically sent to the client once booking is confirmed."
+                      "Otomatis dikirimkan ke email/portal klien saat jadwal booking terkonfirmasi.",
+                      "Automatically shared with client once booking is confirmed."
                     )}
                   </p>
                 </div>
@@ -404,7 +412,7 @@ export function BookingSettingsPanel({
 
             {canEdit && (
               <div className="flex justify-end pt-3 border-t mt-auto">
-                <Button type="submit" size="sm" disabled={saving} className="h-8 text-xs font-semibold px-4 gap-1.5">
+                <Button type="submit" size="sm" disabled={saving} className="h-8 text-xs font-semibold px-4 gap-1.5 rounded-lg">
                   {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                   {t("Simpan Opsi Platform", "Save Platform Options")}
                 </Button>
