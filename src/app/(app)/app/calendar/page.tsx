@@ -15,11 +15,13 @@ import { Calendar, Clock, Video, CalendarCheck } from "lucide-react";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
 import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
 import { BookingSlugHeaderWidget } from "@/components/calendar/booking-slug-header-widget";
+import { BookingMeetingPlatformCard } from "@/components/calendar/booking-meeting-platform-card";
 import { AppointmentsListPanel } from "@/components/calendar/appointments-list-panel";
 import { PendingMeetingRequestsPanel } from "@/components/calendar/pending-meeting-requests-panel";
 import { DeleteAvailabilityRuleButton } from "@/components/calendar/calendar-item-actions";
 import { clients, portalRequests, projects } from "@/db/schema";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
+import { getEffectivePlan } from "@/lib/plan";
 
 export const dynamic = "force-dynamic";
 
@@ -32,6 +34,19 @@ export default async function CalendarPage() {
   const ws = await getWorkspaceFullForCurrentUser();
   const workspaceId = ws.id;
   await assertWorkspaceMember(db, user.id, workspaceId);
+
+  // Get owner plan for slug customization tier check
+  const [owner] = await db
+    .select({
+      plan: users.plan,
+      planExpiresAt: users.planExpiresAt,
+    })
+    .from(users)
+    .where(eq(users.id, ws.ownerId))
+    .limit(1);
+
+  const effectivePlan = getEffectivePlan(owner?.plan, owner?.planExpiresAt);
+  const isFreePlan = effectivePlan === "free";
 
   // All appointments for this workspace
   const allAppointments = await db
@@ -134,9 +149,7 @@ export default async function CalendarPage() {
         actions={
           <BookingSlugHeaderWidget
             defaultSlug={ws.bookingSlug}
-            defaultPlatform={ws.bookingMeetingPlatform ?? "google_meet"}
-            defaultLink={ws.bookingMeetingLink ?? ""}
-            defaultAllowedPlatforms={ws.bookingAllowedPlatforms ?? ["google_meet", "zoom", "teams", "phone", "in_person", "custom"]}
+            isFreePlan={isFreePlan}
             canEdit={ws.ownerId === user.id}
           />
         }
@@ -210,7 +223,7 @@ export default async function CalendarPage() {
 
       {/* 2-Column Main Layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 items-stretch">
-        {/* Availability Rules */}
+        {/* Left Column: Availability Rules & Meeting Platform Card */}
         <div className="flex flex-col lg:col-span-1">
           <Card className="rounded-xl border shadow-none bg-card flex flex-col h-full">
             <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3 border-b">
@@ -267,6 +280,15 @@ export default async function CalendarPage() {
             </div>
             </CardContent>
           </Card>
+
+          {/* Meeting Platform Card underneath Availability Rules */}
+          <BookingMeetingPlatformCard
+            defaultPlatform={ws.bookingMeetingPlatform ?? "google_meet"}
+            defaultLink={ws.bookingMeetingLink ?? ""}
+            defaultAllowedPlatforms={ws.bookingAllowedPlatforms ?? ["google_meet", "zoom", "teams", "phone", "in_person", "custom"]}
+            bookingSlug={ws.bookingSlug}
+            canEdit={ws.ownerId === user.id}
+          />
         </div>
 
         {/* Appointments List Panel with Status Tabs */}

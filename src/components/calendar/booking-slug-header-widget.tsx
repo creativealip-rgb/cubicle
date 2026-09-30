@@ -11,16 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n-client";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 
-const ALL_PLATFORMS = [
-  { id: "google_meet", label: "Google Meet" },
-  { id: "zoom", label: "Zoom" },
-  { id: "teams", label: "Microsoft Teams" },
-  { id: "phone", label: "Telepon / WhatsApp Call" },
-  { id: "in_person", label: "Tatap Muka Langsung (In-person)" },
-  { id: "custom", label: "Custom Link / Lainnya" },
-];
 
 function normalizeSlug(value: string) {
   return value
@@ -33,27 +24,18 @@ function normalizeSlug(value: string) {
 
 export function BookingSlugHeaderWidget({
   defaultSlug,
-  defaultPlatform = "google_meet",
-  defaultLink = "",
-  defaultAllowedPlatforms = ["google_meet", "zoom", "teams", "phone", "in_person", "custom"],
+  isFreePlan = false,
   canEdit,
 }: {
   defaultSlug: string | null;
-  defaultPlatform?: string | null;
-  defaultLink?: string | null;
-  defaultAllowedPlatforms?: string[];
+  isFreePlan?: boolean;
   canEdit: boolean;
 }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
   const [slug, setSlug] = useState(defaultSlug ?? "");
-  const [customLink, setCustomLink] = useState(defaultLink ?? "");
-  const [allowedPlatforms, setAllowedPlatforms] = useState<string[]>(
-    defaultAllowedPlatforms && defaultAllowedPlatforms.length > 0
-      ? defaultAllowedPlatforms
-      : ["google_meet", "zoom", "teams", "phone", "in_person", "custom"]
-  );
+
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -67,31 +49,20 @@ export function BookingSlugHeaderWidget({
     return `${origin}/booking/${clean}`;
   }, [defaultSlug]);
 
-  function togglePlatform(platformId: string) {
-    setAllowedPlatforms((prev) => {
-      if (prev.includes(platformId)) {
-        if (prev.length <= 1) {
-          toast.error(t("Minimal pilih satu opsi platform meeting", "Select at least one meeting platform"));
-          return prev;
-        }
-        return prev.filter((id) => id !== platformId);
-      } else {
-        return [...prev, platformId];
-      }
-    });
-  }
+
 
   async function onSave(e: React.FormEvent) {
     e.preventDefault();
     if (!canEdit) return;
+    if (isFreePlan) {
+      toast.error(t("Upgrade ke Solo atau Team untuk kustomisasi URL slug booking", "Upgrade to Solo or Team to customize your booking URL slug"));
+      return;
+    }
     const next = normalizeSlug(slug);
     setLoading(true);
     try {
       const result = await updateWorkspaceBookingSlug({
         bookingSlug: next,
-        bookingMeetingPlatform: (allowedPlatforms[0] as any) || "google_meet",
-        bookingMeetingLink: customLink.trim() || undefined,
-        bookingAllowedPlatforms: allowedPlatforms,
       });
       if ("error" in result) {
         toast.error(t("Booking slug sudah dipakai workspace lain", "Booking slug is already used by another workspace"));
@@ -177,7 +148,14 @@ export function BookingSlugHeaderWidget({
 
             <form onSubmit={onSave} className="space-y-4 py-2">
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">{t("Booking URL Slug", "Booking URL Slug")}</Label>
+                <div className="flex items-center justify-between">
+                  <Label className="text-xs font-semibold">{t("Booking URL Slug", "Booking URL Slug")}</Label>
+                  {isFreePlan && (
+                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20">
+                      {t("Free Plan: Random Slug", "Free Plan: Random Slug")}
+                    </span>
+                  )}
+                </div>
                 <div className="relative">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-muted-foreground select-none">
                     /booking/
@@ -185,67 +163,44 @@ export function BookingSlugHeaderWidget({
                   <Input
                     value={slug}
                     onChange={(e) => setSlug(e.target.value)}
+                    disabled={isFreePlan}
                     maxLength={64}
                     placeholder="nama-kamu"
-                    className="h-9 pl-[4.5rem] font-mono text-sm"
+                    className="h-9 pl-[4.5rem] font-mono text-sm disabled:opacity-75 disabled:bg-muted/40"
                   />
                 </div>
-                <p className="text-[11px] text-muted-foreground">
-                  {t("Hanya huruf kecil, angka, dan tanda hubung (-).", "Lowercase letters, numbers, and dashes (-) only.")}
-                </p>
-              </div>
-
-              {/* Opsi Checklist Platform yang Ditampilkan ke Klien */}
-              <div className="space-y-2 rounded-lg border bg-muted/20 p-3">
-                <Label className="text-xs font-semibold block">
-                  {t("Opsi Platform Meeting yang Ditampilkan ke Klien", "Allowed Meeting Platforms in Booking Form")}
-                </Label>
-                <p className="text-[11px] text-muted-foreground">
-                  {t("Centang opsi yang ingin Anda sediakan di halaman booking publik:", "Check the options you want to offer on the public booking page:")}
-                </p>
-                <div className="grid grid-cols-1 gap-2 pt-1">
-                  {ALL_PLATFORMS.map((item) => {
-                    const isChecked = allowedPlatforms.includes(item.id);
-                    return (
-                      <label
-                        key={item.id}
-                        className="flex items-center gap-2.5 rounded-md border bg-background px-3 py-2 text-xs font-medium cursor-pointer hover:bg-muted/40 transition-colors"
-                      >
-                        <Checkbox
-                          checked={isChecked}
-                          onCheckedChange={() => togglePlatform(item.id)}
-                        />
-                        <span className="select-none">{item.label}</span>
-                      </label>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {(allowedPlatforms.includes("zoom") ||
-                allowedPlatforms.includes("teams") ||
-                allowedPlatforms.includes("custom")) && (
-                <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold">{t("Link Ruang Meeting Tetap / Catatan (Opsional)", "Fixed Meeting Room Link / Note (Optional)")}</Label>
-                  <Input
-                    value={customLink}
-                    onChange={(e) => setCustomLink(e.target.value)}
-                    placeholder="https://zoom.us/j/... atau https://teams.microsoft.com/..."
-                    className="h-9 text-xs"
-                  />
+                {isFreePlan ? (
+                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-xs text-muted-foreground">
+                    <p className="font-semibold text-amber-800 dark:text-amber-400">
+                      {t("Kustomisasi Slug Eksklusif Paket Solo / Team", "Slug Customization Exclusive to Solo & Team")}
+                    </p>
+                    <p className="mt-0.5 text-[11px] leading-relaxed">
+                      {t(
+                        "Pengguna Free Plan menggunakan tautan acak otomatis. Upgrade akun Anda ke paket Solo atau Team untuk membuat URL booking kustom yang profesional (misal: /booking/nama-anda).",
+                        "Free Plan uses an automated random link. Upgrade your workspace to Solo or Team to unlock clean, customized booking links (e.g. /booking/your-brand)."
+                      )}
+                    </p>
+                  </div>
+                ) : (
                   <p className="text-[11px] text-muted-foreground">
-                    {t("Link ini akan otomatis disertakan jika klien memilih platform tersebut.", "This link will be included if the client chooses that platform.")}
+                    {t("Hanya huruf kecil, angka, dan tanda hubung (-).", "Lowercase letters, numbers, and dashes (-) only.")}
                   </p>
-                </div>
-              )}
+                )}
+              </div>
 
               <DialogFooter>
                 <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)} disabled={loading}>
                   {t("Batal", "Cancel")}
                 </Button>
-                <LoadingButton type="submit" size="sm" loading={loading} className="font-semibold">
-                  {t("Simpan Slug", "Save Slug")}
-                </LoadingButton>
+                {isFreePlan ? (
+                  <Button size="sm" className="font-semibold" asChild>
+                    <a href="/app/billing">{t("Upgrade Plan", "Upgrade Plan")}</a>
+                  </Button>
+                ) : (
+                  <LoadingButton type="submit" size="sm" loading={loading} className="font-semibold">
+                    {t("Simpan Slug", "Save Slug")}
+                  </LoadingButton>
+                )}
               </DialogFooter>
             </form>
           </DialogContent>
