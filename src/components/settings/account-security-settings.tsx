@@ -327,36 +327,41 @@ export function AccountSecuritySettings({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* 1. Recovery Security PIN Card (Prominent Crimson Card if NOT set, Hidden if set) */}
+          {/* 1. Recovery Security PIN Card (Compact Crimson Card if NOT set, Hidden if set) */}
           {!hasRecoveryPin && (
-            <div className="flex flex-col gap-3 rounded-2xl border-2 border-red-500/40 bg-gradient-to-r from-red-500/[0.08] via-red-500/[0.04] to-transparent p-4.5 shadow-sm sm:flex-row sm:items-center sm:justify-between animate-pulse-subtle">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2">
-                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white shadow-xs">
-                    <ShieldAlert className="h-4 w-4" />
-                  </div>
-                  <p className="font-bold text-sm text-red-950 dark:text-red-200">
-                    {t("Recovery Security PIN (Wajib Diatur)", "Recovery Security PIN (Action Required)")}
-                  </p>
-                  <Badge className="bg-red-600 hover:bg-red-600 text-white text-[10px] font-bold">
-                    {t("Penting", "Important")}
-                  </Badge>
+            <div
+              data-testid="recovery-method-row"
+              className="flex flex-col gap-2.5 rounded-xl border border-red-500/30 bg-red-500/[0.06] dark:bg-red-950/20 p-3 sm:flex-row sm:items-center sm:justify-between shadow-2xs"
+            >
+              <div className="flex items-start gap-2.5">
+                <div className="mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-red-600/15 text-red-600 dark:text-red-400">
+                  <ShieldAlert className="h-3.5 w-3.5" />
                 </div>
-                <p className="text-xs text-red-900/80 dark:text-red-300">
-                  {t(
-                    "PIN 6 digit ini diperlukan untuk generate recovery codes dan menambah passkey. PIN TIDAK BISA direset di kemudian hari — catat & simpan baik-baik.",
-                    "This 6-digit PIN is strictly required to generate backup codes & add passkeys. Cannot be reset via settings."
-                  )}
-                </p>
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <p className="font-semibold text-xs text-red-950 dark:text-red-200">
+                      {t("Recovery Security PIN", "Recovery Security PIN")}
+                    </p>
+                    <span className="rounded-md bg-red-600/15 px-1.5 py-0.2 text-[10px] font-bold text-red-700 dark:text-red-300">
+                      {t("Wajib Diatur", "Action Required")}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-red-900/70 dark:text-red-300/80 mt-0.5 leading-snug max-w-xl">
+                    {t(
+                      "PIN 6 digit ini wajib untuk generate recovery codes & passkey. Tidak dapat direset via pengaturan.",
+                      "Required to generate codes & passkeys. Cannot be reset via settings."
+                    )}
+                  </p>
+                </div>
               </div>
 
               <Dialog open={pinDialogOpen} onOpenChange={setPinDialogOpen}>
                 <DialogTrigger asChild>
                   <Button
                     size="sm"
-                    className="h-9 w-full shrink-0 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-xs sm:w-auto px-4"
+                    className="h-7.5 w-full shrink-0 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-xs shadow-2xs sm:w-auto px-3"
                   >
-                    <Key className="h-3.5 w-3.5 mr-1.5" />
+                    <Key className="h-3 w-3 mr-1.5" />
                     {t("Set Recovery PIN", "Set Recovery PIN")}
                   </Button>
                 </DialogTrigger>
