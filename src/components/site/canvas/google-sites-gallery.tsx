@@ -27,15 +27,19 @@ export function GoogleSitesGalleryCanvas({
   const [activeUploadIndex, setActiveUploadIndex] = useState<number | null>(null);
   const [uploading, setUploading] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [localDimensions, setLocalDimensions] = useState<Record<string, { width?: number; height?: number }>>({});
 
   // Resize State for Currently Selected Single Item
   const resizeRef = useRef<{
     handle: ResizeHandleType;
     index: number;
+    id: string;
     startX: number;
     startY: number;
     startWidth: number;
     startHeight: number;
+    lastW: number;
+    lastH: number;
   } | null>(null);
 
   const columns = section.columns ?? 3;
@@ -52,7 +56,7 @@ export function GoogleSitesGalleryCanvas({
   useEffect(() => {
     function handleMouseMove(e: MouseEvent) {
       if (!resizeRef.current) return;
-      const { handle, index, startX, startY, startWidth, startHeight } = resizeRef.current;
+      const { handle, id, startX, startY, startWidth, startHeight } = resizeRef.current;
       const deltaX = e.clientX - startX;
       const deltaY = e.clientY - startY;
 
@@ -73,22 +77,34 @@ export function GoogleSitesGalleryCanvas({
         newWidth = Math.max(100, Math.min(1000, startWidth - deltaX));
       }
 
-      const updated = [...section.images];
-      if (updated[index]) {
-        updated[index] = {
-          ...updated[index],
-          height: Math.round(newHeight),
-          width: Math.round(newWidth),
-        };
-        onUpdate({ images: updated });
-      }
+      const roundedW = Math.round(newWidth);
+      const roundedH = Math.round(newHeight);
+      resizeRef.current.lastW = roundedW;
+      resizeRef.current.lastH = roundedH;
+
+      // Instant 60fps local state update without triggering React parent tree lag
+      setLocalDimensions((prev) => ({
+        ...prev,
+        [id]: { width: roundedW, height: roundedH },
+      }));
     }
 
     function handleMouseUp() {
       if (resizeRef.current) {
-        resizeRef.current = null;
+        const { index, lastW, lastH } = resizeRef.current;
+        const updated = [...section.images];
+        if (updated[index]) {
+          updated[index] = {
+            ...updated[index],
+            height: lastH,
+            width: lastW,
+          };
+          onUpdate({ images: updated });
+        }
+
         document.body.style.cursor = "default";
         document.body.style.userSelect = "auto";
+        resizeRef.current = null;
       }
     }
 
@@ -103,6 +119,7 @@ export function GoogleSitesGalleryCanvas({
   function startResize(
     e: React.MouseEvent,
     index: number,
+    id: string,
     handle: ResizeHandleType,
     currentWidth: number,
     currentHeight: number
@@ -122,10 +139,13 @@ export function GoogleSitesGalleryCanvas({
     resizeRef.current = {
       handle,
       index,
+      id,
       startX: e.clientX,
       startY: e.clientY,
       startWidth: currentWidth,
       startHeight: currentHeight,
+      lastW: currentWidth,
+      lastH: currentHeight,
     };
   }
 
@@ -201,8 +221,10 @@ export function GoogleSitesGalleryCanvas({
       <div className={`grid ${gridClass} gap-5 items-start`}>
         {section.images.map((item, index) => {
           const isSelected = selectedItemId === item.id;
-          const itemHeight = item.height ?? section.imageHeight ?? 240;
-          const itemWidth = item.width ? `${item.width}px` : "100%";
+          const localDim = localDimensions[item.id];
+          const itemHeight = localDim?.height ?? item.height ?? section.imageHeight ?? 240;
+          const itemWidth = localDim?.width ? `${localDim.width}px` : item.width ? `${item.width}px` : "100%";
+          const currentNumericWidth = localDim?.width ?? item.width ?? 300;
 
           return (
             <div
@@ -211,7 +233,7 @@ export function GoogleSitesGalleryCanvas({
                 e.stopPropagation();
                 setSelectedItemId(item.id);
               }}
-              style={{ width: item.width ? `${item.width}px` : undefined, maxWidth: "100%" }}
+              style={{ width: localDim?.width ? `${localDim.width}px` : item.width ? `${item.width}px` : undefined, maxWidth: "100%" }}
               className="flex flex-col gap-2 group relative"
             >
               {/* IMAGE CONTAINER BOX (Individual Sizing & Corner Handles) */}
@@ -292,47 +314,47 @@ export function GoogleSitesGalleryCanvas({
                   <>
                     {/* Corner Handles (NW, NE, SW, SE) */}
                     <div
-                      onMouseDown={(e) => startResize(e, index, "nw", item.width ?? 300, itemHeight)}
-                      className="absolute -top-1 -left-1 h-3.5 w-3.5 rounded-full bg-primary border-2 border-white ring-1 ring-primary/40 cursor-nwse-resize z-20 hover:scale-125 transition-transform"
+                      onMouseDown={(e) => startResize(e, index, item.id, "nw", currentNumericWidth, itemHeight)}
+                      className="absolute -top-1.5 -left-1.5 h-4 w-4 rounded-full bg-primary border-2 border-white ring-1 ring-primary/40 cursor-nwse-resize z-20 hover:scale-125 transition-transform shadow-xs"
                       title={t("Tarik sudut kiri atas", "Resize Top-Left")}
                     />
                     <div
-                      onMouseDown={(e) => startResize(e, index, "ne", item.width ?? 300, itemHeight)}
-                      className="absolute -top-1 -right-1 h-3.5 w-3.5 rounded-full bg-primary border-2 border-white ring-1 ring-primary/40 cursor-nesw-resize z-20 hover:scale-125 transition-transform"
+                      onMouseDown={(e) => startResize(e, index, item.id, "ne", currentNumericWidth, itemHeight)}
+                      className="absolute -top-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary border-2 border-white ring-1 ring-primary/40 cursor-nesw-resize z-20 hover:scale-125 transition-transform shadow-xs"
                       title={t("Tarik sudut kanan atas", "Resize Top-Right")}
                     />
                     <div
-                      onMouseDown={(e) => startResize(e, index, "sw", item.width ?? 300, itemHeight)}
-                      className="absolute -bottom-1 -left-1 h-3.5 w-3.5 rounded-full bg-primary border-2 border-white ring-1 ring-primary/40 cursor-nesw-resize z-20 hover:scale-125 transition-transform"
+                      onMouseDown={(e) => startResize(e, index, item.id, "sw", currentNumericWidth, itemHeight)}
+                      className="absolute -bottom-1.5 -left-1.5 h-4 w-4 rounded-full bg-primary border-2 border-white ring-1 ring-primary/40 cursor-nesw-resize z-20 hover:scale-125 transition-transform shadow-xs"
                       title={t("Tarik sudut kiri bawah", "Resize Bottom-Left")}
                     />
                     <div
-                      onMouseDown={(e) => startResize(e, index, "se", item.width ?? 300, itemHeight)}
-                      className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full bg-primary border-2 border-white ring-1 ring-primary/40 cursor-nwse-resize z-20 hover:scale-125 transition-transform"
+                      onMouseDown={(e) => startResize(e, index, item.id, "se", currentNumericWidth, itemHeight)}
+                      className="absolute -bottom-1.5 -right-1.5 h-4 w-4 rounded-full bg-primary border-2 border-white ring-1 ring-primary/40 cursor-nwse-resize z-20 hover:scale-125 transition-transform shadow-xs"
                       title={t("Tarik sudut kanan bawah", "Resize Bottom-Right")}
                     />
 
                     {/* Edge Handles (N, S, E, W) */}
                     <div
-                      onMouseDown={(e) => startResize(e, index, "n", item.width ?? 300, itemHeight)}
-                      className="absolute top-0 inset-x-0 h-2 cursor-ns-resize z-10 hover:bg-primary/30 transition-colors"
+                      onMouseDown={(e) => startResize(e, index, item.id, "n", currentNumericWidth, itemHeight)}
+                      className="absolute top-0 inset-x-0 h-2.5 cursor-ns-resize z-10 hover:bg-primary/30 transition-colors"
                       title={t("Tarik ke atas", "Resize Top")}
                     />
                     <div
-                      onMouseDown={(e) => startResize(e, index, "s", item.width ?? 300, itemHeight)}
+                      onMouseDown={(e) => startResize(e, index, item.id, "s", currentNumericWidth, itemHeight)}
                       className="absolute bottom-0 inset-x-0 h-2.5 cursor-ns-resize z-10 hover:bg-primary/30 transition-colors flex items-center justify-center"
                       title={t("Tarik ke bawah", "Resize Bottom")}
                     >
                       <div className="h-1 w-6 rounded-full bg-primary/80" />
                     </div>
                     <div
-                      onMouseDown={(e) => startResize(e, index, "w", item.width ?? 300, itemHeight)}
-                      className="absolute inset-y-0 left-0 w-2 cursor-ew-resize z-10 hover:bg-primary/30 transition-colors"
+                      onMouseDown={(e) => startResize(e, index, item.id, "w", currentNumericWidth, itemHeight)}
+                      className="absolute inset-y-0 left-0 w-2.5 cursor-ew-resize z-10 hover:bg-primary/30 transition-colors"
                       title={t("Tarik ke kiri", "Resize Left")}
                     />
                     <div
-                      onMouseDown={(e) => startResize(e, index, "e", item.width ?? 300, itemHeight)}
-                      className="absolute inset-y-0 right-0 w-2 cursor-ew-resize z-10 hover:bg-primary/30 transition-colors"
+                      onMouseDown={(e) => startResize(e, index, item.id, "e", currentNumericWidth, itemHeight)}
+                      className="absolute inset-y-0 right-0 w-2.5 cursor-ew-resize z-10 hover:bg-primary/30 transition-colors"
                       title={t("Tarik ke kanan", "Resize Right")}
                     />
                   </>
