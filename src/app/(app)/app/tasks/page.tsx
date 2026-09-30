@@ -167,29 +167,27 @@ export default async function TasksPage({
       ) : (
         <>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-3 flex-wrap">
-              <TaskPageTabs current={tab} />
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <TaskQuickFilterChips />
-              </div>
-            </div>
+            <TaskPageTabs current={tab} />
 
-            <form className="relative w-full sm:w-64">
-              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                name="search"
-                aria-label={t("Cari tugas", "Search tasks")}
-                defaultValue={search}
-                placeholder={t("Cari tugas...", "Search tasks...")}
-                className="pl-8"
-              />
-              <input type="hidden" name="tab" value={tab} />
-              {params.status && <input type="hidden" name="status" value={params.status} />}
-              {params.priority && <input type="hidden" name="priority" value={params.priority} />}
-              {params.projectId && <input type="hidden" name="projectId" value={params.projectId} />}
-              {params.assignee && <input type="hidden" name="assignee" value={params.assignee} />}
-              {params.view && <input type="hidden" name="view" value={params.view} />}
-            </form>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <TaskQuickFilterChips />
+              <form className="relative w-full sm:w-60">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  name="search"
+                  aria-label={t("Cari tugas", "Search tasks")}
+                  defaultValue={search}
+                  placeholder={t("Cari tugas...", "Search tasks...")}
+                  className="pl-8 h-8 text-xs"
+                />
+                <input type="hidden" name="tab" value={tab} />
+                {params.status && <input type="hidden" name="status" value={params.status} />}
+                {params.priority && <input type="hidden" name="priority" value={params.priority} />}
+                {params.projectId && <input type="hidden" name="projectId" value={params.projectId} />}
+                {params.assignee && <input type="hidden" name="assignee" value={params.assignee} />}
+                {params.view && <input type="hidden" name="view" value={params.view} />}
+              </form>
+            </div>
           </div>
 
           {tab === "reusable" ? (

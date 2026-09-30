@@ -1,9 +1,8 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n-client";
-import { User, AlertCircle, Clock, Flame, Layers } from "lucide-react";
+import { User, Flame, Layers } from "lucide-react";
 
 export function TaskQuickFilterChips() {
   const { t } = useT();
@@ -29,45 +28,45 @@ export function TaskQuickFilterChips() {
   };
 
   return (
-    <div className="flex items-center gap-1.5 overflow-x-auto py-1 scrollbar-none text-xs">
-      <Button
+    <div className="flex items-center gap-1 rounded-lg bg-muted/60 p-0.5 border border-border/60 text-xs">
+      <button
         type="button"
-        size="sm"
-        variant={isAll ? "default" : "outline"}
         onClick={() => applyFilter({ assignee: null, priority: null, status: null })}
-        className={`h-7 rounded-lg px-2.5 text-xs font-medium ${
-          isAll ? "shadow-xs" : "bg-background text-muted-foreground hover:text-foreground"
+        className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+          isAll
+            ? "bg-background text-foreground shadow-2xs font-semibold"
+            : "text-muted-foreground hover:text-foreground hover:bg-background/40"
         }`}
       >
-        <Layers className="mr-1 h-3 w-3" />
-        {t("Semua", "All Tasks")}
-      </Button>
+        <Layers className="h-3 w-3 text-muted-foreground" />
+        <span>{t("Semua", "All Tasks")}</span>
+      </button>
 
-      <Button
+      <button
         type="button"
-        size="sm"
-        variant={isMe ? "default" : "outline"}
         onClick={() => applyFilter({ assignee: isMe ? null : "me" })}
-        className={`h-7 rounded-lg px-2.5 text-xs font-medium ${
-          isMe ? "shadow-xs" : "bg-background text-muted-foreground hover:text-foreground"
+        className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+          isMe
+            ? "bg-background text-foreground shadow-2xs font-semibold"
+            : "text-muted-foreground hover:text-foreground hover:bg-background/40"
         }`}
       >
-        <User className="mr-1 h-3 w-3" />
-        {t("Tugas Saya", "Assigned to Me")}
-      </Button>
+        <User className="h-3 w-3 text-muted-foreground" />
+        <span>{t("Tugas Saya", "Assigned to Me")}</span>
+      </button>
 
-      <Button
+      <button
         type="button"
-        size="sm"
-        variant={isUrgentHigh ? "default" : "outline"}
         onClick={() => applyFilter({ priority: isUrgentHigh ? null : "urgent" })}
-        className={`h-7 rounded-lg px-2.5 text-xs font-medium ${
-          isUrgentHigh ? "shadow-xs" : "bg-background text-muted-foreground hover:text-foreground"
+        className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
+          isUrgentHigh
+            ? "bg-background text-foreground shadow-2xs font-semibold"
+            : "text-muted-foreground hover:text-foreground hover:bg-background/40"
         }`}
       >
-        <Flame className="mr-1 h-3 w-3 text-red-500" />
-        {t("Prioritas Tinggi", "High & Urgent")}
-      </Button>
+        <Flame className={`h-3 w-3 ${isUrgentHigh ? "text-red-500" : "text-muted-foreground"}`} />
+        <span>{t("Prioritas Tinggi", "High & Urgent")}</span>
+      </button>
     </div>
   );
 }
