@@ -377,33 +377,58 @@ export function BookingSettingsPanel({
                 })}
               </div>
 
-              {/* Refined Minimalist Fixed Meeting Link Container */}
+              {/* Modern Inset URL Input Group */}
               {(allowedPlatforms.includes("zoom") ||
                 allowedPlatforms.includes("teams") ||
                 allowedPlatforms.includes("custom")) && (
-                <div className="space-y-1.5 pt-1">
+                <div className="rounded-xl border border-border/80 bg-muted/20 p-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                      <LinkIcon className="h-3.5 w-3.5 text-primary" />
-                      {t("Link Ruang Meeting Tetap", "Fixed Meeting Link")}
-                    </Label>
-                    <span className="text-[10px] text-muted-foreground font-medium">
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex h-5 w-5 items-center justify-center rounded-md bg-primary/10 text-primary">
+                        <LinkIcon className="h-3 w-3" />
+                      </div>
+                      <span className="text-xs font-semibold text-foreground">
+                        {t("Link Ruang Meeting Tetap", "Fixed Meeting Room Link")}
+                      </span>
+                    </div>
+                    <span className="rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-mono text-muted-foreground">
                       {t("Opsional", "Optional")}
                     </span>
                   </div>
-                  <div className="relative">
-                    <Input
-                      value={customLink}
+
+                  {/* Input Group with Prefix & External Test Button */}
+                  <div className="flex items-center rounded-lg border border-border/80 bg-background shadow-2xs overflow-hidden focus-within:ring-1 focus-within:ring-primary focus-within:border-primary">
+                    <span className="flex items-center px-2.5 text-[11px] font-mono font-medium text-muted-foreground bg-muted/40 border-r border-border/60 select-none py-1.5">
+                      https://
+                    </span>
+                    <input
+                      type="text"
+                      value={customLink.replace(/^https?:\/\//i, "")}
                       disabled={!canEdit}
-                      onChange={(e) => setCustomLink(e.target.value)}
-                      placeholder="https://zoom.us/j/... atau https://teams.microsoft.com/..."
-                      className="h-9 text-xs font-mono bg-muted/20 border-border/80 focus:bg-background rounded-xl"
+                      onChange={(e) => {
+                        const val = e.target.value.trim();
+                        setCustomLink(val ? `https://${val.replace(/^https?:\/\//i, "")}` : "");
+                      }}
+                      placeholder="zoom.us/j/... atau teams.microsoft.com/..."
+                      className="flex-1 px-2.5 py-1.5 text-xs font-mono bg-transparent outline-none placeholder:text-muted-foreground/50 text-foreground min-w-0"
                     />
+                    {customLink.trim() && (
+                      <a
+                        href={customLink.startsWith("http") ? customLink : `https://${customLink}`}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="px-2.5 py-1 text-[11px] font-semibold text-primary hover:bg-primary/10 transition-colors border-l border-border/60 shrink-0"
+                        title={t("Buka / Uji Link", "Test Link")}
+                      >
+                        {t("Uji", "Test")} ↗
+                      </a>
+                    )}
                   </div>
+
                   <p className="text-[10px] text-muted-foreground leading-normal">
                     {t(
-                      "Otomatis dikirimkan ke email/portal klien saat jadwal booking terkonfirmasi.",
-                      "Automatically shared with client once booking is confirmed."
+                      "Tautan ini akan disertakan secara otomatis saat klien memilih Zoom, Teams, atau Custom Link.",
+                      "This link is automatically sent to clients when they choose Zoom, Teams, or Custom Link."
                     )}
                   </p>
                 </div>
