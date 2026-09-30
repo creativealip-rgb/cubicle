@@ -8,14 +8,13 @@ import {
   Video,
   Check,
   Loader2,
-  Globe,
   Phone,
   Users,
   Link as LinkIcon,
-  Sparkles,
+  Plus,
 } from "lucide-react";
 import { updateWorkspaceBookingSlug } from "@/lib/actions/workspace";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -31,6 +30,8 @@ export interface AvailabilityRuleItem {
   endTime: string;
   timezone: string;
 }
+
+const ORDERED_DAYS = [1, 2, 3, 4, 5, 6, 0]; // Mon -> Sun
 
 const PLATFORM_CONFIGS = [
   {
@@ -99,6 +100,7 @@ export function BookingSettingsPanel({
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [activeTab, setActiveTab] = useState<"hours" | "platforms">("hours");
+  const [selectedDay, setSelectedDay] = useState<number>(1); // Default to Monday (1)
 
   const [customLink, setCustomLink] = useState(defaultLink ?? "");
   const [allowedPlatforms, setAllowedPlatforms] = useState<string[]>(
@@ -109,25 +111,25 @@ export function BookingSettingsPanel({
   const [saving, setSaving] = useState(false);
 
   // Group rules by Day of Week (0 = Sun, 1 = Mon, ..., 6 = Sat)
-  const groupedRules = useMemo(() => {
+  const rulesByDay = useMemo(() => {
     const map = new Map<number, AvailabilityRuleItem[]>();
+    for (const d of ORDERED_DAYS) {
+      map.set(d, []);
+    }
     for (const rule of rules) {
-      const existing = map.get(rule.dayOfWeek) ?? [];
-      existing.push(rule);
-      map.set(rule.dayOfWeek, existing);
+      const list = map.get(rule.dayOfWeek) ?? [];
+      list.push(rule);
+      map.set(rule.dayOfWeek, list);
     }
     // Sort slots inside each day chronologically
     map.forEach((slots) => {
       slots.sort((a, b) => a.startTime.localeCompare(b.startTime));
     });
-    // Return as array sorted by day (Monday first or Sunday first based on index)
-    return Array.from(map.entries()).sort(([dayA], [dayB]) => {
-      // Put Monday (1) to Saturday (6) then Sunday (0) at end, or standard 0-6
-      const adjustedA = dayA === 0 ? 7 : dayA;
-      const adjustedB = dayB === 0 ? 7 : dayB;
-      return adjustedA - adjustedB;
-    });
+    return map;
   }, [rules]);
+
+  const activeDaySlots = rulesByDay.get(selectedDay) ?? [];
+
   function togglePlatform(platformId: string) {
     if (!canEdit) return;
     setAllowedPlatforms((prev) => {
@@ -184,7 +186,7 @@ export function BookingSettingsPanel({
         </div>
 
         {/* Clean Pill Sub-Nav (Linear/Cal.com style) */}
-        <div className="flex items-center gap-2 border-b border-transparent -mb-px">
+        <div className="flex items-center gap-4 border-b border-transparent -mb-px">
           <button
             type="button"
             onClick={() => setActiveTab("hours")}
@@ -221,60 +223,103 @@ export function BookingSettingsPanel({
 
       <CardContent className="p-4 flex-1 flex flex-col">
         {activeTab === "hours" ? (
-          /* TAB 1: WORKING HOURS */
-          <div className="space-y-2 flex-1 flex flex-col">
-            {rules.length === 0 ? (
-              <div className="flex flex-1 items-center justify-center py-8">
-                <EmptyState
-                  icon={Clock}
-                  title={t("Belum ada jam kerja aktif", "No working hours set")}
-                  description={t(
-                    "Tambah aturan untuk menentukan kapan kamu bersedia menerima booking klien",
-                    "Add rules to define when you're available for client bookings"
-                  )}
-                  embedded
-                />
-              </div>
-            ) : (
-              <div className="space-y-2 flex-1">
-                {groupedRules.map(([dayIndex, daySlots]) => (
-                  <div
-                    key={`day-${dayIndex}`}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-2.5 rounded-xl border border-border/70 bg-card hover:border-border transition-colors"
+          /* TAB 1: WORKING HOURS WITH INTERACTIVE 7-DAY SELECTOR */
+          <div className="space-y-3.5 flex-1 flex flex-col">
+            {/* 7-Day Selector Bar */}
+            <div className="grid grid-cols-7 gap-1.5 p-1 rounded-xl bg-muted/40 border border-border/60">
+              {ORDERED_DAYS.map((dayIndex) => {
+                const isSelected = selectedDay === dayIndex;
+                const count = rulesByDay.get(dayIndex)?.length ?? 0;
+                return (
+                  <button
+                    type="button"
+                    key={`day-btn-${dayIndex}`}
+                    onClick={() => setSelectedDay(dayIndex)}
+                    className={`flex flex-col items-center justify-center py-1.5 px-1 rounded-lg text-xs transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-background text-primary shadow-xs font-bold ring-1 ring-border"
+                        : "text-muted-foreground hover:bg-background/50 hover:text-foreground"
+                    }`}
                   >
-                    {/* Day Badge & Name */}
-                    <div className="flex items-center gap-2.5 min-w-[120px] shrink-0">
-                      <div className="flex h-7 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs uppercase shrink-0">
-                        {dayShortNames[dayIndex]}
-                      </div>
-                      <span className="text-xs font-semibold text-foreground">
-                        {dayNames[dayIndex]}
-                      </span>
-                    </div>
-
-                    {/* Multi-Slot Time Chips Group */}
-                    <div className="flex flex-wrap items-center gap-1.5 flex-1 sm:justify-end">
-                      {daySlots.map((slot) => (
-                        <div
-                          key={slot.id}
-                          className="inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-muted/40 px-2 py-1 text-[11px] font-mono font-medium text-foreground hover:bg-muted/70 transition-colors"
+                    <span className="text-[11px] uppercase tracking-wider">{dayShortNames[dayIndex]}</span>
+                    <div className="mt-0.5 flex items-center gap-1">
+                      {count > 0 ? (
+                        <span
+                          className={`inline-flex items-center justify-center rounded-full text-[9px] font-mono font-bold px-1.5 py-0.2 ${
+                            isSelected ? "bg-primary text-primary-foreground" : "bg-muted-foreground/15 text-foreground"
+                          }`}
                         >
-                          <span>
+                          {count}
+                        </span>
+                      ) : (
+                        <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/30" />
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Selected Day Slots Detail View */}
+            <div className="rounded-xl border border-border/70 bg-card p-3.5 flex-1 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between pb-2.5 border-b border-border/50 mb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-sm text-foreground">
+                      {dayNames[selectedDay]}
+                    </span>
+                    <span className="text-xs text-muted-foreground font-medium">
+                      ({activeDaySlots.length} {t("slot jam aktif", "active slots")})
+                    </span>
+                  </div>
+                  {activeDaySlots.length > 0 && (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                      ● {t("Tersedia", "Available")}
+                    </span>
+                  )}
+                </div>
+
+                {activeDaySlots.length === 0 ? (
+                  <div className="py-8 flex flex-col items-center justify-center text-center">
+                    <Clock className="h-7 w-7 text-muted-foreground/40 mb-2" />
+                    <p className="text-xs font-semibold text-foreground">
+                      {t(`Tidak ada jam kerja di hari ${dayNames[selectedDay]}`, `No working hours for ${dayNames[selectedDay]}`)}
+                    </p>
+                    <p className="text-[11px] text-muted-foreground mt-0.5">
+                      {t("Klien tidak dapat memesan sesi pada hari ini.", "Clients cannot book appointments on this day.")}
+                    </p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    {activeDaySlots.map((slot) => (
+                      <div
+                        key={slot.id}
+                        className="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-border/80 bg-muted/20 hover:bg-muted/40 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-3.5 w-3.5 text-primary" />
+                          <span className="text-xs font-mono font-bold text-foreground">
                             {slot.startTime.substring(0, 5)} – {slot.endTime.substring(0, 5)}
                           </span>
-                          {canEdit && (
-                            <DeleteAvailabilityRuleButton
-                              id={slot.id}
-                              label={`${dayNames[dayIndex]} ${slot.startTime.substring(0, 5)}–${slot.endTime.substring(0, 5)}`}
-                            />
-                          )}
                         </div>
-                      ))}
-                    </div>
+                        {canEdit && (
+                          <DeleteAvailabilityRuleButton
+                            id={slot.id}
+                            label={`${dayNames[selectedDay]} ${slot.startTime.substring(0, 5)}–${slot.endTime.substring(0, 5)}`}
+                          />
+                        )}
+                      </div>
+                    ))}
                   </div>
-                ))}
+                )}
               </div>
-            )}
+
+              {canEdit && (
+                <div className="pt-3 border-t border-border/50 mt-3 flex justify-end">
+                  <AvailabilityRuleForm />
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           /* TAB 2: MEETING PLATFORMS */
