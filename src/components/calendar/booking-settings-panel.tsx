@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import {
@@ -108,6 +108,26 @@ export function BookingSettingsPanel({
   );
   const [saving, setSaving] = useState(false);
 
+  // Group rules by Day of Week (0 = Sun, 1 = Mon, ..., 6 = Sat)
+  const groupedRules = useMemo(() => {
+    const map = new Map<number, AvailabilityRuleItem[]>();
+    for (const rule of rules) {
+      const existing = map.get(rule.dayOfWeek) ?? [];
+      existing.push(rule);
+      map.set(rule.dayOfWeek, existing);
+    }
+    // Sort slots inside each day chronologically
+    map.forEach((slots) => {
+      slots.sort((a, b) => a.startTime.localeCompare(b.startTime));
+    });
+    // Return as array sorted by day (Monday first or Sunday first based on index)
+    return Array.from(map.entries()).sort(([dayA], [dayB]) => {
+      // Put Monday (1) to Saturday (6) then Sunday (0) at end, or standard 0-6
+      const adjustedA = dayA === 0 ? 7 : dayA;
+      const adjustedB = dayB === 0 ? 7 : dayB;
+      return adjustedA - adjustedB;
+    });
+  }, [rules]);
   function togglePlatform(platformId: string) {
     if (!canEdit) return;
     setAllowedPlatforms((prev) => {
@@ -216,31 +236,41 @@ export function BookingSettingsPanel({
                 />
               </div>
             ) : (
-              <div className="space-y-1.5 flex-1">
-                {rules.map((rule) => (
+              <div className="space-y-2 flex-1">
+                {groupedRules.map(([dayIndex, daySlots]) => (
                   <div
-                    key={rule.id}
-                    className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/70 bg-card hover:bg-muted/30 transition-colors"
+                    key={`day-${dayIndex}`}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 p-2.5 rounded-xl border border-border/70 bg-card hover:border-border transition-colors"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <div className="flex h-8 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs uppercase shrink-0">
-                        {dayShortNames[rule.dayOfWeek]}
+                    {/* Day Badge & Name */}
+                    <div className="flex items-center gap-2.5 min-w-[120px] shrink-0">
+                      <div className="flex h-7 w-9 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs uppercase shrink-0">
+                        {dayShortNames[dayIndex]}
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-xs font-semibold text-foreground leading-tight">
-                          {dayNames[rule.dayOfWeek]}
-                        </p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 font-mono font-medium">
-                          {rule.startTime.substring(0, 5)} – {rule.endTime.substring(0, 5)}
-                        </p>
-                      </div>
+                      <span className="text-xs font-semibold text-foreground">
+                        {dayNames[dayIndex]}
+                      </span>
                     </div>
-                    {canEdit && (
-                      <DeleteAvailabilityRuleButton
-                        id={rule.id}
-                        label={`${dayNames[rule.dayOfWeek]} ${rule.startTime.substring(0, 5)}–${rule.endTime.substring(0, 5)}`}
-                      />
-                    )}
+
+                    {/* Multi-Slot Time Chips Group */}
+                    <div className="flex flex-wrap items-center gap-1.5 flex-1 sm:justify-end">
+                      {daySlots.map((slot) => (
+                        <div
+                          key={slot.id}
+                          className="inline-flex items-center gap-1.5 rounded-lg border border-border/80 bg-muted/40 px-2 py-1 text-[11px] font-mono font-medium text-foreground hover:bg-muted/70 transition-colors"
+                        >
+                          <span>
+                            {slot.startTime.substring(0, 5)} – {slot.endTime.substring(0, 5)}
+                          </span>
+                          {canEdit && (
+                            <DeleteAvailabilityRuleButton
+                              id={slot.id}
+                              label={`${dayNames[dayIndex]} ${slot.startTime.substring(0, 5)}–${slot.endTime.substring(0, 5)}`}
+                            />
+                          )}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 ))}
               </div>
