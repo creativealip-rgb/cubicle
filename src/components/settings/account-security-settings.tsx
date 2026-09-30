@@ -93,6 +93,8 @@ export function AccountSecuritySettings({
   trustedDevices,
   currentTrustedDeviceId,
   hasRecoveryPin = false,
+  activeBackupCodesCount = 0,
+  totalBackupCodesCount = 0,
 }: {
   twoFactorEnabled: boolean;
   hasAuthenticator: boolean;
@@ -101,6 +103,8 @@ export function AccountSecuritySettings({
   trustedDevices: TrustedDeviceItem[];
   currentTrustedDeviceId: string | null;
   hasRecoveryPin?: boolean;
+  activeBackupCodesCount?: number;
+  totalBackupCodesCount?: number;
 }) {
   const { t } = useT();
   const { confirm, dialog } = useConfirm();
@@ -452,11 +456,20 @@ export function AccountSecuritySettings({
             className="recovery-method-row flex flex-col gap-3 rounded-xl border bg-muted/20 p-3 sm:flex-row sm:items-center sm:justify-between"
           >
             <div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <KeyRound className="h-3.5 w-3.5 text-primary" />
                 <p className="font-medium text-xs">
                   {t("Recovery Backup Codes", "Recovery Backup Codes")}
                 </p>
+                {totalBackupCodesCount > 0 ? (
+                  <span className="rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 px-1.5 py-0.2 text-[10px] font-bold">
+                    ✓ {activeBackupCodesCount}/{totalBackupCodesCount} {t("kode aktif", "codes active")}
+                  </span>
+                ) : (
+                  <span className="rounded-md bg-muted px-1.5 py-0.2 text-[10px] font-semibold text-muted-foreground">
+                    {t("Belum dibuat", "Not generated")}
+                  </span>
+                )}
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5">
                 {t(
@@ -493,7 +506,7 @@ export function AccountSecuritySettings({
                 }}
                 className="h-8 w-full text-xs sm:w-auto"
               >
-                {t("Generate Kode", "Generate Codes")}
+                {totalBackupCodesCount > 0 ? t("Buat Ulang Kode", "Regenerate Codes") : t("Generate Kode", "Generate Codes")}
               </Button>
               <DialogContent className="sm:max-w-md rounded-2xl">
                 <DialogHeader>

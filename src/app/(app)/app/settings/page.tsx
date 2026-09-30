@@ -4,6 +4,7 @@ import { cookies, headers } from "next/headers";
 import { db } from "@/db";
 import {
   accounts,
+  authBackupCodes,
   authTrustedDevices,
   passkeys,
   twoFactors,
@@ -89,7 +90,7 @@ export default async function SettingsPage({
     .where(eq(users.id, user.id))
     .limit(1);
 
-  const [credentialPassword, passkeyRows, twoFactorRows, trustedDeviceRows] =
+  const [credentialPassword, passkeyRows, twoFactorRows, trustedDeviceRows, backupCodeRows] =
     await Promise.all([
       db
         .select({ id: accounts.id })
@@ -133,7 +134,17 @@ export default async function SettingsPage({
           ),
         )
         .orderBy(desc(authTrustedDevices.lastUsedAt)),
+      db
+        .select({
+          id: authBackupCodes.id,
+          consumedAt: authBackupCodes.consumedAt,
+        })
+        .from(authBackupCodes)
+        .where(eq(authBackupCodes.userId, user.id)),
     ]);
+
+  const activeBackupCodesCount = backupCodeRows.filter((r) => !r.consumedAt).length;
+  const totalBackupCodesCount = backupCodeRows.length;
 
   const members = await db
     .select({
@@ -326,6 +337,8 @@ export default async function SettingsPage({
                   trustedDevices={trustedDeviceRows}
                   currentTrustedDeviceId={currentTrustedDeviceId}
                   hasRecoveryPin={Boolean(currentUser?.hasRecoveryPin)}
+                  activeBackupCodesCount={activeBackupCodesCount}
+                  totalBackupCodesCount={totalBackupCodesCount}
                 />
               </div>
             </div>
