@@ -161,6 +161,8 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
       alt: z.string().trim().max(200).optional(),
       title: z.string().trim().max(100).optional(),
       description: z.string().trim().max(1000).optional(),
+      height: z.number().min(80).max(800).optional(),
+      width: z.number().min(80).max(1200).optional(),
     })).max(12),
   }),
   z.object({

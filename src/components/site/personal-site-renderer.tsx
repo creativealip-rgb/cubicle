@@ -150,7 +150,6 @@ function SectionBody({ section, accent, panel, buttonRadius, labels }: { section
     case "custom":
       return <div className={`rounded-2xl p-6 ${panel}`}><p className="max-w-3xl whitespace-pre-wrap text-base leading-8 opacity-75">{section.content}</p></div>;
     case "gallery":
-      const publicHeight = section.imageHeight ? `${section.imageHeight}px` : "240px";
       const publicCols =
         section.columns === 1
           ? "grid-cols-1"
@@ -164,11 +163,14 @@ function SectionBody({ section, accent, panel, buttonRadius, labels }: { section
         <div className={`grid gap-6 ${publicCols}`}>
           {section.images
             .filter((img) => img.url)
-            .map((img) => (
-              <div key={img.id} className="flex flex-col gap-2">
+            .map((img) => {
+              const cardHeight = img.height ? `${img.height}px` : section.imageHeight ? `${section.imageHeight}px` : "240px";
+              const cardWidth = img.width ? `${img.width}px` : "100%";
+              return (
+              <div key={img.id} className="flex flex-col gap-2" style={{ width: img.width ? `${img.width}px` : undefined, maxWidth: "100%" }}>
                 <div
-                  style={{ height: publicHeight }}
-                  className="relative w-full overflow-hidden rounded-xl bg-muted/40 border border-border/60"
+                  style={{ height: cardHeight, width: cardWidth }}
+                  className="relative overflow-hidden rounded-xl bg-muted/40 border border-border/60"
                 >
                   <Image
                     src={img.url.startsWith("http") ? img.url : img.url.startsWith("/") ? img.url : `/${img.url}`}
@@ -182,7 +184,7 @@ function SectionBody({ section, accent, panel, buttonRadius, labels }: { section
                 {img.title && <h3 className="text-base font-semibold">{img.title}</h3>}
                 {img.description && <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 opacity-75">{img.description}</p>}
               </div>
-            ))}
+            );})}
         </div>
       );
     case "embed":
