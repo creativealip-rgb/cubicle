@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
-import { deleteFile, deleteFolder, bulkDeleteFiles, bulkMoveFiles, updateFileMeta } from "@/lib/actions/files";
+import { deleteFile, deleteFolder, renameFolder, bulkDeleteFiles, bulkMoveFiles, updateFileMeta } from "@/lib/actions/files";
 import Link from "next/link";
 
 import { useT } from "@/lib/i18n-client";
@@ -59,6 +59,7 @@ import {
   X,
   Globe,
   Lock,
+  Pencil,
 } from "lucide-react";
 
 interface FileItem {
@@ -124,6 +125,8 @@ export function FileList({
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
   const [folderDeleteTarget, setFolderDeleteTarget] = useState<FolderGridItem | null>(null);
+  const [renameTarget, setRenameTarget] = useState<{ type: "file"; item: FileItem } | { type: "folder"; item: FolderGridItem } | null>(null);
+  const [renameValue, setRenameValue] = useState("");
   const [previewTarget, setPreviewTarget] = useState<FileItem | null>(null);
 
   // Multi-Select State
@@ -268,6 +271,27 @@ export function FileList({
       refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menghapus folder", "Failed to delete folder"));
+    } finally {
+      setBusyId(null);
+    }
+  };
+
+  const handleConfirmRename = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!renameTarget || !renameValue.trim()) return;
+    setBusyId(renameTarget.item.id);
+    try {
+      if (renameTarget.type === "file") {
+        await updateFileMeta({ fileId: renameTarget.item.id, name: renameValue.trim() });
+        toast.success(t("Nama berkas berhasil diubah", "File renamed"));
+      } else {
+        await renameFolder(renameTarget.item.id, renameValue.trim());
+        toast.success(t("Nama folder berhasil diubah", "Folder renamed"));
+      }
+      setRenameTarget(null);
+      refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal mengubah nama", "Rename failed"));
     } finally {
       setBusyId(null);
     }
@@ -564,6 +588,15 @@ export function FileList({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" className="text-xs">
                             <DropdownMenuItem
+                              onSelect={() => {
+                                setRenameTarget({ type: "folder", item: f });
+                                setRenameValue(f.name);
+                              }}
+                            >
+                              <Pencil className="h-3.5 w-3.5 mr-2" />
+                              {t("Ubah Nama", "Rename")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
                               className="text-destructive focus:text-destructive"
                               onSelect={() => setFolderDeleteTarget(f)}
                             >
@@ -671,6 +704,17 @@ export function FileList({
                                     {t("Bagikan ke Klien (Portal)", "Share to Client (Portal)")}
                                   </>
                                 )}
+                              </DropdownMenuItem>
+                            )}
+                            {canWrite && (
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setRenameTarget({ type: "file", item: file });
+                                  setRenameValue(file.name);
+                                }}
+                              >
+                                <Pencil className="h-3.5 w-3.5 mr-2" />
+                                {t("Ubah Nama", "Rename")}
                               </DropdownMenuItem>
                             )}
                             {canWrite && (
@@ -1036,6 +1080,40 @@ export function FileList({
               {busyId ? t("Menghapus...", "Deleting...") : t("Hapus Folder", "Delete Folder")}
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Rename Dialog (File & Folder) */}
+      <Dialog open={!!renameTarget} onOpenChange={(open) => !open && setRenameTarget(null)}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <form onSubmit={handleConfirmRename}>
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Pencil className="h-4 w-4 text-primary" />
+                {renameTarget?.type === "folder" ? t("Ubah Nama Folder", "Rename Folder") : t("Ubah Nama Berkas", "Rename File")}
+              </DialogTitle>
+              <DialogDescription className="text-xs">
+                {t("Masukkan nama baru untuk item ini.", "Enter a new name for this item.")}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <Input
+                value={renameValue}
+                onChange={(e) => setRenameValue(e.target.value)}
+                placeholder={t("Nama baru...", "New name...")}
+                autoFocus
+                className="text-sm font-medium"
+              />
+            </div>
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setRenameTarget(null)}>
+                {t("Batal", "Cancel")}
+              </Button>
+              <Button type="submit" size="sm" disabled={!renameValue.trim() || !!busyId}>
+                {busyId ? t("Menyimpan...", "Saving...") : t("Simpan", "Save")}
+              </Button>
+            </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </div>

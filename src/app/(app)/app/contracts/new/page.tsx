@@ -18,7 +18,7 @@ export default async function NewContractPage() {
   const res = await createContract({
     workspaceId,
     clientName: "Klien Baru",
-    clientEmail: "client@example.com",
+    clientEmail: null,
     contractNumber: contractNumber || `CTR-${Date.now()}`,
     title: "Kontrak Kerja Sama",
     body: "## 1. Lingkup Pekerjaan\nDeskripsi lingkup pekerjaan dan deliverables...",

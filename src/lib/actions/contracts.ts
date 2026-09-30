@@ -142,7 +142,7 @@ const createContractSchema = z.object({
   workspaceId: z.string().uuid(),
   clientId: z.string().uuid().optional().nullable(),
   clientName: z.string().trim().min(1).max(200).optional(),
-  clientEmail: z.string().email(),
+  clientEmail: z.string().email().optional().nullable(),
   companyName: z.string().trim().max(200).optional().nullable(),
   contractNumber: z.string().trim().max(100).optional().nullable(),
   contractDate: z.string().optional().nullable(),

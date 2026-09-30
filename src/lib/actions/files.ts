@@ -39,6 +39,7 @@ const completeUploadReqSchema = z.object({
 
 const updateFileMetaSchema = z.object({
   fileId: z.string().uuid(),
+  name: z.string().trim().min(1).max(255).optional(),
   visibility: z.enum(["internal", "client"]).optional(),
   fileType: z.enum(["working_file", "deliverable"]).optional(),
 });
@@ -106,7 +107,7 @@ export async function updateFileMeta(input: z.infer<typeof updateFileMetaSchema>
   await assertWorkspaceWritable(db, user.id, workspaceId);
 
   const parsed = updateFileMetaSchema.parse(input);
-  if (parsed.visibility === undefined && parsed.fileType === undefined) {
+  if (parsed.visibility === undefined && parsed.fileType === undefined && parsed.name === undefined) {
     throw new Error("Nothing to update");
   }
 
@@ -119,9 +120,11 @@ export async function updateFileMeta(input: z.infer<typeof updateFileMetaSchema>
   if (!file) throw new Error("File not found");
 
   const next: {
+    name?: string;
     visibility?: "internal" | "client";
     fileType?: "working_file" | "deliverable";
   } = {};
+  if (parsed.name !== undefined) next.name = parsed.name;
   if (parsed.visibility !== undefined) next.visibility = parsed.visibility;
   if (parsed.fileType !== undefined) next.fileType = parsed.fileType;
 
@@ -379,4 +382,24 @@ export async function listFiles(workspaceId: string, clientId?: string, projectI
     .orderBy(desc(files.createdAt));
 
   return result;
+}
+export async function renameFolder(folderId: string, name: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const trimmed = name.trim();
+  if (!trimmed) throw new Error("Nama folder tidak boleh kosong");
+
+  const [updated] = await db
+    .update(folders)
+    .set({ name: trimmed })
+    .where(and(eq(folders.id, folderId), eq(folders.workspaceId, workspaceId)))
+    .returning();
+
+  if (!updated) throw new Error("Folder tidak ditemukan");
+
+  revalidatePath("/app/files");
+  return updated;
 }
