@@ -11,14 +11,11 @@ import {
   Phone,
   Users,
   Link as LinkIcon,
-  Sparkles,
 } from "lucide-react";
 import { updateWorkspaceBookingSlug } from "@/lib/actions/workspace";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { EmptyState } from "@/components/empty-state";
 import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
 import { DeleteAvailabilityRuleButton } from "@/components/calendar/calendar-item-actions";
 import { useT } from "@/lib/i18n-client";
@@ -171,13 +168,13 @@ export function BookingSettingsPanel({
 
   return (
     <Card className="rounded-2xl border shadow-none bg-card flex flex-col h-full overflow-hidden">
-      {/* Sleek Segmented Control Header */}
-      <div className="border-b bg-muted/30 px-4 py-3">
-        <div className="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-muted/80 border border-border/60">
+      {/* Compact Header: Segmented Tab Bar */}
+      <div className="border-b bg-muted/20 px-3.5 py-2.5">
+        <div className="flex items-center gap-1.5 p-1 rounded-xl bg-muted/80 border border-border/60">
           <button
             type="button"
             onClick={() => setActiveTab("hours")}
-            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "hours"
                 ? "bg-background text-foreground shadow-xs ring-1 ring-border/80"
                 : "text-muted-foreground hover:text-foreground"
@@ -197,7 +194,7 @@ export function BookingSettingsPanel({
           <button
             type="button"
             onClick={() => setActiveTab("platforms")}
-            className={`flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+            className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
               activeTab === "platforms"
                 ? "bg-background text-foreground shadow-xs ring-1 ring-border/80"
                 : "text-muted-foreground hover:text-foreground"
@@ -216,12 +213,12 @@ export function BookingSettingsPanel({
         </div>
       </div>
 
-      <CardContent className="p-4 flex-1 flex flex-col">
+      <CardContent className="p-3.5 flex-1 flex flex-col">
         {activeTab === "hours" ? (
-          /* TAB 1: WORKING HOURS WITH INTERACTIVE 7-DAY SELECTOR */
-          <div className="space-y-3.5 flex-1 flex flex-col">
+          /* TAB 1: WORKING HOURS WITH 1-ROW COMPACT SLOTS */
+          <div className="space-y-3 flex-1 flex flex-col">
             {/* 7-Day Selector Bar */}
-            <div className="grid grid-cols-7 gap-1.5 p-1 rounded-xl bg-muted/40 border border-border/60">
+            <div className="grid grid-cols-7 gap-1 p-1 rounded-xl bg-muted/40 border border-border/60">
               {ORDERED_DAYS.map((dayIndex) => {
                 const isSelected = selectedDay === dayIndex;
                 const count = rulesByDay.get(dayIndex)?.length ?? 0;
@@ -255,28 +252,28 @@ export function BookingSettingsPanel({
               })}
             </div>
 
-            {/* Selected Day Slots Detail View */}
-            <div className="rounded-xl border border-border/70 bg-card p-3.5 flex-1 flex flex-col justify-between">
+            {/* Selected Day Slots Detail View (Full Width 1-Row Items) */}
+            <div className="rounded-xl border border-border/70 bg-card p-3 flex-1 flex flex-col justify-between">
               <div>
-                <div className="flex items-center justify-between pb-2.5 border-b border-border/50 mb-3">
+                <div className="flex items-center justify-between pb-2 border-b border-border/50 mb-2.5">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-sm text-foreground">
+                    <span className="font-bold text-xs sm:text-sm text-foreground">
                       {dayNames[selectedDay]}
                     </span>
-                    <span className="text-xs text-muted-foreground font-medium">
-                      ({activeDaySlots.length} {t("slot jam aktif", "active slots")})
+                    <span className="text-[11px] text-muted-foreground font-medium">
+                      ({activeDaySlots.length} {t("slot aktif", "active slots")})
                     </span>
                   </div>
                   {activeDaySlots.length > 0 && (
-                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                    <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">
                       ● {t("Tersedia", "Available")}
                     </span>
                   )}
                 </div>
 
                 {activeDaySlots.length === 0 ? (
-                  <div className="py-8 flex flex-col items-center justify-center text-center">
-                    <Clock className="h-7 w-7 text-muted-foreground/40 mb-2" />
+                  <div className="py-6 flex flex-col items-center justify-center text-center">
+                    <Clock className="h-6 w-6 text-muted-foreground/40 mb-1.5" />
                     <p className="text-xs font-semibold text-foreground">
                       {t(`Tidak ada jam kerja di hari ${dayNames[selectedDay]}`, `No working hours for ${dayNames[selectedDay]}`)}
                     </p>
@@ -285,15 +282,18 @@ export function BookingSettingsPanel({
                     </p>
                   </div>
                 ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  /* 1-Row Full-Width Time Slots Stack */
+                  <div className="space-y-1.5">
                     {activeDaySlots.map((slot) => (
                       <div
                         key={slot.id}
-                        className="flex items-center justify-between gap-2 p-2.5 rounded-lg border border-border/80 bg-muted/20 hover:bg-muted/40 transition-colors"
+                        className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg border border-border/80 bg-muted/20 hover:bg-muted/40 transition-colors"
                       >
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-3.5 w-3.5 text-primary" />
-                          <span className="text-xs font-mono font-bold text-foreground">
+                        <div className="flex items-center gap-2.5">
+                          <div className="flex h-6 w-6 items-center justify-center rounded-md bg-primary/10 text-primary">
+                            <Clock className="h-3.5 w-3.5" />
+                          </div>
+                          <span className="text-xs font-mono font-bold text-foreground tracking-tight">
                             {slot.startTime.substring(0, 5)} – {slot.endTime.substring(0, 5)}
                           </span>
                         </div>
@@ -310,7 +310,7 @@ export function BookingSettingsPanel({
               </div>
 
               {canEdit && (
-                <div className="pt-3 border-t border-border/50 mt-3 flex justify-end">
+                <div className="pt-2.5 border-t border-border/50 mt-2.5 flex justify-end">
                   <AvailabilityRuleForm />
                 </div>
               )}
@@ -318,8 +318,8 @@ export function BookingSettingsPanel({
           </div>
         ) : (
           /* TAB 2: MEETING PLATFORMS */
-          <form onSubmit={handleSavePlatforms} className="space-y-4 flex-1 flex flex-col justify-between">
-            <div className="space-y-3.5">
+          <form onSubmit={handleSavePlatforms} className="space-y-3.5 flex-1 flex flex-col justify-between">
+            <div className="space-y-3">
               <div>
                 <p className="text-xs font-semibold text-foreground">
                   {t("Platform yang Ditawarkan", "Offered Platforms")}
