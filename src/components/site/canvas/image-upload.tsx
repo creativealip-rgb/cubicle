@@ -2,10 +2,11 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { Upload, Loader2, X } from "lucide-react";
+import { Upload, Loader2, X, Crop } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n-client";
+import { ImageCropModal } from "./image-crop-modal";
 
 type Props = {
   value: string;
@@ -18,6 +19,7 @@ export function ImageUpload({ value, onChange, label }: Props) {
   const uploadLabel = label ?? t("Unggah gambar", "Upload image");
   const fileRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
+  const [cropModalOpen, setCropModalOpen] = useState(false);
 
   async function handleUpload(file: File | undefined) {
     if (!file) return;
@@ -74,6 +76,17 @@ export function ImageUpload({ value, onChange, label }: Props) {
           </Button>
           <Button
             type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs gap-1 px-2 font-medium"
+            onClick={() => setCropModalOpen(true)}
+            title={t("Potong / Atur Posisi", "Crop / Adjust")}
+          >
+            <Crop className="h-3 w-3" />
+            {t("Crop", "Crop")}
+          </Button>
+          <Button
+            type="button"
             variant="ghost"
             size="icon"
             className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-lg"
@@ -83,6 +96,12 @@ export function ImageUpload({ value, onChange, label }: Props) {
           >
             <X className="h-3.5 w-3.5" />
           </Button>
+          <ImageCropModal
+            open={cropModalOpen}
+            onOpenChange={setCropModalOpen}
+            imageUrl={value}
+            onCropComplete={(croppedUrl) => onChange(croppedUrl)}
+          />
         </div>
       ) : (
         <Button

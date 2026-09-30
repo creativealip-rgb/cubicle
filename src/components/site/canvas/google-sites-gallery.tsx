@@ -7,10 +7,12 @@ import {
   Loader2,
   Trash2,
   Plus,
+  Crop,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n-client";
 import { toast } from "sonner";
+import { ImageCropModal } from "./image-crop-modal";
 import type { PersonalSiteSection } from "@/lib/personal-site/model";
 
 type ResizeHandleType = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
@@ -28,6 +30,7 @@ export function GoogleSitesGalleryCanvas({
   const [uploading, setUploading] = useState(false);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [localDimensions, setLocalDimensions] = useState<Record<string, { width?: number; height?: number }>>({});
+  const [cropTargetIndex, setCropTargetIndex] = useState<number | null>(null);
 
   // Resize State for Currently Selected Single Item
   const resizeRef = useRef<{
@@ -275,6 +278,20 @@ export function GoogleSitesGalleryCanvas({
                       </Button>
                       <Button
                         type="button"
+                        variant="secondary"
+                        size="sm"
+                        className="h-8 text-xs font-semibold gap-1 rounded-lg"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCropTargetIndex(index);
+                        }}
+                        title={t("Potong / Crop", "Crop Image")}
+                      >
+                        <Crop className="h-3.5 w-3.5" />
+                        {t("Crop", "Crop")}
+                      </Button>
+                      <Button
+                        type="button"
                         variant="destructive"
                         size="sm"
                         className="h-8 w-8 p-0 rounded-lg"
@@ -381,6 +398,21 @@ export function GoogleSitesGalleryCanvas({
           );
         })}
       </div>
+
+      {/* Interactive Crop Modal for Gallery Item */}
+      {cropTargetIndex !== null && section.images[cropTargetIndex] && (
+        <ImageCropModal
+          open={cropTargetIndex !== null}
+          onOpenChange={(open) => {
+            if (!open) setCropTargetIndex(null);
+          }}
+          imageUrl={section.images[cropTargetIndex].url}
+          onCropComplete={(croppedUrl) => {
+            updateItem(cropTargetIndex, { url: croppedUrl });
+            setCropTargetIndex(null);
+          }}
+        />
+      )}
     </div>
   );
 }
