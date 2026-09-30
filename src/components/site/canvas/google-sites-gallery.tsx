@@ -70,11 +70,11 @@ export function GoogleSitesGalleryCanvas({
         newHeight = Math.max(100, Math.min(800, startHeight - deltaY));
       }
 
-      // Handle horizontal resizing (E, W, NE, NW, SE, SW)
-      if (handle.includes("e")) {
-        newWidth = Math.max(100, Math.min(1000, startWidth + deltaX));
-      } else if (handle.includes("w")) {
-        newWidth = Math.max(100, Math.min(1000, startWidth - deltaX));
+      // In corner handles (NE, NW, SE, SW), allow proportional scale with deltaY
+      if (handle === "se" || handle === "sw") {
+        newHeight = Math.max(100, Math.min(800, startHeight + deltaY));
+      } else if (handle === "ne" || handle === "nw") {
+        newHeight = Math.max(100, Math.min(800, startHeight - deltaY));
       }
 
       const roundedW = Math.round(newWidth);
@@ -223,7 +223,7 @@ export function GoogleSitesGalleryCanvas({
           const isSelected = selectedItemId === item.id;
           const localDim = localDimensions[item.id];
           const itemHeight = localDim?.height ?? item.height ?? section.imageHeight ?? 240;
-          const itemWidth = localDim?.width ? `${localDim.width}px` : item.width ? `${item.width}px` : "100%";
+          const itemWidth = "100%";
           const currentNumericWidth = localDim?.width ?? item.width ?? 300;
 
           return (
@@ -233,8 +233,7 @@ export function GoogleSitesGalleryCanvas({
                 e.stopPropagation();
                 setSelectedItemId(item.id);
               }}
-              style={{ width: localDim?.width ? `${localDim.width}px` : item.width ? `${item.width}px` : undefined, maxWidth: "100%" }}
-              className="flex flex-col gap-2 group relative"
+              className="flex flex-col gap-2 group relative w-full"
             >
               {/* IMAGE CONTAINER BOX (Individual Sizing & Corner Handles) */}
               <div
