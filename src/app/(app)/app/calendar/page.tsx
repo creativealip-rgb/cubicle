@@ -13,12 +13,10 @@ import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { Calendar, Clock, Video, CalendarCheck } from "lucide-react";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";
-import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
 import { BookingSlugHeaderWidget } from "@/components/calendar/booking-slug-header-widget";
-import { BookingMeetingPlatformCard } from "@/components/calendar/booking-meeting-platform-card";
+import { BookingSettingsPanel } from "@/components/calendar/booking-settings-panel";
 import { AppointmentsListPanel } from "@/components/calendar/appointments-list-panel";
 import { PendingMeetingRequestsPanel } from "@/components/calendar/pending-meeting-requests-panel";
-import { DeleteAvailabilityRuleButton } from "@/components/calendar/calendar-item-actions";
 import { clients, portalRequests, projects } from "@/db/schema";
 import { getCurrentLang, createT, getLocale } from "@/lib/i18n";
 import { getEffectivePlan } from "@/lib/plan";
@@ -223,66 +221,12 @@ export default async function CalendarPage() {
 
       {/* 2-Column Main Layout */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3 items-stretch">
-        {/* Left Column: Availability Rules & Meeting Platform Card */}
-        <div className="flex flex-col lg:col-span-1">
-          <Card className="rounded-xl border shadow-none bg-card flex flex-col h-full">
-            <CardHeader className="flex flex-row items-center justify-between gap-3 pb-3 border-b">
-              <div>
-                <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-                  <Clock className="h-4 w-4 text-primary" />
-                  {t("Aturan Ketersediaan", "Availability Rules")}
-                </CardTitle>
-                <p className="text-[11px] text-muted-foreground mt-0.5">
-                  {rules.length} {t("slot jam kerja aktif", "active work hour slots")}
-                </p>
-              </div>
-              <AvailabilityRuleForm />
-            </CardHeader>
-            <CardContent className="p-3.5 space-y-2 flex-1 flex flex-col">
-              {rules.length === 0 && (
-                <div className="flex flex-1 items-center justify-center">
-                  <EmptyState
-                    icon={Clock}
-                    title={t("Belum ada aturan ketersediaan", "No availability rules yet")}
-                    description={t(
-                      "Tambah aturan untuk menentukan kapan kamu tersedia menerima booking",
-                      "Add rules to define when you're available for bookings"
-                    )}
-                    embedded
-                  />
-                </div>
-              )}
-            <div className="divide-y divide-border/60 -mx-3.5 px-3.5">
-              {rules.map((rule) => (
-                <div
-                  key={rule.id}
-                  className="flex items-center justify-between gap-2.5 py-2.5 first:pt-0 last:pb-0"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="flex h-7 w-10 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-xs uppercase shrink-0">
-                      {dayShortNames[rule.dayOfWeek]}
-                    </span>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-foreground leading-tight">
-                        {dayNames[rule.dayOfWeek]}
-                      </p>
-                      <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">
-                        {rule.startTime.substring(0, 5)} – {rule.endTime.substring(0, 5)}
-                      </p>
-                    </div>
-                  </div>
-                  <DeleteAvailabilityRuleButton
-                    id={rule.id}
-                    label={`${dayNames[rule.dayOfWeek]} ${rule.startTime.substring(0, 5)}–${rule.endTime.substring(0, 5)}`}
-                  />
-                </div>
-              ))}
-            </div>
-            </CardContent>
-          </Card>
-
-          {/* Meeting Platform Card underneath Availability Rules */}
-          <BookingMeetingPlatformCard
+        {/* Left Column: Unified Booking Settings Panel (Working Hours + Platforms) */}
+        <div className="flex flex-col lg:col-span-1 h-full">
+          <BookingSettingsPanel
+            rules={rules}
+            dayNames={dayNames}
+            dayShortNames={dayShortNames}
             defaultPlatform={ws.bookingMeetingPlatform ?? "google_meet"}
             defaultLink={ws.bookingMeetingLink ?? ""}
             defaultAllowedPlatforms={ws.bookingAllowedPlatforms ?? ["google_meet", "zoom", "teams", "phone", "in_person", "custom"]}
