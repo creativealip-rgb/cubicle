@@ -494,14 +494,73 @@ function CtaEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSectio
 function GalleryEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "gallery" }>>) {
   const { t } = useT();
   const atMax = section.images.length >= GALLERY_MAX;
+  const layout = section.layout ?? "grid";
+  const aspectRatio = section.aspectRatio ?? "video";
+  const columns = section.columns ?? 3;
+
   return (
-    <div className="space-y-3">
+    <div className="space-y-4">
+      {/* Google Sites Style Layout Selector */}
+      <div className="space-y-2 rounded-xl border bg-muted/20 p-3">
+        <Label className="text-xs font-semibold text-foreground flex items-center justify-between">
+          <span>{t("Layout & Tampilan", "Layout & Display")}</span>
+        </Label>
+
+        {/* Layout Presets */}
+        <div className="space-y-1">
+          <Label className="text-[11px] text-muted-foreground">{t("Format Layout", "Layout Preset")}</Label>
+          <select
+            value={layout}
+            onChange={(e) => onUpdate({ layout: e.target.value as any })}
+            className="flex h-8 w-full rounded-lg border border-input bg-background px-2 text-xs shadow-2xs focus-visible:ring-1 focus-visible:ring-primary"
+          >
+            <option value="grid">{t("Grid Gambar Murni (Google Sites)", "Pure Image Grid")}</option>
+            <option value="cards_1col">{t("1 Kolom (Gambar Besar + Teks)", "1 Column (Hero Image + Text)")}</option>
+            <option value="cards_2col">{t("2 Kolom (Gambar + Judul & Deskripsi)", "2 Columns (Image + Title/Desc)")}</option>
+            <option value="cards_3col">{t("3 Kolom (Cards Berjejer)", "3 Columns (3 Cards Row)")}</option>
+            <option value="cards_4col">{t("4 Kolom (Compact Grid)", "4 Columns (Compact Grid)")}</option>
+          </select>
+        </div>
+
+        {/* Aspect Ratio / Height Controller */}
+        <div className="grid grid-cols-2 gap-2 pt-1">
+          <div className="space-y-1">
+            <Label className="text-[11px] text-muted-foreground">{t("Rasio Foto (Tinggi)", "Aspect Ratio")}</Label>
+            <select
+              value={aspectRatio}
+              onChange={(e) => onUpdate({ aspectRatio: e.target.value as any })}
+              className="flex h-8 w-full rounded-lg border border-input bg-background px-2 text-xs shadow-2xs focus-visible:ring-1 focus-visible:ring-primary"
+            >
+              <option value="video">{t("16:9 (Landscape)", "16:9 Landscape")}</option>
+              <option value="square">{t("1:1 (Persegi / Square)", "1:1 Square")}</option>
+              <option value="wide">{t("21:9 (Ultra Wide)", "21:9 Ultra Wide")}</option>
+              <option value="portrait">{t("3:4 (Portrait)", "3:4 Portrait")}</option>
+              <option value="auto">{t("Asli (Auto Height)", "Original Auto")}</option>
+            </select>
+          </div>
+
+          <div className="space-y-1">
+            <Label className="text-[11px] text-muted-foreground">{t("Jumlah Kolom", "Columns")}</Label>
+            <select
+              value={columns}
+              onChange={(e) => onUpdate({ columns: Number(e.target.value) as any })}
+              className="flex h-8 w-full rounded-lg border border-input bg-background px-2 text-xs shadow-2xs focus-visible:ring-1 focus-visible:ring-primary"
+            >
+              <option value={1}>1 {t("Kolom", "Column")}</option>
+              <option value={2}>2 {t("Kolom", "Columns")}</option>
+              <option value={3}>3 {t("Kolom", "Columns")}</option>
+              <option value={4}>4 {t("Kolom", "Columns")}</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
         <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Gambar", "Images")} ({section.images.length}/{GALLERY_MAX})</Label>
         <AddItemButton
           label={t("Tambah gambar", "Add image")}
           disabled={atMax}
-          onClick={() => onUpdate({ images: appendItem(section.images, () => ({ id: makeItemId("image"), url: "", alt: "" })) })}
+          onClick={() => onUpdate({ images: appendItem(section.images, () => ({ id: makeItemId("image"), url: "", alt: "", title: "", description: "" })) })}
         />
       </div>
       {section.images.map((image, i) => (
@@ -512,28 +571,48 @@ function GalleryEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
               <Image src={image.url} alt={image.alt ?? ""} fill sizes="300px" className="object-cover" />
             </div>
           )}
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">{t("Gambar", "Image")}</Label>
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">{t("Unggah Gambar", "Upload Image")}</Label>
             <ImageUpload
               value={image.url}
               onChange={(url) => onUpdate({ images: patchItem(section.images, i, { url }) })}
               label={t("Unggah", "Upload")}
             />
-            <Input
-              value={image.url}
-              maxLength={2000}
-              onChange={(e) => onUpdate({ images: patchItem(section.images, i, { url: e.target.value }) })}
-              className="h-8 text-xs"
-              placeholder={t("…atau tempel URL gambar", "…or paste an image URL")}
-            />
           </div>
+
+          {/* Show Title & Description inputs when not purely minimal */}
+          {(layout !== "grid" || layout.startsWith("cards")) && (
+            <div className="space-y-2 pt-1 border-t border-border/50">
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">{t("Judul Card", "Card Title")}</Label>
+                <Input
+                  value={image.title ?? ""}
+                  maxLength={100}
+                  onChange={(e) => onUpdate({ images: patchItem(section.images, i, { title: e.target.value }) })}
+                  className="h-8 text-xs font-semibold"
+                  placeholder={t("Judul item gambar...", "Image card title...")}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-xs text-muted-foreground">{t("Deskripsi", "Description")}</Label>
+                <Textarea
+                  value={image.description ?? ""}
+                  maxLength={500}
+                  onChange={(e) => onUpdate({ images: patchItem(section.images, i, { description: e.target.value }) })}
+                  className="min-h-14 resize-none text-xs"
+                  placeholder={t("Keterangan singkat...", "Short description...")}
+                />
+              </div>
+            </div>
+          )}
+
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">{t("Teks alternatif", "Alt text")}</Label>
             <Input
               value={image.alt ?? ""}
               maxLength={200}
               onChange={(e) => onUpdate({ images: patchItem(section.images, i, { alt: e.target.value }) })}
-              className="h-8 text-sm"
+              className="h-8 text-xs font-mono"
               placeholder={t("Deskripsi gambar", "Image description")}
             />
           </div>

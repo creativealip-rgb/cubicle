@@ -150,9 +150,48 @@ function SectionBody({ section, accent, panel, buttonRadius, labels }: { section
     case "custom":
       return <div className={`rounded-2xl p-6 ${panel}`}><p className="max-w-3xl whitespace-pre-wrap text-base leading-8 opacity-75">{section.content}</p></div>;
     case "gallery":
-      return <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">{section.images.filter((img) => img.url).map((img) => (
-        <div key={img.id} className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl"><Image src={img.url.startsWith("http") ? img.url : img.url.startsWith("/") ? img.url : `/${img.url}`} alt={img.alt || ""} fill sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw" className="object-cover" loading="lazy" /></div>
-      ))}</div>;
+      const publicAspect =
+        section.aspectRatio === "square"
+          ? "aspect-square"
+          : section.aspectRatio === "wide"
+          ? "aspect-[21/9]"
+          : section.aspectRatio === "portrait"
+          ? "aspect-[3/4]"
+          : section.aspectRatio === "auto"
+          ? "aspect-auto h-64"
+          : "aspect-video";
+
+      const publicCols =
+        section.columns === 1
+          ? "grid-cols-1"
+          : section.columns === 2
+          ? "grid-cols-1 sm:grid-cols-2"
+          : section.columns === 4
+          ? "grid-cols-2 sm:grid-cols-4"
+          : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+
+      return (
+        <div className={`grid gap-6 ${publicCols}`}>
+          {section.images
+            .filter((img) => img.url)
+            .map((img) => (
+              <ItemCard key={img.id} panel={panel}>
+                <div className={`relative ${publicAspect} w-full overflow-hidden rounded-xl bg-muted/30 mb-3`}>
+                  <Image
+                    src={img.url.startsWith("http") ? img.url : img.url.startsWith("/") ? img.url : `/${img.url}`}
+                    alt={img.alt || img.title || ""}
+                    fill
+                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    className="object-cover transition-transform duration-300 hover:scale-105"
+                    loading="lazy"
+                  />
+                </div>
+                {img.title && <h3 className="text-base font-semibold">{img.title}</h3>}
+                {img.description && <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 opacity-75">{img.description}</p>}
+              </ItemCard>
+            ))}
+        </div>
+      );
     case "embed":
       return section.url ? <iframe src={section.url} className="w-full rounded-2xl" style={{ height: section.height || 400 }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy" /> : null;
     case "social":
@@ -214,14 +253,17 @@ export function PersonalSiteRenderer({
     <main data-testid="personal-site-renderer" data-theme={site.theme} style={accentStyle} className={`${embedded ? "min-h-0" : "min-h-screen"} overflow-hidden ${styles.page}`}>
       <section className={`relative ${styles.hero} ${heroShellClass} px-6 py-14 sm:px-10 sm:py-20 lg:px-16 lg:py-24`} style={{ backgroundColor: themeConfig?.headerStyle === "minimal" ? "transparent" : accent }}>
         {site.heroImage && (
-          <Image
-            src={site.heroImage}
-            alt=""
-            fill
-            sizes="100vw"
-            aria-hidden="true"
-            className="object-cover opacity-20"
-          />
+          <>
+            <Image
+              src={site.heroImage}
+              alt=""
+              fill
+              sizes="100vw"
+              aria-hidden="true"
+              className="object-cover opacity-85"
+            />
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60 pointer-events-none" />
+          </>
         )}
         <div className="relative z-10 mx-auto max-w-6xl">
           {site.subtitle && <p className={`text-xs font-semibold uppercase tracking-[0.2em] sm:text-sm ${styles.eyebrow}`}>{site.subtitle}</p>}

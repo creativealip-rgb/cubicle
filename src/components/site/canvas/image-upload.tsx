@@ -57,13 +57,31 @@ export function ImageUpload({ value, onChange, label }: Props) {
         onChange={(e) => handleUpload(e.target.files?.[0])}
       />
       {value ? (
-        <div className="flex items-center gap-2 flex-1 min-w-0">
-          <div className="relative h-8 w-8 rounded overflow-hidden shrink-0">
-            <Image src={value} alt="" fill sizes="32px" className="object-cover" />
+        <div className="flex items-center gap-2 bg-muted/40 p-1.5 rounded-xl border border-border/70">
+          <div className="relative h-9 w-9 rounded-lg overflow-hidden shrink-0 border border-border bg-background shadow-xs">
+            <Image src={value} alt="" fill sizes="36px" className="object-cover" />
           </div>
-          <span className="text-xs text-muted-foreground truncate flex-1">{value.split("/").pop()}</span>
-          <Button type="button" variant="ghost" size="icon" className="h-6 w-6 shrink-0" aria-label={t("Hapus gambar", "Remove image")} onClick={() => onChange("")}>
-            <X className="h-3 w-3" />
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="h-7 text-xs gap-1 px-2 font-medium"
+            disabled={uploading}
+            onClick={() => fileRef.current?.click()}
+          >
+            {uploading ? <Loader2 className="h-3 w-3 animate-spin" /> : <Upload className="h-3 w-3" />}
+            {t("Ganti", "Change")}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-lg"
+            aria-label={t("Hapus gambar", "Remove image")}
+            onClick={() => onChange("")}
+            title={t("Hapus gambar", "Remove image")}
+          >
+            <X className="h-3.5 w-3.5" />
           </Button>
         </div>
       ) : (

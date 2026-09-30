@@ -76,16 +76,20 @@ export function CanvasRenderer({
       onClick={() => onSelectSection(null)}
     >
       {/* Hero section */}
-      <div data-readiness-target="hero" className={cn("relative px-8 pt-16 pb-12 text-center", readinessTarget === "hero" && "ring-4 ring-red-400 ring-offset-2")} style={{ backgroundColor: theme?.primaryColor ?? "#6647F0" }}>
+      <div data-readiness-target="hero" className={cn("relative px-8 pt-20 pb-16 text-center overflow-hidden", readinessTarget === "hero" && "ring-4 ring-red-400 ring-offset-2")} style={{ backgroundColor: theme?.primaryColor ?? "#6647F0" }}>
         {site.heroImage && (
-          <Image
-            src={site.heroImage}
-            alt=""
-            fill
-            sizes="100vw"
-            aria-hidden="true"
-            className="object-cover opacity-20"
-          />
+          <>
+            <Image
+              src={site.heroImage}
+              alt=""
+              fill
+              sizes="100vw"
+              aria-hidden="true"
+              className="object-cover opacity-85"
+            />
+            {/* Gentle Dark Gradient Overlay so text stays 100% legible */}
+            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60 pointer-events-none" />
+          </>
         )}
         <div className="relative z-10">
           <InlineText
@@ -109,7 +113,7 @@ export function CanvasRenderer({
             className="text-white/90 max-w-2xl mx-auto"
             placeholder={t("Deskripsi hero...", "Hero description...")}
           />
-          <div className="mt-4 flex justify-center">
+          <div className="mt-6 flex justify-center">
             <ImageUpload
               value={site.heroImage ?? ""}
               onChange={(url) => onUpdateSite({ heroImage: url || undefined })}
@@ -423,13 +427,37 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
       );
 
     case "gallery":
+      const gLayout = section.layout ?? "grid";
+      const gAspect = section.aspectRatio ?? "video";
+      const gCols = section.columns ?? 3;
+
+      const aspectClass =
+        gAspect === "square"
+          ? "aspect-square"
+          : gAspect === "wide"
+          ? "aspect-[21/9]"
+          : gAspect === "portrait"
+          ? "aspect-[3/4]"
+          : gAspect === "auto"
+          ? "aspect-auto h-48"
+          : "aspect-video";
+
+      const colClass =
+        gCols === 1
+          ? "grid-cols-1"
+          : gCols === 2
+          ? "grid-cols-1 sm:grid-cols-2"
+          : gCols === 4
+          ? "grid-cols-2 sm:grid-cols-4"
+          : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+
       return (
         <div className="py-6">
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+          <div className={`grid ${colClass} gap-4`}>
             {section.images.map((img, i) => (
-              <div key={img.id} className="space-y-1">
-                <div className="relative aspect-square rounded-lg bg-muted overflow-hidden">
+              <div key={img.id} className="space-y-2 rounded-xl border bg-card p-3 shadow-2xs">
+                <div className={`relative ${aspectClass} rounded-lg bg-muted overflow-hidden border border-border/60`}>
                   {img.url ? (
                     <Image
                       src={img.url}
@@ -442,6 +470,26 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
                     <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
                   )}
                 </div>
+
+                {(gLayout !== "grid" || img.title || img.description) && (
+                  <div className="space-y-1 pt-1">
+                    <InlineText
+                      value={img.title ?? ""}
+                      onChange={(v) => onUpdate({ images: section.images.map((im, j) => j === i ? { ...im, title: v } : im) })}
+                      tag="h3"
+                      className="text-sm font-semibold text-foreground"
+                      placeholder={t("Judul...", "Title...")}
+                    />
+                    <InlineText
+                      value={img.description ?? ""}
+                      onChange={(v) => onUpdate({ images: section.images.map((im, j) => j === i ? { ...im, description: v } : im) })}
+                      tag="p"
+                      className="text-xs text-muted-foreground"
+                      placeholder={t("Deskripsi...", "Description...")}
+                    />
+                  </div>
+                )}
+
                 <ImageUpload
                   value={img.url}
                   onChange={(url) => onUpdate({ images: section.images.map((im, j) => j === i ? { ...im, url } : im) })}
