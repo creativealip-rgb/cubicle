@@ -3,13 +3,22 @@
 import { useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
-import { Clock, Video, Check, Loader2, Plus, Globe } from "lucide-react";
+import {
+  Clock,
+  Video,
+  Check,
+  Loader2,
+  Globe,
+  Phone,
+  Users,
+  Link as LinkIcon,
+  Sparkles,
+} from "lucide-react";
 import { updateWorkspaceBookingSlug } from "@/lib/actions/workspace";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { EmptyState } from "@/components/empty-state";
 import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
 import { DeleteAvailabilityRuleButton } from "@/components/calendar/calendar-item-actions";
@@ -23,13 +32,49 @@ export interface AvailabilityRuleItem {
   timezone: string;
 }
 
-const ALL_PLATFORMS = [
-  { id: "google_meet", label: "Google Meet" },
-  { id: "zoom", label: "Zoom" },
-  { id: "teams", label: "Microsoft Teams" },
-  { id: "phone", label: "Phone / WhatsApp Call" },
-  { id: "in_person", label: "In-Person Meeting" },
-  { id: "custom", label: "Custom Link / Other" },
+const PLATFORM_CONFIGS = [
+  {
+    id: "google_meet",
+    label: "Google Meet",
+    desc: "Auto-generate video link",
+    icon: Video,
+    color: "text-emerald-600 bg-emerald-500/10 border-emerald-500/20",
+  },
+  {
+    id: "zoom",
+    label: "Zoom",
+    desc: "Direct meeting link",
+    icon: Video,
+    color: "text-blue-600 bg-blue-500/10 border-blue-500/20",
+  },
+  {
+    id: "teams",
+    label: "Microsoft Teams",
+    desc: "Teams meeting",
+    icon: Video,
+    color: "text-indigo-600 bg-indigo-500/10 border-indigo-500/20",
+  },
+  {
+    id: "phone",
+    label: "Phone / WhatsApp",
+    desc: "Audio call direct",
+    icon: Phone,
+    color: "text-emerald-600 bg-emerald-500/10 border-emerald-500/20",
+  },
+  {
+    id: "in_person",
+    label: "In-Person Meeting",
+    desc: "Offline face-to-face",
+    icon: Users,
+    color: "text-amber-600 bg-amber-500/10 border-amber-500/20",
+  },
+  {
+    id: "custom",
+    label: "Custom Link / Other",
+    desc: "Custom room URL",
+    icon: LinkIcon,
+    color: "text-purple-600 bg-purple-500/10 border-purple-500/20",
+  },
 ];
 
 export function BookingSettingsPanel({
@@ -103,81 +148,89 @@ export function BookingSettingsPanel({
   }
 
   return (
-    <Card className="rounded-xl border shadow-none bg-card flex flex-col h-full">
-      <CardHeader className="pb-3 border-b space-y-2.5">
-        <div className="flex items-center justify-between gap-2">
-          <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
-            {activeTab === "hours" ? (
-              <Clock className="h-4 w-4 text-primary" />
-            ) : (
-              <Video className="h-4 w-4 text-primary" />
-            )}
-            {t("Konfigurasi Jadwal", "Booking Configuration")}
-          </CardTitle>
+    <Card className="rounded-2xl border shadow-none bg-card flex flex-col h-full overflow-hidden">
+      {/* Header with Linear-style Navigation Tab Bar */}
+      <div className="border-b bg-muted/20 px-4 pt-3 pb-0">
+        <div className="flex items-center justify-between gap-2 mb-3">
+          <div>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              {t("Pengaturan Sesi", "Session Setup")}
+            </h3>
+            <p className="text-sm font-semibold text-foreground">
+              {activeTab === "hours" ? t("Jadwal Jam Kerja", "Availability & Hours") : t("Pilihan Platform", "Meeting Platforms")}
+            </p>
+          </div>
           {activeTab === "hours" && canEdit && <AvailabilityRuleForm />}
         </div>
 
-        {/* Minimal Segmented Tab Switcher */}
-        <div className="flex items-center gap-1 rounded-lg bg-muted/60 p-0.5 border border-border/60 text-xs">
+        {/* Clean Pill Sub-Nav (Linear/Cal.com style) */}
+        <div className="flex items-center gap-2 border-b border-transparent -mb-px">
           <button
             type="button"
             onClick={() => setActiveTab("hours")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-md py-1 text-xs font-medium transition-all ${
+            className={`flex items-center gap-1.5 pb-2.5 px-1 text-xs font-semibold transition-all border-b-2 cursor-pointer ${
               activeTab === "hours"
-                ? "bg-background text-foreground shadow-2xs font-semibold"
-                : "text-muted-foreground hover:text-foreground"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Clock className="h-3 w-3" />
-            <span>{t("Jam Kerja", "Working Hours")} ({rules.length})</span>
+            <Clock className="h-3.5 w-3.5" />
+            <span>{t("Jam Kerja", "Working Hours")}</span>
+            <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px] font-mono text-muted-foreground">
+              {rules.length}
+            </span>
           </button>
+
           <button
             type="button"
             onClick={() => setActiveTab("platforms")}
-            className={`flex-1 flex items-center justify-center gap-1.5 rounded-md py-1 text-xs font-medium transition-all ${
+            className={`flex items-center gap-1.5 pb-2.5 px-1 text-xs font-semibold transition-all border-b-2 cursor-pointer ${
               activeTab === "platforms"
-                ? "bg-background text-foreground shadow-2xs font-semibold"
-                : "text-muted-foreground hover:text-foreground"
+                ? "border-primary text-primary"
+                : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            <Video className="h-3 w-3" />
-            <span>{t("Platform Meeting", "Platforms")} ({allowedPlatforms.length})</span>
+            <Video className="h-3.5 w-3.5" />
+            <span>{t("Platform", "Platforms")}</span>
+            <span className="rounded-full bg-muted px-1.5 py-0.2 text-[10px] font-mono text-muted-foreground">
+              {allowedPlatforms.length}
+            </span>
           </button>
         </div>
-      </CardHeader>
+      </div>
 
-      <CardContent className="p-3.5 flex-1 flex flex-col">
+      <CardContent className="p-4 flex-1 flex flex-col">
         {activeTab === "hours" ? (
-          /* TAB 1: WORKING HOURS / AVAILABILITY RULES */
+          /* TAB 1: WORKING HOURS */
           <div className="space-y-2 flex-1 flex flex-col">
             {rules.length === 0 ? (
-              <div className="flex flex-1 items-center justify-center py-6">
+              <div className="flex flex-1 items-center justify-center py-8">
                 <EmptyState
                   icon={Clock}
                   title={t("Belum ada jam kerja aktif", "No working hours set")}
                   description={t(
-                    "Tambah aturan untuk menentukan jadwal ketersediaan kamu",
+                    "Tambah aturan untuk menentukan kapan kamu bersedia menerima booking klien",
                     "Add rules to define when you're available for client bookings"
                   )}
                   embedded
                 />
               </div>
             ) : (
-              <div className="divide-y divide-border/60 -mx-3.5 px-3.5">
+              <div className="space-y-1.5 flex-1">
                 {rules.map((rule) => (
                   <div
                     key={rule.id}
-                    className="flex items-center justify-between gap-2.5 py-2.5 first:pt-0 last:pb-0"
+                    className="flex items-center justify-between gap-3 p-2.5 rounded-xl border border-border/70 bg-card hover:bg-muted/30 transition-colors"
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="flex h-7 w-10 items-center justify-center rounded-md bg-primary/10 text-primary font-bold text-xs uppercase shrink-0">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="flex h-8 w-10 items-center justify-center rounded-lg bg-primary/10 text-primary font-bold text-xs uppercase shrink-0">
                         {dayShortNames[rule.dayOfWeek]}
-                      </span>
+                      </div>
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-foreground leading-tight">
                           {dayNames[rule.dayOfWeek]}
                         </p>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 font-mono">
+                        <p className="text-[11px] text-muted-foreground mt-0.5 font-mono font-medium">
                           {rule.startTime.substring(0, 5)} – {rule.endTime.substring(0, 5)}
                         </p>
                       </div>
@@ -195,60 +248,92 @@ export function BookingSettingsPanel({
           </div>
         ) : (
           /* TAB 2: MEETING PLATFORMS */
-          <form onSubmit={handleSavePlatforms} className="space-y-3.5 flex-1 flex flex-col justify-between">
-            <div className="space-y-3">
-              <p className="text-[11px] text-muted-foreground">
+          <form onSubmit={handleSavePlatforms} className="space-y-4 flex-1 flex flex-col justify-between">
+            <div className="space-y-3.5">
+              <p className="text-xs text-muted-foreground">
                 {t(
-                  "Pilih platform pertemuan yang ingin Anda tawarkan ke klien pada link booking publik:",
-                  "Select which platforms clients can choose from on your booking link:"
+                  "Pilih platform pertemuan yang ingin Anda sediakan pada halaman booking:",
+                  "Select the meeting platform options to offer on your booking link:"
                 )}
               </p>
 
+              {/* 2-Column Clean Interactive Grid */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                {ALL_PLATFORMS.map((item) => {
+                {PLATFORM_CONFIGS.map((item) => {
                   const isChecked = allowedPlatforms.includes(item.id);
+                  const Icon = item.icon;
                   return (
-                    <label
+                    <button
+                      type="button"
                       key={item.id}
-                      className={`flex items-center gap-2 rounded-lg border px-2.5 py-2 text-xs font-medium transition-colors ${
+                      disabled={!canEdit}
+                      onClick={() => togglePlatform(item.id)}
+                      className={`relative flex items-center justify-between p-2.5 rounded-xl border text-left transition-all ${
                         isChecked
-                          ? "bg-primary/5 border-primary/40 text-foreground font-semibold"
-                          : "bg-background border-border/70 text-muted-foreground"
-                      } ${canEdit ? "cursor-pointer hover:bg-muted/40" : "opacity-70 cursor-not-allowed"}`}
+                          ? "border-primary bg-primary/[0.04] shadow-xs"
+                          : "border-border/70 bg-card hover:bg-muted/30 opacity-70"
+                      } ${canEdit ? "cursor-pointer" : "cursor-default"}`}
                     >
-                      <Checkbox
-                        checked={isChecked}
-                        disabled={!canEdit}
-                        onCheckedChange={() => togglePlatform(item.id)}
-                      />
-                      <span className="select-none truncate text-[11px]">{item.label}</span>
-                    </label>
+                      <div className="flex items-center gap-2.5 min-w-0">
+                        <div
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg border ${
+                            isChecked ? item.color : "bg-muted text-muted-foreground border-transparent"
+                          }`}
+                        >
+                          <Icon className="h-3.5 w-3.5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-xs font-semibold text-foreground truncate">{item.label}</p>
+                          <p className="text-[10px] text-muted-foreground truncate">{item.desc}</p>
+                        </div>
+                      </div>
+
+                      <div
+                        className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-full border transition-colors ${
+                          isChecked
+                            ? "bg-primary border-primary text-primary-foreground"
+                            : "border-muted-foreground/30 bg-background"
+                        }`}
+                      >
+                        {isChecked && <Check className="h-2.5 w-2.5 stroke-[3]" />}
+                      </div>
+                    </button>
                   );
                 })}
               </div>
 
+              {/* Custom Link Section with icon badge */}
               {(allowedPlatforms.includes("zoom") ||
                 allowedPlatforms.includes("teams") ||
                 allowedPlatforms.includes("custom")) && (
-                <div className="space-y-1.5 pt-1">
-                  <Label className="text-[11px] font-semibold text-muted-foreground">
-                    {t("Link Ruang Meeting Tetap / Catatan (Opsional)", "Fixed Meeting Room Link / Note (Optional)")}
-                  </Label>
+                <div className="rounded-xl border border-border/80 bg-muted/20 p-3 space-y-1.5">
+                  <div className="flex items-center gap-1.5">
+                    <LinkIcon className="h-3.5 w-3.5 text-primary" />
+                    <Label className="text-xs font-semibold text-foreground">
+                      {t("Link Ruang Meeting Tetap / Catatan", "Fixed Meeting Link / Note")}
+                    </Label>
+                  </div>
                   <Input
                     value={customLink}
                     disabled={!canEdit}
                     onChange={(e) => setCustomLink(e.target.value)}
-                    placeholder="https://zoom.us/j/... / https://teams.microsoft.com/..."
-                    className="h-8 text-xs font-mono"
+                    placeholder="https://zoom.us/j/... atau https://teams.microsoft.com/..."
+                    className="h-8 text-xs font-mono bg-background"
                   />
+                  <p className="text-[10px] text-muted-foreground leading-normal">
+                    {t(
+                      "Link ini otomatis diberikan kepada klien saat konfirmasi booking berhasil.",
+                      "This link is automatically sent to the client once booking is confirmed."
+                    )}
+                  </p>
                 </div>
               )}
             </div>
 
             {canEdit && (
-              <div className="flex justify-end pt-2 border-t mt-auto">
-                <Button type="submit" size="sm" disabled={saving} className="h-7 text-xs font-semibold px-3">
-                  {saving ? <Loader2 className="h-3 w-3 animate-spin mr-1.5" /> : <Check className="h-3 w-3 mr-1.5" />}
+              <div className="flex justify-end pt-3 border-t mt-auto">
+                <Button type="submit" size="sm" disabled={saving} className="h-8 text-xs font-semibold px-4 gap-1.5">
+                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
                   {t("Simpan Opsi Platform", "Save Platform Options")}
                 </Button>
               </div>
