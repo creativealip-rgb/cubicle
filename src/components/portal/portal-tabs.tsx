@@ -39,6 +39,7 @@ export type PortalTabsProps = {
     invoices?: number;
     requests?: number;
   };
+  bookingSlug?: string | null;
 };
 
 export function PortalTabs({
@@ -51,6 +52,7 @@ export function PortalTabs({
   requests,
   contact,
   counts,
+  bookingSlug,
 }: PortalTabsProps) {
   const { t } = useT();
   const pathname = usePathname();
@@ -152,6 +154,7 @@ export function PortalTabs({
             <PortalActionButtons
               token={token}
               projects={projectOptions ?? []}
+              bookingSlug={bookingSlug}
             />
           </div>
         )}

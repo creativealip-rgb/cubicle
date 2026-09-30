@@ -169,6 +169,9 @@ export default async function ClientPortalPage({
       logoUrl: workspaces.logoUrl,
       billingName: workspaces.billingName,
       billingAddress: workspaces.billingAddress,
+      workingHours: workspaces.workingHours,
+      supportNote: workspaces.supportNote,
+      bookingSlug: workspaces.bookingSlug,
       ownerId: workspaces.ownerId,
     })
     .from(workspaces)
@@ -999,6 +1002,7 @@ export default async function ClientPortalPage({
             <PortalTabs
               initialTab={initialTab}
               token={portalCredential}
+              bookingSlug={workspaceContact?.bookingSlug}
               projectOptions={clientProjects.map((p) => ({
                 id: p.id,
                 name: p.name,
@@ -1099,7 +1103,7 @@ export default async function ClientPortalPage({
                       ownerWhatsAppPhone={workspaceContact?.phone}
                       ownerEmail={portalContactEmail}
                       ownerName={workspaceContact?.name}
-                    />
+                      />
                   )}
                 </section>
               }
@@ -1175,6 +1179,9 @@ export default async function ClientPortalPage({
                     ownerName={workspaceContact?.name}
                     clientName={client.companyName || client.name}
                     billingAddress={workspaceContact?.billingAddress}
+                    workingHours={workspaceContact?.workingHours}
+                    supportNote={workspaceContact?.supportNote}
+                    bookingSlug={workspaceContact?.bookingSlug}
                   />
                 </section>
               }

@@ -173,16 +173,13 @@ export function BookingSettingsPanel({
     <Card className="rounded-2xl border shadow-none bg-card flex flex-col h-full overflow-hidden">
       {/* Header with Linear-style Navigation Tab Bar */}
       <div className="border-b bg-muted/20 px-4 pt-3 pb-0">
-        <div className="flex items-center justify-between gap-2 mb-3">
-          <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              {t("Pengaturan Sesi", "Session Setup")}
-            </h3>
-            <p className="text-sm font-semibold text-foreground">
-              {activeTab === "hours" ? t("Jadwal Jam Kerja", "Availability & Hours") : t("Pilihan Platform", "Meeting Platforms")}
-            </p>
-          </div>
-          {activeTab === "hours" && canEdit && <AvailabilityRuleForm />}
+        <div className="mb-3">
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+            {t("Pengaturan Sesi", "Session Setup")}
+          </p>
+          <h3 className="text-sm font-bold text-foreground mt-0.5">
+            {activeTab === "hours" ? t("Jadwal Jam Kerja", "Availability & Hours") : t("Pilihan Platform", "Meeting Platforms")}
+          </h3>
         </div>
 
         {/* Clean Pill Sub-Nav (Linear/Cal.com style) */}

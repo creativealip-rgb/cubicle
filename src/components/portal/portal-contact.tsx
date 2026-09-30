@@ -13,6 +13,9 @@ interface PortalContactProps {
   billingAddress?: string | null;
   billingPhone?: string | null;
   projectName?: string | null;
+  workingHours?: string | null;
+  supportNote?: string | null;
+  bookingSlug?: string | null;
   compact?: boolean;
   inline?: boolean;
 }
@@ -36,6 +39,9 @@ export function PortalContactButtons({
   clientName,
   billingAddress,
   projectName,
+  workingHours,
+  supportNote,
+  bookingSlug,
   compact = false,
   inline = false,
 }: PortalContactProps) {
@@ -222,11 +228,10 @@ export function PortalContactButtons({
               <div>
                 <p className="font-semibold text-foreground">{t("Jam Operasional", "Working Hours")}</p>
                 <p className="text-muted-foreground mt-0.5">
-                  Senin – Jumat (09.00 – 17.00 WIB)
+                  {workingHours || t("Senin – Jumat (09.00 – 17.00 WIB)", "Monday – Friday (09:00 – 17:00)")}
                 </p>
               </div>
             </div>
-
             <div className="flex items-start gap-3">
               <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
                 <Calendar className="h-4 w-4" />
@@ -234,11 +239,10 @@ export function PortalContactButtons({
               <div>
                 <p className="font-semibold text-foreground">{t("Diskusi & Meeting", "Meetings & Sync")}</p>
                 <p className="text-muted-foreground mt-0.5">
-                  {t("Gunakan tombol 'Schedule Meeting' di atas untuk booking jadwal sync.", "Use 'Schedule Meeting' button above to book a sync session.")}
+                  {supportNote || t("Gunakan tombol 'Schedule Meeting' di atas untuk booking jadwal sync.", "Use 'Schedule Meeting' button above to book a sync session.")}
                 </p>
               </div>
             </div>
-
             {billingAddress && (
               <div className="flex items-start gap-3 pt-2 border-t border-border/60">
                 <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">

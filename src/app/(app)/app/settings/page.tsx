@@ -282,6 +282,8 @@ export default async function SettingsPage({
                         defaultHourlyRate: workspace.defaultHourlyRate,
                         defaultInvoiceTerms: workspace.defaultInvoiceTerms,
                         replyToEmail: workspace.replyToEmail,
+                        workingHours: workspace.workingHours,
+                        supportNote: workspace.supportNote,
                       }}
                     />
                 </CardContent>

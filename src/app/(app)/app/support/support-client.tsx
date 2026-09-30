@@ -182,22 +182,14 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
           "Manage support tickets, track issue resolutions, and access operational guidebooks."
         )}
         actions={
-          <div className="flex items-center gap-2">
-            <Button asChild variant="outline" size="sm" className="h-8 gap-1.5 rounded-lg text-xs font-semibold">
-              <Link href="/app/docs">
-                <BookOpen className="h-3.5 w-3.5 text-primary" />
-                {t("Dokumentasi", "Documentation")}
-              </Link>
-            </Button>
-            <Button
-              onClick={openCreate}
-              size="sm"
-              className="h-8 gap-1.5 rounded-lg text-xs font-semibold shadow-xs"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              {t("Tiket Baru", "New Ticket")}
-            </Button>
-          </div>
+          <Button
+            onClick={openCreate}
+            size="sm"
+            className="h-8 gap-1.5 rounded-lg text-xs font-semibold shadow-xs"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            {t("Tiket Baru", "New Ticket")}
+          </Button>
         }
       />
 
@@ -452,39 +444,26 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
         </>
       )}
 
-      {/* 5. Additional Support Knowledge & Contact Channels */}
-      <div className="grid gap-3 sm:grid-cols-2 pt-2">
-        <div className="flex items-center gap-3.5 rounded-xl border border-border bg-card p-3.5 shadow-2xs">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-950/50 dark:text-violet-300">
-            <BookOpen className="h-5 w-5" />
+      {/* 5. Feature Guides Documentation Hub Card */}
+      <div className="pt-2">
+        <div className="flex items-center justify-between gap-3.5 rounded-xl border border-border bg-card p-4 shadow-2xs">
+          <div className="flex items-center gap-3.5 min-w-0">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-violet-600 dark:bg-violet-950/50 dark:text-violet-300">
+              <BookOpen className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-card-foreground">
+                {t("Feature Guides Documentation Hub", "Feature Guides Documentation Hub")}
+              </p>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                {t("Panduan langkah demi langkah modul invoice, project, time tracking, dan portal klien.", "Step-by-step guides for invoices, projects, time tracking, and client portal.")}
+              </p>
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-card-foreground">{t("Dokumentasi Penggunaan", "Feature Guides")}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5">
-              {t("Panduan langkah demi langkah modul invoice, project, dan portal.", "Step-by-step guides for invoices, projects, and portals.")}
-            </p>
-          </div>
-          <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs font-semibold text-primary">
+          <Button asChild variant="outline" size="sm" className="h-8 px-3 text-xs font-semibold text-primary gap-1.5 shrink-0 rounded-lg">
             <Link href="/app/docs">
-              {t("Buka", "Open")} <ExternalLink className="ml-1 h-3 w-3" />
+              {t("Buka Dokumentasi", "Open Guides")} <ExternalLink className="h-3.5 w-3.5" />
             </Link>
-          </Button>
-        </div>
-
-        <div className="flex items-center gap-3.5 rounded-xl border border-border bg-card p-3.5 shadow-2xs">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-300">
-            <Mail className="h-5 w-5" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-card-foreground">{t("Email Support Cubiqlo", "Email Support")}</p>
-            <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
-              support@cubiqlo.com
-            </p>
-          </div>
-          <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-xs font-semibold text-primary">
-            <a href="mailto:support@cubiqlo.com">
-              {t("Kirim", "Send")} <ExternalLink className="ml-1 h-3 w-3" />
-            </a>
           </Button>
         </div>
       </div>

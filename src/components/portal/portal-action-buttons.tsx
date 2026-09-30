@@ -31,9 +31,11 @@ type ProjectOption = { id: string; name: string };
 export function PortalActionButtons({
   token,
   projects,
+  bookingSlug,
 }: {
   token: string;
   projects: ProjectOption[];
+  bookingSlug?: string | null;
 }) {
   const { refresh } = useAppTransition();
   const { t } = useT();
@@ -105,14 +107,26 @@ export function PortalActionButtons({
           <PlusCircle className="h-3.5 w-3.5" />
           {t("Ajukan Request Baru", "New Request")}
         </Button>
-        <Button
-          type="button"
-          className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs bg-purple-600 hover:bg-purple-700 text-white"
-          onClick={() => setKind("meeting")}
-        >
-          <Calendar className="h-3.5 w-3.5" />
-          {t("Ajukan Pertemuan", "Schedule Meeting")}
-        </Button>
+        {bookingSlug ? (
+          <Button
+            asChild
+            className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
+          >
+            <a href={`/booking/${bookingSlug}`} target="_blank" rel="noreferrer">
+              <Calendar className="h-3.5 w-3.5" />
+              {t("Booking Jadwal", "Schedule Meeting")}
+            </a>
+          </Button>
+        ) : (
+          <Button
+            type="button"
+            className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
+            onClick={() => setKind("meeting")}
+          >
+            <Calendar className="h-3.5 w-3.5" />
+            {t("Ajukan Pertemuan", "Schedule Meeting")}
+          </Button>
+        )}
       </div>
 
       {/* Schedule Meeting Dialog */}

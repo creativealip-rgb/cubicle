@@ -31,6 +31,8 @@ interface WorkspaceBrandingFormProps {
     defaultHourlyRate?: string | number | null;
     defaultInvoiceTerms?: string | null;
     replyToEmail?: string | null;
+    workingHours?: string | null;
+    supportNote?: string | null;
   };
 }
 
@@ -63,6 +65,8 @@ export function WorkspaceBrandingForm({
     defaultHourlyRate: defaults.defaultHourlyRate != null ? String(defaults.defaultHourlyRate) : "",
     defaultInvoiceTerms: defaults.defaultInvoiceTerms ?? "",
     replyToEmail: defaults.replyToEmail ?? "",
+    workingHours: defaults.workingHours ?? "",
+    supportNote: defaults.supportNote ?? "",
   });
 
   async function onSubmit(e: React.FormEvent) {
@@ -331,14 +335,40 @@ export function WorkspaceBrandingForm({
                   </div>
 
                   <div className="space-y-1.5 md:col-span-2">
-                    <Label htmlFor="billingAddress" className="text-xs font-medium text-slate-700">{t("Alamat Bisnis", "Business Address")}</Label>
+                    <Label htmlFor="billingAddress" className="text-xs font-medium text-slate-700">{t("Alamat Bisnis / Kantor", "Business / Office Address")}</Label>
                     <Textarea
                       id="billingAddress"
                       rows={2}
                       value={form.billingAddress}
                       onChange={(e) => setForm((p) => ({ ...p, billingAddress: e.target.value }))}
-                      placeholder={t("Alamat lengkap kantor atau domisili...", "Full business address...")}
-                      className="rounded-xl resize-none text-xs"
+                      placeholder={t("Jl. Contoh No. 123, Jakarta", "123 Main St, City")}
+                      className="rounded-xl text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 md:col-span-2">
+                    <Label htmlFor="workingHours" className="text-xs font-medium text-slate-700">
+                      {t("Jam Operasional / Layanan (Tampil di Portal Klien)", "Working / Service Hours (Shown on Client Portal)")}
+                    </Label>
+                    <Input
+                      id="workingHours"
+                      value={form.workingHours}
+                      onChange={(e) => setForm((p) => ({ ...p, workingHours: e.target.value }))}
+                      placeholder="Senin – Jumat (09.00 – 17.00 WIB) / Mon – Fri (9 AM – 5 PM)"
+                      className="h-10 rounded-xl text-xs"
+                    />
+                  </div>
+
+                  <div className="space-y-1.5 md:col-span-2">
+                    <Label htmlFor="supportNote" className="text-xs font-medium text-slate-700">
+                      {t("Catatan Layanan & Meeting (Tampil di Portal Klien)", "Service & Meeting Note (Shown on Client Portal)")}
+                    </Label>
+                    <Input
+                      id="supportNote"
+                      value={form.supportNote}
+                      onChange={(e) => setForm((p) => ({ ...p, supportNote: e.target.value }))}
+                      placeholder={t("Gunakan tombol 'Schedule Meeting' untuk booking jadwal sync.", "Use 'Schedule Meeting' button to book a sync session.")}
+                      className="h-10 rounded-xl text-xs"
                     />
                   </div>
                 </div>
