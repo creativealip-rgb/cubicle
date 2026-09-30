@@ -311,6 +311,43 @@ export async function bulkMoveFiles(fileIds: string[], targetFolderId: string | 
   return { success: true, count: updated.length };
 }
 
+export async function deleteFolder(folderId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  // Get all files inside this folder (and subfolders recursively if any)
+  const folderFiles = await db
+    .select()
+    .from(files)
+    .where(and(eq(files.folderId, folderId), eq(files.workspaceId, workspaceId)));
+
+  for (const f of folderFiles) {
+    try {
+      await deleteStoredFile(f.storageKey);
+    } catch (e) {
+      console.error("Error deleting stored file in folder:", e);
+    }
+  }
+
+  const fileIds = folderFiles.map((f) => f.id);
+  await db.transaction(async (tx) => {
+    if (fileIds.length > 0) {
+      await tx.delete(uploadIntents).where(and(inArray(uploadIntents.finalFileId, fileIds), eq(uploadIntents.workspaceId, workspaceId)));
+      await tx.delete(files).where(and(inArray(files.id, fileIds), eq(files.workspaceId, workspaceId)));
+    }
+    await tx.delete(folders).where(and(eq(folders.id, folderId), eq(folders.workspaceId, workspaceId)));
+  });
+
+  try {
+    await writeActivityLog(workspaceId, user.id, "deleted_folder", "file", folderId);
+  } catch {}
+
+  revalidatePath("/app/files");
+  return { ok: true };
+}
+
 export async function listFiles(workspaceId: string, clientId?: string, projectId?: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);

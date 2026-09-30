@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
-import { deleteFile, bulkDeleteFiles, bulkMoveFiles, updateFileMeta } from "@/lib/actions/files";
+import { deleteFile, deleteFolder, bulkDeleteFiles, bulkMoveFiles, updateFileMeta } from "@/lib/actions/files";
 import Link from "next/link";
 
 import { useT } from "@/lib/i18n-client";
@@ -123,6 +123,7 @@ export function FileList({
   const [page, setPage] = useState(1);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FileItem | null>(null);
+  const [folderDeleteTarget, setFolderDeleteTarget] = useState<FolderGridItem | null>(null);
   const [previewTarget, setPreviewTarget] = useState<FileItem | null>(null);
 
   // Multi-Select State
@@ -254,6 +255,21 @@ export function FileList({
       toast.error(err instanceof Error ? err.message : t("Gagal memindahkan berkas", "Failed to move files"));
     } finally {
       setBulkMoving(false);
+    }
+  };
+
+  const handleConfirmDeleteFolder = async () => {
+    if (!folderDeleteTarget) return;
+    setBusyId(folderDeleteTarget.id);
+    try {
+      await deleteFolder(folderDeleteTarget.id);
+      toast.success(t("Folder dan isinya berhasil dihapus", "Folder deleted"));
+      setFolderDeleteTarget(null);
+      refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal menghapus folder", "Failed to delete folder"));
+    } finally {
+      setBusyId(null);
     }
   };
 
@@ -534,8 +550,31 @@ export function FileList({
                       {f.itemCount !== undefined ? `${f.itemCount} items` : "—"}
                     </td>
                     <td className="px-3 py-2 text-muted-foreground hidden md:table-cell">Folder</td>
-                    <td className="px-3 py-2 text-right">
-                      <ChevronRight className="h-3.5 w-3.5 inline-block text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+                    <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
+                      {f.type === "workspace_folder" ? (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                            >
+                              <MoreVertical className="h-3.5 w-3.5" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="text-xs">
+                            <DropdownMenuItem
+                              className="text-destructive focus:text-destructive"
+                              onSelect={() => setFolderDeleteTarget(f)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5 mr-2" />
+                              {t("Hapus Folder", "Delete Folder")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      ) : (
+                        <ChevronRight className="h-3.5 w-3.5 inline-block text-muted-foreground group-hover:translate-x-0.5 transition-transform" />
+                      )}
                     </td>
                   </tr>
                 ))}
@@ -968,6 +1007,37 @@ export function FileList({
         open={!!previewTarget}
         onOpenChange={(open) => !open && setPreviewTarget(null)}
       />
+
+      {/* Delete Folder Dialog */}
+      <Dialog open={!!folderDeleteTarget} onOpenChange={(open) => !open && setFolderDeleteTarget(null)}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="h-5 w-5" />
+              {t("Hapus Folder", "Delete Folder")}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {t(
+                `Apakah Anda yakin ingin menghapus folder "${folderDeleteTarget?.name}" beserta seluruh berkas di dalamnya? Tindakan ini tidak dapat dibatalkan.`,
+                `Are you sure you want to delete folder "${folderDeleteTarget?.name}" and all files within it? This action cannot be undone.`
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setFolderDeleteTarget(null)}>
+              {t("Batal", "Cancel")}
+            </Button>
+            <Button
+              variant="destructive"
+              size="sm"
+              disabled={!!busyId}
+              onClick={handleConfirmDeleteFolder}
+            >
+              {busyId ? t("Menghapus...", "Deleting...") : t("Hapus Folder", "Delete Folder")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

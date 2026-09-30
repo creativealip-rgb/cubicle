@@ -220,6 +220,21 @@ export async function archiveService(serviceId: string) {
   return archived;
 }
 
+export async function deleteService(serviceId: string) {
+  const { user, workspaceId } = await actor();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+
+  const [deleted] = await db
+    .delete(services)
+    .where(and(eq(services.id, serviceId), eq(services.workspaceId, workspaceId)))
+    .returning();
+  if (!deleted) throw new Error("Service tidak ditemukan");
+
+  await writeActivityLog(workspaceId, user.id, "deleted_service", "service", serviceId);
+  revalidateServiceSurfaces();
+  return { ok: true };
+}
+
 export async function getProjectServices(projectId: string, options?: { includeArchived?: boolean }) {
   const { user, workspaceId } = await actor();
   await assertWorkspaceMember(db, user.id, workspaceId);

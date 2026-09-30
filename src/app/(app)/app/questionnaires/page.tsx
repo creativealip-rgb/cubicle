@@ -10,7 +10,7 @@ import { getCurrentLang, createT } from "@/lib/i18n";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { QuestionnairesListTable } from "@/components/questionnaires/questionnaires-list-table";
-import { QuestionnaireCreateDialog } from "@/components/calendar/questionnaire-create-dialog";
+
 import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { Plus, ClipboardList, ChevronRight } from "lucide-react";
@@ -69,14 +69,12 @@ export default async function QuestionnairesPage() {
         }
         actions={
           canWrite ? (
-            <QuestionnaireCreateDialog
-              trigger={
-                <Button size="sm" className="h-8 gap-1.5 text-xs">
-                  <Plus className="h-3.5 w-3.5" />
-                  {t("Formulir baru", "New form")}
-                </Button>
-              }
-            />
+            <Button size="sm" className="h-8 gap-1.5 text-xs font-semibold" asChild>
+              <Link href="/app/questionnaires/new">
+                <Plus className="h-3.5 w-3.5" />
+                {t("Formulir baru", "New form")}
+              </Link>
+            </Button>
           ) : null
         }
       />

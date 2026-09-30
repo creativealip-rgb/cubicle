@@ -10,6 +10,7 @@ import {
   Pencil,
   Plus,
   Trash2,
+  Archive,
   Wrench,
   Clock,
   Tag,
@@ -22,6 +23,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -38,11 +40,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { EmptyState } from "@/components/empty-state";
 import {
+  createService,
+  updateService,
   archiveService,
   restoreService,
-  createService,
+  deleteService,
   createServiceCategory,
-  updateService,
 } from "@/lib/actions/services";
 import { useT } from "@/lib/i18n-client";
 import { formatMoney } from "@/lib/utils";
@@ -114,6 +117,7 @@ export function ServiceCatalog({
   const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   const [editing, setEditing] = useState<CatalogService | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<CatalogService | null>(null);
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = useState<CatalogService | null>(null);
   const [loading, setLoading] = useState(false);
   const [categoryName, setCategoryName] = useState("");
   const [activeFilter, setActiveFilter] = useState<"all" | "fixed" | "hourly" | "unit">("all");
@@ -228,6 +232,21 @@ export function ServiceCatalog({
       refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal arsip", "Archive failed"));
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeletePermanent() {
+    if (!permanentDeleteTarget) return;
+    setLoading(true);
+    try {
+      await deleteService(permanentDeleteTarget.id);
+      toast.success(t("Layanan berhasil dihapus", "Service deleted"));
+      setPermanentDeleteTarget(null);
+      refresh();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal menghapus layanan", "Delete failed"));
     } finally {
       setLoading(false);
     }
@@ -422,7 +441,37 @@ export function ServiceCatalog({
                       </div>
                     </div>
 
-                    <DropdownMenu><DropdownMenuTrigger asChild><Button variant="ghost" size="icon" className="size-7" aria-label={t("Aksi layanan", "Service actions")}><MoreHorizontal className="size-4" /></Button></DropdownMenuTrigger><DropdownMenuContent align="end"><DropdownMenuItem onSelect={() => openEdit(service)}><Pencil className="size-3.5" />{t("Ubah", "Edit")}</DropdownMenuItem>{service.status === "archived" ? <DropdownMenuItem onSelect={() => handleRestore(service)}><Wrench className="size-3.5" />{t("Pulihkan", "Restore")}</DropdownMenuItem> : <DropdownMenuItem className="text-destructive" onSelect={() => setDeleteTarget(service)}><Trash2 className="size-3.5" />{t("Arsip", "Archive")}</DropdownMenuItem>}</DropdownMenuContent></DropdownMenu>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="size-7" aria-label={t("Aksi layanan", "Service actions")}>
+                          <MoreHorizontal className="size-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onSelect={() => openEdit(service)}>
+                          <Pencil className="size-3.5" />
+                          {t("Ubah", "Edit")}
+                        </DropdownMenuItem>
+                        {service.status === "archived" ? (
+                          <DropdownMenuItem onSelect={() => handleRestore(service)}>
+                            <Wrench className="size-3.5" />
+                            {t("Pulihkan", "Restore")}
+                          </DropdownMenuItem>
+                        ) : (
+                          <DropdownMenuItem onSelect={() => setDeleteTarget(service)}>
+                            <Archive className="size-3.5" />
+                            {t("Arsip", "Archive")}
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem
+                          className="text-destructive focus:text-destructive"
+                          onSelect={() => setPermanentDeleteTarget(service)}
+                        >
+                          <Trash2 className="size-3.5" />
+                          {t("Hapus", "Delete")}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
 
                   {/* Description */}
@@ -597,6 +646,31 @@ export function ServiceCatalog({
           <DialogFooter className="gap-2 sm:gap-0 pt-2">
             <Button variant="outline" className="rounded-xl" onClick={() => setDeleteTarget(null)} disabled={loading}>{t("Batal", "Cancel")}</Button>
             <Button variant="destructive" className="rounded-xl font-semibold" onClick={handleArchive} disabled={loading}>{t("Arsipkan", "Archive")}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Permanent Delete Confirmation Dialog */}
+      <Dialog open={!!permanentDeleteTarget} onOpenChange={(open) => !open && setPermanentDeleteTarget(null)}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-destructive flex items-center gap-2">
+              <Trash2 className="size-5" />
+              {t("Hapus Layanan", "Delete Service")}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {t(
+                `Apakah Anda yakin ingin menghapus layanan "${permanentDeleteTarget?.name}"? Tindakan ini tidak dapat dibatalkan.`,
+                `Are you sure you want to delete service "${permanentDeleteTarget?.name}"? This action cannot be undone.`
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 pt-2">
+            <Button variant="outline" size="sm" onClick={() => setPermanentDeleteTarget(null)}>
+              {t("Batal", "Cancel")}
+            </Button>
+            <Button variant="destructive" size="sm" disabled={loading} onClick={handleDeletePermanent}>
+              {loading ? t("Menghapus...", "Deleting...") : t("Hapus", "Delete")}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

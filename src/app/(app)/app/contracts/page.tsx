@@ -2,6 +2,8 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { contracts, clients, contractTemplates } from "@/db/schema";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
@@ -11,7 +13,7 @@ import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { EmptyState } from "@/components/empty-state";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { PageHeader } from "@/components/ui/page-header";
-import { FileCheck2, FileSignature } from "lucide-react";
+import { FileCheck2, FileSignature, Plus } from "lucide-react";
 import { getProposedContractNumber } from "@/lib/actions/contracts";
 
 export const dynamic = "force-dynamic";
@@ -128,7 +130,12 @@ export default async function ContractsPage({
         )}
         actions={
           canWrite ? (
-            <CreateContractButton clients={clientsList} templates={templateRows} workspaceId={workspaceId} proposedContractNumber={proposedContractNumber} defaultOpen={params.new === "1"} />
+            <Button size="sm" className="gap-1.5 h-8 text-xs font-semibold" asChild>
+              <Link href="/app/contracts/new">
+                <Plus className="h-3.5 w-3.5" />
+                {t("Kontrak baru", "New contract")}
+              </Link>
+            </Button>
           ) : null
         }
       />

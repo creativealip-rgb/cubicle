@@ -28,14 +28,14 @@ export function TaskQuickFilterChips() {
   };
 
   return (
-    <div className="flex items-center gap-1 rounded-lg bg-muted/60 p-0.5 border border-border/60 text-xs">
+    <div className="flex items-center gap-1 rounded-lg bg-muted/40 p-0.5 border border-border/50 text-xs">
       <button
         type="button"
         onClick={() => applyFilter({ assignee: null, priority: null, status: null })}
         className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition-all ${
           isAll
-            ? "bg-background text-foreground shadow-2xs font-semibold"
-            : "text-muted-foreground hover:text-foreground hover:bg-background/40"
+            ? "bg-background text-foreground shadow-2xs font-semibold border border-border/40"
+            : "text-muted-foreground hover:text-foreground hover:bg-background/30"
         }`}
       >
         <Layers className="h-3 w-3 text-muted-foreground" />

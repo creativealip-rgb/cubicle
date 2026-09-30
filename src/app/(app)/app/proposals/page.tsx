@@ -2,11 +2,13 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { proposals, clients, services } from "@/db/schema";
 import { listProposalTemplates } from "@/lib/actions/proposal-templates";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
-import { FileText, FileSpreadsheet } from "lucide-react";
+import { FileText, FileSpreadsheet, Plus } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 import { ProposalsListTable } from "@/components/proposals/proposals-list-table";
 import { CreateProposalButton } from "@/components/proposals/create-proposal-button";
@@ -125,21 +127,12 @@ export default async function ProposalsPage({
         )}
         actions={
           canWrite ? (
-            <CreateProposalButton
-              workspaceId={workspaceId}
-              defaultCurrency={ws.defaultCurrency}
-              defaultTaxRate={ws.defaultTaxRate ?? "0"}
-              clients={clientRows}
-              services={serviceRows.map((s) => ({
-                id: s.id,
-                name: s.name,
-                description: s.description ?? "",
-                defaultPrice: s.defaultPrice ? Number(s.defaultPrice) : 0,
-                defaultUnit: s.defaultUnit ?? "service",
-              }))}
-              templates={proposalTemplates}
-              defaultOpen={params.new === "1"}
-            />
+            <Button size="sm" className="gap-1.5 h-8 text-xs font-semibold" asChild>
+              <Link href="/app/proposals/new">
+                <Plus className="h-3.5 w-3.5" />
+                {t("Proposal baru", "New proposal")}
+              </Link>
+            </Button>
           ) : null
         }
       />
@@ -183,3 +176,4 @@ export default async function ProposalsPage({
     </div>
   );
 }
+
