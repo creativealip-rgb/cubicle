@@ -83,6 +83,7 @@ export default async function SettingsPage({
       emailVerified: users.emailVerified,
       twoFactorEnabled: users.twoFactorEnabled,
       plan: users.plan,
+      hasRecoveryPin: users.recoveryPinHash,
     })
     .from(users)
     .where(eq(users.id, user.id))
@@ -324,6 +325,7 @@ export default async function SettingsPage({
                   passkeys={passkeyRows}
                   trustedDevices={trustedDeviceRows}
                   currentTrustedDeviceId={currentTrustedDeviceId}
+                  hasRecoveryPin={Boolean(currentUser?.hasRecoveryPin)}
                 />
               </div>
             </div>

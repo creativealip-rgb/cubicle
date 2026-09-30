@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import {
+  ShieldAlert,
+  Lock,
+  Key,
   KeyRound,
   Laptop,
   ShieldCheck,
@@ -17,6 +20,8 @@ import {
   generateIndependentBackupCodes,
   logoutAllDevices,
   revokeTrustedDevice,
+  setupRecoveryPin,
+  verifyRecoveryPinAction,
 } from "@/lib/actions/account";
 import {
   Card,
@@ -87,6 +92,7 @@ export function AccountSecuritySettings({
   passkeys,
   trustedDevices,
   currentTrustedDeviceId,
+  hasRecoveryPin = false,
 }: {
   twoFactorEnabled: boolean;
   hasAuthenticator: boolean;
@@ -94,6 +100,7 @@ export function AccountSecuritySettings({
   passkeys: PasskeyItem[];
   trustedDevices: TrustedDeviceItem[];
   currentTrustedDeviceId: string | null;
+  hasRecoveryPin?: boolean;
 }) {
   const { t } = useT();
   const { confirm, dialog } = useConfirm();
@@ -102,12 +109,75 @@ export function AccountSecuritySettings({
 
   // Backup codes modal state
   const [backupDialogOpen, setBackupDialogOpen] = useState(false);
-  const [backupPassword, setBackupPassword] = useState("");
+  const [backupPin, setBackupPin] = useState("");
   const [backupCodes, setBackupCodes] = useState<string[]>([]);
   const [generating, setGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  async function addPasskey() {
+  // Setup Recovery PIN modal state
+  const [pinDialogOpen, setPinDialogOpen] = useState(false);
+  const [newPin, setNewPin] = useState("");
+  const [confirmPin, setConfirmPin] = useState("");
+  const [savingPin, setSavingPin] = useState(false);
+
+  // Passkey PIN verification modal state
+  const [passkeyPinDialogOpen, setPasskeyPinDialogOpen] = useState(false);
+  const [passkeyPin, setPasskeyPin] = useState("");
+  const [verifyingPasskeyPin, setVerifyingPasskeyPin] = useState(false);
+
+  async function handleSetupPin(e: React.FormEvent) {
+    e.preventDefault();
+    if (newPin.length !== 6 || !/^\d{6}$/.test(newPin)) {
+      return toast.error(t("PIN harus berupa 6 digit angka", "PIN must be 6 digits"));
+    }
+    if (newPin !== confirmPin) {
+      return toast.error(t("Konfirmasi PIN tidak cocok", "PIN confirmation does not match"));
+    }
+    setSavingPin(true);
+    try {
+      const result = await setupRecoveryPin(newPin);
+      if (!result.ok) {
+        toast.error(result.error ?? t("Gagal mengatur PIN", "Failed to set PIN"));
+      } else {
+        toast.success(t("Recovery Security PIN berhasil diatur", "Recovery Security PIN set successfully"));
+        setPinDialogOpen(false);
+        window.location.reload();
+      }
+    } catch {
+      toast.error(t("Terjadi kesalahan saat menyimpan PIN", "An error occurred setting PIN"));
+    } finally {
+      setSavingPin(false);
+    }
+  }
+
+  async function handlePasskeyPinSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setVerifyingPasskeyPin(true);
+    try {
+      const res = await verifyRecoveryPinAction(passkeyPin);
+      if (!res.ok) {
+        return toast.error(res.error ?? t("Recovery PIN salah", "Invalid Recovery PIN"));
+      }
+      setPasskeyPinDialogOpen(false);
+      setPasskeyPin("");
+      await executeAddPasskey();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Gagal verifikasi PIN", "Failed to verify PIN"));
+    } finally {
+      setVerifyingPasskeyPin(false);
+    }
+  }
+
+  function triggerAddPasskey() {
+    if (!hasRecoveryPin) {
+      setPinDialogOpen(true);
+      toast.error(t("Atur Recovery PIN terlebih dahulu sebelum menambah passkey", "Please set up Recovery PIN before adding passkey"));
+      return;
+    }
+    setPasskeyPinDialogOpen(true);
+  }
+
+  async function executeAddPasskey() {
     setAdding(true);
     try {
       const result = await authClient.passkey.addPasskey({
@@ -164,7 +234,7 @@ export function AccountSecuritySettings({
     e.preventDefault();
     setGenerating(true);
     try {
-      const result = await generateIndependentBackupCodes(backupPassword);
+      const result = await generateIndependentBackupCodes(backupPin);
       if (!result.ok) {
         toast.error(result.error);
       } else {
@@ -257,6 +327,120 @@ export function AccountSecuritySettings({
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
+          {/* 1. Recovery Security PIN Card (Prominent Crimson Card if NOT set, Hidden if set) */}
+          {!hasRecoveryPin && (
+            <div className="flex flex-col gap-3 rounded-2xl border-2 border-red-500/40 bg-gradient-to-r from-red-500/[0.08] via-red-500/[0.04] to-transparent p-4.5 shadow-sm sm:flex-row sm:items-center sm:justify-between animate-pulse-subtle">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-red-600 text-white shadow-xs">
+                    <ShieldAlert className="h-4 w-4" />
+                  </div>
+                  <p className="font-bold text-sm text-red-950 dark:text-red-200">
+                    {t("Recovery Security PIN (Wajib Diatur)", "Recovery Security PIN (Action Required)")}
+                  </p>
+                  <Badge className="bg-red-600 hover:bg-red-600 text-white text-[10px] font-bold">
+                    {t("Penting", "Important")}
+                  </Badge>
+                </div>
+                <p className="text-xs text-red-900/80 dark:text-red-300">
+                  {t(
+                    "PIN 6 digit ini diperlukan untuk generate recovery codes dan menambah passkey. PIN TIDAK BISA direset di kemudian hari — catat & simpan baik-baik.",
+                    "This 6-digit PIN is strictly required to generate backup codes & add passkeys. Cannot be reset via settings."
+                  )}
+                </p>
+              </div>
+
+              <Dialog open={pinDialogOpen} onOpenChange={setPinDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    className="h-9 w-full shrink-0 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-xs sm:w-auto px-4"
+                  >
+                    <Key className="h-3.5 w-3.5 mr-1.5" />
+                    {t("Set Recovery PIN", "Set Recovery PIN")}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-md rounded-2xl">
+                  <DialogHeader>
+                    <DialogTitle className="flex items-center gap-2 text-base text-red-700 dark:text-red-400">
+                      <ShieldAlert className="h-5 w-5" />
+                      {t("Atur Recovery Security PIN", "Set Recovery Security PIN")}
+                    </DialogTitle>
+                    <DialogDescription className="text-xs">
+                      {t(
+                        "Buat 6 digit angka rahasia. Sekali disimpan, PIN ini permanen dan tidak dapat direset di menu pengaturan.",
+                        "Create a secret 6-digit PIN. Once set, it cannot be reset from settings."
+                      )}
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <form onSubmit={handleSetupPin} className="space-y-4 pt-2">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="rec-pin" className="text-xs font-semibold">
+                        {t("PIN Baru (6 Digit Angka)", "New PIN (6 Digits)")}
+                      </Label>
+                      <Input
+                        id="rec-pin"
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        required
+                        placeholder="123456"
+                        value={newPin}
+                        onChange={(e) => setNewPin(e.target.value.replace(/\D/g, ""))}
+                        className="h-9 font-mono tracking-widest text-center text-sm"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="rec-pin-confirm" className="text-xs font-semibold">
+                        {t("Konfirmasi PIN (6 Digit)", "Confirm PIN (6 Digits)")}
+                      </Label>
+                      <Input
+                        id="rec-pin-confirm"
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={6}
+                        required
+                        placeholder="123456"
+                        value={confirmPin}
+                        onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, ""))}
+                        className="h-9 font-mono tracking-widest text-center text-sm"
+                      />
+                    </div>
+
+                    <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-2.5 text-[11px] text-amber-800 dark:text-amber-300">
+                      ⚠️ {t(
+                        "Pastikan kamu mencatat PIN ini di tempat aman. Jangan bagikan kepada siapa pun.",
+                        "Make sure to record this PIN in a secure place. Never share it."
+                      )}
+                    </div>
+
+                    <DialogFooter className="pt-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setPinDialogOpen(false)}
+                        className="text-xs h-8"
+                      >
+                        {t("Batal", "Cancel")}
+                      </Button>
+                      <Button
+                        type="submit"
+                        size="sm"
+                        disabled={savingPin || newPin.length !== 6 || newPin !== confirmPin}
+                        className="text-xs h-8 bg-red-600 hover:bg-red-700 text-white font-semibold"
+                      >
+                        {savingPin ? t("Menyimpan…", "Saving…") : t("Simpan Recovery PIN", "Save Recovery PIN")}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </DialogContent>
+              </Dialog>
+            </div>
+          )}
+
           {/* Recovery Backup Codes Card Section */}
           <div
             data-testid="recovery-method-row"
@@ -282,19 +466,30 @@ export function AccountSecuritySettings({
                 setBackupDialogOpen(open);
                 if (!open) {
                   setBackupCodes([]);
-                  setBackupPassword("");
+                  setBackupPin("");
                 }
               }}
             >
-              <DialogTrigger asChild>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 w-full text-xs sm:w-auto"
-                >
-                  {t("Generate Kode", "Generate Codes")}
-                </Button>
-              </DialogTrigger>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => {
+                  if (!hasRecoveryPin) {
+                    setPinDialogOpen(true);
+                    toast.error(
+                      t(
+                        "Atur Recovery Security PIN terlebih dahulu sebelum generate kode",
+                        "Please set up Recovery Security PIN before generating codes"
+                      )
+                    );
+                    return;
+                  }
+                  setBackupDialogOpen(true);
+                }}
+                className="h-8 w-full text-xs sm:w-auto"
+              >
+                {t("Generate Kode", "Generate Codes")}
+              </Button>
               <DialogContent className="sm:max-w-md rounded-2xl">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2 text-base">
@@ -372,20 +567,22 @@ export function AccountSecuritySettings({
                     className="space-y-3.5 pt-1"
                   >
                     <div className="space-y-1.5">
-                      <Label htmlFor="backup-pw" className="text-xs">
+                      <Label htmlFor="backup-pin" className="text-xs font-semibold">
                         {t(
-                          "Konfirmasi password akun",
-                          "Confirm account password",
+                          "Masukkan Recovery Security PIN (6 Digit)",
+                          "Enter Recovery Security PIN (6 Digits)"
                         )}
                       </Label>
                       <Input
-                        id="backup-pw"
+                        id="backup-pin"
                         type="password"
+                        inputMode="numeric"
+                        maxLength={6}
                         required
-                        placeholder="••••••••"
-                        value={backupPassword}
-                        onChange={(e) => setBackupPassword(e.target.value)}
-                        className="h-9 text-xs"
+                        placeholder="••••••"
+                        value={backupPin}
+                        onChange={(e) => setBackupPin(e.target.value.replace(/\D/g, ""))}
+                        className="h-9 font-mono tracking-widest text-center text-sm"
                       />
                     </div>
                     <DialogFooter className="pt-2">
@@ -401,7 +598,7 @@ export function AccountSecuritySettings({
                       <Button
                         type="submit"
                         size="sm"
-                        disabled={generating || !backupPassword}
+                        disabled={generating || backupPin.length !== 6}
                         className="text-xs h-8"
                       >
                         {generating ? (
@@ -439,7 +636,7 @@ export function AccountSecuritySettings({
                 type="button"
                 size="sm"
                 variant="outline"
-                onClick={addPasskey}
+                onClick={triggerAddPasskey}
                 disabled={adding}
                 className="h-8 w-full text-xs sm:w-auto"
               >
@@ -596,6 +793,61 @@ export function AccountSecuritySettings({
           ))}
         </CardContent>
       </Card>
+
+      {/* Modal Verifikasi Recovery PIN untuk Passkey */}
+      <Dialog open={passkeyPinDialogOpen} onOpenChange={setPasskeyPinDialogOpen}>
+        <DialogContent className="sm:max-w-md rounded-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <KeyRound className="h-4 w-4 text-primary" />
+              {t("Verifikasi Recovery Security PIN", "Verify Recovery Security PIN")}
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              {t(
+                "Masukkan Recovery Security PIN 6 digit Anda untuk mendaftarkan passkey baru.",
+                "Enter your 6-digit Recovery Security PIN to register a new passkey."
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handlePasskeyPinSubmit} className="space-y-4 pt-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="passkey-pin" className="text-xs font-semibold">
+                {t("Recovery PIN (6 Digit)", "Recovery PIN (6 Digits)")}
+              </Label>
+              <Input
+                id="passkey-pin"
+                type="password"
+                inputMode="numeric"
+                maxLength={6}
+                required
+                placeholder="••••••"
+                value={passkeyPin}
+                onChange={(e) => setPasskeyPin(e.target.value.replace(/\D/g, ""))}
+                className="h-9 font-mono tracking-widest text-center text-sm"
+              />
+            </div>
+            <DialogFooter className="pt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setPasskeyPinDialogOpen(false)}
+                className="text-xs h-8"
+              >
+                {t("Batal", "Cancel")}
+              </Button>
+              <Button
+                type="submit"
+                size="sm"
+                disabled={verifyingPasskeyPin || passkeyPin.length !== 6}
+                className="text-xs h-8"
+              >
+                {verifyingPasskeyPin ? t("Memverifikasi…", "Verifying…") : t("Lanjutkan ke Passkey", "Proceed to Passkey")}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

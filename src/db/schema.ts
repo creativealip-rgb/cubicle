@@ -40,6 +40,7 @@ export const users = pgTable("users", {
   timezone: text("timezone").notNull().default("Asia/Jakarta"),
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
   mfaEnrollmentDeadline: timestamp("mfa_enrollment_deadline", { withTimezone: true }),
+  recoveryPinHash: text("recovery_pin_hash"),
 });
 
 export const twoFactors = pgTable("two_factor", {

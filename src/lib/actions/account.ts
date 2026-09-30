@@ -232,23 +232,68 @@ export async function updateAccountPassword(
   return { ok: true };
 }
 
-export async function generateIndependentBackupCodes(password: string) {
+export async function setupRecoveryPin(pin: string): Promise<AccountActionResult> {
   const session = await requireAppSession("/app/settings?tab=account");
-  const [credential] = await db
-    .select({ password: accounts.password })
-    .from(accounts)
-    .where(
-      and(
-        eq(accounts.userId, session.user.id),
-        eq(accounts.providerId, "credential"),
-      ),
-    )
+  const cleaned = pin.trim();
+  if (!/^\d{6}$/.test(cleaned)) {
+    return { ok: false, error: "Recovery PIN harus berupa 6 digit angka." };
+  }
+
+  const [user] = await db
+    .select({ id: users.id, recoveryPinHash: users.recoveryPinHash })
+    .from(users)
+    .where(eq(users.id, session.user.id))
     .limit(1);
-  if (
-    !credential?.password ||
-    !(await verifyPassword(credential.password, password))
-  )
-    return { ok: false as const, error: "Password salah." };
+
+  if (user?.recoveryPinHash) {
+    return { ok: false, error: "Recovery PIN sudah diatur dan tidak dapat diubah." };
+  }
+
+  const hashed = await hashPassword(cleaned);
+  await db
+    .update(users)
+    .set({ recoveryPinHash: hashed, updatedAt: new Date() })
+    .where(eq(users.id, session.user.id));
+
+  revalidatePath("/app/settings");
+  return { ok: true };
+}
+
+export async function verifyRecoveryPinForUser(userId: string, pin: string): Promise<boolean> {
+  const [user] = await db
+    .select({ recoveryPinHash: users.recoveryPinHash })
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!user?.recoveryPinHash) return false;
+  return verifyPassword(user.recoveryPinHash, pin.trim());
+}
+
+export async function verifyRecoveryPinAction(pin: string): Promise<{ ok: boolean; error?: string }> {
+  const session = await requireAppSession("/app/settings?tab=account");
+  const valid = await verifyRecoveryPinForUser(session.user.id, pin);
+  if (!valid) {
+    return { ok: false, error: "Recovery PIN salah." };
+  }
+  return { ok: true };
+}
+
+export async function generateIndependentBackupCodes(pin: string) {
+  const session = await requireAppSession("/app/settings?tab=account");
+  const [user] = await db
+    .select({ recoveryPinHash: users.recoveryPinHash })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+
+  if (!user?.recoveryPinHash) {
+    return { ok: false as const, error: "Harap atur Recovery PIN terlebih dahulu." };
+  }
+  const valid = await verifyPassword(user.recoveryPinHash, pin.trim());
+  if (!valid) {
+    return { ok: false as const, error: "Recovery PIN salah." };
+  }
   const secret = process.env.BETTER_AUTH_SECRET;
   if (!secret)
     return { ok: false as const, error: "Backup codes tidak tersedia." };
