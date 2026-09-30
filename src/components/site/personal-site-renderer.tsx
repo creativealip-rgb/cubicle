@@ -150,17 +150,7 @@ function SectionBody({ section, accent, panel, buttonRadius, labels }: { section
     case "custom":
       return <div className={`rounded-2xl p-6 ${panel}`}><p className="max-w-3xl whitespace-pre-wrap text-base leading-8 opacity-75">{section.content}</p></div>;
     case "gallery":
-      const publicAspect =
-        section.aspectRatio === "square"
-          ? "aspect-square"
-          : section.aspectRatio === "wide"
-          ? "aspect-[21/9]"
-          : section.aspectRatio === "portrait"
-          ? "aspect-[3/4]"
-          : section.aspectRatio === "auto"
-          ? "aspect-auto h-64"
-          : "aspect-video";
-
+      const publicHeight = section.imageHeight ? `${section.imageHeight}px` : "240px";
       const publicCols =
         section.columns === 1
           ? "grid-cols-1"
@@ -175,20 +165,23 @@ function SectionBody({ section, accent, panel, buttonRadius, labels }: { section
           {section.images
             .filter((img) => img.url)
             .map((img) => (
-              <ItemCard key={img.id} panel={panel}>
-                <div className={`relative ${publicAspect} w-full overflow-hidden rounded-xl bg-muted/30 mb-3`}>
+              <div key={img.id} className="flex flex-col gap-2">
+                <div
+                  style={{ height: publicHeight }}
+                  className="relative w-full overflow-hidden rounded-xl bg-muted/40 border border-border/60"
+                >
                   <Image
                     src={img.url.startsWith("http") ? img.url : img.url.startsWith("/") ? img.url : `/${img.url}`}
                     alt={img.alt || img.title || ""}
                     fill
-                    sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    sizes="400px"
                     className="object-cover transition-transform duration-300 hover:scale-105"
                     loading="lazy"
                   />
                 </div>
                 {img.title && <h3 className="text-base font-semibold">{img.title}</h3>}
                 {img.description && <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 opacity-75">{img.description}</p>}
-              </ItemCard>
+              </div>
             ))}
         </div>
       );

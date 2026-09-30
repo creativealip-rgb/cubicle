@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { InlineText } from "./inline-text";
 import { ImageUpload } from "./image-upload";
 import { useT } from "@/lib/i18n-client";
+import { GoogleSitesGalleryCanvas } from "./google-sites-gallery";
 import type { PersonalSiteInput, PersonalSiteSection, ThemeConfig } from "@/lib/personal-site/model";
 import { isEditorialPlaceholderText, PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
 
@@ -427,78 +428,11 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
       );
 
     case "gallery":
-      const gLayout = section.layout ?? "grid";
-      const gAspect = section.aspectRatio ?? "video";
-      const gCols = section.columns ?? 3;
-
-      const aspectClass =
-        gAspect === "square"
-          ? "aspect-square"
-          : gAspect === "wide"
-          ? "aspect-[21/9]"
-          : gAspect === "portrait"
-          ? "aspect-[3/4]"
-          : gAspect === "auto"
-          ? "aspect-auto h-48"
-          : "aspect-video";
-
-      const colClass =
-        gCols === 1
-          ? "grid-cols-1"
-          : gCols === 2
-          ? "grid-cols-1 sm:grid-cols-2"
-          : gCols === 4
-          ? "grid-cols-2 sm:grid-cols-4"
-          : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
-
       return (
-        <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
-          <div className={`grid ${colClass} gap-4`}>
-            {section.images.map((img, i) => (
-              <div key={img.id} className="space-y-2 rounded-xl border bg-card p-3 shadow-2xs">
-                <div className={`relative ${aspectClass} rounded-lg bg-muted overflow-hidden border border-border/60`}>
-                  {img.url ? (
-                    <Image
-                      src={img.url}
-                      alt={img.alt ?? ""}
-                      fill
-                      sizes="(max-width: 640px) 100vw, 33vw"
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground text-xs">No image</div>
-                  )}
-                </div>
-
-                {(gLayout !== "grid" || img.title || img.description) && (
-                  <div className="space-y-1 pt-1">
-                    <InlineText
-                      value={img.title ?? ""}
-                      onChange={(v) => onUpdate({ images: section.images.map((im, j) => j === i ? { ...im, title: v } : im) })}
-                      tag="h3"
-                      className="text-sm font-semibold text-foreground"
-                      placeholder={t("Judul...", "Title...")}
-                    />
-                    <InlineText
-                      value={img.description ?? ""}
-                      onChange={(v) => onUpdate({ images: section.images.map((im, j) => j === i ? { ...im, description: v } : im) })}
-                      tag="p"
-                      className="text-xs text-muted-foreground"
-                      placeholder={t("Deskripsi...", "Description...")}
-                    />
-                  </div>
-                )}
-
-                <ImageUpload
-                  value={img.url}
-                  onChange={(url) => onUpdate({ images: section.images.map((im, j) => j === i ? { ...im, url } : im) })}
-                  label="Upload"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
+        <GoogleSitesGalleryCanvas
+          section={section}
+          onUpdate={onUpdate}
+        />
       );
 
     case "embed":

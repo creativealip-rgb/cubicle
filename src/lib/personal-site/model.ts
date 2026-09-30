@@ -154,6 +154,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     layout: z.enum(["grid", "cards_1col", "cards_2col", "cards_3col", "cards_4col", "masonry"]).optional(),
     aspectRatio: z.enum(["square", "video", "wide", "portrait", "auto"]).optional(),
     columns: z.number().min(1).max(4).optional(),
+    imageHeight: z.number().min(80).max(800).optional(),
     images: z.array(z.object({
       id: idSchema,
       url: z.string().trim().max(2_000),
