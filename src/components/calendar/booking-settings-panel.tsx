@@ -283,16 +283,16 @@ export function BookingSettingsPanel({
                   </div>
                 ) : (
                   /* 2 Slots per Row Grid */
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                     {activeDaySlots.map((slot) => (
                       <div
                         key={slot.id}
-                        className="flex items-center justify-between gap-1.5 px-2.5 py-1.5 rounded-lg border border-border/80 bg-muted/20 hover:bg-muted/40 transition-colors"
+                        className="flex items-center justify-between gap-1 px-2 py-1.5 rounded-lg border border-border/80 bg-muted/20 hover:bg-muted/40 transition-colors"
                       >
-                        <div className="flex items-center gap-1.5 min-w-0">
-                          <Clock className="h-3.5 w-3.5 text-primary shrink-0" />
-                          <span className="text-[11px] sm:text-xs font-mono font-bold text-foreground tracking-tight truncate">
-                            {slot.startTime.substring(0, 5)} – {slot.endTime.substring(0, 5)}
+                        <div className="flex items-center gap-1 min-w-0 flex-1">
+                          <Clock className="h-3 w-3 text-primary shrink-0 opacity-75" />
+                          <span className="text-xs font-mono font-bold text-foreground whitespace-nowrap">
+                            {slot.startTime.substring(0, 5)} - {slot.endTime.substring(0, 5)}
                           </span>
                         </div>
                         {canEdit && (

@@ -112,7 +112,7 @@ function CalendarActionBtn({ action }: { action: Exclude<PendingAction, null> })
       type="button"
       variant="ghost"
       size="icon"
-      className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+      className="h-5 w-5 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive p-0"
       onClick={() => setConfirming(true)}
       aria-label={
         isRule
