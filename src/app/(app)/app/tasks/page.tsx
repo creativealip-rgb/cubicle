@@ -189,8 +189,19 @@ export default async function TasksPage({
             </div>
 
             {/* Baris 2: Sub-filter Strip (Linear / Asana Style) */}
-            <div className="flex items-center justify-between border-y border-border/50 py-2">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-y border-border/50 py-2">
               <TaskQuickFilterChips />
+              <ActiveFilterSummary
+                basePath="/app/tasks"
+                inline={true}
+                filters={[
+                  { key: "search", label: t("Pencarian", "Search"), value: search },
+                  { key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name },
+                  { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee },
+                  { key: "priority", label: t("Prioritas", "Priority"), value: params.priority },
+                  { key: "status", label: "Status", value: params.status },
+                ]}
+              />
             </div>
           </div>
 
@@ -217,16 +228,6 @@ export default async function TasksPage({
             />
           ) : (
             <>
-              <ActiveFilterSummary
-                basePath="/app/tasks"
-                filters={[
-                  { key: "search", label: t("Pencarian", "Search"), value: search },
-                  { key: "projectId", label: t("Proyek", "Project"), value: taskProjects.find((project) => project.id === params.projectId)?.name },
-                  { key: "assignee", label: t("Petugas", "Assignee"), value: params.assignee },
-                  { key: "priority", label: t("Prioritas", "Priority"), value: params.priority },
-                  { key: "status", label: "Status", value: params.status },
-                ]}
-              />
               {view === "weekly" ? (
                 <TasksWeeklyTracker tasks={taskList} />
               ) : view === "board" ? (
