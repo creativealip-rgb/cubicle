@@ -2,8 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { DirectCreateProposalButton } from "@/components/proposals/direct-create-proposal-button";
 import { proposals, clients, services } from "@/db/schema";
 import { listProposalTemplates } from "@/lib/actions/proposal-templates";
 import { and, desc, eq, sql } from "drizzle-orm";
@@ -127,12 +126,7 @@ export default async function ProposalsPage({
         )}
         actions={
           canWrite ? (
-            <Button size="sm" className="gap-1.5 h-8 text-xs font-semibold" asChild>
-              <Link href="/app/proposals/new">
-                <Plus className="h-3.5 w-3.5" />
-                {t("Proposal baru", "New proposal")}
-              </Link>
-            </Button>
+            <DirectCreateProposalButton workspaceId={workspaceId} />
           ) : null
         }
       />

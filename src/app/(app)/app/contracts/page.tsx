@@ -2,8 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { headers } from "next/headers";
 import { auth } from "@/lib/auth";
 import { db } from "@/db";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { DirectCreateContractButton } from "@/components/contracts/direct-create-contract-button";
 import { contracts, clients, contractTemplates } from "@/db/schema";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
@@ -130,12 +129,7 @@ export default async function ContractsPage({
         )}
         actions={
           canWrite ? (
-            <Button size="sm" className="gap-1.5 h-8 text-xs font-semibold" asChild>
-              <Link href="/app/contracts/new">
-                <Plus className="h-3.5 w-3.5" />
-                {t("Kontrak baru", "New contract")}
-              </Link>
-            </Button>
+            <DirectCreateContractButton workspaceId={workspaceId} />
           ) : null
         }
       />
