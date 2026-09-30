@@ -166,12 +166,11 @@ export default async function TasksPage({
         />
       ) : (
         <>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <TaskPageTabs current={tab} />
-
-            <div className="flex flex-wrap items-center gap-2.5">
-              <TaskQuickFilterChips />
-              <form className="relative w-full sm:w-60">
+          <div className="space-y-3">
+            {/* Baris 1: Main Scope Tabs & Search Bar */}
+            <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
+              <TaskPageTabs current={tab} />
+              <form className="relative w-full sm:w-64">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   name="search"
@@ -187,6 +186,11 @@ export default async function TasksPage({
                 {params.assignee && <input type="hidden" name="assignee" value={params.assignee} />}
                 {params.view && <input type="hidden" name="view" value={params.view} />}
               </form>
+            </div>
+
+            {/* Baris 2: Sub-filter Strip (Linear / Asana Style) */}
+            <div className="flex items-center justify-between border-y border-border/50 py-2">
+              <TaskQuickFilterChips />
             </div>
           </div>
 
