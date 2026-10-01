@@ -17,7 +17,8 @@ import { AddonPurchaseControls } from "@/components/billing/addon-purchase-contr
 import { getWorkspaceRecordForUser } from "@/lib/workspace";
 import { getCheckoutStatusForWorkspaceOwner, type CheckoutStatus } from "@/lib/billing-checkout-status";
 import { getEffectivePlan } from "@/lib/plan";
-import { Check, Crown, Zap, Shield, Sparkles, Calendar } from "lucide-react";
+import { Check, Crown, Zap, Shield, Sparkles, Calendar, CreditCard } from "lucide-react";
+import { PageHeader } from "@/components/ui/page-header";
 
 export const dynamic = "force-dynamic";
 
@@ -112,15 +113,14 @@ export default async function BillingPage({
   return (
     <div className="space-y-6">
       {showHeader && (
-        <div>
-          <h1 className="app-page-title">{t("Paket & Langganan", "Plan & Billing")}</h1>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {t(
-              "Kelola paket langganan dan kapasitas workspace Anda. Pembayaran instan via QRIS & Virtual Account dengan aktivasi otomatis.",
-              "Manage your subscription plan and workspace capacity. Instant payment via QRIS & Virtual Account with automated activation.",
-            )}
-          </p>
-        </div>
+        <PageHeader
+          icon={CreditCard}
+          title={t("Plan & Add-ons", "Plan & Add-ons")}
+          description={t(
+            "Kelola paket langganan dan kapasitas workspace Anda.",
+            "Manage your subscription plan and workspace capacity.",
+          )}
+        />
       )}
 
       {checkoutStatus && (
