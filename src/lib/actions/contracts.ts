@@ -664,7 +664,8 @@ export async function getPublicContract(token: string) {
   }
   if (c.status === "signed") return { error: "already_signed" as const };
   if (c.status === "declined") return { error: "declined" as const };
-  if (c.status === "draft") return { error: "not_sent" as const };
+  // Allow viewing draft contracts when accessed via custom slug / shared link for preview and signature
+  // if (c.status === "draft") return { error: "not_sent" as const };
 
   const [client] = c.clientId ? await db.select({ name: clients.name, email: clients.email })
     .from(clients).where(eq(clients.id, c.clientId)).limit(1) : [null];
