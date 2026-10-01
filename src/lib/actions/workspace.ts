@@ -91,7 +91,7 @@ export async function updateWorkspaceBranding(input: z.infer<typeof brandingSche
             ? null
             : String(parsed.defaultHourlyRate),
       defaultInvoiceTerms: parsed.defaultInvoiceTerms || null,
-      replyToEmail: parsed.replyToEmail || null,
+      replyToEmail: parsed.billingEmail || parsed.replyToEmail || null,
       workingHours: parsed.workingHours || null,
       supportNote: parsed.supportNote || null,
       updatedAt: new Date(),

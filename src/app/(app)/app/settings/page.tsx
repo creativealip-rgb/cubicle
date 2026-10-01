@@ -177,7 +177,7 @@ export default async function SettingsPage({
       done: Boolean(workspace.billingName || workspace.name),
     },
     {
-      label: t("Email bisnis untuk invoice", "Business email for invoices"),
+      label: t("Email bisnis", "Business email"),
       done: Boolean(workspace.billingEmail || workspace.replyToEmail),
     },
     {
@@ -199,10 +199,6 @@ export default async function SettingsPage({
     {
       label: t("Terms pembayaran", "Payment terms"),
       done: Boolean(workspace.defaultInvoiceTerms),
-    },
-    {
-      label: t("Email balasan invoice", "Invoice reply-to email"),
-      done: Boolean(workspace.replyToEmail),
     },
   ];
   const workspaceSetupDone = workspaceSetupItems.filter(

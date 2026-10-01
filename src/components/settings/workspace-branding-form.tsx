@@ -285,7 +285,7 @@ export function WorkspaceBrandingForm({
               <div data-testid="workspace-business-group" className="space-y-4 pt-1">
                 <div className="flex items-center gap-2 border-b border-slate-100 pb-2">
                   <Building2 className="h-4 w-4 text-slate-500" />
-                  <h4 className="text-sm font-semibold text-slate-900">{t("Detail Profil & Tagihan Bisnis", "Business & Billing Details")}</h4>
+                  <h4 className="text-sm font-semibold text-slate-900">{t("Detail Bisnis", "Business Details")}</h4>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2">
@@ -301,15 +301,18 @@ export function WorkspaceBrandingForm({
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="billingEmail" className="text-xs font-medium text-slate-700">{t("Email Tagihan Bisnis", "Billing Email")}</Label>
+                    <Label htmlFor="billingEmail" className="text-xs font-medium text-slate-700">{t("Email", "Email")}</Label>
                     <Input
                       id="billingEmail"
                       type="email"
                       value={form.billingEmail}
                       onChange={(e) => setForm((p) => ({ ...p, billingEmail: e.target.value }))}
-                      placeholder="billing@company.com"
+                      placeholder="contact@company.com"
                       className="h-10 rounded-xl"
                     />
+                    <p className="text-[11px] text-muted-foreground">
+                      {t("Email resmi untuk invoice dan balasan komunikasi klien.", "Official email for invoices and client communications.")}
+                    </p>
                   </div>
 
                   <div className="space-y-1.5">
@@ -379,26 +382,6 @@ export function WorkspaceBrandingForm({
           {/* SECTION: INVOICE TAB */}
           {section === "invoice" ? (
             <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-1.5 md:col-span-2">
-                <Label htmlFor="replyToEmail" className="text-xs font-medium text-slate-700">
-                  {t("Email Balasan Klien (Reply-To)", "Client Reply-To Email")}
-                </Label>
-                <Input
-                  id="replyToEmail"
-                  type="email"
-                  value={form.replyToEmail}
-                  onChange={(e) => setForm((p) => ({ ...p, replyToEmail: e.target.value }))}
-                  placeholder={t("invoice@bisnismu.com", "invoice@yourbusiness.com")}
-                  className="h-10 rounded-xl"
-                />
-                <p className="text-[11px] text-muted-foreground">
-                  {t(
-                    "Balasan invoice/booking klien akan dikirim ke email ini.",
-                    "Client replies to invoices/bookings will be directed here.",
-                  )}
-                </p>
-              </div>
-
               <div className="space-y-1.5">
                 <Label htmlFor="defaultCurrency" className="text-xs font-medium text-slate-700">
                   {t("Mata Uang Utama", "Default Currency")}
