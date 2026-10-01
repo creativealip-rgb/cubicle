@@ -12,14 +12,20 @@ import { useT } from "@/lib/i18n-client";
 
 export function DeleteContractButton({
   contractId,
-  redirectTo = "/app/contracts",
+  redirectTo,
   label,
   confirmText,
+  variant = "outline",
+  size = "sm",
+  className,
 }: {
   contractId: string;
   redirectTo?: string;
   label?: string;
   confirmText?: string;
+  variant?: "outline" | "ghost" | "destructive";
+  size?: "default" | "sm" | "lg" | "icon";
+  className?: string;
 }) {
   const router = useRouter();
   const { t } = useT();
@@ -30,7 +36,9 @@ export function DeleteContractButton({
     try {
       await deleteContract(contractId);
       toast.success(t("Kontrak dihapus", "Contract deleted"));
-      router.push(redirectTo);
+      if (redirectTo) {
+        router.push(redirectTo);
+      }
       refresh();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal menghapus", "Failed to delete"));
@@ -40,9 +48,15 @@ export function DeleteContractButton({
 
   return (
     <>
-      <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)} className="text-destructive hover:text-destructive">
-        <Trash2 className="mr-1 h-3.5 w-3.5" />
-        {label ?? t("Hapus", "Delete")}
+      <Button
+        type="button"
+        variant={variant}
+        size={size}
+        onClick={() => setOpen(true)}
+        className={className ?? "text-destructive hover:bg-destructive/10 hover:text-destructive"}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+        {size !== "icon" && <span className="ml-1">{label ?? t("Hapus", "Delete")}</span>}
       </Button>
       <ConfirmDialog
         open={open}

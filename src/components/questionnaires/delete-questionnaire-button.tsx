@@ -10,7 +10,19 @@ import { LoadingButton } from "@/components/ui/loading-button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-export function DeleteQuestionnaireButton({ questionnaireId }: { questionnaireId: string }) {
+export function DeleteQuestionnaireButton({
+  questionnaireId,
+  redirectTo,
+  variant = "outline",
+  size = "sm",
+  className,
+}: {
+  questionnaireId: string;
+  redirectTo?: string;
+  variant?: "outline" | "ghost" | "destructive";
+  size?: "default" | "sm" | "lg" | "icon";
+  className?: string;
+}) {
   const router = useRouter();
   const { refresh } = useAppTransition();
   const [loading, setLoading] = useState(false);
@@ -22,7 +34,9 @@ export function DeleteQuestionnaireButton({ questionnaireId }: { questionnaireId
       await deleteQuestionnaire(questionnaireId);
       toast.success("Formulir dihapus");
       setOpen(false);
-      router.push("/app/questionnaires");
+      if (redirectTo) {
+        router.push(redirectTo);
+      }
       refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Gagal menghapus formulir");
@@ -32,7 +46,16 @@ export function DeleteQuestionnaireButton({ questionnaireId }: { questionnaireId
 
   return (
     <>
-      <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)} className="gap-1 text-destructive hover:text-destructive"><Trash2 className="h-4 w-4" /> Hapus</Button>
+      <Button
+        type="button"
+        variant={variant}
+        size={size}
+        onClick={() => setOpen(true)}
+        className={className ?? "gap-1 text-destructive hover:bg-destructive/10 hover:text-destructive"}
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+        {size !== "icon" && <span>Hapus</span>}
+      </Button>
       <Dialog open={open} onOpenChange={(next) => !loading && setOpen(next)}>
         <DialogContent className="sm:max-w-md"><DialogHeader><DialogTitle>Hapus formulir?</DialogTitle><DialogDescription>Tindakan ini tidak bisa dibatalkan.</DialogDescription></DialogHeader><DialogFooter><Button variant="outline" disabled={loading} onClick={() => setOpen(false)}>Batal</Button><LoadingButton variant="destructive" onClick={remove} loading={loading} loadingText="Menghapus...">Hapus</LoadingButton></DialogFooter></DialogContent>
       </Dialog>

@@ -16,6 +16,8 @@ import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { ClipboardList, Copy } from "lucide-react";
+import { duplicateQuestionnaire } from "@/lib/actions/questionnaires";
+import { DeleteQuestionnaireButton } from "@/components/questionnaires/delete-questionnaire-button";
 import { toast } from "sonner";
 import { useAppTransition } from "@/lib/transition-provider";
 
@@ -33,8 +35,10 @@ type SortKey = "name" | "fields" | "submitted" | "pending" | "updated";
 
 export function QuestionnairesListTable({
   rows,
+  canWrite = true,
 }: {
   rows: QuestionnaireListItem[];
+  canWrite?: boolean;
 }) {
   const { t, lang } = useT();
   const { refresh } = useAppTransition();
@@ -176,6 +180,14 @@ export function QuestionnairesListTable({
                         {t("Buka", "Open")}
                       </Link>
                     </Button>
+                    {canWrite && (
+                      <DeleteQuestionnaireButton
+                        questionnaireId={q.id}
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-md"
+                      />
+                    )}
                   </div>
                 </TableCell>
               </TableRow>

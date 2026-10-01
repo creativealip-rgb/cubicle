@@ -25,6 +25,7 @@ import { useT } from "@/lib/i18n-client";
 import { formatMoney } from "@/lib/utils";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { SendProposalButton } from "@/components/proposals/send-proposal-button";
+import { DeleteProposalButton } from "@/components/proposals/delete-proposal-button";
 import { updateProposalStatus } from "@/lib/actions/proposals";
 import { toast } from "sonner";
 import { FileText, Loader2 } from "lucide-react";
@@ -275,7 +276,7 @@ export function ProposalsListTable({
                     {activityLabel(p, t, lang)}
                   </TableCell>
                   <TableCell className="text-right align-middle">
-                    <div className="flex justify-end">
+                    <div className="flex items-center justify-end gap-1">
                     {canWrite &&
                     (p.status === "draft" ||
                       p.status === "sent" ||
@@ -303,6 +304,14 @@ export function ProposalsListTable({
                           {t("Buka", "Open")}
                         </Link>
                       </Button>
+                    )}
+                    {canWrite && p.status !== "accepted" && (
+                      <DeleteProposalButton
+                        proposalId={p.id}
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-md"
+                      />
                     )}
                     </div>
                   </TableCell>

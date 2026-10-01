@@ -12,14 +12,20 @@ import { useT } from "@/lib/i18n-client";
 
 export function DeleteProposalButton({
   proposalId,
-  redirectTo = "/app/proposals",
+  redirectTo,
   label,
   confirmText,
+  variant = "outline",
+  size = "sm",
+  className,
 }: {
   proposalId: string;
   redirectTo?: string;
   label?: string;
   confirmText?: string;
+  variant?: "outline" | "ghost" | "destructive";
+  size?: "default" | "sm" | "lg" | "icon";
+  className?: string;
 }) {
   const router = useRouter();
   const { refresh } = useAppTransition();
@@ -40,7 +46,9 @@ export function DeleteProposalButton({
     try {
       await deleteProposal(proposalId);
       toast.success(t("Proposal dihapus", "Proposal deleted"));
-      router.push(redirectTo);
+      if (redirectTo) {
+        router.push(redirectTo);
+      }
       refresh();
     } catch (err: unknown) {
       const msg =
@@ -69,15 +77,15 @@ export function DeleteProposalButton({
   return (
     <LoadingButton
       type="button"
-      variant="outline"
-      size="sm"
+      variant={variant}
+      size={size}
       onClick={() => setConfirming(true)}
       loading={loading}
       loadingText="..."
-      className="text-destructive hover:text-destructive"
+      className={className ?? "text-destructive hover:bg-destructive/10 hover:text-destructive"}
     >
-      <Trash2 className="h-3.5 w-3.5 mr-1" />
-      {displayLabel}
+      <Trash2 className="h-3.5 w-3.5" />
+      {size !== "icon" && <span className="ml-1">{displayLabel}</span>}
     </LoadingButton>
   );
 }

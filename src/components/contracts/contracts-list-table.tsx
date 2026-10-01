@@ -24,6 +24,7 @@ import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { SendContractButton } from "@/components/contracts/send-contract-button";
+import { DeleteContractButton } from "@/components/contracts/delete-contract-button";
 import { updateContractStatus } from "@/lib/actions/contracts";
 import { toast } from "sonner";
 import { FileSignature, Loader2 } from "lucide-react";
@@ -266,7 +267,7 @@ export function ContractsListTable({
                     {activityLabel(c, t, lang)}
                   </TableCell>
                   <TableCell className="text-right align-middle">
-                    <div className="flex justify-end">
+                    <div className="flex items-center justify-end gap-1">
                     {canWrite &&
                     (c.status === "draft" ||
                       c.status === "sent" ||
@@ -294,6 +295,14 @@ export function ContractsListTable({
                           {t("Buka", "Open")}
                         </Link>
                       </Button>
+                    )}
+                    {canWrite && c.status !== "signed" && (
+                      <DeleteContractButton
+                        contractId={c.id}
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-md"
+                      />
                     )}
                     </div>
                   </TableCell>
