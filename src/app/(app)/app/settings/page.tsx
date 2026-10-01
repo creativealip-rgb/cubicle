@@ -470,12 +470,6 @@ export default async function SettingsPage({
               </CardContent>
             </Card>
           }
-          billing={
-            <BillingPage
-              searchParams={Promise.resolve({})}
-              showHeader={false}
-            />
-          }
         />
       </Suspense>
     </div>

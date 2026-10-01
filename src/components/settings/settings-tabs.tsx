@@ -18,8 +18,7 @@ export type SettingsTabKey =
   | "invoice"
   | "account"
   | "team"
-  | "integrations"
-  | "billing";
+  | "integrations";
 
 const TAB_KEYS: SettingsTabKey[] = [
   "account",
@@ -27,12 +26,10 @@ const TAB_KEYS: SettingsTabKey[] = [
   "invoice",
   "team",
   "integrations",
-  "billing",
 ];
 
 function normalizeTab(tab?: string | null): SettingsTabKey {
   if (tab === "branding") return "workspace";
-  if (tab === "more") return "billing";
   if (tab && (TAB_KEYS as string[]).includes(tab)) {
     return tab as SettingsTabKey;
   }
@@ -46,7 +43,6 @@ type SettingsTabsProps = {
   team: ReactNode;
   invoice: ReactNode;
   integrations: ReactNode;
-  billing: ReactNode;
 };
 
 export function SettingsTabs({
@@ -56,7 +52,6 @@ export function SettingsTabs({
   team,
   invoice,
   integrations,
-  billing,
 }: SettingsTabsProps) {
   const { t } = useT();
   const router = useRouter();
@@ -121,11 +116,6 @@ export function SettingsTabs({
       label: t("Integrasi", "Integrations"),
       icon: <Plug className="h-3.5 w-3.5" />,
     },
-    {
-      key: "billing",
-      label: t("Billing", "Billing"),
-      icon: <ImageIcon className="h-3.5 w-3.5" />,
-    },
   ];
   return (
     <Tabs value={activeTab} onValueChange={changeTab} className="space-y-4">
@@ -156,11 +146,8 @@ export function SettingsTabs({
       <TabsContent value="invoice" className="mt-0 space-y-4 focus-visible:ring-0">
         {invoice}
       </TabsContent>
-      <TabsContent value="integrations" className="mt-0 space-y-4 focus-visible:ring-0">
+      <TabsContent value="integrations" className="space-y-4">
         {integrations}
-      </TabsContent>
-      <TabsContent value="billing" className="mt-0 space-y-4 focus-visible:ring-0">
-        {billing}
       </TabsContent>
     </Tabs>
   );

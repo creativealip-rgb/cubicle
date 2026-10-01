@@ -515,7 +515,7 @@ export function AppTopbar({ user }: AppTopbarProps) {
                   <DropdownMenuItem asChild>
                     <Link href="/app/billing" className="cursor-pointer">
                       <CreditCard className="h-4 w-4" />
-                      {t("Tagihan", "Billing")}
+                      {t("Plan & Langganan", "Plan")}
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

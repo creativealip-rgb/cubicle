@@ -113,11 +113,11 @@ export default async function BillingPage({
     <div className="space-y-6">
       {showHeader && (
         <div>
-          <h1 className="app-page-title">{t("Billing", "Billing")}</h1>
+          <h1 className="app-page-title">{t("Paket & Langganan", "Plan & Billing")}</h1>
           <p className="mt-1 text-xs text-muted-foreground">
             {t(
-              "Bayar bulanan atau tahunan via Pakasir QRIS, tanpa pajak. Plan aktif otomatis setelah webhook payment diterima.",
-              "Pay monthly or yearly via Pakasir QRIS, tax-free. Plan activates automatically after payment webhook is received.",
+              "Kelola paket langganan dan kapasitas workspace Anda. Pembayaran instan via QRIS & Virtual Account dengan aktivasi otomatis.",
+              "Manage your subscription plan and workspace capacity. Instant payment via QRIS & Virtual Account with automated activation.",
             )}
           </p>
         </div>
