@@ -136,72 +136,53 @@ export function BookingSlugHeaderWidget({
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
                 <Link2 className="h-4 w-4 text-primary" />
-                {t("Pengaturan Booking Slug", "Booking Slug Settings")}
+                {t("Pengaturan URL & Slug", "URL & Slug Settings")}
               </DialogTitle>
               <DialogDescription>
                 {t(
-                  "Tentukan tautan URL publik agar klien dapat memilih jadwal pertemuan secara mandiri.",
-                  "Set your public URL link so clients can schedule appointments with you directly."
+                  "Tentukan alamat slug unik untuk tautan booking jadwal pertemuan publik Anda.",
+                  "Define the unique URL slug for your public appointment booking link."
                 )}
               </DialogDescription>
             </DialogHeader>
-
-            <form onSubmit={onSave} className="space-y-4 py-2">
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between">
-                  <Label className="text-xs font-semibold">{t("Booking URL Slug", "Booking URL Slug")}</Label>
-                  {isFreePlan && (
-                    <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-600 border border-amber-500/20">
-                      {t("Free Plan: Random Slug", "Free Plan: Random Slug")}
+              <form onSubmit={onSave} className="space-y-4 py-2">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-foreground">{t("Slug URL", "URL Slug")}</Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-muted-foreground bg-muted px-2.5 py-2 rounded-lg border border-border/60 whitespace-nowrap">
+                      https://cubiqlo.com/booking/
                     </span>
+                    <Input
+                      value={slug}
+                      onChange={(e) => setSlug(e.target.value)}
+                      disabled={isFreePlan}
+                      readOnly={isFreePlan}
+                      maxLength={64}
+                      placeholder="nama-kamu"
+                      className="font-mono text-xs sm:text-sm"
+                    />
+                  </div>
+                  {isFreePlan && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t("Upgrade untuk memakai slug / URL kustom.", "Upgrade to use a custom slug / URL.")}{" "}
+                      <a href="/app/billing" className="font-medium text-primary underline">{t("Upgrade Plan", "Upgrade Plan")}</a>
+                    </p>
                   )}
                 </div>
-                <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-mono text-muted-foreground select-none">
-                    /booking/
-                  </span>
-                  <Input
-                    value={slug}
-                    onChange={(e) => setSlug(e.target.value)}
-                    disabled={isFreePlan}
-                    maxLength={64}
-                    placeholder="nama-kamu"
-                    className="h-9 pl-[4.5rem] font-mono text-sm disabled:opacity-75 disabled:bg-muted/40"
-                  />
-                </div>
-                {isFreePlan ? (
-                  <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5 text-xs text-muted-foreground">
-                    <p className="font-semibold text-amber-800 dark:text-amber-400">
-                      {t("Kustomisasi Slug Eksklusif Paket Solo / Team", "Slug Customization Exclusive to Solo & Team")}
-                    </p>
-                    <p className="mt-0.5 text-[11px] leading-relaxed">
-                      {t(
-                        "Pengguna Free Plan menggunakan tautan acak otomatis. Upgrade akun Anda ke paket Solo atau Team untuk membuat URL booking kustom yang profesional (misal: /booking/nama-anda).",
-                        "Free Plan uses an automated random link. Upgrade your workspace to Solo or Team to unlock clean, customized booking links (e.g. /booking/your-brand)."
-                      )}
-                    </p>
-                  </div>
-                ) : (
-                  <p className="text-[11px] text-muted-foreground">
-                    {t("Hanya huruf kecil, angka, dan tanda hubung (-).", "Lowercase letters, numbers, and dashes (-) only.")}
-                  </p>
-                )}
-              </div>
-
-              <DialogFooter>
-                <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)} disabled={loading}>
-                  {t("Batal", "Cancel")}
-                </Button>
-                {isFreePlan ? (
-                  <Button size="sm" className="font-semibold" asChild>
-                    <a href="/app/billing">{t("Upgrade Plan", "Upgrade Plan")}</a>
+                <DialogFooter>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setOpen(false)} disabled={loading}>
+                    {t("Batal", "Cancel")}
                   </Button>
-                ) : (
-                  <LoadingButton type="submit" size="sm" loading={loading} className="font-semibold">
-                    {t("Simpan Slug", "Save Slug")}
-                  </LoadingButton>
-                )}
-              </DialogFooter>
+                  {isFreePlan ? (
+                    <Button size="sm" className="font-semibold" asChild>
+                      <a href="/app/billing">{t("Upgrade Plan", "Upgrade Plan")}</a>
+                    </Button>
+                  ) : (
+                    <LoadingButton type="submit" size="sm" loading={loading} className="font-semibold">
+                      {t("Simpan Slug", "Save Slug")}
+                    </LoadingButton>
+                  )}
+                </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
