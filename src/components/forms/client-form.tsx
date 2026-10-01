@@ -418,7 +418,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
                 <p className="text-[11px] text-muted-foreground">
                   {isPaidPlan
                     ? t("Slug kustom portal klien.", "Custom portal URL slug.")
-                    : t("Slug portal di-generate otomatis untuk akun gratis (upgrade ke Solo/Team untuk kustomisasi).", "Portal slug is auto-generated on free plan (upgrade to customize).")}
+                    : t("Tautan akses portal klien Anda.", "Access link for your client portal.")}
                 </p>
               </div>
               {form.portalEnabled && defaultValues?.id && (
