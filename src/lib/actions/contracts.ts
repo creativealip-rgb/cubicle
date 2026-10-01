@@ -728,18 +728,23 @@ export async function signContract(input: {
   // acceptProposalPublic).
   const [updated] = await db.transaction(async (tx) => {
     const [locked] = await tx.select().from(contracts)
-      .where(eq(contracts.sharedTokenHash, tokenHash))
+      .where(
+        or(
+          eq(contracts.sharedTokenHash, tokenHash),
+          eq(sql`lower(${contracts.slug})`, input.token.toLowerCase())
+        )
+      )
       .for("update")
       .limit(1);
     if (!locked) throw new Error("Contract not found");
     try {
       assertPublicTokenLifecycle({
-        presentedHash: tokenHash,
+        presentedHash: (locked.slug && locked.slug.toLowerCase() === input.token.toLowerCase() ? locked.sharedTokenHash : tokenHash) || "",
         storedHash: locked.sharedTokenHash,
         revokedAt: locked.sharedTokenRevokedAt,
         expiresAt: locked.sharedTokenExpiresAt,
         status: locked.status,
-        allowedStatuses: ["sent", "viewed", "signed"],
+        allowedStatuses: ["draft", "sent", "viewed", "signed"],
         processedStatuses: ["declined"],
       });
     } catch (error) {
@@ -828,18 +833,23 @@ export async function declineContract(input: { token: string; reason?: string })
   const tokenHash = hashToken(input.token);
   await enforceServerActionRateLimit("contract:decline", tokenHash, { limit: 10, windowSec: 300 });
   const [c] = await db.select().from(contracts)
-    .where(eq(contracts.sharedTokenHash, tokenHash))
+    .where(
+      or(
+        eq(contracts.sharedTokenHash, tokenHash),
+        eq(sql`lower(${contracts.slug})`, input.token.toLowerCase())
+      )
+    )
     .limit(1);
   if (!c) throw new Error("Contract not found");
   if (c.status === "declined") throw new Error("Contract already declined");
   try {
     assertPublicTokenLifecycle({
-      presentedHash: tokenHash,
+      presentedHash: (c.slug && c.slug.toLowerCase() === input.token.toLowerCase() ? c.sharedTokenHash : tokenHash) || "",
       storedHash: c.sharedTokenHash,
       revokedAt: c.sharedTokenRevokedAt,
       expiresAt: c.sharedTokenExpiresAt,
       status: c.status,
-      allowedStatuses: ["sent", "viewed"],
+      allowedStatuses: ["draft", "sent", "viewed"],
       processedStatuses: ["signed"],
     });
   } catch (error) {

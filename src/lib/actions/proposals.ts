@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { proposals, projects, projectServices, invoices, invoiceItems, workspaceInvoiceCounters, workspaces, proposalTemplates, clients } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, desc, sql, or } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
@@ -481,23 +481,33 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
   await enforceServerActionRateLimit("proposal:accept", tokenHash, { limit: 10, windowSec: 300 });
 
   const [initialProposal] = await db.select().from(proposals)
-    .where(eq(proposals.id, proposalId))
+    .where(
+      or(
+        eq(proposals.id, proposalId),
+        eq(sql`lower(${proposals.slug})`, token.toLowerCase())
+      )
+    )
     .limit(1);
 
   const result = await db.transaction(async (tx) => {
     const [p] = await tx.select().from(proposals)
-      .where(eq(proposals.id, proposalId))
+      .where(
+        or(
+          eq(proposals.id, proposalId),
+          eq(sql`lower(${proposals.slug})`, token.toLowerCase())
+        )
+      )
       .for("update")
       .limit(1);
     if (!p) throw new Error("Proposal not found");
     try {
       assertPublicTokenLifecycle({
-        presentedHash: tokenHash,
+        presentedHash: (p.slug && p.slug.toLowerCase() === token.toLowerCase() ? p.sharedTokenHash : tokenHash) || "",
         storedHash: p.sharedTokenHash,
         revokedAt: p.sharedTokenRevokedAt,
         expiresAt: p.sharedTokenExpiresAt,
         status: p.status,
-        allowedStatuses: ["sent", "viewed", "accepted"],
+        allowedStatuses: ["draft", "sent", "viewed", "accepted"],
         processedStatuses: ["declined"],
       });
     } catch (error) {
