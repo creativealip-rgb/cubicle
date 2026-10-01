@@ -716,6 +716,7 @@ export function QuestionnaireBuilder({
   // Navigation tab: "build" | "settings" | "publish"
   const [activeTab, setActiveTab] = useState<"build" | "settings" | "publish">("build");
   const [isPaidPlan, setIsPaidPlan] = useState<boolean>(true);
+  const [customSlug, setCustomSlug] = useState("");
 
   useEffect(() => {
     getCurrentUserPlanForPortal().then((res) => {
@@ -2122,7 +2123,8 @@ export function QuestionnaireBuilder({
                       https://cubiqlo.com/intake/
                     </span>
                     <Input
-                      value={questionnaireId ? `form-${questionnaireId.slice(0, 8)}` : "auto-generated"}
+                      value={customSlug || (questionnaireId ? `form-${questionnaireId.slice(0, 8)}` : "")}
+                      onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, ""))}
                       disabled={!isPaidPlan}
                       readOnly={!isPaidPlan}
                       placeholder="nama-form"

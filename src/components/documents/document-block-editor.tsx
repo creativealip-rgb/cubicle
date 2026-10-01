@@ -262,6 +262,7 @@ export function DocumentBlockEditor({
   });
   const [savingMeta, setSavingMeta] = useState(false);
   const [isPaidPlan, setIsPaidPlan] = useState<boolean>(true);
+  const [customSlug, setCustomSlug] = useState("");
 
   useEffect(() => {
     getCurrentUserPlanForPortal().then((res) => {
@@ -1594,7 +1595,8 @@ export function DocumentBlockEditor({
                       https://cubiqlo.com/{kind === "proposal" ? "proposal" : "contract"}/
                     </span>
                     <Input
-                      value={documentMeta?.id ? `${kind}-${documentMeta.id.slice(0, 8)}` : "auto-generated"}
+                      value={customSlug || (documentMeta?.id ? `${kind}-${documentMeta.id.slice(0, 8)}` : "")}
+                      onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, ""))}
                       disabled={!isPaidPlan}
                       readOnly={!isPaidPlan}
                       placeholder="nama-dokumen"
