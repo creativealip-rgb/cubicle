@@ -47,7 +47,7 @@ export function ClientRowActions({ client }: { client: ClientListItem }) {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-    <div className="hidden" aria-hidden="true"><ClientEditDialog defaultValues={{ id: client.id, clientNumber: client.clientNumber, name: client.name, companyName: client.companyName ?? undefined, email: client.email ?? undefined, phone: client.phone ?? undefined, website: client.website ?? undefined, address: client.address ?? undefined, internalNotes: client.internalNotes ?? undefined, tags: client.tags ?? [], portalEnabled: client.portalEnabled ?? false, portalSlug: client.portalSlug ?? undefined, portalSlugEnabled: client.portalSlugEnabled ?? false }} trigger={<button id={editTriggerId} type="button" />} /></div>
+    <div className="hidden" aria-hidden="true"><ClientEditDialog defaultValues={{ id: client.id, clientNumber: client.clientNumber, name: client.name, companyName: client.companyName ?? undefined, email: client.email ?? undefined, phone: client.phone ?? undefined, website: client.website ?? undefined, address: client.address ?? undefined, internalNotes: client.internalNotes ?? undefined, tags: client.tags ?? [], portalEnabled: client.portalEnabled ?? false, portalSlug: client.portalSlug ?? undefined, portalSlugEnabled: client.portalSlugEnabled ?? false, portalPasswordConfigured: Boolean(client.portalPasswordConfigured) }} trigger={<button id={editTriggerId} type="button" />} /></div>
     <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>

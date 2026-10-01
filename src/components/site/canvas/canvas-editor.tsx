@@ -892,8 +892,8 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                     </div>
                     {!canEditSlug && (
                       <p className="text-xs text-muted-foreground mt-1">
-                        {t("Paket Free menggunakan slug workspace. Upgrade untuk memakai slug kustom.", "Free uses your workspace slug. Upgrade to use a custom slug.")} {" "}
-                        <a href="/app/billing" className="font-medium text-primary underline">Upgrade Plan</a>
+                        {t("Upgrade untuk memakai slug / URL kustom.", "Upgrade to use a custom slug / URL.")}{" "}
+                        <a href="/app/billing" className="font-medium text-primary underline">{t("Upgrade Plan", "Upgrade Plan")}</a>
                       </p>
                     )}
                   </div>

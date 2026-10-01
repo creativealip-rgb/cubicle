@@ -31,6 +31,7 @@ interface ClientEditDialogProps {
     portalSlug?: string;
     portalSlugEnabled?: boolean;
     portalEnabled?: boolean;
+    portalPasswordConfigured?: boolean;
   };
 }
 

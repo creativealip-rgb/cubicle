@@ -24,6 +24,7 @@ export type ClientListItem = {
   portalEnabled: boolean | null;
   portalSlug: string | null;
   portalSlugEnabled: boolean | null;
+  portalPasswordConfigured?: boolean | null;
   projectCount: number;
 };
 

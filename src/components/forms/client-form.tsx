@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createClient, generatePortalToken, checkPortalSlugAvailability, getCurrentUserPlanForPortal, setClientPortalPassword, updateClient, revokePortalToken } from "@/lib/actions/clients";
+import { createClient, generatePortalToken, checkPortalSlugAvailability, getCurrentUserPlanForPortal, setClientPortalPassword, updateClient, revokePortalToken, revealClientPortalPassword } from "@/lib/actions/clients";
 import { isStaleServerActionError } from "@/lib/client-errors";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, KeyRound, Sparkles, Check, Copy } from "lucide-react";
 
 interface ClientFormProps {
   mode: "create" | "edit";
@@ -56,6 +56,10 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
   const [isPaidPlan, setIsPaidPlan] = useState<boolean>(true);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
   const [revokingPortal, setRevokingPortal] = useState(false);
+  const [hasPassword, setHasPassword] = useState(Boolean(defaultValues?.portalPasswordConfigured));
+  const [revealingPassword, setRevealingPassword] = useState(false);
+  const [revealedPassword, setRevealedPassword] = useState<string | null>(null);
+  const [showChangePassword, setShowChangePassword] = useState(!defaultValues?.portalPasswordConfigured);
   const [form, setForm] = useState({
     clientNumber: defaultValues?.clientNumber ?? "",
     name: defaultValues?.name ?? "",
@@ -77,6 +81,27 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
       setIsPaidPlan(res.isPaid);
     }).catch(() => {});
   }, []);
+
+  async function handleRevealPassword() {
+    if (!defaultValues?.id) return;
+    if (revealedPassword) {
+      setRevealedPassword(null);
+      return;
+    }
+    setRevealingPassword(true);
+    try {
+      const res = await revealClientPortalPassword(defaultValues.id);
+      if (res.state === "revealed" && res.password) {
+        setRevealedPassword(res.password);
+      } else {
+        toast.error(t("Password tidak dapat didekripsi / belum tersimpan", "Password cannot be decrypted"));
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal melihat password", "Failed to reveal password"));
+    } finally {
+      setRevealingPassword(false);
+    }
+  }
 
   async function handleCheckSlug() {
     const slug = form.portalSlug.trim();
@@ -442,15 +467,104 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
                 </p>
               )}
               {!isPaidPlan && (
-                <p className="text-[11px] text-muted-foreground">
-                  {t("Slug dibuat acak secara otomatis dan tidak dapat diubah pada plan Free.", "Slug is randomly generated and cannot be edited on Free plan.")}
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("Upgrade untuk memakai slug / URL kustom.", "Upgrade to use a custom slug / URL.")}{" "}
+                  <a href="/app/billing" className="font-medium text-primary underline">{t("Upgrade Plan", "Upgrade Plan")}</a>
                 </p>
               )}
             </div>
-            <div className="space-y-1.5 border-t pt-3">
-              <Label htmlFor="portalPassword" className="text-xs font-medium">{t("Password Portal", "Portal Password")}</Label>
-              <Input id="portalPassword" type="password" minLength={8} value={portalPassword} onChange={(e) => setPortalPassword(e.target.value)} placeholder={t("Kosongkan jika tidak diubah", "Leave blank to keep current password")} className="h-9 text-sm" autoComplete="new-password" />
-              <p className="text-[11px] text-muted-foreground">{t("Password baru akan mengaktifkan portal jika belum aktif.", "A new password activates the portal if it is not active yet.")}</p>
+            {/* Password Management */}
+            <div className="space-y-2 border-t pt-3">
+              <div className="flex items-center justify-between">
+                <Label className="text-xs font-medium">{t("Password Portal", "Portal Password")}</Label>
+                {hasPassword && !showChangePassword && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setShowChangePassword(true)}
+                    className="h-6 text-[11px] px-2 font-medium text-primary hover:text-primary"
+                  >
+                    {t("Ganti Password", "Change Password")}
+                  </Button>
+                )}
+              </div>
+
+              {hasPassword && !showChangePassword ? (
+                <div className="flex items-center justify-between gap-2 rounded-xl border border-border/80 bg-background p-2.5">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <KeyRound className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <span className="font-mono text-xs truncate">
+                      {revealedPassword ? revealedPassword : "••••••••••••"}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {revealedPassword && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                        onClick={() => {
+                          navigator.clipboard.writeText(revealedPassword);
+                          toast.success(t("Password disalin!", "Password copied!"));
+                        }}
+                        title={t("Salin Password", "Copy Password")}
+                      >
+                        <Copy className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-7 text-xs gap-1 px-2 font-medium"
+                      disabled={revealingPassword}
+                      onClick={handleRevealPassword}
+                    >
+                      {revealedPassword ? (
+                        <>
+                          <EyeOff className="h-3 w-3" /> {t("Sembunyikan", "Hide")}
+                        </>
+                      ) : (
+                        <>
+                          <Eye className="h-3 w-3" /> {revealingPassword ? t("Membuka...", "Revealing...") : t("Lihat Password", "View Password")}
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="relative">
+                    <Input
+                      id="portalPassword"
+                      type="password"
+                      minLength={8}
+                      value={portalPassword}
+                      onChange={(e) => setPortalPassword(e.target.value)}
+                      placeholder={hasPassword ? t("Masukkan password baru (min. 8 karakter)", "Enter new password (min. 8 chars)") : t("Buat password portal (min. 8 karakter)", "Create portal password (min. 8 chars)")}
+                      className="h-9 text-sm"
+                      autoComplete="new-password"
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                    <span>{t("Minimal 8 karakter.", "At least 8 characters.")}</span>
+                    {hasPassword && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setShowChangePassword(false);
+                          setPortalPassword("");
+                        }}
+                        className="text-muted-foreground hover:text-foreground underline cursor-pointer"
+                      >
+                        {t("Batal ubah", "Cancel change")}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
