@@ -1056,10 +1056,10 @@ export function QuestionnaireBuilder({
                 size="sm"
                 onClick={() => setElementsOpen(!elementsOpen)}
                 className="h-8 gap-1.5 text-xs font-medium hidden md:inline-flex"
-                title="Toggle Element Catalog"
+                title={t("Toggle Elemen", "Toggle Element Catalog")}
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span>{t("Elements", "Elements")}</span>
+                <span>{t("Elemen", "Elements")}</span>
               </Button>
 
               <Button
@@ -1068,10 +1068,10 @@ export function QuestionnaireBuilder({
                 size="sm"
                 onClick={() => setPropertiesOpen(!propertiesOpen)}
                 className="h-8 gap-1.5 text-xs font-medium hidden md:inline-flex"
-                title="Toggle Field Properties"
+                title={t("Toggle Properti", "Toggle Field Properties")}
               >
                 <Settings className="h-3.5 w-3.5" />
-                <span>{t("Properties", "Properties")}</span>
+                <span>{t("Properti", "Properties")}</span>
               </Button>
             </>
           )}
@@ -1475,14 +1475,14 @@ export function QuestionnaireBuilder({
                         className="h-8.5 px-4 text-xs font-semibold gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5"
                       >
                         <Plus className="h-3.5 w-3.5" />
-                        <span>Tambah Elemen Baru</span>
+                        <span>{t("Tambah Elemen Baru", "+ Add New Element")}</span>
                       </Button>
                     </div>
 
                     {/* Submit button preview */}
                     <div className="pt-5 border-t border-border/60 flex items-center justify-between">
                       <Button disabled className="h-9.5 px-5 text-xs font-semibold bg-primary text-primary-foreground">
-                        Submit Form
+                        {t("Kirim Tanggapan", "Submit Form")}
                       </Button>
                       <span className="text-[10px] text-muted-foreground">Powered by Cubiqlo Forms</span>
                     </div>
@@ -1496,7 +1496,7 @@ export function QuestionnaireBuilder({
                   <div className="p-3.5 border-b border-border/60 flex items-center justify-between shrink-0">
                     <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                       <Settings className="h-3.5 w-3.5 text-primary" />
-                      <span>Field Properties</span>
+                      <span>{t("Properti Elemen", "Field Properties")}</span>
                     </h4>
                     <div className="flex items-center gap-1">
                       {selectedField && (
@@ -1510,7 +1510,7 @@ export function QuestionnaireBuilder({
                         size="icon"
                         onClick={() => setPropertiesOpen(false)}
                         className="h-6 w-6 rounded-md text-muted-foreground hover:text-foreground"
-                        title="Tutup Panel"
+                        title={t("Tutup Panel", "Close Panel")}
                       >
                         <X className="h-3.5 w-3.5" />
                       </Button>
@@ -1524,9 +1524,9 @@ export function QuestionnaireBuilder({
                         {selectedField.type !== "page_break" && (
                           <div className="space-y-1.5">
                             <Label className="text-xs font-medium flex items-center justify-between">
-                              <span>Lebar Kolom (Column Width)</span>
+                              <span>{t("Lebar Kolom", "Column Width")}</span>
                               <Badge variant="outline" className="text-[9px] font-mono">
-                                {selectedField.colSpan === "half" ? "50% (2 Kolom)" : "100% (Penuh)"}
+                                {selectedField.colSpan === "half" ? t("50% (2 Kolom)", "50% Shrink") : t("100% (Penuh)", "100% Full")}
                               </Badge>
                             </Label>
                             <div className="grid grid-cols-2 gap-2">
@@ -1560,7 +1560,7 @@ export function QuestionnaireBuilder({
 
                         {/* Field Label */}
                         <div className="space-y-1.5">
-                          <Label className="text-xs font-medium">Question Label / Heading</Label>
+                          <Label className="text-xs font-medium">{t("Label Pertanyaan / Judul", "Question Label / Heading")}</Label>
                           <Input
                             value={selectedField.label}
                             onChange={(e) => updateSelectedField({ label: e.target.value })}
