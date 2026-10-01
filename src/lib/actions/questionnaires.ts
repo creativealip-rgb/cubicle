@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { questionnaires, questionnaireResponses, clients, workspaces } from "@/db/schema";
-import { eq, and, desc } from "drizzle-orm";
+import { eq, and, desc, or, sql } from "drizzle-orm";
 import { z } from "zod";
 import * as crypto from "node:crypto";
 import { requireUser, assertWorkspaceMember, assertWorkspaceWritable } from "@/lib/access";
@@ -28,6 +28,7 @@ const createQuestionnaireSchema = z.object({
 const updateQuestionnaireSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   description: z.string().max(2000).optional().nullable(),
+  slug: z.string().trim().max(100).optional().nullable(),
   schema: questionnaireSchemaInput.optional(),
 });
 
@@ -388,11 +389,19 @@ export async function getPublicQuestionnaire(tokenOrId: string) {
     };
   }
 
-  // 2. Jika bukan token respon spesifik, coba cari by Questionnaire Master ID (Public Shareable Link ke siapapun)
+  // 2. Jika bukan token respon spesifik, coba cari by Questionnaire Master ID / custom Slug (Public Shareable Link ke siapapun)
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tokenOrId);
   const [qMaster] = await db
     .select()
     .from(questionnaires)
-    .where(eq(questionnaires.id, tokenOrId))
+    .where(
+      isUuid
+        ? or(
+            eq(questionnaires.id, tokenOrId),
+            eq(sql`lower(${questionnaires.slug})`, tokenOrId.toLowerCase())
+          )
+        : eq(sql`lower(${questionnaires.slug})`, tokenOrId.toLowerCase())
+    )
     .limit(1);
 
   if (qMaster) {

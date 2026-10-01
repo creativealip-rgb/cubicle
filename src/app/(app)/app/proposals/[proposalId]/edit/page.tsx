@@ -18,6 +18,7 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
   const workspaceId = await getWorkspaceForCurrentUser();
   const [proposal] = await db.select({
     id: proposals.id,
+    slug: proposals.slug,
     title: proposals.title,
     clientName: proposals.clientName,
     clientEmail: proposals.clientEmail,
@@ -67,6 +68,7 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
       saveBlocks={saveBlocks}
       proposalMeta={{
         id: proposal.id,
+        slug: proposal.slug,
         title: proposal.title,
         clientName: proposal.clientName,
         clientEmail: proposal.clientEmail,

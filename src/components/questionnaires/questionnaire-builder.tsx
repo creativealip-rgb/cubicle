@@ -707,7 +707,7 @@ export function QuestionnaireBuilder({
 }: {
   workspaceId: string;
   questionnaireId?: string;
-  initial?: { name: string; description: string | null; schema: QuestionnaireField[] };
+  initial?: { name: string; slug?: string | null; description: string | null; schema: QuestionnaireField[] };
 }) {
   const { t } = useT();
   const router = useRouter();
@@ -716,7 +716,7 @@ export function QuestionnaireBuilder({
   // Navigation tab: "build" | "settings" | "publish"
   const [activeTab, setActiveTab] = useState<"build" | "settings" | "publish">("build");
   const [isPaidPlan, setIsPaidPlan] = useState<boolean>(true);
-  const [customSlug, setCustomSlug] = useState("");
+  const [customSlug, setCustomSlug] = useState(initial?.slug || "");
 
   useEffect(() => {
     getCurrentUserPlanForPortal().then((res) => {
@@ -897,10 +897,12 @@ export function QuestionnaireBuilder({
     startTransition(async () => {
       try {
         let qId = questionnaireId;
+        const normalizedSlug = isPaidPlan && customSlug.trim() ? customSlug.trim().toLowerCase() : null;
         if (questionnaireId) {
           await updateQuestionnaire(questionnaireId, {
             name: name.trim(),
             description: description.trim() || null,
+            slug: normalizedSlug,
             schema: fields,
           });
           toast.success(t("Formulir berhasil diperbarui", "Form updated"));
@@ -912,6 +914,9 @@ export function QuestionnaireBuilder({
             schema: fields,
           });
           qId = res.id;
+          if (normalizedSlug) {
+            await updateQuestionnaire(res.id, { slug: normalizedSlug });
+          }
           toast.success(t("Formulir berhasil dibuat", "Form created"));
         }
         router.push(`/app/questionnaires/${qId}`);
@@ -922,8 +927,9 @@ export function QuestionnaireBuilder({
     });
   }
 
-  const shareUrl = questionnaireId ? `https://app.cubiqlo.com/intake/${questionnaireId}` : "";
-  const embedCode = questionnaireId ? `<iframe src="https://app.cubiqlo.com/intake/${questionnaireId}" width="100%" height="700px" frameborder="0" style="border:0;border-radius:12px;"></iframe>` : "";
+  const activeSlugOrId = customSlug.trim() || initial?.slug || questionnaireId;
+  const shareUrl = activeSlugOrId ? `https://cubiqlo.com/intake/${activeSlugOrId}` : "";
+  const embedCode = activeSlugOrId ? `<iframe src="https://cubiqlo.com/intake/${activeSlugOrId}" width="100%" height="700px" frameborder="0" style="border:0;border-radius:12px;"></iframe>` : "";
 
   return (
     <div className="flex flex-col h-[calc(100vh-56px)] w-full bg-slate-100/70 dark:bg-zinc-950 overflow-hidden select-none">

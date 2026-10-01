@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { proposals, clients, workspaces } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, or, sql } from "drizzle-orm";
 import { notifyWorkspaceMembers } from "@/lib/in-app-notifications";
 import crypto from "crypto";
 import { notFound } from "next/navigation";
@@ -51,7 +51,12 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
     .from(proposals)
     .leftJoin(clients, eq(clients.id, proposals.clientId))
     .innerJoin(workspaces, eq(workspaces.id, proposals.workspaceId))
-    .where(eq(proposals.sharedTokenHash, tokenHash))
+    .where(
+      or(
+        eq(proposals.sharedTokenHash, tokenHash),
+        eq(sql`lower(${proposals.slug})`, token.toLowerCase())
+      )
+    )
     .limit(1);
   if (!proposal) notFound();
 

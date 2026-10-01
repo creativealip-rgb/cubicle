@@ -16,7 +16,7 @@ export default async function ContractEditPage({ params }: { params: Promise<{ c
   const { contractId } = await params;
   if (!isUuid(contractId)) notFound();
   const workspaceId = await getWorkspaceForCurrentUser();
-  const [contract] = await db.select({ id: contracts.id, title: contracts.title, contentBlocks: contracts.contentBlocks, contentRevision: contracts.contentRevision, status: contracts.status, clientName: contracts.clientName, clientEmail: contracts.clientEmail, companyName: contracts.companyName, contractNumber: contracts.contractNumber, contractDate: contracts.contractDate, validUntil: contracts.validUntil })
+  const [contract] = await db.select({ id: contracts.id, slug: contracts.slug, title: contracts.title, contentBlocks: contracts.contentBlocks, contentRevision: contracts.contentRevision, status: contracts.status, clientName: contracts.clientName, clientEmail: contracts.clientEmail, companyName: contracts.companyName, contractNumber: contracts.contractNumber, contractDate: contracts.contractDate, validUntil: contracts.validUntil })
     .from(contracts).where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId))).limit(1);
   if (!contract) notFound();
   const [workspace] = await db.select({ name: workspaces.name, billingAddress: workspaces.billingAddress }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
@@ -37,6 +37,7 @@ export default async function ContractEditPage({ params }: { params: Promise<{ c
       saveBlocks={saveBlocks}
       documentMeta={{
         id: contract.id,
+        slug: contract.slug,
         title: contract.title,
         clientName: contract.clientName,
         clientEmail: contract.clientEmail,

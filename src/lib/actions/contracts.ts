@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { contracts, contractTemplates, clients, projects, workspaces, workspaceInvoiceCounters } from "@/db/schema";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, or } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
@@ -284,7 +284,7 @@ export async function getProposedContractNumber(workspaceId: string): Promise<st
   ));
 }
 
-export async function updateContract(contractId: string, input: { clientName?: string; clientEmail?: string | null; companyName?: string | null; title?: string; body?: string; validUntil?: string | null; contractNumber?: string | null }) {
+export async function updateContract(contractId: string, input: { clientName?: string; clientEmail?: string | null; companyName?: string | null; title?: string; body?: string; validUntil?: string | null; contractNumber?: string | null; slug?: string | null }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -650,7 +650,12 @@ export async function getContract(contractId: string) {
 export async function getPublicContract(token: string) {
   const tokenHash = hashToken(token);
   const [c] = await db.select().from(contracts)
-    .where(eq(contracts.sharedTokenHash, tokenHash))
+    .where(
+      or(
+        eq(contracts.sharedTokenHash, tokenHash),
+        eq(sql`lower(${contracts.slug})`, token.toLowerCase())
+      )
+    )
     .limit(1);
   if (!c) return { error: "not_found" as const };
   if (c.sharedTokenRevokedAt) return { error: "revoked" as const };

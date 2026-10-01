@@ -27,6 +27,7 @@ export default async function QuestionnaireEditPage({ params }: { params: Promis
       questionnaireId={q.id}
       initial={{
         name: q.name,
+        slug: q.slug,
         description: q.description,
         schema: fields,
       }}

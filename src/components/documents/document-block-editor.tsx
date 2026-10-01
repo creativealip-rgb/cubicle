@@ -81,6 +81,7 @@ type Props = {
   onUpdateMeta?: (meta: Record<string, unknown>) => Promise<unknown>;
   documentMeta?: {
     id?: string;
+    slug?: string | null;
     title: string;
     clientName: string | null;
     clientEmail: string | null;
@@ -90,6 +91,7 @@ type Props = {
   };
   proposalMeta?: {
     id?: string;
+    slug?: string | null;
     title: string;
     clientName: string | null;
     clientEmail: string | null;
@@ -262,7 +264,9 @@ export function DocumentBlockEditor({
   });
   const [savingMeta, setSavingMeta] = useState(false);
   const [isPaidPlan, setIsPaidPlan] = useState<boolean>(true);
-  const [customSlug, setCustomSlug] = useState("");
+  const [customSlug, setCustomSlug] = useState(
+    proposalMeta?.slug || documentMeta?.slug || ""
+  );
 
   useEffect(() => {
     getCurrentUserPlanForPortal().then((res) => {
@@ -302,9 +306,9 @@ export function DocumentBlockEditor({
   const { lang, t } = useT();
 
   const docTitle = metaState.title || (kind === "proposal" ? "Proposal" : "Contract");
-  const docId = proposalMeta?.id || documentMeta?.id;
+  const docId = customSlug.trim() || proposalMeta?.slug || documentMeta?.slug || proposalMeta?.id || documentMeta?.id;
   const sharePath = kind === "proposal" ? `/proposal/${docId || ""}` : `/contract/${docId || ""}`;
-  const fullShareUrl = docId ? `https://app.cubiqlo.com${sharePath}` : "";
+  const fullShareUrl = docId ? `https://cubiqlo.com${sharePath}` : "";
 
   // Dynamic Price Calculations for Settings
   const lineItemsSubtotal = metaState.lineItems.reduce((acc, item) => acc + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0), 0);
@@ -369,6 +373,7 @@ export function DocumentBlockEditor({
         clientEmail: metaState.clientEmail || null,
         companyName: metaState.companyName || null,
         validUntil: metaState.validUntil || null,
+        slug: isPaidPlan && customSlug.trim() ? customSlug.trim().toLowerCase() : null,
       };
       if (kind === "proposal") {
         payload.taxRate = Number(metaState.taxRate) || 0;
