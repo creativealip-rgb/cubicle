@@ -22,6 +22,7 @@ import {
 } from "@/lib/document-blocks";
 import { uploadOneFile, MAX_UPLOAD_BYTES } from "@/lib/files-upload";
 import { listContractTemplates } from "@/lib/actions/contract-templates";
+import { getCurrentUserPlanForPortal } from "@/lib/actions/clients";
 import { listProposalTemplates } from "@/lib/actions/proposal-templates";
 import { useT } from "@/lib/i18n-client";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
@@ -260,6 +261,13 @@ export function DocumentBlockEditor({
       : [{ description: "Services Deliverable", quantity: 1, unitPrice: 0 }],
   });
   const [savingMeta, setSavingMeta] = useState(false);
+  const [isPaidPlan, setIsPaidPlan] = useState<boolean>(true);
+
+  useEffect(() => {
+    getCurrentUserPlanForPortal().then((res) => {
+      setIsPaidPlan(res.isPaid);
+    }).catch(() => {});
+  }, []);
 
   // Left & Right Panels
   const [elementsOpen, setElementsOpen] = useState(true);
@@ -1566,6 +1574,42 @@ export function DocumentBlockEditor({
                 </div>
               </div>
             )}
+
+            {/* SECTION: URL & SLUG SETTINGS */}
+            <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-4">
+              <div>
+                <h3 className="text-base font-bold text-foreground">{t("Pengaturan URL & Slug", "URL & Slug Settings")}</h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t("Tentukan alamat slug unik untuk tautan dokumen publik Anda.", "Define the unique URL slug for your public document link.")}
+                </p>
+              </div>
+
+              <div className="space-y-3 pt-1">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-foreground">
+                    {t("Slug URL", "URL Slug")}
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-muted-foreground bg-muted px-2.5 py-2 rounded-lg border border-border/60 whitespace-nowrap">
+                      https://cubiqlo.com/{kind === "proposal" ? "proposal" : "contract"}/
+                    </span>
+                    <Input
+                      value={documentMeta?.id ? `${kind}-${documentMeta.id.slice(0, 8)}` : "auto-generated"}
+                      disabled={!isPaidPlan}
+                      readOnly={!isPaidPlan}
+                      placeholder="nama-dokumen"
+                      className="font-mono text-xs sm:text-sm"
+                    />
+                  </div>
+                  {!isPaidPlan && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t("Upgrade untuk memakai slug / URL kustom.", "Upgrade to use a custom slug / URL.")}{" "}
+                      <a href="/app/billing" className="font-medium text-primary underline">{t("Upgrade Plan", "Upgrade Plan")}</a>
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
 
             {/* Bottom Save Settings Button */}
             <div className="flex justify-end pt-2">

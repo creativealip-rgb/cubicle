@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState, useEffect, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
@@ -87,6 +87,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
+import { getCurrentUserPlanForPortal } from "@/lib/actions/clients";
 import { useT } from "@/lib/i18n-client";
 import Link from "next/link";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
@@ -714,6 +715,13 @@ export function QuestionnaireBuilder({
 
   // Navigation tab: "build" | "settings" | "publish"
   const [activeTab, setActiveTab] = useState<"build" | "settings" | "publish">("build");
+  const [isPaidPlan, setIsPaidPlan] = useState<boolean>(true);
+
+  useEffect(() => {
+    getCurrentUserPlanForPortal().then((res) => {
+      setIsPaidPlan(res.isPaid);
+    }).catch(() => {});
+  }, []);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [livePreviewMode, setLivePreviewMode] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(!initial && !questionnaireId);
@@ -2089,6 +2097,45 @@ export function QuestionnaireBuilder({
                   className="h-9 text-xs font-mono"
                 />
                 <p className="text-[10px] text-muted-foreground">If provided, respondents will automatically be redirected to this link after submission.</p>
+              </div>
+            </div>
+
+            {/* SECTION: URL & SLUG SETTINGS */}
+            <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
+              <div>
+                <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                  <Globe className="h-4 w-4 text-primary" />
+                  <span>{t("Pengaturan URL & Slug", "URL & Slug Settings")}</span>
+                </h3>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  {t("Tentukan alamat slug unik untuk tautan formulir publik Anda.", "Define the unique URL slug for your public intake form link.")}
+                </p>
+              </div>
+
+              <div className="space-y-3 pt-1">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-foreground">
+                    {t("Slug URL", "URL Slug")}
+                  </Label>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-mono text-muted-foreground bg-muted px-2.5 py-2 rounded-lg border border-border/60 whitespace-nowrap">
+                      https://cubiqlo.com/intake/
+                    </span>
+                    <Input
+                      value={questionnaireId ? `form-${questionnaireId.slice(0, 8)}` : "auto-generated"}
+                      disabled={!isPaidPlan}
+                      readOnly={!isPaidPlan}
+                      placeholder="nama-form"
+                      className="font-mono text-xs sm:text-sm"
+                    />
+                  </div>
+                  {!isPaidPlan && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t("Upgrade untuk memakai slug / URL kustom.", "Upgrade to use a custom slug / URL.")}{" "}
+                      <a href="/app/billing" className="font-medium text-primary underline">{t("Upgrade Plan", "Upgrade Plan")}</a>
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
           </div>
