@@ -112,39 +112,39 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
   {
     type: "text",
     label: "Short Text",
-    description: "Nama, judul, input pendek",
+    description: "Single-line text input",
     icon: Type,
     category: "basic",
-    defaultConfig: { placeholder: "Jawaban singkat...", colSpan: "full" },
+    defaultConfig: { placeholder: "Short answer...", colSpan: "full" },
   },
   {
     type: "textarea",
     label: "Long Text / Paragraph",
-    description: "Deskripsi, brief rinci, catatan",
+    description: "Detailed multiline text response",
     icon: AlignLeft,
     category: "basic",
-    defaultConfig: { placeholder: "Tuliskan jawaban lengkap di sini...", colSpan: "full" },
+    defaultConfig: { placeholder: "Write your complete answer here...", colSpan: "full" },
   },
   {
     type: "email",
     label: "Email Address",
-    description: "Validasi format email klien",
+    description: "Valid client email format",
     icon: Mail,
     category: "basic",
-    defaultConfig: { placeholder: "contoh@perusahaan.com", colSpan: "half" },
+    defaultConfig: { placeholder: "contact@company.com", colSpan: "half" },
   },
   {
     type: "phone",
     label: "Phone / WhatsApp",
-    description: "Nomor kontak telepon atau WA",
+    description: "Phone or WhatsApp contact number",
     icon: Phone,
     category: "basic",
-    defaultConfig: { placeholder: "+62 812-3456-7890", colSpan: "half" },
+    defaultConfig: { placeholder: "+1 555-0199", colSpan: "half" },
   },
   {
     type: "number",
     label: "Number",
-    description: "Angka, budget, nominal",
+    description: "Numeric digits, budget, quantities",
     icon: Hash,
     category: "basic",
     defaultConfig: { placeholder: "0", colSpan: "half" },
@@ -152,7 +152,7 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
   {
     type: "date",
     label: "Date Picker",
-    description: "Tanggal deadline / mulai",
+    description: "Target deadline or kickoff date",
     icon: Calendar,
     category: "basic",
     defaultConfig: { colSpan: "half" },
@@ -160,7 +160,7 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
   {
     type: "time",
     label: "Time Picker",
-    description: "Waktu / jam meeting & ketersediaan",
+    description: "Meeting time or availability",
     icon: Clock,
     category: "basic",
     defaultConfig: { colSpan: "half" },
@@ -168,7 +168,7 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
   {
     type: "url",
     label: "Website / URL",
-    description: "Tautan referensi atau website",
+    description: "Reference link or website address",
     icon: LinkIcon,
     category: "basic",
     defaultConfig: { placeholder: "https://example.com", colSpan: "full" },
@@ -178,41 +178,41 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
   {
     type: "select",
     label: "Single Select (Dropdown)",
-    description: "Pilih satu dari beberapa opsi",
+    description: "Choose one option from dropdown",
     icon: ListFilter,
     category: "choice",
-    defaultConfig: { options: ["Opsi 1", "Opsi 2", "Opsi 3"], colSpan: "full" },
+    defaultConfig: { options: ["Option 1", "Option 2", "Option 3"], colSpan: "full" },
   },
   {
     type: "multiselect",
     label: "Multiple Choice (Checkboxes)",
-    description: "Pilih beberapa opsi sekaligus",
+    description: "Select one or more choices",
     icon: CheckSquare,
     category: "choice",
-    defaultConfig: { options: ["Pilihan A", "Pilihan B", "Pilihan C"], colSpan: "full" },
+    defaultConfig: { options: ["Option A", "Option B", "Option C"], colSpan: "full" },
   },
 
   // Advanced / Interactive
   {
     type: "file",
     label: "File Upload",
-    description: "Klien upload dokumen brief / aset",
+    description: "Document, brief, or asset attachment",
     icon: Paperclip,
     category: "advanced",
-    defaultConfig: { acceptFiles: ".pdf,.doc,.docx,.png,.jpg,.zip", placeholder: "Upload file brief (PDF, PNG, ZIP)", colSpan: "full" },
+    defaultConfig: { acceptFiles: ".pdf,.doc,.docx,.png,.jpg,.zip", placeholder: "Upload file (PDF, PNG, ZIP)", colSpan: "full" },
   },
   {
     type: "signature",
     label: "E-Signature",
-    description: "Tanda tangan digital langsung",
+    description: "Digital legal signature pad",
     icon: PenTool,
     category: "advanced",
-    defaultConfig: { placeholder: "Tanda tangan di sini", colSpan: "full" },
+    defaultConfig: { placeholder: "Sign here", colSpan: "full" },
   },
   {
     type: "rating",
     label: "Rating Scale (1-5 / 1-10)",
-    description: "Skala rating kepuasan / NPS",
+    description: "Satisfaction or NPS rating score",
     icon: Star,
     category: "advanced",
     defaultConfig: { maxRating: 5, colSpan: "full" },
@@ -399,6 +399,7 @@ function SortableCanvasField({
   onOpenProperties: () => void;
   onUpdateLabel: (val: string) => void;
 }) {
+  const { t } = useT();
   const {
     attributes,
     listeners,
@@ -447,7 +448,7 @@ function SortableCanvasField({
           {...attributes}
           {...listeners}
           className="p-1 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing rounded"
-          title="Drag untuk geser posisi"
+          title={t("Drag untuk geser posisi", "Drag to reorder")}
         >
           <GripVertical className="h-3.5 w-3.5" />
         </button>
@@ -458,7 +459,7 @@ function SortableCanvasField({
             onOpenProperties();
           }}
           className="p-1 text-muted-foreground hover:text-primary rounded"
-          title="Buka Properti"
+          title={t("Buka Properti", "Open Properties")}
         >
           <Settings className="h-3.5 w-3.5" />
         </button>
@@ -469,7 +470,7 @@ function SortableCanvasField({
             onDuplicate();
           }}
           className="p-1 text-muted-foreground hover:text-primary rounded"
-          title="Duplikasi"
+          title={t("Duplikasi", "Duplicate")}
         >
           <Copy className="h-3.5 w-3.5" />
         </button>
@@ -480,7 +481,7 @@ function SortableCanvasField({
             onDelete();
           }}
           className="p-1 text-muted-foreground hover:text-destructive rounded"
-          title="Hapus"
+          title={t("Hapus", "Delete")}
         >
           <Trash2 className="h-3.5 w-3.5" />
         </button>
@@ -498,10 +499,10 @@ function SortableCanvasField({
         <div className="py-2 flex items-center justify-between gap-4">
           <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-wider">
             <SplitSquareVertical className="h-4 w-4" />
-            <span>─── Pemisah Halaman (Page Break) ───</span>
+            <span>─── {t("Pemisah Halaman (Page Break)", "Page Break (Multi-Step)")} ───</span>
           </div>
           <Badge variant="outline" className="text-[10px] font-semibold text-primary border-primary/40 bg-primary/5">
-            Langkah Baru
+            {t("Langkah Baru", "New Step")}
           </Badge>
         </div>
       ) : isHeading ? (
@@ -526,7 +527,7 @@ function SortableCanvasField({
                 (e.target as HTMLElement).style.display = "none";
               }}
             />
-            <span className="text-xs font-semibold text-muted-foreground">Header Logo Brand</span>
+            <span className="text-xs font-semibold text-muted-foreground">{t("Header Logo Brand", "Brand Header Logo")}</span>
           </div>
         </div>
       ) : isDivider ? (
@@ -548,7 +549,7 @@ function SortableCanvasField({
             />
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed px-1">
-            {field.content || "Tuliskan informasi atau catatan panduan untuk responden."}
+            {field.content || t("Tuliskan informasi atau catatan panduan untuk responden.", "Provide guidelines or notes for respondents.")}
           </p>
         </div>
       ) : isTerms ? (
@@ -585,16 +586,16 @@ function SortableCanvasField({
           {field.sublabel && <p className="text-[11px] text-muted-foreground px-1">{field.sublabel}</p>}
 
           {field.type === "text" && (
-            <Input disabled placeholder={field.placeholder || "Jawaban singkat..."} className="h-9 text-xs bg-muted/20" />
+            <Input disabled placeholder={field.placeholder || t("Jawaban singkat...", "Short answer...")} className="h-9 text-xs bg-muted/20" />
           )}
           {field.type === "textarea" && (
-            <Textarea disabled placeholder={field.placeholder || "Tuliskan jawaban lengkap di sini..."} rows={2} className="text-xs bg-muted/20" />
+            <Textarea disabled placeholder={field.placeholder || t("Tuliskan jawaban lengkap di sini...", "Write complete answer here...")} rows={2} className="text-xs bg-muted/20" />
           )}
           {field.type === "email" && (
             <Input disabled placeholder={field.placeholder || "email@domain.com"} className="h-9 text-xs bg-muted/20" />
           )}
           {field.type === "phone" && (
-            <Input disabled placeholder={field.placeholder || "+62 812..."} className="h-9 text-xs bg-muted/20" />
+            <Input disabled placeholder={field.placeholder || "+1 555-0199"} className="h-9 text-xs bg-muted/20" />
           )}
           {field.type === "number" && (
             <Input disabled placeholder={field.placeholder || "0"} type="number" className="h-9 text-xs bg-muted/20" />
@@ -735,7 +736,10 @@ export function QuestionnaireBuilder({
   const [customHex, setCustomHex] = useState("#6C5CE7");
   const [cardRoundness, setCardRoundness] = useState<"normal" | "rounded" | "soft">("rounded");
   const [thankYouMessage, setThankYouMessage] = useState(
-    "Terima kasih! Tanggapan Anda telah berhasil kami terima dan akan segera kami proses.",
+    t(
+      "Terima kasih! Tanggapan Anda telah berhasil kami terima dan akan segera kami proses.",
+      "Thank you! Your response has been received and will be processed shortly.",
+    ),
   );
   const [redirectUrl, setRedirectUrl] = useState("");
   const [formStatus, setFormStatus] = useState<"active" | "disabled">("active");
@@ -748,25 +752,25 @@ export function QuestionnaireBuilder({
           {
             id: makeId(),
             type: "text",
-            label: "Nama Lengkap",
+            label: t("Nama Lengkap", "Full Name"),
             required: true,
-            placeholder: "Masukkan nama Anda",
+            placeholder: t("Masukkan nama Anda", "Enter your full name"),
             colSpan: "full",
           },
           {
             id: makeId(),
             type: "email",
-            label: "Email Bisnis",
+            label: t("Email Bisnis", "Business Email"),
             required: true,
-            placeholder: "email@perusahaan.com",
+            placeholder: "email@company.com",
             colSpan: "half",
           },
           {
             id: makeId(),
             type: "phone",
-            label: "Nomor WhatsApp",
+            label: t("Nomor WhatsApp", "WhatsApp / Phone"),
             required: true,
-            placeholder: "+62 812...",
+            placeholder: "+1 555-0199",
             colSpan: "half",
           },
         ],
@@ -820,15 +824,15 @@ export function QuestionnaireBuilder({
       type: def.type,
       label:
         def.type === "page_break"
-          ? "Langkah Baru"
+          ? t("Langkah Baru", "New Step")
           : def.type === "heading"
-            ? "Judul Bagian Baru"
+            ? t("Judul Bagian Baru", "New Section Header")
             : def.type === "divider"
-              ? "Divider"
+              ? t("Divider", "Divider")
               : def.type === "info"
-                ? "Informasi Penting"
-                : `Pertanyaan ${def.label}`,
-      sublabel: def.type === "heading" ? "Panduan singkat bagian ini..." : undefined,
+                ? t("Informasi Penting", "Important Information")
+                : `${t("Pertanyaan", "Question")} ${def.label}`,
+      sublabel: def.type === "heading" ? t("Panduan singkat bagian ini...", "Brief guideline for this section...") : undefined,
       required: def.type !== "heading" && def.type !== "divider" && def.type !== "info" && def.type !== "page_break",
       colSpan: def.defaultConfig.colSpan || "full",
       ...def.defaultConfig,
@@ -836,7 +840,7 @@ export function QuestionnaireBuilder({
     setFields((prev) => [...prev, newField]);
     setSelectedFieldId(newField.id);
     setPropertiesOpen(true);
-    toast.success(`${def.label} ditambahkan`);
+    toast.success(`${def.label} ${t("ditambahkan", "added")}`);
   }
 
   function handleApplyTemplate(tpl: typeof FORM_TEMPLATES[0]) {
@@ -845,7 +849,7 @@ export function QuestionnaireBuilder({
     setFields(tpl.fields);
     setSelectedFieldId(tpl.fields[0]?.id || null);
     setTemplateDialogOpen(false);
-    toast.success(`Template ${tpl.title} diterapkan!`);
+    toast.success(t(`Template ${tpl.title} diterapkan!`, `Template ${tpl.title} applied!`));
   }
 
   function handleDuplicateField(fieldId: string) {
@@ -861,12 +865,12 @@ export function QuestionnaireBuilder({
     updated.splice(idx + 1, 0, clone);
     setFields(updated);
     setSelectedFieldId(clone.id);
-    toast.success("Field diduplikasi");
+    toast.success(t("Field diduplikasi", "Field duplicated"));
   }
 
   function handleDeleteField(fieldId: string) {
     if (fields.length <= 1) {
-      toast.error("Formulir harus memiliki minimal 1 field");
+      toast.error(t("Formulir harus memiliki minimal 1 field", "Form must have at least 1 field"));
       return;
     }
     setFields((prev) => prev.filter((f) => f.id !== fieldId));
@@ -874,7 +878,7 @@ export function QuestionnaireBuilder({
       const remaining = fields.filter((f) => f.id !== fieldId);
       setSelectedFieldId(remaining[0]?.id || null);
     }
-    toast.success("Field dihapus");
+    toast.success(t("Field dihapus", "Field deleted"));
   }
 
   function updateSelectedField(patch: Partial<QuestionnaireField>) {
@@ -1003,10 +1007,10 @@ export function QuestionnaireBuilder({
                 ? "bg-primary text-primary-foreground border-primary shadow-xs"
                 : "bg-muted/40 text-muted-foreground hover:text-foreground border-border/70"
             }`}
-            title="Uji coba langsung pengisian formulir interaktif"
+            title={t("Uji coba langsung pengisian formulir interaktif", "Interactive live form preview")}
           >
             <Eye className="h-3.5 w-3.5" />
-            <span>Preview Form</span>
+            <span>{t("Preview Form", "Preview Form")}</span>
           </button>
 
           <Button
@@ -1017,7 +1021,7 @@ export function QuestionnaireBuilder({
             className="h-8 gap-1.5 text-xs font-semibold text-primary border-primary/30 hover:bg-primary/5 hidden sm:inline-flex"
           >
             <LayoutTemplate className="h-3.5 w-3.5" />
-            <span>Templates</span>
+            <span>{t("Templates", "Templates")}</span>
           </Button>
 
           {activeTab === "build" && !livePreviewMode && (
@@ -1055,7 +1059,7 @@ export function QuestionnaireBuilder({
                 title="Toggle Element Catalog"
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span>Elements</span>
+                <span>{t("Elements", "Elements")}</span>
               </Button>
 
               <Button
@@ -1067,7 +1071,7 @@ export function QuestionnaireBuilder({
                 title="Toggle Field Properties"
               >
                 <Settings className="h-3.5 w-3.5" />
-                <span>Properties</span>
+                <span>{t("Properties", "Properties")}</span>
               </Button>
             </>
           )}
@@ -1093,8 +1097,8 @@ export function QuestionnaireBuilder({
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
                 <div>
-                  <h3 className="font-bold text-sm text-foreground">Template Galeri Formulir</h3>
-                  <p className="text-xs text-muted-foreground">Pilih template siap pakai atau mulai dari kertas kosong.</p>
+                  <h3 className="font-bold text-sm text-foreground">{t("Template Galeri Formulir", "Form Template Gallery")}</h3>
+                  <p className="text-xs text-muted-foreground">{t("Pilih template siap pakai atau mulai dari kertas kosong.", "Choose a prebuilt template or start from blank canvas.")}</p>
                 </div>
               </div>
               <Button
@@ -1118,7 +1122,7 @@ export function QuestionnaireBuilder({
                     <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                       <span>{tpl.title}</span>
                       <Badge variant="secondary" className="text-[10px] font-semibold py-0">
-                        {tpl.fields.length} Kolom
+                        {tpl.fields.length} {t("Kolom", "Fields")}
                       </Badge>
                     </h4>
                     <p className="text-xs text-muted-foreground">{tpl.description}</p>
@@ -1129,7 +1133,7 @@ export function QuestionnaireBuilder({
                     onClick={() => handleApplyTemplate(tpl)}
                     className="h-8.5 px-4 text-xs font-semibold shrink-0 bg-primary text-primary-foreground"
                   >
-                    Gunakan Template
+                    {t("Gunakan Template", "Use Template")}
                   </Button>
                 </div>
               ))}
@@ -1143,7 +1147,7 @@ export function QuestionnaireBuilder({
                 onClick={() => setTemplateDialogOpen(false)}
                 className="text-xs text-muted-foreground"
               >
-                Mulai dari Blank Form
+                {t("Mulai dari Blank Form", "Start with Blank Form")}
               </Button>
             </div>
           </div>
@@ -1160,9 +1164,9 @@ export function QuestionnaireBuilder({
                 <div className="flex items-center justify-between border-b pb-4">
                   <div>
                     <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30 mb-1">
-                      Mode Pratinjau Interaktif
+                      {t("Mode Pratinjau Interaktif", "Interactive Preview Mode")}
                     </Badge>
-                    <h2 className="text-xl font-bold">{name || "Formulir Tanpa Judul"}</h2>
+                    <h2 className="text-xl font-bold">{name || t("Formulir Tanpa Judul", "Untitled Form")}</h2>
                     {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
                   </div>
                   <Button
@@ -1172,7 +1176,7 @@ export function QuestionnaireBuilder({
                     onClick={() => setLivePreviewMode(false)}
                     className="text-xs text-muted-foreground hover:text-foreground"
                   >
-                    ✕ Tutup Preview
+                    ✕ {t("Tutup Preview", "Close Preview")}
                   </Button>
                 </div>
 
@@ -1206,7 +1210,7 @@ export function QuestionnaireBuilder({
                       <Input
                         value={elementSearch}
                         onChange={(e) => setElementSearch(e.target.value)}
-                        placeholder="Cari elemen..."
+                        placeholder={t("Cari elemen...", "Search elements...")}
                         className="h-7.5 pl-8 text-xs bg-muted/20"
                       />
                     </div>
@@ -1217,7 +1221,7 @@ export function QuestionnaireBuilder({
                     {elementSearch ? (
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
-                          Hasil Pencarian ({ELEMENT_CATALOG.filter((e) => e.label.toLowerCase().includes(elementSearch.toLowerCase()) || e.description.toLowerCase().includes(elementSearch.toLowerCase())).length})
+                          {t("Hasil Pencarian", "Search Results")} ({ELEMENT_CATALOG.filter((e) => e.label.toLowerCase().includes(elementSearch.toLowerCase()) || e.description.toLowerCase().includes(elementSearch.toLowerCase())).length})
                         </p>
                         <div className="grid grid-cols-1 gap-1.5">
                           {ELEMENT_CATALOG.filter((e) => e.label.toLowerCase().includes(elementSearch.toLowerCase()) || e.description.toLowerCase().includes(elementSearch.toLowerCase())).map((item) => (
@@ -1380,7 +1384,7 @@ export function QuestionnaireBuilder({
                               type="button"
                               onClick={() => setLogoUrl(null)}
                               className="absolute -top-2 -right-2 bg-destructive text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
-                              title="Hapus Logo"
+                              title={t("Hapus Logo", "Remove Logo")}
                             >
                               <X className="h-3 w-3" />
                             </button>
@@ -1388,7 +1392,7 @@ export function QuestionnaireBuilder({
                         ) : (
                           <label className="text-[11px] font-medium text-muted-foreground hover:text-primary flex items-center gap-1.5 py-1 px-2 rounded-lg border border-dashed border-border hover:border-primary/40 transition-all cursor-pointer">
                             <ImageIcon className="h-3.5 w-3.5" />
-                            <span>+ Upload Logo Brand</span>
+                            <span>+ {t("Upload Logo Brand", "Upload Brand Logo")}</span>
                             <input
                               type="file"
                               accept="image/png,image/jpeg,image/webp,image/gif"
@@ -1397,14 +1401,14 @@ export function QuestionnaireBuilder({
                                 const file = e.target.files?.[0];
                                 if (!file) return;
                                 if (file.size > 2 * 1024 * 1024) {
-                                  toast.error("Ukuran logo maksimal 2MB");
+                                  toast.error(t("Ukuran logo maksimal 2MB", "Maximum logo size is 2MB"));
                                   return;
                                 }
                                 const reader = new FileReader();
                                 reader.onload = () => {
                                   if (typeof reader.result === "string") {
                                     setLogoUrl(reader.result);
-                                    toast.success("Logo berhasil diupload!");
+                                    toast.success(t("Logo berhasil diupload!", "Logo uploaded successfully!"));
                                   }
                                 };
                                 reader.readAsDataURL(file);
@@ -1419,13 +1423,13 @@ export function QuestionnaireBuilder({
                       <Input
                         value={name}
                         onChange={(e) => setName(e.target.value)}
-                        placeholder="Judul Formulir..."
+                        placeholder={t("Judul Formulir...", "Form Title...")}
                         className="text-xl sm:text-2xl font-extrabold tracking-tight border-none px-0 h-auto focus-visible:ring-0 placeholder:text-muted-foreground/40"
                       />
                       <Textarea
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Tuliskan petunjuk atau deskripsi formulir untuk responden..."
+                        placeholder={t("Tuliskan petunjuk atau deskripsi formulir untuk responden...", "Write instructions or description for respondents...")}
                         rows={2}
                         className="text-xs text-muted-foreground border-none px-0 min-h-[40px] resize-none focus-visible:ring-0 placeholder:text-muted-foreground/40"
                       />
@@ -1567,11 +1571,11 @@ export function QuestionnaireBuilder({
                         {/* Field Sublabel / Description */}
                         {selectedField.type !== "divider" && selectedField.type !== "page_break" && (
                           <div className="space-y-1.5">
-                            <Label className="text-xs font-medium">Sublabel / Help Text</Label>
+                            <Label className="text-xs font-medium">{t("Sublabel / Petunjuk", "Sublabel / Help Text")}</Label>
                             <Input
                               value={selectedField.sublabel || ""}
                               onChange={(e) => updateSelectedField({ sublabel: e.target.value })}
-                              placeholder="Petunjuk tambahan..."
+                              placeholder={t("Petunjuk tambahan...", "Additional instructions...")}
                               className="h-8.5 text-xs"
                             />
                           </div>
@@ -1580,7 +1584,7 @@ export function QuestionnaireBuilder({
                         {/* Content Text (For Info / Terms) */}
                         {(selectedField.type === "info" || selectedField.type === "terms") && (
                           <div className="space-y-1.5">
-                            <Label className="text-xs font-medium">Isi Teks / Penjelasan</Label>
+                            <Label className="text-xs font-medium">{t("Isi Teks / Penjelasan", "Content / Description")}</Label>
                             <Textarea
                               value={selectedField.content || ""}
                               onChange={(e) => updateSelectedField({ content: e.target.value })}
@@ -1603,7 +1607,7 @@ export function QuestionnaireBuilder({
                               <Input
                                 value={selectedField.placeholder || ""}
                                 onChange={(e) => updateSelectedField({ placeholder: e.target.value })}
-                                placeholder="Teks placeholder..."
+                                placeholder={t("Teks placeholder...", "Placeholder text...")}
                                 className="h-8.5 text-xs"
                               />
                             </div>
@@ -1616,8 +1620,8 @@ export function QuestionnaireBuilder({
                           selectedField.type !== "info" && (
                             <div className="flex items-center justify-between rounded-lg border p-2.5 bg-muted/10">
                               <div>
-                                <p className="text-xs font-medium">Wajib Diisi (Required)</p>
-                                <p className="text-[10px] text-muted-foreground">Klien tidak bisa submit jika kosong</p>
+                                <p className="text-xs font-medium">{t("Wajib Diisi (Required)", "Required Field")}</p>
+                                <p className="text-[10px] text-muted-foreground">{t("Klien tidak bisa submit jika kosong", "Respondents cannot submit if left blank")}</p>
                               </div>
                               <Checkbox
                                 checked={selectedField.required}
@@ -1629,7 +1633,7 @@ export function QuestionnaireBuilder({
                         {/* Rating Scale Max setting */}
                         {selectedField.type === "rating" && (
                           <div className="space-y-1.5 pt-2 border-t border-border/60">
-                            <Label className="text-xs font-medium">Skala Bintang Maksimal</Label>
+                            <Label className="text-xs font-medium">{t("Skala Bintang Maksimal", "Maximum Star Scale")}</Label>
                             <Select
                               value={String(selectedField.maxRating || 5)}
                               onValueChange={(val) => updateSelectedField({ maxRating: Number(val) })}
@@ -1638,8 +1642,8 @@ export function QuestionnaireBuilder({
                                 <SelectValue />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="5">5 Bintang (Standar)</SelectItem>
-                                <SelectItem value="10">10 Bintang (NPS Scale)</SelectItem>
+                                <SelectItem value="5">5 {t("Bintang (Standar)", "Stars (Standard)")}</SelectItem>
+                                <SelectItem value="10">10 {t("Bintang (NPS Scale)", "Stars (NPS Scale)")}</SelectItem>
                               </SelectContent>
                             </Select>
                           </div>
@@ -1649,7 +1653,7 @@ export function QuestionnaireBuilder({
                         {selectedField.type === "logo" && (
                           <div className="space-y-3 pt-2 border-t border-border/60">
                             <div className="space-y-1">
-                              <Label className="text-xs font-medium">Posisi Logo</Label>
+                              <Label className="text-xs font-medium">{t("Posisi Logo", "Logo Alignment")}</Label>
                               <div className="grid grid-cols-3 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
                                 {(["left", "center", "right"] as const).map((al) => (
                                   <button
@@ -1704,7 +1708,7 @@ export function QuestionnaireBuilder({
                         {/* Calculation Settings */}
                         {selectedField.type === "calculation" && (
                           <div className="space-y-2 pt-2 border-t border-border/60">
-                            <Label className="text-xs font-medium">Simbol Mata Uang</Label>
+                            <Label className="text-xs font-medium">{t("Simbol Mata Uang", "Currency Symbol")}</Label>
                             <Input
                               value={selectedField.currency || "Rp"}
                               onChange={(e) => updateSelectedField({ currency: e.target.value })}
@@ -1718,7 +1722,7 @@ export function QuestionnaireBuilder({
                         {selectedField.type === "image_choice" && (
                           <div className="space-y-2 pt-2 border-t border-border/60">
                             <div className="flex items-center justify-between">
-                              <Label className="text-xs font-medium">Pilihan Kartu Gambar</Label>
+                              <Label className="text-xs font-medium">{t("Pilihan Kartu Gambar", "Image Card Options")}</Label>
                               <span className="text-[10px] text-muted-foreground">Label : Image URL</span>
                             </div>
                             <Textarea
@@ -1753,7 +1757,7 @@ export function QuestionnaireBuilder({
                         {selectedField.type === "matrix" && (
                           <div className="space-y-3 pt-2 border-t border-border/60">
                             <div className="space-y-1">
-                              <Label className="text-xs font-medium">Baris Evaluasi (Aspek)</Label>
+                              <Label className="text-xs font-medium">{t("Baris Evaluasi (Aspek)", "Evaluation Rows (Aspects)")}</Label>
                               <Textarea
                                 value={(selectedField.matrixRows || []).join("\n")}
                                 onChange={(e) =>
@@ -1767,7 +1771,7 @@ export function QuestionnaireBuilder({
                               />
                             </div>
                             <div className="space-y-1">
-                              <Label className="text-xs font-medium">Kolom Skala Nilai</Label>
+                              <Label className="text-xs font-medium">{t("Kolom Skala Nilai", "Rating Scale Columns")}</Label>
                               <Input
                                 value={(selectedField.matrixCols || []).join(", ")}
                                 onChange={(e) =>
@@ -1786,8 +1790,8 @@ export function QuestionnaireBuilder({
                         {(selectedField.type === "select" || selectedField.type === "multiselect") && (
                           <div className="space-y-2 pt-2 border-t border-border/60">
                             <div className="flex items-center justify-between">
-                              <Label className="text-xs font-medium">Pilihan Opsi & Harga</Label>
-                              <span className="text-[10px] text-muted-foreground">Format: Opsi : Harga</span>
+                              <Label className="text-xs font-medium">{t("Pilihan Opsi & Harga", "Options & Pricing")}</Label>
+                              <span className="text-[10px] text-muted-foreground">{t("Format: Opsi : Harga", "Format: Option : Price")}</span>
                             </div>
                             <Textarea
                               value={(selectedField.options || [])
@@ -1862,7 +1866,7 @@ export function QuestionnaireBuilder({
 
                           {fields.filter((f) => f.id !== selectedField.id && f.type !== "heading" && f.type !== "divider" && f.type !== "page_break").length > 0 ? (
                             <div className="space-y-2 rounded-lg border p-2.5 bg-muted/10">
-                              <p className="text-[11px] text-muted-foreground">Tampilkan elemen ini hanya jika:</p>
+                              <p className="text-[11px] text-muted-foreground">{t("Tampilkan elemen ini hanya jika:", "Display this element only if:")}</p>
                               <Select
                                 value={selectedField.condition?.fieldId || "none"}
                                 onValueChange={(val) => {
@@ -1880,10 +1884,10 @@ export function QuestionnaireBuilder({
                                 }}
                               >
                                 <SelectTrigger className="h-8 text-xs bg-background">
-                                  <SelectValue placeholder="Pilih pertanyaan pemicu..." />
+                                  <SelectValue placeholder={t("Pilih pertanyaan pemicu...", "Select trigger question...")} />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="none">Tanpa Kondisi (Selalu Tampil)</SelectItem>
+                                  <SelectItem value="none">{t("Tanpa Kondisi (Selalu Tampil)", "No Condition (Always Show)")}</SelectItem>
                                   {fields
                                     .filter((f) => f.id !== selectedField.id && f.type !== "heading" && f.type !== "divider" && f.type !== "page_break")
                                     .map((f) => (
@@ -1897,7 +1901,7 @@ export function QuestionnaireBuilder({
                               {selectedField.condition && (
                                 <div className="space-y-1.5 pt-1">
                                   <Label className="text-[10px] text-muted-foreground uppercase font-bold">
-                                    Nilai yang Cocok (Value Equals):
+                                    {t("Nilai yang Cocok (Value Equals):", "Matching Value (Value Equals):")}
                                   </Label>
                                   <Input
                                     value={selectedField.condition.value || ""}
@@ -1909,7 +1913,7 @@ export function QuestionnaireBuilder({
                                         },
                                       })
                                     }
-                                    placeholder="Misal: Web Development, Ya, dsb."
+                                    placeholder={t("Misal: Web Development, Ya, dsb.", "e.g., Web Development, Yes, etc.")}
                                     className="h-8 text-xs bg-background"
                                   />
                                 </div>
@@ -1917,7 +1921,7 @@ export function QuestionnaireBuilder({
                             </div>
                           ) : (
                             <p className="text-[10px] text-muted-foreground italic">
-                              Tambahkan minimal 2 pertanyaan untuk mengaktifkan conditional logic.
+                              {t("Tambahkan minimal 2 pertanyaan untuk mengaktifkan conditional logic.", "Add at least 2 questions to enable conditional logic.")}
                             </p>
                           )}
                         </div>
@@ -1932,14 +1936,14 @@ export function QuestionnaireBuilder({
                             className="w-full h-8 text-xs text-destructive hover:bg-destructive/10 border-destructive/30"
                           >
                             <Trash2 className="h-3.5 w-3.5 mr-1.5" />
-                            Hapus Elemen Ini
+                            {t("Hapus Elemen Ini", "Delete This Element")}
                           </Button>
                         </div>
                       </div>
                     ) : (
                       <div className="py-12 text-center text-muted-foreground">
                         <Sliders className="h-8 w-8 mx-auto mb-2 opacity-40" />
-                        <p className="text-xs">Klik salah satu pertanyaan di canvas untuk mengedit pengaturannya.</p>
+                        <p className="text-xs">{t("Klik salah satu pertanyaan di canvas untuk mengedit pengaturannya.", "Click any field on the canvas to configure its settings.")}</p>
                       </div>
                     )}
                   </div>
@@ -1958,16 +1962,16 @@ export function QuestionnaireBuilder({
             <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Settings className="h-4 w-4 text-primary" />
-                <span>Form Settings</span>
+                <span>{t("Pengaturan Formulir", "Form Settings")}</span>
               </h3>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Form Name</Label>
+                <Label className="text-xs font-semibold">{t("Nama Formulir", "Form Name")}</Label>
                 <Input value={name} onChange={(e) => setName(e.target.value)} className="h-9 text-xs sm:text-sm" />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Description & Instructions</Label>
+                <Label className="text-xs font-semibold">{t("Deskripsi & Petunjuk", "Description & Instructions")}</Label>
                 <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="text-xs" />
               </div>
             </div>
@@ -1976,14 +1980,14 @@ export function QuestionnaireBuilder({
             <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Lock className="h-4 w-4 text-amber-500" />
-                <span>Access Control & Status</span>
+                <span>{t("Kontrol Akses & Status", "Access Control & Status")}</span>
               </h3>
 
               <div className="flex items-center justify-between rounded-xl border p-3 bg-muted/10">
                 <div>
-                  <p className="text-xs font-semibold">Form Status</p>
+                  <p className="text-xs font-semibold">{t("Status Formulir", "Form Status")}</p>
                   <p className="text-[10px] text-muted-foreground">
-                    {formStatus === "active" ? "Form is active and accepting responses" : "Form is disabled (closed for submissions)"}
+                    {formStatus === "active" ? t("Formulir aktif dan menerima tanggapan", "Form is active and accepting responses") : t("Formulir ditutup (tidak menerima pengisian)", "Form is disabled (closed for submissions)")}
                   </p>
                 </div>
                 <Select value={formStatus} onValueChange={(val: any) => setFormStatus(val)}>
@@ -1991,23 +1995,23 @@ export function QuestionnaireBuilder({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">🟢 Active</SelectItem>
-                    <SelectItem value="disabled">🔴 Closed</SelectItem>
+                    <SelectItem value="active">🟢 {t("Aktif", "Active")}</SelectItem>
+                    <SelectItem value="disabled">🔴 {t("Ditutup", "Closed")}</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-1.5 pt-1">
-                <Label className="text-xs font-semibold">Password Protection (Optional)</Label>
+                <Label className="text-xs font-semibold">{t("Proteksi Password (Opsional)", "Password Protection (Optional)")}</Label>
                 <Input
                   type="password"
                   value={passwordProtection}
                   onChange={(e) => setPasswordProtection(e.target.value)}
-                  placeholder="Leave empty for public access without password"
+                  placeholder={t("Biarkan kosong untuk akses publik tanpa password", "Leave empty for public access without password")}
                   className="h-9 text-xs"
                 />
                 <p className="text-[10px] text-muted-foreground">
-                  If set, respondents must enter this passcode before accessing the form.
+                  {t("Jika diisi, responden wajib memasukkan passcode sebelum dapat mengisi form.", "If set, respondents must enter this passcode before accessing the form.")}
                 </p>
               </div>
             </div>
@@ -2016,9 +2020,9 @@ export function QuestionnaireBuilder({
             <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Palette className="h-4 w-4 text-primary" />
-                <span>Theme, Colors & Card Radius</span>
+                <span>{t("Tema, Warna & Radius Kartu", "Theme, Colors & Card Radius")}</span>
               </h3>
-              <p className="text-xs text-muted-foreground">Customize branding visuals to match your agency and client identity.</p>
+              <p className="text-xs text-muted-foreground">{t("Sesuaikan visual branding dengan identitas agensi dan klien Anda.", "Customize branding visuals to match your agency and client identity.")}</p>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
                 {THEME_PRESETS.map((tPreset) => (
@@ -2045,7 +2049,7 @@ export function QuestionnaireBuilder({
 
               {/* Card Roundness Switcher */}
               <div className="space-y-2 pt-3 border-t border-border/60">
-                <Label className="text-xs font-semibold">Card Corner Radius</Label>
+                <Label className="text-xs font-semibold">{t("Radius Sudut Kartu", "Card Corner Radius")}</Label>
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
@@ -2082,11 +2086,11 @@ export function QuestionnaireBuilder({
             <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <FileCheck className="h-4 w-4 text-emerald-500" />
-                <span>Post-Submission Action (Thank You Page)</span>
+                <span>{t("Aksi Setelah Submit (Thank You Page)", "Post-Submission Action (Thank You Page)")}</span>
               </h3>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">Thank You Message</Label>
+                <Label className="text-xs font-semibold">{t("Pesan Terima Kasih", "Thank You Message")}</Label>
                 <Textarea
                   value={thankYouMessage}
                   onChange={(e) => setThankYouMessage(e.target.value)}
@@ -2096,14 +2100,14 @@ export function QuestionnaireBuilder({
               </div>
 
               <div className="space-y-1.5 pt-2">
-                <Label className="text-xs font-semibold">Redirect URL (Optional)</Label>
+                <Label className="text-xs font-semibold">{t("URL Pengalihan / Redirect (Opsional)", "Redirect URL (Optional)")}</Label>
                 <Input
                   value={redirectUrl}
                   onChange={(e) => setRedirectUrl(e.target.value)}
                   placeholder="https://wa.me/... or https://yourdomain.com"
                   className="h-9 text-xs font-mono"
                 />
-                <p className="text-[10px] text-muted-foreground">If provided, respondents will automatically be redirected to this link after submission.</p>
+                <p className="text-[10px] text-muted-foreground">{t("Jika diisi, responden akan otomatis dialihkan ke tautan ini setelah submit.", "If provided, respondents will automatically be redirected to this link after submission.")}</p>
               </div>
             </div>
 
@@ -2146,6 +2150,19 @@ export function QuestionnaireBuilder({
                 </div>
               </div>
             </div>
+
+            {/* Bottom Save Settings Button */}
+            <div className="flex justify-end pt-2">
+              <Button
+                type="button"
+                disabled={pending}
+                onClick={handleSave}
+                className="gap-1.5 text-xs font-semibold px-5"
+              >
+                {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                <span>{t("Simpan Pengaturan", "Save Settings")}</span>
+              </Button>
+            </div>
           </div>
         </div>
       )}
@@ -2157,13 +2174,13 @@ export function QuestionnaireBuilder({
             <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Globe className="h-4 w-4 text-primary" />
-                <span>Share & Publish Form</span>
+                <span>{t("Bagikan & Publikasikan Formulir", "Share & Publish Form")}</span>
               </h3>
 
               {questionnaireId ? (
                 <div className="space-y-5">
                   <div className="space-y-2">
-                    <Label className="text-xs font-semibold">Direct Shareable Link</Label>
+                    <Label className="text-xs font-semibold">{t("Link Publik Formulir", "Direct Shareable Link")}</Label>
                     <div className="flex items-center gap-2">
                       <Input
                         readOnly
@@ -2175,11 +2192,11 @@ export function QuestionnaireBuilder({
                         size="sm"
                         onClick={() => {
                           navigator.clipboard.writeText(shareUrl);
-                          toast.success("Link copied to clipboard!");
+                          toast.success(t("Link berhasil disalin ke clipboard!", "Link copied to clipboard!"));
                         }}
                         className="h-9.5 px-4 text-xs font-semibold"
                       >
-                        Copy Link
+                        {t("Salin Link", "Copy Link")}
                       </Button>
                     </div>
                   </div>
@@ -2197,7 +2214,7 @@ export function QuestionnaireBuilder({
                       className="h-9 gap-1.5 text-xs font-semibold border-emerald-500/40 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                     >
                       <MessageCircle className="h-4 w-4" />
-                      <span>Share to WhatsApp</span>
+                      <span>{t("Kirim via WhatsApp", "Share to WhatsApp")}</span>
                     </Button>
 
                     <Button
@@ -2213,14 +2230,14 @@ export function QuestionnaireBuilder({
                       className="h-9 gap-1.5 text-xs font-semibold"
                     >
                       <QrCode className="h-4 w-4 text-primary" />
-                      <span>View QR Code</span>
+                      <span>{t("Buka QR Code", "View QR Code")}</span>
                     </Button>
                   </div>
 
                   <div className="space-y-2 pt-3 border-t border-border/60">
                     <Label className="text-xs font-semibold flex items-center gap-1.5">
                       <Code className="h-3.5 w-3.5 text-primary" />
-                      <span>Embed Form on Website (iFrame)</span>
+                      <span>{t("Embed Form di Website (iFrame)", "Embed Form on Website (iFrame)")}</span>
                     </Label>
                     <Textarea
                       readOnly
@@ -2234,11 +2251,11 @@ export function QuestionnaireBuilder({
                       size="sm"
                       onClick={() => {
                         navigator.clipboard.writeText(embedCode);
-                        toast.success("Embed code copied to clipboard!");
+                        toast.success(t("Kode embed berhasil disalin!", "Embed code copied to clipboard!"));
                       }}
                       className="h-8.5 px-3 text-xs"
                     >
-                      Copy Embed Code
+                      {t("Salin Kode Embed", "Copy Embed Code")}
                     </Button>
                   </div>
                 </div>
@@ -2246,7 +2263,10 @@ export function QuestionnaireBuilder({
                 <div className="py-8 text-center space-y-2">
                   <Share2 className="h-8 w-8 mx-auto text-muted-foreground/50" />
                   <p className="text-xs text-muted-foreground">
-                    Click <strong>Save</strong> in the top right header first to generate your shareable link and embed snippet.
+                    {t(
+                      "Klik Simpan di pojok kanan atas terlebih dahulu untuk membuat link dan snippet embed form Anda.",
+                      "Click Save in the top right header first to generate your shareable link and embed snippet.",
+                    )}
                   </p>
                 </div>
               )}
