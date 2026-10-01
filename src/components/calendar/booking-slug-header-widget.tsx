@@ -24,30 +24,32 @@ function normalizeSlug(value: string) {
 
 export function BookingSlugHeaderWidget({
   defaultSlug,
+  workspaceSlug,
   isFreePlan = false,
   canEdit,
 }: {
   defaultSlug: string | null;
+  workspaceSlug?: string | null;
   isFreePlan?: boolean;
   canEdit: boolean;
 }) {
   const { t } = useT();
   const { refresh } = useAppTransition();
   const [open, setOpen] = useState(false);
-  const [slug, setSlug] = useState(defaultSlug ?? "");
+  const [slug, setSlug] = useState(defaultSlug || workspaceSlug || "");
 
   const [loading, setLoading] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const publicUrl = useMemo(() => {
-    const clean = normalizeSlug(defaultSlug ?? "");
+    const clean = normalizeSlug(defaultSlug || workspaceSlug || "");
     if (!clean) return null;
     const origin =
       typeof window !== "undefined"
         ? window.location.origin
         : process.env.NEXT_PUBLIC_APP_URL || "https://cubiqlo.com";
     return `${origin}/booking/${clean}`;
-  }, [defaultSlug]);
+  }, [defaultSlug, workspaceSlug]);
 
 
 
@@ -153,7 +155,7 @@ export function BookingSlugHeaderWidget({
                       https://cubiqlo.com/booking/
                     </span>
                     <Input
-                      value={slug}
+                      value={isFreePlan ? (workspaceSlug || slug) : slug}
                       onChange={(e) => setSlug(e.target.value)}
                       disabled={isFreePlan}
                       readOnly={isFreePlan}

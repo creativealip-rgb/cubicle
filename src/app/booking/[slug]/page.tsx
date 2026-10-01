@@ -1,7 +1,7 @@
 import { db } from "@/db";
 import Image from "next/image";
 import { availabilityRules, workspaces } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, or } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getAvailableSlots } from "@/lib/actions/appointments";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,7 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
     .select({
       id: workspaces.id,
       name: workspaces.name,
+      slug: workspaces.slug,
       bookingSlug: workspaces.bookingSlug,
       bookingMeetingPlatform: workspaces.bookingMeetingPlatform,
       bookingMeetingLink: workspaces.bookingMeetingLink,
@@ -31,7 +32,7 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
       logoUrl: workspaces.logoUrl,
     })
     .from(workspaces)
-    .where(eq(workspaces.bookingSlug, slug))
+    .where(or(eq(workspaces.bookingSlug, slug), eq(workspaces.slug, slug)))
     .limit(1);
 
   if (!ws) notFound();

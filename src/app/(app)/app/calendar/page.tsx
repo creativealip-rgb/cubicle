@@ -146,7 +146,8 @@ export default async function CalendarPage() {
         )}
         actions={
           <BookingSlugHeaderWidget
-            defaultSlug={ws.bookingSlug}
+            defaultSlug={ws.bookingSlug || ws.slug}
+            workspaceSlug={ws.slug}
             isFreePlan={isFreePlan}
             canEdit={ws.ownerId === user.id}
           />
