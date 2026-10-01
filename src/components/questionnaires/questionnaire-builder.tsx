@@ -330,46 +330,46 @@ const FORM_TEMPLATES = [
   {
     id: "web-dev",
     title: "Web Development Client Intake",
-    description: "Brief multi-step untuk project website, landing page, atau web app.",
+    description: "Multi-step brief for website, landing page, or web app projects.",
     fields: [
-      { id: makeId(), type: "text" as const, label: "Nama Lengkap / Perusahaan", required: true, placeholder: "PT Contoh Sukses", colSpan: "full" as const },
-      { id: makeId(), type: "email" as const, label: "Email Bisnis", required: true, placeholder: "contact@contoh.com", colSpan: "half" as const },
-      { id: makeId(), type: "phone" as const, label: "Nomor WhatsApp", required: true, placeholder: "+62 812-3456-7890", colSpan: "half" as const },
-      { id: makeId(), type: "page_break" as const, label: "Detail Kebutuhan & Fitur", required: false, colSpan: "full" as const },
-      { id: makeId(), type: "select" as const, label: "Tipe Website yang Dibutuhkan", options: ["Company Profile / Landing Page", "E-Commerce / Toko Online", "Custom Web Application", "Redesign Website Lama"], required: true, colSpan: "full" as const },
-      { id: makeId(), type: "textarea" as const, label: "Jelaskan Tujuan & Fitur Utama", required: true, placeholder: "Website untuk meningkatkan penjualan dan branding...", colSpan: "full" as const },
-      { id: makeId(), type: "url" as const, label: "Website Referensi / Kompetitor", required: false, placeholder: "https://apple.com, https://stripe.com", colSpan: "full" as const },
-      { id: makeId(), type: "page_break" as const, label: "Dokumen & Deadline", required: false, colSpan: "full" as const },
-      { id: makeId(), type: "file" as const, label: "Upload Asset / Dokumen Pendukung", acceptFiles: ".pdf,.doc,.docx,.png,.jpg,.zip", required: false, colSpan: "full" as const },
-      { id: makeId(), type: "date" as const, label: "Target Tanggal Peluncuran", required: false, colSpan: "half" as const },
-      { id: makeId(), type: "time" as const, label: "Waktu Hubungi Terbaik", required: false, colSpan: "half" as const },
-      { id: makeId(), type: "terms" as const, label: "Saya menyetujui data brief ini digunakan untuk pembuatan estimasi proposal", required: true, colSpan: "full" as const },
+      { id: makeId(), type: "text" as const, label: "Full Name / Company Name", required: true, placeholder: "Acme Corp", colSpan: "full" as const },
+      { id: makeId(), type: "email" as const, label: "Business Email", required: true, placeholder: "contact@company.com", colSpan: "half" as const },
+      { id: makeId(), type: "phone" as const, label: "WhatsApp / Phone Number", required: true, placeholder: "+1 555-0199", colSpan: "half" as const },
+      { id: makeId(), type: "page_break" as const, label: "Project Scope & Features", required: false, colSpan: "full" as const },
+      { id: makeId(), type: "select" as const, label: "Required Website Type", options: ["Company Profile / Landing Page", "E-Commerce / Online Store", "Custom Web Application", "Website Redesign"], required: true, colSpan: "full" as const },
+      { id: makeId(), type: "textarea" as const, label: "Project Goals & Key Features", required: true, placeholder: "The website aims to increase conversions and strengthen brand presence...", colSpan: "full" as const },
+      { id: makeId(), type: "url" as const, label: "Reference / Competitor Websites", required: false, placeholder: "https://apple.com, https://stripe.com", colSpan: "full" as const },
+      { id: makeId(), type: "page_break" as const, label: "Assets & Timeline", required: false, colSpan: "full" as const },
+      { id: makeId(), type: "file" as const, label: "Upload Brand Assets & Documents", acceptFiles: ".pdf,.doc,.docx,.png,.jpg,.zip", required: false, colSpan: "full" as const },
+      { id: makeId(), type: "date" as const, label: "Target Launch Date", required: false, colSpan: "half" as const },
+      { id: makeId(), type: "time" as const, label: "Preferred Contact Time", required: false, colSpan: "half" as const },
+      { id: makeId(), type: "terms" as const, label: "I agree that this brief will be used to prepare a project proposal", required: true, colSpan: "full" as const },
     ],
   },
   {
     id: "branding-design",
     title: "Branding & Logo Design Brief",
-    description: "Kumpulkan preferensi visual, nilai brand, dan aset dari klien untuk project desain.",
+    description: "Gather visual preferences, brand values, and design requirements.",
     fields: [
-      { id: makeId(), type: "text" as const, label: "Nama Brand / Brand Name", required: true, placeholder: "Cubiqlo Studio", colSpan: "half" as const },
-      { id: makeId(), type: "text" as const, label: "Tagline atau Slogan", required: false, placeholder: "Crafting modern experiences", colSpan: "half" as const },
-      { id: makeId(), type: "textarea" as const, label: "Ceritakan tentang Brand & Target Audiens Anda", required: true, placeholder: "Target kami adalah profesional muda umur 20-35 tahun...", colSpan: "full" as const },
-      { id: makeId(), type: "multiselect" as const, label: "Nuansa / Vibe Visual yang Diinginkan", options: ["Modern & Minimalist", "Bold & Energetic", "Luxury & Elegant", "Friendly & Approachable", "Tech / Futuristic"], required: true, colSpan: "full" as const },
-      { id: makeId(), type: "textarea" as const, label: "Warna yang Disukai atau Dihindari", required: false, placeholder: "Suka warna biru navy dan ungu, hindari warna kuning cerah.", colSpan: "full" as const },
-      { id: makeId(), type: "file" as const, label: "Upload Moodboard / Referensi Desain", acceptFiles: ".pdf,.png,.jpg,.zip", required: false, colSpan: "full" as const },
+      { id: makeId(), type: "text" as const, label: "Brand Name", required: true, placeholder: "Cubiqlo Studio", colSpan: "half" as const },
+      { id: makeId(), type: "text" as const, label: "Tagline or Slogan", required: false, placeholder: "Crafting modern experiences", colSpan: "half" as const },
+      { id: makeId(), type: "textarea" as const, label: "Tell Us About Your Brand & Target Audience", required: true, placeholder: "Our audience consists of modern professionals aged 20-35...", colSpan: "full" as const },
+      { id: makeId(), type: "multiselect" as const, label: "Desired Visual Vibe / Style", options: ["Modern & Minimalist", "Bold & Energetic", "Luxury & Elegant", "Friendly & Approachable", "Tech / Futuristic"], required: true, colSpan: "full" as const },
+      { id: makeId(), type: "textarea" as const, label: "Preferred or Avoided Colors", required: false, placeholder: "Prefer navy blue and purple, avoid neon yellow.", colSpan: "full" as const },
+      { id: makeId(), type: "file" as const, label: "Upload Moodboard / Design References", acceptFiles: ".pdf,.png,.jpg,.zip", required: false, colSpan: "full" as const },
     ],
   },
   {
     id: "feedback-survey",
     title: "Client Feedback & Satisfaction Survey",
-    description: "Survey kepuasan klien setelah project selesai untuk review dan perbaikan layanan.",
+    description: "Post-project satisfaction survey for client review and service improvement.",
     fields: [
-      { id: makeId(), type: "text" as const, label: "Nama Klien / Perusahaan", required: true, placeholder: "Budi Santoso", colSpan: "full" as const },
-      { id: makeId(), type: "rating" as const, label: "Seberapa Puas Anda dengan Hasil Akhir Proyek?", required: true, maxRating: 5, colSpan: "half" as const },
-      { id: makeId(), type: "rating" as const, label: "Kecepatan Respon & Komunikasi Tim Kami", required: true, maxRating: 5, colSpan: "half" as const },
-      { id: makeId(), type: "textarea" as const, label: "Apa yang Paling Anda Sukai dari Kolaborasi Ini?", required: false, placeholder: "Hasil desain sangat memuaskan...", colSpan: "full" as const },
-      { id: makeId(), type: "textarea" as const, label: "Saran atau Hal yang Bisa Kami Tingkatkan?", required: false, placeholder: "Komunikasi estimasi waktu bisa lebih sering...", colSpan: "full" as const },
-      { id: makeId(), type: "signature" as const, label: "Tanda Tangan Konfirmasi Serah Terima", required: false, colSpan: "full" as const },
+      { id: makeId(), type: "text" as const, label: "Client / Company Name", required: true, placeholder: "John Doe", colSpan: "full" as const },
+      { id: makeId(), type: "rating" as const, label: "Overall Satisfaction with the Final Deliverable", required: true, maxRating: 5, colSpan: "half" as const },
+      { id: makeId(), type: "rating" as const, label: "Team Communication & Response Speed", required: true, maxRating: 5, colSpan: "half" as const },
+      { id: makeId(), type: "textarea" as const, label: "What Did You Enjoy Most About Working With Us?", required: false, placeholder: "The quality of work and quick turnarounds...", colSpan: "full" as const },
+      { id: makeId(), type: "textarea" as const, label: "Suggestions or Areas for Improvement", required: false, placeholder: "More frequent milestone check-ins...", colSpan: "full" as const },
+      { id: makeId(), type: "signature" as const, label: "Sign-Off & Handover Confirmation", required: false, colSpan: "full" as const },
     ],
   },
 ];
@@ -612,13 +612,13 @@ function SortableCanvasField({
           {field.type === "select" && (
             <Select disabled>
               <SelectTrigger className="h-9 text-xs bg-muted/20">
-                <SelectValue placeholder="Pilih salah satu..." />
+                <SelectValue placeholder={t("Pilih salah satu...", "Select an option...")} />
               </SelectTrigger>
             </Select>
           )}
           {field.type === "multiselect" && (
             <div className="space-y-1.5 pt-1 px-1">
-              {(field.options || ["Pilihan 1", "Pilihan 2"]).map((opt, i) => (
+              {(field.options || [t("Pilihan 1", "Option 1"), t("Pilihan 2", "Option 2")]).map((opt, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs text-muted-foreground">
                   <div className="h-3.5 w-3.5 rounded border border-border bg-muted/30" />
                   <span>{opt}</span>
@@ -629,14 +629,14 @@ function SortableCanvasField({
           {field.type === "file" && (
             <div className="border-2 border-dashed border-border/80 rounded-xl p-4 text-center bg-muted/10 space-y-1">
               <Paperclip className="h-4 w-4 mx-auto text-muted-foreground" />
-              <p className="text-xs font-medium text-foreground">Upload file brief atau dokumen</p>
-              <p className="text-[10px] text-muted-foreground">{field.acceptFiles || "Format: PDF, PNG, ZIP"}</p>
+              <p className="text-xs font-medium text-foreground">{t("Upload file brief atau dokumen", "Upload brief or document attachment")}</p>
+              <p className="text-[10px] text-muted-foreground">{field.acceptFiles || t("Format: PDF, PNG, ZIP", "Format: PDF, PNG, ZIP")}</p>
             </div>
           )}
           {field.type === "signature" && (
             <div className="border border-border/80 rounded-xl p-3 text-center bg-muted/10 h-14 flex items-center justify-center gap-2">
               <PenTool className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-[11px] text-muted-foreground italic">Area Tanda Tangan Digital</p>
+              <p className="text-[11px] text-muted-foreground italic">{t("Area Tanda Tangan Digital", "Digital Signature Pad Area")}</p>
             </div>
           )}
           {field.type === "rating" && (
@@ -650,7 +650,7 @@ function SortableCanvasField({
             <div className="p-3.5 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Calculator className="h-4 w-4 text-primary" />
-                <span className="text-xs font-semibold text-foreground">Total Estimasi Real-time</span>
+                <span className="text-xs font-semibold text-foreground">{t("Total Estimasi Real-time", "Live Calculated Total")}</span>
               </div>
               <span className="font-mono font-bold text-sm text-primary">
                 {field.currency || "Rp"} 0
@@ -674,7 +674,7 @@ function SortableCanvasField({
               <table className="w-full text-xs text-left">
                 <thead className="bg-muted/40 text-[10px] uppercase font-bold text-muted-foreground border-b border-border/70">
                   <tr>
-                    <th className="p-2.5">Aspek / Pertanyaan</th>
+                    <th className="p-2.5">{t("Aspek / Pertanyaan", "Aspect / Question")}</th>
                     {(field.matrixCols || []).map((col, idx) => (
                       <th key={idx} className="p-2.5 text-center">{col}</th>
                     ))}
@@ -1766,7 +1766,7 @@ export function QuestionnaireBuilder({
                                   })
                                 }
                                 rows={3}
-                                placeholder="Kecepatan&#10;Kualitas&#10;Komunikasi"
+                                placeholder="Response Speed&#10;Deliverable Quality&#10;Communication"
                                 className="text-xs font-mono"
                               />
                             </div>
@@ -1779,7 +1779,7 @@ export function QuestionnaireBuilder({
                                     matrixCols: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
                                   })
                                 }
-                                placeholder="Kurang, Cukup, Baik, Sangat Baik"
+                                placeholder="Poor, Fair, Good, Excellent"
                                 className="h-8.5 text-xs font-mono"
                               />
                             </div>
@@ -1804,28 +1804,25 @@ export function QuestionnaireBuilder({
                                 const lines = e.target.value.split("\n");
                                 const opts: string[] = [];
                                 const prices: Record<string, number> = {};
-                                lines.forEach((line) => {
-                                  const trimmed = line.trim();
+                                lines.forEach((l) => {
+                                  const trimmed = l.trim();
                                   if (!trimmed) return;
                                   if (trimmed.includes(":")) {
-                                    const [name, priceStr] = trimmed.split(":");
-                                    const optName = name.trim();
-                                    const p = parseFloat(priceStr.replace(/[^0-9.-]+/g, "")) || 0;
-                                    if (optName) {
-                                      opts.push(optName);
-                                      prices[optName] = p;
+                                    const parts = trimmed.split(":");
+                                    const label = parts[0].trim();
+                                    const price = Number(parts[1].trim());
+                                    if (label) {
+                                      opts.push(label);
+                                      if (!isNaN(price)) prices[label] = price;
                                     }
                                   } else {
                                     opts.push(trimmed);
                                   }
                                 });
-                                updateSelectedField({
-                                  options: opts,
-                                  optionPrices: Object.keys(prices).length > 0 ? prices : undefined,
-                                });
+                                updateSelectedField({ options: opts, optionPrices: prices });
                               }}
                               rows={4}
-                              placeholder="Landing Page : 3000000&#10;Add-on SEO : 1000000&#10;Maintenance : 500000"
+                              placeholder="Website Design : 3000&#10;SEO Optimization : 1000&#10;Monthly Maintenance : 500"
                               className="text-xs font-mono"
                             />
                           </div>
