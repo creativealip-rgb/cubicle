@@ -25,7 +25,8 @@ import { useT } from "@/lib/i18n-client";
 import { formatMoney } from "@/lib/utils";
 import { projectStatusVariant } from "@/lib/status-badge";
 import { SendProposalButton } from "@/components/proposals/send-proposal-button";
-import { DeleteProposalButton } from "@/components/proposals/delete-proposal-button";
+import { DeleteProposalButton } from "./delete-proposal-button";
+import { ProposalRowActions } from "./proposal-row-actions";
 import { updateProposalStatus } from "@/lib/actions/proposals";
 import { toast } from "sonner";
 import { FileText, Loader2 } from "lucide-react";
@@ -276,44 +277,7 @@ export function ProposalsListTable({
                     {activityLabel(p, t, lang)}
                   </TableCell>
                   <TableCell className="text-right align-middle">
-                    <div className="flex items-center justify-end gap-1">
-                    {canWrite &&
-                    (p.status === "draft" ||
-                      p.status === "sent" ||
-                      p.status === "viewed") ? (
-                      <SendProposalButton
-                        proposalId={p.id}
-                        status={p.status}
-                        compact
-                        title={p.title}
-                        clientName={p.clientName}
-                        clientEmail={p.clientEmail ?? undefined}
-                        labelSend={t("Kirim", "Send")}
-                        labelResend={t("Kirim ulang", "Resend")}
-                        labelSending={t("Mengirim...", "Sending...")}
-                        labelCopy={t("Salin", "Copy")}
-                        labelCopied={t("Disalin", "Copied")}
-                        successMessage={t(
-                          "Proposal siap dibagikan. Salin tautan ke klien.",
-                          "Proposal ready to share. Copy the link for your client.",
-                        )}
-                      />
-                    ) : (
-                      <Button asChild variant="ghost" size="sm" className="h-7 text-xs">
-                        <Link href={`/app/proposals/${p.id}/edit`}>
-                          {t("Buka", "Open")}
-                        </Link>
-                      </Button>
-                    )}
-                    {canWrite && p.status !== "accepted" && (
-                      <DeleteProposalButton
-                        proposalId={p.id}
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-md"
-                      />
-                    )}
-                    </div>
+                    <ProposalRowActions proposal={p} canWrite={canWrite} />
                   </TableCell>
                 </TableRow>
               );

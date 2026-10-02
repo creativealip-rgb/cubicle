@@ -17,7 +17,8 @@ import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { ClipboardList, Copy } from "lucide-react";
 import { duplicateQuestionnaire } from "@/lib/actions/questionnaires";
-import { DeleteQuestionnaireButton } from "@/components/questionnaires/delete-questionnaire-button";
+import { DeleteQuestionnaireButton } from "./delete-questionnaire-button";
+import { QuestionnaireRowActions } from "./questionnaire-row-actions";
 import { toast } from "sonner";
 import { useAppTransition } from "@/lib/transition-provider";
 
@@ -163,32 +164,7 @@ export function QuestionnairesListTable({
                   {q.updatedAt ? new Date(q.updatedAt).toLocaleDateString(lang === "en" ? "en-US" : "id-ID") : "—"}
                 </TableCell>
                 <TableCell className="text-right align-middle">
-                  <div className="flex items-center justify-end gap-1">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      disabled={pending}
-                      onClick={() => handleDuplicate(q.id)}
-                      className="h-7 w-7 text-muted-foreground hover:text-foreground rounded-md"
-                      title="Duplikasi Formulir"
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button asChild variant="ghost" size="sm" className="h-7 text-xs font-semibold">
-                      <Link href={`/app/questionnaires/${q.id}`}>
-                        {t("Buka", "Open")}
-                      </Link>
-                    </Button>
-                    {canWrite && (
-                      <DeleteQuestionnaireButton
-                        questionnaireId={q.id}
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 text-muted-foreground hover:bg-destructive/10 hover:text-destructive rounded-md"
-                      />
-                    )}
-                  </div>
+                  <QuestionnaireRowActions questionnaire={q} canWrite={canWrite} />
                 </TableCell>
               </TableRow>
             ))}
