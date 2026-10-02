@@ -35,7 +35,7 @@ import { buildReportPeriod } from "@/lib/report-period";
 import { InvoicePeriodControls } from "@/components/invoices/invoice-period-controls";
 import { RecurringInvoiceManager } from "@/components/invoices/recurring-invoice-manager";
 import { PaginationLinks } from "@/components/ui/pagination-links";
-import { Plus } from "lucide-react";
+import { DirectCreateInvoiceButton } from "@/components/invoices/direct-create-invoice-button";
 
 const PAGE_SIZE = 10;
 
@@ -434,12 +434,7 @@ export default async function InvoicesPage({
         )}
         actions={
           canWrite ? (
-            <Button asChild size="sm" className="gap-1.5 font-semibold">
-              <Link href="/app/invoices/new">
-                <Plus className="h-4 w-4" />
-                <span>{t("Invoice Baru", "New Invoice")}</span>
-              </Link>
-            </Button>
+            <DirectCreateInvoiceButton />
           ) : null
         }
       />

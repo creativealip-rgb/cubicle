@@ -24,7 +24,7 @@ import {
   projectServices,
   workspaceCurrencyRates,
 } from "@/db/schema";
-import { eq, and, desc, sql, inArray, lt, isNotNull, ne, or } from "drizzle-orm";
+import { eq, and, desc, asc, sql, inArray, lt, isNotNull, ne, or } from "drizzle-orm";
 import { z } from "zod";
 import { createHash, randomBytes } from "crypto";
 import { requireUser, assertWorkspaceWritable, assertWorkspaceMember } from "@/lib/access";
@@ -171,11 +171,11 @@ async function assertInvoiceInWorkspace(invoiceId: string, workspaceId: string) 
 // ─── CRUD ───
 
 const createEmptyInvoiceDraftSchema = z.object({
-  clientId: z.string().uuid(),
+  clientId: z.string().uuid().optional(),
   invoiceNumber: z.string().optional(),
 });
 
-export async function createEmptyInvoiceDraft(input: z.infer<typeof createEmptyInvoiceDraftSchema>) {
+export async function createEmptyInvoiceDraft(input: z.infer<typeof createEmptyInvoiceDraftSchema> = {}) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
@@ -187,11 +187,32 @@ export async function createEmptyInvoiceDraft(input: z.infer<typeof createEmptyI
   const limit = await checkEntityLimit(workspaceId, "invoices", await getUserPlan(user.id));
   if (!limit.allowed) throw new Error(limit.reason!);
 
-  const [validClient] = await db.select({ id: clients.id }).from(clients).where(and(
-    eq(clients.id, parsed.clientId),
-    eq(clients.workspaceId, workspaceId),
-  )).limit(1);
-  if (!validClient) throw new Error(t("Klien tidak ditemukan", "Client not found"));
+  let targetClientId = parsed.clientId;
+
+  if (targetClientId) {
+    const [validClient] = await db.select({ id: clients.id }).from(clients).where(and(
+      eq(clients.id, targetClientId),
+      eq(clients.workspaceId, workspaceId),
+    )).limit(1);
+    if (!validClient) throw new Error(t("Klien tidak ditemukan", "Client not found"));
+  } else {
+    // If no clientId provided, pick the first active client or create a default one
+    const [firstClient] = await db.select({ id: clients.id }).from(clients)
+      .where(eq(clients.workspaceId, workspaceId))
+      .orderBy(asc(clients.createdAt))
+      .limit(1);
+
+    if (firstClient) {
+      targetClientId = firstClient.id;
+    } else {
+      const [newClient] = await db.insert(clients).values({
+        workspaceId,
+        name: "Klien Baru",
+        clientNumber: `CLI-${Date.now().toString().slice(-4)}`,
+      }).returning();
+      targetClientId = newClient.id;
+    }
+  }
 
   const result = await db.transaction(async (tx) => {
     const [workspace] = await tx.select({
@@ -212,7 +233,7 @@ export async function createEmptyInvoiceDraft(input: z.infer<typeof createEmptyI
     try {
       const [invoice] = await tx.insert(invoices).values({
         workspaceId,
-        clientId: parsed.clientId,
+        clientId: targetClientId,
         invoiceNumber,
         issueDate: new Date().toISOString().slice(0, 10),
         currency: workspace?.defaultCurrency || "IDR",
