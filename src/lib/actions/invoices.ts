@@ -1016,6 +1016,40 @@ export async function updateInvoiceItem(itemId: string, input: z.infer<typeof up
   return updated;
 }
 
+export async function archiveInvoice(invoiceId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertInvoiceInWorkspace(invoiceId, workspaceId);
+
+  const [updated] = await db
+    .update(invoices)
+    .set({ status: "archived", updatedAt: new Date() })
+    .where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)))
+    .returning();
+
+  await writeActivityLog(workspaceId, user.id, "archived_invoice", "invoice", invoiceId);
+  return updated;
+}
+
+export async function unarchiveInvoice(invoiceId: string, fallbackStatus: "draft" | "sent" | "paid" = "draft") {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertInvoiceInWorkspace(invoiceId, workspaceId);
+
+  const [updated] = await db
+    .update(invoices)
+    .set({ status: fallbackStatus, updatedAt: new Date() })
+    .where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId)))
+    .returning();
+
+  await writeActivityLog(workspaceId, user.id, "unarchived_invoice", "invoice", invoiceId);
+  return updated;
+}
+
 export async function deleteInvoiceItem(itemId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);

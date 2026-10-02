@@ -19,6 +19,7 @@ import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { formatMoney } from "@/lib/utils";
 import { Receipt, Clock } from "lucide-react";
+import { InvoiceRowActions } from "./invoice-row-actions";
 
 function formatDate(date: string | Date | null | undefined, locale: string): string {
   if (!date) return "—";
@@ -217,6 +218,9 @@ export function InvoicesListTable({
                   className="text-[11px] uppercase tracking-wider"
                 />
               </TableHead>
+              <TableHead className="w-12 text-right pr-4 text-[11px] uppercase tracking-wider text-muted-foreground">
+                {t("Aksi", "Actions")}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -301,6 +305,13 @@ export function InvoicesListTable({
                       {status.label}
                     </Badge>
                   </TableCell>
+                  <TableCell className="text-right pr-3">
+                    <InvoiceRowActions
+                      invoiceId={inv.id}
+                      invoiceNumber={inv.invoiceNumber}
+                      status={inv.status}
+                    />
+                  </TableCell>
                 </TableRow>
               );
             })}
@@ -329,31 +340,38 @@ export function InvoicesListTable({
                     </div>
                   </div>
                 </div>
-                <Badge
-                  variant="outline"
-                  className={`gap-1 text-[10px] font-medium rounded-full px-2 py-0 h-5 shrink-0 ${
-                    inv.status === "paid"
-                      ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
-                      : inv.status === "sent" || inv.status === "viewed"
-                      ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400"
-                      : inv.status === "overdue"
-                      ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400"
-                      : "border-border/80 bg-muted/60 text-muted-foreground"
-                  }`}
-                >
-                  <span
-                    className={`h-1 w-1 rounded-full ${
-                      inv.status === "paid"
-                        ? "bg-emerald-600"
-                        : inv.status === "sent" || inv.status === "viewed"
-                        ? "bg-blue-600"
-                        : inv.status === "overdue"
-                        ? "bg-rose-600"
-                        : "bg-muted-foreground"
-                    }`}
-                  />
-                  {status.label}
-                </Badge>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Badge
+                      variant="outline"
+                      className={`gap-1 text-[10px] font-medium rounded-full px-2 py-0 h-5 shrink-0 ${
+                        inv.status === "paid"
+                          ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400"
+                          : inv.status === "sent" || inv.status === "viewed"
+                          ? "border-blue-500/30 bg-blue-500/10 text-blue-700 dark:text-blue-400"
+                          : inv.status === "overdue"
+                          ? "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-400"
+                          : "border-border/80 bg-muted/60 text-muted-foreground"
+                      }`}
+                    >
+                      <span
+                        className={`h-1 w-1 rounded-full ${
+                          inv.status === "paid"
+                            ? "bg-emerald-600"
+                            : inv.status === "sent" || inv.status === "viewed"
+                            ? "bg-blue-600"
+                            : inv.status === "overdue"
+                            ? "bg-rose-600"
+                            : "bg-muted-foreground"
+                        }`}
+                      />
+                      {status.label}
+                    </Badge>
+                    <InvoiceRowActions
+                      invoiceId={inv.id}
+                      invoiceNumber={inv.invoiceNumber}
+                      status={inv.status}
+                    />
+                  </div>
               </div>
 
               <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/60">

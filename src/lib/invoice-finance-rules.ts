@@ -22,9 +22,9 @@ const INVOICE_STATUS_TRANSITIONS: Record<string, ReadonlySet<string>> = {
   sent: new Set(["sent", "viewed", "paid", "overdue", "archived"]),
   viewed: new Set(["viewed", "paid", "overdue", "archived"]),
   overdue: new Set(["overdue", "paid", "archived"]),
-  paid: new Set(["paid"]),
-  cancelled: new Set(["cancelled"]),
-  archived: new Set(["archived"]),
+  paid: new Set(["paid", "archived"]),
+  cancelled: new Set(["cancelled", "archived"]),
+  archived: new Set(["archived", "draft", "sent", "paid"]),
 };
 
 export function isInvoiceStatusTransitionAllowed(from: string, to: string): boolean {
