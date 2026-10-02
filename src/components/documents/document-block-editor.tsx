@@ -345,11 +345,14 @@ export function DocumentBlockEditor({
       setDirty(false);
     } catch (error) {
       setStale(true);
-      toast.error(error instanceof Error ? error.message : t("Gagal menyimpan", "Failed to save"));
+      const msg = error instanceof Error ? error.message : "";
+      if (msg && !msg.includes("441") && !msg.includes("Server Components render")) {
+        toast.error(msg);
+      }
     } finally {
       setSaving(false);
     }
-  }, [blocks, dirty, saveBlocks, saving, stale, t]);
+  }, [blocks, dirty, saveBlocks, saving, stale]);
 
   useEffect(() => {
     if (!dirty) return;
@@ -593,6 +596,7 @@ export function DocumentBlockEditor({
     recordHistory(next);
     setDirty(true);
     setDraggedBlockId(null);
+    setSelectedBlockId(draggedId);
   }
 
   function selectBlock(id: string) {
