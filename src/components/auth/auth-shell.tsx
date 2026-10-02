@@ -16,7 +16,7 @@ export async function AuthShell({ children }: { children: React.ReactNode }) {
         </Link>
 
         <div className="relative z-10 my-auto max-w-lg">
-          <p className="text-xs font-semibold uppercase tracking-[.2em] text-violet-300">{t("Workspace kerja klien", "Client work workspace")}</p>
+          <p className="text-xs font-semibold uppercase tracking-[.2em] text-violet-300">{t("Hub kerja klien all-in-one", "All-in-one client hub for remote workers & teams")}</p>
           <h2 className="mt-6 text-4xl font-semibold leading-[1.12] tracking-[-0.025em] xl:text-5xl">
             {t("Kerja klien lebih rapi dari awal sampai dibayar.", "Keep client work organized from start to paid.")}
           </h2>

@@ -219,7 +219,7 @@ const workflowCopy = [
           <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.82fr_1.18fr] lg:gap-10">
             <div className="min-w-0">
               <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#6647F0] shadow-sm ring-1 ring-[#6647F0]/15">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" /> {tx("Hub kerja klien all-in-one untuk freelancer & agensi", "All-in-one client hub for freelancers & agencies")}
+                <span className="h-2 w-2 rounded-full bg-emerald-500" /> {tx("Hub kerja klien all-in-one untuk pekerja remote & tim", "All-in-one client hub for remote workers & teams")}
               </div>
               <h1 className="mt-6 max-w-full text-[2.35rem] font-semibold leading-[1.04] tracking-[-0.04em] text-[#292D34] sm:max-w-[13ch] sm:text-6xl lg:text-[4.65rem]" style={{ fontWeight: 650 }}>
                 {tx("Lebih sedikit aplikasi. ", "Fewer apps. ")}<span className="text-[#6647F0] underline decoration-[#FF7657]/45 decoration-4 underline-offset-4">{tx("Lebih banyak pekerjaan selesai.", "More work delivered.")}</span>
@@ -395,7 +395,7 @@ const workflowCopy = [
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 bg-white px-4 py-12 sm:px-6 lg:px-8"><div className="mx-auto flex max-w-7xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between"><div><Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-9 w-auto" /><p className="mt-3 max-w-md text-sm leading-6 text-slate-500">{tx("Client operations hub untuk freelancer, agency, dan tim jasa.", "Client operations hub for freelancers, agencies, and service teams.")}</p></div><div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-slate-500"><a href="#workflow">{tx("Alur kerja", "Workflow")}</a><a href="#pricing">{tx("Harga", "Pricing")}</a><Link href="/terms">{tx("Syarat", "Terms")}</Link><Link href="/privacy">{tx("Privasi", "Privacy")}</Link><span>© 2026 Cubiqlo</span></div></div></footer>
+      <footer className="border-t border-slate-200 bg-white px-4 py-12 sm:px-6 lg:px-8"><div className="mx-auto flex max-w-7xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between"><div><Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-9 w-auto" /><p className="mt-3 max-w-md text-sm leading-6 text-slate-500">{tx("Hub kerja klien all-in-one untuk pekerja remote & tim.", "All-in-one client hub for remote workers & teams.")}</p></div><div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-slate-500"><a href="#workflow">{tx("Alur kerja", "Workflow")}</a><a href="#pricing">{tx("Harga", "Pricing")}</a><Link href="/terms">{tx("Syarat", "Terms")}</Link><Link href="/privacy">{tx("Privasi", "Privacy")}</Link><span>© 2026 Cubiqlo</span></div></div></footer>
     </div>
   );
 }
