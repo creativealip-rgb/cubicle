@@ -44,11 +44,7 @@ export function BookingSlugHeaderWidget({
   const publicUrl = useMemo(() => {
     const clean = normalizeSlug(defaultSlug || workspaceSlug || "");
     if (!clean) return null;
-    const origin =
-      typeof window !== "undefined"
-        ? window.location.origin
-        : process.env.NEXT_PUBLIC_APP_URL || "https://cubiqlo.com";
-    return `${origin}/booking/${clean}`;
+    return `https://cubiqlo.com/booking/${clean}`;
   }, [defaultSlug, workspaceSlug]);
 
 

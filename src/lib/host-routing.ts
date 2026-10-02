@@ -38,9 +38,23 @@ export function getCanonicalRedirect(
       pathname.startsWith("/app") ||
       pathname.startsWith("/onboarding") ||
       AUTH_PATHS.some((path) => pathname === path);
-
     if (belongsToApp) {
       return withQuery("https://app.cubiqlo.com", pathname, search);
+    }
+  }
+  // Public client-facing routes: redirect from app.cubiqlo.com to cubiqlo.com
+  if (normalizedHost === "app.cubiqlo.com") {
+    const isPublicGuestRoute =
+      pathname.startsWith("/booking/") ||
+      pathname.startsWith("/intake/") ||
+      pathname.startsWith("/proposal/") ||
+      pathname.startsWith("/contract/") ||
+      pathname.startsWith("/invoice/") ||
+      pathname.startsWith("/client-portal/") ||
+      pathname.startsWith("/site/");
+
+    if (isPublicGuestRoute) {
+      return withQuery("https://cubiqlo.com", pathname, search);
     }
   }
 
