@@ -63,20 +63,7 @@ export function ProposalRowActions({
 
   return (
     <>
-      <div className="flex items-center justify-end gap-1.5">
-        {/* Primary Clean Action Button */}
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-          className="h-7.5 px-3 text-xs font-semibold bg-background hover:bg-muted/60 border-border/80 text-foreground transition-all"
-        >
-          <Link href={`/app/proposals/${proposal.id}/edit`}>
-            {isAccepted ? t("Lihat", "View") : t("Edit", "Edit")}
-          </Link>
-        </Button>
-
-        {/* More Actions Dropdown Menu */}
+      <div className="flex items-center justify-end">
         {canWrite && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>

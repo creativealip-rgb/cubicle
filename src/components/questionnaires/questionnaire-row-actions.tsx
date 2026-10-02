@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   Ellipsis,
   ExternalLink,
+  Eye,
   Pencil,
   Share2,
   Trash2,
@@ -63,20 +64,7 @@ export function QuestionnaireRowActions({
 
   return (
     <>
-      <div className="flex items-center justify-end gap-1.5">
-        {/* Primary Clean Action Button */}
-        <Button
-          asChild
-          variant="outline"
-          size="sm"
-          className="h-7.5 px-3 text-xs font-semibold bg-background hover:bg-muted/60 border-border/80 text-foreground transition-all"
-        >
-          <Link href={`/app/questionnaires/${questionnaire.id}`}>
-            {t("Buka", "Open")}
-          </Link>
-        </Button>
-
-        {/* More Actions Dropdown Menu */}
+      <div className="flex items-center justify-end">
         {canWrite && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -90,6 +78,13 @@ export function QuestionnaireRowActions({
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-44 rounded-xl shadow-lg border border-border/80 p-1">
+              <DropdownMenuItem asChild className="cursor-pointer text-xs font-medium py-1.5 rounded-lg">
+                <Link href={`/app/questionnaires/${questionnaire.id}`}>
+                  <Eye className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
+                  <span>{t("Buka Tanggapan", "View Responses")}</span>
+                </Link>
+              </DropdownMenuItem>
+
               <DropdownMenuItem asChild className="cursor-pointer text-xs font-medium py-1.5 rounded-lg">
                 <Link href={`/app/questionnaires/${questionnaire.id}/edit`}>
                   <Pencil className="h-3.5 w-3.5 mr-2 text-muted-foreground" />
