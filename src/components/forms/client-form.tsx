@@ -441,14 +441,14 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
                   id="portalSlug"
                   value={form.portalSlug}
                   onChange={(e) => {
-                    if (isPaidPlan) {
-                      set("portalSlug", slugify(e.target.value));
-                      setSlugStatus("idle");
-                    }
+                    const clean = e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "");
+                    set("portalSlug", clean);
+                    setSlugStatus("idle");
                   }}
                   disabled={!isPaidPlan}
-                  placeholder={isPaidPlan ? "kopi-senja" : "auto-generated-random"}
-                  className="h-9 text-sm"
+                  readOnly={!isPaidPlan}
+                  placeholder="your-url"
+                  className="h-9 text-sm font-mono"
                 />
                 {isPaidPlan ? (
                   <Button type="button" variant="outline" size="sm" onClick={handleCheckSlug} disabled={checkingSlug || !form.portalSlug.trim()} className="shrink-0 h-9 font-medium">

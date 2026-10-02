@@ -448,7 +448,7 @@ function PublishStep({ site, publicUrl, previewUrl, onUpdateSite, canEditSlug }:
           disabled={!canEditSlug}
           readOnly={!canEditSlug}
           className="h-9 text-xs"
-          placeholder="nama-halaman"
+          placeholder="your-url"
         />
         {!canEditSlug && (
           <p className="text-xs text-muted-foreground">

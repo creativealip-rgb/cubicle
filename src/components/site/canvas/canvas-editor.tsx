@@ -886,7 +886,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                         onChange={(event) => updateSite({ slug: normalizePersonalSiteSlug(event.target.value) })}
                         disabled={!canEditSlug}
                         readOnly={!canEditSlug}
-                        placeholder="nama-agensi"
+                        placeholder="your-url"
                         className="font-mono text-xs sm:text-sm"
                       />
                     </div>
@@ -1039,7 +1039,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
               onChange={(event) => updateSite({ slug: event.target.value })}
               disabled={!canEditSlug}
               readOnly={!canEditSlug}
-              placeholder="nama-halaman"
+              placeholder="your-url"
             />
             {!canEditSlug && (
               <p className="text-xs text-muted-foreground">

@@ -1681,10 +1681,10 @@ export function DocumentBlockEditor({
                     </span>
                     <Input
                       value={customSlug || (documentMeta?.id ? `${kind}-${documentMeta.id.slice(0, 8)}` : "")}
-                      onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, ""))}
+                      onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
                       disabled={!isPaidPlan}
                       readOnly={!isPaidPlan}
-                      placeholder="nama-dokumen"
+                      placeholder="your-url"
                       className="font-mono text-xs sm:text-sm"
                     />
                   </div>

@@ -152,11 +152,11 @@ export function BookingSlugHeaderWidget({
                     </span>
                     <Input
                       value={isFreePlan ? (workspaceSlug || slug) : slug}
-                      onChange={(e) => setSlug(e.target.value)}
+                      onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
                       disabled={isFreePlan}
                       readOnly={isFreePlan}
                       maxLength={64}
-                      placeholder="nama-kamu"
+                      placeholder="your-url"
                       className="font-mono text-xs sm:text-sm"
                     />
                   </div>

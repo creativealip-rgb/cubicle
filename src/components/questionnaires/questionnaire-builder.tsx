@@ -2131,10 +2131,10 @@ export function QuestionnaireBuilder({
                     </span>
                     <Input
                       value={customSlug || (questionnaireId ? `form-${questionnaireId.slice(0, 8)}` : "")}
-                      onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-_]/g, ""))}
+                      onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
                       disabled={!isPaidPlan}
                       readOnly={!isPaidPlan}
-                      placeholder="nama-form"
+                      placeholder="your-url"
                       className="font-mono text-xs sm:text-sm"
                     />
                   </div>
