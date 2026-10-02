@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { contracts, workspaces } from "@/db/schema";
+import { contracts, workspaces, clients } from "@/db/schema";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { DocumentBlockEditor } from "@/components/documents/document-block-editor";
 import { defaultDocumentBlocks, normalizeDocumentBlocks } from "@/lib/document-blocks";
@@ -16,10 +16,11 @@ export default async function ContractEditPage({ params }: { params: Promise<{ c
   const { contractId } = await params;
   if (!isUuid(contractId)) notFound();
   const workspaceId = await getWorkspaceForCurrentUser();
-  const [contract] = await db.select({ id: contracts.id, slug: contracts.slug, title: contracts.title, contentBlocks: contracts.contentBlocks, contentRevision: contracts.contentRevision, status: contracts.status, clientName: contracts.clientName, clientEmail: contracts.clientEmail, companyName: contracts.companyName, contractNumber: contracts.contractNumber, contractDate: contracts.contractDate, validUntil: contracts.validUntil })
+  const [contract] = await db.select({ id: contracts.id, clientId: contracts.clientId, slug: contracts.slug, title: contracts.title, contentBlocks: contracts.contentBlocks, contentRevision: contracts.contentRevision, status: contracts.status, clientName: contracts.clientName, clientEmail: contracts.clientEmail, companyName: contracts.companyName, contractNumber: contracts.contractNumber, contractDate: contracts.contractDate, validUntil: contracts.validUntil })
     .from(contracts).where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId))).limit(1);
   if (!contract) notFound();
   const [workspace] = await db.select({ name: workspaces.name, billingAddress: workspaces.billingAddress }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const existingClients = await db.select({ id: clients.id, name: clients.name, email: clients.email, companyName: clients.companyName }).from(clients).where(eq(clients.workspaceId, workspaceId));
   const blocks = normalizeDocumentBlocks(contract.contentBlocks, "contract");
   const placeholderValues = buildContractPlaceholderValues({ ...contract, workspaceName: workspace?.name, workspaceAddress: workspace?.billingAddress });
   async function saveBlocks(next: Parameters<typeof saveContractBlocks>[1]["contentBlocks"], revision: number) {
@@ -35,8 +36,10 @@ export default async function ContractEditPage({ params }: { params: Promise<{ c
       backHref="/app/contracts"
       placeholderValues={placeholderValues}
       saveBlocks={saveBlocks}
+      clientsList={existingClients}
       documentMeta={{
         id: contract.id,
+        clientId: contract.clientId,
         slug: contract.slug,
         title: contract.title,
         clientName: contract.clientName,

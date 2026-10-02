@@ -7,6 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { toast } from "sonner";
 import {
   buildContractStarterBlocks,
@@ -65,10 +72,18 @@ import {
   Trash2,
   Type,
   Undo2,
+  Users,
   X,
 } from "lucide-react";
 
 type LineItem = { description: string; quantity: number; unitPrice: number };
+
+export type ClientOption = {
+  id: string;
+  name: string;
+  email?: string | null;
+  companyName?: string | null;
+};
 
 type Props = {
   kind: "proposal" | "contract";
@@ -79,8 +94,10 @@ type Props = {
   placeholderValues?: DocumentPlaceholderValues;
   saveBlocks: (blocks: DocumentBlock[], revision: number) => Promise<unknown>;
   onUpdateMeta?: (meta: Record<string, unknown>) => Promise<unknown>;
+  clientsList?: ClientOption[];
   documentMeta?: {
     id?: string;
+    clientId?: string | null;
     slug?: string | null;
     title: string;
     clientName: string | null;
@@ -91,6 +108,7 @@ type Props = {
   };
   proposalMeta?: {
     id?: string;
+    clientId?: string | null;
     slug?: string | null;
     title: string;
     clientName: string | null;
@@ -230,6 +248,7 @@ export function DocumentBlockEditor({
   placeholderValues = {},
   saveBlocks,
   onUpdateMeta,
+  clientsList = [],
   documentMeta,
   proposalMeta,
 }: Props) {
@@ -247,6 +266,7 @@ export function DocumentBlockEditor({
   // Form Settings State (Live editable metadata & financial rules)
   const [metaState, setMetaState] = useState({
     title: proposalMeta?.title || documentMeta?.title || "",
+    clientId: proposalMeta?.clientId || documentMeta?.clientId || "",
     clientName: proposalMeta?.clientName || documentMeta?.clientName || "",
     clientEmail: proposalMeta?.clientEmail || documentMeta?.clientEmail || "",
     companyName: proposalMeta?.companyName || documentMeta?.companyName || "",
@@ -372,6 +392,7 @@ export function DocumentBlockEditor({
     try {
       const payload: Record<string, unknown> = {
         title: metaState.title,
+        clientId: metaState.clientId || null,
         clientName: metaState.clientName,
         clientEmail: metaState.clientEmail || null,
         companyName: metaState.companyName || null,
@@ -1376,6 +1397,61 @@ export function DocumentBlockEditor({
                     className="text-xs sm:text-sm font-medium"
                   />
                 </div>
+
+                {/* Existing Client Selector */}
+                {clientsList.length > 0 && (
+                  <div className="space-y-1.5 p-3 rounded-xl border border-primary/20 bg-primary/[0.03]">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                        <Users className="h-3.5 w-3.5 text-primary" />
+                        <span>{t("Pilih Klien Tersimpan (Otomatis Isi)", "Select Existing Client (Auto-fill)")}</span>
+                      </Label>
+                      {metaState.clientId && (
+                        <button
+                          type="button"
+                          onClick={() => setMetaState((v) => ({ ...v, clientId: "" }))}
+                          className="text-[11px] text-muted-foreground hover:text-destructive transition-colors"
+                        >
+                          {t("Hapus Pilihan", "Clear Selection")}
+                        </button>
+                      )}
+                    </div>
+                    <Select
+                      value={metaState.clientId || "custom"}
+                      onValueChange={(val) => {
+                        if (val === "custom") {
+                          setMetaState((v) => ({ ...v, clientId: "" }));
+                          return;
+                        }
+                        const found = clientsList.find((c) => c.id === val);
+                        if (found) {
+                          setMetaState((v) => ({
+                            ...v,
+                            clientId: found.id,
+                            clientName: found.name,
+                            clientEmail: found.email || v.clientEmail,
+                            companyName: found.companyName || v.companyName,
+                          }));
+                          toast.success(t(`Data klien "${found.name}" berhasil diisi otomatis`, `Client "${found.name}" data auto-filled`));
+                        }
+                      }}
+                    >
+                      <SelectTrigger className="h-9 text-xs bg-background">
+                        <SelectValue placeholder={t("Pilih klien dari daftar...", "Select client from list...")} />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-56">
+                        <SelectItem value="custom" className="text-xs text-muted-foreground">
+                          {t("-- Input Klien Manual --", "-- Manual Client Input --")}
+                        </SelectItem>
+                        {clientsList.map((c) => (
+                          <SelectItem key={c.id} value={c.id} className="text-xs font-medium">
+                            {c.name} {c.companyName ? `(${c.companyName})` : c.email ? `(${c.email})` : ""}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">

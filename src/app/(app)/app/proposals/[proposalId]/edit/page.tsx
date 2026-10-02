@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { and, eq } from "drizzle-orm";
 import { db } from "@/db";
-import { proposals, workspaces } from "@/db/schema";
+import { proposals, workspaces, clients } from "@/db/schema";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { DocumentBlockEditor } from "@/components/documents/document-block-editor";
 import { defaultDocumentBlocks, normalizeDocumentBlocks } from "@/lib/document-blocks";
@@ -18,6 +18,7 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
   const workspaceId = await getWorkspaceForCurrentUser();
   const [proposal] = await db.select({
     id: proposals.id,
+    clientId: proposals.clientId,
     slug: proposals.slug,
     title: proposals.title,
     clientName: proposals.clientName,
@@ -39,6 +40,7 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
   if (!proposal) notFound();
   const blocks = normalizeDocumentBlocks(proposal.contentBlocks, "proposal");
   const [workspace] = await db.select({ name: workspaces.name, billingAddress: workspaces.billingAddress }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const existingClients = await db.select({ id: clients.id, name: clients.name, email: clients.email, companyName: clients.companyName }).from(clients).where(eq(clients.workspaceId, workspaceId));
   const downPaymentAmount = Number(proposal.total) * Number(proposal.downPaymentPercent) / 100;
   const placeholderValues = buildProposalPlaceholderValues({
     clientName: proposal.clientName,
@@ -66,8 +68,10 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
       backHref="/app/proposals"
       placeholderValues={placeholderValues}
       saveBlocks={saveBlocks}
+      clientsList={existingClients}
       proposalMeta={{
         id: proposal.id,
+        clientId: proposal.clientId,
         slug: proposal.slug,
         title: proposal.title,
         clientName: proposal.clientName,

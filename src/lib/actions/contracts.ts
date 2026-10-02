@@ -284,7 +284,7 @@ export async function getProposedContractNumber(workspaceId: string): Promise<st
   ));
 }
 
-export async function updateContract(contractId: string, input: { clientName?: string; clientEmail?: string | null; companyName?: string | null; title?: string; body?: string; validUntil?: string | null; contractNumber?: string | null; slug?: string | null }) {
+export async function updateContract(contractId: string, input: { clientId?: string | null; clientName?: string; clientEmail?: string | null; companyName?: string | null; title?: string; body?: string; validUntil?: string | null; contractNumber?: string | null; slug?: string | null }) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
