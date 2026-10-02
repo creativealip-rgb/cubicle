@@ -185,7 +185,7 @@ export async function hardDeletePersonalGoal(
       .from(personalGoals)
       .where(and(eq(personalGoals.id, goalId), eq(personalGoals.userId, id)))
       .for("update");
-    if (!goal || confirmation !== goal.title)
+    if (!goal || (confirmation !== "DELETE" && confirmation !== goal.title))
       throw new Error("Goal confirmation does not match");
     await tx
       .update(personalHabits)

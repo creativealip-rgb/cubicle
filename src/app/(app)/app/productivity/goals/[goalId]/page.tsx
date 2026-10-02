@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -201,15 +202,28 @@ export default async function GoalDetail({
       </Card>
       <Card className="border-destructive/40">
         <CardHeader>
-          <CardTitle>{t("Hapus permanen", "Delete permanently")}</CardTitle>
+          <CardTitle className="text-destructive">{t("Hapus permanen", "Delete permanently")}</CardTitle>
         </CardHeader>
-        <CardContent>
-          <form action={remove} className="flex flex-col gap-2 sm:flex-row">
-            <Input name="confirmation" required placeholder={goal.title} />
-            <Button variant="destructive">
-              {t("Hapus tujuan", "Delete goal")}
-            </Button>
-          </form>
+        <CardContent className="space-y-3">
+          <p className="text-xs text-muted-foreground">
+            {t(
+              "Tujuan ini dan seluruh kebiasaan serta langkah pencapaian terkait akan dihapus secara permanen.",
+              "This goal and all associated habits and progress steps will be deleted permanently.",
+            )}
+          </p>
+          <div>
+            <PermanentDeleteButton
+              entityType="goal"
+              entityId={goalId}
+              entityName={goal.title}
+              redirectTo="/app/productivity?tab=goals"
+              trigger={
+                <Button variant="destructive" size="sm" className="gap-1.5 font-semibold text-xs">
+                  {t("Hapus Tujuan Permanen", "Delete Goal Permanently")}
+                </Button>
+              }
+            />
+          </div>
         </CardContent>
       </Card>
     </div>

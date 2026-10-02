@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useT } from "@/lib/i18n-client";
 
-type EntityType = "client" | "project" | "task";
+type EntityType = "client" | "project" | "task" | "goal";
 
 export function PermanentDeleteButton({ entityType, entityId, entityName, redirectTo, size = "sm", trigger }: {
   entityType: EntityType;
@@ -37,7 +37,11 @@ export function PermanentDeleteButton({ entityType, entityId, entityName, redire
     try {
       if (entityType === "client") await permanentlyDeleteClient(entityId);
       else if (entityType === "project") await permanentlyDeleteProject(entityId);
-      else await permanentlyDeleteTask(entityId);
+      else if (entityType === "task") await permanentlyDeleteTask(entityId);
+      else {
+        const { hardDeletePersonalGoal } = await import("@/lib/actions/personal-goals");
+        await hardDeletePersonalGoal(entityId, "DELETE");
+      }
       toast.success(`${entityName} ${t("dihapus permanen", "deleted permanently")}`);
       setOpen(false);
       if (redirectTo) router.push(redirectTo);
