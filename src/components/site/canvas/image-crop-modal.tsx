@@ -45,7 +45,7 @@ export function ImageCropModal({
   const startDragRef = useRef({ x: 0, y: 0 });
   const imageObjRef = useRef<HTMLImageElement | null>(null);
 
-  // Reset when modal opens
+  // Reset when modal opens or aspect ratio changes
   useEffect(() => {
     if (open && imageUrl) {
       setZoom(1);
@@ -58,6 +58,13 @@ export function ImageCropModal({
       };
     }
   }, [open, imageUrl]);
+
+  // When changing aspect ratio, reset pan & zoom to maintain centering
+  const handleSelectAspect = (val: number | null) => {
+    setAspectRatio(val);
+    setZoom(1);
+    setPan({ x: 0, y: 0 });
+  };
 
   function handleMouseDown(e: React.MouseEvent) {
     e.preventDefault();
@@ -84,44 +91,46 @@ export function ImageCropModal({
     try {
       const container = containerRef.current;
       const rect = container.getBoundingClientRect();
-
-      // Create high-res canvas
-      const canvas = document.createElement("canvas");
-      const ctx = canvas.getContext("2d");
-      if (!ctx) throw new Error("Canvas context error");
+      const img = imageObjRef.current;
 
       const width = rect.width;
       const height = rect.height;
 
-      // Higher resolution export (2x)
-      canvas.width = width * 2;
-      canvas.height = height * 2;
-      ctx.scale(2, 2);
+      // Create high-res canvas (max 2400px width/height for clean clarity)
+      const scaleFactor = Math.min(2.5, Math.max(1.5, 1600 / Math.max(width, height)));
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Canvas context error");
 
-      const img = imageObjRef.current;
-      const imgAspect = img.width / img.height;
+      canvas.width = Math.round(width * scaleFactor);
+      canvas.height = Math.round(height * scaleFactor);
+      ctx.scale(scaleFactor, scaleFactor);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      // Calculate rendered dimensions of image based on object-cover logic
+      const imgAspect = img.naturalWidth / img.naturalHeight;
       const containerAspect = width / height;
 
-      let drawWidth = width;
-      let drawHeight = height;
+      let baseRenderWidth = width;
+      let baseRenderHeight = height;
 
       if (imgAspect > containerAspect) {
-        drawHeight = height;
-        drawWidth = height * imgAspect;
+        baseRenderHeight = height;
+        baseRenderWidth = height * imgAspect;
       } else {
-        drawWidth = width;
-        drawHeight = width / imgAspect;
+        baseRenderWidth = width;
+        baseRenderHeight = width / imgAspect;
       }
 
-      drawWidth *= zoom;
-      drawHeight *= zoom;
+      const scaledRenderWidth = baseRenderWidth * zoom;
+      const scaledRenderHeight = baseRenderHeight * zoom;
 
-      const centerX = width / 2 + pan.x;
-      const centerY = height / 2 + pan.y;
-      const startX = centerX - drawWidth / 2;
-      const startY = centerY - drawHeight / 2;
+      // Center with pan offset
+      const startX = (width - scaledRenderWidth) / 2 + pan.x;
+      const startY = (height - scaledRenderHeight) / 2 + pan.y;
 
-      ctx.drawImage(img, startX, startY, drawWidth, drawHeight);
+      ctx.drawImage(img, startX, startY, scaledRenderWidth, scaledRenderHeight);
 
       // Convert canvas to Blob & Upload as cropped image
       canvas.toBlob(async (blob) => {
@@ -181,7 +190,7 @@ export function ImageCropModal({
                 <button
                   type="button"
                   key={item.label}
-                  onClick={() => setAspectRatio(item.val)}
+                  onClick={() => handleSelectAspect(item.val)}
                   className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
                     aspectRatio === item.val
                       ? "bg-background text-primary shadow-xs ring-1 ring-border"
@@ -212,7 +221,7 @@ export function ImageCropModal({
                 maxHeight: "85%",
                 maxWidth: "85%",
               }}
-              className="relative rounded-lg overflow-hidden border-2 border-dashed border-primary shadow-[0_0_0_9999px_rgba(0,0,0,0.6)] flex items-center justify-center z-10"
+              className="relative rounded-lg overflow-hidden border-2 border-dashed border-primary shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] flex items-center justify-center z-10"
             >
               {imageUrl && (
                 <img
@@ -220,9 +229,17 @@ export function ImageCropModal({
                   alt="Crop preview"
                   draggable={false}
                   style={{
-                    transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                    position: "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`,
                     transformOrigin: "center center",
                     transition: isDraggingRef.current ? "none" : "transform 0.05s ease-out",
+                    minWidth: "100%",
+                    minHeight: "100%",
+                    width: "100%",
+                    height: "100%",
+                    objectFit: "cover",
                   }}
                   className="max-w-none max-h-none pointer-events-none select-none"
                 />
