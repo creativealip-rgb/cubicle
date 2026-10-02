@@ -14,19 +14,39 @@ const createTicketSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().optional(),
   category: z
-    .enum(["technical", "billing", "access", "feature_request", "timeline", "general"])
-    .default("technical"),
+    .enum([
+      "features",
+      "free_plan_pricing",
+      "account",
+      "workspace",
+      "subscription",
+      "billing",
+      "security_privacy",
+      "technical",
+      "general",
+    ])
+    .default("features"),
   priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
-  assigneeId: z.string().optional(),
-  clientId: z.string().uuid().optional(),
-  projectId: z.string().uuid().optional(),
+  assigneeId: z.string().optional().nullable(),
+  clientId: z.string().uuid().optional().nullable(),
+  projectId: z.string().uuid().optional().nullable(),
 });
 
 const updateTicketSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().optional(),
   category: z
-    .enum(["technical", "billing", "access", "feature_request", "timeline", "general"])
+    .enum([
+      "features",
+      "free_plan_pricing",
+      "account",
+      "workspace",
+      "subscription",
+      "billing",
+      "security_privacy",
+      "technical",
+      "general",
+    ])
     .optional(),
   status: z.enum(["open", "in_progress", "resolved", "closed"]).optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),

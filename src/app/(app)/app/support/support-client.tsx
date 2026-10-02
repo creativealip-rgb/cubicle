@@ -88,38 +88,56 @@ const PRIORITY_BADGE_STYLES: Record<string, { bg: string; icon: React.ReactNode 
 };
 
 const CATEGORY_MAP: Record<string, { labelEn: string; labelId: string; emoji: string; color: string }> = {
+  features: {
+    labelEn: "Cubiqlo Features",
+    labelId: "Fitur Cubiqlo",
+    emoji: "⚡",
+    color: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-900/50",
+  },
+  free_plan_pricing: {
+    labelEn: "Free Plan & Pricing",
+    labelId: "Paket Gratis & Harga",
+    emoji: "🏷️",
+    color: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50",
+  },
+  account: {
+    labelEn: "Account",
+    labelId: "Akun",
+    emoji: "👤",
+    color: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/50",
+  },
+  workspace: {
+    labelEn: "Workspace",
+    labelId: "Workspace",
+    emoji: "🏢",
+    color: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/50",
+  },
+  subscription: {
+    labelEn: "Subscription",
+    labelId: "Langganan",
+    emoji: "📦",
+    color: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-900/50",
+  },
+  billing: {
+    labelEn: "Billing",
+    labelId: "Tagihan & Pembayaran",
+    emoji: "💳",
+    color: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-900/50",
+  },
+  security_privacy: {
+    labelEn: "Security & Privacy",
+    labelId: "Keamanan & Privasi",
+    emoji: "🔒",
+    color: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/50",
+  },
   technical: {
-    labelEn: "Bug / Technical",
-    labelId: "Bug / Masalah Teknis",
+    labelEn: "Technical Support",
+    labelId: "Bantuan Teknis",
     emoji: "🐛",
     color: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50",
   },
-  billing: {
-    labelEn: "Billing & Invoices",
-    labelId: "Tagihan & Pembayaran",
-    emoji: "💳",
-    color: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50",
-  },
-  access: {
-    labelEn: "Access & Documents",
-    labelId: "Akses & Berkas",
-    emoji: "📁",
-    color: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/50",
-  },
-  feature_request: {
-    labelEn: "Feature / Revision",
-    labelId: "Permintaan Fitur / Revisi",
-    emoji: "✨",
-    color: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-900/50",
-  },
-  timeline: {
-    labelEn: "Scope & Timeline",
-    labelId: "Jadwal & Scope",
-    emoji: "📅",
-    color: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/50",
-  },
   general: {
-    labelEn: "General Question",
+    labelEn: "General Questions",
     labelId: "Pertanyaan Umum",
     emoji: "💬",
     color: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
@@ -557,7 +575,44 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
             className="space-y-3.5 pt-1"
           >
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">{t("Judul Kendala *", "Issue Title *")}</label>
+              <label className="text-xs font-semibold text-foreground">
+                {t("Apa yang Anda butuhkan bantuan? *", "What do you need help with? *")}
+              </label>
+              <Select name="category" defaultValue="features">
+                <SelectTrigger className="h-8 text-xs rounded-lg">
+                  <SelectValue placeholder={t("Pilih kategori bantuan ▾", "Select a support category ▾")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="features">⚡ {t("Fitur Cubiqlo", "Cubiqlo Features")}</SelectItem>
+                  <SelectItem value="free_plan_pricing">🏷️ {t("Paket Gratis & Harga", "Free Plan & Pricing")}</SelectItem>
+                  <SelectItem value="account">👤 {t("Akun", "Account")}</SelectItem>
+                  <SelectItem value="workspace">🏢 {t("Workspace", "Workspace")}</SelectItem>
+                  <SelectItem value="subscription">📦 {t("Langganan", "Subscription")}</SelectItem>
+                  <SelectItem value="billing">💳 {t("Tagihan & Pembayaran", "Billing")}</SelectItem>
+                  <SelectItem value="security_privacy">🔒 {t("Keamanan & Privasi", "Security & Privacy")}</SelectItem>
+                  <SelectItem value="technical">🐛 {t("Bantuan Teknis", "Technical Support")}</SelectItem>
+                  <SelectItem value="general">💬 {t("Pertanyaan Umum", "General Questions")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">{t("Prioritas", "Priority")}</label>
+              <Select name="priority" defaultValue="medium">
+                <SelectTrigger className="h-8 text-xs rounded-lg">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="low">{t("Rendah", "Low")}</SelectItem>
+                  <SelectItem value="medium">{t("Sedang", "Medium")}</SelectItem>
+                  <SelectItem value="high">{t("Tinggi", "High")}</SelectItem>
+                  <SelectItem value="urgent">{t("Mendesak", "Urgent")}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">{t("Judul Kendala *", "Title *")}</label>
               <Input
                 name="title"
                 placeholder={t("Contoh: Gagal upload lampiran invoice", "e.g., Cannot upload invoice attachment")}
@@ -566,95 +621,10 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">{t("Jenis Masalah", "Issue Category")}</label>
-                <Select name="category" defaultValue="technical">
-                  <SelectTrigger className="h-8 text-xs rounded-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="technical">🐛 {t("Bug / Masalah Teknis", "Bug / Technical")}</SelectItem>
-                    <SelectItem value="billing">💳 {t("Tagihan & Pembayaran", "Billing & Invoices")}</SelectItem>
-                    <SelectItem value="access">📁 {t("Akses & Dokumen", "Access & Documents")}</SelectItem>
-                    <SelectItem value="feature_request">✨ {t("Permintaan Fitur / Revisi", "Feature / Revision")}</SelectItem>
-                    <SelectItem value="timeline">📅 {t("Jadwal & Scope Proyek", "Scope & Timeline")}</SelectItem>
-                    <SelectItem value="general">💬 {t("Pertanyaan Umum", "General Question")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">{t("Prioritas", "Priority")}</label>
-                <Select name="priority" defaultValue="medium">
-                  <SelectTrigger className="h-8 text-xs rounded-lg">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="low">{t("Rendah", "Low")}</SelectItem>
-                    <SelectItem value="medium">{t("Sedang", "Medium")}</SelectItem>
-                    <SelectItem value="high">{t("Tinggi", "High")}</SelectItem>
-                    <SelectItem value="urgent">{t("Mendesak", "Urgent")}</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-2.5">
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">{t("Ditugaskan Ke", "Assign To")}</label>
-                <Select name="assigneeId" defaultValue="">
-                  <SelectTrigger className="h-8 text-xs rounded-lg">
-                    <SelectValue placeholder={t("Belum ditugaskan", "Unassigned")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">{t("Belum ditugaskan", "Unassigned")}</SelectItem>
-                    {members.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">{t("Klien Terkait", "Related Client")}</label>
-                <Select name="clientId" defaultValue="">
-                  <SelectTrigger className="h-8 text-xs rounded-lg">
-                    <SelectValue placeholder={t("Opsional", "Optional")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">{t("Tidak Ada", "None")}</SelectItem>
-                    {clients.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">{t("Projek Terkait", "Related Project")}</label>
-              <Select name="projectId" defaultValue="">
-                <SelectTrigger className="h-8 text-xs rounded-lg">
-                  <SelectValue placeholder={t("Opsional", "Optional")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">{t("Tidak Ada", "None")}</SelectItem>
-                  {projects.map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">{t("Deskripsi Rinci", "Description")}</label>
+              <label className="text-xs font-semibold text-foreground">
+                {t("Jelaskan masalah Anda secara rinci.", "Describe your issue in detail.")}
+              </label>
               <Textarea
                 name="description"
                 rows={3}
