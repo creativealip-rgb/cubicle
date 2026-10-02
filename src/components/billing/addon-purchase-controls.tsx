@@ -170,7 +170,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  +{quota.toLocaleString("id-ID")}/bln
+                  +{quota.toLocaleString("id-ID")}/{t("bln", "mo")}
                 </button>
               ))}
             </div>

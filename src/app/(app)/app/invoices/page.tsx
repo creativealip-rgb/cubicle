@@ -34,9 +34,8 @@ import {
 import { buildReportPeriod } from "@/lib/report-period";
 import { InvoicePeriodControls } from "@/components/invoices/invoice-period-controls";
 import { RecurringInvoiceManager } from "@/components/invoices/recurring-invoice-manager";
-import { InvoiceCreateDialog } from "@/components/invoices/invoice-create-dialog";
-import { getProposedInvoiceNumber } from "@/lib/actions/invoices";
 import { PaginationLinks } from "@/components/ui/pagination-links";
+import { Plus } from "lucide-react";
 
 const PAGE_SIZE = 10;
 
@@ -435,10 +434,12 @@ export default async function InvoicesPage({
         )}
         actions={
           canWrite ? (
-            <InvoiceCreateDialog
-              clients={clientOptions}
-              proposedInvoiceNumber={await getProposedInvoiceNumber()}
-            />
+            <Button asChild size="sm" className="gap-1.5 font-semibold">
+              <Link href="/app/invoices/new">
+                <Plus className="h-4 w-4" />
+                <span>{t("Invoice Baru", "New Invoice")}</span>
+              </Link>
+            </Button>
           ) : null
         }
       />

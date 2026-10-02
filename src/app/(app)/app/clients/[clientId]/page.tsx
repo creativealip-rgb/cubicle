@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ClientTabsNav } from "@/components/clients/client-tabs-nav";
 import Link from "next/link";
-import { Wallet, FolderKanban, FileSpreadsheet, Receipt, Users } from "lucide-react";
+import { Wallet, FolderKanban, FileSpreadsheet, Receipt, Users, Plus } from "lucide-react";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
 import { ClientGoogleCalendarPanel } from "@/components/clients/client-google-calendar-panel";
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
@@ -379,13 +379,15 @@ export default async function ClientDetailPage({
         }
         invoicesAction={
           canWrite ? (
-            <InvoiceCreateDialog
-              clients={[{ id: client.id, name: client.name, companyName: client.companyName }]}
-              proposedInvoiceNumber={proposedInvoiceNumber}
-            />
+            <Button asChild size="sm" className="gap-1.5 font-semibold">
+              <Link href={`/app/invoices/new?clientId=${client.id}`}>
+                <Plus className="h-4 w-4" />
+                <span>{t("Invoice Baru", "New Invoice")}</span>
+              </Link>
+            </Button>
           ) : null
         }
-        overviewContent={<ClientOverview client={{ id: client.id, clientNumber: client.clientNumber, email: client.email, phone: client.phone, website: client.website, address: client.address, tags: client.tags, internalNotes: client.internalNotes, portalSlug: client.portalSlug, portalSlugEnabled: client.portalSlugEnabled }} projects={clientProjects} invoices={clientInvoices} editAction={<ClientEditDialog trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Ubah detail", "Edit details")}</Button>} defaultValues={clientDefaults} />} projectAction={canWrite ? <ProjectCreateDialog clients={[]} clientId={clientId} isAtLimit={!projectLimitState.allowed} projectCount={projectLimitState.current} projectLimit={projectLimitState.limit} trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Tambah Project", "Add Project")}</Button>} /> : undefined} invoiceAction={canWrite ? <InvoiceCreateDialog clients={[{ id: client.id, name: client.name, companyName: client.companyName }]} proposedInvoiceNumber={proposedInvoiceNumber} trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Buat Invoice", "Create Invoice")}</Button>} /> : undefined} t={t} />}
+        overviewContent={<ClientOverview client={{ id: client.id, clientNumber: client.clientNumber, email: client.email, phone: client.phone, website: client.website, address: client.address, tags: client.tags, internalNotes: client.internalNotes, portalSlug: client.portalSlug, portalSlugEnabled: client.portalSlugEnabled }} projects={clientProjects} invoices={clientInvoices} editAction={<ClientEditDialog trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Ubah detail", "Edit details")}</Button>} defaultValues={clientDefaults} />} projectAction={canWrite ? <ProjectCreateDialog clients={[]} clientId={clientId} isAtLimit={!projectLimitState.allowed} projectCount={projectLimitState.current} projectLimit={projectLimitState.limit} trigger={<Button variant="link" size="sm" className="h-auto p-0">{t("Tambah Project", "Add Project")}</Button>} /> : undefined} invoiceAction={canWrite ? <Button asChild variant="link" size="sm" className="h-auto p-0"><Link href={`/app/invoices/new?clientId=${client.id}`}>{t("Buat Invoice", "Create Invoice")}</Link></Button> : undefined} t={t} />}
         projectsContent={
           <div className="space-y-4">
             {clientProjects.length === 0 && (
