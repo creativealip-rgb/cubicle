@@ -1,8 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { Download } from "lucide-react";
+import { Download, Lock, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import { useT } from "@/lib/i18n-client";
 import {
   Dialog,
@@ -14,19 +15,19 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 
-type ReportType = "detailed" | "dashboard" | "full";
+type ReportType = "dashboard" | "detailed" | "full";
 
 type ClientOpt = { id: string; name: string | null };
 type ProjectOpt = { id: string; name: string | null; clientId: string | null };
 
-const REPORT_OPTIONS: { value: ReportType; label: string; labelEn: string; desc: string; descEn: string }[] = [
-  {
-    value: "detailed",
-    label: "Laporan Detail",
-    labelEn: "Detailed Report",
-    desc: "Rincian per entry: hari, tugas, tags, duties, jam, dan amount per klien.",
-    descEn: "Entry details: date, task, tags, duties, hours, and amount per client.",
-  },
+const REPORT_OPTIONS: {
+  value: ReportType;
+  label: string;
+  labelEn: string;
+  desc: string;
+  descEn: string;
+  requiresUpgrade?: boolean;
+}[] = [
   {
     value: "dashboard",
     label: "Laporan Dashboard",
@@ -35,11 +36,20 @@ const REPORT_OPTIONS: { value: ReportType; label: string; labelEn: string; desc:
     descEn: "Visual summary: donut chart by project and task plus hour subtotals.",
   },
   {
+    value: "detailed",
+    label: "Laporan Detail",
+    labelEn: "Detailed Report",
+    desc: "Rincian per entry: hari, tugas, tags, duties, jam, dan amount per klien.",
+    descEn: "Entry details: date, task, tags, duties, hours, and amount per client.",
+    requiresUpgrade: true,
+  },
+  {
     value: "full",
     label: "Laporan Lengkap (keduanya)",
     labelEn: "Full Report (both)",
     desc: "Detail + Dashboard dalam satu dokumen.",
     descEn: "Detailed + Dashboard in one document.",
+    requiresUpgrade: true,
   },
 ];
 
@@ -59,13 +69,15 @@ function monthRange(offset: number): { from: string; to: string } {
 export function PdfExportButton({
   clients = [],
   projects = [],
+  canAccessPaidReports = false,
 }: {
   clients?: ClientOpt[];
   projects?: ProjectOpt[];
+  canAccessPaidReports?: boolean;
 }) {
   const { t, lang } = useT();
   const [open, setOpen] = useState(false);
-  const [report, setReport] = useState<ReportType>("full");
+  const [report, setReport] = useState<ReportType>("dashboard");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [clientId, setClientId] = useState("");
@@ -133,30 +145,61 @@ export function PdfExportButton({
           <div className="space-y-2">
             <label className="text-xs font-medium text-muted-foreground">{t("Jenis laporan", "Report type")}</label>
             {REPORT_OPTIONS.map((opt) => {
+              const isLocked = opt.requiresUpgrade && !canAccessPaidReports;
               const active = report === opt.value;
               return (
-                <button
+                <div
                   key={opt.value}
-                  type="button"
-                  onClick={() => setReport(opt.value)}
-                  className={`flex w-full items-start gap-3 rounded-lg border p-3 text-left transition-colors ${
-                    active
+                  className={`relative flex flex-col rounded-lg border transition-all ${
+                    active && !isLocked
                       ? "border-primary bg-primary/5 ring-1 ring-primary"
-                      : "border-border hover:bg-muted/50"
+                      : isLocked
+                        ? "border-border/80 bg-muted/20 opacity-95"
+                        : "border-border hover:bg-muted/50"
                   }`}
                 >
-                  <span
-                    className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
-                      active ? "border-primary" : "border-muted-foreground/40"
-                    }`}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!isLocked) setReport(opt.value);
+                    }}
+                    disabled={isLocked}
+                    className="flex w-full items-start gap-3 p-3 text-left disabled:cursor-default"
                   >
-                    {active && <span className="h-2 w-2 rounded-full bg-primary" />}
-                  </span>
-                  <span className="min-w-0">
-                    <span className="block text-sm font-medium">{lang === "en" ? opt.labelEn : opt.label}</span>
-                    <span className="block text-xs text-muted-foreground">{lang === "en" ? opt.descEn : opt.desc}</span>
-                  </span>
-                </button>
+                    <span
+                      className={`mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border ${
+                        active && !isLocked ? "border-primary" : "border-muted-foreground/40"
+                      }`}
+                    >
+                      {active && !isLocked && <span className="h-2 w-2 rounded-full bg-primary" />}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <span className="block text-sm font-medium">{lang === "en" ? opt.labelEn : opt.label}</span>
+                        {isLocked && (
+                          <span className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
+                            <Lock className="h-2.5 w-2.5" /> PRO
+                          </span>
+                        )}
+                      </div>
+                      <span className="block text-xs text-muted-foreground">{lang === "en" ? opt.descEn : opt.desc}</span>
+                    </div>
+                  </button>
+
+                  {isLocked && (
+                    <div className="flex items-center justify-between border-t border-border/50 bg-muted/40 px-3 py-2 text-xs">
+                      <span className="text-muted-foreground">
+                        {t("Upgrade untuk mengunduh laporan ini.", "Upgrade to download report.")}
+                      </span>
+                      <Button asChild size="sm" variant="outline" className="h-6 gap-1 px-2 text-[11px] font-semibold text-primary">
+                        <Link href="/app/billing" onClick={() => setOpen(false)}>
+                          <Sparkles className="h-3 w-3 text-amber-500" />
+                          <span>{t("Tingkatkan Plan", "Upgrade Plan")}</span>
+                        </Link>
+                      </Button>
+                    </div>
+                  )}
+                </div>
               );
             })}
           </div>

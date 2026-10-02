@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { timeEntries, clients, projects, tasks, users, activities, projectActivities, timesheetSubmissions } from "@/db/schema";
 import { eq, and, isNull, isNotNull, desc, gte, lt, or, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
+import { getWorkspaceOwnerPlan } from "@/lib/plan";
 import { TimerWidget } from "@/components/time/timer-widget";
 import { Timesheet } from "@/components/time/timesheet";
 import { WeeklyTimeGrid } from "@/components/time/weekly-time-grid";
@@ -201,6 +202,8 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
   );
 
   const currentWeekStart = weekStartIso(new Date());
+  const ownerPlanInfo = await getWorkspaceOwnerPlan(workspaceId);
+  const canAccessPaidReports = ownerPlanInfo.plan !== "free";
   const approvalRows = await db.select({ id: timesheetSubmissions.id, userId: timesheetSubmissions.userId, userName: users.name, weekStart: timesheetSubmissions.weekStart, status: timesheetSubmissions.status, totalMinutes: timesheetSubmissions.totalMinutes, billableMinutes: timesheetSubmissions.billableMinutes, submitterNote: timesheetSubmissions.submitterNote, reviewNote: timesheetSubmissions.reviewNote }).from(timesheetSubmissions).leftJoin(users, eq(users.id, timesheetSubmissions.userId)).where(eq(timesheetSubmissions.workspaceId, workspaceId)).orderBy(desc(timesheetSubmissions.submittedAt)).limit(50);
   const currentApproval = approvalRows.find((item) => item.userId === user.id && item.weekStart === currentWeekStart) ?? null;
   const pendingApprovals = member.role === "owner" ? approvalRows.filter((item) => item.status === "submitted") : [];
@@ -292,7 +295,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
       )}
       {mode === "timesheet" && (
         <>
-          <WaktuNavigation view="weekly" selectedDate={selectedDate} actions={<PdfExportButton clients={clientList} projects={projectList} />} />
+          <WaktuNavigation view="weekly" selectedDate={selectedDate} actions={<PdfExportButton clients={clientList} projects={projectList} canAccessPaidReports={canAccessPaidReports} />} />
           <WeeklyTimeGrid
             selectedDate={selectedDate}
             entries={entries.map((entry) => ({
@@ -323,7 +326,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
       )}
       {mode === "history" && (
         <>
-          <WaktuNavigation view="daily" selectedDate={selectedDate} actions={<PdfExportButton clients={clientList} projects={projectList} />} />
+          <WaktuNavigation view="daily" selectedDate={selectedDate} actions={<PdfExportButton clients={clientList} projects={projectList} canAccessPaidReports={canAccessPaidReports} />} />
           <ActiveTimerCard initialTimer={activeTimer ? { id: activeTimer.id, clientId: activeTimer.clientId, projectId: activeTimer.projectId, taskId: activeTimer.taskId, projectName: activeTimer.projectName, taskTitle: activeTimer.taskTitle, description: activeTimer.description, startTime: activeTimer.startTime!, pausedAt: activeTimer.pausedAt } : null} clients={clientList} projects={writableProjectList} tasks={writableTaskList} />
           <Timesheet compact entries={entries.map((e) => ({ id: e.id, description: e.description, tags: e.tags, durationMinutes: e.durationMinutes, manualMinutes: e.manualMinutes, billable: e.billable ?? false, hourlyRate: e.hourlyRate, workDate: e.workDate, startTime: e.startTime, endTime: e.endTime, status: e.status, clientId: e.clientId, projectId: e.projectId, activityId: e.activityId, taskId: e.taskId, clientName: e.clientName, projectName: e.projectName, activityName: e.activityName, projectCurrency: e.projectCurrency, projectTimeTrackingMode: e.projectTimeTrackingMode, billingType: projectList.find((project) => project.id === e.projectId)?.billingType, taskTitle: e.taskTitle, userName: e.userName, createdAt: e.createdAt }))} clients={clientList} projects={projectList} tasks={taskList} activities={activityList} />
         </>
