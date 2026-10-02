@@ -38,6 +38,7 @@ type Ticket = {
   id: string;
   title: string;
   description: string | null;
+  category: string;
   status: string;
   priority: string;
   assigneeId: string | null;
@@ -83,6 +84,45 @@ const PRIORITY_BADGE_STYLES: Record<string, { bg: string; icon: React.ReactNode 
   urgent: {
     bg: "bg-red-50 text-red-700 dark:bg-red-950/60 dark:text-red-300",
     icon: <AlertTriangle className="h-3 w-3 text-red-500" />,
+  },
+};
+
+const CATEGORY_MAP: Record<string, { labelEn: string; labelId: string; emoji: string; color: string }> = {
+  technical: {
+    labelEn: "Bug / Technical",
+    labelId: "Bug / Masalah Teknis",
+    emoji: "🐛",
+    color: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50",
+  },
+  billing: {
+    labelEn: "Billing & Invoices",
+    labelId: "Tagihan & Pembayaran",
+    emoji: "💳",
+    color: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50",
+  },
+  access: {
+    labelEn: "Access & Documents",
+    labelId: "Akses & Berkas",
+    emoji: "📁",
+    color: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/50",
+  },
+  feature_request: {
+    labelEn: "Feature / Revision",
+    labelId: "Permintaan Fitur / Revisi",
+    emoji: "✨",
+    color: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-900/50",
+  },
+  timeline: {
+    labelEn: "Scope & Timeline",
+    labelId: "Jadwal & Scope",
+    emoji: "📅",
+    color: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/50",
+  },
+  general: {
+    labelEn: "General Question",
+    labelId: "Pertanyaan Umum",
+    emoji: "💬",
+    color: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
   },
 };
 
@@ -323,7 +363,18 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                         <div className="flex items-center gap-2.5">
                           <div className="shrink-0">{STATUS_ICONS[ticket.status]}</div>
                           <div className="min-w-0 max-w-md">
-                            <p className="font-semibold text-card-foreground truncate">{ticket.title}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-semibold text-card-foreground truncate">{ticket.title}</p>
+                              {(() => {
+                                const cat = CATEGORY_MAP[ticket.category] || CATEGORY_MAP.technical;
+                                return (
+                                  <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.2 rounded border ${cat.color} shrink-0`}>
+                                    <span>{cat.emoji}</span>
+                                    <span>{locale === "id" ? cat.labelId : cat.labelEn}</span>
+                                  </span>
+                                );
+                              })()}
+                            </div>
                             {ticket.description && (
                               <p className="text-[11px] text-muted-foreground truncate">{ticket.description}</p>
                             )}
@@ -395,10 +446,15 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                       {STATUS_ICONS[ticket.status]}
                       <p className="font-semibold text-sm text-card-foreground truncate">{ticket.title}</p>
                     </div>
-                    <span className={`inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${pMeta.bg}`}>
-                      {pMeta.icon}
-                      {getPriorityLabel(ticket.priority)}
-                    </span>
+                    {(() => {
+                      const cat = CATEGORY_MAP[ticket.category] || CATEGORY_MAP.technical;
+                      return (
+                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded border ${cat.color} shrink-0`}>
+                          <span>{cat.emoji}</span>
+                          <span>{locale === "id" ? cat.labelId : cat.labelEn}</span>
+                        </span>
+                      );
+                    })()}
                   </div>
 
                   {ticket.description && (
@@ -408,6 +464,10 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                   )}
 
                   <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground pt-1 border-t border-border/60">
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold ${pMeta.bg}`}>
+                      {pMeta.icon}
+                      {getPriorityLabel(ticket.priority)}
+                    </span>
                     {ticket.clientName && <span>👤 {ticket.clientName}</span>}
                     {ticket.projectName && <span>📁 {ticket.projectName}</span>}
                     {ticket.assigneeName && <span>→ {ticket.assigneeName}</span>}
@@ -508,6 +568,23 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
 
             <div className="grid grid-cols-2 gap-2.5">
               <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">{t("Jenis Masalah", "Issue Category")}</label>
+                <Select name="category" defaultValue="technical">
+                  <SelectTrigger className="h-8 text-xs rounded-lg">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="technical">🐛 {t("Bug / Masalah Teknis", "Bug / Technical")}</SelectItem>
+                    <SelectItem value="billing">💳 {t("Tagihan & Pembayaran", "Billing & Invoices")}</SelectItem>
+                    <SelectItem value="access">📁 {t("Akses & Dokumen", "Access & Documents")}</SelectItem>
+                    <SelectItem value="feature_request">✨ {t("Permintaan Fitur / Revisi", "Feature / Revision")}</SelectItem>
+                    <SelectItem value="timeline">📅 {t("Jadwal & Scope Proyek", "Scope & Timeline")}</SelectItem>
+                    <SelectItem value="general">💬 {t("Pertanyaan Umum", "General Question")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">{t("Prioritas", "Priority")}</label>
                 <Select name="priority" defaultValue="medium">
                   <SelectTrigger className="h-8 text-xs rounded-lg">
@@ -521,7 +598,9 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
+            <div className="grid grid-cols-2 gap-2.5">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">{t("Ditugaskan Ke", "Assign To")}</label>
                 <Select name="assigneeId" defaultValue="">
@@ -538,9 +617,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                   </SelectContent>
                 </Select>
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-2.5">
               <div className="space-y-1.5">
                 <label className="text-xs font-semibold text-foreground">{t("Klien Terkait", "Related Client")}</label>
                 <Select name="clientId" defaultValue="">
@@ -557,23 +634,23 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                   </SelectContent>
                 </Select>
               </div>
+            </div>
 
-              <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-foreground">{t("Projek Terkait", "Related Project")}</label>
-                <Select name="projectId" defaultValue="">
-                  <SelectTrigger className="h-8 text-xs rounded-lg">
-                    <SelectValue placeholder={t("Opsional", "Optional")} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="">{t("Tidak Ada", "None")}</SelectItem>
-                    {projects.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">{t("Projek Terkait", "Related Project")}</label>
+              <Select name="projectId" defaultValue="">
+                <SelectTrigger className="h-8 text-xs rounded-lg">
+                  <SelectValue placeholder={t("Opsional", "Optional")} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="">{t("Tidak Ada", "None")}</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-1.5">

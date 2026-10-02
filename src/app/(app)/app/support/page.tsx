@@ -36,6 +36,13 @@ export default async function SupportPage() {
     await createTicket({
       title: String(formData.get("title") || ""),
       description: String(formData.get("description") || "") || undefined,
+      category: String(formData.get("category") || "technical") as
+        | "technical"
+        | "billing"
+        | "access"
+        | "feature_request"
+        | "timeline"
+        | "general",
       priority: String(formData.get("priority") || "medium") as "low" | "medium" | "high" | "urgent",
       assigneeId: String(formData.get("assigneeId") || "") || undefined,
       clientId: String(formData.get("clientId") || "") || undefined,

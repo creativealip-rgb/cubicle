@@ -2346,6 +2346,9 @@ export const supportTickets = pgTable("support_tickets", {
   workspaceId: uuid("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
+  category: text("category", {
+    enum: ["technical", "billing", "access", "feature_request", "timeline", "general"],
+  }).notNull().default("technical"),
   status: text("status", { enum: ["open", "in_progress", "resolved", "closed"] }).notNull().default("open"),
   priority: text("priority", { enum: ["low", "medium", "high", "urgent"] }).notNull().default("medium"),
   assigneeId: text("assignee_id").references(() => users.id, { onDelete: "set null" }),

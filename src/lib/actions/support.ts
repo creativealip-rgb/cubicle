@@ -13,6 +13,9 @@ import { writeActivityLog } from "@/lib/actions/activity";
 const createTicketSchema = z.object({
   title: z.string().min(1).max(200),
   description: z.string().optional(),
+  category: z
+    .enum(["technical", "billing", "access", "feature_request", "timeline", "general"])
+    .default("technical"),
   priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
   assigneeId: z.string().optional(),
   clientId: z.string().uuid().optional(),
@@ -22,6 +25,9 @@ const createTicketSchema = z.object({
 const updateTicketSchema = z.object({
   title: z.string().min(1).max(200).optional(),
   description: z.string().optional(),
+  category: z
+    .enum(["technical", "billing", "access", "feature_request", "timeline", "general"])
+    .optional(),
   status: z.enum(["open", "in_progress", "resolved", "closed"]).optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
   assigneeId: z.string().optional().nullable(),
@@ -48,6 +54,7 @@ export async function createTicket(input: z.infer<typeof createTicketSchema>) {
       workspaceId,
       title: parsed.title,
       description: parsed.description || null,
+      category: parsed.category,
       priority: parsed.priority,
       assigneeId: parsed.assigneeId || null,
       clientId: parsed.clientId || null,
@@ -105,6 +112,7 @@ export async function listTickets() {
       id: supportTickets.id,
       title: supportTickets.title,
       description: supportTickets.description,
+      category: supportTickets.category,
       status: supportTickets.status,
       priority: supportTickets.priority,
       assigneeId: supportTickets.assigneeId,
