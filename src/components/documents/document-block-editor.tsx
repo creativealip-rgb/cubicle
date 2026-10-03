@@ -637,7 +637,6 @@ export function DocumentBlockEditor({
     { type: "list", label: "Bullet / Numbered List", desc: "Itemized scope or deliverables", icon: List, category: "basic" },
     { type: "table", label: "Pricing & Data Table", desc: "Structured fee breakdown table", icon: TableIcon, category: "basic" },
     { type: "divider", label: "Divider Line", desc: "Horizontal separation line", icon: Minus, category: "basic" },
-    { type: "logo", label: "Brand Logo", desc: "Official header brand logo with alignment", icon: ImageIcon, category: "media" },
     { type: "image", label: "Image / Asset", desc: "Mockups, logos, diagrams", icon: ImageIcon, category: "media" },
     { type: "attachment", label: "File Attachment", desc: "Downloadable PDF / brief files", icon: Paperclip, category: "media" },
     { type: "placeholder", label: "Smart Variable Block", desc: "Dynamic client / project token", icon: ShieldCheck, category: "special" },

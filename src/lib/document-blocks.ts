@@ -110,7 +110,6 @@ export function defaultDocumentBlocks(kind: "proposal" | "contract"): DocumentBl
  */
 export function buildProposalStarterBlocks(): DocumentBlock[] {
   return [
-    { id: crypto.randomUUID(), type: "logo", align: "center", logoSize: "md" },
     { id: crypto.randomUUID(), type: "heading", level: 1, content: "Project Proposal", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "{{workspace_name}}", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "Prepared for: {{client_name}}", align: "center" },
@@ -130,7 +129,6 @@ export function buildProposalStarterBlocks(): DocumentBlock[] {
 
 export function buildMarketingProposalBlocks(): DocumentBlock[] {
   return [
-    { id: crypto.randomUUID(), type: "logo", align: "center", logoSize: "md" },
     { id: crypto.randomUUID(), type: "heading", level: 1, content: "Digital Marketing & Growth Proposal", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "{{workspace_name}}", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "Target Client: {{client_name}}", align: "center" },
@@ -148,7 +146,6 @@ export function buildMarketingProposalBlocks(): DocumentBlock[] {
 
 export function buildBrandDesignProposalBlocks(): DocumentBlock[] {
   return [
-    { id: crypto.randomUUID(), type: "logo", align: "center", logoSize: "md" },
     { id: crypto.randomUUID(), type: "heading", level: 1, content: "Brand Identity & UI/UX Design Proposal", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "{{workspace_name}}", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "Prepared for: {{client_name}}", align: "center" },
@@ -166,14 +163,13 @@ export function buildBrandDesignProposalBlocks(): DocumentBlock[] {
 
 export function buildContractStarterBlocks(): DocumentBlock[] {
   return [
-    { id: crypto.randomUUID(), type: "logo", align: "center", logoSize: "md" },
     { id: crypto.randomUUID(), type: "heading", level: 1, content: "Service Agreement", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "{{workspace_name}}", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "Contract No. {{contract_number}}", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "{{contract_date}}", align: "center" },
     { id: crypto.randomUUID(), type: "divider" },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Parties" },
-    { id: crypto.randomUUID(), type: "text", content: "This Service Agreement is entered into on {{contract_date}} between {{workspace_name}} (\u201cService Provider\u201d) and {{client_name}} (\u201cClient\u201d)." },
+    { id: crypto.randomUUID(), type: "text", content: "This Service Agreement is entered into on {{contract_date}} between {{workspace_name}} (“Service Provider”) and {{client_name}} (“Client”)." },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Background" },
     { id: crypto.randomUUID(), type: "text", content: "The Client desires to retain Service Provider to perform professional services as agreed." },
     { id: crypto.randomUUID(), type: "heading", level: 2, content: "Services & Scope" },
@@ -196,7 +192,6 @@ export function buildContractStarterBlocks(): DocumentBlock[] {
 
 export function buildNdaContractBlocks(): DocumentBlock[] {
   return [
-    { id: crypto.randomUUID(), type: "logo", align: "center", logoSize: "md" },
     { id: crypto.randomUUID(), type: "heading", level: 1, content: "Non-Disclosure Agreement (NDA)", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "Ref: {{contract_number}}", align: "center" },
     { id: crypto.randomUUID(), type: "divider" },
@@ -215,7 +210,6 @@ export function buildNdaContractBlocks(): DocumentBlock[] {
 
 export function buildRetainerContractBlocks(): DocumentBlock[] {
   return [
-    { id: crypto.randomUUID(), type: "logo", align: "center", logoSize: "md" },
     { id: crypto.randomUUID(), type: "heading", level: 1, content: "Monthly Retainer & Support Agreement", align: "center" },
     { id: crypto.randomUUID(), type: "text", content: "{{workspace_name}} & {{client_name}}", align: "center" },
     { id: crypto.randomUUID(), type: "divider" },
