@@ -876,6 +876,50 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                 </div>
               </div>
 
+              {/* Contact Form Settings Card */}
+              <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
+                <div>
+                  <h3 className="text-base font-bold text-foreground">{t("Formulir Pesan Footer (Contact Form)", "Footer Contact Form Settings")}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {t("Atur tampilan formulir kirim pesan langsung di bagian paling bawah landing page Anda.", "Configure the direct message contact form at the bottom of your landing page.")}
+                  </p>
+                </div>
+
+                <div className="space-y-4 pt-1">
+                  <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/30 p-3.5">
+                    <div className="space-y-0.5">
+                      <Label htmlFor="toggle-contact-form" className="text-xs font-semibold cursor-pointer">
+                        {t("Tampilkan Formulir Pesan Bawah", "Enable Footer Contact Form")}
+                      </Label>
+                      <p className="text-[11px] text-muted-foreground">
+                        {t("Jika dimatikan, form kirim pesan di footer tidak akan muncul di website publik.", "If disabled, the message form at the footer will be hidden on your public website.")}
+                      </p>
+                    </div>
+                    <input
+                      id="toggle-contact-form"
+                      type="checkbox"
+                      checked={site.showContactForm ?? true}
+                      onChange={(e) => updateSite({ showContactForm: e.target.checked })}
+                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                    />
+                  </div>
+
+                  {(site.showContactForm ?? true) && (
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-semibold text-foreground">
+                        {t("Judul Formulir Kontak", "Contact Form Heading")}
+                      </Label>
+                      <Input
+                        value={site.contactFormHeading || ""}
+                        onChange={(e) => updateSite({ contactFormHeading: e.target.value })}
+                        placeholder={t("Contact me (Default)", "Contact me (Default)")}
+                        className="text-xs sm:text-sm"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
               {/* Slug & URL Settings Card */}
               <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
                 <div>

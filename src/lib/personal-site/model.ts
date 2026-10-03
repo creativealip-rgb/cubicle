@@ -354,6 +354,8 @@ export const personalSiteInputSchema = z.object({
   pages: z.array(personalSitePageSchema).max(10).optional(),
   themeConfig: themeConfigSchema.nullish(),
   seo: seoMetadataSchema.optional().nullish(),
+  showContactForm: z.boolean().optional(),
+  contactFormHeading: z.string().trim().max(100).optional(),
 });
 
 export type PersonalSiteInput = z.infer<typeof personalSiteInputSchema>;
@@ -394,8 +396,28 @@ export const DEFAULT_PERSONAL_SITE: PersonalSiteInput = {
     slug: "",
     title: "Home",
     isHome: true,
-    sections: [],
+    sections: [
+      {
+        id: "default-services",
+        type: "services",
+        heading: "Services",
+        items: [
+          { id: "default-service-1", title: "Service", description: "A concise outcome and scope." },
+        ],
+      },
+      {
+        id: "default-process",
+        type: "process",
+        heading: "How it works",
+        steps: [
+          { id: "default-step-1", title: "Discovery", description: "Align goals, needs, and scope." },
+          { id: "default-step-2", title: "Execution", description: "Deliver through clear checkpoints." },
+        ],
+      },
+    ],
   }],
+  showContactForm: true,
+  contactFormHeading: "",
   themeConfig: {
     primaryColor: "#6647F0",
     secondaryColor: "#1e293b",
@@ -590,6 +612,8 @@ export function normalizeStoredPersonalSite(value: unknown): PersonalSiteInput {
     links: normalizeLegacyLinks(raw.links),
     pages: Array.isArray(raw.pages) && raw.pages.length ? (raw.pages as PersonalSiteInput["pages"]) : undefined,
     themeConfig: raw.themeConfig && typeof raw.themeConfig === "object" ? (raw.themeConfig as PersonalSiteInput["themeConfig"]) : undefined,
+    showContactForm: typeof raw.showContactForm === "boolean" ? raw.showContactForm : true,
+    contactFormHeading: typeof raw.contactFormHeading === "string" ? raw.contactFormHeading : "",
     seo: rawSeo
       ? {
           title: String(rawSeo.title ?? ""),
