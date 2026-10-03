@@ -447,7 +447,7 @@ function zonedDateTimeToUtc(date: string, time: string, timeZone: string): Date 
 }
 
 export async function getAvailableSlots(workspaceId: string, date: string, durationMinutes: number = 30) {
-  const durationMs = Math.max(15, Math.min(240, durationMinutes)) * 60 * 1000;
+  const durationMs = Math.max(15, Math.min(720, durationMinutes)) * 60 * 1000;
   const rules = await db
     .select()
     .from(availabilityRules)
