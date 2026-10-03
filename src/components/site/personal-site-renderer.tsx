@@ -262,7 +262,7 @@ function SectionBody({ section, accent, panel, buttonRadius, labels }: { section
 
           {/* Text Content */}
           <div
-            className={`space-y-3 ${
+            className={`space-y-3.5 ${
               section.mediaWidth === "30%"
                 ? "md:col-span-8"
                 : section.mediaWidth === "40%"
@@ -272,6 +272,11 @@ function SectionBody({ section, accent, panel, buttonRadius, labels }: { section
                 : "md:col-span-6"
             } ${isLeft ? "order-2" : "order-2 md:order-1"}`}
           >
+            {section.heading && (
+              <h3 className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: accent }}>
+                {section.heading}
+              </h3>
+            )}
             {section.content && (
               <p className="text-base leading-relaxed opacity-80 whitespace-pre-wrap">{section.content}</p>
             )}
@@ -393,13 +398,23 @@ export function PersonalSiteRenderer({
 
       {aboutCopy && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.65fr_1.35fr]"><div><p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>{labels.about}</p><h2 className="mt-3 text-3xl font-bold tracking-[-0.01em]" style={headingStyle}>{site.title}</h2></div><p className="whitespace-pre-wrap text-base leading-8 opacity-70">{aboutCopy}</p></div></section>}
 
-      {visibleSections.map((section, index) => (
-        <AnimateOnScroll key={section.id} animation={section.animation}>
-          <section data-section-type={section.type} className={`${index % 2 === 0 ? styles.sectionAlt : ""} px-6 py-14 sm:px-10 lg:px-16 lg:py-20`}>
-            <div className="mx-auto max-w-6xl"><h2 className="mb-7 text-2xl font-bold tracking-[-0.01em] sm:text-3xl" style={headingStyle}>{section.heading}</h2><SectionBody section={section} accent={accent} panel={styles.panel} buttonRadius={buttonRadius} labels={labels} /></div>
-          </section>
-        </AnimateOnScroll>
-      ))}
+      {visibleSections.map((section, index) => {
+        const hideDefaultHeading = section.type === "mediaText" || (section.type === "image" && !section.heading);
+        return (
+          <AnimateOnScroll key={section.id} animation={section.animation}>
+            <section data-section-type={section.type} className={`${index % 2 === 0 ? styles.sectionAlt : ""} px-6 py-14 sm:px-10 lg:px-16 lg:py-20`}>
+              <div className="mx-auto max-w-6xl">
+                {!hideDefaultHeading && section.heading && (
+                  <h2 className="mb-7 text-2xl font-bold tracking-[-0.01em] sm:text-3xl" style={headingStyle}>
+                    {section.heading}
+                  </h2>
+                )}
+                <SectionBody section={section} accent={accent} panel={styles.panel} buttonRadius={buttonRadius} labels={labels} />
+              </div>
+            </section>
+          </AnimateOnScroll>
+        );
+      })}
 
       {visibleLinks.length > 0 && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className={`mx-auto max-w-6xl rounded-3xl p-7 text-center sm:p-10 ${styles.panel}`}><h2 className="text-2xl font-bold sm:text-3xl">{labels.workWithMe}</h2><p className="mx-auto mt-3 max-w-xl text-sm leading-6 opacity-65">{labels.contactHint}</p><div className="mt-6 flex flex-wrap justify-center gap-3">{visibleLinks.map((link) => <a key={link.id} className="inline-flex min-h-11 items-center rounded-xl px-5 py-3 text-sm font-semibold" style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }} href={safePublicHref(link.url)} target={/^https?:/i.test(link.url) ? "_blank" : undefined} rel={/^https?:/i.test(link.url) ? "noreferrer" : undefined}>{link.label}</a>)}</div></div></section>}
 
