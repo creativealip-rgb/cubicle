@@ -58,6 +58,8 @@ function getSectionPreview(section: PersonalSiteSection, t: (id: string, en: str
     case "services": return section.items?.[0]?.title || t("Layanan", "Services");
     case "portfolio": return section.projects?.[0]?.title || t("Portofolio", "Portfolio");
     case "gallery": return t("Galeri", "Gallery");
+    case "image": return section.caption || t("Gambar", "Image");
+    case "mediaText": return section.heading || t("Media & Teks", "Media & Text");
     case "contact": return t("Kontak", "Contact");
     case "process": return section.steps?.[0]?.title || t("Proses", "Process");
     default: return section.type;

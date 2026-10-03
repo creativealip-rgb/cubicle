@@ -187,6 +187,109 @@ function SectionBody({ section, accent, panel, buttonRadius, labels }: { section
             );})}
         </div>
       );
+    case "image": {
+      if (!section.url) return null;
+      const imgContent = (
+        <div className={`flex flex-col ${section.align === "left" ? "items-start" : section.align === "right" ? "items-end" : "items-center"}`}>
+          <div
+            className={`relative overflow-hidden rounded-2xl ${panel} ${
+              section.size === "sm"
+                ? "w-full max-w-sm"
+                : section.size === "md"
+                ? "w-full max-w-xl"
+                : section.size === "lg"
+                ? "w-full max-w-3xl"
+                : "w-full"
+            }`}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={section.url}
+              alt={section.alt || section.heading || "Image"}
+              className={`w-full object-cover transition-all ${
+                section.aspectRatio === "square"
+                  ? "aspect-square"
+                  : section.aspectRatio === "video"
+                  ? "aspect-video"
+                  : section.aspectRatio === "wide"
+                  ? "aspect-[21/9]"
+                  : section.aspectRatio === "portrait"
+                  ? "aspect-[3/4]"
+                  : "h-auto max-h-[600px]"
+              }`}
+              loading="lazy"
+            />
+          </div>
+          {section.caption && (
+            <p className="mt-2 text-center text-xs opacity-75 italic max-w-xl">{section.caption}</p>
+          )}
+        </div>
+      );
+      return section.linkUrl && !isPlaceholderHref(section.linkUrl) ? (
+        <a href={safePublicHref(section.linkUrl)} target="_blank" rel="noreferrer" className="block hover:opacity-95 transition-opacity">
+          {imgContent}
+        </a>
+      ) : (
+        imgContent
+      );
+    }
+    case "mediaText": {
+      const isLeft = (section.mediaPosition || "left") === "left";
+      return (
+        <div className={`grid gap-6 md:gap-8 items-center md:grid-cols-12 ${panel} p-6 sm:p-8 rounded-3xl`}>
+          {/* Image */}
+          <div
+            className={`rounded-2xl overflow-hidden ${
+              section.mediaWidth === "30%"
+                ? "md:col-span-4"
+                : section.mediaWidth === "40%"
+                ? "md:col-span-5"
+                : section.mediaWidth === "60%"
+                ? "md:col-span-7"
+                : "md:col-span-6"
+            } ${isLeft ? "order-1" : "order-1 md:order-2"}`}
+          >
+            {section.imageUrl ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={section.imageUrl}
+                alt={section.imageAlt || section.heading || "Media"}
+                className="w-full h-auto max-h-[420px] object-cover rounded-xl"
+                loading="lazy"
+              />
+            ) : null}
+          </div>
+
+          {/* Text Content */}
+          <div
+            className={`space-y-3 ${
+              section.mediaWidth === "30%"
+                ? "md:col-span-8"
+                : section.mediaWidth === "40%"
+                ? "md:col-span-7"
+                : section.mediaWidth === "60%"
+                ? "md:col-span-5"
+                : "md:col-span-6"
+            } ${isLeft ? "order-2" : "order-2 md:order-1"}`}
+          >
+            {section.content && (
+              <p className="text-base leading-relaxed opacity-80 whitespace-pre-wrap">{section.content}</p>
+            )}
+            {section.buttonLabel && section.buttonUrl && !isPlaceholderHref(section.buttonUrl) && (
+              <div className="pt-2">
+                <a
+                  className="inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-md"
+                  style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }}
+                  href={safePublicHref(section.buttonUrl)}
+                >
+                  {section.buttonLabel}
+                </a>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
     case "embed":
       return section.url ? <iframe src={section.url} className="w-full rounded-2xl" style={{ height: section.height || 400 }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy" /> : null;
     case "social":

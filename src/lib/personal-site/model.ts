@@ -13,6 +13,8 @@ export const PERSONAL_SITE_SECTION_TYPES = [
   "contact",
   "custom",
   "gallery",
+  "image",
+  "mediaText",
   "embed",
   "social",
   "cta",
@@ -164,6 +166,33 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
       height: z.number().min(80).max(800).optional(),
       width: z.number().min(80).max(1200).optional(),
     })).max(12),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("image"),
+    heading: headingSchema,
+    animation: animationSchema,
+    url: z.string().trim().max(2_000).optional(),
+    alt: z.string().trim().max(200).optional(),
+    caption: z.string().trim().max(500).optional(),
+    linkUrl: optionalPublicHrefSchema,
+    align: z.enum(["left", "center", "right"]).optional(),
+    size: z.enum(["sm", "md", "lg", "full"]).optional(),
+    aspectRatio: z.enum(["auto", "square", "video", "wide", "portrait"]).optional(),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("mediaText"),
+    heading: headingSchema,
+    animation: animationSchema,
+    mediaPosition: z.enum(["left", "right"]).optional(),
+    mediaWidth: z.enum(["30%", "40%", "50%", "60%"]).optional(),
+    verticalAlign: z.enum(["top", "center", "bottom"]).optional(),
+    imageUrl: z.string().trim().max(2_000).optional(),
+    imageAlt: z.string().trim().max(200).optional(),
+    content: z.string().trim().max(2_000).optional(),
+    buttonLabel: z.string().trim().max(60).optional(),
+    buttonUrl: optionalPublicHrefSchema,
   }),
   z.object({
     id: idSchema,
@@ -571,6 +600,8 @@ export function sectionHasContent(section: PersonalSiteSection) {
     case "contact": return section.methods.some((item) => item.label && (item.value || item.url));
     case "custom": return Boolean(section.content.trim());
     case "gallery": return section.images.some((img) => img.url);
+    case "image": return Boolean(section.url?.trim());
+    case "mediaText": return Boolean(section.imageUrl?.trim()) || Boolean(section.content?.trim());
     case "embed": return Boolean(section.url.trim());
     case "social": return section.links.some((link) => link.url);
     case "cta": return Boolean(section.text.trim()) || Boolean(section.buttonLabel.trim());

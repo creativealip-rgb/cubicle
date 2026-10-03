@@ -28,6 +28,8 @@ function emptySection(type: PersonalSiteSection["type"]): PersonalSiteSection {
     case "contact": return { ...base, type, methods: [{ id: id(), label: "", value: "", url: "" }] };
     case "custom": return { ...base, type, content: "" };
     case "gallery": return { ...base, type, images: [{ id: id(), url: "", alt: "" }] };
+    case "image": return { ...base, type, url: "", alt: "", caption: "", linkUrl: "", align: "center", size: "md", aspectRatio: "auto" };
+    case "mediaText": return { ...base, type, mediaPosition: "left", mediaWidth: "50%", verticalAlign: "center", imageUrl: "", imageAlt: "", content: "", buttonLabel: "", buttonUrl: "" };
     case "embed": return { ...base, type, url: "", height: 400 };
     case "social": return { ...base, type, links: [{ id: id(), platform: "Instagram", url: "" }] };
     case "cta": return { ...base, type, text: "", buttonLabel: "", buttonUrl: "" };

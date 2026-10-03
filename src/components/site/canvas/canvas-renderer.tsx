@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Plus, ChevronDown, ChevronUp, GripVertical, Copy, Trash2 } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, GripVertical, Copy, Trash2, Image as ImageIcon } from "lucide-react";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
@@ -434,6 +434,132 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           onUpdate={onUpdate}
         />
       );
+
+    case "image":
+      return (
+        <div className="py-6">
+          {section.heading && (
+            <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
+          )}
+          <div className={`flex flex-col ${section.align === "left" ? "items-start" : section.align === "right" ? "items-end" : "items-center"}`}>
+            <div
+              className={`relative overflow-hidden rounded-2xl border border-border/80 bg-muted/20 ${
+                section.size === "sm"
+                  ? "w-full max-w-sm"
+                  : section.size === "md"
+                  ? "w-full max-w-xl"
+                  : section.size === "lg"
+                  ? "w-full max-w-3xl"
+                  : "w-full"
+              }`}
+            >
+              {section.url ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={section.url}
+                  alt={section.alt || section.heading || "Image"}
+                  className={`w-full object-cover transition-all ${
+                    section.aspectRatio === "square"
+                      ? "aspect-square"
+                      : section.aspectRatio === "video"
+                      ? "aspect-video"
+                      : section.aspectRatio === "wide"
+                      ? "aspect-[21/9]"
+                      : section.aspectRatio === "portrait"
+                      ? "aspect-[3/4]"
+                      : "h-auto max-h-[550px]"
+                  }`}
+                />
+              ) : (
+                <div className="py-16 flex flex-col items-center justify-center text-muted-foreground gap-2">
+                  <ImageIcon className="h-8 w-8 text-muted-foreground/60" />
+                  <p className="text-xs font-medium">{t("Pilih atau unggah gambar di panel kanan", "Select or upload an image in the right panel")}</p>
+                </div>
+              )}
+            </div>
+            {section.caption && (
+              <InlineText
+                value={section.caption}
+                onChange={(v) => onUpdate({ caption: v })}
+                tag="p"
+                className="mt-2 text-center text-xs text-muted-foreground italic max-w-xl"
+              />
+            )}
+          </div>
+        </div>
+      );
+
+    case "mediaText": {
+      const isLeft = (section.mediaPosition || "left") === "left";
+      return (
+        <div className="py-6">
+          <div className={`grid gap-6 md:gap-8 items-center ${isLeft ? "md:grid-cols-12" : "md:grid-cols-12"}`}>
+            {/* Image Column */}
+            <div
+              className={`rounded-2xl overflow-hidden border border-border/80 bg-muted/20 ${
+                section.mediaWidth === "30%"
+                  ? "md:col-span-4"
+                  : section.mediaWidth === "40%"
+                  ? "md:col-span-5"
+                  : section.mediaWidth === "60%"
+                  ? "md:col-span-7"
+                  : "md:col-span-6"
+              } ${isLeft ? "order-1" : "order-1 md:order-2"}`}
+            >
+              {section.imageUrl ? (
+                /* eslint-disable-next-line @next/next/no-img-element */
+                <img
+                  src={section.imageUrl}
+                  alt={section.imageAlt || section.heading || "Media"}
+                  className="w-full h-auto max-h-[420px] object-cover rounded-xl"
+                />
+              ) : (
+                <div className="py-16 flex flex-col items-center justify-center text-muted-foreground gap-2">
+                  <ImageIcon className="h-8 w-8 text-muted-foreground/60" />
+                  <p className="text-xs font-medium">{t("Unggah media di panel kanan", "Upload media in right panel")}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Text & Content Column */}
+            <div
+              className={`space-y-3.5 ${
+                section.mediaWidth === "30%"
+                  ? "md:col-span-8"
+                  : section.mediaWidth === "40%"
+                  ? "md:col-span-7"
+                  : section.mediaWidth === "60%"
+                  ? "md:col-span-5"
+                  : "md:col-span-6"
+              } ${isLeft ? "order-2" : "order-2 md:order-1"}`}
+            >
+              <InlineText
+                value={section.heading}
+                onChange={(v) => onUpdate({ heading: v })}
+                tag="h2"
+                className="text-xl sm:text-2xl font-bold tracking-tight text-foreground"
+              />
+              <InlineText
+                value={section.content ?? ""}
+                onChange={(v) => onUpdate({ content: v })}
+                tag="p"
+                className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap"
+              />
+              {section.buttonLabel && (
+                <div className="pt-2">
+                  <span
+                    className="inline-flex items-center rounded-xl px-5 py-2.5 text-xs font-semibold text-white shadow-xs"
+                    style={{ backgroundColor: theme?.primaryColor ?? "#6647F0" }}
+                  >
+                    {section.buttonLabel}
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     case "embed":
       return (

@@ -138,6 +138,8 @@ function emptySection(type: PersonalSiteSection["type"]): PersonalSiteSection {
     case "contact": return { ...base, type, methods: [{ id: makeId(), label: "", value: "", url: "" }] };
     case "custom": return { ...base, type, content: "" };
     case "gallery": return { ...base, type, images: [{ id: makeId(), url: "", alt: "" }] };
+    case "image": return { ...base, type, url: "", alt: "", caption: "", linkUrl: "", align: "center", size: "md", aspectRatio: "auto" };
+    case "mediaText": return { ...base, type, mediaPosition: "left", mediaWidth: "50%", verticalAlign: "center", imageUrl: "", imageAlt: "", content: "", buttonLabel: "", buttonUrl: "" };
     case "embed": return { ...base, type, url: "", height: 400 };
     case "social": return { ...base, type, links: [{ id: makeId(), platform: "Instagram", url: "" }] };
     case "cta": return { ...base, type, text: "", buttonLabel: "", buttonUrl: "" };
@@ -159,6 +161,8 @@ const WIDGET_LIST: Array<{ type: PersonalSiteSection["type"]; label: string; ico
   { type: "faq", label: "FAQ", icon: HelpCircle, category: "content" },
   { type: "contact", label: "Kontak", icon: Mail, category: "content" },
   { type: "gallery", label: "Galeri", icon: ImageIcon, category: "media" },
+  { type: "image", label: "Gambar Tunggal", icon: ImageIcon, category: "media" },
+  { type: "mediaText", label: "Media & Teks", icon: Columns3, category: "media" },
   { type: "embed", label: "Embed", icon: Code, category: "media" },
   { type: "social", label: "Sosial", icon: Share2, category: "basic" },
   { type: "cta", label: "Tombol CTA", icon: MousePointerClick, category: "basic" },
@@ -180,6 +184,8 @@ const WIDGET_EN_LABELS: Record<string, string> = {
   FAQ: "FAQ",
   Kontak: "Contact",
   Galeri: "Gallery",
+  "Gambar Tunggal": "Single Image",
+  "Media & Teks": "Media & Text",
   Embed: "Embed",
   Sosial: "Social",
   "Tombol CTA": "CTA Button",
@@ -223,6 +229,8 @@ const SECTION_TEMPLATE_EN_LABELS: Record<string, string> = {
   "CTA Kontak": "Contact CTA",
   "Testimoni 3 Klien": "3-Client Testimonials",
   "Portfolio Gallery": "Portfolio Gallery",
+  "Banner Image": "Banner Image",
+  "Media and Text (Split)": "Media and Text (Split)",
   "Embed Video": "Video Embed",
   "Content Block 2 Kolom": "2-Column Content Block",
   "Divider Minimalis": "Minimal Divider",
@@ -244,6 +252,8 @@ const SECTION_TEMPLATE_EN_DESCRIPTIONS: Record<string, string> = {
   "CTA Kontak": "CTA to direct visitors to contact/WhatsApp.",
   "Testimoni 3 Klien": "Quotes from previous clients.",
   "Portfolio Gallery": "Image gallery to showcase your work.",
+  "Banner Image": "High-impact single banner image with caption.",
+  "Media and Text (Split)": "Split 2-column layout with media on one side and text/CTA on the other.",
   "Embed Video": "Embed a video from YouTube or others.",
   "Content Block 2 Kolom": "Two content columns with a flexible layout.",
   "Divider Minimalis": "Horizontal separator for a visual break.",

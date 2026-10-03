@@ -279,6 +279,8 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
         {section.type === "faq" && <FaqEditor section={section} onUpdate={onUpdate} />}
         {section.type === "cta" && <CtaEditor section={section} onUpdate={onUpdate} />}
         {section.type === "gallery" && <GalleryEditor section={section} onUpdate={onUpdate} />}
+        {section.type === "image" && <SingleImageEditor section={section} onUpdate={onUpdate} />}
+        {section.type === "mediaText" && <MediaTextEditor section={section} onUpdate={onUpdate} />}
       </div>
     </aside>
   );
@@ -618,6 +620,163 @@ function GalleryEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function SingleImageEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "image" }>>) {
+  const { t } = useT();
+  return (
+    <div className="space-y-4">
+      <div className="space-y-1.5">
+        <Label className="text-xs font-semibold">{t("Unggah Gambar", "Upload Image")}</Label>
+        <ImageUpload
+          value={section.url || ""}
+          onChange={(url) => onUpdate({ url })}
+          label={t("Unggah", "Upload")}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Ukuran Gambar", "Image Size")}</Label>
+        <select
+          value={section.size || "md"}
+          onChange={(e) => onUpdate({ size: e.target.value as "sm" | "md" | "lg" | "full" })}
+          className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+        >
+          <option value="sm">{t("Kecil (Small)", "Small (sm)")}</option>
+          <option value="md">{t("Sedang (Medium)", "Medium (md)")}</option>
+          <option value="lg">{t("Besar (Large)", "Large (lg)")}</option>
+          <option value="full">{t("Lebar Penuh (Full Width)", "Full Width (full)")}</option>
+        </select>
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Perataan (Alignment)", "Alignment")}</Label>
+        <select
+          value={section.align || "center"}
+          onChange={(e) => onUpdate({ align: e.target.value as "left" | "center" | "right" })}
+          className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+        >
+          <option value="left">{t("Rata Kiri", "Left")}</option>
+          <option value="center">{t("Rata Tengah", "Center")}</option>
+          <option value="right">{t("Rata Kanan", "Right")}</option>
+        </select>
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Rasio Aspek", "Aspect Ratio")}</Label>
+        <select
+          value={section.aspectRatio || "auto"}
+          onChange={(e) => onUpdate({ aspectRatio: e.target.value as "auto" | "square" | "video" | "wide" | "portrait" })}
+          className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+        >
+          <option value="auto">{t("Otomatis (Sesuai Asli)", "Auto (Original)")}</option>
+          <option value="square">{t("Kotak 1:1", "Square 1:1")}</option>
+          <option value="video">{t("Video 16:9", "Video 16:9")}</option>
+          <option value="wide">{t("Banner Lebar 21:9", "Wide Banner 21:9")}</option>
+          <option value="portrait">{t("Potret 3:4", "Portrait 3:4")}</option>
+        </select>
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Teks Keterangan (Caption)", "Caption")}</Label>
+        <Input
+          value={section.caption || ""}
+          maxLength={200}
+          onChange={(e) => onUpdate({ caption: e.target.value })}
+          className="h-8 text-xs"
+          placeholder={t("Keterangan di bawah gambar...", "Caption below image...")}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Tautan URL (Opsional)", "Link URL (Optional)")}</Label>
+        <Input
+          value={section.linkUrl || ""}
+          maxLength={2000}
+          onChange={(e) => onUpdate({ linkUrl: e.target.value })}
+          className="h-8 text-xs font-mono"
+          placeholder="https://..."
+        />
+      </div>
+    </div>
+  );
+}
+
+function MediaTextEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "mediaText" }>>) {
+  const { t } = useT();
+  return (
+    <div className="space-y-4">
+      <div className="space-y-1.5">
+        <Label className="text-xs font-semibold">{t("Unggah Gambar Media", "Upload Media Image")}</Label>
+        <ImageUpload
+          value={section.imageUrl || ""}
+          onChange={(imageUrl) => onUpdate({ imageUrl })}
+          label={t("Unggah", "Upload")}
+        />
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Posisi Media (Gambar)", "Media Position")}</Label>
+        <select
+          value={section.mediaPosition || "left"}
+          onChange={(e) => onUpdate({ mediaPosition: e.target.value as "left" | "right" })}
+          className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+        >
+          <option value="left">{t("Media di Kiri, Teks di Kanan", "Media Left, Text Right")}</option>
+          <option value="right">{t("Teks di Kiri, Media di Kanan", "Text Left, Media Right")}</option>
+        </select>
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Proporsi Lebar Media", "Media Width")}</Label>
+        <select
+          value={section.mediaWidth || "50%"}
+          onChange={(e) => onUpdate({ mediaWidth: e.target.value as "30%" | "40%" | "50%" | "60%" })}
+          className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+        >
+          <option value="30%">30% Media / 70% Teks</option>
+          <option value="40%">40% Media / 60% Teks</option>
+          <option value="50%">50% Seimbang / 50% Teks</option>
+          <option value="60%">60% Media / 40% Teks</option>
+        </select>
+      </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Konten Teks / Deskripsi", "Content / Story")}</Label>
+        <Textarea
+          value={section.content || ""}
+          maxLength={2000}
+          onChange={(e) => onUpdate({ content: e.target.value })}
+          className="min-h-24 resize-none text-xs leading-relaxed"
+          placeholder={t("Tuliskan cerita, keunggulan layanan, atau deskripsi di sini...", "Write your story or description here...")}
+        />
+      </div>
+
+      <div className="space-y-2 pt-2 border-t border-border/60">
+        <Label className="text-xs font-semibold">{t("Tombol Aksi (CTA Button)", "CTA Button")}</Label>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">{t("Label Tombol", "Button Label")}</Label>
+          <Input
+            value={section.buttonLabel || ""}
+            maxLength={60}
+            onChange={(e) => onUpdate({ buttonLabel: e.target.value })}
+            className="h-8 text-xs font-semibold"
+            placeholder={t("contoh: Konsultasi Sekarang", "e.g. Get Started")}
+          />
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">{t("Tautan Tombol (URL)", "Button URL")}</Label>
+          <Input
+            value={section.buttonUrl || ""}
+            maxLength={2000}
+            onChange={(e) => onUpdate({ buttonUrl: e.target.value })}
+            className="h-8 text-xs font-mono"
+            placeholder="https://... atau #contact"
+          />
+        </div>
+      </div>
     </div>
   );
 }
