@@ -73,8 +73,6 @@ export function PublicBookingForm({
     { value: 60, label: "1h (60m)" },
     { value: 90, label: "1.5h" },
     { value: 120, label: "2h" },
-    { value: 240, label: "4h (Half Day)" },
-    { value: 480, label: "8h (Full Day)" },
   ];
 
   function loadSlotsFor(dateVal: string, durVal: number) {
@@ -151,7 +149,7 @@ export function PublicBookingForm({
           </div>
 
           {!isCustomDuration ? (
-            <div className="grid grid-cols-4 sm:grid-cols-8 gap-1.5 p-1 rounded-xl bg-muted/50 border border-border/70">
+            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 p-1 rounded-xl bg-muted/50 border border-border/70">
               {DURATION_OPTIONS.map((opt) => (
                 <button
                   key={opt.value}
