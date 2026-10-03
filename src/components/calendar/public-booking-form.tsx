@@ -56,6 +56,7 @@ export function PublicBookingForm({
       : allowed[0] || "google_meet"
   );
 
+  const [selectedDuration, setSelectedDuration] = useState(30);
   const [slots, setSlots] = useState<Slot[]>(initialSlots);
   const [slotsError, setSlotsError] = useState(initialError);
   const [submitting, setSubmitting] = useState(false);
@@ -63,19 +64,37 @@ export function PublicBookingForm({
 
   const [isPending, startTransition] = useTransition();
 
-  function handleApplyDate(newDate: string) {
-    setSelectedDate(newDate);
-    if (!newDate) return;
+  const DURATION_OPTIONS = [
+    { value: 15, label: "15m" },
+    { value: 30, label: "30m" },
+    { value: 45, label: "45m" },
+    { value: 60, label: "1h (60m)" },
+    { value: 90, label: "1.5h (90m)" },
+    { value: 120, label: "2h (120m)" },
+  ];
+
+  function loadSlotsFor(dateVal: string, durVal: number) {
+    if (!dateVal) return;
     startTransition(async () => {
       try {
         setSlotsError("");
-        const newSlots = await getAvailableSlots(workspace.id, newDate);
+        const newSlots = await getAvailableSlots(workspace.id, dateVal, durVal);
         setSlots(newSlots);
         setSelectedSlot("");
       } catch (err) {
         setSlotsError(err instanceof Error ? err.message : t("Gagal memuat slot", "Failed to load slots"));
       }
     });
+  }
+
+  function handleApplyDate(newDate: string) {
+    setSelectedDate(newDate);
+    loadSlotsFor(newDate, selectedDuration);
+  }
+
+  function handleApplyDuration(newDur: number) {
+    setSelectedDuration(newDur);
+    loadSlotsFor(selectedDate, newDur);
   }
 
   return (
@@ -91,11 +110,38 @@ export function PublicBookingForm({
           </div>
         </div>
         <span className="text-[10px] font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-          30 Min
+          {selectedDuration >= 60
+            ? `${selectedDuration / 60} ${selectedDuration === 60 ? "Hour" : "Hours"}`
+            : `${selectedDuration} Min`}
         </span>
       </div>
 
       <div className="p-5 sm:p-6">
+        {/* Duration Selector */}
+        <div className="mb-5 space-y-2">
+          <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+            <Clock className="h-3.5 w-3.5 text-primary" />
+            <span>{t("Durasi Pertemuan", "Meeting Duration")}</span>
+          </Label>
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 p-1 rounded-xl bg-muted/50 border border-border/70">
+            {DURATION_OPTIONS.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => handleApplyDuration(opt.value)}
+                disabled={isPending}
+                className={`py-1.5 px-2 rounded-lg text-xs font-semibold transition-all text-center ${
+                  selectedDuration === opt.value
+                    ? "bg-primary text-primary-foreground shadow-xs scale-[1.02]"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {submitError && (
           <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
             {submitError}

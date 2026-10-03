@@ -446,7 +446,8 @@ function zonedDateTimeToUtc(date: string, time: string, timeZone: string): Date 
   return new Date(guess);
 }
 
-export async function getAvailableSlots(workspaceId: string, date: string) {
+export async function getAvailableSlots(workspaceId: string, date: string, durationMinutes: number = 30) {
+  const durationMs = Math.max(15, Math.min(240, durationMinutes)) * 60 * 1000;
   const rules = await db
     .select()
     .from(availabilityRules)
@@ -480,7 +481,7 @@ export async function getAvailableSlots(workspaceId: string, date: string) {
     const ruleEnd = zonedDateTimeToUtc(date, rule.endTime, rule.timezone);
 
     while (current < ruleEnd) {
-      const slotEnd = new Date(current.getTime() + 30 * 60 * 1000);
+      const slotEnd = new Date(current.getTime() + durationMs);
       if (slotEnd <= ruleEnd) {
         const overlaps = bookedSlots.some(
           (b) =>
