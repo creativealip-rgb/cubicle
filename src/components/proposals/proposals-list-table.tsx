@@ -24,7 +24,6 @@ import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { formatMoney } from "@/lib/utils";
 import { projectStatusVariant } from "@/lib/status-badge";
-import { SendProposalButton } from "@/components/proposals/send-proposal-button";
 import { DeleteProposalButton } from "./delete-proposal-button";
 import { ProposalRowActions } from "./proposal-row-actions";
 import { updateProposalStatus } from "@/lib/actions/proposals";
@@ -342,34 +341,7 @@ export function ProposalsListTable({
                 </span>
                 <div className="flex items-center gap-2">
                   <span>{activityLabel(p, t, lang)}</span>
-                  {canWrite &&
-                  (p.status === "draft" ||
-                    p.status === "sent" ||
-                    p.status === "viewed") ? (
-                    <SendProposalButton
-                      proposalId={p.id}
-                      status={p.status}
-                      compact
-                      title={p.title}
-                      clientName={p.clientName}
-                      clientEmail={p.clientEmail ?? undefined}
-                      labelSend={t("Kirim", "Send")}
-                      labelResend={t("Kirim ulang", "Resend")}
-                      labelSending={t("Mengirim...", "Sending...")}
-                      labelCopy={t("Salin", "Copy")}
-                      labelCopied={t("Disalin", "Copied")}
-                      successMessage={t(
-                        "Proposal siap dibagikan. Salin tautan ke klien.",
-                        "Proposal ready to share. Copy the link for your client.",
-                      )}
-                    />
-                  ) : (
-                    <Button asChild variant="ghost" size="sm" className="h-6 px-2 text-xs">
-                      <Link href={`/app/proposals/${p.id}`}>
-                        {t("Buka", "Open")}
-                      </Link>
-                    </Button>
-                  )}
+                  <ProposalRowActions proposal={p} canWrite={canWrite} />
                 </div>
               </div>
             </div>

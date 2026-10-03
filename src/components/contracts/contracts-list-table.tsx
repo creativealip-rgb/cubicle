@@ -23,7 +23,6 @@ import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { projectStatusVariant } from "@/lib/status-badge";
-import { SendContractButton } from "@/components/contracts/send-contract-button";
 import { DeleteContractButton } from "./delete-contract-button";
 import { ContractRowActions } from "./contract-row-actions";
 import { updateContractStatus } from "@/lib/actions/contracts";
@@ -329,36 +328,7 @@ export function ContractsListTable({
 
               <div className="flex items-center justify-between text-xs text-muted-foreground pt-1 border-t border-border/60">
                 <span>{activityLabel(c, t, lang)}</span>
-                <div className="flex items-center gap-2">
-                  {canWrite &&
-                  (c.status === "draft" ||
-                    c.status === "sent" ||
-                    c.status === "viewed") ? (
-                    <SendContractButton
-                      contractId={c.id}
-                      status={c.status}
-                      compact
-                      title={c.title}
-                      clientName={c.clientName}
-                      clientEmail={c.clientEmail ?? undefined}
-                      labelSend={t("Kirim", "Send")}
-                      labelResend={t("Kirim ulang", "Resend")}
-                      labelSending={t("Mengirim...", "Sending...")}
-                      labelCopy={t("Salin", "Copy")}
-                      labelCopied={t("Disalin", "Copied")}
-                      successMessage={t(
-                        "Kontrak siap dibagikan. Salin tautan ke klien.",
-                        "Contract ready to share. Copy the link for your client.",
-                      )}
-                    />
-                  ) : (
-                    <Button asChild variant="ghost" size="sm" className="h-6 px-2 text-xs">
-                      <Link href={`/app/contracts/${c.id}`}>
-                        {t("Buka", "Open")}
-                      </Link>
-                    </Button>
-                  )}
-                </div>
+                <ContractRowActions contract={c} canWrite={canWrite} />
               </div>
             </div>
           );
