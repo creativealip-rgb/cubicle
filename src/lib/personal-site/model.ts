@@ -420,6 +420,7 @@ export function isSafePublicHref(value: string) {
   const href = value.trim();
   if (!href) return false;
   if (/^(javascript|data|vbscript):/i.test(href)) return false;
+  if (/^#[a-z0-9_-]+$/i.test(href)) return true;
   if (/^\/app(?:\/|$)/i.test(href)) return false;
   if (/^\/(?:booking|intake|site)\/[a-z0-9][a-z0-9/_?=&.%+-]*$/i.test(href)) return true;
   if (/^(?:mailto:|tel:)/i.test(href)) return href.length > href.indexOf(":") + 1;
@@ -576,12 +577,18 @@ export function normalizeStoredPersonalSite(value: unknown): PersonalSiteInput {
     ...raw,
     slug: normalizePersonalSiteSlug(String(raw.slug || DEFAULT_PERSONAL_SITE.slug)),
     published: Boolean(raw.published),
+    title: String(raw.title || DEFAULT_PERSONAL_SITE.title),
+    subtitle: String(raw.subtitle ?? DEFAULT_PERSONAL_SITE.subtitle),
+    hero: String(raw.hero ?? DEFAULT_PERSONAL_SITE.hero),
+    about: String(raw.about ?? DEFAULT_PERSONAL_SITE.about),
+    ctaLabel: String(raw.ctaLabel ?? DEFAULT_PERSONAL_SITE.ctaLabel),
+    ctaUrl: String(raw.ctaUrl ?? DEFAULT_PERSONAL_SITE.ctaUrl),
     theme: PERSONAL_SITE_THEMES.includes(raw.theme as (typeof PERSONAL_SITE_THEMES)[number])
       ? (raw.theme as PersonalSiteInput["theme"])
       : (raw.background as string | undefined) === "Paper" ? "paper" : "midnight",
     sections: normalizeLegacySections(raw.sections),
     links: normalizeLegacyLinks(raw.links),
-    pages: Array.isArray(raw.pages) ? (raw.pages as PersonalSiteInput["pages"]) : DEFAULT_PERSONAL_SITE.pages,
+    pages: Array.isArray(raw.pages) && raw.pages.length ? (raw.pages as PersonalSiteInput["pages"]) : undefined,
     themeConfig: raw.themeConfig && typeof raw.themeConfig === "object" ? (raw.themeConfig as PersonalSiteInput["themeConfig"]) : undefined,
     seo: rawSeo
       ? {
