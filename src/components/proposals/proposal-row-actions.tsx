@@ -122,16 +122,16 @@ export function ProposalRowActions({
         )}
       </div>
 
-      {/* Hidden Send Button Dialog Trigger */}
-      <div className="hidden" aria-hidden="true">
-        <SendProposalButton
-          proposalId={proposal.id}
-          status={proposal.status}
-          title={proposal.title}
-          clientName={proposal.clientName ?? undefined}
-          clientEmail={proposal.clientEmail ?? undefined}
-        />
-      </div>
+      {/* Controlled Send Proposal Dialog */}
+      <SendProposalButton
+        proposalId={proposal.id}
+        status={proposal.status}
+        title={proposal.title}
+        clientName={proposal.clientName ?? undefined}
+        clientEmail={proposal.clientEmail ?? undefined}
+        open={sendOpen}
+        onOpenChange={setSendOpen}
+      />
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

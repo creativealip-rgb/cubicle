@@ -20,35 +20,39 @@ import { useT } from "@/lib/i18n-client";
 export function SendContractButton({
   contractId,
   status,
-  compact = false,
   title,
   clientName,
   clientEmail,
   labelSend,
-  labelResend,
   labelSending,
+  labelResend,
   labelCopy,
   labelCopied,
   successMessage,
+  compact = false,
+  open: controlledOpen,
+  onOpenChange: setControlledOpen,
 }: {
   contractId: string;
   status?: string;
-  compact?: boolean;
-  /** Document title — used to build the email subject shown in the confirm dialog. */
   title?: string;
-  /** Recipient shown in the confirm dialog. */
   clientName?: string;
   clientEmail?: string | null;
   labelSend?: string;
-  labelResend?: string;
   labelSending?: string;
+  labelResend?: string;
   labelCopy?: string;
   labelCopied?: string;
   successMessage?: string;
+  compact?: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
   const { refresh } = useAppTransition();
   const { t } = useT();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
+  const setOpen = setControlledOpen || setInternalOpen;
   const [link, setLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();

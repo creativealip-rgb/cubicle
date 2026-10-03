@@ -122,16 +122,16 @@ export function ContractRowActions({
         )}
       </div>
 
-      {/* Hidden Send Button Dialog Trigger */}
-      <div className="hidden" aria-hidden="true">
-        <SendContractButton
-          contractId={contract.id}
-          status={contract.status}
-          title={contract.title}
-          clientName={contract.clientName ?? undefined}
-          clientEmail={contract.clientEmail ?? undefined}
-        />
-      </div>
+      {/* Controlled Send Contract Dialog */}
+      <SendContractButton
+        contractId={contract.id}
+        status={contract.status}
+        title={contract.title}
+        clientName={contract.clientName ?? undefined}
+        clientEmail={contract.clientEmail ?? undefined}
+        open={sendOpen}
+        onOpenChange={setSendOpen}
+      />
 
       {/* Delete Confirmation Dialog */}
       <ConfirmDialog

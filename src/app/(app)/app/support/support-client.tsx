@@ -155,6 +155,45 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
   const [searchQuery, setSearchQuery] = useState("");
   const [isPending, startTransition] = useTransition();
 
+  // Screenshot upload state
+  const [uploadedScreenshotUrl, setUploadedScreenshotUrl] = useState("");
+  const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  async function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(t("Ukuran file maksimal 5MB", "Maximum file size is 5MB"));
+      return;
+    }
+
+    try {
+      setUploadingScreenshot(true);
+      const fd = new FormData();
+      fd.append("file", file);
+
+      const res = await fetch("/api/site/upload", {
+        method: "POST",
+        body: fd,
+      });
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || t("Gagal mengunggah gambar", "Failed to upload image"));
+      }
+
+      const data = await res.json();
+      setUploadedScreenshotUrl(data.url);
+      toast.success(t("Screenshot berhasil diunggah", "Screenshot uploaded successfully"));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal mengunggah gambar", "Failed to upload image"));
+    } finally {
+      setUploadingScreenshot(false);
+    }
+  }
+
   const getStatusLabel = (status: string): string => {
     switch (status) {
       case "open":
@@ -627,13 +666,55 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
 
             <div className="space-y-1.5">
               <label className="text-xs font-semibold text-foreground">
-                {t("Unggah Screenshot Kendala (opsional)", "Upload a screenshot of the issue (optional)")}
+                {t("Upload a screenshot of the issue (optional)", "Upload a screenshot of the issue (optional)")}
               </label>
-              <Input
-                name="screenshotUrl"
-                placeholder={t("Tautan / URL screenshot gambar kendala...", "Screenshot image link / URL (optional)...")}
-                className="h-8 text-xs rounded-lg"
+              <input
+                type="file"
+                ref={fileInputRef}
+                onChange={handleFileSelect}
+                accept="image/png,image/jpeg,image/webp,image/gif"
+                className="hidden"
               />
+              <input
+                type="hidden"
+                name="screenshotUrl"
+                value={uploadedScreenshotUrl}
+              />
+              
+              {uploadedScreenshotUrl ? (
+                <div className="flex items-center justify-between gap-2 p-2 rounded-lg border border-border/80 bg-muted/30 text-xs">
+                  <div className="flex items-center gap-2 truncate">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
+                    <span className="truncate text-muted-foreground">{uploadedScreenshotUrl}</span>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
+                    onClick={() => setUploadedScreenshotUrl("")}
+                  >
+                    <XCircle className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              ) : (
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex flex-col items-center justify-center p-3 rounded-lg border border-dashed border-border hover:border-primary/50 hover:bg-muted/30 cursor-pointer transition-colors text-center"
+                >
+                  {uploadingScreenshot ? (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                      <span>{t("Mengunggah gambar...", "Uploading screenshot...")}</span>
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Plus className="h-3.5 w-3.5" />
+                      <span>{t("Pilih gambar dari perangkat (PNG, JPG, WebP)", "Choose local image file (PNG, JPG, WebP)")}</span>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
