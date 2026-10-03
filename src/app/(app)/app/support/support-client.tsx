@@ -157,6 +157,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
 
   // Screenshot upload state
   const [uploadedScreenshotUrl, setUploadedScreenshotUrl] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState("");
   const [uploadingScreenshot, setUploadingScreenshot] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -186,6 +187,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
 
       const data = await res.json();
       setUploadedScreenshotUrl(data.url);
+      setUploadedFileName(file.name);
       toast.success(t("Screenshot berhasil diunggah", "Screenshot uploaded successfully"));
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal mengunggah gambar", "Failed to upload image"));
@@ -576,7 +578,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
 
       {/* Modal Dialog: New Ticket Creation */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent onCloseAutoFocus={restoreCreateFocus} className="sm:max-w-md rounded-2xl">
+        <DialogContent onCloseAutoFocus={restoreCreateFocus} className="sm:max-w-md w-full max-w-[calc(100vw-2rem)] rounded-2xl overflow-hidden">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <LifeBuoy className="h-4 w-4 text-primary" />
@@ -682,17 +684,20 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
               />
               
               {uploadedScreenshotUrl ? (
-                <div className="flex items-center justify-between gap-2 p-2 rounded-lg border border-border/80 bg-muted/30 text-xs">
-                  <div className="flex items-center gap-2 truncate">
+                <div className="flex items-center justify-between gap-2 p-2 rounded-lg border border-border/80 bg-muted/30 text-xs w-full max-w-full min-w-0 overflow-hidden">
+                  <div className="flex items-center gap-2 min-w-0 truncate">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600 shrink-0" />
-                    <span className="truncate text-muted-foreground">{uploadedScreenshotUrl}</span>
+                    <span className="truncate font-medium text-foreground">{uploadedFileName || t("Screenshot Terlampir", "Attached Screenshot")}</span>
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
                     className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
-                    onClick={() => setUploadedScreenshotUrl("")}
+                    onClick={() => {
+                      setUploadedScreenshotUrl("");
+                      setUploadedFileName("");
+                    }}
                   >
                     <XCircle className="h-3.5 w-3.5" />
                   </Button>
