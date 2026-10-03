@@ -30,6 +30,7 @@ export function SendProposalButton({
   labelCopied,
   successMessage,
   compact = false,
+  hideTrigger = false,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
 }: {
@@ -45,6 +46,7 @@ export function SendProposalButton({
   labelCopied?: string;
   successMessage?: string;
   compact?: boolean;
+  hideTrigger?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
@@ -103,56 +105,58 @@ export function SendProposalButton({
 
   return (
     <>
-      <div className="flex flex-wrap items-center gap-2">
-        {link ? (
-          <div className="flex min-w-0 max-w-full items-center gap-1 rounded-md border bg-muted/40 px-2 py-1">
-            <Link2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-            <span className="max-w-[220px] truncate text-xs text-muted-foreground sm:max-w-[320px]">
-              {link}
-            </span>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={copyLink}
-              className="h-7 px-2 text-xs"
-            >
-              {copied ? (
-                <>
-                  <Check className="h-3.5 w-3.5 text-emerald-600" />
-                  {labelCopied || "Disalin"}
-                </>
-              ) : (
-                <>
-                  <Copy className="h-3.5 w-3.5" />
-                  {labelCopy || "Salin"}
-                </>
-              )}
-            </Button>
-          </div>
-        ) : null}
-        <Button
-          variant={isSentLike ? "outline" : "default"}
-          size={compact ? "sm" : "sm"}
-          onClick={() => setOpen(true)}
-          disabled={pending}
-          className={compact ? "h-7 px-2 text-xs" : undefined}
-          aria-label={pending ? sendingText : sendText}
-          title={pending ? sendingText : sendText}
-        >
-          <Send className="h-3.5 w-3.5" />
-          {pending ? sendingText : sendText}
-        </Button>
-      </div>
+      {!hideTrigger && (
+        <div className="flex flex-wrap items-center gap-2">
+          {link ? (
+            <div className="flex min-w-0 max-w-full items-center gap-1 rounded-md border bg-muted/40 px-2 py-1">
+              <Link2 className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+              <span className="max-w-[220px] truncate text-xs text-muted-foreground sm:max-w-[320px]">
+                {link}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={copyLink}
+                className="h-7 px-2 text-xs"
+              >
+                {copied ? (
+                  <>
+                    <Check className="h-3.5 w-3.5 text-emerald-600" />
+                    {labelCopied || "Disalin"}
+                  </>
+                ) : (
+                  <>
+                    <Copy className="h-3.5 w-3.5" />
+                    {labelCopy || "Salin"}
+                  </>
+                )}
+              </Button>
+            </div>
+          ) : null}
+          <Button
+            variant={isSentLike ? "outline" : "default"}
+            size={compact ? "sm" : "sm"}
+            onClick={() => setOpen(true)}
+            disabled={pending}
+            className={compact ? "h-7 px-2 text-xs" : undefined}
+            aria-label={pending ? sendingText : sendText}
+          >
+            {pending ? (
+              <>
+                <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                {sendingText}
+              </>
+            ) : (
+              <>
+                <Send className="mr-1.5 h-3.5 w-3.5" />
+                {sendText}
+              </>
+            )}
+          </Button>
+        </div>
+      )}
 
-      <Dialog
-        open={open}
-        onOpenChange={(next) => {
-          if (!pending) {
-            if (next) setMessage(defaultMessage);
-            setOpen(next);
-          }
-        }}
-      >
+      <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>

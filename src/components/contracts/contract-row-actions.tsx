@@ -129,6 +129,7 @@ export function ContractRowActions({
         title={contract.title}
         clientName={contract.clientName ?? undefined}
         clientEmail={contract.clientEmail ?? undefined}
+        hideTrigger={true}
         open={sendOpen}
         onOpenChange={setSendOpen}
       />

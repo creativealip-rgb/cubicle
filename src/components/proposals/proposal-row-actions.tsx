@@ -129,6 +129,7 @@ export function ProposalRowActions({
         title={proposal.title}
         clientName={proposal.clientName ?? undefined}
         clientEmail={proposal.clientEmail ?? undefined}
+        hideTrigger={true}
         open={sendOpen}
         onOpenChange={setSendOpen}
       />
