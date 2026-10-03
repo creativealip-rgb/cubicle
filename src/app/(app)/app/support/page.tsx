@@ -53,7 +53,6 @@ export default async function SupportPage() {
         | "high"
         | "urgent"),
     });
-    redirect("/app/support");
   }
 
   return (

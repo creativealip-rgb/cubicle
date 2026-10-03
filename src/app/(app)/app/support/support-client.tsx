@@ -596,9 +596,13 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                 try {
                   await createAction(formData);
                   setShowCreate(false);
+                  setUploadedScreenshotUrl("");
+                  setUploadedFileName("");
                   toast.success(t("Tiket berhasil dibuat", "Ticket created successfully"));
-                } catch {
-                  toast.error(t("Gagal membuat tiket", "Failed to create ticket"));
+                  refresh();
+                } catch (err: unknown) {
+                  const msg = err instanceof Error ? err.message : t("Gagal membuat tiket", "Failed to create ticket");
+                  toast.error(msg);
                 }
               });
             }}
