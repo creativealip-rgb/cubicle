@@ -303,7 +303,16 @@ export function PublicBookingForm({
                           })}
                         </span>
                       </div>
-                      <span className="text-[10px] opacity-75">30m</span>
+                      <span className="text-[10px] opacity-75">
+                        {(() => {
+                          const diffMin = Math.round((new Date(slot.end).getTime() - new Date(slot.start).getTime()) / 60000);
+                          return diffMin >= 60
+                            ? diffMin % 60 === 0
+                              ? `${diffMin / 60}h`
+                              : `${(diffMin / 60).toFixed(1)}h`
+                            : `${diffMin}m`;
+                        })()}
+                      </span>
                     </label>
                   );
                 })}
