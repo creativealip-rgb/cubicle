@@ -172,12 +172,11 @@ function SectionBody({ section, accent, panel, buttonRadius, labels }: { section
                   style={{ height: cardHeight, width: cardWidth }}
                   className="relative overflow-hidden rounded-xl bg-muted/40 border border-border/60"
                 >
-                  <Image
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
                     src={img.url.startsWith("http") ? img.url : img.url.startsWith("/") ? img.url : `/${img.url}`}
                     alt={img.alt || img.title || ""}
-                    fill
-                    sizes="400px"
-                    className="object-cover transition-transform duration-300 hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                     loading="lazy"
                   />
                 </div>
