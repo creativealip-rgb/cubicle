@@ -122,7 +122,7 @@ export default async function InvoiceDetailPage({
     .where(eq(clients.id, inv.clientId))
     .limit(1);
 
-  const allClients = await db.select({ id: clients.id, name: clients.name }).from(clients).where(eq(clients.workspaceId, workspaceId));
+  const allClients = await db.select({ id: clients.id, name: clients.name, email: clients.email }).from(clients).where(eq(clients.workspaceId, workspaceId));
   const allProjects = await db.select({ id: projects.id, name: projects.name, clientId: projects.clientId }).from(projects).where(and(eq(projects.workspaceId, workspaceId), ne(projects.status, "cancelled"), ne(projects.status, "archived")));
   const sameClientProjects = await db.select({ id: projects.id, name: projects.name, billingType: projects.billingType, billingModel: projects.billingModel, budget: projects.budget, currency: projects.currency })
     .from(projects)
@@ -287,6 +287,7 @@ export default async function InvoiceDetailPage({
           />
           <SendReminderButton
             invoiceId={invoiceId}
+            clientEmail={client?.email}
             disabled={!client?.email || items.length === 0 || ["draft", "paid", "cancelled"].includes(inv.status)}
           />
           <VoidInvoiceButton

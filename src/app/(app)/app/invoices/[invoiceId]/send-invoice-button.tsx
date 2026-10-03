@@ -82,7 +82,7 @@ export function SendInvoiceButton({
       }}
     >
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-2" disabled={disabled}>
+        <Button size="sm" className="gap-2" disabled={disabled} title={!clientEmail ? t("Email klien belum diisi. Lengkapi email klien di menu Clients agar bisa dikirim.", "Client email is missing. Add client email in Clients menu to send.") : undefined}>
           <Send className="h-4 w-4" />
           {t("Kirim Invoice", "Send invoice")}
         </Button>

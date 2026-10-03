@@ -16,7 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 
 export type Line = { description: string; quantity: number; unitPrice: number; amount?: number; sourceType?: string | null };
-type Option = { id: string; name: string; clientId?: string | null };
+type Option = { id: string; name: string; email?: string | null; clientId?: string | null };
 
 export function InvoiceFullEditor({ invoice, initialItems, clients, projects, sourceActions, children }: {
   invoice: { id: string; clientId: string; projectId: string | null; invoiceNumber: string; issueDate: string; dueDate: string | null; currency: string; discount: number; tax: number; chargeType: "none" | "tax" | "admin_fee"; includeClientCompany?: boolean; notes: string; terms: string; status: string };
@@ -48,6 +48,8 @@ export function InvoiceFullEditor({ invoice, initialItems, clients, projects, so
     includeClientCompany: invoice.includeClientCompany ?? true,
     items: initialItems.map(({ description, quantity, unitPrice, amount, sourceType }) => ({ description, quantity, unitPrice, amount, sourceType })),
   });
+
+  const selectedClient = clients.find((c) => c.id === form.clientId);
 
   useEffect(() => {
     setForm((curr) => ({
@@ -132,7 +134,14 @@ export function InvoiceFullEditor({ invoice, initialItems, clients, projects, so
               <Input id="invoice-number" value={form.invoiceNumber} disabled={locked} onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })} />
             </div>
             <div className="space-y-2">
-              <Label>{t("Klien", "Client")}</Label>
+              <div className="flex items-center justify-between">
+                <Label>{t("Klien", "Client")}</Label>
+                {selectedClient && !selectedClient.email && (
+                  <span className="text-[11px] text-amber-600 dark:text-amber-400 font-medium">
+                    {t("Email belum diisi", "Email missing")}
+                  </span>
+                )}
+              </div>
               <Select value={form.clientId} disabled={locked || sourceBacked} onValueChange={(clientId) => setForm({ ...form, clientId, projectId: null })}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
                 <SelectContent>
