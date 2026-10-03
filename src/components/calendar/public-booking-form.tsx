@@ -58,6 +58,8 @@ export function PublicBookingForm({
 
   const [slots, setSlots] = useState<Slot[]>(initialSlots);
   const [slotsError, setSlotsError] = useState(initialError);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState("");
 
   const [isPending, startTransition] = useTransition();
 
@@ -94,23 +96,43 @@ export function PublicBookingForm({
       </div>
 
       <div className="p-5 sm:p-6">
+        {submitError && (
+          <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
+            {submitError}
+          </div>
+        )}
         <form
-          action={async () => {
-            if (!title || !attendeeName || !attendeeEmail || !selectedSlot) return;
+          onSubmit={async (e) => {
+            e.preventDefault();
+            if (!title || !attendeeName || !attendeeEmail || !selectedSlot) {
+              setSubmitError(t("Harap isi semua field wajib dan pilih slot waktu.", "Please fill all required fields and select a time slot."));
+              return;
+            }
             const [startTime, endTime] = selectedSlot.split("|");
-            if (!startTime || !endTime) return;
+            if (!startTime || !endTime) {
+              setSubmitError(t("Slot waktu tidak valid.", "Invalid time slot."));
+              return;
+            }
 
-            const meetingNote = `Platform: ${meetingPlatform}${workspace.bookingMeetingLink ? `\nMeeting Link: ${workspace.bookingMeetingLink}` : ""}${notes ? `\n\nNotes: ${notes}` : ""}`;
-            await createPublicAppointment({
-              workspaceId: workspace.id,
-              title,
-              notes: meetingNote,
-              attendeeName,
-              attendeeEmail,
-              startTime,
-              endTime,
-            });
-            window.location.href = `/booking/${workspace.bookingSlug}?success=1`;
+            try {
+              setSubmitting(true);
+              setSubmitError("");
+              const meetingNote = `Platform: ${meetingPlatform}${workspace.bookingMeetingLink ? `\nMeeting Link: ${workspace.bookingMeetingLink}` : ""}${notes ? `\n\nNotes: ${notes}` : ""}`;
+              await createPublicAppointment({
+                workspaceId: workspace.id,
+                title,
+                notes: meetingNote,
+                attendeeName,
+                attendeeEmail,
+                startTime,
+                endTime,
+              });
+              const targetSlug = workspace.bookingSlug || workspace.id;
+              window.location.href = `/booking/${targetSlug}?success=1`;
+            } catch (err) {
+              setSubmitting(false);
+              setSubmitError(err instanceof Error ? err.message : t("Gagal membuat janji temu", "Failed to schedule appointment"));
+            }
           }}
           className="space-y-4"
         >
@@ -289,9 +311,22 @@ export function PublicBookingForm({
             />
           </div>
 
-          <Button type="submit" className="w-full h-11 rounded-xl font-semibold shadow-xs" disabled={!selectedSlot || !title || !attendeeName || !attendeeEmail}>
-            <CheckCircle2 className="mr-2 h-4 w-4" />
-            {t("Konfirmasi Janji Temu", "Confirm Booking")}
+          <Button
+            type="submit"
+            className="w-full h-11 rounded-xl font-semibold shadow-xs"
+            disabled={!selectedSlot || !title || !attendeeName || !attendeeEmail || submitting}
+          >
+            {submitting ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                {t("Menjadwalkan...", "Scheduling...")}
+              </>
+            ) : (
+              <>
+                <CheckCircle2 className="mr-2 h-4 w-4" />
+                {t("Konfirmasi Janji Temu", "Confirm Booking")}
+              </>
+            )}
           </Button>
         </form>
       </div>

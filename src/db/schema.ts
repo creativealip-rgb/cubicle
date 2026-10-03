@@ -2361,6 +2361,7 @@ export const supportTickets = pgTable("support_tickets", {
   }).notNull().default("features"),
   status: text("status", { enum: ["open", "in_progress", "resolved", "closed"] }).notNull().default("open"),
   priority: text("priority", { enum: ["low", "medium", "high", "urgent"] }).notNull().default("medium"),
+  screenshotUrl: text("screenshot_url"),
   assigneeId: text("assignee_id").references(() => users.id, { onDelete: "set null" }),
   clientId: uuid("client_id").references(() => clients.id, { onDelete: "set null" }),
   projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),

@@ -36,6 +36,7 @@ export default async function SupportPage() {
     await createTicket({
       title: String(formData.get("title") || ""),
       description: String(formData.get("description") || "") || undefined,
+      screenshotUrl: String(formData.get("screenshotUrl") || "") || undefined,
       category: (String(formData.get("category") || "features") as
         | "features"
         | "free_plan_pricing"

@@ -27,6 +27,7 @@ const createTicketSchema = z.object({
     ])
     .default("features"),
   priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
+  screenshotUrl: z.string().optional().nullable(),
   assigneeId: z.string().optional().nullable(),
   clientId: z.string().uuid().optional().nullable(),
   projectId: z.string().uuid().optional().nullable(),
@@ -50,6 +51,7 @@ const updateTicketSchema = z.object({
     .optional(),
   status: z.enum(["open", "in_progress", "resolved", "closed"]).optional(),
   priority: z.enum(["low", "medium", "high", "urgent"]).optional(),
+  screenshotUrl: z.string().optional().nullable(),
   assigneeId: z.string().optional().nullable(),
   clientId: z.string().uuid().optional().nullable(),
   projectId: z.string().uuid().optional().nullable(),
@@ -73,12 +75,13 @@ export async function createTicket(input: z.infer<typeof createTicketSchema>) {
     .values({
       workspaceId,
       title: parsed.title,
-      description: parsed.description || null,
+      description: parsed.description,
       category: parsed.category,
       priority: parsed.priority,
-      assigneeId: parsed.assigneeId || null,
-      clientId: parsed.clientId || null,
-      projectId: parsed.projectId || null,
+      screenshotUrl: parsed.screenshotUrl || null,
+      assigneeId: parsed.assigneeId,
+      clientId: parsed.clientId,
+      projectId: parsed.projectId,
       createdBy: user.id,
     })
     .returning();

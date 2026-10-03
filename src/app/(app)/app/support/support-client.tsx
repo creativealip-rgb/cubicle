@@ -87,59 +87,50 @@ const PRIORITY_BADGE_STYLES: Record<string, { bg: string; icon: React.ReactNode 
   },
 };
 
-const CATEGORY_MAP: Record<string, { labelEn: string; labelId: string; emoji: string; color: string }> = {
+const CATEGORY_MAP: Record<string, { labelEn: string; labelId: string; color: string }> = {
   features: {
     labelEn: "Cubiqlo Features",
     labelId: "Fitur Cubiqlo",
-    emoji: "⚡",
     color: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-900/50",
   },
   free_plan_pricing: {
     labelEn: "Free Plan & Pricing",
     labelId: "Paket Gratis & Harga",
-    emoji: "🏷️",
     color: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900/50",
   },
   account: {
     labelEn: "Account",
     labelId: "Akun",
-    emoji: "👤",
     color: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/50",
   },
   workspace: {
     labelEn: "Workspace",
     labelId: "Workspace",
-    emoji: "🏢",
     color: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-900/50",
   },
   subscription: {
     labelEn: "Subscription",
     labelId: "Langganan",
-    emoji: "📦",
     color: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-900/50",
   },
   billing: {
     labelEn: "Billing",
     labelId: "Tagihan & Pembayaran",
-    emoji: "💳",
     color: "bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-950/40 dark:text-teal-300 dark:border-teal-900/50",
   },
   security_privacy: {
     labelEn: "Security & Privacy",
     labelId: "Keamanan & Privasi",
-    emoji: "🔒",
     color: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900/50",
   },
   technical: {
     labelEn: "Technical Support",
     labelId: "Bantuan Teknis",
-    emoji: "🐛",
     color: "bg-red-50 text-red-700 border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-900/50",
   },
   general: {
     labelEn: "General Questions",
     labelId: "Pertanyaan Umum",
-    emoji: "💬",
     color: "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
   },
 };
@@ -386,8 +377,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                               {(() => {
                                 const cat = CATEGORY_MAP[ticket.category] || CATEGORY_MAP.technical;
                                 return (
-                                  <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.2 rounded border ${cat.color} shrink-0`}>
-                                    <span>{cat.emoji}</span>
+                                  <span className={`inline-flex items-center text-[10px] font-semibold px-1.5 py-0.2 rounded border ${cat.color} shrink-0`}>
                                     <span>{locale === "id" ? cat.labelId : cat.labelEn}</span>
                                   </span>
                                 );
@@ -467,8 +457,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                     {(() => {
                       const cat = CATEGORY_MAP[ticket.category] || CATEGORY_MAP.technical;
                       return (
-                        <span className={`inline-flex items-center gap-1 text-[10px] font-semibold px-1.5 py-0.5 rounded border ${cat.color} shrink-0`}>
-                          <span>{cat.emoji}</span>
+                        <span className={`inline-flex items-center text-[10px] font-semibold px-1.5 py-0.5 rounded border ${cat.color} shrink-0`}>
                           <span>{locale === "id" ? cat.labelId : cat.labelEn}</span>
                         </span>
                       );
@@ -583,15 +572,15 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                   <SelectValue placeholder={t("Pilih kategori bantuan ▾", "Select a support category ▾")} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="features">⚡ {t("Fitur Cubiqlo", "Cubiqlo Features")}</SelectItem>
-                  <SelectItem value="free_plan_pricing">🏷️ {t("Paket Gratis & Harga", "Free Plan & Pricing")}</SelectItem>
-                  <SelectItem value="account">👤 {t("Akun", "Account")}</SelectItem>
-                  <SelectItem value="workspace">🏢 {t("Workspace", "Workspace")}</SelectItem>
-                  <SelectItem value="subscription">📦 {t("Langganan", "Subscription")}</SelectItem>
-                  <SelectItem value="billing">💳 {t("Tagihan & Pembayaran", "Billing")}</SelectItem>
-                  <SelectItem value="security_privacy">🔒 {t("Keamanan & Privasi", "Security & Privacy")}</SelectItem>
-                  <SelectItem value="technical">🐛 {t("Bantuan Teknis", "Technical Support")}</SelectItem>
-                  <SelectItem value="general">💬 {t("Pertanyaan Umum", "General Questions")}</SelectItem>
+                  <SelectItem value="features">{t("Fitur Cubiqlo", "Cubiqlo Features")}</SelectItem>
+                  <SelectItem value="free_plan_pricing">{t("Paket Gratis & Harga", "Free Plan & Pricing")}</SelectItem>
+                  <SelectItem value="account">{t("Akun", "Account")}</SelectItem>
+                  <SelectItem value="workspace">{t("Workspace", "Workspace")}</SelectItem>
+                  <SelectItem value="subscription">{t("Langganan", "Subscription")}</SelectItem>
+                  <SelectItem value="billing">{t("Tagihan & Pembayaran", "Billing")}</SelectItem>
+                  <SelectItem value="security_privacy">{t("Keamanan & Privasi", "Security & Privacy")}</SelectItem>
+                  <SelectItem value="technical">{t("Bantuan Teknis", "Technical Support")}</SelectItem>
+                  <SelectItem value="general">{t("Pertanyaan Umum", "General Questions")}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -633,6 +622,17 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                   "Explain the issue details, related URL, and steps to reproduce..."
                 )}
                 className="text-xs rounded-lg"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">
+                {t("Unggah Screenshot Kendala (opsional)", "Upload a screenshot of the issue (optional)")}
+              </label>
+              <Input
+                name="screenshotUrl"
+                placeholder={t("Tautan / URL screenshot gambar kendala...", "Screenshot image link / URL (optional)...")}
+                className="h-8 text-xs rounded-lg"
               />
             </div>
 
