@@ -26,6 +26,7 @@ function emptySection(type: PersonalSiteSection["type"]): PersonalSiteSection {
     case "testimonials": return { ...base, type, testimonials: [{ id: id(), quote: "", author: "", role: "" }] };
     case "faq": return { ...base, type, items: [{ id: id(), question: "", answer: "" }] };
     case "contact": return { ...base, type, methods: [{ id: id(), label: "", value: "", url: "" }] };
+    case "booking": return { ...base, type, heading: "Schedule Appointment", subtitle: "Choose your preferred date and time slot", durationMinutes: 30 };
     case "custom": return { ...base, type, content: "" };
     case "gallery": return { ...base, type, images: [{ id: id(), url: "", alt: "" }] };
     case "image": return { ...base, type, url: "", alt: "", caption: "", linkUrl: "", align: "center", size: "md", aspectRatio: "auto" };

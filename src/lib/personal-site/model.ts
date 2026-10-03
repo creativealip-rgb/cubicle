@@ -11,6 +11,7 @@ export const PERSONAL_SITE_SECTION_TYPES = [
   "testimonials",
   "faq",
   "contact",
+  "booking",
   "custom",
   "gallery",
   "image",
@@ -140,6 +141,14 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     heading: headingSchema,
     animation: animationSchema,
     methods: z.array(contactMethodSchema).max(8),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("booking"),
+    heading: headingSchema,
+    animation: animationSchema,
+    subtitle: z.string().trim().max(160).optional(),
+    durationMinutes: z.number().min(15).max(720).optional(),
   }),
   z.object({
     id: idSchema,
@@ -598,6 +607,7 @@ export function sectionHasContent(section: PersonalSiteSection) {
     case "testimonials": return section.testimonials.some((item) => item.quote && (item.author || item.role) && !isFakeProofItem(item.quote, item.author, item.role));
     case "faq": return section.items.some((item) => item.question && item.answer);
     case "contact": return section.methods.some((item) => item.label && (item.value || item.url));
+    case "booking": return Boolean(section.heading.trim());
     case "custom": return Boolean(section.content.trim());
     case "gallery": return section.images.some((img) => img.url);
     case "image": return Boolean(section.url?.trim());

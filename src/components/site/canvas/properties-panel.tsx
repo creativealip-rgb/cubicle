@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Plus, X, Sparkles, Check, Loader2 } from "lucide-react";
+import { Plus, X, Sparkles, Check, Loader2, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -281,6 +281,7 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
         {section.type === "gallery" && <GalleryEditor section={section} onUpdate={onUpdate} />}
         {section.type === "image" && <SingleImageEditor section={section} onUpdate={onUpdate} />}
         {section.type === "mediaText" && <MediaTextEditor section={section} onUpdate={onUpdate} />}
+        {section.type === "booking" && <BookingEditor section={section} onUpdate={onUpdate} />}
       </div>
     </aside>
   );
@@ -620,6 +621,37 @@ function GalleryEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function BookingEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "booking" }>>) {
+  const { t } = useT();
+  return (
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Subjudul / Keterangan", "Subtitle / Description")}</Label>
+        <Input
+          value={section.subtitle || ""}
+          maxLength={160}
+          onChange={(e) => onUpdate({ subtitle: e.target.value })}
+          className="h-8 text-xs"
+          placeholder={t("Pilih tanggal dan slot waktu yang tersedia...", "Choose your preferred date and time...")}
+        />
+      </div>
+
+      <div className="rounded-lg bg-muted/40 border p-3 space-y-2">
+        <div className="flex items-center gap-2 text-primary font-semibold text-xs">
+          <Calendar className="h-4 w-4" />
+          <span>{t("Sinkronisasi Calendar", "Calendar Integration")}</span>
+        </div>
+        <p className="text-[11px] text-muted-foreground leading-relaxed">
+          {t(
+            "Jadwal slot waktu dan platform pertemuan (Google Meet, Zoom, dll.) otomatis sinkron dengan jam kerja yang Anda atur di menu Calendar.",
+            "Time slots and meeting platforms (Google Meet, Zoom, etc.) automatically sync from your Calendar availability settings."
+          )}
+        </p>
+      </div>
     </div>
   );
 }

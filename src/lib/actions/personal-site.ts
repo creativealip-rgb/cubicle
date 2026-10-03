@@ -202,7 +202,7 @@ export async function savePersonalSite(
 
 export async function getPublishedPersonalSiteBySlug(
   slug: string,
-): Promise<(PersonalSiteInput & { userId: string }) | null> {
+): Promise<(PersonalSiteInput & { userId: string; workspaceId: string }) | null> {
   const clean = normalizePersonalSiteSlug(slug);
   const match = findPersonalSiteByEffectiveSlug(await listPersonalSiteRows(), clean, { publishedOnly: true });
   if (!match) return null;
@@ -221,10 +221,11 @@ export async function getPublishedPersonalSiteBySlug(
       ctaUrl: site.ctaUrl ?? "",
     }),
     userId: site.userId,
+    workspaceId: site.workspaceId,
   };
 }
 
-export async function getPersonalSiteBySlugForPreview(slug: string): Promise<PersonalSiteInput | null> {
+export async function getPersonalSiteBySlugForPreview(slug: string): Promise<(PersonalSiteInput & { workspaceId?: string }) | null> {
   const clean = normalizePersonalSiteSlug(slug);
   const match = findPersonalSiteByEffectiveSlug(await listPersonalSiteRows(), clean);
   if (!match) return null;
@@ -235,13 +236,16 @@ export async function getPersonalSiteBySlugForPreview(slug: string): Promise<Per
     .limit(1);
   if (!site) return null;
   if (site.published) {
-    return normalizeStoredPersonalSite({
-      ...site,
-      subtitle: site.subtitle ?? "",
-      about: site.about ?? "",
-      ctaLabel: site.ctaLabel ?? "",
-      ctaUrl: site.ctaUrl ?? "",
-    });
+    return {
+      ...normalizeStoredPersonalSite({
+        ...site,
+        subtitle: site.subtitle ?? "",
+        about: site.about ?? "",
+        ctaLabel: site.ctaLabel ?? "",
+        ctaUrl: site.ctaUrl ?? "",
+      }),
+      workspaceId: site.workspaceId,
+    };
   }
 
   // If draft, verify user owns/belongs to the workspace
@@ -254,11 +258,14 @@ export async function getPersonalSiteBySlugForPreview(slug: string): Promise<Per
     return null;
   }
 
-  return normalizeStoredPersonalSite({
-    ...site,
-    subtitle: site.subtitle ?? "",
-    about: site.about ?? "",
-    ctaLabel: site.ctaLabel ?? "",
-    ctaUrl: site.ctaUrl ?? "",
-  });
+  return {
+    ...normalizeStoredPersonalSite({
+      ...site,
+      subtitle: site.subtitle ?? "",
+      about: site.about ?? "",
+      ctaLabel: site.ctaLabel ?? "",
+      ctaUrl: site.ctaUrl ?? "",
+    }),
+    workspaceId: site.workspaceId,
+  };
 }

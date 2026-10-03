@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Plus, ChevronDown, ChevronUp, GripVertical, Copy, Trash2, Image as ImageIcon } from "lucide-react";
+import { Plus, ChevronDown, ChevronUp, GripVertical, Copy, Trash2, Image as ImageIcon, Calendar } from "lucide-react";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
@@ -415,6 +415,25 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
                 <InlineText value={method.value} onChange={(v) => onUpdate({ methods: section.methods.map((m, j) => j === i ? { ...m, value: v } : m) })} tag="span" className="text-muted-foreground" />
               </div>
             ))}
+          </div>
+        </div>
+      );
+
+    case "booking":
+      return (
+        <div className="py-6">
+          <div className="max-w-2xl mx-auto rounded-3xl border border-border/80 bg-card p-6 sm:p-8 shadow-sm space-y-4 text-center">
+            <div className="flex flex-col items-center justify-center gap-2">
+              <span className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
+                <Calendar className="h-5 w-5" />
+              </span>
+              <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-bold" />
+              <InlineText value={section.subtitle || ""} onChange={(v) => onUpdate({ subtitle: v })} tag="p" className="text-xs text-muted-foreground max-w-md" />
+            </div>
+            <div className="rounded-2xl border border-dashed border-border/80 bg-muted/30 p-6 flex flex-col items-center justify-center gap-2 text-muted-foreground">
+              <p className="text-xs font-semibold">{t("Formulir Jadwal Pertemuan Interaktif", "Interactive Appointment Booking Form")}</p>
+              <p className="text-[11px] opacity-75">{t("Pengunjung dapat memilih durasi, tanggal, dan slot jam ketersediaan langsung di situs Anda.", "Visitors can select duration, date, and available time slots directly on your site.")}</p>
+            </div>
           </div>
         </div>
       );

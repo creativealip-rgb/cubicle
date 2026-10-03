@@ -61,6 +61,7 @@ function getSectionPreview(section: PersonalSiteSection, t: (id: string, en: str
     case "image": return section.caption || t("Gambar", "Image");
     case "mediaText": return section.heading || t("Media & Teks", "Media & Text");
     case "contact": return t("Kontak", "Contact");
+    case "booking": return section.heading || t("Booking Jadwal", "Schedule Appointment");
     case "process": return section.steps?.[0]?.title || t("Proses", "Process");
     default: return section.type;
   }

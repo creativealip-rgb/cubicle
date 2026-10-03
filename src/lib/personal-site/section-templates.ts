@@ -218,6 +218,20 @@ export const SECTION_TEMPLATES: SectionTemplate[] = [
 
   // CTA TEMPLATES
   {
+    id: "booking-appointment-section",
+    type: "booking" as const,
+    label: "Schedule Appointment",
+    description: "Interactive booking form for direct client consultation meetings.",
+    category: "conversion",
+    build: () => ({
+      id: makeId(),
+      type: "booking" as const,
+      heading: "Schedule a Consultation",
+      subtitle: "Choose your preferred date and time slot for a meeting.",
+      durationMinutes: 30,
+    }),
+  },
+  {
     id: "cta-primary",
     type: "cta" as const,
     label: "Primary CTA",

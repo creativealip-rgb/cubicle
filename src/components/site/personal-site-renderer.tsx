@@ -12,6 +12,7 @@ import {
 } from "@/lib/personal-site/model";
 import { AnimateOnScroll } from "./animate-on-scroll";
 import { ContactForm } from "./contact-form";
+import { PublicBookingForm } from "@/components/calendar/public-booking-form";
 import "@/styles/site-animations.css";
 
 const themeStyles = {
@@ -112,7 +113,23 @@ function looksLikeFakeProof(quote: string, author: string, role: string) {
     || /\b\d+\s*%|\b\d+\+\s*(project|tahun|klien)/i.test(text);
 }
 
-function SectionBody({ section, accent, panel, buttonRadius, labels }: { section: PersonalSiteSection; accent: string; panel: string; buttonRadius: string; labels: PersonalSiteRendererLabels }) {
+function SectionBody({
+  section,
+  accent,
+  panel,
+  buttonRadius,
+  labels,
+  bookingData,
+  lang,
+}: {
+  section: PersonalSiteSection;
+  accent: string;
+  panel: string;
+  buttonRadius: string;
+  labels: PersonalSiteRendererLabels;
+  bookingData?: any;
+  lang: string;
+}) {
   const marker = <span aria-hidden className="mb-4 block h-1 w-10 rounded-full" style={{ backgroundColor: accent }} />;
 
   switch (section.type) {
@@ -147,6 +164,23 @@ function SectionBody({ section, accent, panel, buttonRadius, labels }: { section
       return <div className="flex flex-wrap gap-3">{section.methods.filter((item) => item.label && (item.value || item.url)).map((item) => item.url && !isPlaceholderHref(item.url) ? (
         <a key={item.id} className={`min-h-11 rounded-xl px-4 py-3 text-sm font-semibold ${panel}`} href={safePublicHref(item.url)}>{item.label}{item.value ? ` · ${item.value}` : ""}</a>
       ) : <span key={item.id} className={`rounded-xl px-4 py-3 text-sm ${panel}`}><strong>{item.label}</strong>{item.value ? ` · ${item.value}` : ""}</span>)}</div>;
+    case "booking":
+      if (!bookingData) return null;
+      return (
+        <div className="max-w-2xl mx-auto">
+          {section.subtitle && (
+            <p className="text-center text-sm opacity-75 mb-6">{section.subtitle}</p>
+          )}
+          <PublicBookingForm
+            workspace={bookingData.workspace}
+            timezone={bookingData.timezone}
+            initialDate={bookingData.initialDate}
+            initialSlots={bookingData.initialSlots}
+            initialError={bookingData.initialError}
+            lang={lang}
+          />
+        </div>
+      );
     case "custom":
       return <div className={`rounded-2xl p-6 ${panel}`}><p className="max-w-3xl whitespace-pre-wrap text-base leading-8 opacity-75">{section.content}</p></div>;
     case "gallery":
@@ -324,11 +358,15 @@ export function PersonalSiteRenderer({
   labels = defaultLabels,
   embedded = false,
   activePageSlug = "",
+  bookingData,
+  lang = "id",
 }: {
   site: PersonalSiteInput;
   labels?: PersonalSiteRendererLabels;
   embedded?: boolean;
   activePageSlug?: string;
+  bookingData?: any;
+  lang?: string;
 }) {
   const styles = themeStyles[site.theme];
   const pages = site.pages?.length ? site.pages : [{ id: "home", slug: "", title: "Home", isHome: true, sections: site.sections }];
@@ -408,7 +446,15 @@ export function PersonalSiteRenderer({
                     {section.heading}
                   </h2>
                 )}
-                <SectionBody section={section} accent={accent} panel={styles.panel} buttonRadius={buttonRadius} labels={labels} />
+                <SectionBody
+                  section={section}
+                  accent={accent}
+                  panel={styles.panel}
+                  buttonRadius={buttonRadius}
+                  labels={labels}
+                  bookingData={bookingData}
+                  lang={lang}
+                />
               </div>
             </section>
           </AnimateOnScroll>

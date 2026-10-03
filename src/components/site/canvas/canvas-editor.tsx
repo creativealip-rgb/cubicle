@@ -27,6 +27,7 @@ import {
   Quote,
   HelpCircle,
   Mail,
+  Calendar,
   Image as ImageIcon,
   Code,
   Share2,
@@ -136,6 +137,7 @@ function emptySection(type: PersonalSiteSection["type"]): PersonalSiteSection {
     case "testimonials": return { ...base, type, testimonials: [{ id: makeId(), quote: "", author: "", role: "" }] };
     case "faq": return { ...base, type, items: [{ id: makeId(), question: "", answer: "" }] };
     case "contact": return { ...base, type, methods: [{ id: makeId(), label: "", value: "", url: "" }] };
+    case "booking": return { ...base, type, heading: "Schedule Appointment", subtitle: "Choose your preferred date and time slot", durationMinutes: 30 };
     case "custom": return { ...base, type, content: "" };
     case "gallery": return { ...base, type, images: [{ id: makeId(), url: "", alt: "" }] };
     case "image": return { ...base, type, url: "", alt: "", caption: "", linkUrl: "", align: "center", size: "md", aspectRatio: "auto" };
@@ -160,6 +162,7 @@ const WIDGET_LIST: Array<{ type: PersonalSiteSection["type"]; label: string; ico
   { type: "testimonials", label: "Testimoni", icon: Quote, category: "content" },
   { type: "faq", label: "FAQ", icon: HelpCircle, category: "content" },
   { type: "contact", label: "Kontak", icon: Mail, category: "content" },
+  { type: "booking", label: "Booking Jadwal", icon: Calendar, category: "content" },
   { type: "gallery", label: "Galeri", icon: ImageIcon, category: "media" },
   { type: "image", label: "Gambar Tunggal", icon: ImageIcon, category: "media" },
   { type: "mediaText", label: "Media & Teks", icon: Columns3, category: "media" },
@@ -183,6 +186,7 @@ const WIDGET_EN_LABELS: Record<string, string> = {
   Testimoni: "Testimonials",
   FAQ: "FAQ",
   Kontak: "Contact",
+  "Booking Jadwal": "Book Appointment",
   Galeri: "Gallery",
   "Gambar Tunggal": "Single Image",
   "Media & Teks": "Media & Text",
@@ -252,6 +256,7 @@ const SECTION_TEMPLATE_EN_DESCRIPTIONS: Record<string, string> = {
   "CTA Kontak": "CTA to direct visitors to contact/WhatsApp.",
   "Testimoni 3 Klien": "Quotes from previous clients.",
   "Portfolio Gallery": "Image gallery to showcase your work.",
+  "Schedule Appointment": "Interactive booking form for direct client consultation meetings.",
   "Banner Image": "High-impact single banner image with caption.",
   "Media and Text (Split)": "Split 2-column layout with media on one side and text/CTA on the other.",
   "Embed Video": "Embed a video from YouTube or others.",
