@@ -897,8 +897,8 @@ export default async function ClientPortalPage({
                   <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
                     {t("Dikelola oleh", "Managed by")}{" "}
                     <span className="font-semibold text-foreground">
-                      {workspaceContact?.billingName ||
-                        workspaceContact?.name ||
+                      {workspaceContact?.billingName?.trim() ||
+                        workspaceContact?.name?.trim() ||
                         "Cubiqlo"}
                     </span>
                   </p>

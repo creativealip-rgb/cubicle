@@ -92,7 +92,7 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
           </div>
           <h1 className="text-xl font-bold text-foreground tracking-tight">{ws.name}</h1>
           <p className="text-xs text-muted-foreground mt-1">
-            {t("Jadwalkan sesi konsultasi atau pertemuan langsung", "Book a consultation or direct meeting with us")}
+            {t("Jadwalkan sesi konsultasi atau pertemuan langsung", "Book a consultation or direct meeting")}
           </p>
         </div>
 
