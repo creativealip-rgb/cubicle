@@ -266,39 +266,39 @@ export function InvoiceTemplatesClient() {
                     </div>
                   ))}
                   <Button type="button" variant="outline" size="sm" onClick={addLineItem}>
-                    <Plus className="h-3 w-3" /> Tambah Item
+                    <Plus className="h-3 w-3" /> {t("Tambah Item", "Add Item")}
                   </Button>
                 </div>
               </div>
 
               <div>
-                <Label htmlFor="tpl-notes">Notes (tampil di invoice)</Label>
+                <Label htmlFor="tpl-notes">{t("Notes (tampil di invoice)", "Notes (visible on invoice)")}</Label>
                 <Textarea
                   id="tpl-notes"
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Terima kasih atas kepercayaannya."
+                  placeholder={t("Terima kasih atas kepercayaannya.", "Thank you for your business.")}
                   rows={2}
                 />
               </div>
 
               <div>
-                <Label htmlFor="tpl-terms">Terms & Conditions</Label>
+                <Label htmlFor="tpl-terms">{t("Syarat & Ketentuan", "Terms & Conditions")}</Label>
                 <Textarea
                   id="tpl-terms"
                   value={terms}
                   onChange={(e) => setTerms(e.target.value)}
-                  placeholder="Pembayaran via transfer bank dalam 14 hari."
+                  placeholder={t("Pembayaran via transfer bank dalam 14 hari.", "Payment via bank transfer within 14 days.")}
                   rows={2}
                 />
               </div>
 
               <div className="flex justify-end gap-2 pt-2">
                 <Button variant="outline" onClick={() => { setDialogOpen(false); resetForm(); }}>
-                  Batal
+                  {t("Batal", "Cancel")}
                 </Button>
                 <Button onClick={handleSave} disabled={saving}>
-                  {saving ? "Menyimpan..." : editingId ? "Update" : "Simpan"}
+                  {saving ? t("Menyimpan...", "Saving...") : editingId ? t("Update", "Update") : t("Simpan", "Save")}
                 </Button>
               </div>
             </div>

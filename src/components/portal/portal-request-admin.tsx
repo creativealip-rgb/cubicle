@@ -272,25 +272,25 @@ export function PortalRequestAdmin({
             {meetingDialog?.mode === "reject" ? (
               <div className="py-5">
                 <Label htmlFor="meeting-rejection">Alasan penolakan</Label>
-                <Textarea id="meeting-rejection" className="mt-2 min-h-28" value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} placeholder="Contoh: Tim belum tersedia pada jadwal tersebut..." required autoFocus />
+                <Textarea id="meeting-rejection" className="mt-2 min-h-28" value={rejectionReason} onChange={(e) => setRejectionReason(e.target.value)} placeholder={t("Contoh: Tim belum tersedia pada jadwal tersebut...", "e.g. Team unavailable at that time...")} required autoFocus />
               </div>
             ) : (
               <div className="grid gap-4 py-5">
-                {meetingDialog?.request.meetingStartTime && <div className="rounded-lg bg-muted/50 p-3 text-sm"><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Jadwal sebelumnya</p><p className="mt-1 font-medium">{new Intl.DateTimeFormat("id-ID", { dateStyle: "full", timeStyle: "short", timeZone: meetingDialog.request.meetingTimezone || undefined }).format(new Date(meetingDialog.request.meetingStartTime))}</p></div>}
+                {meetingDialog?.request.meetingStartTime && <div className="rounded-lg bg-muted/50 p-3 text-sm"><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t("Jadwal sebelumnya", "Previous schedule")}</p><p className="mt-1 font-medium">{new Intl.DateTimeFormat("id-ID", { dateStyle: "full", timeStyle: "short", timeZone: meetingDialog.request.meetingTimezone || undefined }).format(new Date(meetingDialog.request.meetingStartTime))}</p></div>}
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2"><Label htmlFor="meeting-date">Tanggal baru</Label><Input id="meeting-date" type="date" value={schedule.date} onChange={(e) => setSchedule((p) => ({ ...p, date: e.target.value }))} required /></div>
-                  <div className="space-y-2"><Label htmlFor="meeting-time">Jam mulai</Label><Input id="meeting-time" type="time" value={schedule.time} onChange={(e) => setSchedule((p) => ({ ...p, time: e.target.value }))} required /></div>
+                  <div className="space-y-2"><Label htmlFor="meeting-date">{t("Tanggal baru", "New date")}</Label><Input id="meeting-date" type="date" value={schedule.date} onChange={(e) => setSchedule((p) => ({ ...p, date: e.target.value }))} required /></div>
+                  <div className="space-y-2"><Label htmlFor="meeting-time">{t("Jam mulai", "Start time")}</Label><Input id="meeting-time" type="time" value={schedule.time} onChange={(e) => setSchedule((p) => ({ ...p, time: e.target.value }))} required /></div>
                 </div>
                 <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="space-y-2"><Label>Durasi</Label><Select value={schedule.duration} onValueChange={(duration) => setSchedule((p) => ({ ...p, duration }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{[30, 45, 60, 90, 120].map((minutes) => <SelectItem key={minutes} value={String(minutes)}>{minutes} menit</SelectItem>)}</SelectContent></Select></div>
-                  <div className="space-y-2"><Label htmlFor="meeting-timezone">Zona waktu</Label><Input id="meeting-timezone" value={schedule.timezone} onChange={(e) => setSchedule((p) => ({ ...p, timezone: e.target.value }))} required /></div>
+                  <div className="space-y-2"><Label>{t("Durasi", "Duration")}</Label><Select value={schedule.duration} onValueChange={(duration) => setSchedule((p) => ({ ...p, duration }))}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{[30, 45, 60, 90, 120].map((minutes) => <SelectItem key={minutes} value={String(minutes)}>{minutes} {t("menit", "mins")}</SelectItem>)}</SelectContent></Select></div>
+                  <div className="space-y-2"><Label htmlFor="meeting-timezone">{t("Zona waktu", "Timezone")}</Label><Input id="meeting-timezone" value={schedule.timezone} onChange={(e) => setSchedule((p) => ({ ...p, timezone: e.target.value }))} required /></div>
                 </div>
-                <div className="space-y-2"><Label htmlFor="meeting-note">Catatan untuk klien</Label><Textarea id="meeting-note" value={schedule.note} onChange={(e) => setSchedule((p) => ({ ...p, note: e.target.value }))} placeholder="Jelaskan alasan atau konteks perubahan jadwal..." /></div>
+                <div className="space-y-2"><Label htmlFor="meeting-note">{t("Catatan untuk klien", "Note for client")}</Label><Textarea id="meeting-note" value={schedule.note} onChange={(e) => setSchedule((p) => ({ ...p, note: e.target.value }))} placeholder={t("Jelaskan alasan atau konteks perubahan jadwal...", "Explain the reason or context for the schedule change...")} /></div>
               </div>
             )}
             <DialogFooter className="gap-2 sm:gap-0">
-              <Button type="button" variant="outline" disabled={loading} onClick={() => setMeetingDialog(null)}>Batal</Button>
-              <Button type="submit" variant={meetingDialog?.mode === "reject" ? "destructive" : "default"} disabled={loading || (meetingDialog?.mode === "reject" ? !rejectionReason.trim() : !schedule.date || !schedule.time || !schedule.timezone)}>{loading ? "Memproses..." : meetingDialog?.mode === "reject" ? "Tolak pertemuan" : "Kirim usulan jadwal"}</Button>
+              <Button type="button" variant="outline" disabled={loading} onClick={() => setMeetingDialog(null)}>{t("Batal", "Cancel")}</Button>
+              <Button type="submit" variant={meetingDialog?.mode === "reject" ? "destructive" : "default"} disabled={loading || (meetingDialog?.mode === "reject" ? !rejectionReason.trim() : !schedule.date || !schedule.time || !schedule.timezone)}>{loading ? t("Memproses...", "Processing...") : meetingDialog?.mode === "reject" ? t("Tolak pertemuan", "Reject meeting") : t("Kirim usulan jadwal", "Send schedule proposal")}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

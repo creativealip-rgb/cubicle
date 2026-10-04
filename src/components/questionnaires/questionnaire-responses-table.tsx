@@ -14,6 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
+import { useT } from "@/lib/i18n-client";
 import {
   Search,
   Download,
@@ -59,6 +60,7 @@ export function QuestionnaireResponsesTable({
   fields: QuestionnaireField[];
   formName: string;
 }) {
+  const { t } = useT();
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedResponse, setSelectedResponse] = useState<QuestionnaireResponseItem | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "cards">("table");
@@ -132,7 +134,7 @@ export function QuestionnaireResponsesTable({
           <Input
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Cari respon (nama, email, isi jawaban)..."
+            placeholder={t("Cari respon (nama, email, isi jawaban)...", "Search responses (name, email, answers)...")}
             className="h-8.5 pl-8 text-xs bg-muted/20"
           />
         </div>
@@ -146,7 +148,7 @@ export function QuestionnaireResponsesTable({
               className={`p-1.5 rounded-md transition-all ${
                 viewMode === "table" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
               }`}
-              title="Table View (Spreadsheet)"
+              title={t("Tampilan Tabel", "Table View (Spreadsheet)")}
             >
               <TableIcon className="h-3.5 w-3.5" />
             </button>
@@ -156,7 +158,7 @@ export function QuestionnaireResponsesTable({
               className={`p-1.5 rounded-md transition-all ${
                 viewMode === "cards" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
               }`}
-              title="Card View"
+              title={t("Tampilan Kartu", "Card View")}
             >
               <LayoutList className="h-3.5 w-3.5" />
             </button>
@@ -173,10 +175,10 @@ export function QuestionnaireResponsesTable({
               }}
               disabled={responses.length === 0}
               className="h-8.5 gap-1.5 text-xs font-medium"
-              title="Cetak atau Simpan PDF Laporan"
+              title={t("Cetak atau Simpan PDF Laporan", "Print or Save PDF Report")}
             >
               <Printer className="h-3.5 w-3.5" />
-              <span>Cetak / PDF</span>
+              <span>{t("Cetak / PDF", "Print / PDF")}</span>
             </Button>
             <Button
               type="button"

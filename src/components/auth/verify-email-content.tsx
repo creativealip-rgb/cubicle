@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
-import { Loader2, Mail, CheckCircle } from "lucide-react";
+import Link from "next/link";
+import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,12 +14,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { authClient } from "@/lib/auth-client";
+import { CheckCircle, Loader2, Mail } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 export function VerifyEmailContent() {
+  const { t } = useT();
   const searchParams = useSearchParams();
   const email = searchParams.get("email") ?? "";
-
   const [resending, setResending] = useState(false);
   const [resent, setResent] = useState(false);
   const [error, setError] = useState("");
@@ -35,7 +36,7 @@ export function VerifyEmailContent() {
       });
       setResent(true);
     } catch {
-      setError("Gagal mengirim ulang email. Coba lagi nanti.");
+      setError(t("Gagal mengirim ulang email. Coba lagi nanti.", "Failed to resend email. Please try again later."));
     } finally {
       setResending(false);
     }
@@ -52,27 +53,27 @@ export function VerifyEmailContent() {
           className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover"
         />
         <Mail className="mx-auto h-12 w-12 text-primary" />
-        <CardTitle className="text-2xl">Cek email kamu</CardTitle>
+        <CardTitle className="text-2xl">{t("Cek email kamu", "Check your email")}</CardTitle>
         <CardDescription>
-          Kami sudah mengirim link verifikasi ke{" "}
+          {t("Kami sudah mengirim link verifikasi ke", "We sent a verification link to")}{" "}
           {email ? (
             <span className="font-medium text-foreground">{email}</span>
           ) : (
-            "alamat email kamu"
+            t("alamat email kamu", "your email address")
           )}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="rounded-lg bg-muted/50 px-4 py-3 text-sm text-muted-foreground">
-          <p className="mb-1 font-medium text-foreground">Langkah selanjutnya:</p>
+          <p className="mb-1 font-medium text-foreground">{t("Langkah selanjutnya:", "Next steps:")}</p>
           <ol className="list-inside list-decimal space-y-1">
-            <li>Buka inbox email kamu</li>
-            <li>Cari email dari <span className="font-medium">Cubiqlo</span></li>
-            <li>Klik tombol &ldquo;Verify Email&rdquo;</li>
+            <li>{t("Buka inbox email kamu", "Open your email inbox")}</li>
+            <li>{t("Cari email dari", "Look for an email from")} <span className="font-medium">Cubiqlo</span></li>
+            <li>{t("Klik tombol \u201CVerify Email\u201D", "Click the \u201CVerify Email\u201D button")}</li>
           </ol>
         </div>
         <p className="text-center text-xs text-muted-foreground">
-          Email tidak masuk? Cek folder spam/promotions.
+          {t("Email tidak masuk? Cek folder spam/promotions.", "Didn't receive it? Check spam/promotions folder.")}
         </p>
         {error && (
           <div className="rounded-lg bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -82,7 +83,7 @@ export function VerifyEmailContent() {
         {resent && (
           <div className="flex items-center gap-2 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-800">
             <CheckCircle className="h-4 w-4" />
-            Email verifikasi berhasil dikirim ulang!
+            {t("Email verifikasi berhasil dikirim ulang!", "Verification email sent successfully!")}
           </div>
         )}
       </CardContent>
@@ -95,15 +96,17 @@ export function VerifyEmailContent() {
             disabled={resending || resent}
           >
             {resending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {resent ? "Email terkirim" : "Kirim ulang email verifikasi"}
+            {resent ? t("Email terkirim", "Email sent") : t("Kirim ulang email verifikasi", "Resend verification email")}
           </Button>
         )}
-        <Link
-          href="/login"
-          className="text-sm text-muted-foreground underline-offset-4 hover:underline"
-        >
-          Kembali ke login
-        </Link>
+        <p className="text-center text-sm text-muted-foreground">
+          <Link
+            href="/login"
+            className="font-medium text-primary underline-offset-4 hover:underline"
+          >
+            {t("Kembali ke login", "Back to login")}
+          </Link>
+        </p>
       </CardFooter>
     </Card>
   );

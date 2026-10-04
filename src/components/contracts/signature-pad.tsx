@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { signContract, declineContract } from "@/lib/actions/contracts";
 import { Loader2, CheckCircle2, Trash2, X, Send } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 export function SignaturePad({
   token,
@@ -16,6 +17,7 @@ export function SignaturePad({
   defaultName: string;
   defaultEmail: string;
 }) {
+  const { t } = useT();
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [drawing, setDrawing] = useState(false);
   const [hasSignature, setHasSignature] = useState(false);
@@ -173,21 +175,21 @@ export function SignaturePad({
   if (showDecline) {
     return (
       <div className="space-y-3">
-        <p className="text-sm font-medium">Decline this contract</p>
-        <p className="text-xs text-slate-500">Optional: let the sender know why.</p>
+        <p className="text-sm font-medium">{t("Tolak kontrak ini", "Decline this contract")}</p>
+        <p className="text-xs text-slate-500">{t("Opsional: beri tahu pengirim alasannya.", "Optional: let the sender know why.")}</p>
         <Textarea
           rows={3}
-          placeholder="Reason for declining (optional)"
+          placeholder={t("Alasan penolakan (opsional)", "Reason for declining (optional)")}
           value={declineReason}
           onChange={(e) => setDeclineReason(e.target.value)}
         />
         <div className="flex items-center gap-2">
           <Button variant="destructive" onClick={handleDecline} disabled={pending}>
             {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
-            Confirm decline
+            {t("Konfirmasi penolakan", "Confirm decline")}
           </Button>
           <Button variant="ghost" onClick={() => setShowDecline(false)} disabled={pending}>
-            Back
+            {t("Kembali", "Back")}
           </Button>
         </div>
       </div>
@@ -199,18 +201,18 @@ export function SignaturePad({
       <div>
         <div className="mb-3 inline-flex rounded-lg border border-border/80 bg-background p-1" role="group" aria-label="Signature method">
           <Button type="button" size="sm" variant={signatureMode === "draw" ? "default" : "ghost"} onClick={() => setSignatureMode("draw")}>
-            Draw Signature
+            {t("Gambar Tanda Tangan", "Draw Signature")}
           </Button>
           <Button type="button" size="sm" variant={signatureMode === "type" ? "default" : "ghost"} onClick={() => setSignatureMode("type")}>
-            Type Name
+            {t("Ketik Nama", "Type Name")}
           </Button>
         </div>
         <div className="flex items-center justify-between mb-1.5">
-          <label htmlFor="contract-signature" className="text-xs font-semibold text-foreground">Sign here</label>
+          <label htmlFor="contract-signature" className="text-xs font-semibold text-foreground">{t("Tanda tangan di sini", "Sign here")}</label>
           {hasSignature && (
             <Button type="button" variant="ghost" size="sm" onClick={clearSignature} className="h-7 text-xs text-muted-foreground hover:text-destructive">
               <Trash2 className="h-3.5 w-3.5 mr-1" />
-              Clear
+              {t("Hapus", "Clear")}
             </Button>
           )}
         </div>

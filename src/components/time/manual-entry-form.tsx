@@ -250,7 +250,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
             <Input
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Ngerjain apa aja?"
+              placeholder={t("Apa yang kamu kerjakan?", "What are you working on?")}
               className="h-9"
             />
             <p className="text-[11px] text-muted-foreground">
