@@ -379,7 +379,7 @@ export function QuestionnaireResponsesTable({
             <div className="p-4 border-b border-border/80 flex items-center justify-between shrink-0 bg-muted/20">
               <div className="flex items-center gap-2">
                 <FileSpreadsheet className="h-4 w-4 text-primary" />
-                <h3 className="font-bold text-sm text-foreground">Detail Respon Formulir</h3>
+                <h3 className="font-bold text-sm text-foreground">{t("Detail Respon Formulir", "Form Response Details")}</h3>
               </div>
               <Button
                 type="button"
@@ -397,7 +397,7 @@ export function QuestionnaireResponsesTable({
               {/* Auto Convert Quick Actions */}
               <div className="p-3.5 rounded-xl border border-primary/30 bg-primary/5 space-y-2">
                 <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                  Aksi Cepat Integrasi Cubiqlo
+                  {t("Aksi Cepat Integrasi Cubiqlo", "Cubiqlo Quick Integration Actions")}
                 </span>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   {!selectedResponse.clientId ? (
@@ -408,19 +408,19 @@ export function QuestionnaireResponsesTable({
                         try {
                           const { convertResponseToClient } = await import("@/lib/actions/questionnaires");
                           await convertResponseToClient(selectedResponse.id);
-                          toast.success("Klien baru berhasil dibuat dari respon ini!");
-                        } catch (err: any) {
-                          toast.error(err?.message || "Gagal membuat klien");
+                          toast.success(t("Klien baru berhasil dibuat dari respon ini!", "New client created from this response!"));
+                        } catch (err: unknown) {
+                          toast.error(err instanceof Error ? err.message : t("Gagal membuat klien", "Failed to create client"));
                         }
                       }}
                       className="h-8 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground"
                     >
                       <User className="h-3.5 w-3.5" />
-                      <span>+ Buat Klien Baru</span>
+                      <span>{t("+ Buat Klien Baru", "+ Create New Client")}</span>
                     </Button>
                   ) : (
                     <Badge variant="outline" className="text-xs bg-background text-emerald-600 border-emerald-300">
-                      ✓ Terhubung ke Klien
+                      {t("✓ Terhubung ke Klien", "✓ Connected to Client")}
                     </Badge>
                   )}
 
@@ -433,19 +433,19 @@ export function QuestionnaireResponsesTable({
                         try {
                           const { convertResponseToProject } = await import("@/lib/actions/questionnaires");
                           await convertResponseToProject(selectedResponse.id);
-                          toast.success("Proyek baru berhasil dibuat dari brief ini!");
-                        } catch (err: any) {
-                          toast.error(err?.message || "Gagal membuat proyek");
+                          toast.success(t("Proyek baru berhasil dibuat dari brief ini!", "New project created from this brief!"));
+                        } catch (err: unknown) {
+                          toast.error(err instanceof Error ? err.message : t("Gagal membuat proyek", "Failed to create project"));
                         }
                       }}
                       className="h-8 text-xs font-semibold gap-1.5"
                     >
                       <Folder className="h-3.5 w-3.5" />
-                      <span>+ Jadikan Proyek Baru</span>
+                      <span>{t("+ Jadikan Proyek Baru", "+ Create New Project")}</span>
                     </Button>
                   ) : (
                     <Badge variant="outline" className="text-xs bg-background text-emerald-600 border-emerald-300">
-                      ✓ Terhubung ke Proyek
+                      {t("✓ Terhubung ke Proyek", "✓ Connected to Project")}
                     </Badge>
                   )}
                 </div>

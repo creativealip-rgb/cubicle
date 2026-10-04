@@ -151,7 +151,7 @@ export function IntakeForm({
         try {
           if (token === "preview_mode") {
             setSubmitted(true);
-            toast.success("Mode Preview: Tanggapan berhasil disimulasikan!");
+            toast.success(t("Mode Preview: Tanggapan berhasil disimulasikan!", "Preview Mode: Response simulated successfully!"));
             return;
           }
 
@@ -161,15 +161,15 @@ export function IntakeForm({
           });
 
           setSubmitted(true);
-          toast.success("Tanggapan berhasil dikirimkan!");
+          toast.success(t("Tanggapan berhasil dikirimkan!", "Response submitted successfully!"));
 
           if (redirectUrl && typeof window !== "undefined") {
             setTimeout(() => {
               window.location.href = redirectUrl;
             }, 1500);
           }
-        } catch (err: any) {
-          toast.error(err?.message || "Terjadi kesalahan saat mengirim");
+        } catch (err: unknown) {
+          toast.error(err instanceof Error ? err.message : t("Terjadi kesalahan saat mengirim", "An error occurred while submitting"));
         }
       });
     }
@@ -403,7 +403,7 @@ export function IntakeForm({
                   onValueChange={(val) => setFieldValue(f.id, val)}
                 >
                   <SelectTrigger className="h-10 text-xs sm:text-sm bg-background">
-                    <SelectValue placeholder="Pilih salah satu..." />
+                    <SelectValue placeholder={t("Pilih salah satu...", "Select an option...")} />
                   </SelectTrigger>
                   <SelectContent>
                     {(f.options || []).map((opt, i) => (

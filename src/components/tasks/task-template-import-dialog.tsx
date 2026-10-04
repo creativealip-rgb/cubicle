@@ -166,7 +166,7 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
               return <div key={item.itemId} className="flex flex-wrap items-center gap-2 border-b px-3 py-2 last:border-b-0">
                 <input type="checkbox" checked={Boolean(decision)} onChange={(event) => toggleItem(item.itemId, event.target.checked)} />
                 <span className="min-w-0 flex-1 text-sm">{item.title}</span>
-                {item.duplicate ? <div className="flex gap-1"><Button size="sm" variant={decision?.duplicateAction === "skip" ? "default" : "outline"} onClick={() => setDuplicate(item.itemId, "skip")}>Lewati</Button><Button size="sm" variant={decision?.duplicateAction === "keep" ? "default" : "outline"} onClick={() => setDuplicate(item.itemId, "keep")}>Tetap tambahkan</Button></div> : null}
+                {item.duplicate ? <div className="flex gap-1"><Button size="sm" variant={decision?.duplicateAction === "skip" ? "default" : "outline"} onClick={() => setDuplicate(item.itemId, "skip")}>{t("Lewati", "Skip")}</Button><Button size="sm" variant={decision?.duplicateAction === "keep" ? "default" : "outline"} onClick={() => setDuplicate(item.itemId, "keep")}>{t("Tetap tambahkan", "Add anyway")}</Button></div> : null}
               </div>;
             })}
           </div></div> : null}

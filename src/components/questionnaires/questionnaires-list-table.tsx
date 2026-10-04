@@ -50,10 +50,10 @@ export function QuestionnairesListTable({
       try {
         const { duplicateQuestionnaire } = await import("@/lib/actions/questionnaires");
         await duplicateQuestionnaire(id);
-        toast.success("Formulir berhasil diduplikasi!");
+        toast.success(t("Formulir berhasil diduplikasi!", "Form duplicated successfully!"));
         refresh();
-      } catch (err: any) {
-        toast.error(err?.message || "Gagal menduplikasi formulir");
+      } catch (err: unknown) {
+        toast.error(err instanceof Error ? err.message : t("Gagal menduplikasi formulir", "Failed to duplicate form"));
       }
     });
   }

@@ -169,7 +169,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
       </DialogTrigger>
       <DialogContent className="flex max-h-[min(90dvh,720px)] flex-col overflow-hidden p-0 sm:max-w-[560px]">
         <DialogHeader className="shrink-0 border-b px-5 py-4 pr-12">
-          <DialogTitle>Tambah Entri Waktu Manual</DialogTitle>
+          <DialogTitle>{t("Tambah Entri Waktu Manual", "Add Manual Time Entry")}</DialogTitle>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="min-h-0 space-y-4 overflow-y-auto px-5 py-4">
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -274,7 +274,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="space-y-2">
-              <Label className="text-xs">Tanggal *</Label>
+              <Label className="text-xs">{t("Tanggal", "Date")} *</Label>
               <Input
                 type="date"
                 value={date}
@@ -284,7 +284,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Jam</Label>
+              <Label className="text-xs">{t("Jam", "Hours")}</Label>
               <Input
                 type="number"
                 min="0"
@@ -294,7 +294,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
               />
             </div>
             <div className="space-y-2">
-              <Label className="text-xs">Menit</Label>
+              <Label className="text-xs">{t("Menit", "Minutes")}</Label>
               <Input
                 type="number"
                 min="0"
@@ -315,7 +315,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
                 onChange={(e) => setBillable(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300"
               />
-              <Label htmlFor="billable" className="text-sm">Bisa Ditagih</Label>
+              <Label htmlFor="billable" className="text-sm">{t("Bisa Ditagih", "Billable")}</Label>
             </div>
             {billable && isHourly && (
               <div className="space-y-2">
@@ -338,7 +338,7 @@ export function ManualEntryForm({ workspaceId, clients, projects, tasks, activit
 
           <Button type="submit" disabled={loading} className="w-full">
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
-            Tambah Entri
+            {t("Tambah Entri", "Add Entry")}
           </Button>
         </form>
       </DialogContent>

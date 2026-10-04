@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import Image from "next/image";
-import { CheckCircle, XCircle } from "lucide-react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,12 +13,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CheckCircle, XCircle } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 export function VerifyEmailSuccess() {
+  const { t } = useT();
   const router = useRouter();
-  // i18n labels hardcoded for verification flow
-  // const { t } = useT();
-  const [countdown, setCountdown] = useState(5);
+  const [countdown, setCountdown] = useState(3);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -32,6 +32,7 @@ export function VerifyEmailSuccess() {
         return prev - 1;
       });
     }, 1000);
+
     return () => clearInterval(timer);
   }, [router]);
 
@@ -45,20 +46,20 @@ export function VerifyEmailSuccess() {
           height={40}
           className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover"
         />
-        <CheckCircle className="mx-auto h-12 w-12 text-green-600" />
-        <CardTitle className="text-2xl">Email terverifikasi!</CardTitle>
+        <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
+        <CardTitle className="text-2xl">{t("Email berhasil diverifikasi!", "Email verified successfully!")}</CardTitle>
         <CardDescription>
-          Akun kamu sudah aktif. Selamat datang di Cubiqlo!
+          {t("Akun kamu sudah aktif. Selamat datang di Cubiqlo!", "Your account is active. Welcome to Cubiqlo!")}
         </CardDescription>
       </CardHeader>
       <CardContent className="text-center">
         <p className="text-sm text-muted-foreground">
-          Otomatis masuk dalam {countdown} detik...
+          {t("Otomatis masuk dalam", "Redirecting in")} {countdown} {t("detik...", "seconds...")}
         </p>
       </CardContent>
       <CardFooter className="flex justify-center">
         <Button onClick={() => router.push("/onboarding")}>
-          Lanjut setup akun
+          {t("Lanjut setup akun", "Continue account setup")}
         </Button>
       </CardFooter>
     </Card>
@@ -66,6 +67,7 @@ export function VerifyEmailSuccess() {
 }
 
 export function VerifyEmailError() {
+  const { t } = useT();
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
@@ -77,14 +79,14 @@ export function VerifyEmailError() {
           className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover"
         />
         <XCircle className="mx-auto h-12 w-12 text-destructive" />
-        <CardTitle className="text-2xl">Link tidak valid</CardTitle>
+        <CardTitle className="text-2xl">{t("Link tidak valid", "Invalid link")}</CardTitle>
         <CardDescription>
-          Link verifikasi sudah kedaluwarsa atau tidak valid. Minta link baru.
+          {t("Link verifikasi sudah kedaluwarsa atau tidak valid. Minta link baru.", "Verification link is invalid or has expired. Please request a new link.")}
         </CardDescription>
       </CardHeader>
       <CardFooter className="flex justify-center">
         <Link href="/login">
-          <Button variant="outline">Kembali ke login</Button>
+          <Button variant="outline">{t("Kembali ke login", "Back to login")}</Button>
         </Link>
       </CardFooter>
     </Card>

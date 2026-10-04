@@ -311,7 +311,7 @@ export function PackageCatalog({
                   )}
                   {pkg.includedServices && pkg.includedServices.length > 0 && (
                     <div className="rounded-md bg-muted/40 p-2 text-xs text-muted-foreground">
-                      <p className="mb-1 font-medium text-foreground">Layanan dalam paket</p>
+                      <p className="mb-1 font-medium text-foreground">{t("Layanan dalam paket", "Included services")}</p>
                       <p>{pkg.includedServices.map((service) => service.serviceName).join(", ")}</p>
                     </div>
                   )}
@@ -445,7 +445,7 @@ export function PackageCatalog({
                   ))}
                 </div>
               ) : (
-                <p className="text-xs text-muted-foreground">Belum ada Service aktif. Buat dulu di menu Service.</p>
+                <p className="text-xs text-muted-foreground">{t("Belum ada Service aktif. Buat dulu di menu Service.", "No active services yet. Create one in the Services menu first.")}</p>
               )}
             </div>
             <div className="flex items-center gap-2">

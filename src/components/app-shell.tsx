@@ -84,7 +84,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
     function handleGlobalError(event: ErrorEvent | PromiseRejectionEvent) {
       const err = "reason" in event ? event.reason : event.error;
       if (isStaleServerActionError(err)) {
-        toast.info("Versi aplikasi baru terdeteksi. Memuat ulang halaman...");
+        toast.info("A new version of the app was detected. Reloading page...");
         setTimeout(() => window.location.reload(), 600);
       }
     }
