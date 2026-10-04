@@ -59,6 +59,10 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
         }
         return;
       }
+      if (!json?.data?.paymentUrl) {
+        setError(t("URL pembayaran tidak ditemukan dari server.", "Payment URL not returned from server."));
+        return;
+      }
       window.location.assign(json.data.paymentUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : t("Gagal membuat checkout", "Could not start checkout"));
