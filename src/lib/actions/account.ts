@@ -160,19 +160,19 @@ export async function requestAccountEmailChange(
         <div style="font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6b7280;">Cubiqlo</div>
       </td></tr>
       <tr><td style="padding:32px;font-size:15px;line-height:1.6;color:#1a1d24;">
-        <h2 style="margin:0 0 16px;font-size:20px;font-weight:600;">Konfirmasi Perubahan Email</h2>
-        <p style="margin:0 0 16px;">Halo ${session.user.name ?? "Pengguna"},</p>
-        <p style="margin:0 0 24px;">Kami menerima permintaan untuk mengganti email login akun Cubiqlo kamu ke <strong>${newEmail}</strong>. Klik tombol di bawah untuk mengonfirmasi (link berlaku selama 1 jam).</p>
+        <h2 style="margin:0 0 16px;font-size:20px;font-weight:600;">Confirm Email Change / Konfirmasi Perubahan Email</h2>
+        <p style="margin:0 0 16px;">Hello / Halo ${session.user.name ?? "User"},</p>
+        <p style="margin:0 0 24px;">We received a request to change your Cubiqlo login email to <strong>${newEmail}</strong>. Click the button below to confirm (link valid for 1 hour). / Kami menerima permintaan untuk mengganti email login akun Cubiqlo kamu ke <strong>${newEmail}</strong>. Klik tombol di bawah untuk mengonfirmasi (link berlaku selama 1 jam).</p>
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
           <tr><td style="border-radius:8px;background:#1a1d24;">
-            <a href="${verifyUrl}" target="_blank" style="display:inline-block;padding:12px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">Konfirmasi Email Baru</a>
+            <a href="${verifyUrl}" target="_blank" style="display:inline-block;padding:12px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">Confirm New Email / Konfirmasi Email Baru</a>
           </td></tr>
         </table>
-        <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">Atau salin tautan berikut ke browsermu:</p>
+        <p style="margin:0 0 8px;font-size:13px;color:#6b7280;">Or copy and paste the link below into your browser / Atau salin tautan berikut ke browsermu:</p>
         <p style="margin:0;font-size:13px;color:#6b7280;word-break:break-all;">${verifyUrl}</p>
       </td></tr>
       <tr><td style="padding:16px 32px;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;text-align:center;">
-        <p style="margin:0;">Jika kamu tidak meminta perubahan ini, amankan akunmu segera.</p>
+        <p style="margin:0;">If you didn't request this change, please secure your account immediately. / Jika kamu tidak meminta perubahan ini, amankan akunmu segera.</p>
       </td></tr>
     </table>
   </td></tr>

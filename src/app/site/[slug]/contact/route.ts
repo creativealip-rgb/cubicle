@@ -82,13 +82,13 @@ export async function POST(
   }
 
   // Send email notification
-  const subject = `[${site.title}] Pesan dari ${name}`;
-  const text = `Pesan baru dari landing page ${site.title}:\n\nNama: ${name}\nEmail: ${email}${phone ? `\nTelepon: ${phone}` : ""}\n\nPesan:\n${message}`;
-  const html = `<h3>Pesan baru dari landing page <strong>${site.title}</strong></h3>
-<p><strong>Nama:</strong> ${name}</p>
+  const subject = `[${site.title}] New Message from / Pesan dari ${name}`;
+  const text = `New message from personal site / Pesan baru dari landing page ${site.title}:\n\nName / Nama: ${name}\nEmail: ${email}${phone ? `\nPhone / Telepon: ${phone}` : ""}\n\nMessage / Pesan:\n${message}`;
+  const html = `<h3>New message from landing page / Pesan baru dari landing page <strong>${site.title}</strong></h3>
+<p><strong>Name / Nama:</strong> ${name}</p>
 <p><strong>Email:</strong> ${email}</p>
-${phone ? `<p><strong>Telepon:</strong> ${phone}</p>` : ""}
-<p><strong>Pesan:</strong></p>
+${phone ? `<p><strong>Phone / Telepon:</strong> ${phone}</p>` : ""}
+<p><strong>Message / Pesan:</strong></p>
 <p style="white-space:pre-wrap">${message}</p>`;
 
   await sendNotification({

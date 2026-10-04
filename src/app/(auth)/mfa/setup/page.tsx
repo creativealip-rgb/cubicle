@@ -29,7 +29,7 @@ export default async function MfaSetupPage({
           className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="h-3.5 w-3.5" />
-          <span>Kembali ke Pengaturan Akun</span>
+          <span>Back to Account Settings / Kembali ke Pengaturan Akun</span>
         </Link>
         <div className="inline-flex items-center gap-1.5 text-xs text-slate-500 font-medium">
           <ShieldCheck className="h-4 w-4 text-emerald-400" />
