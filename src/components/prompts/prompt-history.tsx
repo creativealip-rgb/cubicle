@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n-client";
 import { deleteGeneration } from "@/lib/actions/prompts";
 import { Clock, Trash2, FileText, FolderOpen, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -23,30 +24,31 @@ interface Generation {
 
 export function PromptHistory({
   generations: initialGenerations,
+  onSelectPrompt,
 }: {
   generations: Generation[];
+  onSelectPrompt?: (gen: Generation) => void;
 }) {
+  const { t } = useT();
   const [generations, setGenerations] = useState(initialGenerations);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [deleting, setDeleting] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleDelete = async (id: string) => {
-    setDeleting(true);
+  async function handleDelete(id: string) {
+    setDeletingId(id);
     try {
       await deleteGeneration(id);
       setGenerations((prev) => prev.filter((g) => g.id !== id));
       if (selectedId === id) setSelectedId(null);
-      toast.success("Generation dihapus");
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Delete failed");
+      toast.success(t("Riwayat prompt dihapus", "Prompt history deleted"));
+    } catch {
+      toast.error(t("Gagal menghapus riwayat", "Failed to delete history"));
     } finally {
-      setDeleting(false);
+      setDeletingId(null);
     }
-  };
+  }
 
-  const selected = generations.find((g) => g.id === selectedId);
-
-  function formatDate(d: string | Date): string {
+  function formatDate(d: Date | string) {
     return new Date(d).toLocaleDateString("en-US", {
       month: "short",
       day: "numeric",
@@ -55,13 +57,15 @@ export function PromptHistory({
     });
   }
 
+  const selected = generations.find((g) => g.id === selectedId);
+
   if (generations.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-8 text-center">
         <FileText className="mb-2 h-8 w-8 text-muted-foreground/50" />
-        <p className="text-sm text-muted-foreground">Belum ada generation</p>
+        <p className="text-sm text-muted-foreground">{t("Belum ada generation", "No generations yet")}</p>
         <p className="text-xs text-muted-foreground">
-          Generate prompt dari studio di atas
+          {t("Generate prompt dari studio di atas", "Generate prompts from the studio above")}
         </p>
       </div>
     );
@@ -112,14 +116,14 @@ export function PromptHistory({
               variant="ghost"
               size="icon"
               className="h-6 w-6 shrink-0 ml-2"
-              aria-label="Hapus riwayat"
+              aria-label={t("Hapus riwayat", "Delete history")}
               onClick={(e) => {
                 e.stopPropagation();
                 handleDelete(gen.id);
               }}
-              disabled={deleting}
+              disabled={deletingId === gen.id}
             >
-              {deleting ? (
+              {deletingId === gen.id ? (
                 <Loader2 className="h-3 w-3 animate-spin" />
               ) : (
                 <Trash2 className="h-3 w-3 text-muted-foreground" />

@@ -449,7 +449,7 @@ export function IntakeForm({
                 <div className="border-2 border-dashed border-border/80 rounded-xl p-5 text-center bg-muted/10 hover:bg-muted/20 transition-all space-y-2">
                   <Paperclip className="h-5 w-5 mx-auto text-primary" />
                   <div className="space-y-0.5">
-                    <p className="text-xs font-semibold text-foreground">Upload file dokumen atau aset</p>
+                    <p className="text-xs font-semibold text-foreground">{t("Upload file dokumen atau aset", "Upload document or asset file")}</p>
                     <p className="text-[10px] text-muted-foreground">{f.acceptFiles || "Format: PDF, DOC, PNG, ZIP"}</p>
                   </div>
                   <Input
@@ -459,7 +459,7 @@ export function IntakeForm({
                       const file = e.target.files?.[0];
                       if (file) {
                         setFieldValue(f.id, file.name);
-                        toast.success(`File ${file.name} dipilih`);
+                        toast.success(t(`File ${file.name} dipilih`, `File ${file.name} selected`));
                       }
                     }}
                     className="max-w-xs mx-auto text-xs h-8.5 bg-background"
@@ -474,12 +474,12 @@ export function IntakeForm({
                 <div className="border border-border/80 rounded-xl p-3 bg-muted/10 space-y-2">
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                     <PenTool className="h-3.5 w-3.5" />
-                    <span>Ketik Nama Lengkap sebagai Tanda Tangan Digital:</span>
+                    <span>{t("Ketik Nama Lengkap sebagai Tanda Tangan Digital:", "Type Full Name as Digital Signature:")}</span>
                   </div>
                   <Input
                     value={answers[f.id] || ""}
                     onChange={(e) => setFieldValue(f.id, e.target.value)}
-                    placeholder="Tanda tangan / Nama Penandatangan..."
+                    placeholder={t("Tanda tangan / Nama Penandatangan...", "Signature / Signer Name...")}
                     className="h-10 font-serif italic text-sm sm:text-base bg-background"
                   />
                 </div>

@@ -407,7 +407,7 @@ export function BookingSettingsPanel({
                         const val = e.target.value.trim();
                         setCustomLink(val ? `https://${val.replace(/^https?:\/\//i, "")}` : "");
                       }}
-                      placeholder="zoom.us/j/... atau teams.microsoft.com/..."
+                      placeholder={t("zoom.us/j/... atau teams.microsoft.com/...", "zoom.us/j/... or teams.microsoft.com/...")}
                       className="flex-1 px-2.5 py-1.5 text-xs font-mono bg-transparent outline-none placeholder:text-muted-foreground/50 text-foreground min-w-0"
                     />
                     {customLink.trim() && (

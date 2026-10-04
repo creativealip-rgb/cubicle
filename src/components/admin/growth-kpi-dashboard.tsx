@@ -12,7 +12,7 @@ const percent = (value: number | null) => value == null ? "—" : `${number.form
 const date = (value: string) => new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", year: "numeric" }).format(new Date(value));
 
 function Delta({ value }: { value: number | null }) {
-  if (value == null) return <span className="inline-flex items-center gap-1 text-xs text-slate-400"><Minus className="size-3" />Belum ada baseline</span>;
+  if (value == null) return <span className="inline-flex items-center gap-1 text-xs text-slate-400"><Minus className="size-3" />No baseline yet</span>;
   const positive = value >= 0;
   const Icon = positive ? ArrowUpRight : ArrowDownRight;
   return <span className={`inline-flex items-center gap-1 text-xs font-medium ${positive ? "text-emerald-600" : "text-rose-600"}`}><Icon className="size-3" />{positive ? "+" : ""}{value}%</span>;
@@ -43,21 +43,21 @@ function MetricRows({ rows }: { rows: Array<{ label: string; value: string | num
 function hasTrend(data: GrowthDashboard) { return data.trends.filter(x => x.visitors || x.signupCompletions || x.activated || x.revenue).length >= 2; }
 
 function TrafficTrend({ data }: { data: GrowthDashboard }) {
-  if (!hasTrend(data)) return <Empty title="Belum cukup data untuk trend" detail="Chart muncul setelah aktivitas tercatat pada sedikitnya dua periode." />;
+  if (!hasTrend(data)) return <Empty title="Not enough data for trend" detail="Charts appear after activity is recorded in at least two periods." />;
   const max = Math.max(1, ...data.trends.map(x => Math.max(x.visitors, x.signupCompletions, x.activated)));
   return <div><div className="flex h-32 items-end gap-1" aria-label="Traffic trend chart">{data.trends.map(row => <div key={row.bucket} className="flex min-w-0 flex-1 items-end gap-px" title={`${date(row.bucket)} · ${row.visitors} visitors · ${row.signupCompletions} signups · ${row.activated} activated`}><span className="w-1/2 rounded-t bg-violet-400" style={{ height: `${Math.max(row.visitors ? 4 : 0, row.visitors / max * 100)}%` }} /><span className="w-1/2 rounded-t bg-emerald-400" style={{ height: `${Math.max(row.signupCompletions || row.activated ? 4 : 0, Math.max(row.signupCompletions, row.activated) / max * 100)}%` }} /></div>)}</div><div className="mt-3 flex flex-wrap items-center gap-4 border-t pt-3 text-xs text-slate-600"><span className="text-violet-600">■ Visitors</span><span className="text-emerald-600">■ Signup/activation</span><span className="ml-auto">{date(data.trends[0].bucket)} – {date(data.trends.at(-1)!.bucket)}</span></div></div>;
 }
 
 function RevenueTrend({ data }: { data: GrowthDashboard }) {
   const active = data.trends.filter(x => x.revenue > 0);
-  if (!active.length) return <Empty title="Belum ada revenue pada periode ini" detail="Trend akan muncul setelah plan payment selesai." />;
+  if (!active.length) return <Empty title="No revenue in this period" detail="Trend will appear after a plan payment is completed." />;
   const max = Math.max(...data.trends.map(x => x.revenue), 1);
   return <div><div className="flex h-32 items-end gap-1" aria-label="Completed payment revenue chart">{data.trends.map(row => <div key={row.bucket} className="min-w-0 flex-1" title={`${date(row.bucket)} · ${money(row.revenue)}`}><div className="rounded-t bg-violet-500" style={{ height: `${Math.max(row.revenue ? 5 : 0, row.revenue / max * 128)}px` }} /></div>)}</div><div className="mt-3 flex justify-between border-t pt-3 text-xs text-slate-500"><span>Completed payment revenue</span><span>{money(data.trends.reduce((sum, row) => sum + row.revenue, 0))}</span></div></div>;
 }
 
 function Sources({ data, limit = 20 }: { data: GrowthDashboard; limit?: number }) {
   const rows = data.acquisition.slice(0, limit);
-  if (!rows.length) return <Empty title="Belum ada attribution" detail="Source dan campaign muncul setelah visitor atau marketing spend tercatat." />;
+  if (!rows.length) return <Empty title="No attribution yet" detail="Source and campaign data will appear after visitors or marketing spend are recorded." />;
   return <><div className="space-y-2 md:hidden">{rows.map(row => <div key={`${row.source}-${row.campaign}`} className="rounded-lg border border-slate-200 p-3"><div className="flex justify-between gap-3"><div><p className="text-sm font-medium text-slate-900">{row.source}</p><p className="text-xs text-slate-500">{row.campaign}</p></div><p className="text-sm font-semibold">{row.signupCompletions} signup</p></div><div className="mt-3 grid grid-cols-3 gap-2 text-xs"><div><p className="text-slate-500">Visitors</p><p className="font-medium">{row.visitors}</p></div><div><p className="text-slate-500">Spend</p><p className="font-medium">{money(row.spend)}</p></div><div><p className="text-slate-500">CAC</p><p className="font-medium">{money(row.cac)}</p></div></div></div>)}</div><div className="hidden md:block"><table className="w-full text-left text-sm"><thead><tr className="border-b text-xs text-slate-500"><th className="pb-2">Source / campaign</th><th className="pb-2">Visitors</th><th className="pb-2">Signups</th><th className="pb-2">Conversion</th><th className="pb-2">Spend</th><th className="pb-2">CAC</th></tr></thead><tbody>{rows.map(row => <tr key={`${row.source}-${row.campaign}`} className="border-b border-slate-100 last:border-0"><td className="py-3"><p className="font-medium">{row.source}</p><p className="text-xs text-slate-500">{row.campaign}</p></td><td>{row.visitors}</td><td>{row.signupCompletions}</td><td>{percent(row.conversionRate)}</td><td>{money(row.spend)}</td><td>{money(row.cac)}</td></tr>)}</tbody></table></div></>;
 }
 

@@ -2,6 +2,7 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { X } from "lucide-react";
+import { useT } from "@/lib/i18n-client";
 
 export function ActiveFilterSummary({
   basePath,
@@ -12,6 +13,7 @@ export function ActiveFilterSummary({
   filters: Array<{ key: string; label: string; value?: string | null }>;
   inline?: boolean;
 }) {
+  const { t } = useT();
   const router = useRouter();
   const searchParams = useSearchParams();
   const active = filters.filter((filter) => filter.value);
@@ -47,7 +49,7 @@ export function ActiveFilterSummary({
               type="button"
               onClick={() => removeSingle(filter.key)}
               className="hover:text-violet-950 dark:hover:text-white transition-colors"
-              title="Hapus filter ini"
+              title={t("Hapus filter ini", "Remove this filter")}
             >
               <X className="h-3 w-3" />
             </button>
@@ -59,7 +61,7 @@ export function ActiveFilterSummary({
             onClick={clear}
             className="text-[11px] font-medium text-muted-foreground hover:text-foreground underline underline-offset-2 ml-1"
           >
-            Hapus semua
+            {t("Hapus semua", "Clear all")}
           </button>
         )}
       </div>
@@ -68,7 +70,7 @@ export function ActiveFilterSummary({
 
   return (
     <div className="flex flex-wrap items-center gap-2 rounded-lg border border-violet-200 bg-violet-50/60 px-3 py-2 text-xs text-violet-950">
-      <span className="font-semibold">Filter aktif:</span>
+      <span className="font-semibold">{t("Filter aktif:", "Active filters:")}</span>
       {active.map((filter) => (
         <span
           key={filter.key}
@@ -83,7 +85,7 @@ export function ActiveFilterSummary({
         className="ml-auto inline-flex items-center gap-1 font-medium text-violet-700 hover:text-violet-900"
       >
         <X className="h-3.5 w-3.5" />
-        Hapus filter
+        {t("Hapus filter", "Clear filters")}
       </button>
     </div>
   );

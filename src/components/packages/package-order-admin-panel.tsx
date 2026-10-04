@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { transitionPackageOrder } from "@/lib/actions/package-orders";
 import { formatMoney } from "@/lib/utils";
+import { useT } from "@/lib/i18n-client";
 
 export interface AdminPackageOrder {
   id: string;
@@ -23,6 +24,7 @@ export interface AdminPackageOrder {
 }
 
 export function PackageOrderAdminPanel({ orders }: { orders: AdminPackageOrder[] }) {
+  const { t } = useT();
   const { refresh } = useAppTransition();
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
@@ -30,10 +32,10 @@ export function PackageOrderAdminPanel({ orders }: { orders: AdminPackageOrder[]
     setLoadingId(orderId);
     try {
       await transitionPackageOrder({ orderId, decision });
-      toast.success(decision === "confirm" ? "Order dikonfirmasi" : "Order dibatalkan");
+      toast.success(decision === "confirm" ? t("Order dikonfirmasi", "Order confirmed") : t("Order dibatalkan", "Order cancelled"));
       refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Gagal memproses order");
+      toast.error(error instanceof Error ? error.message : t("Gagal memproses order", "Failed to process order"));
     } finally {
       setLoadingId(null);
     }
@@ -44,8 +46,8 @@ export function PackageOrderAdminPanel({ orders }: { orders: AdminPackageOrder[]
   return (
     <section className="space-y-3">
       <div>
-        <h2 className="text-base font-semibold">Order Paket</h2>
-        <p className="text-sm text-muted-foreground">Konfirmasi permintaan paket dari portal klien.</p>
+        <h2 className="text-base font-semibold">{t("Order Paket", "Package Orders")}</h2>
+        <p className="text-sm text-muted-foreground">{t("Konfirmasi permintaan paket dari portal klien.", "Confirm package requests from client portal.")}</p>
       </div>
       <div className="grid gap-3 sm:grid-cols-2">
         {orders.map((order) => (
@@ -56,7 +58,7 @@ export function PackageOrderAdminPanel({ orders }: { orders: AdminPackageOrder[]
                   <p className="truncate font-medium">{order.packageName}</p>
                   <p className="text-xs text-muted-foreground">
                     {formatMoney(order.price, order.currency)}
-                    {order.hours != null ? ` · ${order.hours} jam` : ""}
+                    {order.hours != null ? ` · ${order.hours} ${t("jam", "hrs")}` : ""}
                   </p>
                 </div>
                 <Badge variant={order.status === "pending" ? "secondary" : "outline"}>{order.status}</Badge>
@@ -66,17 +68,14 @@ export function PackageOrderAdminPanel({ orders }: { orders: AdminPackageOrder[]
                 <div className="flex gap-2">
                   <Button size="sm" onClick={() => decide(order.id, "confirm")} disabled={loadingId === order.id}>
                     {loadingId === order.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Check className="h-4 w-4" />}
-                    Konfirmasi
+                    {t("Konfirmasi", "Confirm")}
                   </Button>
                   <Button size="sm" variant="outline" onClick={() => decide(order.id, "cancel")} disabled={loadingId === order.id}>
-                    <X className="h-4 w-4" /> Batal
+                    {loadingId === order.id ? <Loader2 className="h-4 w-4 animate-spin" /> : <X className="h-4 w-4" />}
+                    {t("Tolak", "Reject")}
                   </Button>
                 </div>
-              ) : (
-                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                  <ShoppingCart className="h-3.5 w-3.5" /> Order sudah diproses
-                </div>
-              )}
+              ) : null}
             </CardContent>
           </Card>
         ))}

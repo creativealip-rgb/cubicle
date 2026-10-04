@@ -188,18 +188,18 @@ export function InvoiceTemplatesClient() {
             </DialogHeader>
             <div className="space-y-4 mt-4">
               <div>
-                <Label htmlFor="tpl-name">Nama Template *</Label>
+                <Label htmlFor="tpl-name">{t("Nama Template", "Template Name")} *</Label>
                 <Input
                   id="tpl-name"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="contoh: Monthly VA Invoice"
+                  placeholder={t("contoh: Monthly VA Invoice", "e.g. Monthly VA Invoice")}
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="tpl-currency">Mata Uang</Label>
+                  <Label htmlFor="tpl-currency">{t("Mata Uang", "Currency")}</Label>
                   <Select value={currency} onValueChange={setCurrency}>
                     <SelectTrigger id="tpl-currency">
                       <SelectValue />
@@ -213,7 +213,7 @@ export function InvoiceTemplatesClient() {
                   </Select>
                 </div>
                 <div>
-                  <Label htmlFor="tpl-tax">Tax Rate (%)</Label>
+                  <Label htmlFor="tpl-tax">{t("Tarif Pajak (%)", "Tax Rate (%)")}</Label>
                   <Input
                     id="tpl-tax"
                     type="number"
@@ -228,20 +228,20 @@ export function InvoiceTemplatesClient() {
               </div>
 
               <div>
-                <Label>Default Line Items</Label>
+                <Label>{t("Item Bawaan", "Default Line Items")}</Label>
                 <div className="space-y-2 mt-2">
                   {lineItems.map((item, i) => (
                     <div key={i} className="flex gap-2 items-start">
                       <Input
                         className="flex-1"
-                        placeholder="Deskripsi"
+                        placeholder={t("Deskripsi", "Description")}
                         value={item.description}
                         onChange={(e) => updateLineItem(i, "description", e.target.value)}
                       />
                       <Input
                         className="w-20"
                         type="number"
-                        placeholder="Qty"
+                        placeholder={t("Qty", "Qty")}
                         value={item.quantity}
                         onChange={(e) => updateLineItem(i, "quantity", Number(e.target.value))}
                         min="0"
@@ -250,7 +250,7 @@ export function InvoiceTemplatesClient() {
                       <Input
                         className="w-32"
                         type="number"
-                        placeholder="Harga"
+                        placeholder={t("Harga", "Price")}
                         value={item.unitPrice}
                         onChange={(e) => updateLineItem(i, "unitPrice", Number(e.target.value))}
                         min="0"
@@ -307,13 +307,13 @@ export function InvoiceTemplatesClient() {
       </div>
 
       {loading ? (
-        <div className="text-sm text-muted-foreground">Memuat...</div>
+        <div className="text-sm text-muted-foreground">{t("Memuat...", "Loading...")}</div>
       ) : templates.length === 0 ? (
         <div className="rounded-lg border border-dashed p-8 text-center">
           <FileText className="mx-auto h-10 w-10 text-muted-foreground/50" />
-          <p className="mt-3 text-sm font-medium">Belum ada template</p>
+          <p className="mt-3 text-sm font-medium">{t("Belum ada template", "No templates yet")}</p>
           <p className="mt-1 text-xs text-muted-foreground">
-            Buat template untuk mempercepat pembuatan invoice berulang.
+            {t("Buat template untuk mempercepat pembuatan invoice berulang.", "Create templates to speed up recurring invoice creation.")}
           </p>
         </div>
       ) : (

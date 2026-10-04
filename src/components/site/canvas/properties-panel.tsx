@@ -805,7 +805,7 @@ function MediaTextEditor({ section, onUpdate }: EditorProps<Extract<PersonalSite
             maxLength={2000}
             onChange={(e) => onUpdate({ buttonUrl: e.target.value })}
             className="h-8 text-xs font-mono"
-            placeholder="https://... atau #contact"
+            placeholder={t("https://... atau #contact", "https://... or #contact")}
           />
         </div>
       </div>

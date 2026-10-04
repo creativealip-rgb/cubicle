@@ -283,15 +283,15 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
       <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("Tagihkan Kepada", "Bill to")}</h3>
       {templates && templates.length > 0 && mode === "create" && (
         <div className="space-y-2">
-          <Label>Apply Template (opsional)</Label>
+          <Label>{t("Terapkan Template (opsional)", "Apply Template (optional)")}</Label>
           <Select onValueChange={applyTemplate}>
             <SelectTrigger>
               <SelectValue placeholder={t("Pilih template...", "Select template...")} />
             </SelectTrigger>
             <SelectContent>
-              {templates.map((t) => (
-                <SelectItem key={t.id} value={t.id}>
-                  {t.name} ({t.defaultCurrency})
+              {templates.map((tmpl) => (
+                <SelectItem key={tmpl.id} value={tmpl.id}>
+                  {tmpl.name} ({tmpl.defaultCurrency})
                 </SelectItem>
               ))}
             </SelectContent>
@@ -363,7 +363,13 @@ export function InvoiceForm({ mode, defaultValues, clients, projects, templates,
             })}
           </div>
           {missingRateProjects.length > 0 && (
-            <p className="text-xs text-destructive">Kurs belum tersedia untuk {Array.from(new Set(missingRateProjects.map((item) => item.originalCurrency))).join(", ")}. <a className="underline" href="/app/settings?tab=currency">Atur Kurs</a></p>
+            <p className="text-xs text-destructive">
+              {t("Kurs belum tersedia untuk", "Exchange rate not available for")}{" "}
+              {Array.from(new Set(missingRateProjects.map((item) => item.originalCurrency))).join(", ")}.{" "}
+              <a className="underline" href="/app/settings?tab=currency">
+                {t("Atur Kurs", "Set Exchange Rate")}
+              </a>
+            </p>
           )}
         </div>
       )}

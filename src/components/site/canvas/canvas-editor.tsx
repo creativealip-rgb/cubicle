@@ -858,7 +858,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                     <Input
                       value={site.hero || ""}
                       onChange={(e) => updateSite({ hero: e.target.value })}
-                      placeholder="e.g. Kami Membangun Solusi Digital untuk Bisnis Anda"
+                      placeholder={t("e.g. Kami Membangun Solusi Digital untuk Bisnis Anda", "e.g. We Build Digital Solutions for Your Business")}
                       className="text-xs sm:text-sm"
                     />
                   </div>
@@ -868,7 +868,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                     <Textarea
                       value={site.about || ""}
                       onChange={(e) => updateSite({ about: e.target.value })}
-                      placeholder="Tuliskan profil singkat agensi Anda..."
+                      placeholder={t("Tuliskan profil singkat agensi Anda...", "Write a brief profile about your agency...")}
                       rows={3}
                       className="text-xs sm:text-sm"
                     />

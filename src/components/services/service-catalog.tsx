@@ -607,7 +607,7 @@ export function ServiceCatalog({
             <div className="grid gap-3 sm:grid-cols-3">
               <div className="space-y-1.5 sm:col-span-1">
                 <Label htmlFor="service-unit" className="text-xs font-semibold">{t("Unit", "Unit")}</Label>
-                <Input id="service-unit" value={form.defaultUnit} onChange={(event) => setForm((prev) => ({ ...prev, defaultUnit: event.target.value }))} placeholder="proyek / jam" className="rounded-xl h-10 text-sm" />
+                <Input id="service-unit" value={form.defaultUnit} onChange={(event) => setForm((prev) => ({ ...prev, defaultUnit: event.target.value }))} placeholder={t("proyek / jam", "project / hour")} className="rounded-xl h-10 text-sm" />
               </div>
               <div className="space-y-1.5 sm:col-span-1">
                 <Label htmlFor="service-price" className="text-xs font-semibold">{t("Tarif Acuan", "Rate")}</Label>

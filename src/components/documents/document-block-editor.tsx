@@ -1603,7 +1603,7 @@ export function DocumentBlockEditor({
                         <Input
                           type="number"
                           min="0"
-                          placeholder="Harga Satuan"
+                          placeholder={t("Harga Satuan", "Unit Price")}
                           value={item.unitPrice}
                           onChange={(e) => {
                             const price = Number(e.target.value) || 0;
@@ -2048,7 +2048,7 @@ export function DocumentBlockEditor({
                 className="h-44 w-44 mx-auto"
               />
             </div>
-            <p className="text-[11px] text-muted-foreground">Scan untuk membuka dokumen ini langsung di smartphone klien.</p>
+            <p className="text-[11px] text-muted-foreground">{t("Scan untuk membuka dokumen ini langsung di smartphone klien.", "Scan to open this document directly on client's smartphone.")}</p>
           </div>
         </div>
       )}

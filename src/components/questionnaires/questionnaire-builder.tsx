@@ -1620,7 +1620,7 @@ export function QuestionnaireBuilder({
                             </div>
 
                             <div className="space-y-1">
-                              <Label className="text-xs font-medium">Ukuran Logo</Label>
+                              <Label className="text-xs font-medium">{t("Ukuran Logo", "Logo Size")}</Label>
                               <div className="grid grid-cols-3 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
                                 {(["sm", "md", "lg"] as const).map((sz) => (
                                   <button
@@ -1640,14 +1640,14 @@ export function QuestionnaireBuilder({
                             </div>
 
                             <div className="space-y-1">
-                              <Label className="text-xs font-medium">Kustom Logo URL (Opsional)</Label>
+                              <Label className="text-xs font-medium">{t("Kustom Logo URL (Opsional)", "Custom Logo URL (Optional)")}</Label>
                               <Input
                                 value={selectedField.src || ""}
                                 onChange={(e) => updateSelectedField({ src: e.target.value })}
                                 placeholder={`/api/public/workspace-logo/${workspaceId}`}
                                 className="h-8.5 text-xs font-mono"
                               />
-                              <p className="text-[10px] text-muted-foreground">Kosongkan untuk otomatis menggunakan Logo Workspace.</p>
+                              <p className="text-[10px] text-muted-foreground">{t("Kosongkan untuk otomatis menggunakan Logo Workspace.", "Leave empty to automatically use Workspace Logo.")}</p>
                             </div>
                           </div>
                         )}

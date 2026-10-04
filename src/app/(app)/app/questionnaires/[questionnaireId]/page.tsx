@@ -80,7 +80,7 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
             <Link
               href="/app/questionnaires"
               className="p-1 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-              title="Kembali ke Daftar Formulir"
+              title={t("Kembali ke Daftar Formulir", "Back to Forms List")}
             >
               <ArrowLeft className="h-4 w-4" />
             </Link>
