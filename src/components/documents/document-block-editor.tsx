@@ -968,10 +968,10 @@ export function DocumentBlockEditor({
                   {blocks.length === 0 ? (
                     <div className="py-20 text-center space-y-3">
                       <FileText className="h-10 w-10 text-muted-foreground/40 mx-auto" />
-                      <p className="text-sm font-semibold text-muted-foreground">Dokumen masih kosong</p>
+                      <p className="text-sm font-semibold text-muted-foreground">{t("Dokumen masih kosong", "Document is empty")}</p>
                       <Button size="sm" variant="outline" onClick={() => applyStarterTemplate()} className="gap-1.5 text-xs font-semibold">
                         <LayoutTemplate className="h-3.5 w-3.5" />
-                        <span>Gunakan Starter Template</span>
+                        <span>{t("Gunakan Starter Template", "Use Starter Template")}</span>
                       </Button>
                     </div>
                   ) : (
@@ -2035,7 +2035,7 @@ export function DocumentBlockEditor({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs" onClick={() => setQrModalOpen(false)}>
           <div className="max-w-sm w-full rounded-2xl border border-border/80 bg-background p-6 shadow-xl text-center space-y-4" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between">
-              <h3 className="font-bold text-sm text-foreground">QR Code Dokumen</h3>
+              <h3 className="font-bold text-sm text-foreground">{t("QR Code Dokumen", "Document QR Code")}</h3>
               <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setQrModalOpen(false)}>
                 <X className="h-4 w-4" />
               </Button>

@@ -81,11 +81,11 @@ export function renderDocumentBlockHtml(
       return (
         <figure className="my-3">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={block.src} alt={block.fileName ?? "Gambar"} className="max-w-full rounded-lg border border-slate-200" />
+          <img src={block.src} alt={block.fileName ?? "Image"} className="max-w-full rounded-lg border border-slate-200" />
         </figure>
       );
     }
-    return <p className="text-sm text-amber-700">Gambar tidak valid — hanya file workspace yang didukung.</p>;
+    return <p className="text-sm text-amber-700">Invalid image — only workspace files are supported.</p>;
   }
   if (block.type === "attachment") {
     if (isSafeAttachmentMeta(block)) {
@@ -95,12 +95,12 @@ export function renderDocumentBlockHtml(
             href={`/api/files/${block.fileId}/download`}
             className="inline-flex items-center gap-2 rounded border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700 hover:bg-slate-100"
           >
-            📎 {block.fileName ?? "Lampiran"}
+            📎 {block.fileName ?? "Attachment"}
           </a>
         </p>
       );
     }
-    return <p className="text-sm text-amber-700">Lampiran tidak valid.</p>;
+    return <p className="text-sm text-amber-700">Invalid attachment.</p>;
   }
   if (block.type === "table") {
     const rows = block.rows ?? [];

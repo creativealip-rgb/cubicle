@@ -416,8 +416,8 @@ export function PackageCatalog({
             <div className="space-y-2 rounded-lg border bg-muted/30 p-3">
               <div className="flex items-center justify-between gap-2">
                 <div>
-                  <Label>Layanan dalam paket</Label>
-                  <p className="text-xs text-muted-foreground">Package Builder: pilih Service yang ikut snapshot Project.</p>
+                  <Label>{t("Layanan dalam paket", "Services in package")}</Label>
+                  <p className="text-xs text-muted-foreground">{t("Package Builder: pilih Service yang ikut snapshot Project.", "Package Builder: select Services to include in Project snapshot.")}</p>
                 </div>
                 <Button asChild variant="outline" size="sm" className="h-8 gap-1">
                   <a href="/app/services" target="_blank" rel="noreferrer">

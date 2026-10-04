@@ -159,17 +159,17 @@ export async function notifyAppointmentBooked(opts: {
 
     const hostHtml =
       `<div style="font-family:sans-serif;line-height:1.5;color:#1e293b;">` +
-      `<h2 style="margin:0 0 16px;color:#0f172a;font-size:18px;">📅 Appointment Baru Diterima</h2>` +
-      `<p style="margin:0 0 16px;">Klien <strong>${escapeHtml(opts.attendeeName)}</strong> telah memesan jadwal meeting dengan Anda.</p>` +
+      `<h2 style="margin:0 0 16px;color:#0f172a;font-size:18px;">📅 New Appointment / Jadwal Baru</h2>` +
+      `<p style="margin:0 0 16px;">Client / Klien <strong>${escapeHtml(opts.attendeeName)}</strong> has booked a meeting / telah memesan jadwal meeting.</p>` +
       `<div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:0 0 20px;">` +
-      `<p style="margin:0 0 8px;"><strong>Judul:</strong> ${escapeHtml(opts.appointmentTitle)}</p>` +
-      `<p style="margin:0 0 8px;"><strong>Nama Klien:</strong> ${escapeHtml(opts.attendeeName)} (${escapeHtml(opts.attendeeEmail)})</p>` +
-      `<p style="margin:0 0 8px;"><strong>Waktu:</strong> <span style="color:#2563eb;font-weight:600;">${escapeHtml(readableDateTime)}</span></p>` +
-      (opts.notes ? `<p style="margin:0;"><strong>Catatan:</strong> ${escapeHtml(opts.notes)}</p>` : "") +
+      `<p style="margin:0 0 8px;"><strong>Title / Judul:</strong> ${escapeHtml(opts.appointmentTitle)}</p>` +
+      `<p style="margin:0 0 8px;"><strong>Client / Klien:</strong> ${escapeHtml(opts.attendeeName)} (${escapeHtml(opts.attendeeEmail)})</p>` +
+      `<p style="margin:0 0 8px;"><strong>Time / Waktu:</strong> <span style="color:#2563eb;font-weight:600;">${escapeHtml(readableDateTime)}</span></p>` +
+      (opts.notes ? `<p style="margin:0;"><strong>Notes / Catatan:</strong> ${escapeHtml(opts.notes)}</p>` : "") +
       `</div>` +
       `<div style="margin:24px 0 0;display:flex;gap:12px;">` +
-      `<a href="https://app.cubiqlo.com/app/calendar" style="display:inline-block;background:#0f172a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Buka Kalender Cubiqlo</a>` +
-      (opts.calendarUrl ? ` &nbsp; <a href="${escapeHtml(opts.calendarUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Sync ke Google Calendar</a>` : "") +
+      `<a href="https://app.cubiqlo.com/app/calendar" style="display:inline-block;background:#0f172a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Open Calendar / Buka Kalender</a>` +
+      (opts.calendarUrl ? ` &nbsp; <a href="${escapeHtml(opts.calendarUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Google Calendar</a>` : "") +
       `</div>` +
       `</div>`;
 

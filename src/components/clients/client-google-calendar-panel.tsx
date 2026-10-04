@@ -536,7 +536,7 @@ export function ClientGoogleCalendarPanel({
                       className="h-8 w-8 p-0"
                       onClick={() => openEditForm(ev)}
                       disabled={loading}
-                      title="Edit"
+                      title={t("Edit", "Edit")}
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
@@ -547,7 +547,7 @@ export function ClientGoogleCalendarPanel({
                       className="h-8 w-8 p-0 text-destructive"
                       onClick={() => handleDeleteEvent(ev)}
                       disabled={loading}
-                      title="Hapus"
+                      title={t("Hapus", "Delete")}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
