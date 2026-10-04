@@ -14,6 +14,7 @@ import {
   invoices,
   proposals,
   contracts,
+  users,
 } from "@/db/schema";
 
 export default async function AppLayout({
@@ -27,6 +28,17 @@ export default async function AppLayout({
 
   if (!session?.user) {
     redirect("/login");
+  }
+
+  // Check if user has completed profile onboarding (must have country & city set)
+  const [currentUser] = await db
+    .select({ country: users.country, city: users.city })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1);
+
+  if (!currentUser?.country || !currentUser?.city) {
+    redirect("/onboarding");
   }
 
   const lang = await getCurrentLang("en");
