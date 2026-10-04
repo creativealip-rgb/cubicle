@@ -68,7 +68,8 @@ export async function POST(request: Request) {
   }
 
   const amount = getExtraMemberAddonAmount(quantity);
-  const orderId = `cb_mbr_${Date.now()}_${randomBytes(4).toString("hex")}`;
+  const shortWs = membership.workspaceId.replace(/-/g, "").slice(0, 10).toUpperCase();
+  const orderId = `CUB-${shortWs}-MBR${quantity}-${Date.now()}-${randomBytes(3).toString("hex").toUpperCase()}`;
 
   try {
     const payment = await createPakasirTransaction({ orderId, amount, method: "qris" });
@@ -99,6 +100,7 @@ export async function POST(request: Request) {
       data: { orderId, addon: "extra_member", quantity, amount, paymentUrl },
     });
   } catch (err) {
+    console.error("[checkout-extra-member] Error creating transaction:", err);
     const message = err instanceof Error ? err.message : "Gagal membuat transaksi Pakasir";
     return NextResponse.json({ error: message }, { status: 502 });
   }
