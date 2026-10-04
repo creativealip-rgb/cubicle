@@ -135,7 +135,7 @@ export function ImageCropModal({
       // Convert canvas to Blob & Upload as cropped image
       canvas.toBlob(async (blob) => {
         if (!blob) {
-          toast.error("Gagal memproses crop");
+          toast.error(t("Gagal memproses crop", "Failed to process crop"));
           setSaving(false);
           return;
         }
@@ -150,7 +150,7 @@ export function ImageCropModal({
 
         const data = await res.json().catch(() => ({}));
         if (!res.ok || !data.ok || !data.url) {
-          throw new Error(data.error || "Gagal menyimpan hasil crop");
+          throw new Error(data.error || t("Gagal menyimpan hasil crop", "Failed to save cropped image"));
         }
 
         onCropComplete(data.url);
@@ -159,7 +159,7 @@ export function ImageCropModal({
         setSaving(false);
       }, "image/webp", 0.92);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Crop error");
+      toast.error(err instanceof Error ? err.message : t("Gagal memproses crop", "Failed to process crop"));
       setSaving(false);
     }
   }

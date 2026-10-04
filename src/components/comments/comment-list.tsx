@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
+import { useT } from "@/lib/i18n-client";
 import {
   MessageSquare,
   Send,
@@ -32,12 +33,23 @@ interface Comment {
 interface CommentListProps {
   entityType: "project" | "task" | "file" | "invoice";
   entityId: string;
-  initialComments: Comment[];
+  initialComments?: Comment[];
+  currentUserRole?: string;
+  canComment?: boolean;
   clientPhone?: string | null;
   contextTitle?: string | null;
 }
 
-export function CommentList({ entityType, entityId, initialComments, clientPhone, contextTitle }: CommentListProps) {
+export function CommentList({
+  entityType,
+  entityId,
+  initialComments = [],
+  currentUserRole = "viewer",
+  canComment = false,
+  contextTitle,
+  clientPhone,
+}: CommentListProps) {
+  const { t } = useT();
   const { refresh } = useAppTransition();
   const [comments, setComments] = useState<Comment[]>(initialComments);
   const [body, setBody] = useState("");
@@ -57,25 +69,25 @@ export function CommentList({ entityType, entityId, initialComments, clientPhone
       });
       setComments((prev) => [comment as Comment, ...prev]);
       setBody("");
-      toast.success("Komentar ditambahkan");
+      toast.success(t("Komentar ditambahkan", "Comment added"));
       refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to add comment");
+      toast.error(err instanceof Error ? err.message : t("Gagal menambahkan komentar", "Failed to add comment"));
     } finally {
       setLoading(false);
     }
-  }, [body, visibility, entityType, entityId, refresh]);
+  }, [body, visibility, entityType, entityId, refresh, t]);
 
   const handleDelete = useCallback(async (commentId: string) => {
     try {
       await deleteComment(commentId);
       setComments((prev) => prev.filter((c) => c.id !== commentId));
-      toast.success("Komentar dihapus");
+      toast.success(t("Komentar dihapus", "Comment deleted"));
       refresh();
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : "Failed to delete comment");
+      toast.error(err instanceof Error ? err.message : t("Gagal menghapus komentar", "Failed to delete comment"));
     }
-  }, [refresh]);
+  }, [refresh, t]);
 
   function getInitials(name: string | null, email: string | null): string {
     if (name) return name.slice(0, 2).toUpperCase();

@@ -72,7 +72,7 @@ export function InvoiceTemplatesClient() {
       const data = await listInvoiceTemplates();
       setTemplates(data as Template[]);
     } catch {
-      toast.error("Gagal load templates");
+      toast.error(t("Gagal memuat template", "Failed to load templates"));
     } finally {
       setLoading(false);
     }
@@ -119,7 +119,7 @@ export function InvoiceTemplatesClient() {
 
   async function handleSave() {
     if (!name.trim()) {
-      toast.error("Nama template wajib diisi");
+      toast.error(t("Nama template wajib diisi", "Template name is required"));
       return;
     }
 
@@ -136,30 +136,30 @@ export function InvoiceTemplatesClient() {
 
       if (editingId) {
         await updateInvoiceTemplate(editingId, input);
-        toast.success("Template diupdate");
+        toast.success(t("Template diperbarui", "Template updated"));
       } else {
         await createInvoiceTemplate(input);
-        toast.success("Template dibuat");
+        toast.success(t("Template dibuat", "Template created"));
       }
 
       setDialogOpen(false);
       resetForm();
       await loadTemplates();
     } catch {
-      toast.error("Gagal simpan template");
+      toast.error(t("Gagal menyimpan template", "Failed to save template"));
     } finally {
       setSaving(false);
     }
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Hapus template ini?")) return;
+    if (!confirm(t("Hapus template ini?", "Delete this template?"))) return;
     try {
       await deleteInvoiceTemplate(id);
-      toast.success("Template dihapus");
+      toast.success(t("Template dihapus", "Template deleted"));
       await loadTemplates();
     } catch {
-      toast.error("Gagal hapus template");
+      toast.error(t("Gagal menghapus template", "Failed to delete template"));
     }
   }
 

@@ -204,19 +204,19 @@ export function ClientGoogleCalendarPanel({
       const result = await generateClientGoogleCalendarInvite(clientId);
       setInviteUrl(result.inviteUrl);
       setInviteExpiresAt(result.expiresAt);
-      toast.success("Link undangan dibuat. Kirim ke klien.");
+      toast.success(t("Link undangan dibuat. Kirim ke klien.", "Invitation link created. Send to client."));
       refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal buat link");
+      toast.error(err instanceof Error ? err.message : t("Gagal membuat link undangan", "Failed to create invitation link"));
     } finally {
       setLoading(false);
     }
   }
 
-  async function _handleCopy() {
+  async function handleCopy() {
     if (!inviteUrl) return;
     await navigator.clipboard.writeText(inviteUrl);
-    toast.success("Link undangan disalin");
+    toast.success(t("Link undangan disalin", "Invitation link copied"));
   }
 
   async function handleDisconnect() {
@@ -225,10 +225,10 @@ export function ClientGoogleCalendarPanel({
       await disconnectClientGoogleCalendarAction(clientId);
       setInviteUrl(null);
       setInviteExpiresAt(null);
-      toast.success("Google Calendar klien diputus");
+      toast.success(t("Google Calendar klien diputus", "Client Google Calendar disconnected"));
       refresh();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Gagal putus koneksi");
+      toast.error(err instanceof Error ? err.message : t("Gagal memutus Google Calendar", "Failed to disconnect Google Calendar"));
     } finally {
       setLoading(false);
     }
