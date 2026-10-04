@@ -628,7 +628,7 @@ export const pakasirPayments = pgTable("pakasir_payments", {
   orderId: text("order_id").notNull().unique(),
   plan: text("plan", { enum: ["solo", "team"] }).notNull(),
   billingPeriod: text("billing_period", { enum: ["monthly", "yearly"] }).notNull().default("yearly"),
-  paymentType: text("payment_type", { enum: ["plan", "storage_addon", "extra_workspace", "ai_addon"] }).notNull().default("plan"),
+  paymentType: text("payment_type", { enum: ["plan", "storage_addon", "extra_workspace", "ai_addon", "extra_member"] }).notNull().default("plan"),
   entitlementRef: text("entitlement_ref"),
   amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
   status: text("status", { enum: ["pending", "completed", "failed", "expired"] }).notNull().default("pending"),
@@ -677,6 +677,22 @@ export const workspaceStorageUsage = pgTable("workspace_storage_usage", {
 });
 
 export const userExtraWorkspaceEntitlements = pgTable("user_extra_workspace_entitlements", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  quantity: integer("quantity").notNull().default(1),
+  amount: numeric("amount", { precision: 12, scale: 2 }).notNull(),
+  billingPeriod: text("billing_period", { enum: ["monthly", "yearly"] }).notNull(),
+  status: text("status", { enum: ["active", "cancel_scheduled", "cancelled", "expired"] }).notNull().default("active"),
+  startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+  endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+  autoRenew: boolean("auto_renew").notNull().default(false),
+  providerOrderId: text("provider_order_id").unique(),
+  providerEventId: text("provider_event_id").unique(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const userExtraMemberEntitlements = pgTable("user_extra_member_entitlements", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   quantity: integer("quantity").notNull().default(1),

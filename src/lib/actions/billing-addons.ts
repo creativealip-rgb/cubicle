@@ -13,6 +13,10 @@ import {
   getActiveExtraWorkspaceSlots,
   listActiveExtraWorkspaceEntitlements,
 } from "@/lib/extra-workspace";
+import {
+  getActiveExtraMemberSlots,
+  listActiveExtraMemberEntitlements,
+} from "@/lib/extra-members";
 import { listActiveAiAddons, getUserPurchasedAiQuota } from "@/lib/ai-addons";
 import { getUserPlan } from "@/lib/plan";
 import { getUploadQuotaLimits } from "@/lib/upload-safety";
@@ -35,22 +39,45 @@ export async function listActiveAddOns(): Promise<{
   storageAddons: Awaited<ReturnType<typeof listActiveStorageAddons>>;
   extraWorkspaceSlots: number;
   extraWorkspaceEntitlements: Awaited<ReturnType<typeof listActiveExtraWorkspaceEntitlements>>;
+  extraMemberSlots: number;
+  extraMemberEntitlements: Awaited<ReturnType<typeof listActiveExtraMemberEntitlements>>;
   aiAddonQuota: number;
   aiAddons: Awaited<ReturnType<typeof listActiveAiAddons>>;
 }> {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
 
-  const [storageAddons, storageBytes, extraWorkspaceSlots, extraWorkspaceEntitlements, aiAddons, aiAddonQuota] = await Promise.all([
+  const [
+    storageAddons,
+    storageBytes,
+    extraWorkspaceSlots,
+    extraWorkspaceEntitlements,
+    extraMemberSlots,
+    extraMemberEntitlements,
+    aiAddons,
+    aiAddonQuota,
+  ] = await Promise.all([
     listActiveStorageAddons(user.id),
     getActiveStorageAddonBytes(user.id),
     getActiveExtraWorkspaceSlots(user.id),
     listActiveExtraWorkspaceEntitlements(user.id),
+    getActiveExtraMemberSlots(user.id),
+    listActiveExtraMemberEntitlements(user.id),
     listActiveAiAddons(user.id),
     getUserPurchasedAiQuota(user.id),
   ]);
 
-  return { ok: true, storageBytes, storageAddons, extraWorkspaceSlots, extraWorkspaceEntitlements, aiAddonQuota, aiAddons };
+  return {
+    ok: true,
+    storageBytes,
+    storageAddons,
+    extraWorkspaceSlots,
+    extraWorkspaceEntitlements,
+    extraMemberSlots,
+    extraMemberEntitlements,
+    aiAddonQuota,
+    aiAddons,
+  };
 }
 
 /** Storage add-on usage context (bytes + limits) for quota UI. */

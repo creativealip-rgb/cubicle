@@ -95,7 +95,14 @@ export default async function BillingPage({
 
   const currentPlan = user?.plan ?? "free";
   const effectivePlan = getEffectivePlan(user?.plan, user?.planExpiresAt);
-  const addons = userId ? await listActiveAddOns() : { storageAddons: [], extraWorkspaceEntitlements: [], aiAddons: [] };
+  const addons = userId
+    ? await listActiveAddOns()
+    : {
+        storageAddons: [],
+        extraWorkspaceEntitlements: [],
+        extraMemberEntitlements: [],
+        aiAddons: [],
+      };
 
   const { checkout: checkoutOrderId } = await searchParams;
   let checkoutStatus: { status: CheckoutStatus; amount: string | null } | null = null;
@@ -298,6 +305,7 @@ export default async function BillingPage({
               <AddonManagement
                 storageAddons={addons.storageAddons}
                 extraWorkspaceEntitlements={addons.extraWorkspaceEntitlements}
+                extraMemberEntitlements={addons.extraMemberEntitlements}
                 aiAddons={addons.aiAddons}
               />
             </CardContent>

@@ -36,6 +36,22 @@ export const STORAGE_ADDONS = {
 
 export const EXTRA_WORKSPACE_ADDON = { monthlyAmount: 30_000 } as const;
 
+export const EXTRA_MEMBER_ADDONS = {
+  1: { quantity: 1, yearlyAmount: 120_000, label: "+1 Anggota Tim", labelEn: "+1 Team Member" },
+  3: { quantity: 3, yearlyAmount: 270_000, label: "+3 Anggota Tim", labelEn: "+3 Team Members" },
+  5: { quantity: 5, yearlyAmount: 390_000, label: "+5 Anggota Tim", labelEn: "+5 Team Members" },
+} as const;
+
+export type ExtraMemberAddonKey = keyof typeof EXTRA_MEMBER_ADDONS;
+
+export function isExtraMemberAddonKey(value: unknown): value is ExtraMemberAddonKey {
+  return value === 1 || value === 3 || value === 5 || value === "1" || value === "3" || value === "5";
+}
+
+export function getExtraMemberAddonAmount(tier: ExtraMemberAddonKey = 1): number {
+  return EXTRA_MEMBER_ADDONS[tier]?.yearlyAmount ?? 120_000;
+}
+
 export const AI_REQUESTS_ADDONS = {
   500: { requestsQuota: 500, amount: 50_000, label: "500 AI Requests/bln" },
   1000: { requestsQuota: 1000, amount: 100_000, label: "1.000 AI Requests/bln" },

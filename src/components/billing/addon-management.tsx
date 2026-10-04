@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { cancelExtraWorkspaceAddOn, cancelStorageAddOn } from "@/lib/actions/billing-addons";
 import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n-client";
-import { HardDrive, Sparkles, Building2, PackageOpen } from "lucide-react";
+import { HardDrive, Sparkles, Building2, PackageOpen, Users } from "lucide-react";
 
 type Addon = {
   id: string;
@@ -28,6 +28,16 @@ type ExtraWorkspaceEntitlement = {
   endsAt: Date;
 };
 
+type ExtraMemberEntitlement = {
+  id: string;
+  quantity: number;
+  amount: string;
+  billingPeriod: string;
+  status: string;
+  startsAt: Date;
+  endsAt: Date;
+};
+
 function formatAmount(amount: string): string {
   const numeric = Number(amount);
   if (!Number.isFinite(numeric)) return amount;
@@ -37,10 +47,12 @@ function formatAmount(amount: string): string {
 export function AddonManagement({
   storageAddons,
   extraWorkspaceEntitlements,
+  extraMemberEntitlements = [],
   aiAddons = [],
 }: {
   storageAddons: Addon[];
   extraWorkspaceEntitlements: ExtraWorkspaceEntitlement[];
+  extraMemberEntitlements?: ExtraMemberEntitlement[];
   aiAddons?: Array<{
     id: string;
     requestsQuota: number;
@@ -73,8 +85,11 @@ export function AddonManagement({
     refresh();
   }
 
-  const hasActiveAddons = storageAddons.length > 0 || aiAddons.length > 0 || extraWorkspaceEntitlements.length > 0;
-  const workspaceSlots = extraWorkspaceEntitlements.reduce((sum, e) => sum + e.quantity, 0);
+  const hasActiveAddons =
+    storageAddons.length > 0 ||
+    aiAddons.length > 0 ||
+    extraWorkspaceEntitlements.length > 0 ||
+    extraMemberEntitlements.length > 0;
 
   return (
     <div className="space-y-3 pt-4 border-t">
@@ -104,6 +119,33 @@ export function AddonManagement({
         </div>
       ) : (
         <div className="space-y-2.5">
+          {/* Extra Member Addons */}
+          {extraMemberEntitlements.map((entitlement) => (
+            <div
+              key={entitlement.id}
+              className="flex items-center justify-between gap-3 rounded-xl border border-border/80 bg-card p-3 text-xs shadow-xs"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                  <Users className="h-4 w-4" />
+                </div>
+                <div>
+                  <p className="font-semibold text-foreground">
+                    +{entitlement.quantity} {t("Extra Anggota Tim", "Extra Team Members")}
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {formatAmount(entitlement.amount)} · {t("Berakhir", "Ends")}: {entitlement.endsAt.toLocaleDateString()}
+                    {entitlement.status === "cancel_scheduled" && (
+                      <span className="ml-1.5 text-amber-600 font-medium">
+                        ({t("aktif hingga akhir periode", "active until period end")})
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            </div>
+          ))}
+
           {/* Storage Addons */}
           {storageAddons.map((addon) => (
             <div
@@ -207,5 +249,3 @@ export function AddonManagement({
     </div>
   );
 }
-
-export type { Addon, ExtraWorkspaceEntitlement };

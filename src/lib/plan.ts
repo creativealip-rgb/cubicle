@@ -394,16 +394,20 @@ export async function canAddWorkspaceMember(
   }
 
   if (limits.maxMembers > 0) {
+    const { getActiveExtraMemberSlots } = await import("@/lib/extra-members");
+    const extraSlots = await getActiveExtraMemberSlots(userId);
+    const totalMaxMembers = limits.maxMembers + extraSlots;
+
     const [{ count }] = await db
       .select({ count: sql<number>`count(*)::int` })
       .from(workspaceMembers)
       .where(eq(workspaceMembers.workspaceId, workspaceId));
-    if (count >= limits.maxMembers) {
+    if (count >= totalMaxMembers) {
       return {
         allowed: false,
-        reason: `Plan ${plan.toUpperCase()} maksimal ${limits.maxMembers} anggota.`,
+        reason: `Workspace mencapai batas maksimal ${totalMaxMembers} anggota. Tambah add-on anggota tim untuk menambah kuota.`,
         current: count,
-        limit: limits.maxMembers,
+        limit: totalMaxMembers,
       };
     }
   }

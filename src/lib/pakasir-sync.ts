@@ -122,7 +122,35 @@ export async function activateCompletedPakasirPayment(
     // active.
     const storageAddonKey = current.paymentType === "storage_addon" ? current.entitlementRef : null;
     const extraWorkspace = current.paymentType === "extra_workspace";
+    const extraMember = current.paymentType === "extra_member";
     const aiAddon = current.paymentType === "ai_addon";
+
+    if (extraMember) {
+      const { activateExtraMemberEntitlementTx } = await import("@/lib/extra-members");
+      const qty = Number(current.entitlementRef) || 1;
+      const activated = await activateExtraMemberEntitlementTx(tx, {
+        userId: workspace.ownerId,
+        quantity: qty,
+        amount: Number(current.amount),
+        billingPeriod: current.billingPeriod as "monthly" | "yearly",
+        paidAt,
+        providerOrderId: current.orderId,
+        providerEventId: orderId,
+      });
+      if (activated.kind === "existing") {
+        return { kind: "idempotent" as const, plan: current.plan, entitlementId: activated.entitlementId };
+      }
+      await tx
+        .update(pakasirPayments)
+        .set({
+          status: "completed",
+          rawPayload,
+          paidAt,
+          updatedAt: new Date(),
+        })
+        .where(eq(pakasirPayments.id, current.id));
+      return { kind: "addon_activated" as const, plan: current.plan, entitlementId: activated.entitlementId };
+    }
 
     if (aiAddon) {
       const { activateAiAddonTx } = await import("@/lib/ai-addons");

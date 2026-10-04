@@ -2,20 +2,32 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { HardDrive, Sparkles, Building2, ShieldCheck, Zap } from "lucide-react";
+import { HardDrive, Sparkles, Building2, ShieldCheck, Users } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
 import {
   getStorageAddonPeriodLabel,
   getExtraWorkspacePeriodLabel,
+  getExtraMemberAddonPeriodLabel,
   getAiRequestsAddonPeriodLabel,
   type BillingPeriod,
 } from "@/lib/billing-pricing";
-import { type StorageAddonKey, type AiRequestsAddonKey } from "@/lib/billing-plans";
+import {
+  type StorageAddonKey,
+  type AiRequestsAddonKey,
+  type ExtraMemberAddonKey,
+  EXTRA_MEMBER_ADDONS,
+} from "@/lib/billing-plans";
 
 const STORAGE_OPTIONS: StorageAddonKey[] = [5, 10, 15];
 const AI_OPTIONS: AiRequestsAddonKey[] = [500, 1000];
+const MEMBER_OPTIONS: ExtraMemberAddonKey[] = [1, 3, 5];
 
-type PendingKey = `storage:${StorageAddonKey}` | `ai:${AiRequestsAddonKey}` | "workspace" | null;
+type PendingKey =
+  | `storage:${StorageAddonKey}`
+  | `ai:${AiRequestsAddonKey}`
+  | `member:${ExtraMemberAddonKey}`
+  | "workspace"
+  | null;
 
 export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string }) {
   const { t } = useT();
@@ -24,6 +36,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
   const [error, setError] = useState<string | null>(null);
   const [selectedStorage, setSelectedStorage] = useState<StorageAddonKey>(5);
   const [selectedAi, setSelectedAi] = useState<AiRequestsAddonKey>(1000);
+  const [selectedMember, setSelectedMember] = useState<ExtraMemberAddonKey>(3);
 
   async function startCheckout(path: string, body: Record<string, unknown>, pendingKey: PendingKey) {
     setPending(pendingKey);
@@ -64,17 +77,98 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
           <h3 className="text-sm font-semibold text-foreground">{t("Beli Add-on Tambahan", "Purchase Add-ons")}</h3>
           <p className="text-xs text-muted-foreground">
             {t(
-              "Tingkatkan kapasitas penyimpanan, kuota AI bulanan, atau workspace sesuai kebutuhan tokomu.",
-              "Expand storage, monthly AI quota, or workspace capacity as your team scales."
+              "Tingkatkan kapasitas penyimpanan, kuota AI bulanan, anggota tim, atau workspace sesuai kebutuhan tokomu.",
+              "Expand storage, monthly AI quota, team members, or workspace capacity as your team scales."
             )}
           </p>
         </div>
       </div>
 
-      {/* 3-Column Premium Addon Catalog Grid */}
-      <div className="grid gap-4 md:grid-cols-3">
-        {/* 1. Storage Card */}
-        <div className="flex flex-col justify-between rounded-2xl border border-border/80 bg-gradient-to-b from-card to-muted/20 p-4 shadow-xs">
+      {error && (
+        <div
+          role="alert"
+          className="rounded-xl border border-destructive/20 bg-destructive/5 p-3 text-xs text-destructive"
+        >
+          {error}
+        </div>
+      )}
+
+      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+        {/* 1. Extra Members Card */}
+        <div className="flex flex-col justify-between rounded-2xl border border-indigo-500/30 bg-gradient-to-b from-indigo-500/[0.04] to-transparent p-4 shadow-xs relative overflow-hidden">
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
+                <Users className="h-4.5 w-4.5" />
+              </div>
+              <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10px] font-bold text-indigo-600 dark:text-indigo-400">
+                Team Plan Only
+              </span>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-bold text-foreground">{t("Extra Anggota Tim", "Extra Team Members")}</h4>
+              <p className="text-[11px] text-muted-foreground">
+                {t("Tambah kuota slot undangan anggota ke workspace Anda.", "Expand member invitation slots in your workspace.")}
+              </p>
+            </div>
+
+            {/* Member Tier Selector */}
+            <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-muted/60 p-1">
+              {MEMBER_OPTIONS.map((qty) => (
+                <button
+                  key={qty}
+                  type="button"
+                  onClick={() => setSelectedMember(qty)}
+                  className={`rounded-lg py-1 text-xs font-semibold transition-all ${
+                    selectedMember === qty
+                      ? "bg-background text-foreground shadow-2xs"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  +{qty} {t("Orang", "Seats")}
+                </button>
+              ))}
+            </div>
+
+            {!isTeam ? (
+              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-400 text-[11px]">
+                {t("Perlu upgrade ke plan Team.", "Requires active Team plan.")}
+              </div>
+            ) : (
+              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1.5 text-xs text-emerald-700 dark:text-emerald-400 text-[11px]">
+                <ShieldCheck className="h-3 w-3 inline mr-1" />
+                {t("Siap diaktifkan ke akun", "Ready to activate")}
+              </div>
+            )}
+
+            <div className="pt-1">
+              <div className="text-lg font-mono font-bold text-foreground">
+                {getExtraMemberAddonPeriodLabel(selectedMember)}
+                <span className="text-xs font-normal text-muted-foreground">/{t("tahun", "yr")}</span>
+              </div>
+            </div>
+          </div>
+
+          <Button
+            size="sm"
+            disabled={busy || !isTeam}
+            aria-busy={pending === `member:${selectedMember}` || undefined}
+            onClick={() =>
+              startCheckout("/api/billing/checkout-extra-member", { quantity: selectedMember }, `member:${selectedMember}`)
+            }
+            className="mt-4 w-full h-8.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
+          >
+            {pending === `member:${selectedMember}`
+              ? t("Memproses...", "Processing...")
+              : !isTeam
+              ? t("Upgrade ke Team", "Upgrade to Team")
+              : t(`Beli +${selectedMember} Anggota`, `Buy +${selectedMember} Seats`)}
+          </Button>
+        </div>
+
+        {/* 2. Extra Storage Card */}
+        <div className="flex flex-col justify-between rounded-2xl border border-blue-500/30 bg-gradient-to-b from-blue-500/[0.04] to-transparent p-4 shadow-xs">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
@@ -133,7 +227,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
           </Button>
         </div>
 
-        {/* 2. AI Requests Card */}
+        {/* 3. AI Requests Card */}
         <div className="flex flex-col justify-between rounded-2xl border border-purple-500/30 bg-gradient-to-b from-purple-500/[0.04] to-transparent p-4 shadow-xs relative overflow-hidden">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -147,17 +241,14 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
 
             <div>
               <h4 className="text-sm font-bold text-foreground">
-                +{selectedAi.toLocaleString("id-ID")} AI Requests / {t("bln", "mo")}
+                {t("AI Request Tambahan", "Extra AI Requests")}
               </h4>
               <p className="text-[11px] text-muted-foreground">
-                {t(
-                  "Tambahan kuota AI bulanan aktif setahun untuk Assistant & Prompt Studio.",
-                  "Extra monthly AI quota valid for 1 full year for Assistant & Prompts."
-                )}
+                {t("Tingkatkan batas AI bulanan untuk dokumen & prompt.", "Boost monthly AI quota for docs & prompt generation.")}
               </p>
             </div>
 
-            {/* AI Tier Selector: 500 vs 1.000 */}
+            {/* AI Tier Selector */}
             <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-muted/60 p-1">
               {AI_OPTIONS.map((quota) => (
                 <button
@@ -166,11 +257,11 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
                   onClick={() => setSelectedAi(quota)}
                   className={`rounded-lg py-1 text-xs font-semibold transition-all ${
                     selectedAi === quota
-                      ? "bg-purple-600 text-white shadow-2xs"
+                      ? "bg-background text-foreground shadow-2xs"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  +{quota.toLocaleString("id-ID")}/{t("bln", "mo")}
+                  +{quota >= 1000 ? `${quota / 1000}k` : quota} {t("req/bln", "req/mo")}
                 </button>
               ))}
             </div>
@@ -198,7 +289,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
           </Button>
         </div>
 
-        {/* 3. Extra Workspace Card */}
+        {/* 4. Extra Workspace Card */}
         <div className="flex flex-col justify-between rounded-2xl border border-border/80 bg-gradient-to-b from-card to-muted/20 p-4 shadow-xs">
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -247,13 +338,11 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
             {pending === "workspace"
               ? t("Memproses...", "Processing...")
               : !isTeam
-                ? t("Khusus Plan Team", "Team Plan Only")
-                : t("Beli +1 Workspace", "Buy +1 Workspace")}
+              ? t("Upgrade ke Team", "Upgrade to Team")
+              : t("Beli +1 Workspace", "Buy +1 Workspace")}
           </Button>
         </div>
       </div>
-
-      {error && <p className="text-xs font-medium text-destructive">{error}</p>}
     </div>
   );
 }

@@ -18,6 +18,7 @@ import {
   type BillingPeriod,
   type PaidBillingPlan,
   type StorageAddonKey,
+  type ExtraMemberAddonKey,
 } from "@/lib/billing-plans";
 
 export const PERIOD_STORAGE_KEY = "cubiqlo:billing:period";
@@ -100,6 +101,11 @@ export function getStorageAddonPeriodLabel(addon: StorageAddonKey, period: Billi
 
 export function getExtraWorkspacePeriodLabel(period: BillingPeriod): string {
   return formatRupiah(getExtraWorkspaceAmount(period));
+}
+
+export function getExtraMemberAddonPeriodLabel(tier: ExtraMemberAddonKey = 1): string {
+  const amount = tier === 5 ? 390_000 : tier === 3 ? 270_000 : 120_000;
+  return formatRupiah(amount);
 }
 
 export function getAiRequestsAddonAmount(tier: 500 | 1000 = 1000): number {
