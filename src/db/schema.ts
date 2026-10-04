@@ -41,6 +41,9 @@ export const users = pgTable("users", {
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
   mfaEnrollmentDeadline: timestamp("mfa_enrollment_deadline", { withTimezone: true }),
   recoveryPinHash: text("recovery_pin_hash"),
+  birthDate: date("birth_date"),
+  country: text("country"),
+  city: text("city"),
 });
 
 export const twoFactors = pgTable("two_factor", {
@@ -613,6 +616,8 @@ export const workspaces = pgTable("workspaces", {
   timezone: text("timezone").notNull().default("UTC"),
   workingHours: text("working_hours"),
   supportNote: text("support_note"),
+  industry: text("industry"),
+  teamSize: text("team_size"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
