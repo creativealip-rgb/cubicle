@@ -97,10 +97,10 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
         </div>
       )}
 
-      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-3.5 sm:grid-cols-2 lg:grid-cols-4 items-stretch">
         {/* 1. Extra Members Card */}
         <div className="flex flex-col justify-between rounded-2xl border border-indigo-500/30 bg-gradient-to-b from-indigo-500/[0.04] to-transparent p-4 shadow-xs relative overflow-hidden">
-          <div className="space-y-3">
+          <div className="flex flex-col flex-1">
             <div className="flex items-center justify-between">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-indigo-500/10 text-indigo-600 dark:text-indigo-400">
                 <Users className="h-4.5 w-4.5" />
@@ -110,15 +110,15 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
               </span>
             </div>
 
-            <div>
+            <div className="mt-3">
               <h4 className="text-sm font-bold text-foreground">{t("Extra Anggota Tim", "Extra Team Members")}</h4>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground min-h-[32px] mt-0.5">
                 {t("Tambah kuota slot undangan anggota ke workspace Anda.", "Expand member invitation slots in your workspace.")}
               </p>
             </div>
 
             {/* Member Tier Selector */}
-            <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-muted/60 p-1">
+            <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-muted/60 p-1 mt-3">
               {MEMBER_OPTIONS.map((qty) => (
                 <button
                   key={qty}
@@ -135,18 +135,20 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
               ))}
             </div>
 
-            {!isTeam ? (
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-400 text-[11px]">
-                {t("Perlu upgrade ke plan Team.", "Requires active Team plan.")}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1.5 text-xs text-emerald-700 dark:text-emerald-400 text-[11px]">
-                <ShieldCheck className="h-3 w-3 inline mr-1" />
-                {t("Siap diaktifkan ke akun", "Ready to activate")}
-              </div>
-            )}
+            <div className="min-h-[28px] mt-2.5 flex items-center">
+              {!isTeam ? (
+                <div className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-2.5 py-1 text-[11px] text-amber-700 dark:text-amber-400">
+                  {t("Perlu upgrade ke plan Team.", "Requires active Team plan.")}
+                </div>
+              ) : (
+                <div className="w-full rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1 text-[11px] text-emerald-700 dark:text-emerald-400">
+                  <ShieldCheck className="h-3 w-3 inline mr-1" />
+                  {t("Siap diaktifkan ke akun", "Ready to activate")}
+                </div>
+              )}
+            </div>
 
-            <div className="pt-1">
+            <div className="mt-auto pt-4 border-t border-border/40">
               <div className="text-lg font-mono font-bold text-foreground">
                 {getExtraMemberAddonPeriodLabel(selectedMember, lang)}
                 <span className="text-xs font-normal text-muted-foreground">/{t("tahun", "yr")}</span>
@@ -161,7 +163,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
             onClick={() =>
               startCheckout("/api/billing/checkout-extra-member", { quantity: selectedMember }, `member:${selectedMember}`)
             }
-            className="mt-4 w-full h-8.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
+            className="mt-3 w-full h-8.5 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs"
           >
             {pending === `member:${selectedMember}`
               ? t("Memproses...", "Processing...")
@@ -173,7 +175,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
 
         {/* 2. Extra Storage Card */}
         <div className="flex flex-col justify-between rounded-2xl border border-blue-500/30 bg-gradient-to-b from-blue-500/[0.04] to-transparent p-4 shadow-xs">
-          <div className="space-y-3">
+          <div className="flex flex-col flex-1">
             <div className="flex items-center justify-between">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-500/10 text-blue-600 dark:text-blue-400">
                 <HardDrive className="h-4.5 w-4.5" />
@@ -183,15 +185,15 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
               </span>
             </div>
 
-            <div>
+            <div className="mt-3">
               <h4 className="text-sm font-bold text-foreground">{t("Extra Storage", "Extra Storage")}</h4>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground min-h-[32px] mt-0.5">
                 {t("Tambah kuota berkas proyek & lampiran.", "Expand project files & attachments quota.")}
               </p>
             </div>
 
             {/* Storage Tier Selector */}
-            <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-muted/60 p-1">
+            <div className="grid grid-cols-3 gap-1.5 rounded-xl bg-muted/60 p-1 mt-3">
               {STORAGE_OPTIONS.map((gb) => (
                 <button
                   key={gb}
@@ -208,7 +210,14 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
               ))}
             </div>
 
-            <div className="pt-1">
+            <div className="min-h-[28px] mt-2.5 flex items-center">
+              <div className="w-full rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1 text-[11px] text-emerald-700 dark:text-emerald-400">
+                <ShieldCheck className="h-3 w-3 inline mr-1" />
+                {t("Tersedia untuk semua plan", "Available on all plans")}
+              </div>
+            </div>
+
+            <div className="mt-auto pt-4 border-t border-border/40">
               <div className="text-lg font-mono font-bold text-foreground">
                 {getStorageAddonPeriodLabel(selectedStorage, period, lang)}
                 <span className="text-xs font-normal text-muted-foreground">/{t("tahun", "yr")}</span>
@@ -223,7 +232,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
             onClick={() =>
               startCheckout("/api/billing/checkout", { addon: selectedStorage, period }, `storage:${selectedStorage}`)
             }
-            className="mt-4 w-full h-8.5 rounded-xl text-xs font-semibold"
+            className="mt-3 w-full h-8.5 rounded-xl text-xs font-semibold"
           >
             {pending === `storage:${selectedStorage}`
               ? t("Memproses...", "Processing...")
@@ -233,7 +242,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
 
         {/* 3. AI Requests Card */}
         <div className="flex flex-col justify-between rounded-2xl border border-purple-500/30 bg-gradient-to-b from-purple-500/[0.04] to-transparent p-4 shadow-xs relative overflow-hidden">
-          <div className="space-y-3">
+          <div className="flex flex-col flex-1">
             <div className="flex items-center justify-between">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
                 <Sparkles className="h-4.5 w-4.5" />
@@ -243,17 +252,17 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
               </span>
             </div>
 
-            <div>
+            <div className="mt-3">
               <h4 className="text-sm font-bold text-foreground">
                 {t("AI Request Tambahan", "Extra AI Requests")}
               </h4>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground min-h-[32px] mt-0.5">
                 {t("Tingkatkan batas AI bulanan untuk dokumen & prompt.", "Boost monthly AI quota for docs & prompt generation.")}
               </p>
             </div>
 
             {/* AI Tier Selector */}
-            <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-muted/60 p-1">
+            <div className="grid grid-cols-2 gap-1.5 rounded-xl bg-muted/60 p-1 mt-3">
               {AI_OPTIONS.map((quota) => (
                 <button
                   key={quota}
@@ -270,7 +279,14 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
               ))}
             </div>
 
-            <div className="pt-1">
+            <div className="min-h-[28px] mt-2.5 flex items-center">
+              <div className="w-full rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1 text-[11px] text-emerald-700 dark:text-emerald-400">
+                <ShieldCheck className="h-3 w-3 inline mr-1" />
+                {t("Tersedia untuk semua plan", "Available on all plans")}
+              </div>
+            </div>
+
+            <div className="mt-auto pt-4 border-t border-border/40">
               <div className="text-lg font-mono font-bold text-foreground">
                 {getAiRequestsAddonPeriodLabel(selectedAi, lang)}
                 <span className="text-xs font-normal text-muted-foreground">/{t("tahun", "yr")}</span>
@@ -285,7 +301,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
             onClick={() =>
               startCheckout("/api/billing/checkout-ai-addon", { tier: selectedAi, period }, `ai:${selectedAi}`)
             }
-            className="mt-4 w-full h-8.5 rounded-xl text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white shadow-xs"
+            className="mt-3 w-full h-8.5 rounded-xl text-xs font-semibold bg-purple-600 hover:bg-purple-700 text-white shadow-xs"
           >
             {pending === `ai:${selectedAi}`
               ? t("Memproses...", "Processing...")
@@ -295,7 +311,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
 
         {/* 4. Extra Workspace Card */}
         <div className="flex flex-col justify-between rounded-2xl border border-border/80 bg-gradient-to-b from-card to-muted/20 p-4 shadow-xs">
-          <div className="space-y-3">
+          <div className="flex flex-col flex-1">
             <div className="flex items-center justify-between">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400">
                 <Building2 className="h-4.5 w-4.5" />
@@ -305,25 +321,32 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
               </span>
             </div>
 
-            <div>
+            <div className="mt-3">
               <h4 className="text-sm font-bold text-foreground">+1 Extra Workspace</h4>
-              <p className="text-[11px] text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground min-h-[32px] mt-0.5">
                 {t("Tambah slot workspace terpisah untuk entitas bisnis baru.", "Separate workspace slot for new business entities.")}
               </p>
             </div>
 
-            {!isTeam ? (
-              <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 px-2.5 py-1.5 text-xs text-amber-700 dark:text-amber-400 text-[11px]">
-                {t("Perlu upgrade ke plan Team.", "Requires active Team plan.")}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1.5 text-xs text-emerald-700 dark:text-emerald-400 text-[11px]">
-                <ShieldCheck className="h-3 w-3 inline mr-1" />
-                {t("Siap diaktifkan ke akun", "Ready to activate")}
-              </div>
-            )}
+            {/* Extra Workspace Selector Placeholder (Fixed Height) */}
+            <div className="rounded-xl bg-muted/30 border border-border/40 p-1 mt-3 flex items-center justify-center min-h-[32px]">
+              <span className="text-xs font-medium text-muted-foreground">+1 Workspace Slot</span>
+            </div>
 
-            <div className="pt-1">
+            <div className="min-h-[28px] mt-2.5 flex items-center">
+              {!isTeam ? (
+                <div className="w-full rounded-xl border border-amber-500/20 bg-amber-500/5 px-2.5 py-1 text-[11px] text-amber-700 dark:text-amber-400">
+                  {t("Perlu upgrade ke plan Team.", "Requires active Team plan.")}
+                </div>
+              ) : (
+                <div className="w-full rounded-xl border border-emerald-500/20 bg-emerald-500/5 px-2.5 py-1 text-[11px] text-emerald-700 dark:text-emerald-400">
+                  <ShieldCheck className="h-3 w-3 inline mr-1" />
+                  {t("Siap diaktifkan ke akun", "Ready to activate")}
+                </div>
+              )}
+            </div>
+
+            <div className="mt-auto pt-4 border-t border-border/40">
               <div className="text-lg font-mono font-bold text-foreground">
                 {getExtraWorkspacePeriodLabel(period, lang)}
                 <span className="text-xs font-normal text-muted-foreground">/{t("tahun", "yr")}</span>
@@ -337,7 +360,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
             disabled={busy || !isTeam}
             aria-busy={pending === "workspace" || undefined}
             onClick={() => startCheckout("/api/billing/checkout-extra-workspace", { period }, "workspace")}
-            className="mt-4 w-full h-8.5 rounded-xl text-xs font-semibold"
+            className="mt-3 w-full h-8.5 rounded-xl text-xs font-semibold"
           >
             {pending === "workspace"
               ? t("Memproses...", "Processing...")
