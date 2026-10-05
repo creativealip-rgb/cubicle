@@ -456,7 +456,9 @@ export async function getAvailableSlots(workspaceId: string, date: string, durat
 
   const [year, month, day] = date.split("-").map(Number);
   const dayOfWeek = new Date(Date.UTC(year, month - 1, day)).getUTCDay();
-  const dayRules = rules.filter((rule) => rule.dayOfWeek === dayOfWeek);
+  const dayRules = rules
+    .filter((rule) => rule.dayOfWeek === dayOfWeek)
+    .sort((a, b) => a.startTime.localeCompare(b.startTime));
 
   if (dayRules.length === 0) return [];
 

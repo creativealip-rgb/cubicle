@@ -251,7 +251,7 @@ export function PublicBookingForm({
                       />
                       <div className="flex items-center gap-1.5">
                         <Clock className={`h-3.5 w-3.5 ${isChecked ? "text-primary" : "text-muted-foreground"}`} />
-                        <span className="text-xs font-mono">
+                        <span className="text-xs font-mono font-medium">
                           {new Date(slot.start).toLocaleTimeString(lang === "en" ? "en-US" : "id-ID", {
                             hour: "2-digit",
                             minute: "2-digit",
@@ -259,16 +259,6 @@ export function PublicBookingForm({
                           })}
                         </span>
                       </div>
-                      <span className="text-[10px] opacity-75">
-                        {(() => {
-                          const diffMin = Math.round((new Date(slot.end).getTime() - new Date(slot.start).getTime()) / 60000);
-                          return diffMin >= 60
-                            ? diffMin % 60 === 0
-                              ? `${diffMin / 60}h`
-                              : `${(diffMin / 60).toFixed(1)}h`
-                            : `${diffMin}m`;
-                        })()}
-                      </span>
                     </label>
                   );
                 })}
