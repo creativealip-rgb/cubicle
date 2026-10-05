@@ -14,6 +14,7 @@ import { getPlanPeriodLabel } from "@/lib/billing-pricing";
 import { listActiveAddOns } from "@/lib/actions/billing-addons";
 import { AddonManagement } from "@/components/billing/addon-management";
 import { AddonPurchaseControls } from "@/components/billing/addon-purchase-controls";
+import { BillingTabsNav } from "@/components/billing/billing-tabs-nav";
 import { getWorkspaceRecordForUser } from "@/lib/workspace";
 import { getCheckoutStatusForWorkspaceOwner, type CheckoutStatus } from "@/lib/billing-checkout-status";
 import { getEffectivePlan } from "@/lib/plan";
@@ -73,7 +74,7 @@ export default async function BillingPage({
   searchParams,
   showHeader = true,
 }: {
-  searchParams: Promise<{ checkout?: string }>;
+  searchParams: Promise<{ checkout?: string; tab?: string }>;
   showHeader?: boolean;
 }) {
   const lang = await getCurrentLang();
@@ -104,7 +105,8 @@ export default async function BillingPage({
         aiAddons: [],
       };
 
-  const { checkout: checkoutOrderId } = await searchParams;
+  const { checkout: checkoutOrderId, tab: rawTab } = await searchParams;
+  const currentTab = rawTab === "addons" ? "addons" : "plans";
   let checkoutStatus: { status: CheckoutStatus; amount: string | null } | null = null;
   if (userId && checkoutOrderId) {
     const workspace = await getWorkspaceRecordForUser(userId);
@@ -138,13 +140,10 @@ export default async function BillingPage({
         />
       )}
 
-      <Tabs defaultValue="plans" className="space-y-5">
-        <TabsList className="bg-muted/80 p-1">
-          <TabsTrigger value="plans" className="text-xs font-semibold px-4">{t("Paket", "Plans")}</TabsTrigger>
-          <TabsTrigger value="addons" className="text-xs font-semibold px-4">{t("Add-on", "Add-ons")}</TabsTrigger>
-        </TabsList>
+      <BillingTabsNav currentTab={currentTab} />
 
-        <TabsContent value="plans" className="space-y-5">
+      {currentTab === "plans" && (
+        <div className="space-y-5">
           {/* Streamlined Subscription Status Banner */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-border/80 bg-gradient-to-r from-card via-card to-purple-500/[0.04] p-4 shadow-xs">
             <div className="flex items-center gap-3.5">
@@ -293,25 +292,22 @@ export default async function BillingPage({
               );
             })}
           </div>
-        </TabsContent>
+        </div>
+      )}
 
-        <TabsContent value="addons">
-          <Card className="rounded-2xl border-border/80 shadow-xs">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base font-bold">{t("Storage & Add-on", "Storage & Add-ons")}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <AddonPurchaseControls effectivePlan={effectivePlan} />
-              <AddonManagement
-                storageAddons={addons.storageAddons}
-                extraWorkspaceEntitlements={addons.extraWorkspaceEntitlements}
-                extraMemberEntitlements={addons.extraMemberEntitlements}
-                aiAddons={addons.aiAddons}
-              />
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
+      {currentTab === "addons" && (
+        <Card className="rounded-2xl border-border/80 shadow-xs">
+          <CardContent className="space-y-6 pt-6">
+            <AddonPurchaseControls effectivePlan={effectivePlan} />
+            <AddonManagement
+              storageAddons={addons.storageAddons}
+              extraWorkspaceEntitlements={addons.extraWorkspaceEntitlements}
+              extraMemberEntitlements={addons.extraMemberEntitlements}
+              aiAddons={addons.aiAddons}
+            />
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 }
