@@ -30,7 +30,7 @@ type PendingKey =
   | null;
 
 export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const period: BillingPeriod = "yearly";
   const [pending, setPending] = useState<PendingKey>(null);
   const [error, setError] = useState<string | null>(null);
@@ -148,7 +148,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
 
             <div className="pt-1">
               <div className="text-lg font-mono font-bold text-foreground">
-                {getExtraMemberAddonPeriodLabel(selectedMember)}
+                {getExtraMemberAddonPeriodLabel(selectedMember, lang)}
                 <span className="text-xs font-normal text-muted-foreground">/{t("tahun", "yr")}</span>
               </div>
             </div>
@@ -210,7 +210,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
 
             <div className="pt-1">
               <div className="text-lg font-mono font-bold text-foreground">
-                {getStorageAddonPeriodLabel(selectedStorage, period)}
+                {getStorageAddonPeriodLabel(selectedStorage, period, lang)}
                 <span className="text-xs font-normal text-muted-foreground">/{t("tahun", "yr")}</span>
               </div>
             </div>
@@ -272,7 +272,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
 
             <div className="pt-1">
               <div className="text-lg font-mono font-bold text-foreground">
-                {getAiRequestsAddonPeriodLabel(selectedAi)}
+                {getAiRequestsAddonPeriodLabel(selectedAi, lang)}
                 <span className="text-xs font-normal text-muted-foreground">/{t("tahun", "yr")}</span>
               </div>
             </div>
@@ -325,7 +325,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
 
             <div className="pt-1">
               <div className="text-lg font-mono font-bold text-foreground">
-                {getExtraWorkspacePeriodLabel(period)}
+                {getExtraWorkspacePeriodLabel(period, lang)}
                 <span className="text-xs font-normal text-muted-foreground">/{t("tahun", "yr")}</span>
               </div>
             </div>

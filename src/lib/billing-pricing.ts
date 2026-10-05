@@ -95,16 +95,33 @@ export function getPlanPeriodLabel(plan: PaidBillingPlan, period: BillingPeriod)
   return formatRupiah(getPlanAmount(plan, period));
 }
 
-export function getStorageAddonPeriodLabel(addon: StorageAddonKey, period: BillingPeriod): string {
+export function getStorageAddonPeriodLabel(addon: StorageAddonKey, period: BillingPeriod, lang: string = "id"): string {
+  if (lang === "en") {
+    // 5GB -> 120k / 18k = 6.66 -> $7 | 10GB -> 240k / 18k = 13.33 -> $14 | 15GB -> 360k / 18k = 20 -> $20
+    const amountIdr = getStorageAddonAmount(addon, period);
+    const usd = Math.ceil(amountIdr / 18_000);
+    return `$${usd}`;
+  }
   return formatRupiah(getStorageAddonAmount(addon, period));
 }
 
-export function getExtraWorkspacePeriodLabel(period: BillingPeriod): string {
+export function getExtraWorkspacePeriodLabel(period: BillingPeriod, lang: string = "id"): string {
+  if (lang === "en") {
+    // 360k / 18k = 20 -> $20
+    const amountIdr = getExtraWorkspaceAmount(period);
+    const usd = Math.ceil(amountIdr / 18_000);
+    return `$${usd}`;
+  }
   return formatRupiah(getExtraWorkspaceAmount(period));
 }
 
-export function getExtraMemberAddonPeriodLabel(tier: ExtraMemberAddonKey = 1): string {
-  const amount = tier === 5 ? 390_000 : tier === 3 ? 270_000 : 120_000;
+export function getExtraMemberAddonPeriodLabel(tier: ExtraMemberAddonKey = 1, lang: string = "id"): string {
+  if (lang === "en") {
+    // +1 (120k -> $7), +3 (360k -> $20), +5 (600k -> $34 / $33)
+    const usdAmount = tier === 5 ? 34 : tier === 3 ? 20 : 7;
+    return `$${usdAmount}`;
+  }
+  const amount = tier === 5 ? 600_000 : tier === 3 ? 360_000 : 120_000;
   return formatRupiah(amount);
 }
 
@@ -112,7 +129,13 @@ export function getAiRequestsAddonAmount(tier: 500 | 1000 = 1000): number {
   return tier === 500 ? 50_000 : 100_000;
 }
 
-export function getAiRequestsAddonPeriodLabel(tier: 500 | 1000 = 1000): string {
+export function getAiRequestsAddonPeriodLabel(tier: 500 | 1000 = 1000, lang: string = "id"): string {
+  if (lang === "en") {
+    // 500 -> 50k / 18k = 2.77 -> $3 | 1000 -> 100k / 18k = 5.55 -> $6
+    const amountIdr = getAiRequestsAddonAmount(tier);
+    const usd = Math.ceil(amountIdr / 18_000);
+    return `$${usd}`;
+  }
   return formatRupiah(getAiRequestsAddonAmount(tier));
 }
 

@@ -38,8 +38,8 @@ export const EXTRA_WORKSPACE_ADDON = { monthlyAmount: 30_000 } as const;
 
 export const EXTRA_MEMBER_ADDONS = {
   1: { quantity: 1, yearlyAmount: 120_000, label: "+1 Anggota Tim", labelEn: "+1 Team Member" },
-  3: { quantity: 3, yearlyAmount: 270_000, label: "+3 Anggota Tim", labelEn: "+3 Team Members" },
-  5: { quantity: 5, yearlyAmount: 390_000, label: "+5 Anggota Tim", labelEn: "+5 Team Members" },
+  3: { quantity: 3, yearlyAmount: 360_000, label: "+3 Anggota Tim", labelEn: "+3 Team Members" },
+  5: { quantity: 5, yearlyAmount: 600_000, label: "+5 Anggota Tim", labelEn: "+5 Team Members" },
 } as const;
 
 export type ExtraMemberAddonKey = keyof typeof EXTRA_MEMBER_ADDONS;

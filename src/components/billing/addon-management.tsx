@@ -38,9 +38,13 @@ type ExtraMemberEntitlement = {
   endsAt: Date;
 };
 
-function formatAmount(amount: string): string {
+function formatAmount(amount: string, lang: string = "id"): string {
   const numeric = Number(amount);
   if (!Number.isFinite(numeric)) return amount;
+  if (lang === "en") {
+    const usd = Math.ceil(numeric / 18_000);
+    return `$${usd}`;
+  }
   return `Rp ${numeric.toLocaleString("id-ID")}`;
 }
 
@@ -63,7 +67,7 @@ export function AddonManagement({
     endsAt: Date;
   }>;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const { refresh } = useAppTransition();
   const [busy, setBusy] = useState<string | null>(null);
 
@@ -134,7 +138,7 @@ export function AddonManagement({
                     +{entitlement.quantity} {t("Extra Anggota Tim", "Extra Team Members")}
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    {formatAmount(entitlement.amount)} · {t("Berakhir", "Ends")}: {entitlement.endsAt.toLocaleDateString()}
+                    {formatAmount(entitlement.amount, lang)} · {t("Berakhir", "Ends")}: {entitlement.endsAt.toLocaleDateString()}
                     {entitlement.status === "cancel_scheduled" && (
                       <span className="ml-1.5 text-amber-600 font-medium">
                         ({t("aktif hingga akhir periode", "active until period end")})
@@ -197,7 +201,7 @@ export function AddonManagement({
                     +{addon.requestsQuota.toLocaleString("id-ID")} AI Requests
                   </p>
                   <p className="text-[11px] text-muted-foreground">
-                    {formatAmount(addon.amount)} · {t("Berakhir", "Ends")}: {addon.endsAt.toLocaleDateString()}
+                    {formatAmount(addon.amount, lang)} · {t("Berakhir", "Ends")}: {addon.endsAt.toLocaleDateString()}
                     {addon.status === "cancel_scheduled" && (
                       <span className="ml-1.5 text-amber-600 font-medium">
                         ({t("aktif hingga akhir periode", "active until period end")})
