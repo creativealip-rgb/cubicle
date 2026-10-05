@@ -260,7 +260,7 @@ export function OnboardingFlow() {
                           setSource(s.id);
                           if (s.id !== "other") setSourceOther("");
                         }}
-                        className={`rounded-lg border px-3 py-2 text-center text-xs font-medium transition-all ${
+                        className={`rounded-lg border px-3 py-2 text-left text-xs font-medium transition-all ${
                           active
                             ? "border-primary bg-primary text-primary-foreground font-semibold shadow-xs"
                             : "border-border/80 bg-background text-foreground hover:border-border hover:bg-muted/40"
@@ -358,7 +358,7 @@ export function OnboardingFlow() {
                     }`}
                   >
                     <div className="text-xs font-bold text-foreground">Free Forever</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">$0</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">Rp 0</div>
                     <p className="mt-2 text-[10px] text-muted-foreground leading-snug">
                       {t("Fitur inti, 1 workspace aktif untuk mulai cepat.", "Core features, 1 active workspace.")}
                     </p>
@@ -377,7 +377,7 @@ export function OnboardingFlow() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-foreground">Solo</span>
                     </div>
-                    <div className="text-[11px] text-primary font-semibold mt-0.5">$9 / mo</div>
+                    <div className="text-[11px] text-primary font-semibold mt-0.5">Rp 99.000 / bln</div>
                     <p className="mt-2 text-[10px] text-muted-foreground leading-snug">
                       {t("Klien unlimited, custom slug & branding penuh.", "Unlimited clients & custom branding.")}
                     </p>
@@ -396,7 +396,7 @@ export function OnboardingFlow() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-foreground">Team</span>
                     </div>
-                    <div className="text-[11px] text-primary font-semibold mt-0.5">$19 / mo</div>
+                    <div className="text-[11px] text-primary font-semibold mt-0.5">Rp 199.000 / bln</div>
                     <p className="mt-2 text-[10px] text-muted-foreground leading-snug">
                       {t("Multi-member, delegasi tugas & kolaborasi agensi.", "Multi-member team collaboration.")}
                     </p>
