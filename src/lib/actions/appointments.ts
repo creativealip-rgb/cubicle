@@ -479,25 +479,19 @@ export async function getAvailableSlots(workspaceId: string, date: string, durat
   const slots: { start: string; end: string }[] = [];
 
   for (const rule of dayRules) {
-    let current = zonedDateTimeToUtc(date, rule.startTime, rule.timezone);
+    const current = zonedDateTimeToUtc(date, rule.startTime, rule.timezone);
     const ruleEnd = zonedDateTimeToUtc(date, rule.endTime, rule.timezone);
 
-    while (current < ruleEnd) {
-      const slotEnd = new Date(current.getTime() + durationMs);
-      if (slotEnd <= ruleEnd) {
-        const overlaps = bookedSlots.some(
-          (b) =>
-            new Date(b.startTime).getTime() < slotEnd.getTime() &&
-            new Date(b.endTime).getTime() > current.getTime()
-        );
-        if (!overlaps && current > new Date()) {
-          slots.push({
-            start: current.toISOString(),
-            end: slotEnd.toISOString(),
-          });
-        }
-      }
-      current = new Date(current.getTime() + 30 * 60 * 1000);
+    const overlaps = bookedSlots.some(
+      (b) =>
+        new Date(b.startTime).getTime() < ruleEnd.getTime() &&
+        new Date(b.endTime).getTime() > current.getTime()
+    );
+    if (!overlaps && current > new Date()) {
+      slots.push({
+        start: current.toISOString(),
+        end: ruleEnd.toISOString(),
+      });
     }
   }
 

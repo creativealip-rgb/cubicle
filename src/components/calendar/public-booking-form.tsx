@@ -249,15 +249,23 @@ export function PublicBookingForm({
                         className="sr-only"
                         required
                       />
-                      <div className="flex items-center gap-1.5">
-                        <Clock className={`h-3.5 w-3.5 ${isChecked ? "text-primary" : "text-muted-foreground"}`} />
-                        <span className="text-xs font-mono font-medium">
-                          {new Date(slot.start).toLocaleTimeString(lang === "en" ? "en-US" : "id-ID", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                            timeZone: timezone,
-                          })}
-                        </span>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex items-center gap-1.5">
+                          <Clock className={`h-3.5 w-3.5 ${isChecked ? "text-primary" : "text-muted-foreground"}`} />
+                          <span className="text-xs font-mono font-medium">
+                            {new Date(slot.start).toLocaleTimeString(lang === "en" ? "en-US" : "id-ID", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              timeZone: timezone,
+                            })}
+                            {" - "}
+                            {new Date(slot.end).toLocaleTimeString(lang === "en" ? "en-US" : "id-ID", {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              timeZone: timezone,
+                            })}
+                          </span>
+                        </div>
                       </div>
                     </label>
                   );
