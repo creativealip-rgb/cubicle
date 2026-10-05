@@ -17,9 +17,9 @@ export function GoogleAuthButton({ callbackURL }: { callbackURL: string }) {
     setError("");
     try {
       const result = await authClient.signIn.social({ provider: "google", callbackURL });
-      if (result.error) setError(result.error.message ?? "Gagal masuk dengan Google");
+      if (result.error) setError(result.error.message ?? t("Gagal masuk dengan Google", "Failed to sign in with Google"));
     } catch {
-      setError("Gagal masuk dengan Google. Coba lagi.");
+      setError(t("Gagal masuk dengan Google. Coba lagi.", "Failed to sign in with Google. Try again."));
     } finally {
       setLoading(false);
     }

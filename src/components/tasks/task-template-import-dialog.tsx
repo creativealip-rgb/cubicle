@@ -93,7 +93,12 @@ export function TaskTemplateImportDialog({ projects, templates, selectedTemplate
         previewFingerprint: freshPreview.payloadFingerprint,
         idempotencyKey: idempotencyKeyRef.current,
       }) as { created?: unknown[] };
-      toast.success(`Tugas berhasil ditambahkan: ${result.created?.length ?? 0}`);
+      toast.success(
+        t(
+          `Tugas berhasil ditambahkan: ${result.created?.length ?? 0}`,
+          `Tasks successfully added: ${result.created?.length ?? 0}`,
+        ),
+      );
       idempotencyKeyRef.current = crypto.randomUUID();
       setOpen(false);
       refresh();
