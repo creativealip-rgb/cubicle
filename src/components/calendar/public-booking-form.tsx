@@ -56,9 +56,7 @@ export function PublicBookingForm({
       : allowed[0] || "google_meet"
   );
 
-  const [selectedDuration, setSelectedDuration] = useState(30);
-  const [customHours, setCustomHours] = useState("");
-  const [isCustomDuration, setIsCustomDuration] = useState(false);
+  const [selectedDuration] = useState(30);
   const [slots, setSlots] = useState<Slot[]>(initialSlots);
   const [slotsError, setSlotsError] = useState(initialError);
   const [submitting, setSubmitting] = useState(false);
@@ -66,21 +64,12 @@ export function PublicBookingForm({
 
   const [isPending, startTransition] = useTransition();
 
-  const DURATION_OPTIONS = [
-    { value: 15, label: "15m" },
-    { value: 30, label: "30m" },
-    { value: 45, label: "45m" },
-    { value: 60, label: "1h (60m)" },
-    { value: 90, label: "1.5h" },
-    { value: 120, label: "2h" },
-  ];
-
-  function loadSlotsFor(dateVal: string, durVal: number) {
+  function loadSlotsFor(dateVal: string) {
     if (!dateVal) return;
     startTransition(async () => {
       try {
         setSlotsError("");
-        const newSlots = await getAvailableSlots(workspace.id, dateVal, durVal);
+        const newSlots = await getAvailableSlots(workspace.id, dateVal, 30);
         setSlots(newSlots);
         setSelectedSlot("");
       } catch (err) {
@@ -91,23 +80,7 @@ export function PublicBookingForm({
 
   function handleApplyDate(newDate: string) {
     setSelectedDate(newDate);
-    loadSlotsFor(newDate, selectedDuration);
-  }
-
-  function handleApplyDuration(newDur: number) {
-    setIsCustomDuration(false);
-    setSelectedDuration(newDur);
-    loadSlotsFor(selectedDate, newDur);
-  }
-
-  function handleApplyCustomDuration(hoursVal: string) {
-    setCustomHours(hoursVal);
-    const hrs = parseFloat(hoursVal);
-    if (!isNaN(hrs) && hrs >= 0.5 && hrs <= 12) {
-      const mins = Math.round(hrs * 60);
-      setSelectedDuration(mins);
-      loadSlotsFor(selectedDate, mins);
-    }
+    loadSlotsFor(newDate);
   }
 
   return (
@@ -122,70 +95,9 @@ export function PublicBookingForm({
             <p className="text-[11px] text-muted-foreground">{t("Pilih tanggal & slot waktu yang sesuai", "Choose your preferred date and time slot")}</p>
           </div>
         </div>
-        <span className="text-[10px] font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full">
-          {selectedDuration >= 60
-            ? selectedDuration % 60 === 0
-              ? `${selectedDuration / 60} ${selectedDuration === 60 ? "Hour" : "Hours"}`
-              : `${(selectedDuration / 60).toFixed(1)} Hours`
-            : `${selectedDuration} Min`}
-        </span>
       </div>
 
       <div className="p-5 sm:p-6">
-        {/* Duration Selector */}
-        <div className="mb-5 space-y-2">
-          <div className="flex items-center justify-between">
-            <Label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-              <Clock className="h-3.5 w-3.5 text-primary" />
-              <span>{t("Durasi Pertemuan", "Meeting Duration")}</span>
-            </Label>
-            <button
-              type="button"
-              onClick={() => setIsCustomDuration(!isCustomDuration)}
-              className="text-[11px] font-medium text-primary hover:underline"
-            >
-              {isCustomDuration ? t("Pilih preset durasi", "Use preset duration") : t("+ Custom durasi jam", "+ Custom hours")}
-            </button>
-          </div>
-
-          {!isCustomDuration ? (
-            <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 p-1 rounded-xl bg-muted/50 border border-border/70">
-              {DURATION_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => handleApplyDuration(opt.value)}
-                  disabled={isPending}
-                  className={`py-1.5 px-1.5 rounded-lg text-xs font-semibold transition-all text-center ${
-                    selectedDuration === opt.value
-                      ? "bg-primary text-primary-foreground shadow-xs scale-[1.02]"
-                      : "text-muted-foreground hover:text-foreground hover:bg-muted/80"
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 p-2 rounded-xl bg-muted/40 border border-border/80">
-              <Input
-                type="number"
-                min="0.5"
-                max="12"
-                step="0.5"
-                placeholder="e.g. 4 or 8"
-                value={customHours}
-                onChange={(e) => handleApplyCustomDuration(e.target.value)}
-                className="h-8 text-xs w-28 bg-background"
-                autoFocus
-              />
-              <span className="text-xs text-muted-foreground">
-                {t("Jam (contoh: 4 = 4 jam / setengah hari, 8 = 8 jam / full day)", "Hours (e.g. 4 = 4h / half day, 8 = 8h / full day)")}
-              </span>
-            </div>
-          )}
-        </div>
-
         {submitError && (
           <div className="mb-4 rounded-xl border border-destructive/30 bg-destructive/10 p-3 text-xs text-destructive">
             {submitError}
