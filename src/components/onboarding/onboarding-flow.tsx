@@ -19,12 +19,12 @@ import { useT } from "@/lib/i18n-client";
 
 type PlanChoice = "free" | "solo" | "team";
 type SourceChoice =
-  | "website"
+  | "google"
   | "instagram"
   | "tiktok"
-  | "google"
   | "youtube"
   | "friend"
+  | "articles"
   | "other";
 
 const COUNTRIES = [
@@ -58,24 +58,25 @@ const INDUSTRIES = [
   { value: "consulting", label: "Consulting & Professional Services" },
   { value: "marketing_media", label: "Marketing & Content Creation" },
   { value: "ecommerce", label: "E-Commerce & Retail" },
-  { value: "other", label: "Lainnya / Other" },
+  { value: "other", label: "Other" },
 ];
 
 const TEAM_SIZES = [
-  { value: "1-5", label: "1 - 5 orang" },
-  { value: "6-15", label: "6 - 15 orang" },
-  { value: "16-50", label: "16 - 50 orang" },
-  { value: "50+", label: "50+ orang" },
+  { value: "1", label: "1" },
+  { value: "2-5", label: "2 - 5" },
+  { value: "6-10", label: "6 - 10" },
+  { value: "11-15", label: "11 - 15" },
+  { value: "15+", label: "15+" },
 ];
 
-const SOURCES: Array<{ id: SourceChoice; label: string }> = [
-  { id: "website", label: "Website" },
-  { id: "instagram", label: "Instagram" },
-  { id: "tiktok", label: "TikTok" },
-  { id: "google", label: "Google Search" },
-  { id: "youtube", label: "YouTube" },
-  { id: "friend", label: "Teman / Rekan" },
-  { id: "other", label: "Lainnya" },
+const SOURCES: Array<{ id: SourceChoice; label: { id: string; en: string } }> = [
+  { id: "google", label: { id: "Google Search", en: "Google Search" } },
+  { id: "instagram", label: { id: "Instagram", en: "Instagram" } },
+  { id: "tiktok", label: { id: "TikTok", en: "TikTok" } },
+  { id: "youtube", label: { id: "YouTube", en: "YouTube" } },
+  { id: "friend", label: { id: "Teman", en: "Friends" } },
+  { id: "articles", label: { id: "Artikel", en: "Articles" } },
+  { id: "other", label: { id: "Lainnya", en: "Others" } },
 ];
 
 export function OnboardingFlow() {
@@ -90,7 +91,7 @@ export function OnboardingFlow() {
   // Page 1 state
   const [name, setName] = useState("");
   const [birthDate, setBirthDate] = useState("");
-  const [country, setCountry] = useState("Indonesia");
+  const [country, setCountry] = useState("");
   const [city, setCity] = useState("");
   const [source, setSource] = useState<SourceChoice | "">("");
   const [sourceOther, setSourceOther] = useState("");
@@ -99,10 +100,11 @@ export function OnboardingFlow() {
   const [businessName, setBusinessName] = useState("");
   const [industry, setIndustry] = useState("");
   const [plan, setPlan] = useState<PlanChoice>("free");
-  const [teamSize, setTeamSize] = useState("1-5");
+  const [teamSize, setTeamSize] = useState("1");
 
   function canProceedPage1() {
     if (!name.trim()) return false;
+    if (!birthDate.trim()) return false;
     if (!country.trim()) return false;
     if (!city.trim()) return false;
     if (!source) return false;
@@ -125,7 +127,7 @@ export function OnboardingFlow() {
     try {
       const res = await finishOnboarding({
         name: name.trim(),
-        birthDate: birthDate ? birthDate : null,
+        birthDate: birthDate.trim(),
         country: country.trim(),
         city: city.trim(),
         source: source as SourceChoice,
@@ -168,16 +170,8 @@ export function OnboardingFlow() {
             {step === 2 && t("Detail Bisnis & Workspace", "Business & Workspace Scale")}
           </h1>
           <p className="text-xs text-muted-foreground sm:text-sm">
-            {step === 1 &&
-              t(
-                "Lengkapi profil pribadi dan beri tahu kami bagaimana Anda menemukan Cubiqlo.",
-                "Complete your personal profile and let us know how you discovered Cubiqlo.",
-              )}
-            {step === 2 &&
-              t(
-                "Tentukan nama bisnis, industri, dan paket yang sesuai dengan kebutuhan kerja Anda.",
-                "Set your business name, industry, and the plan that fits your workflow.",
-              )}
+            {step === 1 && t("Lengkapi profil Anda", "Complete your profile")}
+            {step === 2 && t("Atur bisnis & paket akun Anda", "Set your business & plan")}
           </p>
         </CardHeader>
 
@@ -208,7 +202,7 @@ export function OnboardingFlow() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-1.5">
                   <Label htmlFor="ob-birth" className="text-xs font-semibold">
-                    {t("Tanggal Lahir (Opsional)", "Birth Date (Optional)")}
+                    {t("Tanggal Lahir *", "Birth Date *")}
                   </Label>
                   <Input
                     id="ob-birth"
@@ -272,7 +266,7 @@ export function OnboardingFlow() {
                             : "border-border/80 bg-background text-foreground hover:border-border hover:bg-muted/40"
                         }`}
                       >
-                        {s.label}
+                        {t(s.label.id, s.label.en)}
                       </button>
                     );
                   })}
@@ -364,7 +358,7 @@ export function OnboardingFlow() {
                     }`}
                   >
                     <div className="text-xs font-bold text-foreground">Free Forever</div>
-                    <div className="text-[11px] text-muted-foreground mt-0.5">Rp 0</div>
+                    <div className="text-[11px] text-muted-foreground mt-0.5">$0</div>
                     <p className="mt-2 text-[10px] text-muted-foreground leading-snug">
                       {t("Fitur inti, 1 workspace aktif untuk mulai cepat.", "Core features, 1 active workspace.")}
                     </p>
@@ -383,7 +377,7 @@ export function OnboardingFlow() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-foreground">Solo</span>
                     </div>
-                    <div className="text-[11px] text-primary font-semibold mt-0.5">Rp 99k / bln</div>
+                    <div className="text-[11px] text-primary font-semibold mt-0.5">$9 / mo</div>
                     <p className="mt-2 text-[10px] text-muted-foreground leading-snug">
                       {t("Klien unlimited, custom slug & branding penuh.", "Unlimited clients & custom branding.")}
                     </p>
@@ -402,7 +396,7 @@ export function OnboardingFlow() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-foreground">Team</span>
                     </div>
-                    <div className="text-[11px] text-primary font-semibold mt-0.5">Rp 199k / bln</div>
+                    <div className="text-[11px] text-primary font-semibold mt-0.5">$19 / mo</div>
                     <p className="mt-2 text-[10px] text-muted-foreground leading-snug">
                       {t("Multi-member, delegasi tugas & kolaborasi agensi.", "Multi-member team collaboration.")}
                     </p>

@@ -13,10 +13,10 @@ import { writeActivityLog } from "@/lib/actions/activity";
 const onboardingSchema = z.object({
   // Page 1: Personal profile
   name: z.string().trim().min(1, "Nama wajib diisi").max(100).optional(),
-  birthDate: z.string().trim().optional().nullish(),
+  birthDate: z.string().trim().min(1, "Tanggal lahir wajib diisi").optional().nullish(),
   country: z.string().trim().min(1, "Negara wajib dipilih").optional(),
   city: z.string().trim().min(1, "Kota wajib diisi").optional(),
-  source: z.enum(["website", "instagram", "tiktok", "google", "youtube", "friend", "other"]).optional(),
+  source: z.enum(["google", "instagram", "tiktok", "youtube", "friend", "articles", "other"]).optional(),
   sourceOther: z.string().trim().max(120).optional(),
 
   // Page 2: Business & scaling
