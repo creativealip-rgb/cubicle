@@ -377,7 +377,7 @@ export function OnboardingFlow() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-foreground">Solo</span>
                     </div>
-                    <div className="text-[11px] text-primary font-semibold mt-0.5">$9 / mo</div>
+                    <div className="text-[11px] text-primary font-semibold mt-0.5">$6 / mo</div>
                     <p className="mt-2 text-[10px] text-muted-foreground leading-snug">
                       {t("Klien unlimited, custom slug & branding penuh.", "Unlimited clients & custom branding.")}
                     </p>
@@ -396,7 +396,7 @@ export function OnboardingFlow() {
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-foreground">Team</span>
                     </div>
-                    <div className="text-[11px] text-primary font-semibold mt-0.5">$19 / mo</div>
+                    <div className="text-[11px] text-primary font-semibold mt-0.5">$12 / mo</div>
                     <p className="mt-2 text-[10px] text-muted-foreground leading-snug">
                       {t("Multi-member, delegasi tugas & kolaborasi agensi.", "Multi-member team collaboration.")}
                     </p>
