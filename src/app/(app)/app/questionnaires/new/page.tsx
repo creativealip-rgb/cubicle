@@ -12,6 +12,37 @@ export default async function NewQuestionnairePage() {
   return (
     <QuestionnaireBuilder
       workspaceId={workspaceId}
+      initial={{
+        name: "Formulir Baru",
+        slug: null,
+        description: "",
+        schema: [
+          {
+            id: "field_1",
+            type: "text",
+            label: "Nama Lengkap",
+            required: false,
+            placeholder: "Masukkan nama Anda",
+            colSpan: "full",
+          },
+          {
+            id: "field_2",
+            type: "email",
+            label: "Email Bisnis",
+            required: false,
+            placeholder: "email@perusahaan.com",
+            colSpan: "half",
+          },
+          {
+            id: "field_3",
+            type: "phone",
+            label: "Nomor WhatsApp",
+            required: false,
+            placeholder: "+62 812...",
+            colSpan: "half",
+          },
+        ],
+      }}
     />
   );
 }

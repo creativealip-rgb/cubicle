@@ -29,6 +29,9 @@ export default async function QuestionnaireEditPage({ params }: { params: Promis
         name: q.name,
         slug: q.slug,
         description: q.description,
+        expiresAt: q.expiresAt ? q.expiresAt.toISOString() : null,
+        maxResponses: q.maxResponses,
+        requireAll: q.requireAll,
         schema: fields,
       }}
     />

@@ -16,19 +16,29 @@ import { resolveWorkspaceReplyTo } from "@/lib/workspace-reply-to";
 import {
   questionnaireSchemaInput,
   safeParseQuestionnaireSchema,
+  type QuestionnaireField,
 } from "@/lib/questionnaire-schema";
 
 const createQuestionnaireSchema = z.object({
   workspaceId: z.string().uuid(),
   name: z.string().min(1).max(200),
   description: z.string().max(2000).optional().nullable(),
+  slug: z.string().trim().max(100).optional().nullable(),
+  expiresAt: z.string().datetime().optional().nullable(),
+  maxResponses: z.number().int().positive().optional().nullable(),
+  requireAll: z.boolean().optional(),
   schema: questionnaireSchemaInput,
 });
+
+export type CreateQuestionnaireInput = z.input<typeof createQuestionnaireSchema>;
 
 const updateQuestionnaireSchema = z.object({
   name: z.string().min(1).max(200).optional(),
   description: z.string().max(2000).optional().nullable(),
   slug: z.string().trim().max(100).optional().nullable(),
+  expiresAt: z.string().datetime().optional().nullable(),
+  maxResponses: z.number().int().positive().optional().nullable(),
+  requireAll: z.boolean().optional(),
   schema: questionnaireSchemaInput.optional(),
 });
 
@@ -46,7 +56,16 @@ function hashToken(token: string) {
 
 // ─── Authenticated: Manage Questionnaires ───
 
-export async function createQuestionnaire(input: Omit<z.infer<typeof createQuestionnaireSchema>, "workspaceId"> & { workspaceId?: string }) {
+export async function createQuestionnaire(input: {
+  workspaceId?: string;
+  name: string;
+  description?: string | null;
+  slug?: string | null;
+  expiresAt?: string | null;
+  maxResponses?: number | null;
+  requireAll?: boolean;
+  schema: QuestionnaireField[];
+}) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const targetWorkspaceId = input.workspaceId || (await getWorkspaceId());
@@ -58,6 +77,10 @@ export async function createQuestionnaire(input: Omit<z.infer<typeof createQuest
     workspaceId: parsed.workspaceId,
     name: parsed.name,
     description: parsed.description || null,
+    slug: parsed.slug || null,
+    expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
+    maxResponses: parsed.maxResponses || null,
+    requireAll: parsed.requireAll ?? false,
     schema: parsed.schema,
     createdBy: user.id,
   }).returning();
@@ -81,7 +104,14 @@ export async function updateQuestionnaire(questionnaireId: string, input: z.infe
   if (!existing) throw new Error("Questionnaire not found");
 
   const [updated] = await db.update(questionnaires)
-    .set({ ...parsed, updatedAt: new Date() })
+    .set({
+      ...parsed,
+      slug: parsed.slug !== undefined ? (parsed.slug || null) : undefined,
+      expiresAt: parsed.expiresAt !== undefined ? (parsed.expiresAt ? new Date(parsed.expiresAt) : null) : undefined,
+      maxResponses: parsed.maxResponses !== undefined ? (parsed.maxResponses || null) : undefined,
+      requireAll: parsed.requireAll !== undefined ? parsed.requireAll : undefined,
+      updatedAt: new Date(),
+    })
     .where(eq(questionnaires.id, questionnaireId))
     .returning();
 
@@ -405,6 +435,25 @@ export async function getPublicQuestionnaire(tokenOrId: string) {
     .limit(1);
 
   if (qMaster) {
+    if (qMaster.expiresAt && qMaster.expiresAt < new Date()) {
+      return { error: "expired" as const };
+    }
+
+    if (qMaster.maxResponses) {
+      const [countResult] = await db
+        .select({ count: sql<number>`count(*)::int` })
+        .from(questionnaireResponses)
+        .where(
+          and(
+            eq(questionnaireResponses.questionnaireId, qMaster.id),
+            eq(questionnaireResponses.status, "submitted")
+          )
+        );
+      if (countResult && countResult.count >= qMaster.maxResponses) {
+        return { error: "max_responses_reached" as const };
+      }
+    }
+
     return {
       questionnaire: qMaster,
       isPublicMasterLink: true,

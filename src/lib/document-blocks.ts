@@ -12,6 +12,8 @@ export type DocumentBlock = {
   items?: string[];
   ordered?: boolean;
   align?: DocumentBlockAlign;
+  fontFamily?: string;
+  fontSize?: "sm" | "base" | "lg" | "xl";
   src?: string;
   fileName?: string;
   fileId?: string;

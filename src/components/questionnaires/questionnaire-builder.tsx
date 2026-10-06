@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect, useTransition } from "react";
+import { useMemo, useState, useEffect, useTransition, useRef, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
@@ -34,6 +34,11 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  RotateCcw,
   Type,
   AlignLeft,
   Mail,
@@ -92,6 +97,7 @@ import { useT } from "@/lib/i18n-client";
 import Link from "next/link";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import type { QuestionnaireField, QuestionnaireFieldType } from "@/lib/questionnaire-schema";
+import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
 import { IntakeForm } from "@/components/questionnaires/intake-form";
 
 function makeId() {
@@ -446,17 +452,6 @@ function SortableCanvasField({
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onOpenProperties();
-          }}
-          className="p-1 text-muted-foreground hover:text-primary rounded"
-          title={t("Buka Properti", "Open Properties")}
-        >
-          <Settings className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
             onDuplicate();
           }}
           className="p-1 text-muted-foreground hover:text-primary rounded"
@@ -698,7 +693,15 @@ export function QuestionnaireBuilder({
 }: {
   workspaceId: string;
   questionnaireId?: string;
-  initial?: { name: string; slug?: string | null; description: string | null; schema: QuestionnaireField[] };
+  initial?: {
+    name: string;
+    slug?: string | null;
+    description: string | null;
+    expiresAt?: string | null;
+    maxResponses?: number | null;
+    requireAll?: boolean;
+    schema: QuestionnaireField[];
+  };
 }) {
   const { t } = useT();
   const router = useRouter();
@@ -721,6 +724,9 @@ export function QuestionnaireBuilder({
   // Form general state
   const [name, setName] = useState(initial?.name || "");
   const [description, setDescription] = useState(initial?.description || "");
+  const [expiresAt, setExpiresAt] = useState<string>(initial?.expiresAt ? initial.expiresAt.slice(0, 16) : "");
+  const [maxResponses, setMaxResponses] = useState<string>(initial?.maxResponses ? String(initial.maxResponses) : "");
+  const [requireAll, setRequireAll] = useState<boolean>(initial?.requireAll || false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [selectedTheme, setSelectedTheme] = useState("purple");
   const [customHex, setCustomHex] = useState("#6C5CE7");
@@ -743,7 +749,7 @@ export function QuestionnaireBuilder({
             id: makeId(),
             type: "text",
             label: t("Nama Lengkap", "Full Name"),
-            required: true,
+            required: false,
             placeholder: t("Masukkan nama Anda", "Enter your full name"),
             colSpan: "full",
           },
@@ -751,7 +757,7 @@ export function QuestionnaireBuilder({
             id: makeId(),
             type: "email",
             label: t("Email Bisnis", "Business Email"),
-            required: true,
+            required: false,
             placeholder: "email@company.com",
             colSpan: "half",
           },
@@ -759,7 +765,7 @@ export function QuestionnaireBuilder({
             id: makeId(),
             type: "phone",
             label: t("Nomor WhatsApp", "WhatsApp / Phone"),
-            required: true,
+            required: false,
             placeholder: "+1 555-0199",
             colSpan: "half",
           },
@@ -823,7 +829,7 @@ export function QuestionnaireBuilder({
                 ? t("Informasi Penting", "Important Information")
                 : `${t("Pertanyaan", "Question")} ${def.label}`,
       sublabel: def.type === "heading" ? t("Panduan singkat bagian ini...", "Brief guideline for this section...") : undefined,
-      required: def.type !== "heading" && def.type !== "divider" && def.type !== "info" && def.type !== "page_break",
+      required: false,
       colSpan: def.defaultConfig.colSpan || "full",
       ...def.defaultConfig,
     };
@@ -878,52 +884,93 @@ export function QuestionnaireBuilder({
     );
   }
 
-  function handleSave() {
-    if (!name.trim()) {
-      toast.error(t("Nama formulir wajib diisi", "Form name is required"));
-      return;
-    }
-    if (fields.length === 0) {
-      toast.error(t("Formulir harus memiliki minimal 1 field", "At least 1 field is required"));
-      return;
-    }
+  const [savedStatus, setSavedStatus] = useState<"saved" | "saving" | "idle">("saved");
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    startTransition(async () => {
+  const executeSave = useCallback(
+    async (isAuto = false) => {
+      if (!name.trim()) {
+        if (!isAuto) toast.error(t("Nama formulir wajib diisi", "Form name is required"));
+        return;
+      }
+      if (fields.length === 0) {
+        if (!isAuto) toast.error(t("Formulir harus memiliki minimal 1 field", "At least 1 field is required"));
+        return;
+      }
+
+      setSavedStatus("saving");
       try {
         let qId = questionnaireId;
         const normalizedSlug = isPaidPlan && customSlug.trim() ? customSlug.trim().toLowerCase() : null;
+        const isoExpiresAt = expiresAt ? new Date(expiresAt).toISOString() : null;
+        const parsedMaxResp = maxResponses ? parseInt(maxResponses, 10) : null;
+
         if (questionnaireId) {
           await updateQuestionnaire(questionnaireId, {
             name: name.trim(),
             description: description.trim() || null,
             slug: normalizedSlug,
+            expiresAt: isoExpiresAt,
+            maxResponses: parsedMaxResp,
+            requireAll,
             schema: fields,
           });
-          toast.success(t("Formulir berhasil diperbarui", "Form updated"));
+          if (!isAuto) toast.success(t("Formulir berhasil diperbarui", "Form updated"));
         } else {
           const res = await createQuestionnaire({
             workspaceId,
             name: name.trim(),
             description: description.trim() || null,
+            slug: normalizedSlug,
+            expiresAt: isoExpiresAt,
+            maxResponses: parsedMaxResp,
+            requireAll,
             schema: fields,
           });
           qId = res.id;
-          if (normalizedSlug) {
-            await updateQuestionnaire(res.id, { slug: normalizedSlug });
-          }
-          toast.success(t("Formulir berhasil dibuat", "Form created"));
+          if (!isAuto) toast.success(t("Formulir berhasil dibuat", "Form created"));
+          router.push(`/app/questionnaires/${qId}`);
+          refresh();
         }
-        router.push(`/app/questionnaires/${qId}`);
-        refresh();
+        setSavedStatus("saved");
       } catch (err: any) {
-        toast.error(err?.message || t("Gagal menyimpan", "Save failed"));
+        setSavedStatus("idle");
+        if (!isAuto) toast.error(err?.message || t("Gagal menyimpan", "Save failed"));
       }
+    },
+    [name, description, customSlug, expiresAt, maxResponses, requireAll, fields, questionnaireId, isPaidPlan, workspaceId, router, refresh, t]
+  );
+
+  // Debounced auto-save on change
+  useEffect(() => {
+    if (!questionnaireId) return; // Only auto-save existing questionnaires
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    autoSaveTimerRef.current = setTimeout(() => {
+      void executeSave(true);
+    }, 1500);
+
+    return () => {
+      if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    };
+  }, [name, description, customSlug, expiresAt, maxResponses, requireAll, fields, questionnaireId, executeSave]);
+
+  function handleSave() {
+    startTransition(async () => {
+      await executeSave(false);
     });
   }
 
+  const [customOrigin, setCustomOrigin] = useState("");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setCustomOrigin(window.location.origin);
+    }
+  }, []);
+
   const activeSlugOrId = customSlug.trim() || initial?.slug || questionnaireId;
-  const shareUrl = activeSlugOrId ? `https://cubiqlo.com/intake/${activeSlugOrId}` : "";
-  const embedCode = activeSlugOrId ? `<iframe src="https://cubiqlo.com/intake/${activeSlugOrId}" width="100%" height="700px" frameborder="0" style="border:0;border-radius:12px;"></iframe>` : "";
+  const baseUrl = customOrigin || "https://dev.cubiqlo.com";
+  const shareUrl = activeSlugOrId ? `${baseUrl}/intake/${activeSlugOrId}` : "";
+  const embedCode = activeSlugOrId ? `<iframe src="${baseUrl}/intake/${activeSlugOrId}" width="100%" height="700px" frameborder="0" style="border:0;border-radius:12px;"></iframe>` : "";
 
   return (
     <div className="flex flex-col h-[calc(100vh-56px)] w-full bg-slate-100/70 dark:bg-zinc-950 overflow-hidden select-none">
@@ -1066,14 +1113,31 @@ export function QuestionnaireBuilder({
             </>
           )}
 
+          {/* Auto-save status indicator */}
+          {questionnaireId && (
+            <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground bg-muted/40">
+              {savedStatus === "saving" ? (
+                <>
+                  <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                  <span>{t("Menyimpan...", "Saving...")}</span>
+                </>
+              ) : savedStatus === "saved" ? (
+                <>
+                  <Check className="h-3 w-3 text-emerald-600" />
+                  <span className="text-emerald-600">{t("Tersimpan otomatis", "Auto-saved")}</span>
+                </>
+              ) : null}
+            </div>
+          )}
+
           <Button
             type="button"
             size="sm"
-            disabled={pending}
+            disabled={pending || savedStatus === "saving"}
             onClick={handleSave}
             className="h-8 gap-1.5 text-xs font-semibold bg-primary text-primary-foreground shadow-xs"
           >
-            {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            {pending || savedStatus === "saving" ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
             <span>{t("Simpan", "Save")}</span>
           </Button>
         </div>
@@ -1412,20 +1476,6 @@ export function QuestionnaireBuilder({
                       </SortableContext>
                     </DndContext>
 
-                    {/* Add question bottom banner */}
-                    <div className="pt-2 flex items-center justify-center">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setElementsOpen(true)}
-                        className="h-8.5 px-4 text-xs font-semibold gap-2 border-dashed border-primary/40 text-primary hover:bg-primary/5"
-                      >
-                        <Plus className="h-3.5 w-3.5" />
-                        <span>{t("Tambah Elemen Baru", "+ Add New Element")}</span>
-                      </Button>
-                    </div>
-
                     {/* Submit button preview */}
                     <div className="pt-5 border-t border-border/60 flex items-center justify-between">
                       <Button disabled className="h-9.5 px-5 text-xs font-semibold bg-primary text-primary-foreground">
@@ -1576,6 +1626,114 @@ export function QuestionnaireBuilder({
                               />
                             </div>
                           )}
+
+                        {/* Typography & Font Styling */}
+                        <div className="space-y-2 pt-2 border-t border-border/60">
+                          <Label className="text-xs font-medium">{t("Gaya Font", "Font Family")}</Label>
+                          <Select
+                            value={selectedField.fontFamily || "inter"}
+                            onValueChange={(val) => updateSelectedField({ fontFamily: val })}
+                          >
+                            <SelectTrigger className="h-8.5 text-xs bg-background">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {CUBIQLO_FONTS.map((font) => (
+                                <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.fontFamily }}>
+                                  {font.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div className="space-y-1.5 pt-1">
+                          <Label className="text-xs font-medium">{t("Ukuran Teks", "Font Size")}</Label>
+                          <div className="grid grid-cols-4 gap-1">
+                            {(["sm", "base", "lg", "xl"] as const).map((sz) => (
+                              <button
+                                key={sz}
+                                type="button"
+                                onClick={() => updateSelectedField({ fontSize: sz })}
+                                className={`py-1 text-xs font-bold rounded-md border transition-all ${
+                                  (selectedField.fontSize || "base") === sz
+                                    ? "bg-primary text-primary-foreground border-primary"
+                                    : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
+                                }`}
+                              >
+                                {sz.toUpperCase()}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Text Styles: Bold, Italic, Underline, Strikethrough */}
+                        <div className="space-y-1.5 pt-1">
+                          <Label className="text-xs font-medium">{t("Gaya Penulisan Teks", "Text Formatting")}</Label>
+                          <div className="grid grid-cols-4 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
+                            <button
+                              type="button"
+                              onClick={() => updateSelectedField({ bold: !selectedField.bold })}
+                              className={`py-1 text-xs rounded font-bold transition-colors flex items-center justify-center ${
+                                selectedField.bold ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50"
+                              }`}
+                              title="Bold"
+                            >
+                              <Bold className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateSelectedField({ italic: !selectedField.italic })}
+                              className={`py-1 text-xs rounded font-bold transition-colors flex items-center justify-center ${
+                                selectedField.italic ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50"
+                              }`}
+                              title="Italic"
+                            >
+                              <Italic className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateSelectedField({ underline: !selectedField.underline })}
+                              className={`py-1 text-xs rounded font-bold transition-colors flex items-center justify-center ${
+                                selectedField.underline ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50"
+                              }`}
+                              title="Underline"
+                            >
+                              <Underline className="h-3.5 w-3.5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => updateSelectedField({ strikethrough: !selectedField.strikethrough })}
+                              className={`py-1 text-xs rounded font-bold transition-colors flex items-center justify-center ${
+                                selectedField.strikethrough ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50"
+                              }`}
+                              title="Strikethrough"
+                            >
+                              <Strikethrough className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Alignment setting */}
+                        <div className="space-y-1.5 pt-2 border-t border-border/60">
+                          <Label className="text-xs font-medium">{t("Perataan Teks", "Text Alignment")}</Label>
+                          <div className="grid grid-cols-3 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
+                            {(["left", "center", "right"] as const).map((al) => (
+                              <button
+                                key={al}
+                                type="button"
+                                onClick={() => updateSelectedField({ align: al })}
+                                className={`py-1 text-xs capitalize rounded font-medium transition-colors ${
+                                  (selectedField.align || "left") === al
+                                    ? "bg-primary text-primary-foreground font-bold"
+                                    : "text-muted-foreground hover:bg-muted/50"
+                                }`}
+                              >
+                                {al}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
 
                         {/* Rating Scale Max setting */}
                         {selectedField.type === "rating" && (
@@ -1735,43 +1893,102 @@ export function QuestionnaireBuilder({
 
                         {/* Options Editor for Select & Multiselect */}
                         {(selectedField.type === "select" || selectedField.type === "multiselect") && (
-                          <div className="space-y-2 pt-2 border-t border-border/60">
+                          <div className="space-y-3 pt-2 border-t border-border/60">
                             <div className="flex items-center justify-between">
-                              <Label className="text-xs font-medium">{t("Pilihan Opsi & Harga", "Options & Pricing")}</Label>
-                              <span className="text-[10px] text-muted-foreground">{t("Format: Opsi : Harga", "Format: Option : Price")}</span>
+                              <Label className="text-xs font-medium">{t("Daftar Pilihan Opsi", "Choice Options List")}</Label>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const current = selectedField.options || [];
+                                  const newOpt = `${t("Pilihan", "Option")} ${current.length + 1}`;
+                                  updateSelectedField({ options: [...current, newOpt] });
+                                }}
+                                className="h-6 px-2 text-xs text-primary hover:bg-primary/10 font-bold"
+                              >
+                                <Plus className="h-3 w-3 mr-1" />
+                                {t("Tambah Opsi", "Add Option")}
+                              </Button>
                             </div>
-                            <Textarea
-                              value={(selectedField.options || [])
-                                .map((opt) => {
-                                  const price = selectedField.optionPrices?.[opt];
-                                  return price !== undefined ? `${opt} : ${price}` : opt;
-                                })
-                                .join("\n")}
-                              onChange={(e) => {
-                                const lines = e.target.value.split("\n");
-                                const opts: string[] = [];
-                                const prices: Record<string, number> = {};
-                                lines.forEach((l) => {
-                                  const trimmed = l.trim();
-                                  if (!trimmed) return;
-                                  if (trimmed.includes(":")) {
-                                    const parts = trimmed.split(":");
-                                    const label = parts[0].trim();
-                                    const price = Number(parts[1].trim());
-                                    if (label) {
-                                      opts.push(label);
-                                      if (!isNaN(price)) prices[label] = price;
+
+                            <div className="space-y-1.5">
+                              {(selectedField.options && selectedField.options.length > 0
+                                ? selectedField.options
+                                : [t("Pilihan 1", "Option 1"), t("Pilihan 2", "Option 2")]
+                              ).map((opt, idx) => (
+                                <div key={idx} className="flex items-center gap-1.5">
+                                  <span className="text-[10px] text-muted-foreground font-mono w-4 shrink-0 text-center">
+                                    {idx + 1}.
+                                  </span>
+                                  <Input
+                                    value={opt}
+                                    onChange={(e) => {
+                                      const current = [...(selectedField.options || [t("Pilihan 1", "Option 1"), t("Pilihan 2", "Option 2")])];
+                                      current[idx] = e.target.value;
+                                      updateSelectedField({ options: current });
+                                    }}
+                                    placeholder={`${t("Opsi", "Option")} ${idx + 1}`}
+                                    className="h-8 text-xs bg-background flex-1"
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => {
+                                      const current = [...(selectedField.options || [])];
+                                      if (current.length <= 1) {
+                                        toast.error(t("Minimal harus ada 1 opsi", "At least 1 option required"));
+                                        return;
+                                      }
+                                      current.splice(idx, 1);
+                                      updateSelectedField({ options: current });
+                                    }}
+                                    className="h-7 w-7 text-muted-foreground hover:text-destructive shrink-0"
+                                    title={t("Hapus opsi ini", "Delete option")}
+                                  >
+                                    <X className="h-3.5 w-3.5" />
+                                  </Button>
+                                </div>
+                              ))}
+                            </div>
+
+                            {/* Optional quick price / calculation setting */}
+                            <div className="pt-2 border-t border-dashed border-border/60">
+                              <Label className="text-[11px] font-medium text-muted-foreground">{t("Format Cepat Opsi & Harga (Opsional)", "Quick Options & Pricing Bulk Edit")}</Label>
+                              <Textarea
+                                value={(selectedField.options || [])
+                                  .map((opt) => {
+                                    const price = selectedField.optionPrices?.[opt];
+                                    return price !== undefined ? `${opt} : ${price}` : opt;
+                                  })
+                                  .join("\n")}
+                                onChange={(e) => {
+                                  const lines = e.target.value.split("\n");
+                                  const opts: string[] = [];
+                                  const prices: Record<string, number> = {};
+                                  lines.forEach((l) => {
+                                    const trimmed = l.trim();
+                                    if (!trimmed) return;
+                                    if (trimmed.includes(":")) {
+                                      const parts = trimmed.split(":");
+                                      const label = parts[0].trim();
+                                      const price = Number(parts[1].trim());
+                                      if (label) {
+                                        opts.push(label);
+                                        if (!isNaN(price)) prices[label] = price;
+                                      }
+                                    } else {
+                                      opts.push(trimmed);
                                     }
-                                  } else {
-                                    opts.push(trimmed);
-                                  }
-                                });
-                                updateSelectedField({ options: opts, optionPrices: prices });
-                              }}
-                              rows={4}
-                              placeholder="Website Design : 3000&#10;SEO Optimization : 1000&#10;Monthly Maintenance : 500"
-                              className="text-xs font-mono"
-                            />
+                                  });
+                                  updateSelectedField({ options: opts, optionPrices: prices });
+                                }}
+                                rows={2}
+                                placeholder="Website : 5000&#10;Logo : 2000"
+                                className="text-[11px] font-mono mt-1"
+                              />
+                            </div>
                           </div>
                         )}
 
@@ -1787,88 +2004,6 @@ export function QuestionnaireBuilder({
                             />
                           </div>
                         )}
-
-                        {/* Conditional Logic Setting */}
-                        <div className="space-y-2 pt-2 border-t border-border/60">
-                          <div className="flex items-center justify-between">
-                            <Label className="text-xs font-medium flex items-center gap-1.5">
-                              <Sliders className="h-3.5 w-3.5 text-primary" />
-                              <span>Conditional Logic</span>
-                            </Label>
-                            {selectedField.condition && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => updateSelectedField({ condition: undefined })}
-                                className="h-6 px-1.5 text-[10px] text-destructive hover:bg-destructive/10"
-                              >
-                                Reset
-                              </Button>
-                            )}
-                          </div>
-
-                          {fields.filter((f) => f.id !== selectedField.id && f.type !== "heading" && f.type !== "divider" && f.type !== "page_break").length > 0 ? (
-                            <div className="space-y-2 rounded-lg border p-2.5 bg-muted/10">
-                              <p className="text-[11px] text-muted-foreground">{t("Tampilkan elemen ini hanya jika:", "Display this element only if:")}</p>
-                              <Select
-                                value={selectedField.condition?.fieldId || "none"}
-                                onValueChange={(val) => {
-                                  if (val === "none") {
-                                    updateSelectedField({ condition: undefined });
-                                  } else {
-                                    updateSelectedField({
-                                      condition: {
-                                        fieldId: val,
-                                        operator: "equals",
-                                        value: "",
-                                      },
-                                    });
-                                  }
-                                }}
-                              >
-                                <SelectTrigger className="h-8 text-xs bg-background">
-                                  <SelectValue placeholder={t("Pilih pertanyaan pemicu...", "Select trigger question...")} />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="none">{t("Tanpa Kondisi (Selalu Tampil)", "No Condition (Always Show)")}</SelectItem>
-                                  {fields
-                                    .filter((f) => f.id !== selectedField.id && f.type !== "heading" && f.type !== "divider" && f.type !== "page_break")
-                                    .map((f) => (
-                                      <SelectItem key={f.id} value={f.id}>
-                                        {f.label}
-                                      </SelectItem>
-                                    ))}
-                                </SelectContent>
-                              </Select>
-
-                              {selectedField.condition && (
-                                <div className="space-y-1.5 pt-1">
-                                  <Label className="text-[10px] text-muted-foreground uppercase font-bold">
-                                    {t("Nilai yang Cocok (Value Equals):", "Matching Value (Value Equals):")}
-                                  </Label>
-                                  <Input
-                                    value={selectedField.condition.value || ""}
-                                    onChange={(e) =>
-                                      updateSelectedField({
-                                        condition: {
-                                          ...selectedField.condition!,
-                                          value: e.target.value,
-                                        },
-                                      })
-                                    }
-                                    placeholder={t("Misal: Web Development, Ya, dsb.", "e.g., Web Development, Yes, etc.")}
-                                    className="h-8 text-xs bg-background"
-                                  />
-                                </div>
-                              )}
-                            </div>
-                          ) : (
-                            <p className="text-[10px] text-muted-foreground italic">
-                              {t("Tambahkan minimal 2 pertanyaan untuk mengaktifkan conditional logic.", "Add at least 2 questions to enable conditional logic.")}
-                            </p>
-                          )}
-                        </div>
 
                         {/* Quick Delete */}
                         <div className="pt-3 border-t border-border/60">
@@ -1924,8 +2059,68 @@ export function QuestionnaireBuilder({
             <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
               <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
                 <Lock className="h-4 w-4 text-amber-500" />
-                <span>{t("Kontrol Akses & Status", "Access Control & Status")}</span>
+                <span>{t("Batas Waktu, Kuota & Status Akses", "Expiration, Quota & Access Limits")}</span>
               </h3>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold flex items-center gap-1.5">
+                    <Calendar className="h-3.5 w-3.5 text-primary" />
+                    <span>{t("Tanggal Kedaluwarsa (Auto-Close)", "Form Expiration Date")}</span>
+                  </Label>
+                  <Input
+                    type="datetime-local"
+                    value={expiresAt}
+                    onChange={(e) => setExpiresAt(e.target.value)}
+                    className="h-9 text-xs"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    {t("Formulir akan otomatis ditutup setelah tanggal & jam ini terlewati.", "Form automatically closes and stops accepting entries after this date.")}
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold flex items-center gap-1.5">
+                    <Hash className="h-3.5 w-3.5 text-primary" />
+                    <span>{t("Batas Maksimal Respon", "Max Responses Limit")}</span>
+                  </Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={maxResponses}
+                    onChange={(e) => setMaxResponses(e.target.value)}
+                    placeholder={t("Misal: 50 (Kosong = Tak Terbatas)", "e.g., 50 (Empty = Unlimited)")}
+                    className="h-9 text-xs"
+                  />
+                  <p className="text-[10px] text-muted-foreground">
+                    {t("Otomatis ditutup jika jumlah pengisi sudah mencapai kuota.", "Auto-closes when response count reaches this limit.")}
+                  </p>
+                </div>
+              </div>
+
+              {/* Global Require All Toggle */}
+              <div className="flex items-center justify-between rounded-xl border p-3 bg-muted/10">
+                <div>
+                  <p className="text-xs font-semibold">{t("Wajibkan Semua Pertanyaan (Require All)", "Require All Form Questions")}</p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {t("Aktifkan untuk mewajibkan responden mengisi semua kolom pertanyaan", "Make all questions strictly required to submit")}
+                  </p>
+                </div>
+                <Checkbox
+                  checked={requireAll}
+                  onCheckedChange={(checked) => {
+                    const isReq = Boolean(checked);
+                    setRequireAll(isReq);
+                    setFields((prev) =>
+                      prev.map((f) =>
+                        f.type !== "heading" && f.type !== "divider" && f.type !== "info" && f.type !== "page_break"
+                          ? { ...f, required: isReq }
+                          : f
+                      )
+                    );
+                  }}
+                />
+              </div>
 
               <div className="flex items-center justify-between rounded-xl border p-3 bg-muted/10">
                 <div>

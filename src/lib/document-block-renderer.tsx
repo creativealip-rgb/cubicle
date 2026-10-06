@@ -45,11 +45,22 @@ export function renderDocumentBlock(block: DocumentBlock, values: DocumentPlaceh
  * Returns null for blocks that render nothing (divider) or cannot be rendered
  * safely (invalid media) so callers can skip them.
  */
+import { getFontFamily } from "@/lib/builder-fonts";
+
 export function renderDocumentBlockHtml(
   block: DocumentBlock,
   values: DocumentPlaceholderValues,
 ): React.ReactNode {
   const textAlignClass = block.align === "center" ? "text-center" : block.align === "right" ? "text-right" : block.align === "left" ? "text-left" : "";
+  const fontStyle = block.fontFamily ? { fontFamily: getFontFamily(block.fontFamily) } : undefined;
+  const fontSizeClass =
+    block.fontSize === "sm"
+      ? "text-xs"
+      : block.fontSize === "lg"
+      ? "text-base font-medium"
+      : block.fontSize === "xl"
+      ? "text-lg font-semibold"
+      : "";
   if (block.type === "divider") {
     return <hr className="my-4 border-slate-200" />;
   }
@@ -146,5 +157,9 @@ export function renderDocumentBlockHtml(
   if (block.type === "signature") {
     return <div className="rounded border border-dashed p-6 text-center text-sm text-muted-foreground">Tempat tanda tangan client</div>;
   }
-  return <div className={`whitespace-pre-wrap ${textAlignClass}`}>{renderDocumentBlock(block, values)}</div>;
+  return (
+    <div className={`whitespace-pre-wrap ${textAlignClass} ${fontSizeClass}`} style={fontStyle}>
+      {renderDocumentBlock(block, values)}
+    </div>
+  );
 }

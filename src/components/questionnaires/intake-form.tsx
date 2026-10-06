@@ -29,6 +29,8 @@ import {
 } from "lucide-react";
 import type { QuestionnaireField } from "@/lib/questionnaire-schema";
 
+import { getFontFamily } from "@/lib/builder-fonts";
+
 export function IntakeForm({
   token,
   fields,
@@ -136,7 +138,12 @@ export function IntakeForm({
       if (f.required && f.type !== "heading" && f.type !== "divider" && f.type !== "info" && f.type !== "page_break") {
         const val = answers[f.id];
         if (val === undefined || val === null || val === "" || (Array.isArray(val) && val.length === 0)) {
-          toast.error(`Pertanyaan "${f.label}" wajib diisi`);
+          toast.error(
+            t(
+              `Pertanyaan "${f.label}" wajib diisi`,
+              `Question "${f.label}" is required`
+            )
+          );
           return;
         }
       }
@@ -234,11 +241,16 @@ export function IntakeForm({
           const isHalf = f.colSpan === "half";
           const colClass = isHalf ? "col-span-12 md:col-span-6" : "col-span-12";
 
+          const fieldFontFamily = f.fontFamily ? getFontFamily(f.fontFamily) : undefined;
+          const fieldAlignClass = f.align === "center" ? "text-center" : f.align === "right" ? "text-right" : "text-left";
+          const fieldSizeClass = f.fontSize === "sm" ? "text-xs" : f.fontSize === "lg" ? "text-base" : f.fontSize === "xl" ? "text-lg" : "";
+          const textStyles = `${f.bold ? "font-bold" : "font-medium"} ${f.italic ? "italic" : ""} ${f.underline ? "underline" : ""} ${f.strikethrough ? "line-through" : ""}`;
+
           if (f.type === "heading") {
             return (
-              <div key={f.id} className="col-span-12 pt-4 pb-1 border-b border-border/60">
-                <h3 className="text-base sm:text-lg font-bold text-foreground">{f.label}</h3>
-                {f.sublabel && <p className="text-xs text-muted-foreground">{f.sublabel}</p>}
+              <div key={f.id} className="col-span-12 pt-4 pb-2 border-b border-border/60" style={fieldFontFamily ? { fontFamily: fieldFontFamily } : undefined}>
+                <h3 className={`text-base sm:text-lg text-foreground ${fieldAlignClass} ${fieldSizeClass} ${textStyles}`}>{f.label}</h3>
+                {f.sublabel && <p className={`text-xs text-muted-foreground mt-0.5 ${fieldAlignClass}`}>{f.sublabel}</p>}
               </div>
             );
           }
@@ -311,14 +323,14 @@ export function IntakeForm({
           }
 
           return (
-            <div key={f.id} className={`${colClass} space-y-1.5`}>
-              <Label className="text-xs font-semibold text-foreground flex items-center justify-between">
+            <div key={f.id} className={`${colClass} space-y-1.5`} style={fieldFontFamily ? { fontFamily: fieldFontFamily } : undefined}>
+              <Label className={`text-xs text-foreground flex items-center justify-between ${fieldAlignClass} ${fieldSizeClass} ${textStyles}`}>
                 <span>
                   {f.label} {f.required && <span className="text-destructive font-bold">*</span>}
                 </span>
               </Label>
 
-              {f.sublabel && <p className="text-[11px] text-muted-foreground">{f.sublabel}</p>}
+              {f.sublabel && <p className={`text-[11px] text-muted-foreground ${fieldAlignClass}`}>{f.sublabel}</p>}
 
               {f.type === "text" && (
                 <Input
@@ -450,22 +462,41 @@ export function IntakeForm({
                   <Paperclip className="h-5 w-5 mx-auto text-primary" />
                   <div className="space-y-0.5">
                     <p className="text-xs font-semibold text-foreground">{t("Upload file dokumen atau aset", "Upload document or asset file")}</p>
-                    <p className="text-[10px] text-muted-foreground">{f.acceptFiles || "Format: PDF, DOC, PNG, ZIP"}</p>
+                    <p className="text-[10px] text-muted-foreground">{f.acceptFiles || "Format: PDF, DOC, PNG, JPG, ZIP"}</p>
                   </div>
                   <Input
                     type="file"
                     accept={f.acceptFiles}
-                    onChange={(e) => {
+                    onChange={async (e) => {
                       const file = e.target.files?.[0];
-                      if (file) {
-                        setFieldValue(f.id, file.name);
-                        toast.success(t(`File ${file.name} dipilih`, `File ${file.name} selected`));
+                      if (!file) return;
+                      const toastId = toast.loading(t("Mengunggah file...", "Uploading file..."));
+                      try {
+                        const fd = new FormData();
+                        fd.append("file", file);
+                        const res = await fetch("/api/upload", {
+                          method: "POST",
+                          body: fd,
+                        });
+                        const data = await res.json();
+                        if (!res.ok || data.error) {
+                          throw new Error(data.error || "Upload failed");
+                        }
+                        setFieldValue(f.id, data.url);
+                        toast.success(t(`File "${file.name}" berhasil diunggah!`, `File "${file.name}" uploaded successfully!`), { id: toastId });
+                      } catch (err: any) {
+                        toast.error(err?.message || t("Gagal mengunggah file", "Failed to upload file"), { id: toastId });
                       }
                     }}
                     className="max-w-xs mx-auto text-xs h-8.5 bg-background"
                   />
                   {answers[f.id] && (
-                    <p className="text-xs font-medium text-emerald-600">✓ {answers[f.id]}</p>
+                    <div className="flex items-center justify-center gap-1.5 pt-1">
+                      <CheckCircle className="h-3.5 w-3.5 text-emerald-600" />
+                      <a href={answers[f.id]} target="_blank" rel="noopener noreferrer" className="text-xs font-medium text-emerald-600 hover:underline">
+                        {answers[f.id]}
+                      </a>
+                    </div>
                   )}
                 </div>
               )}

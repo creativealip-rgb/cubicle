@@ -65,6 +65,13 @@ export const questionnaireFieldSchema = z.object({
   src: z.string().optional(),
   // Logo size
   logoSize: z.enum(["sm", "md", "lg"]).default("md").optional(),
+  // Typography & Text Style styling
+  fontFamily: z.string().optional(),
+  fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
+  bold: z.boolean().optional(),
+  italic: z.boolean().optional(),
+  underline: z.boolean().optional(),
+  strikethrough: z.boolean().optional(),
   // Info text content (for 'info' type) or terms text (for 'terms' type)
   content: z.string().max(2000).optional(),
   // Currency symbol for calculation (e.g. "Rp", "$")
