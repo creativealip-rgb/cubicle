@@ -58,11 +58,9 @@ export function ProjectTabsNav({
       ? tasksAction
       : currentTab === "files"
         ? filesAction
-        : currentTab === "billing"
-          ? billingAction
-          : currentTab === "time"
-            ? timeAction
-            : null;
+        : currentTab === "time"
+          ? timeAction
+          : null;
 
   return (
     <Tabs value={currentTab} onValueChange={handleTabChange} className="space-y-4">
@@ -82,9 +80,6 @@ export function ProjectTabsNav({
               {t("Waktu", "Time")} <span className="rounded-full bg-background px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground">{timeCount}</span>
             </TabsTrigger>
           ) : null}
-          <TabsTrigger value="billing" className="gap-1.5 px-3 py-1 text-xs font-medium sm:text-sm data-[state=active]:shadow-sm">
-            {t("Invoice", "Invoices")} <span className="rounded-full bg-background px-1.5 py-0.5 text-[10px] tabular-nums text-muted-foreground">{invoicesCount}</span>
-          </TabsTrigger>
         </TabsList>
 
         {activeAction && (
@@ -99,20 +94,16 @@ export function ProjectTabsNav({
       </TabsContent>
 
       <TabsContent value="work" className="pt-1">
-        {currentTab === "work" ? <div className="rounded-xl border bg-card p-4 shadow-xs">{tasksContent}</div> : null}
+        {currentTab === "work" ? tasksContent : null}
       </TabsContent>
 
       <TabsContent value="files" className="pt-1">
-        {currentTab === "files" ? <div className="rounded-xl border bg-card p-4 shadow-xs">{filesContent}</div> : null}
+        {currentTab === "files" ? filesContent : null}
       </TabsContent>
 
-      <TabsContent value="billing" className="pt-1">
-        {currentTab === "billing" ? <div className="rounded-xl border bg-card p-4 shadow-xs">{billingContent}</div> : null}
-      </TabsContent>
-
-      {showTimeTab && timeContent ? (
+      {showTimeTab ? (
         <TabsContent value="time" className="pt-1">
-          {currentTab === "time" ? <div className="rounded-xl border bg-card p-4 shadow-xs">{timeContent}</div> : null}
+          {currentTab === "time" ? timeContent : null}
         </TabsContent>
       ) : null}
     </Tabs>

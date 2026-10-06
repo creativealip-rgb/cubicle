@@ -105,7 +105,19 @@ export default async function ClientPortalPage({
               </div>
               <form action={`/client-portal/${slugOrToken}/unlock`} method="post" className="space-y-3">
                 <Input name="password" type="password" autoComplete="current-password" required minLength={8} placeholder={t("Password portal", "Portal password")} />
-                {error && <p className="text-sm text-destructive">{t("Password salah atau terlalu banyak percobaan.", "Incorrect password or too many attempts.")}</p>}
+                {error === "rate" ? (
+                  <p className="text-sm text-destructive font-medium">
+                    {t("Terlalu banyak percobaan. Silakan coba lagi setelah beberapa menit.", "Too many attempts. Please try again after a few minutes.")}
+                  </p>
+                ) : error === "invalid" ? (
+                  <p className="text-sm text-destructive font-medium">
+                    {t("Password portal salah. Silakan periksa kembali.", "Incorrect portal password. Please check and try again.")}
+                  </p>
+                ) : error ? (
+                  <p className="text-sm text-destructive">
+                    {t("Password portal salah.", "Incorrect portal password.")}
+                  </p>
+                ) : null}
                 <Button className="w-full" type="submit">{t("Buka portal", "Open portal")}</Button>
               </form>
             </CardContent>

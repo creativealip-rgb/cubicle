@@ -89,6 +89,8 @@ export function WorkspaceBrandingForm({
         defaultHourlyRate: form.defaultHourlyRate ? Number(form.defaultHourlyRate) : null,
         defaultInvoiceTerms: form.defaultInvoiceTerms,
         replyToEmail: form.replyToEmail,
+        workingHours: form.workingHours,
+        supportNote: form.supportNote,
       });
 
       toast.success(
