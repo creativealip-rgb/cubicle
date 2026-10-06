@@ -444,6 +444,33 @@ export async function revokePortalToken(clientId: string) {
   return { success: true };
 }
 
+export async function restorePortalAccess(clientId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertClientInWorkspace(db, user.id, workspaceId, clientId);
+  await assertCanUseClientPortal(workspaceId);
+
+  const rawToken = randomBytes(32).toString("hex");
+  const tokenHash = createHash("sha256").update(rawToken).digest("hex");
+  const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 90); // 90 days
+
+  await db.update(clients)
+    .set({
+      portalEnabled: true,
+      portalTokenHash: tokenHash,
+      portalTokenEnc: encryptSecret(rawToken),
+      portalTokenExpiresAt: expiresAt,
+      portalTokenRevokedAt: null,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)));
+
+  await writeActivityLog(workspaceId, user.id, "restored_portal_access", "client", clientId);
+  return { success: true, token: rawToken, expiresAt };
+}
+
 export async function setClientPortalPassword(clientId: string, password: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
