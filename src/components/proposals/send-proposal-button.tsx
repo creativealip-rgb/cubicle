@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { Send, Copy, Check, Link2, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
+import { SendMessageRichEditor } from "@/components/ui/send-message-rich-editor";
 import {
   Dialog,
   DialogContent,
@@ -174,16 +174,19 @@ export function SendProposalButton({
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 text-sm">
-            <label className="block space-y-2">
+            <div className="space-y-2">
               <span className="block text-sm font-medium text-foreground">{t("Pesan", "Message")}</span>
-              <Textarea
+              <SendMessageRichEditor
                 value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                disabled={pending}
-                className="min-h-40 resize-y leading-relaxed"
-                placeholder={t("Pesan tambahan untuk client (opsional)", "Optional message to client")}
+                onChange={setMessage}
+                variables={[
+                  { tag: "{{proposal_link}}", label: t("Link Proposal", "Proposal Link") },
+                  { tag: "{{client_name}}", label: t("Nama Klien", "Client Name") },
+                  { tag: "{{title}}", label: t("Judul Proposal", "Proposal Title") },
+                ]}
+                minRows={6}
               />
-            </label>
+            </div>
             <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
               <div className="space-y-1">
                 <span className="block text-xs font-medium uppercase tracking-wide text-muted-foreground">

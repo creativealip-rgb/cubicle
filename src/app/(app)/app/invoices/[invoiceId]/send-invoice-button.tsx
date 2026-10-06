@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { SendMessageRichEditor } from "@/components/ui/send-message-rich-editor";
 import { sendInvoiceEmail } from "@/lib/actions/invoices";
 import { useT } from "@/lib/i18n-client";
 
@@ -105,19 +105,21 @@ export function SendInvoiceButton({
         </DialogHeader>
 
         <div className="space-y-4 text-sm">
-          <label className="block space-y-2">
+          <div className="space-y-2">
             <span className="block text-sm font-medium text-foreground">{t("Pesan", "Message")}</span>
-            <Textarea
-              id="invoice-message"
-              rows={6}
-              maxLength={10000}
+            <SendMessageRichEditor
               value={message}
-              onChange={(event) => setMessage(event.target.value)}
-              disabled={loading}
-              className="min-h-40 resize-y leading-relaxed font-sans"
-              placeholder={t("Pesan tambahan untuk klien...", "Optional message to client...")}
+              onChange={setMessage}
+              variables={[
+                { tag: "{{invoice_link}}", label: t("Link Invoice", "Invoice Link") },
+                { tag: "{{client_name}}", label: t("Nama Klien", "Client Name") },
+                { tag: "{{amount}}", label: t("Nominal Tagihan", "Amount") },
+                { tag: "{{invoice_number}}", label: t("Nomor Invoice", "Invoice Number") },
+                { tag: "{{due_date}}", label: t("Jatuh Tempo", "Due Date") },
+              ]}
+              minRows={6}
             />
-          </label>
+          </div>
 
           <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
             <div className="space-y-1">

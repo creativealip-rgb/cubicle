@@ -60,11 +60,13 @@ function wrapTemplate(opts: { title: string; bodyHtml: string }): string {
 </body></html>`;
 }
 
+import { formatRichEmailHtml } from "@/lib/rich-email";
+
 export async function sendNotification(opts: SendOpts) {
   const text = opts.text ?? "";
   const html = opts.html ?? wrapTemplate({
     title: opts.subject,
-    bodyHtml: `<p style="margin:0;">${escapeHtml(text).replace(/\n/g, "<br>")}</p>`,
+    bodyHtml: `<div style="margin:0;font-size:15px;line-height:1.6;color:#1a1d24;">${formatRichEmailHtml(text)}</div>`,
   });
 
   if (!resend) {
