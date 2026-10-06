@@ -329,12 +329,12 @@ const workflowCopy = [
           </div>
         </section>
 
-        <section id="portal" className="relative overflow-hidden bg-[#171624] px-4 py-20 text-white sm:px-6 sm:py-28 lg:px-8">
-          <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(circle at 80% 20%, rgba(102,71,240,.42), transparent 30%), radial-gradient(circle at 5% 90%, rgba(255,118,87,.18), transparent 24%)" }} />
+        <section id="portal" className="relative overflow-hidden bg-[#0F172A] px-4 py-20 text-white sm:px-6 sm:py-28 lg:px-8">
+          <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(circle at 80% 20%, rgba(37,99,235,.35), transparent 30%), radial-gradient(circle at 5% 90%, rgba(2,132,199,.15), transparent 24%)" }} />
           <div className="relative mx-auto grid max-w-7xl gap-14 lg:grid-cols-[.78fr_1.22fr] lg:items-center">
             <div>
-              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-violet-200 ring-1 ring-white/15"><ShieldCheck className="h-4 w-4" /> {tx("Portal klien aman", "Secure client portal")}</div>
-              <h2 className="mt-6 text-4xl font-semibold leading-[1.08] tracking-[-.035em] sm:text-6xl">{tx("Satu link.", "One link.")}<br /><span className="text-violet-300">{tx("Lebih sedikit “update dong?”", "Fewer “any updates?” messages")}</span></h2>
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-sky-200 ring-1 ring-white/15"><ShieldCheck className="h-4 w-4" /> {tx("Portal klien aman", "Secure client portal")}</div>
+              <h2 className="mt-6 text-4xl font-semibold leading-[1.08] tracking-[-.035em] sm:text-6xl">{tx("Satu link.", "One link.")}<br /><span className="text-sky-300">{tx("Lebih sedikit “update dong?”", "Fewer “any updates?” messages")}</span></h2>
               <p className="mt-6 max-w-xl text-lg leading-8 text-slate-300">{tx("Klien melihat progress, hasil kerja, komentar, dan invoice. Mereka hanya melihat yang Anda bagikan. Catatan internal tetap aman.", "Clients see progress, deliverables, comments, and invoices. They see only what you share. Internal notes stay private.")}</p>
               <div className="mt-8 grid gap-3 sm:grid-cols-2">
                 {[["Progress terpilih", "Selected progress"], ["File deliverable", "Deliverable files"], ["Komentar publik", "Public comments"], ["Link invoice", "Invoice link"], ["Token aman", "Secure token"], ["Data internal terlindungi", "Internal data protected"]].map(([id, en]) => <div key={id} className="flex items-center gap-2 text-sm text-slate-200"><Check className="h-4 w-4 text-emerald-400" />{tx(id, en)}</div>)}

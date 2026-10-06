@@ -20,12 +20,12 @@ export function CubiqloLogoHeader({ className = "h-8 w-auto" }: { className?: st
       {/* Crisp Modern Logotype "cubiqlo" */}
       <text
         x="44"
-        y="26.5"
-        fontFamily="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Inter, Helvetica, Arial, sans-serif"
-        fontSize="21"
+        y="27"
+        fontFamily="var(--font-jakarta), var(--font-inter), system-ui, sans-serif"
+        fontSize="22"
         fontWeight="800"
-        fill="#292D34"
         letterSpacing="-0.04em"
+        fill="#0F172A"
       >
         cubiqlo
       </text>
