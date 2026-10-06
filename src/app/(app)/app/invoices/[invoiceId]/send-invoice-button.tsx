@@ -22,6 +22,7 @@ import { useT } from "@/lib/i18n-client";
 
 export function SendInvoiceButton({
   invoiceId,
+  invoiceNumber,
   defaultMessage,
   clientEmail,
   defaultFrom,
@@ -29,6 +30,7 @@ export function SendInvoiceButton({
   disabled,
 }: {
   invoiceId: string;
+  invoiceNumber?: string;
   defaultMessage: string;
   clientEmail?: string | null;
   defaultFrom: string;
@@ -43,6 +45,10 @@ export function SendInvoiceButton({
   const [attachReport, setAttachReport] = useState(false);
   const [from, setFrom] = useState(defaultFrom);
   const [to, setTo] = useState(defaultTo);
+
+  const subject = invoiceNumber
+    ? `Invoice ${invoiceNumber}`
+    : t("Invoice Pembayaran", "Payment Invoice");
 
   async function handleSend() {
     if (!message.trim()) {
@@ -129,6 +135,13 @@ export function SendInvoiceButton({
                   )}
                 </p>
               )}
+            </div>
+
+            <div className="space-y-1">
+              <span className="block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("Subjek", "Subject")}
+              </span>
+              <span className="block min-w-0 break-words font-medium">{subject}</span>
             </div>
 
             <div className="space-y-2 border-t pt-2">

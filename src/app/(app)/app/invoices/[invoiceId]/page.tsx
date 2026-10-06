@@ -279,6 +279,7 @@ export default async function InvoiceDetailPage({
           </Button>
           <SendInvoiceButton
             invoiceId={invoiceId}
+            invoiceNumber={inv.invoiceNumber}
             defaultMessage={defaultInvoiceMessage}
             clientEmail={client?.email}
             defaultFrom={`${String(inv.issueDate).slice(0, 7)}-01`}
