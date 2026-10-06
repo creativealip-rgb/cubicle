@@ -14,6 +14,13 @@ import { Label } from "@/components/ui/label";
 import { LoadingButton } from "@/components/ui/loading-button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export type Line = {
   description: string;
@@ -90,6 +97,8 @@ export function InvoiceFullEditor({ invoice, initialItems, clients, projects, so
     return found ? found.label : "";
   });
   const [isEditingHeaders, setIsEditingHeaders] = useState(false);
+  const [addColumnOpen, setAddColumnOpen] = useState(false);
+  const [newColumnName, setNewColumnName] = useState("");
 
   const [form, setForm] = useState({
     ...invoice,
@@ -180,11 +189,12 @@ export function InvoiceFullEditor({ invoice, initialItems, clients, projects, so
     }));
   };
 
-  const addCustomColumn = () => {
-    const colName = prompt(t("Masukkan nama kolom baru:", "Enter new column name:"));
-    if (!colName || !colName.trim()) return;
+  const handleConfirmAddColumn = () => {
+    if (!newColumnName || !newColumnName.trim()) return;
     const colKey = `col_${Date.now()}`;
-    setCustomColumns((curr) => [...curr, { key: colKey, label: colName.trim() }]);
+    setCustomColumns((curr) => [...curr, { key: colKey, label: newColumnName.trim() }]);
+    setNewColumnName("");
+    setAddColumnOpen(false);
   };
 
   const removeCustomColumn = (keyToRemove: string) => {
@@ -388,7 +398,7 @@ export function InvoiceFullEditor({ invoice, initialItems, clients, projects, so
                   type="button"
                   size="sm"
                   variant="outline"
-                  onClick={addCustomColumn}
+                  onClick={() => setAddColumnOpen(true)}
                   className="gap-1 text-xs"
                 >
                   <Plus className="h-3.5 w-3.5" />
@@ -640,6 +650,53 @@ export function InvoiceFullEditor({ invoice, initialItems, clients, projects, so
           <Save className="h-4 w-4 mr-2" />{t("Simpan Manual", "Save Changes")}
         </LoadingButton>
       </div>
+
+      <Dialog open={addColumnOpen} onOpenChange={setAddColumnOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("Tambah Kolom Kustom", "Add Custom Column")}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1">
+              <Label htmlFor="col-name-input" className="text-xs font-medium">
+                {t("Nama Kolom", "Column Name")}
+              </Label>
+              <Input
+                id="col-name-input"
+                placeholder={t("Contoh: Satuan, Catatan, Diskon...", "e.g. Unit, Note, Discount...")}
+                value={newColumnName}
+                onChange={(e) => setNewColumnName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleConfirmAddColumn();
+                  }
+                }}
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                setNewColumnName("");
+                setAddColumnOpen(false);
+              }}
+            >
+              {t("Batal", "Cancel")}
+            </Button>
+            <Button
+              type="button"
+              onClick={handleConfirmAddColumn}
+              disabled={!newColumnName.trim()}
+            >
+              {t("Tambah Kolom", "Add Column")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
