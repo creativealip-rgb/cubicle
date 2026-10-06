@@ -3,10 +3,25 @@ export type InvoiceMessageInput = {
   invoiceNumber: string;
   amount: string;
   dueDate?: string | null;
+  lang?: string;
 };
 
 export function buildDefaultInvoiceMessage(input: InvoiceMessageInput) {
-  const dueLine = input.dueDate ? `\nJatuh tempo: ${input.dueDate}` : "";
+  const isEn = input.lang === "en";
+  const dueLine = input.dueDate
+    ? isEn
+      ? `\nDue date: ${input.dueDate}`
+      : `\nJatuh tempo: ${input.dueDate}`
+    : "";
+
+  if (isEn) {
+    return (
+      `Hello ${input.clientName},\n\n` +
+      `Invoice ${input.invoiceNumber} for ${input.amount} is ready.${dueLine}\n\n` +
+      `Download PDF invoice:\n{{invoice_link}}\n\n` +
+      `Thank you.`
+    );
+  }
 
   return (
     `Halo ${input.clientName},\n\n` +

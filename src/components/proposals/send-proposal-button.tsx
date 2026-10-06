@@ -225,7 +225,11 @@ export function SendProposalButton({
               ) : (
                 <Send className="h-3.5 w-3.5" />
               )}
-              {pending ? sendingText : sendText}
+              {pending
+                ? sendingText
+                : isSentLike
+                  ? t("Kirim ulang", "Resend")
+                  : t("Kirim", "Send")}
             </Button>
           </DialogFooter>
         </DialogContent>

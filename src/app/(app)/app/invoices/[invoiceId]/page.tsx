@@ -233,8 +233,9 @@ export default async function InvoiceDetailPage({
   const defaultInvoiceMessage = buildDefaultInvoiceMessage({
     clientName: client?.companyName || client?.name || t("Klien", "Client"),
     invoiceNumber: inv.invoiceNumber,
-    amount: formatMoney(inv.total, inv.currency || "IDR"),
-    dueDate: inv.dueDate ? formatDate(inv.dueDate) : null,
+    amount: formatMoney(Number(inv.total), inv.currency),
+    dueDate: inv.dueDate ? new Date(inv.dueDate).toLocaleDateString(lang === "en" ? "en-US" : "id-ID") : null,
+    lang,
   });
 
   return (
