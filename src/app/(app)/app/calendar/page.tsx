@@ -173,7 +173,7 @@ export default async function CalendarPage() {
                 </span>
               </p>
             </div>
-            <div className="h-9 w-9 rounded-lg bg-violet-500/10 text-violet-600 flex items-center justify-center shrink-0">
+            <div className="h-9 w-9 rounded-lg bg-blue-600/10 text-blue-600 flex items-center justify-center shrink-0">
               <Video className="h-4 w-4" />
             </div>
           </CardContent>

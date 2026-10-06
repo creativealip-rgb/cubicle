@@ -154,7 +154,7 @@ export async function PersonalReportSection({ month, t }: PersonalReportSectionP
         <Card className="rounded-xl border shadow-none bg-card p-4 space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-xs text-muted-foreground font-medium">{t("Sisa Kas Bebas", "Net Free Cash")}</span>
-            <Scale className="h-4 w-4 text-violet-500" />
+            <Scale className="h-4 w-4 text-blue-600" />
           </div>
           <p className={`text-xl font-bold tracking-tight tabular-nums ${netCashflow >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
             {formatMoney(String(netCashflow), currencyCode)}

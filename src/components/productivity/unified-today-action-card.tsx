@@ -66,7 +66,7 @@ export function UnifiedTodayActionCard({
         {/* Top Header Strip */}
         <div className="flex items-center justify-between gap-2 border-b pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-600 text-white shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
               <Sparkles className="size-4" />
             </div>
             <div>
@@ -82,7 +82,7 @@ export function UnifiedTodayActionCard({
           </div>
 
           <div className="flex items-center gap-1.5 text-xs font-semibold">
-            <span className="rounded-xl border border-violet-200/80 bg-white px-2.5 py-1 text-violet-700 shadow-sm dark:bg-card dark:text-violet-300">
+            <span className="rounded-xl border border-blue-200/80 bg-white px-2.5 py-1 text-blue-700 shadow-sm dark:bg-card dark:text-violet-300">
               {completedHabitsCount}/{scheduledHabitsCount} {t("kebiasaan", "habits")}
             </span>
           </div>
@@ -112,9 +112,9 @@ export function UnifiedTodayActionCard({
                   <button
                     type="submit"
                     disabled={pending}
-                    className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-violet-400 hover:bg-violet-50/50 hover:text-violet-700 active:scale-95 disabled:opacity-50 dark:bg-card dark:text-slate-200"
+                    className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-violet-400 hover:bg-blue-50/50 hover:text-blue-700 active:scale-95 disabled:opacity-50 dark:bg-card dark:text-slate-200"
                   >
-                    <div className="flex size-4 items-center justify-center rounded-full border border-slate-300 transition group-hover:border-violet-500 group-hover:bg-violet-500 group-hover:text-white">
+                    <div className="flex size-4 items-center justify-center rounded-full border border-slate-300 transition group-hover:border-blue-500 group-hover:bg-blue-600 group-hover:text-white">
                       <Check className="size-2.5 opacity-0 transition group-hover:opacity-100" />
                     </div>
                     <span>{h.name}</span>
@@ -148,7 +148,7 @@ export function UnifiedTodayActionCard({
             <div className="rounded-2xl border bg-white p-3 shadow-sm dark:bg-card">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-950 dark:text-violet-300">
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-violet-950 dark:text-violet-300">
                     <Target className="size-3.5" />
                   </div>
                   <div className="min-w-0 flex-1">
@@ -156,7 +156,7 @@ export function UnifiedTodayActionCard({
                       aria-label={t("Pilih tujuan", "Select goal")}
                       value={selectedGoalId}
                       onChange={(e) => setSelectedGoalId(e.target.value)}
-                      className="w-full truncate bg-transparent text-xs font-bold text-slate-800 outline-none hover:text-violet-600 dark:text-slate-100 cursor-pointer"
+                      className="w-full truncate bg-transparent text-xs font-bold text-slate-800 outline-none hover:text-blue-600 dark:text-slate-100 cursor-pointer"
                     >
                       {goals.map((g) => (
                         <option key={g.id} value={g.id}>

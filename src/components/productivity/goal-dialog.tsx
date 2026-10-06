@@ -25,7 +25,7 @@ export function GoalDialog({ lang = "id", createGoalAction }: GoalDialogProps) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="h-8 gap-1.5 rounded-lg bg-violet-600 px-3 text-xs font-semibold text-white shadow-none transition hover:bg-violet-700">
+        <Button size="sm" className="h-8 gap-1.5 rounded-lg bg-blue-600 px-3 text-xs font-semibold text-white shadow-none transition hover:bg-violet-700">
           <Plus className="size-3.5" />
           <span>{isEn ? "Add Goal" : "Tambah Tujuan"}</span>
         </Button>
@@ -115,7 +115,7 @@ export function GoalDialog({ lang = "id", createGoalAction }: GoalDialogProps) {
             <Button
               type="submit"
               size="sm"
-              className="h-8 rounded-lg bg-violet-600 px-4 text-xs font-semibold text-white shadow-none hover:bg-violet-700"
+              className="h-8 rounded-lg bg-blue-600 px-4 text-xs font-semibold text-white shadow-none hover:bg-violet-700"
             >
               {isEn ? "Save Goal" : "Simpan Tujuan"}
             </Button>

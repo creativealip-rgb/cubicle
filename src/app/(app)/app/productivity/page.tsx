@@ -246,7 +246,7 @@ export default async function ProductivityPage({
                     </div>
                     <Link
                       href="/app/productivity?tab=goals"
-                      className="text-xs font-semibold text-violet-600 hover:text-violet-700 flex items-center"
+                      className="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center"
                     >
                       {t("Lihat Semua", "View All")}
                       <ArrowRight className="ml-1 size-3" />

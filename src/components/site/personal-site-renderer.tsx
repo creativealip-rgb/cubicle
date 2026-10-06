@@ -36,9 +36,9 @@ const themeStyles = {
     page: "bg-white text-[#292D34]",
     hero: "bg-[#f4f1ff] text-[#292D34]",
     heroMuted: "text-slate-600",
-    eyebrow: "text-[#6647F0]",
+    eyebrow: "text-[#2563EB]",
     sectionAlt: "bg-[#f8f7fc]",
-    panel: "bg-white shadow-[0_10px_34px_rgba(68,54,124,0.10)] ring-1 ring-[#6647F0]/10",
+    panel: "bg-white shadow-[0_10px_34px_rgba(68,54,124,0.10)] ring-1 ring-[#2563EB]/10",
   },
   ocean: {
     page: "bg-[#f0f9ff] text-[#0c4a6e]",

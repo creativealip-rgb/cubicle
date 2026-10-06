@@ -8,7 +8,7 @@ export async function AuthShell({ children }: { children: React.ReactNode }) {
   return (
     <main className="min-h-screen bg-white lg:grid lg:grid-cols-[0.9fr_1.1fr]">
       <section className="relative hidden min-h-screen overflow-hidden bg-[linear-gradient(145deg,#111827_0%,#1e1b4b_58%,#172554_100%)] px-14 py-12 text-white lg:flex lg:flex-col xl:px-20 xl:py-16">
-        <div className="absolute -left-32 top-1/3 h-96 w-96 rounded-full bg-[#6647F0]/20 blur-3xl" />
+        <div className="absolute -left-32 top-1/3 h-96 w-96 rounded-full bg-[#2563EB]/20 blur-3xl" />
         <div className="absolute -bottom-40 -right-32 h-96 w-96 rounded-full bg-blue-500/15 blur-3xl" />
 
         <Link href="https://cubiqlo.com/" aria-label={t("Kembali ke beranda Cubiqlo", "Back to Cubiqlo home")} className="relative z-10 w-fit">
@@ -48,7 +48,7 @@ export async function AuthShell({ children }: { children: React.ReactNode }) {
           </Link>
           {children}
           <div className="mt-6 flex items-center justify-center gap-2 border-t border-slate-100 pt-5 text-xs text-slate-500">
-            <ShieldCheck className="h-4 w-4 text-[#6647F0]" />
+            <ShieldCheck className="h-4 w-4 text-[#2563EB]" />
             <span>{t("Koneksi aman · Data workspace tetap privat", "Secure connection · Your workspace data stays private")}</span>
           </div>
         </div>

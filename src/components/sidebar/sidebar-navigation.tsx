@@ -192,7 +192,7 @@ export function SidebarNavigation({ collapsed, badgeCounts = {}, workspaceRole, 
               onClick={() => setMobileGroup((current) => current === entry.id ? null : entry.id)}
               className={cn(
                 "relative flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium",
-                active.groupId === entry.id ? "bg-violet-50 text-violet-700" : "text-sidebar-foreground hover:bg-sidebar-accent",
+                active.groupId === entry.id ? "bg-blue-50 text-blue-700" : "text-sidebar-foreground hover:bg-sidebar-accent",
               )}
             >
               <entry.icon className="h-4 w-4" />

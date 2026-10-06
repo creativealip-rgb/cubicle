@@ -254,7 +254,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
               id="tpl-default"
               checked={isDefault}
               onChange={(e) => setIsDefault(e.target.checked)}
-              className="h-4 w-4 rounded border-slate-300 text-violet-600 focus:ring-violet-500"
+              className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-violet-500"
             />
             <Label
               htmlFor="tpl-default"
@@ -287,7 +287,7 @@ export function ContractTemplateBuilder({ workspaceId, template }: Props) {
                   className="w-full text-left px-2 py-1.5 rounded hover:bg-slate-50 transition-colors group"
                   type="button"
                 >
-                  <code className="text-xs font-mono text-violet-700 group-hover:text-violet-900">
+                  <code className="text-xs font-mono text-blue-700 group-hover:text-violet-900">
                     {`{{${v.key}}}`}
                   </code>
                   <p className="text-xs text-slate-500 mt-0.5">{variableDesc(v.key)}</p>

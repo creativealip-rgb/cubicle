@@ -2345,7 +2345,7 @@ export const personalSites = pgTable("personal_sites", {
   ctaLabel: text("cta_label"),
   ctaUrl: text("cta_url"),
   theme: text("theme", { enum: ["midnight", "paper", "studio", "ocean", "forest", "sunset", "rose", "dark"] }).notNull().default("midnight"),
-  accent: text("accent").notNull().default("#6647F0"),
+  accent: text("accent").notNull().default("#2563EB"),
   sections: jsonb("sections").$type<PersonalSiteSection[]>().notNull().default(sql`'[]'::jsonb`),
   links: jsonb("links").$type<PersonalSiteLink[]>().notNull().default(sql`'[]'::jsonb`),
   pages: jsonb("pages").$type<PersonalSitePage[]>().default(sql`'[]'::jsonb`),

@@ -791,7 +791,7 @@ export function TaskDetailSheet({
                     {task.title}
                   </span>
                   <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0" />
-                  <Badge variant="default" className="text-[10px] font-bold tracking-wide uppercase h-5 bg-purple-600 hover:bg-purple-600 text-white gap-1">
+                  <Badge variant="default" className="text-[10px] font-bold tracking-wide uppercase h-5 bg-blue-600 hover:bg-blue-600 text-white gap-1">
                     <CornerDownRight className="h-3 w-3" />
                     {t("Subtask", "Subtask")}
                   </Badge>
@@ -881,7 +881,7 @@ export function TaskDetailSheet({
                 {/* Subtask Title Input */}
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-600 dark:text-purple-400 bg-purple-500/10 px-2 py-0.5 rounded">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-purple-400 bg-blue-600/10 px-2 py-0.5 rounded">
                       {t("Subtask Langkah", "Subtask Step")}
                     </span>
                     <span className="text-[11px] text-muted-foreground">

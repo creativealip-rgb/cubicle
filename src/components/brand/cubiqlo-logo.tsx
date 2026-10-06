@@ -10,7 +10,7 @@ export function CubiqloLogoHeader({ className = "h-8 w-auto" }: { className?: st
       aria-label="Cubiqlo"
     >
       {/* Brand Squircle Icon */}
-      <rect x="4" y="4" width="32" height="32" rx="9" fill="#6647F0" />
+      <rect x="4" y="4" width="32" height="32" rx="9" fill="#2563EB" />
 
       {/* 3 Diagonal Stacked Rounded Blocks */}
       <rect x="10" y="21" width="9" height="9" rx="2.5" fill="#FFFFFF" fillOpacity="0.95" />
@@ -31,7 +31,7 @@ export function CubiqloLogoHeader({ className = "h-8 w-auto" }: { className?: st
       </text>
 
       {/* Subtle Dot Accent */}
-      <circle cx="123.5" cy="24" r="2.5" fill="#6647F0" />
+      <circle cx="123.5" cy="24" r="2.5" fill="#2563EB" />
     </svg>
   );
 }
@@ -46,7 +46,7 @@ export function CubiqloLogoIcon({ className = "h-8.5 w-8.5" }: { className?: str
       aria-label="Cubiqlo Icon"
     >
       {/* Brand Squircle Icon */}
-      <rect x="2" y="2" width="36" height="36" rx="10" fill="#6647F0" />
+      <rect x="2" y="2" width="36" height="36" rx="10" fill="#2563EB" />
 
       {/* 3 Diagonal Stacked Rounded Blocks */}
       <rect x="9" y="21" width="10" height="10" rx="3" fill="#FFFFFF" fillOpacity="0.95" />

@@ -47,9 +47,9 @@ function makeId() {
 }
 
 const PRESET_THEMES = [
-  { name: "Midnight", theme: "midnight" as const, accent: "#6647F0", primary: "#6647F0", bg: "#0f172a", text: "#e2e8f0" },
+  { name: "Midnight", theme: "midnight" as const, accent: "#2563EB", primary: "#2563EB", bg: "#0f172a", text: "#e2e8f0" },
   { name: "Paper", theme: "paper" as const, accent: "#404040", primary: "#404040", bg: "#ffffff", text: "#171717" },
-  { name: "Studio", theme: "studio" as const, accent: "#6647F0", primary: "#6647F0", bg: "#fafafa", text: "#111827" },
+  { name: "Studio", theme: "studio" as const, accent: "#2563EB", primary: "#2563EB", bg: "#fafafa", text: "#111827" },
   { name: "Ocean", theme: "ocean" as const, accent: "#0ea5e9", primary: "#0ea5e9", bg: "#f0f9ff", text: "#0c4a6e" },
   { name: "Forest", theme: "forest" as const, accent: "#16a34a", primary: "#16a34a", bg: "#f0fdf4", text: "#14532d" },
   { name: "Sunset", theme: "sunset" as const, accent: "#ea580c", primary: "#ea580c", bg: "#fff7ed", text: "#7c2d12" },
@@ -368,7 +368,7 @@ function ThemeStep({ site, onUpdateSite }: {
       <div className="space-y-2">
         <Label className="text-xs">{t("Warna Utama", "Primary Color")}</Label>
         <div className="flex gap-2">
-          <input type="color" value={site.themeConfig?.primaryColor ?? "#6647F0"}
+          <input type="color" value={site.themeConfig?.primaryColor ?? "#2563EB"}
             onChange={(e) => onUpdateSite({
               themeConfig: {
                 primaryColor: e.target.value,
@@ -383,7 +383,7 @@ function ThemeStep({ site, onUpdateSite }: {
               accent: e.target.value,
             })}
             className="h-9 w-9 rounded border" />
-          <Input value={site.themeConfig?.primaryColor ?? "#6647F0"}
+          <Input value={site.themeConfig?.primaryColor ?? "#2563EB"}
             onChange={(e) => onUpdateSite({
               themeConfig: {
                 primaryColor: e.target.value,

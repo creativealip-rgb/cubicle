@@ -32,7 +32,7 @@ export function ProductivityKpiCards({
           <span className="text-[11px] font-semibold uppercase tracking-wider">
             {t("Tujuan Aktif", "Active Goals")}
           </span>
-          <Target className="size-3.5 text-violet-500" />
+          <Target className="size-3.5 text-blue-600" />
         </div>
         <div className="mt-1 flex items-baseline gap-1.5">
           <span className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">

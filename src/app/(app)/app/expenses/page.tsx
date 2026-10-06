@@ -425,7 +425,7 @@ export default async function ExpensesPage({
                   : t("Belum ada pengeluaran", "No expenses yet")}
               </p>
             </div>
-            <div className="h-9 w-9 rounded-lg bg-purple-500/10 text-purple-600 flex items-center justify-center shrink-0">
+            <div className="h-9 w-9 rounded-lg bg-blue-600/10 text-blue-600 flex items-center justify-center shrink-0">
               <Tag className="h-4 w-4" />
             </div>
           </CardContent>
@@ -464,7 +464,7 @@ export default async function ExpensesPage({
         <Card className="rounded-xl border shadow-none bg-card">
           <CardHeader className="pb-3 border-b">
             <CardTitle className="text-sm font-semibold flex items-center gap-2">
-              <Tag className="h-4 w-4 text-purple-600" />
+              <Tag className="h-4 w-4 text-blue-600" />
               {t(
                 "Distribusi Biaya Operasional per Kategori",
                 "Operational Expenses by Category",

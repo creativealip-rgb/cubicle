@@ -147,7 +147,7 @@ export default async function BillingPage({
           {/* Streamlined Subscription Status Banner */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 rounded-2xl border border-border/80 bg-gradient-to-r from-card via-card to-purple-500/[0.04] p-4 shadow-xs">
             <div className="flex items-center gap-3.5">
-              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-purple-600/10 text-purple-600 dark:text-purple-400">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600/10 text-blue-600 dark:text-purple-400">
                 {effectivePlan === "team" ? (
                   <Crown className="h-5 w-5" />
                 ) : effectivePlan === "solo" ? (
@@ -161,7 +161,7 @@ export default async function BillingPage({
                   <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                     {t("Plan Saat Ini", "Current Plan")}
                   </span>
-                  <span className="inline-flex items-center rounded-full bg-purple-600/10 px-2.5 py-0.5 text-xs font-bold text-purple-700 dark:text-purple-300 uppercase">
+                  <span className="inline-flex items-center rounded-full bg-blue-600/10 px-2.5 py-0.5 text-xs font-bold text-blue-700 dark:text-purple-300 uppercase">
                     {effectivePlan}
                   </span>
                 </div>
@@ -222,7 +222,7 @@ export default async function BillingPage({
                         </p>
                       </div>
                       {isCurrent && (
-                        <span className="rounded-full bg-purple-600 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-xs">
+                        <span className="rounded-full bg-blue-600 px-2.5 py-0.5 text-[10px] font-bold text-white shadow-xs">
                           {t("Aktif", "Active")}
                         </span>
                       )}

@@ -981,7 +981,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                       onPointerUp={onHeaderPointerUp}
                       onPointerCancel={onHeaderPointerUp}
                       className={cn(
-                        "flex items-center justify-between gap-2 border-b bg-gradient-to-r from-primary to-[#5333DD] px-4 py-3 text-white shadow-xs cursor-grab active:cursor-grabbing select-none",
+                        "flex items-center justify-between gap-2 border-b bg-gradient-to-r from-primary to-[#1D4ED8] px-4 py-3 text-white shadow-xs cursor-grab active:cursor-grabbing select-none",
                         isDragging && "cursor-grabbing",
                       )}
                     >
@@ -1076,13 +1076,13 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                           "rounded-2xl px-4 py-3 text-sm shadow-xs transition-all leading-relaxed",
                           isFullpage ? "max-w-[85%] md:max-w-[75%]" : "max-w-[85%]",
                           m.role === "user"
-                            ? "!bg-[#6647F0] !text-white font-semibold rounded-tr-xs shadow-md"
+                            ? "!bg-[#2563EB] !text-white font-semibold rounded-tr-xs shadow-md"
                             : isFullpage
                               ? "bg-card text-foreground border border-border/80 rounded-tl-xs shadow-xs"
                               : "bg-white text-slate-900 ring-1 ring-slate-200",
                           m.error && "bg-amber-50 border-amber-200 text-amber-950 font-medium",
                         )}
-                        style={m.role === "user" ? { backgroundColor: "#6647F0", color: "#ffffff" } : undefined}
+                        style={m.role === "user" ? { backgroundColor: "#2563EB", color: "#ffffff" } : undefined}
                       >
                         {m.role === "user" ? (
                           <div className="text-white font-medium whitespace-pre-wrap">{m.content}</div>
@@ -1538,7 +1538,7 @@ function _WelcomeScreen({
                       className={cn(
                         "group flex items-center gap-2 px-3 py-2 text-xs transition",
                         c.id === conversationId
-                          ? "bg-purple-50/60"
+                          ? "bg-blue-50/60"
                           : "hover:bg-slate-50",
                       )}
                     >

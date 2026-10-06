@@ -75,7 +75,7 @@ export default function MarketingSpendManager({ rows }: { rows: SpendRow[] }) {
         </div>
         <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
-            <button type="button" className="rounded-md bg-[#6647F0] px-3 py-2 text-xs font-semibold text-white hover:bg-[#5738df]">
+            <button type="button" className="rounded-md bg-[#2563EB] px-3 py-2 text-xs font-semibold text-white hover:bg-[#5738df]">
               Record spend
             </button>
           </DialogTrigger>
@@ -93,7 +93,7 @@ export default function MarketingSpendManager({ rows }: { rows: SpendRow[] }) {
               {error && <p role="alert" className="text-xs text-rose-600 sm:col-span-2">{error}</p>}
               <DialogFooter className="sm:col-span-2">
                 <button type="button" disabled={pending} onClick={() => setDialogOpen(false)} className="rounded-md border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 disabled:opacity-50">Cancel</button>
-                <button type="submit" disabled={pending} className="rounded-md bg-[#6647F0] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{pending ? "Saving…" : "Save spend"}</button>
+                <button type="submit" disabled={pending} className="rounded-md bg-[#2563EB] px-3 py-2 text-xs font-semibold text-white disabled:opacity-50">{pending ? "Saving…" : "Save spend"}</button>
               </DialogFooter>
             </form>
           </DialogContent>

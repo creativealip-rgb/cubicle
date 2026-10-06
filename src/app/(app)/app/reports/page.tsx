@@ -794,7 +794,7 @@ export default async function ReportsPage({
                 overdueTotal > 0
                   ? "text-amber-600 dark:text-amber-400"
                   : "text-foreground",
-              iconTone: "text-violet-500",
+              iconTone: "text-blue-600",
               subtitle:
                 overdueTotal > 0
                   ? `${overdueItems.length} ${t("terlambat", "overdue")}`

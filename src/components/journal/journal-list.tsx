@@ -256,7 +256,7 @@ export function JournalList({
               <div key={entry.id} className="space-y-3">
                 {showMonthHeader && (
                   <div className="flex items-center gap-3 py-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-violet-700 dark:text-violet-400">
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-violet-400">
                       {currentMonth}
                     </span>
                     <div className="h-px flex-1 bg-border/60" />
@@ -264,7 +264,7 @@ export function JournalList({
                 )}
 
                 <article className="relative py-2 pl-7 pr-1 sm:pl-9 transition rounded-2xl hover:bg-muted/20">
-                  <span className="absolute left-1.5 top-3.5 h-3 w-3 rounded-full border-2 border-background bg-violet-600 sm:left-2.5" />
+                  <span className="absolute left-1.5 top-3.5 h-3 w-3 rounded-full border-2 border-background bg-blue-600 sm:left-2.5" />
                   <span className="absolute bottom-0 left-[9px] top-6 w-px bg-border sm:left-[13px]" />
                   <div
                     className="block w-full cursor-pointer text-left"
@@ -511,7 +511,7 @@ export function JournalList({
                           >
                             {isId ? "Batal" : "Cancel"}
                           </Button>
-                          <Button size="sm" className="rounded-xl bg-violet-600 text-white hover:bg-violet-700">
+                          <Button size="sm" className="rounded-xl bg-blue-600 text-white hover:bg-violet-700">
                             {isId ? "Simpan Perubahan" : "Save Changes"}
                           </Button>
                         </div>

@@ -253,7 +253,7 @@ export default async function ProjectsPage({
                 )}
               </p>
             </div>
-            <Button size="sm" className="bg-[#6647F0] hover:bg-[#5333DD] shrink-0" asChild>
+            <Button size="sm" className="bg-[#2563EB] hover:bg-[#1D4ED8] shrink-0" asChild>
               <Link href="/app/billing">
                 {t(`Upgrade ke Solo — ${getPlanYearlyLabel(BILLING_PLANS.solo)}/tahun`, `Upgrade to Solo — ${getPlanYearlyLabel(BILLING_PLANS.solo)}/year`)}
               </Link>

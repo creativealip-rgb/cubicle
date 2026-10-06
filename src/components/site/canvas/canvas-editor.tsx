@@ -80,7 +80,7 @@ function makeId() {
 }
 
 const DEFAULT_THEME_CONFIG: ThemeConfig = {
-  primaryColor: "#6647F0",
+  primaryColor: "#2563EB",
   secondaryColor: "#1e293b",
   backgroundColor: "#ffffff",
   textColor: "#111827",
@@ -1408,8 +1408,8 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
           <div className="space-y-2">
             <Label className="text-xs text-muted-foreground">{t("Warna Utama", "Primary Color")}</Label>
             <div className="flex gap-2">
-              <input type="color" value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateTheme({ primaryColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
-              <Input value={site.themeConfig?.primaryColor ?? "#6647F0"} onChange={(e) => updateTheme({ primaryColor: e.target.value })} className="h-8 text-xs font-mono" />
+              <input type="color" value={site.themeConfig?.primaryColor ?? "#2563EB"} onChange={(e) => updateTheme({ primaryColor: e.target.value })} className="h-8 w-8 rounded border cursor-pointer" />
+              <Input value={site.themeConfig?.primaryColor ?? "#2563EB"} onChange={(e) => updateTheme({ primaryColor: e.target.value })} className="h-8 text-xs font-mono" />
             </div>
           </div>
           <div className="space-y-2">
@@ -1456,8 +1456,8 @@ const PRESET_THEMES = [
   {
     name: "Midnight",
     theme: "midnight",
-    accent: "#6647F0",
-    config: { primaryColor: "#6647F0", secondaryColor: "#1e293b", backgroundColor: "#0f172a", textColor: "#e2e8f0" },
+    accent: "#2563EB",
+    config: { primaryColor: "#2563EB", secondaryColor: "#1e293b", backgroundColor: "#0f172a", textColor: "#e2e8f0" },
   },
   {
     name: "Paper",
@@ -1468,8 +1468,8 @@ const PRESET_THEMES = [
   {
     name: "Studio",
     theme: "studio",
-    accent: "#6647F0",
-    config: { primaryColor: "#6647F0", secondaryColor: "#1e293b", backgroundColor: "#fafafa", textColor: "#111827" },
+    accent: "#2563EB",
+    config: { primaryColor: "#2563EB", secondaryColor: "#1e293b", backgroundColor: "#fafafa", textColor: "#111827" },
   },
   {
     name: "Ocean",

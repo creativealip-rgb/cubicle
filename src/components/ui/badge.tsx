@@ -4,12 +4,12 @@ import { cn } from "@/lib/utils"
 
 const badgeVariants = cva(
   // ClickUp spec: 4px radius (small badges), 12px/16px padding
-  "inline-flex items-center rounded px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[#6647F0] focus:ring-offset-2",
+  "inline-flex items-center rounded px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:ring-offset-2",
   {
     variants: {
       variant: {
         // ClickUp Action Purple
-        default: "bg-[#6647F0] text-white",
+        default: "bg-[#2563EB] text-white",
         secondary: "bg-[#F0F0F0] text-[#292D34]",
         // ClickUp destructive = magenta/critical
         destructive: "bg-[#FFE8F7] text-[#FF02F0] border border-[#FF02F0]",

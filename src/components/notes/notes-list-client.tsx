@@ -46,7 +46,7 @@ export type NoteItem = {
 
 // Distinct pastel border/bg style for sticky note feel
 const NOTE_ACCENTS = [
-  "border-violet-500/20 bg-gradient-to-b from-violet-500/[0.04] to-card",
+  "border-blue-500/20 bg-gradient-to-b from-violet-500/[0.04] to-card",
   "border-sky-500/20 bg-gradient-to-b from-sky-500/[0.04] to-card",
   "border-emerald-500/20 bg-gradient-to-b from-emerald-500/[0.04] to-card",
   "border-amber-500/20 bg-gradient-to-b from-amber-500/[0.04] to-card",

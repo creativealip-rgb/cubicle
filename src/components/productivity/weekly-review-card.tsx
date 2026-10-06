@@ -26,20 +26,20 @@ export function WeeklyReviewCard({
         {/* Header Strip */}
         <div className="flex items-center justify-between gap-2 border-b pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-violet-50 text-violet-700 dark:bg-violet-950 dark:text-violet-300 shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-700 dark:bg-violet-950 dark:text-violet-300 shadow-sm">
               <CalendarCheck className="size-4" />
             </div>
             <div>
               <h2 className="text-sm font-bold tracking-tight text-foreground">
                 {t("Review & Ritme Mingguan", "Weekly Rhythm & Review")}
               </h2>
-              <p className="text-xs font-semibold text-violet-600 dark:text-violet-400">
+              <p className="text-xs font-semibold text-blue-600 dark:text-violet-400">
                 {headline}
               </p>
             </div>
           </div>
 
-          <Button asChild size="sm" variant="ghost" className="h-7 text-xs font-semibold text-violet-600 hover:text-violet-700 p-0">
+          <Button asChild size="sm" variant="ghost" className="h-7 text-xs font-semibold text-blue-600 hover:text-blue-700 p-0">
             <Link href="/app/productivity?tab=habits">
               {t("Lihat Semua", "View All")} <ArrowRight className="ml-1 size-3" />
             </Link>
@@ -58,7 +58,7 @@ export function WeeklyReviewCard({
                 rate >= 80
                   ? "bg-emerald-500"
                   : rate >= 50
-                    ? "bg-violet-600"
+                    ? "bg-blue-600"
                     : "bg-amber-500"
               }`}
               style={{ width: `${Math.max(rate, 3)}%` }}
@@ -77,10 +77,10 @@ export function WeeklyReviewCard({
           </div>
 
           {focusGoal && (
-            <div className="flex items-start gap-2 rounded-xl border border-violet-200/80 bg-violet-50/40 p-2.5 dark:bg-violet-950/20">
-              <Target className="size-4 text-violet-600 shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2 rounded-xl border border-blue-200/80 bg-blue-50/40 p-2.5 dark:bg-violet-950/20">
+              <Target className="size-4 text-blue-600 shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1">
-                <span className="text-[10px] font-semibold uppercase text-violet-600 dark:text-violet-400 block">{t("Fokus Utama", "Primary Focus")}</span>
+                <span className="text-[10px] font-semibold uppercase text-blue-600 dark:text-violet-400 block">{t("Fokus Utama", "Primary Focus")}</span>
                 <span className="text-xs font-semibold text-violet-900 dark:text-violet-200 truncate block">{focusGoal}</span>
               </div>
             </div>

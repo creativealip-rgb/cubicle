@@ -102,9 +102,9 @@ export async function HabitsSection({
         const done = h.checkins.some((c) => c.localDate === today);
         return scheduledToday && !done;
       }) && (
-        <div className="flex items-center justify-between gap-2 rounded-xl border border-violet-200 bg-violet-50/70 p-3 text-xs text-violet-900 shadow-none dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
+        <div className="flex items-center justify-between gap-2 rounded-xl border border-blue-200 bg-blue-50/70 p-3 text-xs text-violet-900 shadow-none dark:border-violet-900/60 dark:bg-violet-950/30 dark:text-violet-200">
           <div className="flex items-center gap-2">
-            <Activity className="size-3.5 shrink-0 text-violet-600" />
+            <Activity className="size-3.5 shrink-0 text-blue-600" />
             <span className="font-semibold">
               {t("Masih ada yang belum selesai:", "Still to do today:")}
             </span>

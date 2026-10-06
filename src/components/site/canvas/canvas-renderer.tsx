@@ -77,7 +77,7 @@ export function CanvasRenderer({
       onClick={() => onSelectSection(null)}
     >
       {/* Hero section */}
-      <div data-readiness-target="hero" className={cn("relative px-8 pt-20 pb-16 text-center overflow-hidden", readinessTarget === "hero" && "ring-4 ring-red-400 ring-offset-2")} style={{ backgroundColor: theme?.primaryColor ?? "#6647F0" }}>
+      <div data-readiness-target="hero" className={cn("relative px-8 pt-20 pb-16 text-center overflow-hidden", readinessTarget === "hero" && "ring-4 ring-red-400 ring-offset-2")} style={{ backgroundColor: theme?.primaryColor ?? "#2563EB" }}>
         {site.heroImage && (
           <>
             <Image
@@ -568,7 +568,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
                 <div className="pt-2">
                   <span
                     className="inline-flex items-center rounded-xl px-5 py-2.5 text-xs font-semibold text-white shadow-xs"
-                    style={{ backgroundColor: theme?.primaryColor ?? "#6647F0" }}
+                    style={{ backgroundColor: theme?.primaryColor ?? "#2563EB" }}
                   >
                     {section.buttonLabel}
                   </span>
@@ -613,7 +613,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
         <div className="py-8 text-center">
           <InlineText value={section.text} onChange={(v) => onUpdate({ text: v })} tag="p" className="text-lg mb-4" />
           {section.buttonLabel && (
-            <span className="inline-flex items-center rounded-lg px-6 py-2.5 text-sm font-medium text-white" style={{ backgroundColor: theme?.primaryColor ?? "#6647F0" }}>
+            <span className="inline-flex items-center rounded-lg px-6 py-2.5 text-sm font-medium text-white" style={{ backgroundColor: theme?.primaryColor ?? "#2563EB" }}>
               {section.buttonLabel}
             </span>
           )}

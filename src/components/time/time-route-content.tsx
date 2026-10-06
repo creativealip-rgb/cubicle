@@ -277,7 +277,7 @@ export async function TimeRouteContent({ mode, view = "daily", selectedDate = lo
                 {activeTimer ? (activeTimer.taskTitle || activeTimer.description || t("Melacak durasi...", "Tracking...")) : t("Mulai timer atau log manual", "Start timer or log manual")}
               </p>
             </div>
-            <div className="h-9 w-9 rounded-lg bg-violet-500/10 text-violet-600 flex items-center justify-center shrink-0">
+            <div className="h-9 w-9 rounded-lg bg-blue-600/10 text-blue-600 flex items-center justify-center shrink-0">
               <Zap className="h-4 w-4" />
             </div>
           </CardContent>

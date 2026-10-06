@@ -16,12 +16,12 @@ export function NotesSummaryStrip({
 }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-      <Card className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-2xs transition hover:border-violet-500/40 hover:shadow-xs">
+      <Card className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-2xs transition hover:border-blue-500/40 hover:shadow-xs">
         <div className="flex items-center justify-between gap-2 text-muted-foreground">
           <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
             {t("Catatan Aktif", "Open Notes")}
           </span>
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/10 text-violet-600 dark:text-violet-400">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600/10 text-blue-600 dark:text-violet-400">
             <FileText className="size-3.5" />
           </div>
         </div>

@@ -39,7 +39,7 @@ export default async function AdminPaymentsPage({
       <div className="flex flex-wrap gap-2">
         <Link
           href="/payments"
-          className={`rounded-lg px-3 py-1.5 text-sm font-medium ${!status ? "bg-[#6647F0] text-white" : "bg-white text-[#292D34] border border-[#D9D9D9]"}`}
+          className={`rounded-lg px-3 py-1.5 text-sm font-medium ${!status ? "bg-[#2563EB] text-white" : "bg-white text-[#292D34] border border-[#D9D9D9]"}`}
         >
           All
         </Link>
@@ -47,7 +47,7 @@ export default async function AdminPaymentsPage({
           <Link
             key={s}
             href={`/payments?status=${s}`}
-            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${status === s ? "bg-[#6647F0] text-white" : "bg-white text-[#292D34] border border-[#D9D9D9]"}`}
+            className={`rounded-lg px-3 py-1.5 text-sm font-medium ${status === s ? "bg-[#2563EB] text-white" : "bg-white text-[#292D34] border border-[#D9D9D9]"}`}
           >
             {s}
           </Link>

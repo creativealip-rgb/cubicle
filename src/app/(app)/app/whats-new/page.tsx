@@ -13,8 +13,8 @@ const typeMeta: Record<
   new: {
     label: { id: "Baru", en: "New" },
     icon: Sparkles,
-    badge: "bg-violet-50 text-violet-700 ring-violet-200/80 dark:bg-violet-950/50 dark:text-violet-300 dark:ring-violet-800/60",
-    iconBox: "bg-violet-100 text-violet-700 dark:bg-violet-950/80 dark:text-violet-300",
+    badge: "bg-blue-50 text-blue-700 ring-violet-200/80 dark:bg-violet-950/50 dark:text-violet-300 dark:ring-violet-800/60",
+    iconBox: "bg-blue-100 text-blue-700 dark:bg-violet-950/80 dark:text-violet-300",
   },
   improvement: {
     label: { id: "Peningkatan", en: "Improvement" },
@@ -52,7 +52,7 @@ export default function WhatsNewPage() {
 
       {/* Hero Header - Sleek & Compact */}
       <header className="relative isolate overflow-hidden rounded-2xl bg-[#171429] px-5 py-6 text-white shadow-[0_16px_50px_-25px_rgba(50,35,110,0.6)] sm:px-8 sm:py-7">
-        <div className="absolute -right-16 -top-28 h-56 w-56 rounded-full bg-violet-500/25 blur-3xl" />
+        <div className="absolute -right-16 -top-28 h-56 w-56 rounded-full bg-blue-600/25 blur-3xl" />
         <div className="absolute -bottom-28 left-1/3 h-48 w-48 rounded-full bg-blue-500/15 blur-3xl" />
         <div className="absolute right-6 top-6 hidden h-20 w-20 rotate-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.07] shadow-xl backdrop-blur sm:flex">
           <Megaphone className="h-8 w-8 -rotate-12 text-violet-200" strokeWidth={1.6} />
@@ -98,7 +98,7 @@ export default function WhatsNewPage() {
             key={release.id}
             className="relative grid grid-cols-[32px_minmax(0,1fr)] gap-2.5 sm:grid-cols-[40px_minmax(0,1fr)] sm:gap-4"
           >
-            <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-[4px] border-background bg-violet-600 shadow-[0_0_0_1px_rgb(221_214_254)] sm:h-10 sm:w-10 sm:border-[5px]">
+            <div className="relative z-10 flex h-8 w-8 items-center justify-center rounded-full border-[4px] border-background bg-blue-600 shadow-[0_0_0_1px_rgb(221_214_254)] sm:h-10 sm:w-10 sm:border-[5px]">
               <span className="h-1.5 w-1.5 rounded-full bg-white sm:h-2 sm:w-2" />
             </div>
 
@@ -108,7 +108,7 @@ export default function WhatsNewPage() {
                   {formatDate(release.date, lang)}
                 </time>
                 {releaseIndex === 0 && (
-                  <span className="rounded-full bg-violet-600 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-xs">
+                  <span className="rounded-full bg-blue-600 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-white shadow-xs">
                     {t("TERBARU", "LATEST")}
                   </span>
                 )}

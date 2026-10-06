@@ -417,7 +417,7 @@ export function ServiceCatalog({
                     <div className="flex items-center gap-2.5 min-w-0">
                       <div className={cn(
                         "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
-                        isFixed ? "bg-emerald-500/10 text-emerald-600" : isHourly ? "bg-blue-500/10 text-blue-600" : "bg-purple-500/10 text-purple-600"
+                        isFixed ? "bg-emerald-500/10 text-emerald-600" : isHourly ? "bg-blue-500/10 text-blue-600" : "bg-blue-600/10 text-blue-600"
                       )}>
                         <Wrench className="h-4 w-4" />
                       </div>
@@ -428,7 +428,7 @@ export function ServiceCatalog({
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <Badge variant="outline" className={cn(
                             "text-[9px] px-1.5 py-0 h-4.5 rounded-full font-semibold border",
-                            isFixed ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700" : isHourly ? "border-blue-500/30 bg-blue-500/10 text-blue-700" : "border-purple-500/30 bg-purple-500/10 text-purple-700"
+                            isFixed ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-700" : isHourly ? "border-blue-500/30 bg-blue-500/10 text-blue-700" : "border-blue-500/30 bg-blue-600/10 text-blue-700"
                           )}>
                             {t(pricingModelLabels[service.defaultPricingModel].id, pricingModelLabels[service.defaultPricingModel].en)}
                           </Badge>

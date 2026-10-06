@@ -110,7 +110,7 @@ export function PortalActionButtons({
         {bookingSlug ? (
           <Button
             asChild
-            className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
+            className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs bg-blue-600 hover:bg-purple-700 text-white cursor-pointer"
           >
             <a href={`/booking/${bookingSlug}`} target="_blank" rel="noreferrer">
               <Calendar className="h-3.5 w-3.5" />
@@ -120,7 +120,7 @@ export function PortalActionButtons({
         ) : (
           <Button
             type="button"
-            className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs bg-purple-600 hover:bg-purple-700 text-white cursor-pointer"
+            className="h-9 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs bg-blue-600 hover:bg-purple-700 text-white cursor-pointer"
             onClick={() => setKind("meeting")}
           >
             <Calendar className="h-3.5 w-3.5" />
@@ -134,7 +134,7 @@ export function PortalActionButtons({
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-base">
-              <Calendar className="h-4 w-4 text-purple-600" />
+              <Calendar className="h-4 w-4 text-blue-600" />
               {t("Ajukan Jadwal Pertemuan", "Schedule Meeting")}
             </DialogTitle>
             <DialogDescription className="text-xs">
@@ -216,7 +216,7 @@ export function PortalActionButtons({
               size="sm"
               onClick={submit}
               disabled={loading || !message.trim()}
-              className="text-xs h-8 bg-purple-600 hover:bg-purple-700 text-white gap-1"
+              className="text-xs h-8 bg-blue-600 hover:bg-purple-700 text-white gap-1"
             >
               {loading && <Loader2 className="h-3 w-3 animate-spin" />}
               {t("Kirim Pengajuan", "Send Request")}

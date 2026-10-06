@@ -100,7 +100,7 @@ export function CheckoutButton({
           </p>
         </div>
       )}
-      <Button onClick={checkout} disabled={disabled || loading} className="w-full bg-[#6647F0] text-white hover:bg-[#5333DD] disabled:bg-slate-200 disabled:text-slate-500">
+      <Button onClick={checkout} disabled={disabled || loading} className="w-full bg-[#2563EB] text-white hover:bg-[#1D4ED8] disabled:bg-slate-200 disabled:text-slate-500">
         {disabled ? t("Plan aktif", "Current plan") : loading ? t("Membuat QRIS...", "Creating QRIS...") : children}
       </Button>
       {error && <p className="text-xs text-red-600">{error}</p>}

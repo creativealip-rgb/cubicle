@@ -37,7 +37,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Desktop sidebar */}
       <aside className="fixed inset-y-0 left-0 z-30 hidden w-56 flex-col border-r border-slate-200 bg-white md:flex">
         <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-4">
-          <ShieldCheck className="h-5 w-5 text-[#6647F0]" />
+          <ShieldCheck className="h-5 w-5 text-[#2563EB]" />
           <div>
             <p className="text-sm font-semibold leading-tight text-[#292D34]">Cubiqlo Admin</p>
             <p className="text-xs text-muted-foreground">Control plane</p>
@@ -53,7 +53,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 className={cn(
                   "flex items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium transition-colors",
                   active
-                    ? "bg-[#6647F0] text-white"
+                    ? "bg-[#2563EB] text-white"
                     : "text-[#292D34] hover:bg-slate-100",
                 )}
               >
@@ -71,7 +71,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       {/* Mobile top bar + horizontal nav */}
       <div className="fixed inset-x-0 top-0 z-30 border-b border-slate-200 bg-white md:hidden">
         <div className="flex items-center gap-2 px-4 py-2.5">
-          <ShieldCheck className="h-5 w-5 text-[#6647F0]" />
+          <ShieldCheck className="h-5 w-5 text-[#2563EB]" />
           <span className="text-sm font-semibold text-[#292D34]">Cubiqlo Admin</span>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-2 pb-2">
@@ -83,7 +83,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
                 href={href}
                 className={cn(
                   "flex shrink-0 items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors",
-                  active ? "bg-[#6647F0] text-white" : "bg-slate-100 text-[#292D34]",
+                  active ? "bg-[#2563EB] text-white" : "bg-slate-100 text-[#292D34]",
                 )}
               >
                 <Icon className="h-3.5 w-3.5" />

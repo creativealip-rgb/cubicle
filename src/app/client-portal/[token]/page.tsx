@@ -963,10 +963,10 @@ export default async function ClientPortalPage({
               {/* 3. Projects */}
               <div className="rounded-2xl border border-border/80 bg-card p-3.5 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm">
                 <div className="flex items-start justify-between gap-2">
-                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-purple-500/10 text-purple-600 dark:text-purple-400">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-600/10 text-blue-600 dark:text-purple-400">
                     <FolderKanban className="h-4 w-4" />
                   </div>
-                  <span className="rounded-full border border-purple-500/30 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-600 dark:text-purple-400">
+                  <span className="rounded-full border border-blue-500/30 bg-blue-600/10 px-2 py-0.5 text-[10px] font-bold text-blue-600 dark:text-purple-400">
                     {clientProjects.length}
                   </span>
                 </div>

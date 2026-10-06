@@ -45,7 +45,7 @@ function TopProgressBar() {
   if (!isPending) return null;
   return (
     <div className="pointer-events-none fixed inset-x-0 top-0 z-[60] h-0.5 overflow-hidden">
-      <div className="top-progress-bar h-full w-1/3 rounded-full bg-[#6647F0]" />
+      <div className="top-progress-bar h-full w-1/3 rounded-full bg-[#2563EB]" />
     </div>
   );
 }

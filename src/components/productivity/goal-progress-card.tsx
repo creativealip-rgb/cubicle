@@ -36,7 +36,7 @@ export function GoalProgressCard({
 
   if (compact) {
     return (
-      <div className="group rounded-lg border border-slate-200 bg-white p-3 transition hover:border-violet-300 dark:border-slate-800 dark:bg-card">
+      <div className="group rounded-lg border border-slate-200 bg-white p-3 transition hover:border-blue-300 dark:border-slate-800 dark:bg-card">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -61,7 +61,7 @@ export function GoalProgressCard({
             </div>
             <Link
               href={`/app/productivity/goals/${goal.id}`}
-              className="block truncate text-xs font-bold tracking-tight text-foreground transition group-hover:text-violet-600 hover:underline"
+              className="block truncate text-xs font-bold tracking-tight text-foreground transition group-hover:text-blue-600 hover:underline"
             >
               {goal.title}
             </Link>
@@ -96,7 +96,7 @@ export function GoalProgressCard({
 
           <Link
             href={`/app/productivity/goals/${goal.id}`}
-            className="font-medium text-violet-600 hover:underline flex items-center gap-0.5 text-xs"
+            className="font-medium text-blue-600 hover:underline flex items-center gap-0.5 text-xs"
           >
             <span>{t("Detail", "Details")}</span>
             <ArrowRight className="size-3" />
@@ -130,7 +130,7 @@ export function GoalProgressCard({
 
             <Link
               href={`/app/productivity/goals/${goal.id}`}
-              className="block text-sm font-bold tracking-tight text-foreground hover:text-violet-600 hover:underline transition-colors"
+              className="block text-sm font-bold tracking-tight text-foreground hover:text-blue-600 hover:underline transition-colors"
             >
               {goal.title}
             </Link>
@@ -190,7 +190,7 @@ export function GoalProgressCard({
             </span>
           </div>
 
-          <Button asChild size="sm" variant="ghost" className="h-7 text-xs font-semibold text-violet-600 hover:text-violet-700 hover:bg-violet-50 dark:hover:bg-violet-950/40 rounded-lg px-2">
+          <Button asChild size="sm" variant="ghost" className="h-7 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-violet-950/40 rounded-lg px-2">
             <Link href={`/app/productivity/goals/${goal.id}`}>
               {t("Kelola Langkah", "Manage Steps")} <ArrowRight className="ml-1 size-3" />
             </Link>

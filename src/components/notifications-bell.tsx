@@ -172,7 +172,7 @@ export function NotificationsBell() {
             <button
               type="button"
               onClick={handleMarkAll}
-              className="text-xs text-[#6647F0] hover:underline flex items-center gap-1"
+              className="text-xs text-[#2563EB] hover:underline flex items-center gap-1"
             >
               <Check className="h-3 w-3" /> {t("Tandai semua dibaca", "Mark all read")}
             </button>
@@ -193,7 +193,7 @@ export function NotificationsBell() {
                   <div
                     className={cn(
                       "flex gap-2 px-3 py-2.5 text-sm hover:bg-muted/40 transition-colors",
-                      isUnread && "bg-[#6647F0]/[0.06]"
+                      isUnread && "bg-[#2563EB]/[0.06]"
                     )}
                   >
                     <div className="text-lg shrink-0 leading-tight">{icon}</div>
@@ -224,7 +224,7 @@ export function NotificationsBell() {
                             e.stopPropagation();
                             handleMarkRead(n.id);
                           }}
-                          className="text-[10px] text-[#6647F0] hover:underline mt-1"
+                          className="text-[10px] text-[#2563EB] hover:underline mt-1"
                         >
                           {t("Tandai dibaca", "Mark read")}
                         </button>

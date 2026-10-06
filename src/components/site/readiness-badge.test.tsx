@@ -8,7 +8,7 @@ import type { PersonalSiteInput } from "@/lib/personal-site/model";
 import { DEFAULT_PERSONAL_SITE } from "@/lib/personal-site/model";
 
 const createThemeConfig = () => ({
-  primaryColor: "#6647F0",
+  primaryColor: "#2563EB",
   secondaryColor: "#1e293b",
   backgroundColor: "#ffffff",
   textColor: "#111827",

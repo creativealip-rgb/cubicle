@@ -3,7 +3,7 @@ import { getPersonalSiteReadiness, isReadyToPublish, countReadinessIssues } from
 import { DEFAULT_PERSONAL_SITE, type ThemeConfig } from "./model";
 
 const createThemeConfig = (): ThemeConfig => ({
-  primaryColor: "#6647F0",
+  primaryColor: "#2563EB",
   secondaryColor: "#1e293b",
   backgroundColor: "#ffffff",
   textColor: "#111827",

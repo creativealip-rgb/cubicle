@@ -35,7 +35,7 @@ export function QuickCaptureCard({ habits, goals, checkHabit, updateGoal, lang }
         <select name="habitId" required className="h-10 min-w-0 flex-1 rounded-xl border bg-background px-3 text-sm" defaultValue={habits[0]?.id}>
           {habits.map((habit) => <option key={habit.id} value={habit.id}>{habit.name}</option>)}
         </select>
-        <Button disabled={!habits.length || pending} className="rounded-xl bg-violet-600 text-white">{pending ? t("Menyimpan...", "Saving...") : t("Check-in", "Check in")}</Button>
+        <Button disabled={!habits.length || pending} className="rounded-xl bg-blue-600 text-white">{pending ? t("Menyimpan...", "Saving...") : t("Check-in", "Check in")}</Button>
       </form>
       <form action={(formData) => submit(updateGoal, formData)} className="grid gap-2 sm:grid-cols-[1fr_132px_auto]">
         <select name="goalId" required value={goalId} onChange={(event) => setGoalId(event.target.value)} className="h-10 min-w-0 rounded-xl border bg-background px-3 text-sm">

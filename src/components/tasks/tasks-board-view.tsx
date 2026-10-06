@@ -75,7 +75,7 @@ export function TasksBoardView({ tasks, members, projects = [] }: TasksBoardView
   const columns = [
     { id: "todo", label: t("Belum Mulai", "To Do"), color: "bg-slate-300" },
     { id: "in_progress", label: t("Dikerjakan", "In Progress"), color: "bg-blue-400" },
-    { id: "review", label: t("Review", "Review"), color: "bg-violet-500" },
+    { id: "review", label: t("Review", "Review"), color: "bg-blue-600" },
     { id: "done", label: t("Selesai", "Done"), color: "bg-emerald-400" },
   ];
 

@@ -178,7 +178,7 @@ export default async function ClientsPage({
               <p className="text-sm font-medium text-amber-900">{t("Batas free plan tercapai", "Free plan limit reached")}</p>
               <p className="text-sm text-amber-700 mt-1">{t(`Kamu punya ${clientCount}/${clientLimit} klien. Upgrade ke Solo untuk unlimited klien.`, `You have ${clientCount}/${clientLimit} clients. Upgrade to Solo for unlimited clients.`)}</p>
             </div>
-            <Button size="sm" className="bg-[#6647F0] hover:bg-[#5333DD] shrink-0" asChild>
+            <Button size="sm" className="bg-[#2563EB] hover:bg-[#1D4ED8] shrink-0" asChild>
               <Link href="/app/billing">
                 {t(`Upgrade ke Solo — ${getPlanYearlyLabel(BILLING_PLANS.solo)}/tahun`, `Upgrade to Solo — ${getPlanYearlyLabel(BILLING_PLANS.solo)}/year`)}
               </Link>

@@ -370,7 +370,7 @@ export const DEFAULT_PERSONAL_SITE: PersonalSiteInput = {
   ctaLabel: "",
   ctaUrl: "",
   theme: "midnight",
-  accent: "#6647F0",
+  accent: "#2563EB",
   sections: [
     {
       id: "default-services",
@@ -419,7 +419,7 @@ export const DEFAULT_PERSONAL_SITE: PersonalSiteInput = {
   showContactForm: true,
   contactFormHeading: "",
   themeConfig: {
-    primaryColor: "#6647F0",
+    primaryColor: "#2563EB",
     secondaryColor: "#1e293b",
     backgroundColor: "#ffffff",
     textColor: "#111827",

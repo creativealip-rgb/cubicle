@@ -37,7 +37,7 @@ export function JournalHeatmap({ entries, t }: JournalHeatmapProps) {
     <div className="rounded-2xl border border-border/80 bg-card p-4 shadow-2xs space-y-3">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-violet-500/20 bg-violet-500/10 text-violet-600 dark:text-violet-400">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-blue-500/20 bg-blue-600/10 text-blue-600 dark:text-violet-400">
             <Sparkles className="h-3.5 w-3.5" />
           </div>
           <div>
@@ -64,7 +64,7 @@ export function JournalHeatmap({ entries, t }: JournalHeatmapProps) {
               title={`${cell.date}${cell.mood ? `: ${cell.mood}` : ` (${t("Belum ada entri", "No entry")})`}`}
               className={`group relative flex flex-col items-center justify-center h-10 rounded-xl border transition-all text-xs font-bold ${
                 cell.mood
-                  ? "border-violet-400/40 bg-violet-500/10 hover:border-violet-500 hover:scale-105"
+                  ? "border-violet-400/40 bg-blue-600/10 hover:border-blue-500 hover:scale-105"
                   : "border-border/50 bg-muted/20 hover:border-border"
               } ${cell.isToday ? "ring-2 ring-primary ring-offset-1" : ""}`}
             >

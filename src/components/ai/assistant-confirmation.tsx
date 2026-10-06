@@ -129,7 +129,7 @@ export function AssistantConfirmationCard({
   const getIcon = () => {
     switch (conf.kind) {
       case "update_task_status":
-        return <Sparkles className="h-4 w-4 text-purple-600" />;
+        return <Sparkles className="h-4 w-4 text-blue-600" />;
       case "draft_invoice_reminder":
         return <Clock className="h-4 w-4 text-amber-600" />;
       case "create_client":
@@ -139,7 +139,7 @@ export function AssistantConfirmationCard({
       case "create_invoice":
         return <Receipt className="h-4 w-4 text-emerald-600" />;
       case "create_task":
-        return <Sparkles className="h-4 w-4 text-purple-600" />;
+        return <Sparkles className="h-4 w-4 text-blue-600" />;
       case "start_timer":
         return <Play className="h-4 w-4 text-primary fill-primary" />;
       case "stop_timer":

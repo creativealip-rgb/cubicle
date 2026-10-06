@@ -234,7 +234,7 @@ export function EditHabitDialog({
                         onClick={() => toggleWeekday(d.value)}
                         title={isEn ? d.fullEn : d.fullId}
                         className={`size-7 rounded-lg text-xs font-bold transition ${
-                          active ? "bg-violet-600 text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"
+                          active ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground hover:bg-muted/80"
                         }`}
                       >
                         {d.label}
@@ -309,7 +309,7 @@ export function EditHabitDialog({
                   type="submit"
                   size="sm"
                   disabled={loading}
-                  className="h-8 rounded-lg bg-violet-600 px-4 text-xs font-semibold text-white shadow-none hover:bg-violet-700"
+                  className="h-8 rounded-lg bg-blue-600 px-4 text-xs font-semibold text-white shadow-none hover:bg-violet-700"
                 >
                   {loading ? (isEn ? "Saving..." : "Menyimpan...") : (isEn ? "Save" : "Simpan")}
                 </Button>

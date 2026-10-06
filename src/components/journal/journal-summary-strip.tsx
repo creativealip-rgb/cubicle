@@ -28,7 +28,7 @@ export function JournalSummaryStrip({
           <span className="text-xs font-semibold uppercase tracking-wider">
             {t("Minggu Ini", "This Week")}
           </span>
-          <CalendarCheck className="size-4 text-violet-500" />
+          <CalendarCheck className="size-4 text-blue-600" />
         </div>
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">

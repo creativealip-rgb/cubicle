@@ -66,7 +66,7 @@ export function JournalComposerDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1 bg-violet-600 font-semibold text-white hover:bg-violet-700">
+        <Button size="sm" className="gap-1 bg-blue-600 font-semibold text-white hover:bg-violet-700">
           <Plus className="h-4 w-4" />
           {isEn ? "Write Today" : "Tulis Jurnal Hari Ini"}
         </Button>
@@ -97,7 +97,7 @@ export function JournalComposerDialog({
                   onClick={() => setSelectedMood(m.emoji)}
                   className={`flex items-center gap-1.5 rounded-xl border px-2.5 py-1.5 text-xs font-medium transition ${
                     selectedMood === m.emoji
-                      ? "border-violet-600 bg-violet-50 text-violet-900 ring-2 ring-violet-200 dark:bg-violet-950/50 dark:text-violet-200 dark:ring-violet-900"
+                      ? "border-violet-600 bg-blue-50 text-violet-900 ring-2 ring-violet-200 dark:bg-violet-950/50 dark:text-violet-200 dark:ring-violet-900"
                       : "border-border bg-background text-muted-foreground hover:bg-muted/50"
                   }`}
                 >
@@ -138,7 +138,7 @@ export function JournalComposerDialog({
               className="flex w-full items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground"
             >
               <span className="flex items-center gap-1.5">
-                <Sparkles className="size-3.5 text-violet-500" />
+                <Sparkles className="size-3.5 text-blue-600" />
                 {isEn ? "Optional: Title & Tags" : "Opsional: Judul & Tag"}
               </span>
               <span>{showDetails ? "−" : "+"}</span>
@@ -189,7 +189,7 @@ export function JournalComposerDialog({
             </Button>
             <Button
               type="submit"
-              className="rounded-xl bg-violet-600 text-white hover:bg-violet-700"
+              className="rounded-xl bg-blue-600 text-white hover:bg-violet-700"
               disabled={pending}
             >
               {pending

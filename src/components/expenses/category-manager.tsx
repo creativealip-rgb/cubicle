@@ -28,7 +28,7 @@ export interface CategoryRow {
 }
 
 const PRESET_COLORS = [
-  "#6647F0", "#0091FF", "#10B981", "#F59E0B", "#ED5F00",
+  "#2563EB", "#0091FF", "#10B981", "#F59E0B", "#ED5F00",
   "#EF4444", "#EC4899", "#8B5CF6", "#64748B", "#0EA5E9",
 ];
 

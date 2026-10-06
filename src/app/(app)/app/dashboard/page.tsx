@@ -272,7 +272,7 @@ export default async function DashboardPage() {
       : "";
   const sparkTotal = sparkline.reduce((s, d) => s + d.amt, 0);
 
-  const pieColors = ["#6647F0", "#8b5cf6", "#10b981", "#f59e0b", "#ec4899"];
+  const pieColors = ["#2563EB", "#8b5cf6", "#10b981", "#f59e0b", "#ec4899"];
 
   type ReminderTone = "rose" | "amber" | "blue" | "purple" | "emerald";
   type ReminderItem = {
@@ -359,10 +359,10 @@ export default async function DashboardPage() {
       dot: "bg-rose-600",
     },
     purple: {
-      bg: "bg-purple-500/10 text-purple-600 dark:text-purple-400",
-      text: "text-purple-600 dark:text-purple-400",
-      ring: "group-hover:border-purple-500/40",
-      dot: "bg-purple-600",
+      bg: "bg-blue-600/10 text-blue-600 dark:text-purple-400",
+      text: "text-blue-600 dark:text-purple-400",
+      ring: "group-hover:border-blue-500/40",
+      dot: "bg-blue-600",
     },
   };
 
@@ -416,7 +416,7 @@ export default async function DashboardPage() {
                           <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-xl", cfg.bg)}>
                             <Icon className="h-4 w-4" />
                           </div>
-                          <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-bold rounded-full border", approvalTotal > 0 ? "border-purple-500/30 bg-purple-500/10 text-purple-600" : "border-border text-muted-foreground")}>
+                          <Badge variant="outline" className={cn("text-[10px] h-5 px-2 font-bold rounded-full border", approvalTotal > 0 ? "border-blue-500/30 bg-blue-600/10 text-blue-600" : "border-border text-muted-foreground")}>
                             <span className={cn("h-1 w-1 rounded-full mr-1", cfg.dot)} />
                             {approvalTotal}
                           </Badge>
@@ -538,7 +538,7 @@ export default async function DashboardPage() {
 
         {/* Right Column: Financial Pulse & Docs Hub */}
         <div className="space-y-4">
-          {/* Finance card with Brand #6647F0 Glow & Sparkline */}
+          {/* Finance card with Brand #2563EB Glow & Sparkline */}
           <Card className="rounded-2xl border border-border/80 bg-card p-4 shadow-xs space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-border/60">
               <div className="flex items-center gap-2">
@@ -574,15 +574,15 @@ export default async function DashboardPage() {
               >
                 <defs>
                   <linearGradient id="brandPurpleSparkFill" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#6647F0" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="#6647F0" stopOpacity="0.0" />
+                    <stop offset="0%" stopColor="#2563EB" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="#2563EB" stopOpacity="0.0" />
                   </linearGradient>
                 </defs>
                 <path d={sparkArea} fill="url(#brandPurpleSparkFill)" />
                 <path
                   d={sparkPath}
                   fill="none"
-                  stroke="#6647F0"
+                  stroke="#2563EB"
                   strokeWidth="2.5"
                   strokeLinejoin="round"
                   strokeLinecap="round"

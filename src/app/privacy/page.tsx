@@ -155,7 +155,7 @@ export default function PrivacyPage() {
               hubungi{" "}
               <a
                 href="mailto:support@cubiqlo.com"
-                className="font-medium text-[#6647F0] underline-offset-4 hover:underline"
+                className="font-medium text-[#2563EB] underline-offset-4 hover:underline"
               >
                 support@cubiqlo.com
               </a>
@@ -174,7 +174,7 @@ export default function PrivacyPage() {
         <div className="mt-10 border-t pt-6 text-sm text-slate-500">
           <Link
             href="/terms"
-            className="font-medium text-[#6647F0] underline-offset-4 hover:underline"
+            className="font-medium text-[#2563EB] underline-offset-4 hover:underline"
           >
             Baca juga: Syarat &amp; Ketentuan
           </Link>

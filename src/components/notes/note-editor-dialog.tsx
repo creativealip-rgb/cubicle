@@ -49,7 +49,7 @@ export function NoteEditorDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="gap-1 bg-violet-600 font-semibold text-white hover:bg-violet-700">
+        <Button size="sm" className="gap-1 bg-blue-600 font-semibold text-white hover:bg-violet-700">
           <Plus className="h-4 w-4" />
           {isEn ? "New Note" : "Catatan Baru"}
         </Button>
@@ -145,7 +145,7 @@ export function NoteEditorDialog({
                     key={key}
                     className={`flex cursor-pointer items-center justify-center rounded-lg border px-2 py-1 text-[11px] font-semibold transition ${
                       val
-                        ? "border-violet-600 bg-violet-50 text-violet-700 dark:bg-violet-950/50 dark:text-violet-300"
+                        ? "border-violet-600 bg-blue-50 text-blue-700 dark:bg-violet-950/50 dark:text-violet-300"
                         : "border-border bg-background text-muted-foreground hover:border-muted-foreground/50"
                     }`}
                   >
@@ -198,7 +198,7 @@ export function NoteEditorDialog({
             </Button>
             <Button
               type="submit"
-              className="rounded-xl bg-violet-600 text-white hover:bg-violet-700"
+              className="rounded-xl bg-blue-600 text-white hover:bg-violet-700"
               disabled={pending}
             >
               {pending
