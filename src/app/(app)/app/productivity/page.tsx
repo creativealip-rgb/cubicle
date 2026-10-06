@@ -140,7 +140,8 @@ export default async function ProductivityPage({
       {/* Compact Page Header with Gradient & Icon */}
       <PageHeader
         icon={CheckSquare}
-        title={t("Produktivitas Pribadi", "Personal Productivity")}
+        title={t("Target & Kebiasaan", "Goals & Habits")}
+        docsHref="/app/docs/productivity"
         description={t(
           "Pantau progres tujuan hidup, streak konsistensi, dan kebiasaan harianmu.",
           "Track life goals progress, consistency streaks, and daily personal habits.",

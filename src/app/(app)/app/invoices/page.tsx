@@ -428,6 +428,7 @@ export default async function InvoicesPage({
       <PageHeader
         icon={FileText}
         title={t("Invoice", "Invoices")}
+        docsHref="/app/docs/invoice"
         description={t(
           `Kelola penagihan klien. Ringkasan disetarakan ke ${baseCurrency}.`,
           `Manage client billings. Summary approximated to ${baseCurrency}.`,

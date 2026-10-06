@@ -347,7 +347,8 @@ export default async function ExpensesPage({
     <div className="space-y-4 sm:space-y-6">
       <PageHeader
         icon={Wallet}
-        title={t("Pengeluaran Bisnis", "Business Expenses")}
+        title={t("Pengeluaran", "Expenses")}
+        docsHref="/app/docs/expenses"
         description={t(
           "Catat dan kelola biaya operasional serta pengeluaran workspace.",
           "Record and manage business and workspace expenses.",

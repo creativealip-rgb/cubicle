@@ -202,6 +202,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
       <PageHeader
         icon={Sparkles}
         title="Prompt Studio"
+        docsHref="/app/docs/ai-studio"
         description={t(
           "Buat materi visual, brief campaign, dan konten iklan instan berbasis AI.",
           "Create visual assets, campaign briefs, and marketing content instantly with AI.",

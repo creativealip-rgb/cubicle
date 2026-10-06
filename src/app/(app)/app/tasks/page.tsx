@@ -137,6 +137,7 @@ export default async function TasksPage({
       <PageHeader
         icon={CheckSquare}
         title={t("Tugas", "Tasks")}
+        docsHref="/app/docs/projects"
         description={t("Kelola pekerjaan proyek, prioritas, dan template tugas reusable.", "Manage project work, priorities, and reusable task templates.")}
         actions={
           <div className="flex flex-wrap items-center gap-2">

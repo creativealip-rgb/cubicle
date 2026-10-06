@@ -192,6 +192,7 @@ export default async function ProjectsPage({
       <PageHeader
         icon={Briefcase}
         title={t("Proyek", "Projects")}
+        docsHref="/app/docs/projects"
         description={t("Pantau alur kerja, alokasi jam, dan progres milestone proyek tim kamu.", "Track workflow pipeline, tracked hours, and milestone progress.")}
         badge={
           <Badge variant="secondary" className="px-1.5 py-0 text-[11px] font-semibold">

@@ -141,6 +141,7 @@ export default async function ClientsPage({
       <PageHeader
         icon={Users}
         title={t("Klien", "Clients")}
+        docsHref="/app/docs/client-portal"
         description={t("Kelola data kontak, proyek, dan akses portal klien.", "Manage client contacts, projects, and portal access.")}
         badge={
           <Badge variant="secondary" className="px-1.5 py-0 text-[11px] font-semibold">

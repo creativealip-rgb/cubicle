@@ -1,5 +1,7 @@
 import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
+import { BookOpen } from "lucide-react";
+import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
@@ -7,6 +9,7 @@ interface PageHeaderProps {
   title?: ReactNode;
   description?: ReactNode;
   badge?: ReactNode;
+  docsHref?: string;
   actions?: ReactNode;
   children?: ReactNode;
   className?: string;
@@ -17,6 +20,7 @@ export function PageHeader({
   title,
   description,
   badge,
+  docsHref,
   actions,
   children,
   className,
@@ -43,6 +47,16 @@ export function PageHeader({
                     {title}
                   </h1>
                   {badge && <div className="shrink-0">{badge}</div>}
+                  {docsHref && (
+                    <Link
+                      href={docsHref}
+                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold text-primary/90 bg-primary/10 hover:bg-primary/20 hover:text-primary transition-colors shrink-0"
+                      title="Documentation & Guides"
+                    >
+                      <BookOpen className="h-3 w-3" />
+                      <span>Docs</span>
+                    </Link>
+                  )}
                 </div>
                 {description && (
                   <p className="mt-0.5 max-w-2xl line-clamp-2 text-xs text-muted-foreground sm:truncate">

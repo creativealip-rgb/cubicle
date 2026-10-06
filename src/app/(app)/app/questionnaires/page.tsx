@@ -57,7 +57,8 @@ export default async function QuestionnairesPage() {
     <div className="min-w-0 space-y-4 sm:space-y-6">
       <PageHeader
         icon={ClipboardList}
-        title={t("Formulir", "Forms")}
+        title={t("Formulir & Kuesioner", "Forms & Questionnaires")}
+        docsHref="/app/docs/questionnaires"
         description={t(
           "Form intake klien & brief terstruktur. Jawaban otomatis terintegrasi ke project.",
           "Client intake forms & structured briefs. Responses auto-integrate into project briefs.",

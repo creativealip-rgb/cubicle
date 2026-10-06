@@ -578,7 +578,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
 
       {/* Modal Dialog: New Ticket Creation */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent onCloseAutoFocus={restoreCreateFocus} className="sm:max-w-md w-full max-w-[calc(100vw-2rem)] rounded-2xl overflow-hidden">
+        <DialogContent onCloseAutoFocus={restoreCreateFocus} className="sm:max-w-2xl w-full max-w-[calc(100vw-2rem)] rounded-2xl overflow-hidden">
           <DialogHeader>
             <DialogTitle className="text-base font-bold flex items-center gap-2">
               <LifeBuoy className="h-4 w-4 text-primary" />
@@ -608,41 +608,43 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
             }}
             className="space-y-3.5 pt-1"
           >
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">
-                {t("Apa yang Anda butuhkan bantuan? *", "What do you need help with? *")}
-              </label>
-              <Select name="category" defaultValue="features">
-                <SelectTrigger className="h-8 text-xs rounded-lg">
-                  <SelectValue placeholder={t("Pilih kategori bantuan ▾", "Select a support category ▾")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="features">{t("Fitur Cubiqlo", "Cubiqlo Features")}</SelectItem>
-                  <SelectItem value="free_plan_pricing">{t("Paket Gratis & Harga", "Free Plan & Pricing")}</SelectItem>
-                  <SelectItem value="account">{t("Akun", "Account")}</SelectItem>
-                  <SelectItem value="workspace">{t("Workspace", "Workspace")}</SelectItem>
-                  <SelectItem value="subscription">{t("Langganan", "Subscription")}</SelectItem>
-                  <SelectItem value="billing">{t("Tagihan & Pembayaran", "Billing")}</SelectItem>
-                  <SelectItem value="security_privacy">{t("Keamanan & Privasi", "Security & Privacy")}</SelectItem>
-                  <SelectItem value="technical">{t("Bantuan Teknis", "Technical Support")}</SelectItem>
-                  <SelectItem value="general">{t("Pertanyaan Umum", "General Questions")}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">
+                  {t("Apa yang Anda butuhkan bantuan? *", "What do you need help with? *")}
+                </label>
+                <Select name="category" defaultValue="features">
+                  <SelectTrigger className="h-9 text-xs rounded-xl">
+                    <SelectValue placeholder={t("Pilih kategori bantuan ▾", "Select a support category ▾")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="features">{t("Fitur Cubiqlo", "Cubiqlo Features")}</SelectItem>
+                    <SelectItem value="free_plan_pricing">{t("Paket Gratis & Harga", "Free Plan & Pricing")}</SelectItem>
+                    <SelectItem value="account">{t("Akun", "Account")}</SelectItem>
+                    <SelectItem value="workspace">{t("Workspace", "Workspace")}</SelectItem>
+                    <SelectItem value="subscription">{t("Langganan", "Subscription")}</SelectItem>
+                    <SelectItem value="billing">{t("Tagihan & Pembayaran", "Billing")}</SelectItem>
+                    <SelectItem value="security_privacy">{t("Keamanan & Privasi", "Security & Privacy")}</SelectItem>
+                    <SelectItem value="technical">{t("Bantuan Teknis", "Technical Support")}</SelectItem>
+                    <SelectItem value="general">{t("Pertanyaan Umum", "General Questions")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-foreground">{t("Prioritas", "Priority")}</label>
-              <Select name="priority" defaultValue="medium">
-                <SelectTrigger className="h-8 text-xs rounded-lg">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">{t("Rendah", "Low")}</SelectItem>
-                  <SelectItem value="medium">{t("Sedang", "Medium")}</SelectItem>
-                  <SelectItem value="high">{t("Tinggi", "High")}</SelectItem>
-                  <SelectItem value="urgent">{t("Mendesak", "Urgent")}</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold text-foreground">{t("Prioritas", "Priority")}</label>
+                <Select name="priority" defaultValue="low">
+                  <SelectTrigger className="h-9 text-xs rounded-xl">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="low">{t("Rendah", "Low")}</SelectItem>
+                    <SelectItem value="medium">{t("Sedang", "Medium")}</SelectItem>
+                    <SelectItem value="high">{t("Tinggi", "High")}</SelectItem>
+                    <SelectItem value="urgent">{t("Mendesak", "Urgent")}</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             <div className="space-y-1.5">
@@ -651,7 +653,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                 name="title"
                 placeholder={t("Contoh: Gagal upload lampiran invoice", "e.g., Cannot upload invoice attachment")}
                 required
-                className="h-8 text-xs rounded-lg"
+                className="h-9 text-xs rounded-xl"
               />
             </div>
 
@@ -666,7 +668,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                   "Jelaskan detail kendala, URL halaman terkait, dan langkah memicunya...",
                   "Explain the issue details, related URL, and steps to reproduce..."
                 )}
-                className="text-xs rounded-lg"
+                className="text-xs rounded-xl"
               />
             </div>
 

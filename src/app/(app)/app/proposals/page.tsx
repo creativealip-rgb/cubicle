@@ -120,6 +120,7 @@ export default async function ProposalsPage({
       <PageHeader
         icon={FileSpreadsheet}
         title={t("Proposal", "Proposals")}
+        docsHref="/app/docs/proposals-contracts"
         description={t(
           "Kirim penawaran scope dan harga ke prospek. Setelah disetujui, proyek siap dieksekusi.",
           "Send scope and pricing estimates to prospects. Once accepted, project execution can begin.",

@@ -715,7 +715,8 @@ export default async function ReportsPage({
     <div className="space-y-4 sm:space-y-6">
       <PageHeader
         icon={BarChart3}
-        title={t("Statement Keuangan Bisnis", "Business Financial Statement")}
+        title={t("Laporan", "Reports")}
+        docsHref="/app/docs/reports"
         description={t(
           "Pantau arus kas, kinerja laba bersih, piutang, dan tren pendapatan bisnismu.",
           "Track cash flow, net profitability, receivables, and revenue trends.",

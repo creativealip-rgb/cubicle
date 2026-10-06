@@ -123,6 +123,7 @@ export default async function ContractsPage({
       <PageHeader
         icon={FileCheck2}
         title={t("Kontrak", "Contracts")}
+        docsHref="/app/docs/proposals-contracts"
         description={t(
           "Kirim kontrak ke klien. Mereka tanda tangan di browser dan kamu dapat jejak audit lengkap.",
           "Send contracts to clients. They sign in browser and you get a complete audit trail.",

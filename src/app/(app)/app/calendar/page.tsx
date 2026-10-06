@@ -139,7 +139,8 @@ export default async function CalendarPage() {
     <div className="space-y-4 sm:space-y-6">
       <PageHeader
         icon={Calendar}
-        title={t("Booking Appointment", "Booking Appointment")}
+        title={t("Jadwal & Booking", "Calendar & Booking")}
+        docsHref="/app/docs/calendar"
         description={t(
           "Kelola jadwal janji temu klien, ketersediaan jam kerja, dan tautan booking publik.",
           "Manage client booking schedule, working availability hours, and public booking link."
