@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { LucideIcon } from "lucide-react";
 import { BookOpen } from "lucide-react";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 interface PageHeaderProps {
@@ -47,16 +48,6 @@ export function PageHeader({
                     {title}
                   </h1>
                   {badge && <div className="shrink-0">{badge}</div>}
-                  {docsHref && (
-                    <Link
-                      href={docsHref}
-                      className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-semibold text-primary/90 bg-primary/10 hover:bg-primary/20 hover:text-primary transition-colors shrink-0"
-                      title="Documentation & Guides"
-                    >
-                      <BookOpen className="h-3 w-3" />
-                      <span>Docs</span>
-                    </Link>
-                  )}
                 </div>
                 {description && (
                   <p className="mt-0.5 max-w-2xl line-clamp-2 text-xs text-muted-foreground sm:truncate">
@@ -72,7 +63,25 @@ export function PageHeader({
 
         {actions && (
           <div className="flex shrink-0 flex-wrap items-center gap-2">
+            {docsHref && (
+              <Button asChild size="sm" variant="outline" className="h-8 gap-1.5 text-xs shadow-none border-primary/20 text-primary hover:bg-primary/10 hover:text-primary">
+                <Link href={docsHref} title="Documentation & Guides">
+                  <BookOpen className="h-3.5 w-3.5" />
+                  <span className="hidden sm:inline">Docs</span>
+                </Link>
+              </Button>
+            )}
             {actions}
+          </div>
+        )}
+        {!actions && docsHref && (
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
+            <Button asChild size="sm" variant="outline" className="h-8 gap-1.5 text-xs shadow-none border-primary/20 text-primary hover:bg-primary/10 hover:text-primary">
+              <Link href={docsHref} title="Documentation & Guides">
+                <BookOpen className="h-3.5 w-3.5" />
+                <span>Docs</span>
+              </Link>
+            </Button>
           </div>
         )}
       </div>
