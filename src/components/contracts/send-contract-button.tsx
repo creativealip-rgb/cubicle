@@ -51,7 +51,7 @@ export function SendContractButton({
   onOpenChange?: (open: boolean) => void;
 }) {
   const { refresh } = useAppTransition();
-  const { t } = useT();
+  const { t, lang } = useT();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = setControlledOpen || setInternalOpen;
@@ -61,13 +61,15 @@ export function SendContractButton({
 
   const isSentLike = status === "sent" || status === "viewed";
   const sendText = isSentLike
-    ? labelResend || "Kirim ulang"
-    : labelSend || "Kirim untuk tanda tangan";
-  const sendingText = labelSending || "Mengirim...";
+    ? labelResend || t("Kirim ulang", "Resend")
+    : labelSend || t("Kirim untuk tanda tangan", "Send for signature");
+  const sendingText = labelSending || t("Mengirim...", "Sending...");
   const subject = title
     ? `Contract for signature: ${title}`
     : t("Kontrak untuk ditandatangani", "Contract for signature");
-  const defaultMessage = `Halo ${clientName || ""},\n\nKontrak "${title || "ini"}" sudah siap untuk ditinjau dan ditandatangani.\n\nSilakan buka tautan kontrak berikut:\n{{contract_link}}\n\nTerima kasih.`;
+  const defaultMessage = lang === "en"
+    ? `Hello ${clientName || ""},\n\nContract "${title || "this"}" is ready for review and signature.\n\nPlease open the contract link below:\n{{contract_link}}\n\nThank you.`
+    : `Halo ${clientName || ""},\n\nKontrak "${title || "ini"}" sudah siap untuk ditinjau dan ditandatangani.\n\nSilakan buka tautan kontrak berikut:\n{{contract_link}}\n\nTerima kasih.`;
   const [message, setMessage] = useState(defaultMessage);
 
   function handleSend() {

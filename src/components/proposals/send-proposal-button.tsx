@@ -51,7 +51,7 @@ export function SendProposalButton({
   onOpenChange?: (open: boolean) => void;
 }) {
   const { refresh } = useAppTransition();
-  const { t } = useT();
+  const { t, lang } = useT();
   const [internalOpen, setInternalOpen] = useState(false);
   const open = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const setOpen = setControlledOpen || setInternalOpen;
@@ -61,11 +61,13 @@ export function SendProposalButton({
 
   const isSentLike = status === "sent" || status === "viewed";
   const sendText = isSentLike
-    ? labelResend || "Kirim ulang"
-    : labelSend || "Kirim";
-  const sendingText = labelSending || "Mengirim...";
+    ? labelResend || t("Kirim ulang", "Resend")
+    : labelSend || t("Kirim", "Send");
+  const sendingText = labelSending || t("Mengirim...", "Sending...");
   const subject = title ? `Proposal: ${title}` : t("Proposal", "Proposal");
-  const defaultMessage = `Halo ${clientName || ""},\n\nProposal "${title || "ini"}" sudah siap untuk ditinjau.\n\nSilakan buka tautan proposal untuk melihat detail scope, harga, dan ketentuan:\n{{proposal_link}}\n\nTerima kasih.`;
+  const defaultMessage = lang === "en"
+    ? `Hello ${clientName || ""},\n\nProposal "${title || "this"}" is ready for review.\n\nPlease open the proposal link below to review details, scope, and pricing:\n{{proposal_link}}\n\nThank you.`
+    : `Halo ${clientName || ""},\n\nProposal "${title || "ini"}" sudah siap untuk ditinjau.\n\nSilakan buka tautan proposal untuk melihat detail scope, harga, dan ketentuan:\n{{proposal_link}}\n\nTerima kasih.`;
   const [message, setMessage] = useState(defaultMessage);
 
   function handleSend() {

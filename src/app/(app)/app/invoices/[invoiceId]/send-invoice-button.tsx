@@ -36,7 +36,7 @@ export function SendInvoiceButton({
   disabled?: boolean;
 }) {
   const { refresh } = useAppTransition();
-  const { t } = useT();
+  const { t, lang } = useT();
   const [open, setOpen] = useState(false);
   const [message, setMessage] = useState(defaultMessage);
   const [loading, setLoading] = useState(false);
@@ -87,61 +87,82 @@ export function SendInvoiceButton({
           {t("Kirim Invoice", "Send invoice")}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[90dvh] max-w-lg overflow-y-auto">
+      <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t("Kirim Invoice", "Send invoice")}</DialogTitle>
+          <DialogTitle>{t("Kirim invoice", "Send invoice")}</DialogTitle>
           <DialogDescription>
             {t(
-              `Pesan dikirim ke ${clientEmail || "email klien"}. Link PDF invoice ditambahkan otomatis melalui {{invoice_link}}.`,
-              `Message will be sent to ${clientEmail || "client email"}. The PDF link is inserted through {{invoice_link}}.`,
+              "Periksa penerima dan subjek sebelum mengirim.",
+              "Review the recipient and subject before sending."
             )}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-2">
-          <Label htmlFor="invoice-message">{t("Body pesan", "Message body")}</Label>
-          <Textarea
-            id="invoice-message"
-            rows={9}
-            maxLength={10000}
-            value={message}
-            onChange={(event) => setMessage(event.target.value)}
-            disabled={loading}
-            className="max-h-[42dvh] resize-y"
-          />
-          <p className="text-right text-xs text-muted-foreground">{message.length.toLocaleString()}/10.000</p>
-        </div>
-
-        <div className="space-y-3 rounded-md border p-3">
-          <div className="flex items-start gap-2">
-            <input
-              id="attach-detail-report"
-              type="checkbox"
-              checked={attachReport}
-              onChange={(event) => setAttachReport(event.target.checked)}
+        <div className="space-y-4 text-sm">
+          <label className="block space-y-2">
+            <span className="block text-sm font-medium text-foreground">{t("Pesan", "Message")}</span>
+            <Textarea
+              id="invoice-message"
+              rows={6}
+              maxLength={10000}
+              value={message}
+              onChange={(event) => setMessage(event.target.value)}
               disabled={loading}
-              className="mt-0.5 h-4 w-4 rounded border"
+              className="min-h-40 resize-y leading-relaxed font-sans"
+              placeholder={t("Pesan tambahan untuk klien...", "Optional message to client...")}
             />
-            <Label htmlFor="attach-detail-report" className="cursor-pointer leading-5">
-              {t("Lampirkan link detail report", "Attach detail report link")}
-            </Label>
-          </div>
-          {attachReport ? (
-            <div className="grid grid-cols-2 gap-3 pl-6">
-              <div className="space-y-1">
-                <Label htmlFor="report-from">{t("Dari", "From")}</Label>
-                <input id="report-from" type="date" value={from} max={to} onChange={(event) => setFrom(event.target.value)} disabled={loading} className="h-9 w-full rounded-md border bg-background px-3 text-sm" />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="report-to">{t("Sampai", "To")}</Label>
-                <input id="report-to" type="date" value={to} min={from} onChange={(event) => setTo(event.target.value)} disabled={loading} className="h-9 w-full rounded-md border bg-background px-3 text-sm" />
-              </div>
+          </label>
+
+          <div className="space-y-3 rounded-lg border bg-muted/20 p-3">
+            <div className="space-y-1">
+              <span className="block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {t("Penerima", "Recipient")}
+              </span>
+              <span className="block min-w-0 break-words font-medium">
+                {clientEmail || t("Belum ada email klien", "No client email set")}
+              </span>
+              {!clientEmail && (
+                <p className="text-xs text-amber-600 font-medium">
+                  ⚠️ {t(
+                    "Email klien kosong. Masukkan email di menu Clients atau bagikan via Link/WhatsApp.",
+                    "Client email is missing. Set it in Clients menu or share via Link/WhatsApp."
+                  )}
+                </p>
+              )}
             </div>
-          ) : null}
+
+            <div className="space-y-2 border-t pt-2">
+              <div className="flex items-start gap-2">
+                <input
+                  id="attach-detail-report"
+                  type="checkbox"
+                  checked={attachReport}
+                  onChange={(event) => setAttachReport(event.target.checked)}
+                  disabled={loading}
+                  className="mt-0.5 h-4 w-4 rounded border"
+                />
+                <Label htmlFor="attach-detail-report" className="cursor-pointer text-xs font-medium leading-5">
+                  {t("Lampirkan rincian timesheet/jam kerja", "Attach detail report link")}
+                </Label>
+              </div>
+              {attachReport ? (
+                <div className="grid grid-cols-2 gap-3 pl-6 pt-1">
+                  <div className="space-y-1">
+                    <Label htmlFor="report-from" className="text-xs font-medium">{t("Dari", "From")}</Label>
+                    <input id="report-from" type="date" value={from} max={to} onChange={(event) => setFrom(event.target.value)} disabled={loading} className="h-8 w-full rounded-md border bg-background px-2 text-xs" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="report-to" className="text-xs font-medium">{t("Sampai", "To")}</Label>
+                    <input id="report-to" type="date" value={to} min={from} onChange={(event) => setTo(event.target.value)} disabled={loading} className="h-8 w-full rounded-md border bg-background px-2 text-xs" />
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          </div>
         </div>
 
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={() => setOpen(false)} disabled={loading}>{t("Batal", "Cancel")}</Button>
+          <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={loading}>{t("Batal", "Cancel")}</Button>
           <LoadingButton type="button" onClick={handleSend} loading={loading} loadingText={t("Mengirim...", "Sending...")} disabled={!message.trim() || (attachReport && (!from || !to || from > to))} className="gap-2">
             <Send className="h-4 w-4" />
             {t("Kirim", "Send")}

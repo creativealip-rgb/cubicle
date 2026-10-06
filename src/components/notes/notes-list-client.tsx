@@ -301,6 +301,13 @@ export function NotesListClient({
               lang={lang}
               action={actions.updateNote}
             />
+            <ConfirmDeleteNoteButton
+              noteId={note.id}
+              tab={tab}
+              action={actions.removeNote}
+              label={t("Hapus", "Delete")}
+              confirmMessage={t("Apakah Anda yakin ingin menghapus catatan ini?", "Are you sure you want to delete this note?")}
+            />
           </div>
         </div>
       </div>
