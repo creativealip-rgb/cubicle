@@ -50,7 +50,7 @@ export interface ExpenseFormValues {
   taxAmount: string;
   receiptUrl: string | null;
   isRecurring?: boolean;
-  frequency?: "monthly" | "quarterly" | "yearly";
+  frequency?: "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
   recurringEndDate?: string;
 }
 
@@ -88,7 +88,7 @@ export function ExpenseForm({
   const [showMore, setShowMore] = useState(mode === "edit" || !compact);
   const [uploading, setUploading] = useState(false);
   const [isRecurring, setIsRecurring] = useState(initial?.isRecurring ?? false);
-  const [frequency, setFrequency] = useState<"monthly" | "quarterly" | "yearly">(initial?.frequency ?? "monthly");
+  const [frequency, setFrequency] = useState<"daily" | "weekly" | "monthly" | "quarterly" | "yearly">(initial?.frequency ?? "monthly");
   const [recurringEndDate, setRecurringEndDate] = useState(initial?.recurringEndDate ?? "");
   const [form, setForm] = useState<ExpenseFormValues>({
     date: initial?.date ?? new Date().toISOString().split("T")[0],
@@ -473,6 +473,8 @@ export function ExpenseForm({
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="daily">{t("Harian", "Daily")}</SelectItem>
+                      <SelectItem value="weekly">{t("Mingguan", "Weekly")}</SelectItem>
                       <SelectItem value="monthly">{t("Bulanan", "Monthly")}</SelectItem>
                       <SelectItem value="quarterly">{t("Triwulanan (3 Bulan)", "Quarterly (3 Months)")}</SelectItem>
                       <SelectItem value="yearly">{t("Tahunan", "Yearly")}</SelectItem>

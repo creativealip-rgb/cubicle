@@ -2083,7 +2083,7 @@ export const expenseRecurring = pgTable("expense_recurring", {
   currency: text("currency").notNull().default("IDR"),
   categoryId: uuid("category_id").references(() => expenseCategories.id, { onDelete: "set null" }),
   projectId: uuid("project_id").references(() => projects.id, { onDelete: "set null" }),
-  frequency: text("frequency", { enum: ["monthly", "quarterly", "yearly"] }).notNull().default("monthly"),
+  frequency: text("frequency", { enum: ["daily", "weekly", "monthly", "quarterly", "yearly"] }).notNull().default("monthly"),
   startDate: date("start_date").notNull(),
   endDate: date("end_date"),
   lastGeneratedDate: date("last_generated_date"),

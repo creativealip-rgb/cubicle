@@ -21,7 +21,7 @@ const createRecurringSchema = z.object({
   currency: z.string().min(3).max(3).default("IDR"),
   categoryId: z.string().uuid().optional().nullable(),
   projectId: z.string().uuid().optional().nullable(),
-  frequency: z.enum(["monthly", "quarterly", "yearly"]).default("monthly"),
+  frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "yearly"]).default("monthly"),
   startDate: z.string().min(1),
   endDate: z.string().optional().nullable(),
   notes: z.string().max(1000).optional().nullable(),
@@ -33,16 +33,18 @@ const updateRecurringSchema = z.object({
   currency: z.string().min(3).max(3).optional(),
   categoryId: z.string().uuid().nullable().optional(),
   projectId: z.string().uuid().nullable().optional(),
-  frequency: z.enum(["monthly", "quarterly", "yearly"]).optional(),
+  frequency: z.enum(["daily", "weekly", "monthly", "quarterly", "yearly"]).optional(),
   endDate: z.string().nullable().optional(),
   isActive: z.boolean().optional(),
   notes: z.string().max(1000).nullable().optional(),
 });
 
 // Compute the next due date given lastGeneratedDate + frequency
-function nextDueDate(last: string, frequency: "monthly" | "quarterly" | "yearly"): string {
+function nextDueDate(last: string, frequency: "daily" | "weekly" | "monthly" | "quarterly" | "yearly"): string {
   const d = new Date(last);
-  if (frequency === "monthly") d.setMonth(d.getMonth() + 1);
+  if (frequency === "daily") d.setDate(d.getDate() + 1);
+  else if (frequency === "weekly") d.setDate(d.getDate() + 7);
+  else if (frequency === "monthly") d.setMonth(d.getMonth() + 1);
   else if (frequency === "quarterly") d.setMonth(d.getMonth() + 3);
   else d.setFullYear(d.getFullYear() + 1);
   return d.toISOString().slice(0, 10);

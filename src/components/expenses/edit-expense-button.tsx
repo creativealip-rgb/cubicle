@@ -64,7 +64,7 @@ export function EditExpenseButton({
   const [open, setOpen] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [recurringModal, setRecurringModal] = useState(false);
-  const [frequency, setFrequency] = useState<"monthly" | "quarterly" | "yearly">("monthly");
+  const [frequency, setFrequency] = useState<"daily" | "weekly" | "monthly" | "quarterly" | "yearly">("monthly");
   const [recurringEndDate, setRecurringEndDate] = useState("");
   const [loading, setLoading] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -217,6 +217,8 @@ export function EditExpenseButton({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
+                  <SelectItem value="daily">{t("Harian", "Daily")}</SelectItem>
+                  <SelectItem value="weekly">{t("Mingguan", "Weekly")}</SelectItem>
                   <SelectItem value="monthly">{t("Bulanan", "Monthly")}</SelectItem>
                   <SelectItem value="quarterly">{t("Triwulanan (3 Bulan)", "Quarterly (3 Months)")}</SelectItem>
                   <SelectItem value="yearly">{t("Tahunan", "Yearly")}</SelectItem>

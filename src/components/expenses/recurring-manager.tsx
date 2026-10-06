@@ -54,7 +54,7 @@ export interface RecurringRow {
   categoryColor: string | null;
   projectId: string | null;
   projectName: string | null;
-  frequency: "monthly" | "quarterly" | "yearly";
+  frequency: "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
   startDate: string;
   endDate: string | null;
   lastGeneratedDate: string | null;
@@ -82,7 +82,7 @@ interface FormState {
   currency: string;
   categoryId: string;
   projectId: string;
-  frequency: "monthly" | "quarterly" | "yearly";
+  frequency: "daily" | "weekly" | "monthly" | "quarterly" | "yearly";
   startDate: string;
   endDate: string;
   notes: string;
@@ -228,6 +228,8 @@ export function RecurringManager({
   }
 
   const freqLabel = (f: string) => {
+    if (f === "daily") return t("Harian", "Daily");
+    if (f === "weekly") return t("Mingguan", "Weekly");
     if (f === "monthly") return t("Bulanan", "Monthly");
     if (f === "quarterly") return t("Kuartalan", "Quarterly");
     return t("Tahunan", "Yearly");
@@ -399,6 +401,8 @@ export function RecurringManager({
                 >
                   <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="daily">{t("Harian", "Daily")}</SelectItem>
+                    <SelectItem value="weekly">{t("Mingguan", "Weekly")}</SelectItem>
                     <SelectItem value="monthly">{t("Bulanan", "Monthly")}</SelectItem>
                     <SelectItem value="quarterly">{t("Kuartalan", "Quarterly")}</SelectItem>
                     <SelectItem value="yearly">{t("Tahunan", "Yearly")}</SelectItem>
