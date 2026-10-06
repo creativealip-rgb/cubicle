@@ -241,12 +241,6 @@ export function RecurringManager({
           {t("Pengeluaran rutin", "Recurring expenses")}
           <span className="text-xs text-slate-500 font-normal">({rows.length})</span>
         </div>
-        {canWrite && (
-          <Button size="sm" variant="outline" className="h-8 gap-1" onClick={openCreate}>
-            <Plus className="h-3.5 w-3.5" />
-            {t("Tambah", "Add")}
-          </Button>
-        )}
       </div>
 
       {rows.length === 0 ? (

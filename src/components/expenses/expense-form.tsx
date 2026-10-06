@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { createExpense, updateExpense } from "@/lib/actions/expenses";
+import { createRecurring } from "@/lib/actions/recurring";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +15,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, X, Loader2, ChevronDown, ChevronUp, Paperclip } from "lucide-react";
+import { Plus, X, Loader2, ChevronDown, ChevronUp, Paperclip, Repeat } from "lucide-react";
 import { useT } from "@/lib/i18n-client";
 
 export interface CategoryOption {
@@ -48,6 +49,9 @@ export interface ExpenseFormValues {
   taxIncluded: boolean;
   taxAmount: string;
   receiptUrl: string | null;
+  isRecurring?: boolean;
+  frequency?: "monthly" | "quarterly" | "yearly";
+  recurringEndDate?: string;
 }
 
 interface ExpenseFormProps {
@@ -83,6 +87,9 @@ export function ExpenseForm({
   const [loading, setLoading] = useState(false);
   const [showMore, setShowMore] = useState(mode === "edit" || !compact);
   const [uploading, setUploading] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(initial?.isRecurring ?? false);
+  const [frequency, setFrequency] = useState<"monthly" | "quarterly" | "yearly">(initial?.frequency ?? "monthly");
+  const [recurringEndDate, setRecurringEndDate] = useState(initial?.recurringEndDate ?? "");
   const [form, setForm] = useState<ExpenseFormValues>({
     date: initial?.date ?? new Date().toISOString().split("T")[0],
     amount: initial?.amount ?? "",
@@ -192,7 +199,23 @@ export function ExpenseForm({
         toast.success(t("Pengeluaran diperbarui", "Expense updated"));
       } else {
         await createExpense({ workspaceId, ...payload });
-        toast.success(t("Pengeluaran ditambahkan", "Expense added"));
+        if (isRecurring) {
+          await createRecurring({
+            workspaceId,
+            name: form.description.trim(),
+            amount: parseFloat(form.amount),
+            currency: form.currency,
+            categoryId: form.categoryId || null,
+            projectId: form.projectId || null,
+            frequency,
+            startDate: form.date,
+            endDate: recurringEndDate || null,
+            notes: form.vendor ? `Vendor: ${form.vendor}` : null,
+          });
+          toast.success(t("Pengeluaran & jadwal rutin berhasil dibuat", "Expense & recurring schedule created"));
+        } else {
+          toast.success(t("Pengeluaran ditambahkan", "Expense added"));
+        }
         setForm({
           date: new Date().toISOString().split("T")[0],
           amount: "",
@@ -206,6 +229,8 @@ export function ExpenseForm({
           taxAmount: "",
           receiptUrl: null,
         });
+        setIsRecurring(false);
+        setRecurringEndDate("");
       }
       refresh();
       onSuccess?.();
@@ -420,6 +445,55 @@ export function ExpenseForm({
           </div>
         </div>
       )}
+        {/* Recurring Option (Create mode only) */}
+        {mode === "create" && (
+          <div className="rounded-xl border border-border/80 bg-muted/20 p-3.5 space-y-3">
+            <label className="flex items-center gap-2 cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={isRecurring}
+                onChange={(e) => setIsRecurring(e.target.checked)}
+                className="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary"
+              />
+              <div className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
+                <Repeat className="h-3.5 w-3.5 text-primary" />
+                {t("Jadikan pengeluaran rutin", "Set as recurring expense")}
+              </div>
+            </label>
+
+            {isRecurring && (
+              <div className="grid gap-3 pt-1 sm:grid-cols-2">
+                <div className="space-y-1">
+                  <Label htmlFor="frequency" className="text-xs">{t("Frekuensi", "Frequency")}</Label>
+                  <Select
+                    value={frequency}
+                    onValueChange={(v: "monthly" | "quarterly" | "yearly") => setFrequency(v)}
+                  >
+                    <SelectTrigger id="frequency" className="h-9">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="monthly">{t("Bulanan", "Monthly")}</SelectItem>
+                      <SelectItem value="quarterly">{t("Triwulanan (3 Bulan)", "Quarterly (3 Months)")}</SelectItem>
+                      <SelectItem value="yearly">{t("Tahunan", "Yearly")}</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="recurringEndDate" className="text-xs">{t("Berakhir pada (opsional)", "End date (optional)")}</Label>
+                  <Input
+                    id="recurringEndDate"
+                    type="date"
+                    value={recurringEndDate}
+                    onChange={(e) => setRecurringEndDate(e.target.value)}
+                    className="h-9"
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
       </div>
 
       <div className="shrink-0 flex gap-2 border-t bg-background px-4 py-3 sm:px-6">
