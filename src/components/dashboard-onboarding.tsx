@@ -4,8 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import {
   BookOpen,
+  CheckCircle2,
   Globe,
-  Sparkles,
+  Target,
   UserPlus,
   ArrowUpRight,
   X,
@@ -42,7 +43,7 @@ const STEP_META: Record<
     en: { title: "Create Landing Page", desc: "Publish your personal or agency website." },
   },
   personal: {
-    icon: Sparkles,
+    icon: Target,
     id: { title: "Setup Personal Activity", desc: "Atur daily goals, habit & catatan." },
     en: { title: "Setup your personal activity", desc: "Manage daily goals, habits & notes." },
   },
@@ -69,7 +70,7 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-4">
         <div className="flex items-center gap-3">
           <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Sparkles className="h-4 w-4" />
+            <CheckCircle2 className="h-4 w-4" />
           </div>
           <div>
             <h2 className="text-sm font-bold tracking-tight text-slate-900">
@@ -123,7 +124,7 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
       >
         {pendingSteps.map((step) => {
           const meta = STEP_META[step.key] || {
-            icon: Sparkles,
+            icon: CheckCircle2,
             id: { title: step.key, desc: "" },
             en: { title: step.key, desc: "" },
           };
