@@ -13,8 +13,8 @@ const typeMeta: Record<
   new: {
     label: { id: "Baru", en: "New" },
     icon: Sparkles,
-    badge: "bg-blue-50 text-blue-700 ring-violet-200/80 dark:bg-violet-950/50 dark:text-violet-300 dark:ring-violet-800/60",
-    iconBox: "bg-blue-100 text-blue-700 dark:bg-violet-950/80 dark:text-violet-300",
+    badge: "bg-blue-50 text-blue-700 ring-blue-200/80 dark:bg-blue-950/50 dark:text-blue-300 dark:ring-blue-800/60",
+    iconBox: "bg-blue-100 text-blue-700 dark:bg-blue-950/80 dark:text-blue-300",
   },
   improvement: {
     label: { id: "Peningkatan", en: "Improvement" },
@@ -55,11 +55,11 @@ export default function WhatsNewPage() {
         <div className="absolute -right-16 -top-28 h-56 w-56 rounded-full bg-blue-600/25 blur-3xl" />
         <div className="absolute -bottom-28 left-1/3 h-48 w-48 rounded-full bg-blue-500/15 blur-3xl" />
         <div className="absolute right-6 top-6 hidden h-20 w-20 rotate-12 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.07] shadow-xl backdrop-blur sm:flex">
-          <Megaphone className="h-8 w-8 -rotate-12 text-violet-200" strokeWidth={1.6} />
+          <Megaphone className="h-8 w-8 -rotate-12 text-blue-200" strokeWidth={1.6} />
         </div>
 
         <div className="relative max-w-xl">
-          <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.07] px-2.5 py-1 text-[11px] font-semibold text-violet-100 backdrop-blur">
+          <div className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.07] px-2.5 py-1 text-[11px] font-semibold text-blue-100 backdrop-blur">
             <Sparkles className="h-3 w-3" />
             {t("Pembaruan Produk", "Product Updates")}
           </div>
@@ -89,7 +89,7 @@ export default function WhatsNewPage() {
       {/* Timeline Section */}
       <section className="relative mt-8 space-y-8 sm:mt-10" aria-label={t("Pembaruan produk", "Product updates")}>
         <div
-          className="absolute bottom-6 left-[15px] top-2.5 w-px bg-gradient-to-b from-violet-300 via-slate-200 to-transparent sm:left-[19px] dark:from-violet-800 dark:via-slate-800"
+          className="absolute bottom-6 left-[15px] top-2.5 w-px bg-gradient-to-b from-blue-300 via-slate-200 to-transparent sm:left-[19px] dark:from-blue-800 dark:via-slate-800"
           aria-hidden="true"
         />
 

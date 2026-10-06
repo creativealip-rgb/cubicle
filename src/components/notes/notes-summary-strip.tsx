@@ -21,7 +21,7 @@ export function NotesSummaryStrip({
           <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
             {t("Catatan Aktif", "Open Notes")}
           </span>
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600/10 text-blue-600 dark:text-violet-400">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400">
             <FileText className="size-3.5" />
           </div>
         </div>

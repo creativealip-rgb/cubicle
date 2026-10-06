@@ -68,13 +68,13 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
     <div className="min-h-screen bg-slate-50/50 dark:bg-slate-950 flex flex-col justify-between py-8 px-4 sm:px-6">
       {/* Background ambient gradient glow */}
       <div className="pointer-events-none fixed inset-0 flex items-center justify-center opacity-30 dark:opacity-20 overflow-hidden">
-        <div className="h-[40rem] w-[40rem] rounded-full bg-gradient-to-tr from-primary/30 to-violet-500/20 blur-3xl" />
+        <div className="h-[40rem] w-[40rem] rounded-full bg-gradient-to-tr from-primary/30 to-blue-500/20 blur-3xl" />
       </div>
 
       <div className="relative mx-auto w-full max-w-xl">
         {/* Header Branding Card */}
         <div className="mb-6 rounded-2xl border border-border/80 bg-card p-6 shadow-xs text-center backdrop-blur-xs">
-          <div className="relative mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-violet-600 text-white shadow-md shadow-primary/20">
+          <div className="relative mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-primary to-blue-600 text-white shadow-md shadow-primary/20">
             {ws.logoUrl ? (
               <Image
                 src={ws.logoUrl}

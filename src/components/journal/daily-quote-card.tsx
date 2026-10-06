@@ -6,7 +6,7 @@ export function DailyQuoteCard({ quote, attribution, t }: {
 
   t: (id: string, en: string) => string;
 }) {
-  return <section className="rounded-2xl border border-blue-200/80 bg-gradient-to-r from-violet-50 to-white p-4 dark:border-violet-900 dark:from-violet-950/40 dark:to-card">
+  return <section className="rounded-2xl border border-blue-200/80 bg-gradient-to-r from-blue-50 to-white p-4 dark:border-blue-900 dark:from-blue-950/40 dark:to-card">
     <div className="flex items-start gap-3">
       <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 text-white"><Sparkles className="size-4" /></div>
       <div className="min-w-0 space-y-1">

@@ -193,7 +193,7 @@ export function AddonManagement({
               className="flex items-center justify-between gap-3 rounded-xl border border-border/80 bg-card p-3 text-xs shadow-xs"
             >
               <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600/10 text-blue-600 dark:text-purple-400">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600/10 text-blue-600 dark:text-blue-400">
                   <Sparkles className="h-4 w-4" />
                 </div>
                 <div>

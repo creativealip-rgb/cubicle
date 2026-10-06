@@ -29,7 +29,7 @@ export interface CategoryRow {
 
 const PRESET_COLORS = [
   "#2563EB", "#0091FF", "#10B981", "#F59E0B", "#ED5F00",
-  "#EF4444", "#EC4899", "#8B5CF6", "#64748B", "#0EA5E9",
+  "#EF4444", "#EC4899", "#3B82F6", "#64748B", "#0EA5E9",
 ];
 
 interface CategoryManagerProps {

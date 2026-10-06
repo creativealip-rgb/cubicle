@@ -203,7 +203,7 @@ export function WorkspaceBrandingForm({
                       </p>
                     </div>
                     {!canCustomizeLogo && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-primary">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-primary">
                         <Sparkles className="h-3 w-3" /> Solo / Team
                       </span>
                     )}

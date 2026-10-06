@@ -91,7 +91,7 @@ const CATEGORY_MAP: Record<string, { labelEn: string; labelId: string; color: st
   features: {
     labelEn: "Cubiqlo Features",
     labelId: "Fitur Cubiqlo",
-    color: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-900/50",
+    color: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/50",
   },
   free_plan_pricing: {
     labelEn: "Free Plan & Pricing",
@@ -111,7 +111,7 @@ const CATEGORY_MAP: Record<string, { labelEn: string; labelId: string; color: st
   subscription: {
     labelEn: "Subscription",
     labelId: "Langganan",
-    color: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-900/50",
+    color: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/50",
   },
   billing: {
     labelEn: "Billing",
@@ -556,7 +556,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
       <div className="pt-2">
         <div className="flex items-center justify-between gap-3.5 rounded-xl border border-border bg-card p-4 shadow-2xs">
           <div className="flex items-center gap-3.5 min-w-0">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-violet-950/50 dark:text-violet-300">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-50 text-blue-600 dark:bg-blue-950/50 dark:text-blue-300">
               <BookOpen className="h-5 w-5" />
             </div>
             <div className="min-w-0">

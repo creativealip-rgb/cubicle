@@ -309,7 +309,7 @@ export function EditHabitDialog({
                   type="submit"
                   size="sm"
                   disabled={loading}
-                  className="h-8 rounded-lg bg-blue-600 px-4 text-xs font-semibold text-white shadow-none hover:bg-violet-700"
+                  className="h-8 rounded-lg bg-blue-600 px-4 text-xs font-semibold text-white shadow-none hover:bg-blue-700"
                 >
                   {loading ? (isEn ? "Saving..." : "Menyimpan...") : (isEn ? "Save" : "Simpan")}
                 </Button>

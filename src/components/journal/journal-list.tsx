@@ -256,7 +256,7 @@ export function JournalList({
               <div key={entry.id} className="space-y-3">
                 {showMonthHeader && (
                   <div className="flex items-center gap-3 py-1">
-                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-violet-400">
+                    <span className="text-xs font-bold uppercase tracking-wider text-blue-700 dark:text-blue-400">
                       {currentMonth}
                     </span>
                     <div className="h-px flex-1 bg-border/60" />
@@ -511,7 +511,7 @@ export function JournalList({
                           >
                             {isId ? "Batal" : "Cancel"}
                           </Button>
-                          <Button size="sm" className="rounded-xl bg-blue-600 text-white hover:bg-violet-700">
+                          <Button size="sm" className="rounded-xl bg-blue-600 text-white hover:bg-blue-700">
                             {isId ? "Simpan Perubahan" : "Save Changes"}
                           </Button>
                         </div>

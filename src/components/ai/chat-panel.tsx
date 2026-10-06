@@ -1305,7 +1305,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                               className={cn(
                                 "group flex items-center gap-1 rounded-lg px-2 py-1.5 text-xs",
                                 c.id === conversationId
-                                  ? "bg-purple-100 text-[var(--cu-purple)]"
+                                  ? "bg-blue-100 text-[var(--cu-purple)]"
                                   : "text-slate-700 hover:bg-white",
                               )}
                             >

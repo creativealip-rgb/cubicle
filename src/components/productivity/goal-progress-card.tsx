@@ -79,8 +79,8 @@ export function GoalProgressCard({
               progress >= 100
                 ? "bg-emerald-500"
                 : progress >= 50
-                  ? "bg-gradient-to-r from-violet-600 to-emerald-500"
-                  : "bg-gradient-to-r from-violet-700 to-violet-500"
+                  ? "bg-gradient-to-r from-blue-600 to-emerald-500"
+                  : "bg-gradient-to-r from-blue-700 to-blue-500"
             }`}
             style={{ width: `${Math.max(progress, 2)}%` }}
           />
@@ -142,7 +142,7 @@ export function GoalProgressCard({
             <select
               name="status"
               defaultValue={effectiveStatus}
-              className="h-7 rounded-lg border bg-background px-2 text-[11px] font-semibold text-foreground shadow-sm cursor-pointer hover:border-violet-400 focus:outline-none"
+              className="h-7 rounded-lg border bg-background px-2 text-[11px] font-semibold text-foreground shadow-sm cursor-pointer hover:border-blue-400 focus:outline-none"
             >
               <option value="not_started">{t("Belum Mulai", "Not Started")}</option>
               <option value="in_progress">{t("Sedang Berjalan", "In Progress")}</option>
@@ -173,8 +173,8 @@ export function GoalProgressCard({
                 progress >= 100
                   ? "bg-emerald-500"
                   : progress >= 50
-                    ? "bg-gradient-to-r from-violet-600 to-emerald-500"
-                    : "bg-gradient-to-r from-violet-700 to-violet-500"
+                    ? "bg-gradient-to-r from-blue-600 to-emerald-500"
+                    : "bg-gradient-to-r from-blue-700 to-blue-500"
               }`}
               style={{ width: `${Math.max(progress, 2)}%` }}
             />
@@ -190,7 +190,7 @@ export function GoalProgressCard({
             </span>
           </div>
 
-          <Button asChild size="sm" variant="ghost" className="h-7 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-violet-950/40 rounded-lg px-2">
+          <Button asChild size="sm" variant="ghost" className="h-7 text-xs font-semibold text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-950/40 rounded-lg px-2">
             <Link href={`/app/productivity/goals/${goal.id}`}>
               {t("Kelola Langkah", "Manage Steps")} <ArrowRight className="ml-1 size-3" />
             </Link>

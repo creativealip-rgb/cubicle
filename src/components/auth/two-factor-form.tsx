@@ -65,10 +65,10 @@ export function TwoFactorForm() {
       {/* Ambient background glow */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.25),rgba(255,255,255,0))]" />
       <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-fuchsia-600/20 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl pointer-events-none" />
 
       <Card className="relative z-10 w-full max-w-[440px] rounded-3xl border border-slate-800 bg-card shadow-[0_24px_70px_-32px_rgba(76,29,149,0.55)] overflow-hidden">
-        <CardHeader className="bg-gradient-to-br from-violet-700 via-purple-600 to-fuchsia-500 p-6 text-white text-center">
+        <CardHeader className="bg-gradient-to-br from-blue-700 via-blue-600 to-blue-500 p-6 text-white text-center">
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-white/15 backdrop-blur-md mb-2">
             {method === "passkey" ? (
               <Fingerprint className="h-6 w-6 text-white" />

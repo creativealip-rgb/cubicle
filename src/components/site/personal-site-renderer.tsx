@@ -20,7 +20,7 @@ const themeStyles = {
     page: "bg-white text-slate-950",
     hero: "bg-slate-950 text-white",
     heroMuted: "text-slate-300",
-    eyebrow: "text-violet-200",
+    eyebrow: "text-blue-200",
     sectionAlt: "bg-slate-50",
     panel: "bg-white shadow-[0_12px_40px_rgba(15,23,42,0.08)] ring-1 ring-slate-900/5",
   },

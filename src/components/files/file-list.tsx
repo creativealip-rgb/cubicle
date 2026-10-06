@@ -101,7 +101,7 @@ function getFileIcon(mimeType: string | null) {
   if (mimeType.includes("spreadsheet") || mimeType.includes("csv") || mimeType.includes("excel"))
     return <FileSpreadsheet className="h-5 w-5 text-emerald-500" />;
   if (mimeType.includes("json") || mimeType.includes("javascript") || mimeType.includes("html"))
-    return <FileCode className="h-5 w-5 text-purple-500" />;
+    return <FileCode className="h-5 w-5 text-blue-500" />;
   return <FileText className="h-5 w-5 text-muted-foreground" />;
 }
 

@@ -241,13 +241,13 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
         </div>
 
         {/* 3. AI Requests Card */}
-        <div className="flex flex-col justify-between rounded-2xl border border-blue-500/30 bg-gradient-to-b from-purple-500/[0.04] to-transparent p-4 shadow-xs relative overflow-hidden">
+        <div className="flex flex-col justify-between rounded-2xl border border-blue-500/30 bg-gradient-to-b from-blue-500/[0.04] to-transparent p-4 shadow-xs relative overflow-hidden">
           <div className="flex flex-col flex-1">
             <div className="flex items-center justify-between">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600/10 text-blue-600 dark:text-purple-400">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-blue-600/10 text-blue-600 dark:text-blue-400">
                 <Sparkles className="h-4.5 w-4.5" />
               </div>
-              <span className="rounded-full bg-blue-600/10 px-2 py-0.5 text-[10px] font-bold text-blue-600 dark:text-purple-400">
+              <span className="rounded-full bg-blue-600/10 px-2 py-0.5 text-[10px] font-bold text-blue-600 dark:text-blue-400">
                 {selectedAi === 1000 ? "Best Value" : "Starter AI"}
               </span>
             </div>
@@ -301,7 +301,7 @@ export function AddonPurchaseControls({ effectivePlan }: { effectivePlan: string
             onClick={() =>
               startCheckout("/api/billing/checkout-ai-addon", { tier: selectedAi, period }, `ai:${selectedAi}`)
             }
-            className="mt-3 w-full h-8.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-purple-700 text-white shadow-xs"
+            className="mt-3 w-full h-8.5 rounded-xl text-xs font-semibold bg-blue-600 hover:bg-blue-700 text-white shadow-xs"
           >
             {pending === `ai:${selectedAi}`
               ? t("Memproses...", "Processing...")

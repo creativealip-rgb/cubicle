@@ -166,7 +166,7 @@ export async function PersonalReportSection({ month, t }: PersonalReportSectionP
       </div>
 
       {/* Smart Health Insights Banner */}
-      <Card className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-violet-500/5 to-transparent shadow-none p-4">
+      <Card className="rounded-xl border border-primary/20 bg-gradient-to-r from-primary/5 via-blue-500/5 to-transparent shadow-none p-4">
         <div className="flex items-start gap-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary mt-0.5">
             <Sparkles className="h-4 w-4" />

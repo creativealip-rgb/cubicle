@@ -32,7 +32,7 @@ const iconMap = {
 
 const iconColorMap = {
   invoice: "text-blue-500 bg-blue-50",
-  clock: "text-purple-500 bg-blue-50",
+  clock: "text-blue-500 bg-blue-50",
   check: "text-emerald-500 bg-emerald-50",
   project: "text-amber-500 bg-amber-50",
   file: "text-sky-500 bg-sky-50",

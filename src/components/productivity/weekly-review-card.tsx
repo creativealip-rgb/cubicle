@@ -26,14 +26,14 @@ export function WeeklyReviewCard({
         {/* Header Strip */}
         <div className="flex items-center justify-between gap-2 border-b pb-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-700 dark:bg-violet-950 dark:text-violet-300 shadow-sm">
+            <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300 shadow-sm">
               <CalendarCheck className="size-4" />
             </div>
             <div>
               <h2 className="text-sm font-bold tracking-tight text-foreground">
                 {t("Review & Ritme Mingguan", "Weekly Rhythm & Review")}
               </h2>
-              <p className="text-xs font-semibold text-blue-600 dark:text-violet-400">
+              <p className="text-xs font-semibold text-blue-600 dark:text-blue-400">
                 {headline}
               </p>
             </div>
@@ -77,11 +77,11 @@ export function WeeklyReviewCard({
           </div>
 
           {focusGoal && (
-            <div className="flex items-start gap-2 rounded-xl border border-blue-200/80 bg-blue-50/40 p-2.5 dark:bg-violet-950/20">
+            <div className="flex items-start gap-2 rounded-xl border border-blue-200/80 bg-blue-50/40 p-2.5 dark:bg-blue-950/20">
               <Target className="size-4 text-blue-600 shrink-0 mt-0.5" />
               <div className="min-w-0 flex-1">
-                <span className="text-[10px] font-semibold uppercase text-blue-600 dark:text-violet-400 block">{t("Fokus Utama", "Primary Focus")}</span>
-                <span className="text-xs font-semibold text-violet-900 dark:text-violet-200 truncate block">{focusGoal}</span>
+                <span className="text-[10px] font-semibold uppercase text-blue-600 dark:text-blue-400 block">{t("Fokus Utama", "Primary Focus")}</span>
+                <span className="text-xs font-semibold text-blue-900 dark:text-blue-200 truncate block">{focusGoal}</span>
               </div>
             </div>
           )}

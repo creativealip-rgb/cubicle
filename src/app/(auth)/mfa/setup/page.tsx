@@ -20,7 +20,7 @@ export default async function MfaSetupPage({
       {/* Decorative ambient background */}
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.25),rgba(255,255,255,0))]" />
       <div className="absolute -top-40 -right-40 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-fuchsia-600/20 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-40 -left-40 h-96 w-96 rounded-full bg-blue-600/20 blur-3xl pointer-events-none" />
 
       {/* Top bar back link */}
       <div className="relative z-10 w-full max-w-[520px] mb-4 flex items-center justify-between">

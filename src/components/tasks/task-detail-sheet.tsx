@@ -881,7 +881,7 @@ export function TaskDetailSheet({
                 {/* Subtask Title Input */}
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-purple-400 bg-blue-600/10 px-2 py-0.5 rounded">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 bg-blue-600/10 px-2 py-0.5 rounded">
                       {t("Subtask Langkah", "Subtask Step")}
                     </span>
                     <span className="text-[11px] text-muted-foreground">
@@ -1093,7 +1093,7 @@ export function TaskDetailSheet({
                   {/* Portal Visibility */}
                   <div className="space-y-1">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
-                      <Shield className="h-3 w-3 text-purple-500" />
+                      <Shield className="h-3 w-3 text-blue-500" />
                       {t("Client Portal", "Client Portal")}
                     </span>
                     <Button

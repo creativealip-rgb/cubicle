@@ -29,7 +29,7 @@ export function PageHeader({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-xl border border-border/70 bg-gradient-to-r from-primary/[0.04] via-violet-500/[0.02] to-transparent p-3.5 sm:p-4 transition-all",
+        "relative overflow-hidden rounded-xl border border-border/70 bg-gradient-to-r from-primary/[0.04] via-blue-500/[0.02] to-transparent p-3.5 sm:p-4 transition-all",
         className,
       )}
     >

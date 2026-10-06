@@ -359,8 +359,8 @@ export default async function DashboardPage() {
       dot: "bg-rose-600",
     },
     purple: {
-      bg: "bg-blue-600/10 text-blue-600 dark:text-purple-400",
-      text: "text-blue-600 dark:text-purple-400",
+      bg: "bg-blue-600/10 text-blue-600 dark:text-blue-400",
+      text: "text-blue-600 dark:text-blue-400",
       ring: "group-hover:border-blue-500/40",
       dot: "bg-blue-600",
     },
@@ -623,7 +623,7 @@ export default async function DashboardPage() {
           {/* Knowledge & AI Hub Banner */}
           <Link
             href="/app/docs"
-            className="group flex items-center gap-3.5 rounded-2xl border border-border/80 bg-gradient-to-br from-primary/[0.06] via-violet-500/[0.03] to-transparent p-4 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm"
+            className="group flex items-center gap-3.5 rounded-2xl border border-border/80 bg-gradient-to-br from-primary/[0.06] via-blue-500/[0.03] to-transparent p-4 shadow-xs transition-all hover:border-primary/40 hover:shadow-sm"
           >
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary shadow-xs ring-1 ring-primary/20 group-hover:scale-105 transition-transform">
               <BookOpen className="h-5 w-5" />

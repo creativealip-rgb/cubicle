@@ -21,7 +21,7 @@ export function QuickNoteCapture({
         await action(formData);
         setTitle("");
       }}
-      className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/[0.04] via-violet-500/[0.02] to-transparent p-3 shadow-2xs transition-all focus-within:border-primary/50 focus-within:shadow-xs"
+      className="rounded-2xl border border-primary/20 bg-gradient-to-r from-primary/[0.04] via-blue-500/[0.02] to-transparent p-3 shadow-2xs transition-all focus-within:border-primary/50 focus-within:shadow-xs"
     >
       <div className="flex items-center gap-2">
         <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-primary text-white shadow-2xs">

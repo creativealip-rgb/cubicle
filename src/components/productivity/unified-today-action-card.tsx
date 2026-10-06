@@ -61,7 +61,7 @@ export function UnifiedTodayActionCard({
   }
 
   return (
-    <Card className="overflow-hidden rounded-3xl border border-violet-100 bg-gradient-to-br from-violet-50/60 via-card to-card shadow-sm dark:border-violet-900/30">
+    <Card className="overflow-hidden rounded-3xl border border-blue-100 bg-gradient-to-br from-blue-50/60 via-card to-card shadow-sm dark:border-blue-900/30">
       <CardContent className="space-y-4 p-4 sm:p-5">
         {/* Top Header Strip */}
         <div className="flex items-center justify-between gap-2 border-b pb-3">
@@ -82,7 +82,7 @@ export function UnifiedTodayActionCard({
           </div>
 
           <div className="flex items-center gap-1.5 text-xs font-semibold">
-            <span className="rounded-xl border border-blue-200/80 bg-white px-2.5 py-1 text-blue-700 shadow-sm dark:bg-card dark:text-violet-300">
+            <span className="rounded-xl border border-blue-200/80 bg-white px-2.5 py-1 text-blue-700 shadow-sm dark:bg-card dark:text-blue-300">
               {completedHabitsCount}/{scheduledHabitsCount} {t("kebiasaan", "habits")}
             </span>
           </div>
@@ -112,7 +112,7 @@ export function UnifiedTodayActionCard({
                   <button
                     type="submit"
                     disabled={pending}
-                    className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-violet-400 hover:bg-blue-50/50 hover:text-blue-700 active:scale-95 disabled:opacity-50 dark:bg-card dark:text-slate-200"
+                    className="group inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm transition hover:border-blue-400 hover:bg-blue-50/50 hover:text-blue-700 active:scale-95 disabled:opacity-50 dark:bg-card dark:text-slate-200"
                   >
                     <div className="flex size-4 items-center justify-center rounded-full border border-slate-300 transition group-hover:border-blue-500 group-hover:bg-blue-600 group-hover:text-white">
                       <Check className="size-2.5 opacity-0 transition group-hover:opacity-100" />
@@ -148,7 +148,7 @@ export function UnifiedTodayActionCard({
             <div className="rounded-2xl border bg-white p-3 shadow-sm dark:bg-card">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
                 <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-violet-950 dark:text-violet-300">
+                  <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
                     <Target className="size-3.5" />
                   </div>
                   <div className="min-w-0 flex-1">

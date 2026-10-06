@@ -228,7 +228,7 @@ export function NoteEditModal({
               type="submit"
               size="sm"
               disabled={pending}
-              className="rounded-xl bg-blue-600 font-semibold text-white hover:bg-violet-700"
+              className="rounded-xl bg-blue-600 font-semibold text-white hover:bg-blue-700"
             >
               {pending
                 ? isEn ? "Saving..." : "Menyimpan..."
