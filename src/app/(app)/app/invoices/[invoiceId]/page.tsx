@@ -324,6 +324,7 @@ export default async function InvoiceDetailPage({
           tax: Number(inv.tax),
           chargeType: inv.chargeType,
           includeClientCompany: inv.includeClientCompany ?? true,
+          customColumns: inv.customColumns ?? [],
           notes: inv.notes ?? "",
           terms: inv.terms ?? "",
           status: inv.status,
@@ -334,6 +335,7 @@ export default async function InvoiceDetailPage({
           unitPrice: Number(item.unitPrice),
           amount: Number(item.amount),
           sourceType: item.sourceType,
+          customValues: item.customValues ?? {},
         }))}
         clients={allClients}
         projects={allProjects}

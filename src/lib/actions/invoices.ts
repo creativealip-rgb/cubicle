@@ -92,10 +92,15 @@ const saveInvoiceEditorSchema = z.object({
   includeClientCompany: z.boolean().default(true),
   notes: z.string(),
   terms: z.string(),
+  customColumns: z.array(z.object({
+    key: z.string(),
+    label: z.string(),
+  })).optional().default([]),
   items: z.array(z.object({
     description: z.string().trim().min(1),
     quantity: z.number().positive(),
     unitPrice: z.number().min(0),
+    customValues: z.record(z.string(), z.string()).optional(),
   })),
 });
 
@@ -682,6 +687,7 @@ export async function saveInvoiceEditor(invoiceId: string, input: z.infer<typeof
         unitPrice: String(item.unitPrice),
         amount: String(item.quantity * item.unitPrice),
         sourceType: "manual" as const,
+        customValues: item.customValues || {},
       })));
       [updated] = await tx.update(invoices).set({
         clientId: parsed.clientId,
@@ -699,6 +705,7 @@ export async function saveInvoiceEditor(invoiceId: string, input: z.infer<typeof
         status: nextStatus,
         chargeType: parsed.chargeType,
         includeClientCompany: parsed.includeClientCompany,
+        customColumns: parsed.customColumns || [],
         updatedAt: new Date(),
       }).where(and(eq(invoices.id, invoiceId), eq(invoices.workspaceId, workspaceId))).returning();
       return updated;

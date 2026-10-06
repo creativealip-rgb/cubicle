@@ -1556,6 +1556,7 @@ export const invoices = pgTable("invoices", {
   includeClientCompany: boolean("include_client_company").notNull().default(true),
   total: numeric("total", { precision: 12, scale: 2 }).notNull().default("0"),
   status: text("status", { enum: ["draft", "sent", "viewed", "paid", "overdue", "cancelled", "archived"] }).notNull().default("draft"),
+  customColumns: jsonb("custom_columns").$type<Array<{ key: string; label: string }>>().default(sql`'[]'::jsonb`),
   notes: text("notes"),
   terms: text("terms"),
   sharedTokenHash: text("shared_token_hash").unique(),
@@ -1602,6 +1603,7 @@ export const invoiceItems = pgTable("invoice_items", {
     periodStart?: string;
     periodEnd?: string;
   }>(),
+  customValues: jsonb("custom_values").$type<Record<string, string>>().default(sql`'{}'::jsonb`),
   originalCurrency: text("original_currency"),
   originalAmount: numeric("original_amount", { precision: 12, scale: 2 }),
   conversionRate: numeric("conversion_rate", { precision: 18, scale: 8 }),
