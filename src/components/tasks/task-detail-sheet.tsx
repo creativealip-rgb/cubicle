@@ -1314,7 +1314,7 @@ export function TaskDetailSheet({
             <div ref={commentScrollRef} className="flex-1 overflow-y-auto space-y-3 pr-1 min-h-[220px]">
               {currentCommentsList.length === 0 ? (
                 <div className="flex flex-col items-center justify-center h-full text-center p-4 text-xs text-muted-foreground space-y-1">
-                  <Sparkles className="h-6 w-6 text-muted-foreground/40 mb-1" />
+                  <MessageSquare className="h-6 w-6 text-muted-foreground/40 mb-1" />
                   <p className="font-medium">
                     {activeDrillDownSubtask
                       ? t("Belum ada komentar di subtask ini", "No comments on this subtask yet")

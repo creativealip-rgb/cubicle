@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckCircle2, Sparkles, Check, Target } from "lucide-react";
+import { CheckCircle2, Target, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -67,7 +67,7 @@ export function UnifiedTodayActionCard({
         <div className="flex items-center justify-between gap-2 border-b pb-3">
           <div className="flex items-center gap-2.5">
             <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-blue-600 text-white shadow-sm">
-              <Sparkles className="size-4" />
+              <Target className="size-4" />
             </div>
             <div>
               <h2 className="text-sm font-bold tracking-tight text-foreground">

@@ -38,6 +38,7 @@ import {
   FolderKanban,
   Receipt,
   CheckCircle2,
+  ShieldCheck,
 } from "lucide-react";
 import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
@@ -899,7 +900,7 @@ export default async function ClientPortalPage({
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
                     <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold text-primary">
-                      <Sparkles className="h-3 w-3" />
+                      <ShieldCheck className="h-3 w-3" />
                       {t("Portal Klien Resmi", "Official Client Portal")}
                     </span>
                   </div>

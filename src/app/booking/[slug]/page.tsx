@@ -87,7 +87,7 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
               <span className="text-xl font-bold tracking-tight">{ws.name.charAt(0).toUpperCase()}</span>
             )}
             <div className="absolute -bottom-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 ring-2 ring-card text-white">
-              <Sparkles className="h-2.5 w-2.5" />
+              <CheckCircle2 className="h-3 w-3" />
             </div>
           </div>
           <h1 className="text-xl font-bold text-foreground tracking-tight">{ws.name}</h1>

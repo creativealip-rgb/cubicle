@@ -631,7 +631,7 @@ export default async function DashboardPage() {
             <div className="min-w-0 flex-1">
               <div className="flex items-center gap-1.5">
                 <p className="text-xs font-bold text-foreground">{t("Pusat Dokumentasi", "Documentation Hub")}</p>
-                <Sparkles className="h-3 w-3 text-primary animate-pulse" />
+                <BookOpen className="h-3 w-3 text-primary" />
               </div>
               <p className="text-[11px] text-muted-foreground line-clamp-2 mt-0.5">
                 {t("19 Panduan modul lengkap: Invoice, Client Portal, 2FA, & Calendar.", "19 Guides: Invoices, Client Portal, 2FA, & Calendar.")}
