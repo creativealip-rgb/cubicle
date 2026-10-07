@@ -36,16 +36,36 @@ export function IntakeForm({
   fields,
   redirectUrl,
   thankYouMessage,
+  themePreset,
+  cardRadius,
 }: {
   token: string;
   fields: QuestionnaireField[];
   redirectUrl?: string | null;
   thankYouMessage?: string | null;
+  themePreset?: string | null;
+  cardRadius?: string | null;
 }) {
   const { t } = useT();
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [submitted, setSubmitted] = useState(false);
   const [pending, startTransition] = useTransition();
+
+  const themeHex =
+    themePreset === "purple"
+      ? "#6C5CE7"
+      : themePreset === "emerald"
+      ? "#059669"
+      : themePreset === "dark"
+      ? "#18181B"
+      : "#2563EB"; // default Ocean Blue
+
+  const fieldRadiusClass =
+    cardRadius === "normal"
+      ? "rounded-md"
+      : cardRadius === "soft"
+      ? "rounded-2xl"
+      : "rounded-xl";
 
   // URL Prefill support (e.g. ?name=Budi&email=budi@pt.com)
   useEffect(() => {
@@ -215,12 +235,12 @@ export function IntakeForm({
             <span>
               Langkah {currentPageIndex + 1} dari {pages.length}
             </span>
-            <span className="font-mono text-primary font-bold">{progressPercent}%</span>
+            <span style={{ color: themeHex }} className="font-mono font-bold">{progressPercent}%</span>
           </div>
           <div className="w-full h-2 bg-muted/60 rounded-full overflow-hidden">
             <div
-              className="h-full bg-primary transition-all duration-300 rounded-full"
-              style={{ width: `${progressPercent}%` }}
+              className="h-full transition-all duration-300 rounded-full"
+              style={{ width: `${progressPercent}%`, backgroundColor: themeHex }}
             />
           </div>
         </div>
@@ -303,7 +323,7 @@ export function IntakeForm({
 
           if (f.type === "terms") {
             return (
-              <div key={f.id} className="col-span-12 p-4 rounded-xl border border-border/80 bg-muted/10 space-y-2">
+              <div key={f.id} className={`col-span-12 p-4 ${fieldRadiusClass} border border-border/80 bg-muted/10 space-y-2`}>
                 <div className="flex items-start gap-3">
                   <Checkbox
                     id={`terms_${f.id}`}
@@ -648,7 +668,8 @@ export function IntakeForm({
         <Button
           type="submit"
           disabled={pending}
-          className="h-10 px-6 text-xs sm:text-sm font-semibold bg-primary text-primary-foreground shadow-sm gap-2"
+          style={{ backgroundColor: themeHex }}
+          className="h-10 px-6 text-xs sm:text-sm font-semibold text-white shadow-sm gap-2"
         >
           {pending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           <span>{isLastPage ? t("Kirim Tanggapan", "Submit Response") : t("Selanjutnya", "Next")}</span>

@@ -366,6 +366,8 @@ function SortableCanvasField({
   onDelete,
   onOpenProperties,
   onUpdateLabel,
+  cardRadius = "rounded",
+  themeHex = "#2563EB",
 }: {
   field: QuestionnaireField;
   isSelected: boolean;
@@ -374,6 +376,8 @@ function SortableCanvasField({
   onDelete: () => void;
   onOpenProperties: () => void;
   onUpdateLabel: (val: string) => void;
+  cardRadius?: "normal" | "rounded" | "soft";
+  themeHex?: string;
 }) {
   const { t } = useT();
   const {
@@ -405,12 +409,19 @@ function SortableCanvasField({
   const isInfo = field.type === "info";
   const isTerms = field.type === "terms";
 
+  const cardRadiusClass =
+    cardRadius === "normal"
+      ? "rounded-md"
+      : cardRadius === "soft"
+      ? "rounded-2xl"
+      : "rounded-xl";
+
   return (
     <div
       ref={setNodeRef}
       style={style}
       onClick={onSelect}
-      className={`group relative rounded-xl border p-4 sm:p-5 transition-all cursor-pointer ${
+      className={`group relative ${cardRadiusClass} border p-4 sm:p-5 transition-all cursor-pointer ${
         isPageBreak ? "col-span-12 border-dashed border-primary/60 bg-primary/[0.03]" : isHalf ? "col-span-12 md:col-span-6" : "col-span-12"
       } ${
         isSelected
@@ -1297,7 +1308,14 @@ export function QuestionnaireBuilder({
                   </Button>
                 </div>
 
-                <IntakeForm token="preview_mode" fields={fields} />
+                <IntakeForm
+                  token="preview_mode"
+                  fields={fields}
+                  themePreset={selectedTheme}
+                  cardRadius={cardRoundness}
+                  thankYouMessage={thankYouMessage}
+                  redirectUrl={redirectUrl}
+                />
               </div>
             </main>
           ) : (
@@ -1517,6 +1535,8 @@ export function QuestionnaireBuilder({
                             <SortableCanvasField
                               key={field.id}
                               field={field}
+                              cardRadius={cardRoundness}
+                              themeHex={customHex}
                               isSelected={field.id === selectedFieldId}
                               onSelect={() => {
                                 setSelectedFieldId(field.id);
@@ -1541,7 +1561,11 @@ export function QuestionnaireBuilder({
 
                     {/* Submit button preview */}
                     <div className="pt-5 border-t border-border/60 flex items-center justify-between">
-                      <Button disabled className="h-9.5 px-5 text-xs font-semibold bg-primary text-primary-foreground">
+                      <Button
+                        disabled
+                        style={{ backgroundColor: customHex }}
+                        className="h-9.5 px-5 text-xs font-semibold text-white shadow-xs"
+                      >
                         {t("Kirim Tanggapan", "Submit Form")}
                       </Button>
                       <span className="text-[10px] text-muted-foreground">Powered by Cubiqlo Forms</span>

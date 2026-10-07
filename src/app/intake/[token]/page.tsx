@@ -75,6 +75,8 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
           fields={fields}
           redirectUrl={questionnaire.redirectUrl}
           thankYouMessage={questionnaire.thankYouMessage}
+          themePreset={questionnaire.themePreset}
+          cardRadius={questionnaire.cardRadius}
         />
       </div>
     </div>
