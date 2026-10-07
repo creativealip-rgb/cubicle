@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import {
@@ -281,7 +282,26 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   const [site, setSite] = useState<PersonalSiteInput>(() => ({ ...initialSite, pages: normalizePages(initialSite) }));
   const [activePageId, setActivePageId] = useState(() => normalizePages(initialSite).find((page) => page.isHome)?.id ?? normalizePages(initialSite)[0]?.id ?? "home");
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<"build" | "settings" | "publish">("build");
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const urlTab = searchParams.get("tab");
+  const initialActiveTab = urlTab === "settings" || urlTab === "publish" ? urlTab : "build";
+  const [activeTab, setActiveTabState] = useState<"build" | "settings" | "publish">(initialActiveTab);
+
+  const setActiveTab = useCallback(
+    (tab: "build" | "settings" | "publish") => {
+      setActiveTabState(tab);
+      const params = new URLSearchParams(window.location.search);
+      if (tab === "build") {
+        params.delete("tab");
+      } else {
+        params.set("tab", tab);
+      }
+      const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+      window.history.replaceState(null, "", newUrl);
+    },
+    [pathname]
+  );
   const [previewDevice, setPreviewDevice] = useState<CanvasDevice>("desktop");
   const [saving, setSaving] = useState(false);
   const [sidebarTab, setSidebarTab] = useState("insert");

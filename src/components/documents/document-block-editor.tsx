@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -44,6 +45,7 @@ import {
   ArrowLeft,
   ArrowUp,
   CheckCircle,
+  Coins,
   Copy,
   Download,
   Eye,
@@ -154,10 +156,43 @@ const contractTokens = [
   "{{today}}",
 ];
 
-function TableBlockEditor({ block, t, onChange }: { block: DocumentBlock; t: TFunc; onChange: (rows: DocumentTableRow[]) => void }) {
+function TableBlockEditor({
+  block,
+  t,
+  onChange,
+  taxRate = 0,
+  downPaymentPercent = 0,
+}: {
+  block: DocumentBlock;
+  t: TFunc;
+  onChange: (rows: DocumentTableRow[]) => void;
+  taxRate?: number;
+  downPaymentPercent?: number;
+}) {
   const raw = block.rows ?? [];
-  const rows: DocumentTableRow[] = raw.length ? raw : [["", ""], ["", ""]];
+  const rows: DocumentTableRow[] = raw.length ? raw : [["Item Description", "Qty", "Price"], ["Core Deliverables", "1", "0"]];
   const colCount = Math.max(1, ...rows.map((r) => r.length));
+
+  // Determine if this is a pricing/fee breakdown table (header contains Qty/Price/Harga)
+  const isPricingTable =
+    rows[0]?.some((cell) => /qty|price|harga|biaya|rate|amount|nominal/i.test(cell)) ||
+    (rows[0]?.length === 3 && /qty/i.test(rows[0][1] || ""));
+
+  // Calculate live financial summary from rows if it's a pricing table
+  let subtotal = 0;
+  if (isPricingTable && rows.length > 1) {
+    for (let i = 1; i < rows.length; i++) {
+      const row = rows[i];
+      if (row.length >= 3) {
+        const qty = parseFloat(row[1]?.replace(/[^0-9.-]+/g, "")) || 0;
+        const price = parseFloat(row[2]?.replace(/[^0-9.-]+/g, "")) || 0;
+        subtotal += qty * price;
+      }
+    }
+  }
+  const tax = subtotal * ((Number(taxRate) || 0) / 100);
+  const total = subtotal + tax;
+  const dpAmount = total * ((Number(downPaymentPercent) || 0) / 100);
 
   function setCell(ri: number, ci: number, value: string) {
     onChange(rows.map((row, i) => row.map((cell, j) => (i === ri && j === ci ? value : cell))));
@@ -178,64 +213,128 @@ function TableBlockEditor({ block, t, onChange }: { block: DocumentBlock; t: TFu
   }
 
   return (
-    <div className="space-y-2">
-      <div className="overflow-x-auto rounded-lg border border-border/80 bg-background/50 p-1">
+    <div className="space-y-2.5">
+      <div className="overflow-x-auto rounded-xl border border-border/80 bg-background/60 p-1 shadow-2xs">
         <table className="w-full border-collapse text-xs sm:text-sm">
-          <tbody>
-            {rows.map((row, ri) => (
-              <tr key={ri} className={ri === 0 ? "bg-muted/40 font-semibold" : "hover:bg-muted/20"}>
-                <td className="w-8 border border-border/60 bg-muted/30 p-1 align-middle text-center">
-                  <button
-                    type="button"
-                    onClick={() => removeRow(ri)}
-                    disabled={rows.length <= 1}
-                    className="text-muted-foreground/60 hover:text-destructive disabled:opacity-20 font-bold"
-                    title={t("Hapus baris", "Remove row")}
-                    aria-label={t("Hapus baris", "Remove row")}
-                  >
-                    ×
-                  </button>
-                </td>
-                {row.map((cell, ci) => (
-                  <td key={ci} className="border border-border/60 p-0.5">
-                    <input
-                      value={cell}
-                      onChange={(e) => setCell(ri, ci, e.target.value)}
-                      className="w-full min-w-[4rem] border-0 bg-transparent px-2.5 py-1.5 text-xs sm:text-sm outline-none focus:bg-background focus:ring-1 focus:ring-primary/40 rounded-sm"
-                      placeholder={ri === 0 ? t(`Kolom ${ci + 1}`, `Column ${ci + 1}`) : ""}
-                    />
-                  </td>
+          <thead>
+            {rows.length > 0 && (
+              <tr className="bg-muted/40 font-semibold text-foreground border-b border-border/60">
+                <th className="w-7 p-1 text-center font-normal text-muted-foreground">#</th>
+                {rows[0].map((cell, ci) => (
+                  <th key={ci} className="p-1 text-left font-semibold">
+                    <div className="flex items-center gap-1">
+                      <input
+                        value={cell}
+                        onChange={(e) => setCell(0, ci, e.target.value)}
+                        className="w-full font-bold bg-transparent px-2 py-1 outline-none focus:bg-background focus:ring-1 focus:ring-primary/40 rounded"
+                        placeholder={t(`Kolom ${ci + 1}`, `Column ${ci + 1}`)}
+                      />
+                      {colCount > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeColumn(ci)}
+                          className="text-muted-foreground hover:text-destructive text-xs px-1"
+                          title={t("Hapus kolom", "Delete column")}
+                        >
+                          ×
+                        </button>
+                      )}
+                    </div>
+                  </th>
                 ))}
               </tr>
-            ))}
-            <tr>
-              <td className="border border-border/60 bg-muted/30 p-1" />
-              {Array.from({ length: colCount }).map((_, ci) => (
-                <td key={ci} className="border border-border/60 bg-muted/30 p-1 text-center">
-                  <button
-                    type="button"
-                    onClick={() => removeColumn(ci)}
-                    disabled={colCount <= 1}
-                    className="text-xs text-muted-foreground/60 hover:text-destructive disabled:opacity-20 font-bold"
-                    title={t("Hapus kolom", "Remove column")}
-                    aria-label={t("Hapus kolom", "Remove column")}
-                  >
-                    ×
-                  </button>
-                </td>
-              ))}
-            </tr>
+            )}
+          </thead>
+          <tbody>
+            {rows.slice(1).map((row, index) => {
+              const ri = index + 1;
+              return (
+                <tr key={ri} className="border-b border-border/40 hover:bg-muted/10 transition-colors">
+                  <td className="w-7 p-1 text-center align-middle">
+                    <button
+                      type="button"
+                      onClick={() => removeRow(ri)}
+                      disabled={rows.length <= 2}
+                      className="text-muted-foreground/60 hover:text-destructive disabled:opacity-20 font-bold"
+                      title={t("Hapus baris", "Remove row")}
+                    >
+                      ×
+                    </button>
+                  </td>
+                  {row.map((cell, ci) => (
+                    <td key={ci} className="p-1">
+                      <input
+                        value={cell}
+                        onChange={(e) => setCell(ri, ci, e.target.value)}
+                        className="w-full bg-transparent px-2 py-1 outline-none focus:bg-background focus:ring-1 focus:ring-primary/40 rounded font-normal"
+                        placeholder={ci === 0 ? t("Deskripsi item...", "Item description...") : ci === 1 ? "1" : "0"}
+                      />
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
+
+        {/* Action Bar Below Table */}
+        <div className="flex items-center justify-between p-1.5 bg-muted/20 border-t border-border/50 text-xs mt-0.5">
+          <div className="flex items-center gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={addRow}
+              className="h-6 px-2 text-[11px] font-semibold text-primary hover:text-primary hover:bg-primary/10 gap-1"
+            >
+              <Plus className="h-3 w-3" />
+              <span>{t("Tambah Baris", "Add Row")}</span>
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={addColumn}
+              className="h-6 px-2 text-[11px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted/40 gap-1"
+            >
+              <Plus className="h-3 w-3" />
+              <span>{t("Tambah Kolom", "Add Column")}</span>
+            </Button>
+          </div>
+
+          {isPricingTable && subtotal > 0 && (
+            <span className="text-[11px] font-medium text-muted-foreground pr-2">
+              Subtotal: <strong className="text-foreground font-mono">{subtotal.toLocaleString("id-ID")}</strong>
+            </span>
+          )}
+        </div>
       </div>
-      <div className="flex flex-wrap gap-2 pt-1">
-        <Button type="button" size="sm" variant="outline" className="h-7 text-xs font-medium" onClick={addRow}>
-          + {t("Baris", "Row")}
-        </Button>
-        <Button type="button" size="sm" variant="outline" className="h-7 text-xs font-medium" onClick={addColumn}>
-          + {t("Kolom", "Column")}
-        </Button>
-      </div>
+
+      {/* Embedded Live Financial Summary Box if it's a pricing table */}
+      {isPricingTable && (
+        <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/[0.02] space-y-1.5 text-xs">
+          <div className="flex justify-between text-muted-foreground">
+            <span>{t("Subtotal", "Subtotal")}</span>
+            <span className="font-mono font-medium">{subtotal.toLocaleString("id-ID")}</span>
+          </div>
+          {taxRate > 0 && (
+            <div className="flex justify-between text-muted-foreground">
+              <span>{t(`Pajak (${taxRate}%)`, `Tax (${taxRate}%)`)}</span>
+              <span className="font-mono font-medium">{tax.toLocaleString("id-ID")}</span>
+            </div>
+          )}
+          <div className="flex justify-between text-sm font-bold text-foreground border-t border-border/60 pt-1.5">
+            <span>{t("Total Investasi", "Total Investment")}</span>
+            <span className="font-mono text-primary font-bold">{total.toLocaleString("id-ID")}</span>
+          </div>
+          {downPaymentPercent > 0 && (
+            <div className="flex justify-between text-xs text-muted-foreground pt-0.5">
+              <span>{t(`Down Payment (${downPaymentPercent}%)`, `Down Payment (${downPaymentPercent}%)`)}</span>
+              <span className="font-mono font-bold text-foreground">{dpAmount.toLocaleString("id-ID")}</span>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -261,7 +360,27 @@ export function DocumentBlockEditor({
   useUnsavedChanges(dirty || saving);
 
   // Workflow Tabs: BUILD (Canvas) | SETTINGS (Document Metadata & Pricing) | PUBLISH (Share / Send)
-  const [activeTab, setActiveTab] = useState<"build" | "settings" | "publish">("build");
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+  const urlTab = searchParams.get("tab");
+  const initialActiveTab = urlTab === "settings" || urlTab === "publish" ? urlTab : "build";
+  const [activeTab, setActiveTabState] = useState<"build" | "settings" | "publish">(initialActiveTab);
+
+  const setActiveTab = useCallback(
+    (tab: "build" | "settings" | "publish") => {
+      setActiveTabState(tab);
+      const params = new URLSearchParams(window.location.search);
+      if (tab === "build") {
+        params.delete("tab");
+      } else {
+        params.set("tab", tab);
+      }
+      const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+      window.history.replaceState(null, "", newUrl);
+    },
+    [pathname]
+  );
   const [livePreviewMode, setLivePreviewMode] = useState(false);
 
   // Form Settings State (Live editable metadata & financial rules)
@@ -441,7 +560,7 @@ export function DocumentBlockEditor({
         : type === "heading"
         ? { id: crypto.randomUUID(), type, content: "", level: 2 }
         : type === "list"
-        ? { id: crypto.randomUUID(), type, items: [""] }
+        ? { id: crypto.randomUUID(), type, items: ["Deliverable / Item 1", "Deliverable / Item 2"], ordered: false }
         : type === "table"
         ? { id: crypto.randomUUID(), type, rows: [["Item Description", "Qty", "Price"], ["Core Deliverables", "1", "{{total_amount}}"]] }
         : type === "signature"
@@ -1070,21 +1189,80 @@ export function DocumentBlockEditor({
                               placeholder={block.type === "placeholder" ? "{{client_name}}" : t("Tulis isi dokumen...", "Write document content...")}
                             />
                           ) : block.type === "list" ? (
-                            <div className="space-y-1">
-                              <Textarea
-                                value={(block.items ?? []).join("\n")}
-                                onChange={(e) => {
-                                  const items = e.target.value.split("\n");
-                                  setBlocks((current) => current.map((item) => (item.id === block.id ? { ...item, items } : item)));
+                            <div className="space-y-1.5 py-1">
+                              {(block.items || []).map((item, idx) => (
+                                <div key={idx} className="flex items-center gap-2.5">
+                                  <span className="text-xs font-semibold text-muted-foreground w-4 text-right select-none shrink-0">
+                                    {block.ordered ? `${idx + 1}.` : "•"}
+                                  </span>
+                                  <Input
+                                    value={item}
+                                    onChange={(e) => {
+                                      const nextItems = [...(block.items || [])];
+                                      nextItems[idx] = e.target.value;
+                                      setBlocks((current) => current.map((b) => (b.id === block.id ? { ...b, items: nextItems } : b)));
+                                      setDirty(true);
+                                    }}
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter") {
+                                        e.preventDefault();
+                                        const nextItems = [...(block.items || [])];
+                                        nextItems.splice(idx + 1, 0, "");
+                                        setBlocks((current) => current.map((b) => (b.id === block.id ? { ...b, items: nextItems } : b)));
+                                        setDirty(true);
+                                      } else if (e.key === "Backspace" && item === "" && (block.items || []).length > 1) {
+                                        e.preventDefault();
+                                        const nextItems = [...(block.items || [])];
+                                        nextItems.splice(idx, 1);
+                                        setBlocks((current) => current.map((b) => (b.id === block.id ? { ...b, items: nextItems } : b)));
+                                        setDirty(true);
+                                      }
+                                    }}
+                                    className="h-8 border-none bg-transparent text-xs sm:text-sm leading-relaxed px-1 focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-background rounded-md"
+                                    placeholder={t("Tulis item...", "Type item...")}
+                                  />
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => {
+                                      const nextItems = [...(block.items || [])];
+                                      if (nextItems.length > 1) {
+                                        nextItems.splice(idx, 1);
+                                      } else {
+                                        nextItems[0] = "";
+                                      }
+                                      setBlocks((current) => current.map((b) => (b.id === block.id ? { ...b, items: nextItems } : b)));
+                                      setDirty(true);
+                                    }}
+                                    className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                                  >
+                                    ✕
+                                  </Button>
+                                </div>
+                              ))}
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const nextItems = [...(block.items || []), ""];
+                                  setBlocks((current) => current.map((b) => (b.id === block.id ? { ...b, items: nextItems } : b)));
                                   setDirty(true);
                                 }}
-                                rows={Math.max(3, (block.items || []).length)}
-                                className="border-none bg-transparent text-xs sm:text-sm leading-relaxed focus:bg-background focus:ring-1 focus:ring-primary/40"
-                                placeholder={t("Satu item per baris...", "One item per line...")}
-                              />
+                                className="text-[11px] font-semibold text-primary hover:text-primary hover:bg-primary/5 h-7 px-2 mt-1 gap-1"
+                              >
+                                <span>+ {t("Tambah Baris Item", "Add List Item")}</span>
+                              </Button>
                             </div>
                           ) : block.type === "table" ? (
-                            <TableBlockEditor block={block} t={t} onChange={(rows) => updateBlock(block.id, { rows })} />
+                            <TableBlockEditor
+                              block={block}
+                              t={t}
+                              onChange={(rows) => updateBlock(block.id, { rows })}
+                              taxRate={metaState.taxRate}
+                              downPaymentPercent={metaState.downPaymentPercent}
+                            />
                           ) : block.type === "divider" ? (
                             <div className="py-2">
                               <hr className="border-border/80" />
@@ -1552,14 +1730,14 @@ export function DocumentBlockEditor({
               </div>
             </div>
 
-            {/* Proposal Financial / Line Items Card */}
+            {/* Proposal Financial / Payment Terms Card */}
             {kind === "proposal" && (
               <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
                 <div className="flex items-center justify-between">
                   <div>
-                    <h3 className="text-base font-bold text-foreground">{t("Rincian Harga & Pembayaran", "Pricing & Payment Terms")}</h3>
+                    <h3 className="text-base font-bold text-foreground">{t("Ketentuan Pembayaran & Pajak", "Payment Terms & Tax Rules")}</h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      {t("Atur rincian item, kuantitas, pajak, dan ketentuan Down Payment (DP).", "Set line items, quantities, taxes, and down payment terms.")}
+                      {t("Atur persentase pajak dan uang muka (DP). Rincian harga diatur langsung pada Pricing Table di tab BUILD.", "Set tax and down payment percentages. Item details are configured directly in the Pricing Table under BUILD.")}
                     </p>
                   </div>
                 </div>
@@ -1591,113 +1769,14 @@ export function DocumentBlockEditor({
                   </div>
                 </div>
 
-                <div className="space-y-3 pt-3 border-t border-border/60">
-                  <div className="flex items-center justify-between">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{t("Daftar Item Proposal", "Proposal Line Items")}</Label>
-                    <Button
-                      type="button"
-                      size="sm"
-                      variant="outline"
-                      onClick={() =>
-                        setMetaState((v) => ({
-                          ...v,
-                          lineItems: [...v.lineItems, { description: "", quantity: 1, unitPrice: 0 }],
-                        }))
-                      }
-                      className="h-7 text-xs font-semibold gap-1"
-                    >
-                      <Plus className="h-3.5 w-3.5" />
-                      <span>{t("Tambah Baris", "Add Row")}</span>
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2">
-                    {metaState.lineItems.map((item, index) => (
-                      <div key={index} className="grid grid-cols-1 sm:grid-cols-[1fr_90px_140px_36px] gap-2 items-center bg-muted/20 p-2 rounded-xl border border-border/60">
-                        <Input
-                          placeholder={t("Deskripsi item / deliverable...", "Item description / deliverable...")}
-                          value={item.description}
-                          onChange={(e) => {
-                            const desc = e.target.value;
-                            setMetaState((v) => ({
-                              ...v,
-                              lineItems: v.lineItems.map((li, i) => (i === index ? { ...li, description: desc } : li)),
-                            }));
-                          }}
-                          className="h-8 text-xs bg-background"
-                          required
-                        />
-                        <Input
-                          type="number"
-                          min="0"
-                          step="0.5"
-                          placeholder="Qty"
-                          value={item.quantity}
-                          onChange={(e) => {
-                            const qty = Number(e.target.value) || 0;
-                            setMetaState((v) => ({
-                              ...v,
-                              lineItems: v.lineItems.map((li, i) => (i === index ? { ...li, quantity: qty } : li)),
-                            }));
-                          }}
-                          className="h-8 text-xs bg-background"
-                        />
-                        <Input
-                          type="number"
-                          min="0"
-                          placeholder={t("Harga Satuan", "Unit Price")}
-                          value={item.unitPrice}
-                          onChange={(e) => {
-                            const price = Number(e.target.value) || 0;
-                            setMetaState((v) => ({
-                              ...v,
-                              lineItems: v.lineItems.map((li, i) => (i === index ? { ...li, unitPrice: price } : li)),
-                            }));
-                          }}
-                          className="h-8 text-xs bg-background"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          disabled={metaState.lineItems.length <= 1}
-                          onClick={() =>
-                            setMetaState((v) => ({
-                              ...v,
-                              lineItems: v.lineItems.filter((_, i) => i !== index),
-                            }))
-                          }
-                          className="h-8 w-8 text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Calculations Summary Box */}
-                  <div className="p-4 rounded-xl border border-border/80 bg-muted/30 space-y-1.5 text-xs text-right mt-3">
-                    <div className="flex justify-between text-muted-foreground">
-                      <span>{t("Subtotal", "Subtotal")}</span>
-                      <span className="font-mono font-medium">{lineItemsSubtotal.toLocaleString("id-ID")}</span>
-                    </div>
-                    {metaState.taxRate > 0 && (
-                      <div className="flex justify-between text-muted-foreground">
-                        <span>{t(`Pajak (${metaState.taxRate}%)`, `Tax (${metaState.taxRate}%)`)}</span>
-                        <span className="font-mono font-medium">{lineItemsTax.toLocaleString("id-ID")}</span>
-                      </div>
+                <div className="p-3.5 rounded-xl border border-primary/20 bg-primary/[0.02] text-xs text-muted-foreground flex items-center gap-2">
+                  <Coins className="h-4 w-4 text-primary shrink-0" />
+                  <span>
+                    {t(
+                      "Kalkulasi total proposal dan nominal DP terhubung otomatis dengan Pricing Table di badan dokumen.",
+                      "Proposal total and down payment amounts sync automatically with the Pricing Table in your document body."
                     )}
-                    <div className="flex justify-between text-sm font-bold text-foreground border-t border-border/60 pt-1.5">
-                      <span>{t("Total Proposal", "Total Proposal")}</span>
-                      <span className="font-mono text-primary font-bold">{lineItemsTotal.toLocaleString("id-ID")}</span>
-                    </div>
-                    {metaState.downPaymentPercent > 0 && (
-                      <div className="flex justify-between text-xs text-muted-foreground pt-0.5">
-                        <span>{t(`Down Payment (${metaState.downPaymentPercent}%)`, `Down Payment (${metaState.downPaymentPercent}%)`)}</span>
-                        <span className="font-mono font-bold text-foreground">{lineItemsDpAmount.toLocaleString("id-ID")}</span>
-                      </div>
-                    )}
-                  </div>
+                  </span>
                 </div>
               </div>
             )}

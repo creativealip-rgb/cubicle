@@ -28,9 +28,9 @@ export async function GET(
     return new NextResponse("Invalid key", { status: 400 });
   }
 
-  const isPublicSiteImage = objectKey.startsWith("site-images/");
+  const isPublicAsset = objectKey.startsWith("site-images/") || objectKey.startsWith("form-assets/");
 
-  if (!isPublicSiteImage) {
+  if (!isPublicAsset) {
     const [file] = await db
       .select()
       .from(files)
@@ -51,7 +51,7 @@ export async function GET(
     return new NextResponse(object.Body.transformToWebStream(), {
       headers: {
         "Content-Type": object.ContentType || MIME_MAP[ext] || "application/octet-stream",
-        "Cache-Control": isPublicSiteImage ? "public, max-age=31536000, immutable" : "private, no-store",
+        "Cache-Control": isPublicAsset ? "public, max-age=31536000, immutable" : "private, no-store",
         "X-Content-Type-Options": "nosniff",
       },
     });

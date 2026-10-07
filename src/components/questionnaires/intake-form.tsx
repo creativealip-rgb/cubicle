@@ -516,20 +516,6 @@ export function IntakeForm({
                 </div>
               )}
 
-              {f.type === "calculation" && (
-                <div className="p-4 rounded-xl border border-primary/40 bg-primary/5 space-y-1">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Calculator className="h-4 w-4 text-primary" />
-                      <span className="text-xs sm:text-sm font-bold text-foreground">{f.label}</span>
-                    </div>
-                    <span className="font-mono font-extrabold text-base sm:text-lg text-primary">
-                      {f.currency || "Rp"} {totalCalculated.toLocaleString("id-ID")}
-                    </span>
-                  </div>
-                  {f.sublabel && <p className="text-[11px] text-muted-foreground">{f.sublabel}</p>}
-                </div>
-              )}
               {f.type === "image_choice" && (
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
                   {(f.imageOptions || []).map((imgOpt, idx) => {

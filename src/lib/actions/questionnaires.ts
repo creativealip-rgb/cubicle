@@ -27,6 +27,12 @@ const createQuestionnaireSchema = z.object({
   expiresAt: z.string().datetime().optional().nullable(),
   maxResponses: z.number().int().positive().optional().nullable(),
   requireAll: z.boolean().optional(),
+  themePreset: z.string().optional().nullable(),
+  cardRadius: z.string().optional().nullable(),
+  thankYouMessage: z.string().max(2000).optional().nullable(),
+  redirectUrl: z.string().url().or(z.string().max(0)).optional().nullable(),
+  passwordProtection: z.string().max(100).optional().nullable(),
+  formStatus: z.enum(["active", "disabled"]).optional(),
   schema: questionnaireSchemaInput,
 });
 
@@ -39,6 +45,12 @@ const updateQuestionnaireSchema = z.object({
   expiresAt: z.string().datetime().optional().nullable(),
   maxResponses: z.number().int().positive().optional().nullable(),
   requireAll: z.boolean().optional(),
+  themePreset: z.string().optional().nullable(),
+  cardRadius: z.string().optional().nullable(),
+  thankYouMessage: z.string().max(2000).optional().nullable(),
+  redirectUrl: z.string().url().or(z.string().max(0)).optional().nullable(),
+  passwordProtection: z.string().max(100).optional().nullable(),
+  formStatus: z.enum(["active", "disabled"]).optional(),
   schema: questionnaireSchemaInput.optional(),
 });
 
@@ -64,6 +76,12 @@ export async function createQuestionnaire(input: {
   expiresAt?: string | null;
   maxResponses?: number | null;
   requireAll?: boolean;
+  themePreset?: string | null;
+  cardRadius?: string | null;
+  thankYouMessage?: string | null;
+  redirectUrl?: string | null;
+  passwordProtection?: string | null;
+  formStatus?: "active" | "disabled";
   schema: QuestionnaireField[];
 }) {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -81,6 +99,12 @@ export async function createQuestionnaire(input: {
     expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
     maxResponses: parsed.maxResponses || null,
     requireAll: parsed.requireAll ?? false,
+    themePreset: parsed.themePreset || "purple",
+    cardRadius: parsed.cardRadius || "rounded",
+    thankYouMessage: parsed.thankYouMessage || null,
+    redirectUrl: parsed.redirectUrl || null,
+    passwordProtection: parsed.passwordProtection || null,
+    formStatus: parsed.formStatus || "active",
     schema: parsed.schema,
     createdBy: user.id,
   }).returning();

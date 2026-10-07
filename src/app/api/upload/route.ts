@@ -1,36 +1,40 @@
 import { NextRequest, NextResponse } from "next/server";
+import { randomUUID } from "crypto";
 import { writeFile, mkdir } from "fs/promises";
-import * as path from "path";
-import * as crypto from "crypto";
+import { join } from "path";
 
+export const runtime = "nodejs";
+
+const MAX_BYTES = 10 * 1024 * 1024; // 10MB
+
+/**
+ * Universal Form Asset & Image Upload.
+ * Saves directly to public upload directory with clean API URL: /api/upload/[filename]
+ */
 export async function POST(req: NextRequest) {
   try {
-    const formData = await req.formData();
-    const file = formData.get("file") as File | null;
+    const form = await req.formData();
+    const file = form.get("file");
 
-    if (!file) {
+    if (!(file instanceof File)) {
       return NextResponse.json({ error: "No file provided" }, { status: 400 });
     }
-
-    // Limit file size to 10MB
-    if (file.size > 10 * 1024 * 1024) {
+    if (file.size > MAX_BYTES) {
       return NextResponse.json({ error: "File size exceeds 10MB limit" }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    const body = Buffer.from(await file.arrayBuffer());
+    const rawExt = file.name.split(".").pop()?.toLowerCase() || "png";
+    const ext = ["png", "jpg", "jpeg", "webp", "gif", "svg"].includes(rawExt) ? rawExt : "png";
+    const filename = `${Date.now()}-${randomUUID()}.${ext}`;
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "form-assets");
-    await mkdir(uploadsDir, { recursive: true });
+    const uploadDir = join(process.cwd(), "public", "uploads", "form-assets");
+    await mkdir(uploadDir, { recursive: true });
+    const filepath = join(uploadDir, filename);
+    await writeFile(filepath, body);
 
-    const ext = path.extname(file.name) || ".bin";
-    const safeHash = crypto.randomBytes(16).toString("hex");
-    const fileName = `${Date.now()}-${safeHash}${ext}`;
-    const filePath = path.join(uploadsDir, fileName);
-
-    await writeFile(filePath, buffer);
-
-    const publicUrl = `/uploads/form-assets/${fileName}`;
+    // Guaranteed working API route
+    const publicUrl = `/api/upload/${filename}`;
 
     return NextResponse.json({
       url: publicUrl,

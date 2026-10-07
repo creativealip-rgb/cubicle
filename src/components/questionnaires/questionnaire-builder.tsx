@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, useEffect, useTransition, useRef, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,6 +87,7 @@ import {
   Coins,
   DollarSign,
   Eye,
+  Upload,
   Play,
   Search,
 } from "lucide-react";
@@ -148,14 +149,6 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     defaultConfig: { placeholder: "+1 555-0199", colSpan: "half" },
   },
   {
-    type: "number",
-    label: "Number",
-    description: "Numeric digits, budget, quantities",
-    icon: Hash,
-    category: "basic",
-    defaultConfig: { placeholder: "0", colSpan: "half" },
-  },
-  {
     type: "date",
     label: "Date Picker",
     description: "Target deadline or kickoff date",
@@ -195,7 +188,7 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     description: "Select one or more choices",
     icon: CheckSquare,
     category: "choice",
-    defaultConfig: { options: ["Option A", "Option B", "Option C"], colSpan: "full" },
+    defaultConfig: { options: ["Option 1", "Option 2", "Option 3", "Option 4"], colSpan: "full" },
   },
 
   // Advanced / Interactive
@@ -234,15 +227,15 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
       imageOptions: [
         { label: "Modern & Clean", imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80" },
         { label: "Bold & Vibrant", imageUrl: "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400&q=80" },
-        { label: "Minimalist Dark", imageUrl: "https://images.unsplash.com/photo-1579783902614-a3fb3927b675?w=400&q=80" },
+        { label: "Minimalist Dark", imageUrl: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80" },
       ],
       colSpan: "full",
     },
   },
   {
     type: "matrix",
-    label: "Matrix / Likert Table",
-    description: "Multi-criteria evaluation grid",
+    label: "Matrix / Likert Scale",
+    description: "Multi-row evaluation grid table",
     icon: Columns,
     category: "advanced",
     defaultConfig: {
@@ -250,19 +243,6 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
       sublabel: "Please rate each aspect below.",
       matrixRows: ["Response Speed", "Deliverable Quality", "Communication"],
       matrixCols: ["Poor", "Fair", "Good", "Excellent"],
-      colSpan: "full",
-    },
-  },
-  {
-    type: "calculation",
-    label: "Cost Estimation / Calculator",
-    description: "Auto calculate total budget from selections",
-    icon: Calculator,
-    category: "advanced",
-    defaultConfig: {
-      label: "Estimated Investment Total",
-      sublabel: "Calculated automatically based on your selected services above.",
-      currency: "Rp",
       colSpan: "full",
     },
   },
@@ -406,11 +386,16 @@ function SortableCanvasField({
   } = useSortable({ id: field.id });
 
   const isHalf = field.colSpan === "half";
+  const fieldFontFamily = field.fontFamily ? getFontFamily(field.fontFamily) : undefined;
+  const fieldAlignClass = field.align === "center" ? "text-center" : field.align === "right" ? "text-right" : "text-left";
+  const fieldSizeClass = field.fontSize === "sm" ? "text-xs" : field.fontSize === "lg" ? "text-base" : field.fontSize === "xl" ? "text-lg" : "text-sm";
+  const textStyles = `${field.bold ? "font-bold" : "font-medium"} ${field.italic ? "italic" : ""} ${field.underline ? "underline" : ""} ${field.strikethrough ? "line-through" : ""}`;
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.35 : 1,
+    fontFamily: fieldFontFamily,
   };
 
   const isPageBreak = field.type === "page_break";
@@ -491,14 +476,14 @@ function SortableCanvasField({
           </Badge>
         </div>
       ) : isHeading ? (
-        <div className="space-y-1.5 pt-1">
+        <div className={`space-y-1.5 pt-1 ${fieldAlignClass}`}>
           <input
             type="text"
             value={field.label}
             onChange={(e) => onUpdateLabel(e.target.value)}
-            className="w-full text-base sm:text-lg font-bold tracking-tight text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1"
+            className={`w-full ${fieldSizeClass} ${textStyles} ${fieldAlignClass} tracking-tight text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1`}
           />
-          {field.sublabel && <p className="text-xs text-muted-foreground px-1">{field.sublabel}</p>}
+          {field.sublabel && <p className={`text-xs text-muted-foreground px-1 ${fieldAlignClass}`}>{field.sublabel}</p>}
         </div>
       ) : isLogo ? (
         <div className={`py-1 flex items-center ${field.align === "center" ? "justify-center" : field.align === "right" ? "justify-end" : "justify-start"}`}>
@@ -524,16 +509,16 @@ function SortableCanvasField({
         </div>
       ) : isInfo ? (
         <div className="p-3 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-1">
-          <div className="flex items-center gap-1.5 text-blue-600 font-bold text-xs">
-            <Info className="h-3.5 w-3.5" />
+          <div className={`flex items-center gap-1.5 text-blue-600 font-bold text-xs ${fieldAlignClass}`}>
+            <Info className="h-3.5 w-3.5 shrink-0" />
             <input
               type="text"
               value={field.label}
               onChange={(e) => onUpdateLabel(e.target.value)}
-              className="bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1"
+              className={`bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-blue-500 rounded px-1 flex-1 ${textStyles} ${fieldSizeClass} ${fieldAlignClass}`}
             />
           </div>
-          <p className="text-xs text-muted-foreground leading-relaxed px-1">
+          <p className={`text-xs text-muted-foreground leading-relaxed px-1 ${fieldAlignClass}`}>
             {field.content || t("Tuliskan informasi atau catatan panduan untuk responden.", "Provide guidelines or notes for respondents.")}
           </p>
         </div>
@@ -545,21 +530,21 @@ function SortableCanvasField({
               type="text"
               value={field.label}
               onChange={(e) => onUpdateLabel(e.target.value)}
-              className="w-full text-xs font-semibold text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1"
+              className={`w-full text-xs ${textStyles} ${fieldSizeClass} ${fieldAlignClass} text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1`}
             />
-            {field.content && <p className="text-[11px] text-muted-foreground px-1">{field.content}</p>}
+            {field.content && <p className={`text-[11px] text-muted-foreground px-1 ${fieldAlignClass}`}>{field.content}</p>}
           </div>
         </div>
       ) : (
         /* Standard Field Preview */
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
-            <div className="flex items-center gap-1.5 min-w-0 flex-1">
+            <div className={`flex items-center gap-1.5 min-w-0 flex-1 ${fieldAlignClass === "text-center" ? "justify-center" : fieldAlignClass === "text-right" ? "justify-end" : "justify-start"}`}>
               <input
                 type="text"
                 value={field.label}
                 onChange={(e) => onUpdateLabel(e.target.value)}
-                className="text-xs font-semibold text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1 py-0.5 flex-1"
+                className={`text-xs ${textStyles} ${fieldSizeClass} ${fieldAlignClass} text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1 py-0.5 flex-1`}
               />
               {field.required && <span className="text-destructive font-bold text-xs shrink-0">*</span>}
             </div>
@@ -568,7 +553,7 @@ function SortableCanvasField({
             </Badge>
           </div>
 
-          {field.sublabel && <p className="text-[11px] text-muted-foreground px-1">{field.sublabel}</p>}
+          {field.sublabel && <p className={`text-[11px] text-muted-foreground px-1 ${fieldAlignClass}`}>{field.sublabel}</p>}
 
           {field.type === "text" && (
             <Input disabled placeholder={field.placeholder || t("Jawaban singkat...", "Short answer...")} className="h-9 text-xs bg-muted/20" />
@@ -631,23 +616,23 @@ function SortableCanvasField({
               ))}
             </div>
           )}
-          {field.type === "calculation" && (
-            <div className="p-3.5 rounded-xl border border-primary/30 bg-primary/5 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Calculator className="h-4 w-4 text-primary" />
-                <span className="text-xs font-semibold text-foreground">{t("Total Estimasi Real-time", "Live Calculated Total")}</span>
-              </div>
-              <span className="font-mono font-bold text-sm text-primary">
-                {field.currency || "Rp"} 0
-              </span>
-            </div>
-          )}
           {field.type === "image_choice" && (
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 pt-1">
               {(field.imageOptions || []).map((imgOpt, idx) => (
                 <div key={idx} className="rounded-xl border border-border/80 overflow-hidden bg-card text-center space-y-1 pb-2">
-                  <div className="h-20 bg-muted/30 overflow-hidden">
-                    <img src={imgOpt.imageUrl} alt={imgOpt.label} className="w-full h-full object-cover" />
+                  <div className="h-20 bg-muted/40 overflow-hidden flex items-center justify-center relative">
+                    {imgOpt.imageUrl ? (
+                      <img
+                        src={imgOpt.imageUrl}
+                        alt={imgOpt.label}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLElement).style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <ImageIcon className="h-6 w-6 text-muted-foreground/40" />
+                    )}
                   </div>
                   <p className="text-[11px] font-semibold text-foreground px-1 truncate">{imgOpt.label}</p>
                 </div>
@@ -700,6 +685,12 @@ export function QuestionnaireBuilder({
     expiresAt?: string | null;
     maxResponses?: number | null;
     requireAll?: boolean;
+    themePreset?: string | null;
+    cardRadius?: string | null;
+    thankYouMessage?: string | null;
+    redirectUrl?: string | null;
+    passwordProtection?: string | null;
+    formStatus?: "active" | "disabled";
     schema: QuestionnaireField[];
   };
 }) {
@@ -708,7 +699,26 @@ export function QuestionnaireBuilder({
   const { refresh } = useAppTransition();
 
   // Navigation tab: "build" | "settings" | "publish"
-  const [activeTab, setActiveTab] = useState<"build" | "settings" | "publish">("build");
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const urlTab = searchParams.get("tab");
+  const initialActiveTab = urlTab === "settings" || urlTab === "publish" ? urlTab : "build";
+  const [activeTab, setActiveTabState] = useState<"build" | "settings" | "publish">(initialActiveTab);
+
+  const setActiveTab = useCallback(
+    (tab: "build" | "settings" | "publish") => {
+      setActiveTabState(tab);
+      const params = new URLSearchParams(window.location.search);
+      if (tab === "build") {
+        params.delete("tab");
+      } else {
+        params.set("tab", tab);
+      }
+      const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+      window.history.replaceState(null, "", newUrl);
+    },
+    [pathname]
+  );
   const [isPaidPlan, setIsPaidPlan] = useState<boolean>(true);
   const [customSlug, setCustomSlug] = useState(initial?.slug || "");
 
@@ -719,7 +729,7 @@ export function QuestionnaireBuilder({
   }, []);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [livePreviewMode, setLivePreviewMode] = useState(false);
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(!initial && !questionnaireId);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
 
   // Form general state
   const [name, setName] = useState(initial?.name || "");
@@ -728,18 +738,23 @@ export function QuestionnaireBuilder({
   const [maxResponses, setMaxResponses] = useState<string>(initial?.maxResponses ? String(initial.maxResponses) : "");
   const [requireAll, setRequireAll] = useState<boolean>(initial?.requireAll || false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [selectedTheme, setSelectedTheme] = useState("purple");
-  const [customHex, setCustomHex] = useState("#6C5CE7");
-  const [cardRoundness, setCardRoundness] = useState<"normal" | "rounded" | "soft">("rounded");
-  const [thankYouMessage, setThankYouMessage] = useState(
-    t(
-      "Terima kasih! Tanggapan Anda telah berhasil kami terima dan akan segera kami proses.",
-      "Thank you! Your response has been received and will be processed shortly.",
-    ),
+  const [selectedTheme, setSelectedTheme] = useState(initial?.themePreset || "purple");
+  const [customHex, setCustomHex] = useState(
+    THEME_PRESETS.find((p) => p.id === (initial?.themePreset || "purple"))?.hex || "#6C5CE7"
   );
-  const [redirectUrl, setRedirectUrl] = useState("");
-  const [formStatus, setFormStatus] = useState<"active" | "disabled">("active");
-  const [passwordProtection, setPasswordProtection] = useState("");
+  const [cardRoundness, setCardRoundness] = useState<"normal" | "rounded" | "soft">(
+    (initial?.cardRadius as "normal" | "rounded" | "soft") || "rounded"
+  );
+  const [thankYouMessage, setThankYouMessage] = useState(
+    initial?.thankYouMessage ||
+      t(
+        "Terima kasih! Tanggapan Anda telah berhasil kami terima dan akan segera kami proses.",
+        "Thank you! Your response has been received and will be processed shortly.",
+      ),
+  );
+  const [redirectUrl, setRedirectUrl] = useState(initial?.redirectUrl || "");
+  const [formStatus, setFormStatus] = useState<"active" | "disabled">(initial?.formStatus || "active");
+  const [passwordProtection, setPasswordProtection] = useState(initial?.passwordProtection || "");
 
   const [fields, setFields] = useState<QuestionnaireField[]>(
     initial?.schema && initial.schema.length > 0
@@ -887,6 +902,8 @@ export function QuestionnaireBuilder({
   const [savedStatus, setSavedStatus] = useState<"saved" | "saving" | "idle">("saved");
   const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
+  const [activeQuestionnaireId, setActiveQuestionnaireId] = useState<string | null>(questionnaireId || null);
+
   const executeSave = useCallback(
     async (isAuto = false) => {
       if (!name.trim()) {
@@ -900,19 +917,25 @@ export function QuestionnaireBuilder({
 
       setSavedStatus("saving");
       try {
-        let qId = questionnaireId;
+        let qId = activeQuestionnaireId;
         const normalizedSlug = isPaidPlan && customSlug.trim() ? customSlug.trim().toLowerCase() : null;
         const isoExpiresAt = expiresAt ? new Date(expiresAt).toISOString() : null;
         const parsedMaxResp = maxResponses ? parseInt(maxResponses, 10) : null;
 
-        if (questionnaireId) {
-          await updateQuestionnaire(questionnaireId, {
+        if (qId) {
+          await updateQuestionnaire(qId, {
             name: name.trim(),
             description: description.trim() || null,
             slug: normalizedSlug,
             expiresAt: isoExpiresAt,
             maxResponses: parsedMaxResp,
             requireAll,
+            themePreset: selectedTheme,
+            cardRadius: cardRoundness,
+            thankYouMessage: thankYouMessage.trim() || null,
+            redirectUrl: redirectUrl.trim() || null,
+            passwordProtection: passwordProtection.trim() || null,
+            formStatus,
             schema: fields,
           });
           if (!isAuto) toast.success(t("Formulir berhasil diperbarui", "Form updated"));
@@ -925,12 +948,18 @@ export function QuestionnaireBuilder({
             expiresAt: isoExpiresAt,
             maxResponses: parsedMaxResp,
             requireAll,
+            themePreset: selectedTheme,
+            cardRadius: cardRoundness,
+            thankYouMessage: thankYouMessage.trim() || null,
+            redirectUrl: redirectUrl.trim() || null,
+            passwordProtection: passwordProtection.trim() || null,
+            formStatus,
             schema: fields,
           });
           qId = res.id;
+          setActiveQuestionnaireId(res.id);
           if (!isAuto) toast.success(t("Formulir berhasil dibuat", "Form created"));
-          router.push(`/app/questionnaires/${qId}`);
-          refresh();
+          window.history.replaceState(null, "", `/app/questionnaires/${qId}`);
         }
         setSavedStatus("saved");
       } catch (err: any) {
@@ -938,7 +967,25 @@ export function QuestionnaireBuilder({
         if (!isAuto) toast.error(err?.message || t("Gagal menyimpan", "Save failed"));
       }
     },
-    [name, description, customSlug, expiresAt, maxResponses, requireAll, fields, questionnaireId, isPaidPlan, workspaceId, router, refresh, t]
+    [
+      name,
+      description,
+      customSlug,
+      expiresAt,
+      maxResponses,
+      requireAll,
+      selectedTheme,
+      cardRoundness,
+      thankYouMessage,
+      redirectUrl,
+      passwordProtection,
+      formStatus,
+      fields,
+      activeQuestionnaireId,
+      isPaidPlan,
+      workspaceId,
+      t,
+    ]
   );
 
   // Debounced auto-save on change
@@ -952,7 +999,23 @@ export function QuestionnaireBuilder({
     return () => {
       if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
     };
-  }, [name, description, customSlug, expiresAt, maxResponses, requireAll, fields, questionnaireId, executeSave]);
+  }, [
+    name,
+    description,
+    customSlug,
+    expiresAt,
+    maxResponses,
+    requireAll,
+    selectedTheme,
+    cardRoundness,
+    thankYouMessage,
+    redirectUrl,
+    passwordProtection,
+    formStatus,
+    fields,
+    questionnaireId,
+    executeSave,
+  ]);
 
   function handleSave() {
     startTransition(async () => {
@@ -967,7 +1030,7 @@ export function QuestionnaireBuilder({
     }
   }, []);
 
-  const activeSlugOrId = customSlug.trim() || initial?.slug || questionnaireId;
+  const activeSlugOrId = customSlug.trim() || initial?.slug || activeQuestionnaireId;
   const baseUrl = customOrigin || "https://dev.cubiqlo.com";
   const shareUrl = activeSlugOrId ? `${baseUrl}/intake/${activeSlugOrId}` : "";
   const embedCode = activeSlugOrId ? `<iframe src="${baseUrl}/intake/${activeSlugOrId}" width="100%" height="700px" frameborder="0" style="border:0;border-radius:12px;"></iframe>` : "";
@@ -1810,83 +1873,229 @@ export function QuestionnaireBuilder({
                           </div>
                         )}
 
-                        {/* Calculation Settings */}
-                        {selectedField.type === "calculation" && (
-                          <div className="space-y-2 pt-2 border-t border-border/60">
-                            <Label className="text-xs font-medium">{t("Simbol Mata Uang", "Currency Symbol")}</Label>
-                            <Input
-                              value={selectedField.currency || "Rp"}
-                              onChange={(e) => updateSelectedField({ currency: e.target.value })}
-                              placeholder="Rp / $ / EUR"
-                              className="h-8.5 text-xs font-mono"
-                            />
-                          </div>
-                        )}
-
-                        {/* Image Choice Settings */}
+                        {/* Image Choice Settings with Add / Edit / Remove Rows & Direct Image Upload */}
                         {selectedField.type === "image_choice" && (
-                          <div className="space-y-2 pt-2 border-t border-border/60">
+                          <div className="space-y-3 pt-2 border-t border-border/60">
                             <div className="flex items-center justify-between">
                               <Label className="text-xs font-medium">{t("Pilihan Kartu Gambar", "Image Card Options")}</Label>
-                              <span className="text-[10px] text-muted-foreground">Label : Image URL</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const current = selectedField.imageOptions || [];
+                                  const newOpt = {
+                                    label: `${t("Opsi Gambar", "Image Option")} ${current.length + 1}`,
+                                    imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80",
+                                  };
+                                  updateSelectedField({ imageOptions: [...current, newOpt] });
+                                }}
+                                className="h-6 px-2 text-xs text-primary hover:bg-primary/10 font-bold"
+                              >
+                                <Plus className="h-3 w-3 mr-1" />
+                                {t("Tambah Kartu", "Add Card")}
+                              </Button>
                             </div>
-                            <Textarea
-                              value={(selectedField.imageOptions || [])
-                                .map((opt) => `${opt.label} : ${opt.imageUrl}`)
-                                .join("\n")}
-                              onChange={(e) => {
-                                const lines = e.target.value.split("\n");
-                                const imgOpts: { label: string; imageUrl: string }[] = [];
-                                lines.forEach((l) => {
-                                  const trimmed = l.trim();
-                                  if (!trimmed) return;
-                                  if (trimmed.includes(":")) {
-                                    const parts = trimmed.split(":");
-                                    const label = parts[0].trim();
-                                    const url = parts.slice(1).join(":").trim();
-                                    if (label && url) imgOpts.push({ label, imageUrl: url });
-                                  } else {
-                                    imgOpts.push({ label: trimmed, imageUrl: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80" });
-                                  }
-                                });
-                                updateSelectedField({ imageOptions: imgOpts });
-                              }}
-                              rows={4}
-                              placeholder="Minimalist : https://image.com/1.jpg&#10;Retro Style : https://image.com/2.jpg"
-                              className="text-xs font-mono"
-                            />
+
+                            <div className="space-y-2.5">
+                              {(selectedField.imageOptions || []).map((opt, idx) => (
+                                <div key={idx} className="p-2.5 rounded-xl border border-border/70 bg-muted/10 space-y-2 relative group">
+                                  <div className="flex items-center justify-between gap-1.5">
+                                    <Input
+                                      value={opt.label}
+                                      onChange={(e) => {
+                                        const current = [...(selectedField.imageOptions || [])];
+                                        current[idx] = { ...current[idx], label: e.target.value };
+                                        updateSelectedField({ imageOptions: current });
+                                      }}
+                                      placeholder={t("Label Kartu...", "Card Label...")}
+                                      className="h-7 text-xs bg-background flex-1"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => {
+                                        const current = [...(selectedField.imageOptions || [])];
+                                        if (current.length <= 1) {
+                                          toast.error(t("Minimal harus ada 1 kartu", "At least 1 card required"));
+                                          return;
+                                        }
+                                        current.splice(idx, 1);
+                                        updateSelectedField({ imageOptions: current });
+                                      }}
+                                      className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
+                                      title={t("Hapus kartu ini", "Delete card")}
+                                    >
+                                      <X className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
+
+                                  {/* Thumbnail Preview & File Upload */}
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-12 w-12 rounded-lg border border-border/70 overflow-hidden shrink-0 bg-muted flex items-center justify-center relative">
+                                      {opt.imageUrl ? (
+                                        <img src={opt.imageUrl} alt={opt.label} className="h-full w-full object-cover" />
+                                      ) : (
+                                        <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <label className="flex items-center justify-center gap-1.5 h-8 px-2.5 rounded-lg border border-border/80 bg-background hover:bg-muted/50 text-xs font-semibold text-foreground cursor-pointer transition-colors w-full">
+                                        <Upload className="h-3.5 w-3.5 text-primary" />
+                                        <span>{t("Upload Gambar", "Upload Image")}</span>
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          className="hidden"
+                                          onChange={async (e) => {
+                                            const file = e.target.files?.[0];
+                                            if (!file) return;
+                                            try {
+                                              const fd = new FormData();
+                                              fd.append("file", file);
+                                              const res = await fetch("/api/upload", {
+                                                method: "POST",
+                                                body: fd,
+                                              });
+                                              const json = await res.json();
+                                              if (json.url) {
+                                                const current = [...(selectedField.imageOptions || [])];
+                                                current[idx] = { ...current[idx], imageUrl: json.url };
+                                                updateSelectedField({ imageOptions: current });
+                                                toast.success(t("Gambar berhasil diupload", "Image uploaded successfully"));
+                                              } else {
+                                                toast.error(json.error || t("Gagal upload gambar", "Failed to upload image"));
+                                              }
+                                            } catch {
+                                              toast.error(t("Gagal upload gambar", "Failed to upload image"));
+                                            }
+                                          }}
+                                        />
+                                      </label>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
                           </div>
                         )}
 
-                        {/* Matrix Table Settings */}
+                        {/* Matrix Table Settings with Interactive Add/Remove for Rows & Cols */}
                         {selectedField.type === "matrix" && (
-                          <div className="space-y-3 pt-2 border-t border-border/60">
-                            <div className="space-y-1">
-                              <Label className="text-xs font-medium">{t("Baris Evaluasi (Aspek)", "Evaluation Rows (Aspects)")}</Label>
-                              <Textarea
-                                value={(selectedField.matrixRows || []).join("\n")}
-                                onChange={(e) =>
-                                  updateSelectedField({
-                                    matrixRows: e.target.value.split("\n").filter((s) => s.trim().length > 0),
-                                  })
-                                }
-                                rows={3}
-                                placeholder="Response Speed&#10;Deliverable Quality&#10;Communication"
-                                className="text-xs font-mono"
-                              />
+                          <div className="space-y-4 pt-2 border-t border-border/60">
+                            {/* Matrix Rows (Aspects) */}
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-xs font-medium">{t("Baris Evaluasi (Aspek)", "Evaluation Rows (Aspects)")}</Label>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const current = selectedField.matrixRows || [];
+                                    const newRow = `${t("Aspek", "Aspect")} ${current.length + 1}`;
+                                    updateSelectedField({ matrixRows: [...current, newRow] });
+                                  }}
+                                  className="h-6 px-2 text-xs text-primary hover:bg-primary/10 font-bold"
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  {t("Tambah Baris", "Add Row")}
+                                </Button>
+                              </div>
+                              <div className="space-y-1.5">
+                                {(selectedField.matrixRows || []).map((row, rIdx) => (
+                                  <div key={rIdx} className="flex items-center gap-1.5">
+                                    <span className="text-[10px] text-muted-foreground font-mono w-4 shrink-0 text-center">
+                                      {rIdx + 1}.
+                                    </span>
+                                    <Input
+                                      value={row}
+                                      onChange={(e) => {
+                                        const current = [...(selectedField.matrixRows || [])];
+                                        current[rIdx] = e.target.value;
+                                        updateSelectedField({ matrixRows: current });
+                                      }}
+                                      placeholder={`Aspek ${rIdx + 1}`}
+                                      className="h-7.5 text-xs bg-background flex-1"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => {
+                                        const current = [...(selectedField.matrixRows || [])];
+                                        if (current.length <= 1) {
+                                          toast.error(t("Minimal harus ada 1 baris", "At least 1 row required"));
+                                          return;
+                                        }
+                                        current.splice(rIdx, 1);
+                                        updateSelectedField({ matrixRows: current });
+                                      }}
+                                      className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
+                                    >
+                                      <X className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
-                            <div className="space-y-1">
-                              <Label className="text-xs font-medium">{t("Kolom Skala Nilai", "Rating Scale Columns")}</Label>
-                              <Input
-                                value={(selectedField.matrixCols || []).join(", ")}
-                                onChange={(e) =>
-                                  updateSelectedField({
-                                    matrixCols: e.target.value.split(",").map((s) => s.trim()).filter(Boolean),
-                                  })
-                                }
-                                placeholder="Poor, Fair, Good, Excellent"
-                                className="h-8.5 text-xs font-mono"
-                              />
+
+                            {/* Matrix Columns (Rating Scale) */}
+                            <div className="space-y-2 pt-2 border-t border-dashed border-border/60">
+                              <div className="flex items-center justify-between">
+                                <Label className="text-xs font-medium">{t("Kolom Skala Nilai", "Rating Scale Columns")}</Label>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const current = selectedField.matrixCols || [];
+                                    const newCol = `${t("Nilai", "Score")} ${current.length + 1}`;
+                                    updateSelectedField({ matrixCols: [...current, newCol] });
+                                  }}
+                                  className="h-6 px-2 text-xs text-primary hover:bg-primary/10 font-bold"
+                                >
+                                  <Plus className="h-3 w-3 mr-1" />
+                                  {t("Tambah Kolom", "Add Col")}
+                                </Button>
+                              </div>
+                              <div className="space-y-1.5">
+                                {(selectedField.matrixCols || []).map((col, cIdx) => (
+                                  <div key={cIdx} className="flex items-center gap-1.5">
+                                    <span className="text-[10px] text-muted-foreground font-mono w-4 shrink-0 text-center">
+                                      {cIdx + 1}.
+                                    </span>
+                                    <Input
+                                      value={col}
+                                      onChange={(e) => {
+                                        const current = [...(selectedField.matrixCols || [])];
+                                        current[cIdx] = e.target.value;
+                                        updateSelectedField({ matrixCols: current });
+                                      }}
+                                      placeholder={`Skala ${cIdx + 1}`}
+                                      className="h-7.5 text-xs bg-background flex-1"
+                                    />
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="icon"
+                                      onClick={() => {
+                                        const current = [...(selectedField.matrixCols || [])];
+                                        if (current.length <= 1) {
+                                          toast.error(t("Minimal harus ada 1 kolom", "At least 1 column required"));
+                                          return;
+                                        }
+                                        current.splice(cIdx, 1);
+                                        updateSelectedField({ matrixCols: current });
+                                      }}
+                                      className="h-6 w-6 text-muted-foreground hover:text-destructive shrink-0"
+                                    >
+                                      <X className="h-3.5 w-3.5" />
+                                    </Button>
+                                  </div>
+                                ))}
+                              </div>
                             </div>
                           </div>
                         )}
@@ -1951,43 +2160,6 @@ export function QuestionnaireBuilder({
                                   </Button>
                                 </div>
                               ))}
-                            </div>
-
-                            {/* Optional quick price / calculation setting */}
-                            <div className="pt-2 border-t border-dashed border-border/60">
-                              <Label className="text-[11px] font-medium text-muted-foreground">{t("Format Cepat Opsi & Harga (Opsional)", "Quick Options & Pricing Bulk Edit")}</Label>
-                              <Textarea
-                                value={(selectedField.options || [])
-                                  .map((opt) => {
-                                    const price = selectedField.optionPrices?.[opt];
-                                    return price !== undefined ? `${opt} : ${price}` : opt;
-                                  })
-                                  .join("\n")}
-                                onChange={(e) => {
-                                  const lines = e.target.value.split("\n");
-                                  const opts: string[] = [];
-                                  const prices: Record<string, number> = {};
-                                  lines.forEach((l) => {
-                                    const trimmed = l.trim();
-                                    if (!trimmed) return;
-                                    if (trimmed.includes(":")) {
-                                      const parts = trimmed.split(":");
-                                      const label = parts[0].trim();
-                                      const price = Number(parts[1].trim());
-                                      if (label) {
-                                        opts.push(label);
-                                        if (!isNaN(price)) prices[label] = price;
-                                      }
-                                    } else {
-                                      opts.push(trimmed);
-                                    }
-                                  });
-                                  updateSelectedField({ options: opts, optionPrices: prices });
-                                }}
-                                rows={2}
-                                placeholder="Website : 5000&#10;Logo : 2000"
-                                className="text-[11px] font-mono mt-1"
-                              />
                             </div>
                           </div>
                         )}
@@ -2289,19 +2461,6 @@ export function QuestionnaireBuilder({
                 </div>
               </div>
             </div>
-
-            {/* Bottom Save Settings Button */}
-            <div className="flex justify-end pt-2">
-              <Button
-                type="button"
-                disabled={pending}
-                onClick={handleSave}
-                className="gap-1.5 text-xs font-semibold px-5"
-              >
-                {pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                <span>{t("Simpan Pengaturan", "Save Settings")}</span>
-              </Button>
-            </div>
           </div>
         </div>
       )}
@@ -2316,7 +2475,7 @@ export function QuestionnaireBuilder({
                 <span>{t("Bagikan & Publikasikan Formulir", "Share & Publish Form")}</span>
               </h3>
 
-              {questionnaireId ? (
+              {activeQuestionnaireId ? (
                 <div className="space-y-5">
                   <div className="space-y-2">
                     <Label className="text-xs font-semibold">{t("Link Publik Formulir", "Direct Shareable Link")}</Label>

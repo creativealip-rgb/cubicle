@@ -183,43 +183,79 @@ function SectionBody({
       );
     case "custom":
       return <div className={`rounded-2xl p-6 ${panel}`}><p className="max-w-3xl whitespace-pre-wrap text-base leading-8 opacity-75">{section.content}</p></div>;
-    case "gallery":
+    case "gallery": {
+      const columns = section.columns ?? 3;
+      const aspectRatio = section.aspectRatio ?? "video";
+      const isPureGrid = !section.layout || section.layout === "grid";
+
       const publicCols =
-        section.columns === 1
+        columns === 1
           ? "grid-cols-1"
-          : section.columns === 2
+          : columns === 2
           ? "grid-cols-1 sm:grid-cols-2"
-          : section.columns === 4
+          : columns === 4
           ? "grid-cols-2 sm:grid-cols-4"
           : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+
+      const aspectClass =
+        aspectRatio === "square"
+          ? "aspect-square"
+          : aspectRatio === "video"
+          ? "aspect-video"
+          : aspectRatio === "wide"
+          ? "aspect-[21/9]"
+          : aspectRatio === "portrait"
+          ? "aspect-[3/4]"
+          : "h-auto min-h-[200px]";
 
       return (
         <div className={`grid gap-6 ${publicCols}`}>
           {section.images
             .filter((img) => img.url)
             .map((img) => {
-              const cardHeight = img.height ? `${img.height}px` : section.imageHeight ? `${section.imageHeight}px` : "240px";
-              const cardWidth = img.width ? `${img.width}px` : "100%";
+              const hasCustomDim = Boolean(img.width || img.height);
               return (
-              <div key={img.id} className="flex flex-col gap-2" style={{ width: img.width ? `${img.width}px` : undefined, maxWidth: "100%" }}>
                 <div
-                  style={{ height: cardHeight, width: cardWidth }}
-                  className="relative overflow-hidden rounded-xl bg-muted/40 border border-border/60"
+                  key={img.id}
+                  className="flex flex-col gap-2 w-full"
+                  style={{
+                    width: img.width ? `${img.width}px` : undefined,
+                    maxWidth: "100%",
+                  }}
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={img.url.startsWith("http") ? img.url : img.url.startsWith("/") ? img.url : `/${img.url}`}
-                    alt={img.alt || img.title || ""}
-                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
-                    loading="lazy"
-                  />
+                  <div
+                    style={
+                      hasCustomDim
+                        ? {
+                            height: img.height ? `${img.height}px` : undefined,
+                            width: img.width ? `${img.width}px` : "100%",
+                          }
+                        : undefined
+                    }
+                    className={`relative overflow-hidden rounded-2xl bg-muted/40 border border-border/60 ${
+                      !hasCustomDim ? aspectClass : ""
+                    }`}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={img.url.startsWith("http") ? img.url : img.url.startsWith("/") ? img.url : `/${img.url}`}
+                      alt={img.alt || img.title || ""}
+                      className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                  {!isPureGrid && (img.title || img.description) && (
+                    <div className="pt-1">
+                      {img.title && <h3 className="text-base font-semibold">{img.title}</h3>}
+                      {img.description && <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 opacity-75">{img.description}</p>}
+                    </div>
+                  )}
                 </div>
-                {img.title && <h3 className="text-base font-semibold">{img.title}</h3>}
-                {img.description && <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 opacity-75">{img.description}</p>}
-              </div>
-            );})}
+              );
+            })}
         </div>
       );
+    }
     case "image": {
       if (!section.url) return null;
       const imgContent = (
@@ -436,7 +472,15 @@ export function PersonalSiteRenderer({
       {aboutCopy && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.65fr_1.35fr]"><div><p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>{labels.about}</p><h2 className="mt-3 text-3xl font-bold tracking-[-0.01em]" style={headingStyle}>{site.title}</h2></div><p className="whitespace-pre-wrap text-base leading-8 opacity-70">{aboutCopy}</p></div></section>}
 
       {visibleSections.map((section, index) => {
-        const hideDefaultHeading = section.type === "mediaText" || (section.type === "image" && !section.heading);
+        const isPlaceholderHeading =
+          !section.heading ||
+          section.heading.toLowerCase().trim() === "section" ||
+          section.heading.toLowerCase().trim() === "seksi";
+        const hideDefaultHeading =
+          section.type === "mediaText" ||
+          section.type === "gallery" ||
+          (section.type === "image" && !section.heading) ||
+          isPlaceholderHeading;
         return (
           <AnimateOnScroll key={section.id} animation={section.animation}>
             <section data-section-type={section.type} className={`${index % 2 === 0 ? styles.sectionAlt : ""} px-6 py-14 sm:px-10 lg:px-16 lg:py-20`}>

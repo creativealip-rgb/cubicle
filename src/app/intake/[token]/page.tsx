@@ -49,10 +49,34 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
 
   const { questionnaire } = result;
   const fields = safeParseQuestionnaireSchema(questionnaire.schema);
+  const radiusClass =
+    questionnaire.cardRadius === "normal"
+      ? "rounded-md"
+      : questionnaire.cardRadius === "soft"
+      ? "rounded-3xl"
+      : "rounded-2xl";
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 py-10 px-4">
-      <IntakeForm token={token} fields={fields} />
+    <div className="min-h-screen bg-slate-900/10 dark:bg-zinc-950/40 py-8 sm:py-12 px-4 flex justify-center items-start">
+      <div className={`w-full max-w-2xl bg-card border border-border/80 ${radiusClass} p-6 sm:p-10 shadow-xl space-y-6`}>
+        <div className="border-b border-border/60 pb-4">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+            {questionnaire.name || "Formulir"}
+          </h1>
+          {questionnaire.description && (
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+              {questionnaire.description}
+            </p>
+          )}
+        </div>
+
+        <IntakeForm
+          token={token}
+          fields={fields}
+          redirectUrl={questionnaire.redirectUrl}
+          thankYouMessage={questionnaire.thankYouMessage}
+        />
+      </div>
     </div>
   );
 }

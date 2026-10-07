@@ -32,6 +32,12 @@ export default async function QuestionnaireEditPage({ params }: { params: Promis
         expiresAt: q.expiresAt ? q.expiresAt.toISOString() : null,
         maxResponses: q.maxResponses,
         requireAll: q.requireAll,
+        themePreset: q.themePreset,
+        cardRadius: q.cardRadius,
+        thankYouMessage: q.thankYouMessage,
+        redirectUrl: q.redirectUrl,
+        passwordProtection: q.passwordProtection,
+        formStatus: (q.formStatus as "active" | "disabled") || "active",
         schema: fields,
       }}
     />
