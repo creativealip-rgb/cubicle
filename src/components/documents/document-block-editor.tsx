@@ -380,6 +380,7 @@ export function DocumentBlockEditor({
   const pathname = usePathname();
   const urlTab = searchParams.get("tab");
   const urlPreview = searchParams.get("preview");
+  const urlDevice = searchParams.get("device") as "desktop" | "tablet" | "mobile" | null;
   const initialActiveTab = urlTab === "settings" || urlTab === "publish" ? urlTab : "build";
   const [activeTab, setActiveTabState] = useState<"build" | "settings" | "publish">(initialActiveTab);
 
@@ -454,8 +455,23 @@ export function DocumentBlockEditor({
   const [translating, setTranslating] = useState(false);
   const [elementSearch, setElementSearch] = useState("");
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(initialBlocks[0]?.id ?? null);
-  const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
+  const [device, setDeviceState] = useState<"desktop" | "tablet" | "mobile">(urlDevice || "desktop");
   const [activeLeftTab, setActiveLeftTab] = useState<"elements" | "structure">("elements");
+
+  const setDevice = useCallback(
+    (d: "desktop" | "tablet" | "mobile") => {
+      setDeviceState(d);
+      const params = new URLSearchParams(window.location.search);
+      if (d === "desktop") {
+        params.delete("device");
+      } else {
+        params.set("device", d);
+      }
+      const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+      window.history.replaceState(null, "", newUrl);
+    },
+    [pathname]
+  );
 
   // History Stack
   const [history, setHistory] = useState<DocumentBlock[][]>([initialBlocks]);

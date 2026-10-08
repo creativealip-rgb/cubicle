@@ -729,6 +729,7 @@ export function QuestionnaireBuilder({
   const pathname = usePathname();
   const urlTab = searchParams.get("tab");
   const urlPreview = searchParams.get("preview");
+  const urlDevice = searchParams.get("device") as "desktop" | "mobile" | null;
   const initialActiveTab = urlTab === "settings" || urlTab === "publish" ? urlTab : "build";
   const [activeTab, setActiveTabState] = useState<"build" | "settings" | "publish">(initialActiveTab);
 
@@ -754,7 +755,22 @@ export function QuestionnaireBuilder({
       setIsPaidPlan(res.isPaid);
     }).catch(() => {});
   }, []);
-  const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
+  const [previewDevice, setPreviewDeviceState] = useState<"desktop" | "mobile">(urlDevice || "desktop");
+
+  const setPreviewDevice = useCallback(
+    (d: "desktop" | "mobile") => {
+      setPreviewDeviceState(d);
+      const params = new URLSearchParams(window.location.search);
+      if (d === "desktop") {
+        params.delete("device");
+      } else {
+        params.set("device", d);
+      }
+      const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+      window.history.replaceState(null, "", newUrl);
+    },
+    [pathname]
+  );
   const [livePreviewMode, setLivePreviewModeState] = useState(urlPreview === "1" || urlPreview === "true");
 
   const setLivePreviewMode = useCallback(
