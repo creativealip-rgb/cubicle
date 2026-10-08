@@ -4,6 +4,7 @@ import { useMemo, useState, useEffect, useTransition, useRef, useCallback } from
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
+import { UnifiedPublishView } from "@/components/public/unified-publish-view";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
@@ -2567,110 +2568,14 @@ export function QuestionnaireBuilder({
 
       {/* ─── TAB CONTENT: PUBLISH ─── */}
       {activeTab === "publish" && (
-        <div className="flex-1 overflow-y-auto p-4 sm:p-8 md:p-12 flex justify-center custom-scrollbar">
-          <div className="w-full max-w-2xl space-y-5">
-            <div className="rounded-2xl border border-border/80 bg-background p-5 sm:p-7 space-y-4 shadow-sm">
-              <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                <Globe className="h-4 w-4 text-primary" />
-                <span>{t("Bagikan & Publikasikan Formulir", "Share & Publish Form")}</span>
-              </h3>
-
-              {activeQuestionnaireId ? (
-                <div className="space-y-5">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-semibold">{t("Link Publik Formulir", "Direct Shareable Link")}</Label>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        readOnly
-                        value={shareUrl}
-                        className="h-9.5 text-xs bg-muted/30 font-mono"
-                      />
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => {
-                          navigator.clipboard.writeText(shareUrl);
-                          toast.success(t("Link berhasil disalin ke clipboard!", "Link copied to clipboard!"));
-                        }}
-                        className="h-9.5 px-4 text-xs font-semibold"
-                      >
-                        {t("Salin Link", "Copy Link")}
-                      </Button>
-                    </div>
-                  </div>
-
-                  {/* WhatsApp Quick Share Button */}
-                  <div className="pt-2 flex items-center gap-2">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        const text = `Hello, please help fill out the brief form for ${name || "our project"} via this link:\n${shareUrl}`;
-                        window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank");
-                      }}
-                      className="h-9 gap-1.5 text-xs font-semibold border-emerald-500/40 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                    >
-                      <MessageCircle className="h-4 w-4" />
-                      <span>{t("Kirim via WhatsApp", "Share to WhatsApp")}</span>
-                    </Button>
-
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        window.open(
-                          `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(shareUrl)}`,
-                          "_blank",
-                        );
-                      }}
-                      className="h-9 gap-1.5 text-xs font-semibold"
-                    >
-                      <QrCode className="h-4 w-4 text-primary" />
-                      <span>{t("Buka QR Code", "View QR Code")}</span>
-                    </Button>
-                  </div>
-
-                  <div className="space-y-2 pt-3 border-t border-border/60">
-                    <Label className="text-xs font-semibold flex items-center gap-1.5">
-                      <Code className="h-3.5 w-3.5 text-primary" />
-                      <span>{t("Embed Form di Website (iFrame)", "Embed Form on Website (iFrame)")}</span>
-                    </Label>
-                    <Textarea
-                      readOnly
-                      value={embedCode}
-                      rows={3}
-                      className="text-xs font-mono bg-muted/30"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => {
-                        navigator.clipboard.writeText(embedCode);
-                        toast.success(t("Kode embed berhasil disalin!", "Embed code copied to clipboard!"));
-                      }}
-                      className="h-8.5 px-3 text-xs"
-                    >
-                      {t("Salin Kode Embed", "Copy Embed Code")}
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="py-8 text-center space-y-2">
-                  <Share2 className="h-8 w-8 mx-auto text-muted-foreground/50" />
-                  <p className="text-xs text-muted-foreground">
-                    {t(
-                      "Klik Simpan di pojok kanan atas terlebih dahulu untuk membuat link dan snippet embed form Anda.",
-                      "Click Save in the top right header first to generate your shareable link and embed snippet.",
-                    )}
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <UnifiedPublishView
+          type="form"
+          title={name || "Briefing Form"}
+          shareUrl={shareUrl}
+          previewUrl={shareUrl}
+          embedCode={embedCode}
+          hasSaved={Boolean(activeQuestionnaireId)}
+        />
       )}
     </div>
   );

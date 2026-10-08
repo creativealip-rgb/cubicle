@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
+import { UnifiedPublishView } from "@/components/public/unified-publish-view";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -1904,97 +1905,14 @@ export function DocumentBlockEditor({
 
       {/* ── TAB 3: PUBLISH (Sharing, WhatsApp, QR, & PDF) ── */}
       {activeTab === "publish" && (
-        <div className="flex-1 overflow-y-auto bg-muted/30 p-4 sm:p-8">
-          <div className="mx-auto max-w-2xl space-y-6">
-            <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-6">
-              <div>
-                <h3 className="text-base font-bold text-foreground">
-                  {kind === "proposal" ? t("Publikasikan & Kirim Proposal", "Publish & Send Proposal") : t("Kirim Kontrak untuk Tanda Tangan", "Send Contract for Signature")}
-                </h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                  {t("Bagikan link resmi kepada klien untuk ditinjau dan ditandatangani secara digital.", "Share universal link with your client for review and digital signature.")}
-                </p>
-              </div>
-
-              {/* Direct Link Share Card */}
-              <div className="p-4 rounded-xl border border-border/80 bg-muted/20 space-y-3">
-                <label className="text-xs font-bold text-foreground">{t("Link Publik Dokumen", "Public Document Link")}</label>
-                <div className="flex items-center gap-2">
-                  <Input value={fullShareUrl || "https://app.cubiqlo.com/..."} readOnly className="font-mono text-xs bg-background" />
-                  <Button
-                    type="button"
-                    size="sm"
-                    onClick={() => {
-                      if (fullShareUrl) {
-                        navigator.clipboard.writeText(fullShareUrl);
-                        toast.success(t("Link berhasil disalin ke clipboard!", "Link copied to clipboard!"));
-                      }
-                    }}
-                    className="shrink-0 gap-1.5 text-xs font-semibold"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                    <span>{t("Salin", "Copy")}</span>
-                  </Button>
-                  {fullShareUrl && (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={() => window.open(fullShareUrl, "_blank")}
-                      className="shrink-0 gap-1.5 text-xs font-semibold"
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" />
-                      <span>{t("Buka", "Open")}</span>
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* Action Buttons Grid: WhatsApp Web, QR Code, PDF Download */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-auto py-3 flex-col gap-1.5 rounded-xl border-border/80 hover:border-emerald-500/50 hover:bg-emerald-500/5 transition-all text-center"
-                  onClick={() => {
-                    const text = encodeURIComponent(
-                      `Hello, here is the official link to review and sign "${docTitle}":\n${fullShareUrl}`
-                    );
-                    window.open(`https://wa.me/?text=${text}`, "_blank");
-                  }}
-                >
-                  <Send className="h-4 w-4 text-emerald-600" />
-                  <span className="text-xs font-bold text-foreground">WhatsApp Share</span>
-                  <span className="text-[10px] text-muted-foreground">Send via WA Chat</span>
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-auto py-3 flex-col gap-1.5 rounded-xl border-border/80 hover:border-primary/50 hover:bg-primary/5 transition-all text-center"
-                  onClick={() => setQrModalOpen(true)}
-                >
-                  <QrCode className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-bold text-foreground">QR Code</span>
-                  <span className="text-[10px] text-muted-foreground">Scan on Mobile Device</span>
-                </Button>
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  className="h-auto py-3 flex-col gap-1.5 rounded-xl border-border/80 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-center"
-                  onClick={() => {
-                    window.open(`${sharePath}`, "_blank");
-                  }}
-                >
-                  <Download className="h-4 w-4 text-blue-600" />
-                  <span className="text-xs font-bold text-foreground">Open / Print PDF</span>
-                  <span className="text-[10px] text-muted-foreground">View printable page</span>
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <UnifiedPublishView
+          type={kind === "proposal" ? "proposal" : "contract"}
+          title={docTitle}
+          shareUrl={fullShareUrl}
+          previewUrl={fullShareUrl}
+          pdfUrl={sharePath}
+          hasSaved={true}
+        />
       )}
 
       {/* ── MODAL: STARTER TEMPLATES SELECTOR ── */}
@@ -2232,29 +2150,6 @@ export function DocumentBlockEditor({
                 {t("Ganti Saja", "Replace Anyway")}
               </Button>
             </div>
-          </div>
-        </div>
-      )}
-
-      {/* ── MODAL: QR CODE ── */}
-      {qrModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs" onClick={() => setQrModalOpen(false)}>
-          <div className="max-w-sm w-full rounded-2xl border border-border/80 bg-background p-6 shadow-xl text-center space-y-4" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold text-sm text-foreground">{t("QR Code Dokumen", "Document QR Code")}</h3>
-              <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setQrModalOpen(false)}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="p-4 bg-white rounded-xl border inline-block mx-auto shadow-2xs">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(fullShareUrl)}`}
-                alt="QR Code"
-                className="h-44 w-44 mx-auto"
-              />
-            </div>
-            <p className="text-[11px] text-muted-foreground">{t("Scan untuk membuka dokumen ini langsung di smartphone klien.", "Scan to open this document directly on client's smartphone.")}</p>
           </div>
         </div>
       )}
