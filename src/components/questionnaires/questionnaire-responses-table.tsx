@@ -394,63 +394,6 @@ export function QuestionnaireResponsesTable({
 
             {/* Drawer Body */}
             <div className="flex-1 overflow-y-auto p-5 space-y-6 custom-scrollbar">
-              {/* Auto Convert Quick Actions */}
-              <div className="p-3.5 rounded-xl border border-primary/30 bg-primary/5 space-y-2">
-                <span className="text-[10px] font-bold uppercase tracking-wider text-primary">
-                  {t("Aksi Cepat Integrasi Cubiqlo", "Cubiqlo Quick Integration Actions")}
-                </span>
-                <div className="flex flex-wrap items-center gap-2 pt-1">
-                  {!selectedResponse.clientId ? (
-                    <Button
-                      type="button"
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          const { convertResponseToClient } = await import("@/lib/actions/questionnaires");
-                          await convertResponseToClient(selectedResponse.id);
-                          toast.success(t("Klien baru berhasil dibuat dari respon ini!", "New client created from this response!"));
-                        } catch (err: unknown) {
-                          toast.error(err instanceof Error ? err.message : t("Gagal membuat klien", "Failed to create client"));
-                        }
-                      }}
-                      className="h-8 text-xs font-semibold gap-1.5 bg-primary text-primary-foreground"
-                    >
-                      <User className="h-3.5 w-3.5" />
-                      <span>{t("+ Buat Klien Baru", "+ Create New Client")}</span>
-                    </Button>
-                  ) : (
-                    <Badge variant="outline" className="text-xs bg-background text-emerald-600 border-emerald-300">
-                      {t("✓ Terhubung ke Klien", "✓ Connected to Client")}
-                    </Badge>
-                  )}
-
-                  {!selectedResponse.projectId ? (
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      onClick={async () => {
-                        try {
-                          const { convertResponseToProject } = await import("@/lib/actions/questionnaires");
-                          await convertResponseToProject(selectedResponse.id);
-                          toast.success(t("Proyek baru berhasil dibuat dari brief ini!", "New project created from this brief!"));
-                        } catch (err: unknown) {
-                          toast.error(err instanceof Error ? err.message : t("Gagal membuat proyek", "Failed to create project"));
-                        }
-                      }}
-                      className="h-8 text-xs font-semibold gap-1.5"
-                    >
-                      <Folder className="h-3.5 w-3.5" />
-                      <span>{t("+ Jadikan Proyek Baru", "+ Create New Project")}</span>
-                    </Button>
-                  ) : (
-                    <Badge variant="outline" className="text-xs bg-background text-emerald-600 border-emerald-300">
-                      {t("✓ Terhubung ke Proyek", "✓ Connected to Project")}
-                    </Badge>
-                  )}
-                </div>
-              </div>
-
               {/* Respondent Card */}
               <div className="p-4 rounded-xl border border-border/80 bg-muted/10 space-y-3">
                 <div className="flex items-center justify-between">

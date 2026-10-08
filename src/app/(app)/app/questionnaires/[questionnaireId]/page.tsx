@@ -102,12 +102,12 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap items-center gap-2">
+        {/* Action Buttons: Clean & Compact */}
+        <div className="flex items-center gap-1.5 shrink-0">
           <Button variant="outline" size="sm" className="h-8 text-xs font-semibold gap-1.5" asChild>
             <Link href={publicShareUrl} target="_blank" rel="noopener noreferrer">
               <ExternalLink className="h-3.5 w-3.5" />
-              <span>Buka Form Publik</span>
+              <span className="hidden sm:inline">Form Publik</span>
             </Link>
           </Button>
 
@@ -125,7 +125,13 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
                 clients={clientsList}
                 projects={projectsList}
               />
-              <DeleteQuestionnaireButton questionnaireId={q.id} />
+              <DeleteQuestionnaireButton
+                questionnaireId={q.id}
+                redirectTo="/app/questionnaires"
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8 text-muted-foreground hover:text-destructive"
+              />
             </>
           )}
         </div>
