@@ -577,15 +577,23 @@ export function DocumentBlockEditor({
         blocks,
       });
 
-      if (result.title && result.title !== metaState.title) {
+      if (result.title) {
         setMetaState((prev) => ({ ...prev, title: result.title }));
       }
-      setBlocks(result.blocks);
-      recordHistory(result.blocks);
+      if (Array.isArray(result.blocks) && result.blocks.length > 0) {
+        setBlocks(result.blocks);
+        recordHistory(result.blocks);
+      }
       setDirty(true);
       toast.success(t("Dokumen berhasil diterjemahkan!", "Document translated successfully!"), { id: toastId });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("Gagal menerjemahkan", "Translation failed"), { id: toastId });
+    } catch (err: any) {
+      console.error("[Document Translation Error]", err);
+      const rawMsg = err?.message || "";
+      const isReactDigest = rawMsg.includes("441") || rawMsg.includes("Server Components render");
+      const errMsg = isReactDigest
+        ? t("Gagal memproses terjemahan dokumen. Silakan coba sesaat lagi.", "Failed to process document translation. Please try again.")
+        : (rawMsg || t("Gagal menerjemahkan", "Translation failed"));
+      toast.error(errMsg, { id: toastId });
     } finally {
       setTranslating(false);
     }
