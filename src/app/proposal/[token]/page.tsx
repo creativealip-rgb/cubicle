@@ -8,6 +8,7 @@ import { AcceptDeclineButtons } from "@/components/proposals/accept-decline-butt
 import { ProposalPublicView } from "@/components/proposals/proposal-public-view";
 import { buildProposalPlaceholderValues } from "@/lib/document-placeholder-values";
 import { normalizeDocumentBlocks } from "@/lib/document-blocks";
+import { PublicDocumentHeader } from "@/components/public/public-document-header";
 
 interface ProposalPageProps {
   params: Promise<{ token: string }>;
@@ -46,6 +47,7 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
       companyName: proposals.companyName,
       proposalNumber: proposals.proposalNumber,
       workspaceName: workspaces.name,
+      workspaceLogoUrl: workspaces.logoUrl,
       workspaceAddress: workspaces.billingAddress,
     })
     .from(proposals)
@@ -102,51 +104,64 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
   });
 
   return (
-    <ProposalPublicView
-      proposal={{
-        title: proposal.title,
-        clientName: proposal.clientName,
-        clientEmail: proposal.clientEmail,
-        validUntil: proposal.validUntil,
-        status: proposal.status,
-        lineItems: (proposal.lineItems ?? []) as import("@/components/proposals/proposal-public-view").ProposalLineItem[],
-        subtotal: proposal.subtotal,
-        tax: proposal.tax,
-        total: proposal.total,
-        currency: proposal.currency || "IDR",
-        downPaymentPercent: proposal.downPaymentPercent,
-      }}
-      blocks={normalizeDocumentBlocks(proposal.contentBlocks, "proposal")}
-      placeholderValues={placeholderValues}
-      topBar={
-        expired ? (
-          <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-700 font-medium text-center">
-            This proposal link has expired. Please contact the sender for a new one.
-          </div>
-        ) : isDraft ? (
-          <div className="p-4 bg-muted/40 border border-border/80 rounded-xl text-xs text-muted-foreground font-medium text-center">
-            This proposal is currently in draft status.
-          </div>
-        ) : null
-      }
-      signatureSlot={
-        isActionable ? (
-          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="text-xs text-muted-foreground">
-              By accepting this proposal, you agree to the deliverables, pricing, and project terms detailed above.
-            </div>
-            <AcceptDeclineButtons proposalId={proposal.id} token={token} />
-          </div>
-        ) : isAccepted ? (
-          <div className="flex items-center justify-center gap-2 text-emerald-600 font-bold text-xs sm:text-sm py-2">
-            <span>✓ Proposal has been accepted</span>
-          </div>
-        ) : isDeclined ? (
-          <div className="flex items-center justify-center gap-2 text-destructive font-bold text-xs sm:text-sm py-2">
-            <span>✕ Proposal was declined</span>
-          </div>
-        ) : null
-      }
-    />
+    <div className="min-h-screen bg-gradient-to-b from-primary/5 via-background to-background py-10 px-4 sm:px-6">
+      <div className="max-w-2xl mx-auto space-y-6">
+        <PublicDocumentHeader
+          badgeLabel="Official Proposal"
+          documentTitle={proposal.title || "Proposal"}
+          workspaceName={proposal.workspaceName}
+          workspaceLogoUrl={proposal.workspaceLogoUrl}
+          securityLabel="Encrypted Document"
+        />
+
+        <ProposalPublicView
+          embedded={true}
+          proposal={{
+            title: proposal.title,
+            clientName: proposal.clientName,
+            clientEmail: proposal.clientEmail,
+            validUntil: proposal.validUntil,
+            status: proposal.status,
+            lineItems: (proposal.lineItems ?? []) as import("@/components/proposals/proposal-public-view").ProposalLineItem[],
+            subtotal: proposal.subtotal,
+            tax: proposal.tax,
+            total: proposal.total,
+            currency: proposal.currency || "IDR",
+            downPaymentPercent: proposal.downPaymentPercent,
+          }}
+          blocks={normalizeDocumentBlocks(proposal.contentBlocks, "proposal")}
+          placeholderValues={placeholderValues}
+          topBar={
+            expired ? (
+              <div className="p-4 bg-amber-500/10 border border-amber-500/30 rounded-xl text-xs text-amber-700 font-medium text-center">
+                This proposal link has expired. Please contact the sender for a new one.
+              </div>
+            ) : isDraft ? (
+              <div className="p-4 bg-muted/40 border border-border/80 rounded-xl text-xs text-muted-foreground font-medium text-center">
+                This proposal is currently in draft status.
+              </div>
+            ) : null
+          }
+          signatureSlot={
+            isActionable ? (
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="text-xs text-muted-foreground">
+                  By accepting this proposal, you agree to the deliverables, pricing, and project terms detailed above.
+                </div>
+                <AcceptDeclineButtons proposalId={proposal.id} token={token} />
+              </div>
+            ) : isAccepted ? (
+              <div className="flex items-center justify-center gap-2 text-emerald-600 font-bold text-xs sm:text-sm py-2">
+                <span>✓ Proposal has been accepted</span>
+              </div>
+            ) : isDeclined ? (
+              <div className="flex items-center justify-center gap-2 text-destructive font-bold text-xs sm:text-sm py-2">
+                <span>✕ Proposal was declined</span>
+              </div>
+            ) : null
+          }
+        />
+      </div>
+    </div>
   );
 }

@@ -1,6 +1,7 @@
 import { getPublicQuestionnaire } from "@/lib/actions/questionnaires";
 import { safeParseQuestionnaireSchema } from "@/lib/questionnaire-schema";
 import { IntakeForm } from "@/components/questionnaires/intake-form";
+import { PublicDocumentHeader } from "@/components/public/public-document-header";
 import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -47,7 +48,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
     );
   }
 
-  const { questionnaire } = result;
+  const { questionnaire, workspaceName, workspaceLogoUrl } = result;
   const fields = safeParseQuestionnaireSchema(questionnaire.schema);
   const radiusClass =
     questionnaire.cardRadius === "normal"
@@ -58,26 +59,36 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
 
   return (
     <div className="min-h-screen bg-slate-900/10 dark:bg-zinc-950/40 py-8 sm:py-12 px-4 flex justify-center items-start">
-      <div className={`w-full max-w-2xl bg-card border border-border/80 ${radiusClass} p-6 sm:p-10 shadow-xl space-y-6`}>
-        <div className="border-b border-border/60 pb-4">
-          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-            {questionnaire.name || "Formulir"}
-          </h1>
-          {questionnaire.description && (
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-              {questionnaire.description}
-            </p>
-          )}
-        </div>
-
-        <IntakeForm
-          token={token}
-          fields={fields}
-          redirectUrl={questionnaire.redirectUrl}
-          thankYouMessage={questionnaire.thankYouMessage}
-          themePreset={questionnaire.themePreset}
-          cardRadius={questionnaire.cardRadius}
+      <div className="w-full max-w-2xl space-y-6">
+        <PublicDocumentHeader
+          badgeLabel="Official Form"
+          documentTitle={questionnaire.name || "Formulir"}
+          workspaceName={workspaceName}
+          workspaceLogoUrl={workspaceLogoUrl}
+          securityLabel="Secure Submission"
         />
+
+        <div className={`w-full bg-card border border-border/80 ${radiusClass} p-6 sm:p-10 shadow-xl space-y-6`}>
+          <div className="border-b border-border/60 pb-4">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+              {questionnaire.name || "Formulir"}
+            </h1>
+            {questionnaire.description && (
+              <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+                {questionnaire.description}
+              </p>
+            )}
+          </div>
+
+          <IntakeForm
+            token={token}
+            fields={fields}
+            redirectUrl={questionnaire.redirectUrl}
+            thankYouMessage={questionnaire.thankYouMessage}
+            themePreset={questionnaire.themePreset}
+            cardRadius={questionnaire.cardRadius}
+          />
+        </div>
       </div>
     </div>
   );

@@ -669,7 +669,11 @@ export async function getPublicContract(token: string) {
 
   const [client] = c.clientId ? await db.select({ name: clients.name, email: clients.email })
     .from(clients).where(eq(clients.id, c.clientId)).limit(1) : [null];
-  const [workspace] = await db.select({ name: workspaces.name, billingAddress: workspaces.billingAddress })
+  const [workspace] = await db.select({
+    name: workspaces.name,
+    billingAddress: workspaces.billingAddress,
+    logoUrl: workspaces.logoUrl,
+  })
     .from(workspaces).where(eq(workspaces.id, c.workspaceId)).limit(1);
 
   // Mark as viewed (idempotent) + notify workspace on first view

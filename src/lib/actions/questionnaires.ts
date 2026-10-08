@@ -415,30 +415,32 @@ export async function getPublicQuestionnaire(tokenOrId: string) {
   
   // 1. Coba cari by direct response token (link khusus per klien/respon)
   const [resp] = await db
-    .select()
+    .select({
+      response: questionnaireResponses,
+      questionnaire: questionnaires,
+      workspaceName: workspaces.name,
+      workspaceLogoUrl: workspaces.logoUrl,
+    })
     .from(questionnaireResponses)
+    .innerJoin(questionnaires, eq(questionnaires.id, questionnaireResponses.questionnaireId))
+    .innerJoin(workspaces, eq(workspaces.id, questionnaires.workspaceId))
     .where(eq(questionnaireResponses.sharedTokenHash, tokenHash))
     .limit(1);
 
   if (resp) {
-    if (resp.sharedTokenRevokedAt) return { error: "revoked" as const };
-    if (resp.sharedTokenExpiresAt && resp.sharedTokenExpiresAt < new Date()) {
+    if (resp.response.sharedTokenRevokedAt) return { error: "revoked" as const };
+    if (resp.response.sharedTokenExpiresAt && resp.response.sharedTokenExpiresAt < new Date()) {
       return { error: "expired" as const };
     }
-    if (resp.status === "submitted") {
+    if (resp.response.status === "submitted") {
       return { error: "already_submitted" as const };
     }
 
-    const [q] = await db
-      .select()
-      .from(questionnaires)
-      .where(eq(questionnaires.id, resp.questionnaireId))
-      .limit(1);
-    if (!q) return { error: "not_found" as const };
-
     return {
-      response: resp,
-      questionnaire: q,
+      response: resp.response,
+      questionnaire: resp.questionnaire,
+      workspaceName: resp.workspaceName,
+      workspaceLogoUrl: resp.workspaceLogoUrl,
       isPublicMasterLink: false,
     };
   }
@@ -446,8 +448,13 @@ export async function getPublicQuestionnaire(tokenOrId: string) {
   // 2. Jika bukan token respon spesifik, coba cari by Questionnaire Master ID / custom Slug (Public Shareable Link ke siapapun)
   const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tokenOrId);
   const [qMaster] = await db
-    .select()
+    .select({
+      questionnaire: questionnaires,
+      workspaceName: workspaces.name,
+      workspaceLogoUrl: workspaces.logoUrl,
+    })
     .from(questionnaires)
+    .innerJoin(workspaces, eq(workspaces.id, questionnaires.workspaceId))
     .where(
       isUuid
         ? or(
@@ -459,27 +466,29 @@ export async function getPublicQuestionnaire(tokenOrId: string) {
     .limit(1);
 
   if (qMaster) {
-    if (qMaster.expiresAt && qMaster.expiresAt < new Date()) {
+    if (qMaster.questionnaire.expiresAt && qMaster.questionnaire.expiresAt < new Date()) {
       return { error: "expired" as const };
     }
 
-    if (qMaster.maxResponses) {
+    if (qMaster.questionnaire.maxResponses) {
       const [countResult] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(questionnaireResponses)
         .where(
           and(
-            eq(questionnaireResponses.questionnaireId, qMaster.id),
+            eq(questionnaireResponses.questionnaireId, qMaster.questionnaire.id),
             eq(questionnaireResponses.status, "submitted")
           )
         );
-      if (countResult && countResult.count >= qMaster.maxResponses) {
+      if (countResult && countResult.count >= qMaster.questionnaire.maxResponses) {
         return { error: "max_responses_reached" as const };
       }
     }
 
     return {
-      questionnaire: qMaster,
+      questionnaire: qMaster.questionnaire,
+      workspaceName: qMaster.workspaceName,
+      workspaceLogoUrl: qMaster.workspaceLogoUrl,
       isPublicMasterLink: true,
     };
   }
