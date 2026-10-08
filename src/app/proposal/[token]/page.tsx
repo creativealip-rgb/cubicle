@@ -115,7 +115,6 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
           documentTitle={proposal.title || "Proposal"}
           workspaceName={proposal.workspaceName}
           workspaceLogoUrl={proposal.workspaceLogoUrl}
-          securityLabel="Encrypted Document"
         />
 
         <ProposalPublicView

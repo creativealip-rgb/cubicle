@@ -6,13 +6,13 @@ import { ShieldCheck } from "lucide-react";
 import { PortalLanguageSwitch } from "@/components/portal/portal-language-switch";
 import { useT } from "@/lib/i18n-client";
 
+// Header props definition
 interface PublicDocumentHeaderProps {
   badgeLabel: string;
   badgeType?: "proposal" | "contract" | "form" | "portal";
   documentTitle?: string;
   workspaceName?: string | null;
   workspaceLogoUrl?: string | null;
-  securityLabel?: string;
 }
 
 export function PublicDocumentHeader({

@@ -56,11 +56,10 @@ export default async function ContractPage({ params }: { params: Promise<{ token
     <div className="min-h-screen bg-slate-50 py-10 px-4 sm:px-6">
       <div className="max-w-2xl mx-auto space-y-6">
         <PublicDocumentHeader
-          badgeLabel="Official Agreement"
-          documentTitle={contract.title || "Contract"}
+          badgeLabel="Official Contract"
+          documentTitle={contract.title || "Kontrak"}
           workspaceName={workspace?.name}
           workspaceLogoUrl={workspace?.logoUrl}
-          securityLabel="Legally Binding & Encrypted"
         />
 
         <ContractPublicView

@@ -65,7 +65,6 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
           documentTitle={questionnaire.name || "Formulir"}
           workspaceName={workspaceName}
           workspaceLogoUrl={workspaceLogoUrl}
-          securityLabel="Secure Submission"
         />
 
         <div className={`w-full bg-card border border-border/80 ${radiusClass} p-6 sm:p-10 shadow-xl space-y-6`}>
