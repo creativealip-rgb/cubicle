@@ -43,6 +43,7 @@ const createProposalSchema = z.object({
   clientEmail: z.string().email().optional().nullable(),
   companyName: z.string().trim().max(200).optional().nullable(),
   proposalNumber: z.string().trim().max(100).optional().nullable(),
+  slug: z.string().trim().max(100).optional().nullable(),
   projectIds: z.array(z.string().uuid()).optional(),
   templateId: z.string().uuid().optional().nullable(),
   title: z.string().min(1).max(200),
@@ -79,6 +80,10 @@ function computeTotals(lineItems: Array<{ amount: number }>, taxRate: number) {
 
 function generateToken() {
   return crypto.randomBytes(32).toString("base64url");
+}
+
+function generateDefaultSlug(prefix: string = "proposal") {
+  return `${prefix}-${crypto.randomBytes(4).toString("hex")}`;
 }
 
 function hashToken(token: string) {
@@ -165,6 +170,9 @@ export async function createProposal(input: z.infer<typeof createProposalSchema>
   // Counter is authoritative, but always bump above MAX(existing PROP-YYYY-####)
   // so seed data / manual inserts cannot collide with the unique index
   // `proposals_workspace_proposal_number_unique` (drizzle/0074).
+  // Generate a random human-friendly slug if not provided (e.g. proposal-a1b2c3d4)
+  const initialSlug = parsed.slug?.trim() || generateDefaultSlug("proposal");
+
   const [proposal] = await db.transaction(async (tx) => {
     let proposalNumber = parsed.proposalNumber?.trim() || buildProposalNumber(currentDocumentYear(), 1);
 
@@ -200,6 +208,7 @@ export async function createProposal(input: z.infer<typeof createProposalSchema>
       clientName: recipient.name,
       clientEmail: recipient.email,
       companyName: recipient.company,
+      slug: initialSlug,
       proposalNumber,
       title: parsed.title,
       body,

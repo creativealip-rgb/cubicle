@@ -49,9 +49,9 @@ export async function translateDocumentContent(
     blocks: input.blocks.map((b) => ({
       id: b.id,
       type: b.type,
-      content: b.content || "",
-      items: b.items || [],
-      rows: b.rows || [],
+      content: typeof b.content === "string" ? b.content : "",
+      items: Array.isArray(b.items) ? b.items : [],
+      rows: Array.isArray(b.rows) ? b.rows : [],
     })),
   };
 

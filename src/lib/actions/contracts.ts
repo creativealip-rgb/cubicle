@@ -136,6 +136,10 @@ export async function listContractTemplates() {
     .orderBy(desc(contractTemplates.isDefault), desc(contractTemplates.createdAt));
 }
 
+function generateDefaultSlug(prefix: string = "contract") {
+  return `${prefix}-${crypto.randomBytes(4).toString("hex")}`;
+}
+
 // ─── Contracts ───
 
 const createContractSchema = z.object({
@@ -199,6 +203,7 @@ export async function createContract(input: z.infer<typeof createContractSchema>
   try {
     [c] = await db.transaction(async (tx) => {
     const contractDate = parsed.contractDate || new Date().toISOString().slice(0, 10);
+    const initialSlug = generateDefaultSlug("contract");
     let contractNumber: string | null = parsed.contractNumber?.trim().toUpperCase() || null;
     if (contractNumber && (contractNumber.length > 100 || /[^\x20-\x7E]/.test(contractNumber))) {
       throw new Error("Contract number must be printable text and at most 100 characters");
@@ -234,6 +239,7 @@ export async function createContract(input: z.infer<typeof createContractSchema>
       clientName: recipient.name,
       clientEmail: recipient.email,
       companyName: recipient.company,
+      slug: initialSlug,
       contractNumber,
       contractDate,
       projectId: parsed.projectId || null,

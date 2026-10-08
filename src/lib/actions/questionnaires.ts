@@ -66,6 +66,10 @@ function hashToken(token: string) {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
+function generateDefaultSlug(prefix: string = "form") {
+  return `${prefix}-${crypto.randomBytes(4).toString("hex")}`;
+}
+
 // ─── Authenticated: Manage Questionnaires ───
 
 export async function createQuestionnaire(input: {
@@ -95,7 +99,7 @@ export async function createQuestionnaire(input: {
     workspaceId: parsed.workspaceId,
     name: parsed.name,
     description: parsed.description || null,
-    slug: parsed.slug || null,
+    slug: parsed.slug || generateDefaultSlug("form"),
     expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
     maxResponses: parsed.maxResponses || null,
     requireAll: parsed.requireAll ?? false,
