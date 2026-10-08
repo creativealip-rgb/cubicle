@@ -109,6 +109,7 @@ import Link from "next/link";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import type { QuestionnaireField, QuestionnaireFieldType } from "@/lib/questionnaire-schema";
 import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
+import { PublicDocumentHeader } from "@/components/public/public-document-header";
 import { IntakeForm } from "@/components/questionnaires/intake-form";
 
 function makeId() {
@@ -1174,6 +1175,30 @@ export function QuestionnaireBuilder({
             <span>{t("Preview", "Preview")}</span>
           </button>
 
+          {/* Desktop & Mobile Viewport Switcher */}
+          <div className="flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/70">
+            <button
+              type="button"
+              onClick={() => setPreviewDevice("desktop")}
+              className={`p-1 rounded-md transition-all ${
+                previewDevice === "desktop" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
+              }`}
+              title={t("Tampilan Desktop", "Desktop View")}
+            >
+              <Monitor className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setPreviewDevice("mobile")}
+              className={`p-1 rounded-md transition-all ${
+                previewDevice === "mobile" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
+              }`}
+              title={t("Tampilan Mobile", "Mobile View")}
+            >
+              <Smartphone className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
           {/* Quick Dropdown for Tools (AI Translate, Templates) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -1363,34 +1388,39 @@ export function QuestionnaireBuilder({
           {livePreviewMode ? (
             /* INTERACTIVE LIVE PREVIEW FRAME */
             <main className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col items-center justify-start bg-slate-900/10 custom-scrollbar">
-              <div className="w-full max-w-2xl bg-card border border-border/80 rounded-2xl p-6 sm:p-10 shadow-xl space-y-6">
-                <div className="flex items-center justify-between border-b pb-4">
-                  <div>
-                    <Badge variant="outline" className="text-xs bg-primary/10 text-primary border-primary/30 mb-1">
-                      {t("Mode Pratinjau Interaktif", "Interactive Preview Mode")}
-                    </Badge>
-                    <h2 className="text-xl font-bold">{name || t("Formulir Tanpa Judul", "Untitled Form")}</h2>
-                    {description && <p className="text-xs text-muted-foreground mt-0.5">{description}</p>}
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setLivePreviewMode(false)}
-                    className="text-xs text-muted-foreground hover:text-foreground"
-                  >
-                    ✕ {t("Tutup Preview", "Close Preview")}
-                  </Button>
-                </div>
-
-                <IntakeForm
-                  token="preview_mode"
-                  fields={fields}
-                  themePreset={selectedTheme}
-                  cardRadius={cardRoundness}
-                  thankYouMessage={thankYouMessage}
-                  redirectUrl={redirectUrl}
+              <div
+                className={`w-full transition-all duration-300 space-y-6 ${
+                  previewDevice === "mobile" ? "max-w-[400px]" : "max-w-2xl"
+                }`}
+              >
+                <PublicDocumentHeader
+                  badgeLabel="Official Form"
+                  documentTitle={name || "Formulir"}
+                  workspaceName="Cubiqlo Workspace"
+                  workspaceLogoUrl={null}
+                  securityLabel="Secure Submission"
                 />
+
+                <div
+                  className={`w-full bg-card border border-border/80 shadow-xl space-y-6 p-6 sm:p-10 ${
+                    cardRoundness === "normal"
+                      ? "rounded-md"
+                      : cardRoundness === "soft"
+                      ? "rounded-3xl"
+                      : "rounded-2xl"
+                  }`}
+                >
+                  <IntakeForm
+                    token="preview_mode"
+                    fields={fields}
+                    formName={name}
+                    formDescription={description}
+                    themePreset={selectedTheme}
+                    cardRadius={cardRoundness}
+                    thankYouMessage={thankYouMessage}
+                    redirectUrl={redirectUrl}
+                  />
+                </div>
               </div>
             </main>
           ) : (

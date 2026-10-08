@@ -45,6 +45,7 @@ import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
 import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
+import { PublicDocumentHeader } from "@/components/public/public-document-header";
 import {
   AlignCenter,
   AlignLeft,
@@ -914,6 +915,30 @@ export function DocumentBlockEditor({
             <span>{t("Preview", "Preview")}</span>
           </button>
 
+          {/* Desktop & Mobile Viewport Switcher */}
+          <div className="flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/70">
+            <button
+              type="button"
+              onClick={() => setDevice("desktop")}
+              className={`p-1 rounded-md transition-all ${
+                device === "desktop" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
+              }`}
+              title={t("Tampilan Desktop", "Desktop View")}
+            >
+              <Monitor className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setDevice("mobile")}
+              className={`p-1 rounded-md transition-all ${
+                device === "mobile" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
+              }`}
+              title={t("Tampilan Mobile", "Mobile View")}
+            >
+              <Smartphone className="h-3.5 w-3.5" />
+            </button>
+          </div>
+
           {/* Tools Dropdown (Translate ID ↔ EN + Templates) */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -1148,19 +1173,29 @@ export function DocumentBlockEditor({
               }`}
             >
               {livePreviewMode ? (
-                <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-10 shadow-sm min-h-[700px]">
-                  <div className="mb-4 pb-3 border-b border-border/60 flex items-center justify-between">
-                    <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase text-primary border-primary/30">
-                      Live Document Preview
-                    </Badge>
-                    <span className="text-xs text-muted-foreground">{blocks.length} blocks rendered</span>
-                  </div>
-                  <div className="space-y-4 break-words [overflow-wrap:anywhere]">
-                    {blocks.map((block) => (
-                      <div key={block.id} className="text-sm text-foreground">
-                        {renderDocumentBlockHtml(block, placeholderValues)}
-                      </div>
-                    ))}
+                <div className="space-y-6">
+                  <PublicDocumentHeader
+                    badgeLabel={kind === "proposal" ? "Official Proposal" : "Official Contract"}
+                    documentTitle={docTitle}
+                    workspaceName={typeof placeholderValues.workspaceName === "string" ? placeholderValues.workspaceName : "Cubiqlo Workspace"}
+                    workspaceLogoUrl={null}
+                    securityLabel={kind === "proposal" ? "Encrypted Document" : "Legally Binding"}
+                  />
+
+                  <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-10 shadow-sm min-h-[700px]">
+                    <div className="mb-4 pb-3 border-b border-border/60 flex items-center justify-between">
+                      <Badge variant="outline" className="text-[10px] font-bold tracking-wider uppercase text-primary border-primary/30">
+                        {kind === "proposal" ? "Live Proposal Preview" : "Live Contract Preview"}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">{blocks.length} blocks rendered</span>
+                    </div>
+                    <div className="space-y-4 break-words [overflow-wrap:anywhere]">
+                      {blocks.map((block) => (
+                        <div key={block.id} className="text-sm text-foreground">
+                          {renderDocumentBlockHtml(block, placeholderValues)}
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               ) : (
