@@ -27,7 +27,7 @@ function getBaseUrl(): string {
 }
 
 function getModel(): string {
-  return process.env.AI_MODEL || "ag/gemini-3.7-flash";
+  return process.env.AI_MODEL || "ag/gemini-3.7-flash-high";
 }
 
 export interface ChatMessage {
