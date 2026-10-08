@@ -76,6 +76,22 @@ export const questionnaireFieldSchema = z.object({
   content: z.string().max(2000).optional(),
   // Currency symbol for calculation (e.g. "Rp", "$")
   currency: z.string().max(10).optional(),
+  // Translations storage (ID, EN, etc.)
+  translations: z
+    .record(
+      z.string(),
+      z.object({
+        label: z.string().optional(),
+        sublabel: z.string().optional(),
+        placeholder: z.string().optional(),
+        options: z.array(z.string()).optional(),
+        imageOptions: z.array(z.object({ label: z.string(), imageUrl: z.string() })).optional(),
+        matrixRows: z.array(z.string()).optional(),
+        matrixCols: z.array(z.string()).optional(),
+        content: z.string().optional(),
+      })
+    )
+    .optional(),
   // Conditional Logic: show this field only if another field matches a value
   condition: z
     .object({

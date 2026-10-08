@@ -31,9 +31,25 @@ import type { QuestionnaireField } from "@/lib/questionnaire-schema";
 
 import { getFontFamily } from "@/lib/builder-fonts";
 
+function getLocalizedText(
+  text: string | undefined | null,
+  lang: "id" | "en"
+): string {
+  if (!text) return "";
+  if (text.includes(" / ")) {
+    const parts = text.split(" / ");
+    if (parts.length >= 2) {
+      return lang === "en" ? parts[1].trim() : parts[0].trim();
+    }
+  }
+  return text;
+}
+
 export function IntakeForm({
   token,
   fields,
+  formName,
+  formDescription,
   redirectUrl,
   thankYouMessage,
   themePreset,
@@ -41,12 +57,14 @@ export function IntakeForm({
 }: {
   token: string;
   fields: QuestionnaireField[];
+  formName?: string | null;
+  formDescription?: string | null;
   redirectUrl?: string | null;
   thankYouMessage?: string | null;
   themePreset?: string | null;
   cardRadius?: string | null;
 }) {
-  const { t } = useT();
+  const { t, lang } = useT();
   const [answers, setAnswers] = useState<Record<string, any>>({});
   const [submitted, setSubmitted] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -226,14 +244,33 @@ export function IntakeForm({
     );
   }
 
+  const formHeading = getLocalizedText(formName, lang);
+  const formDesc = getLocalizedText(formDescription, lang);
+
   return (
     <form onSubmit={handleNextStep} aria-busy={pending} className="space-y-6">
+      {formHeading && (
+        <div className="border-b border-border/60 pb-4 mb-6">
+          <h1 className="text-xl sm:text-2xl font-bold text-foreground">
+            {formHeading}
+          </h1>
+          {formDesc && (
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
+              {formDesc}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Multi-Page Progress Bar (if more than 1 page) */}
       {pages.length > 1 && (
         <div className="space-y-1.5 pb-2">
           <div className="flex items-center justify-between text-xs font-semibold text-muted-foreground">
             <span>
-              Langkah {currentPageIndex + 1} dari {pages.length}
+              {t(
+                `Langkah ${currentPageIndex + 1} dari ${pages.length}`,
+                `Step ${currentPageIndex + 1} of ${pages.length}`
+              )}
             </span>
             <span style={{ color: themeHex }} className="font-mono font-bold">{progressPercent}%</span>
           </div>
@@ -266,11 +303,21 @@ export function IntakeForm({
           const fieldSizeClass = f.fontSize === "sm" ? "text-xs" : f.fontSize === "lg" ? "text-base" : f.fontSize === "xl" ? "text-lg" : "";
           const textStyles = `${f.bold ? "font-bold" : "font-medium"} ${f.italic ? "italic" : ""} ${f.underline ? "underline" : ""} ${f.strikethrough ? "line-through" : ""}`;
 
+          // Localized contents based on saved translations or bilingual delimiter
+          const trans = f.translations?.[lang];
+          const displayLabel = getLocalizedText(trans?.label || f.label, lang);
+          const displaySublabel = getLocalizedText(trans?.sublabel || f.sublabel, lang);
+          const displayPlaceholder = getLocalizedText(trans?.placeholder || f.placeholder, lang);
+          const displayOptions = (trans?.options && trans.options.length > 0 ? trans.options : f.options)?.map((opt) => getLocalizedText(opt, lang));
+          const displayContent = getLocalizedText(trans?.content || f.content, lang);
+          const displayMatrixRows = (trans?.matrixRows && trans.matrixRows.length > 0 ? trans.matrixRows : f.matrixRows)?.map((row) => getLocalizedText(row, lang));
+          const displayMatrixCols = (trans?.matrixCols && trans.matrixCols.length > 0 ? trans.matrixCols : f.matrixCols)?.map((col) => getLocalizedText(col, lang));
+
           if (f.type === "heading") {
             return (
               <div key={f.id} className="col-span-12 pt-4 pb-2 border-b border-border/60" style={fieldFontFamily ? { fontFamily: fieldFontFamily } : undefined}>
-                <h3 className={`text-base sm:text-lg text-foreground ${fieldAlignClass} ${fieldSizeClass} ${textStyles}`}>{f.label}</h3>
-                {f.sublabel && <p className={`text-xs text-muted-foreground mt-0.5 ${fieldAlignClass}`}>{f.sublabel}</p>}
+                <h3 className={`text-base sm:text-lg text-foreground ${fieldAlignClass} ${fieldSizeClass} ${textStyles}`}>{displayLabel}</h3>
+                {displaySublabel && <p className={`text-xs text-muted-foreground mt-0.5 ${fieldAlignClass}`}>{displaySublabel}</p>}
               </div>
             );
           }
@@ -309,13 +356,13 @@ export function IntakeForm({
 
           if (f.type === "info") {
             return (
-              <div key={f.id} className="col-span-12 p-4 rounded-xl border border-blue-500/30 bg-blue-500/5 space-y-1">
-                <div className="flex items-center gap-1.5 text-blue-600 font-bold text-xs">
-                  <Info className="h-4 w-4" />
-                  <span>{f.label}</span>
+              <div key={f.id} className="col-span-12 p-4 rounded-xl border border-primary/20 bg-primary/5 space-y-1 text-left" style={fieldFontFamily ? { fontFamily: fieldFontFamily } : undefined}>
+                <div className="flex items-center gap-2 text-primary font-semibold text-xs sm:text-sm">
+                  <Info className="h-4 w-4 shrink-0" />
+                  <span>{displayLabel}</span>
                 </div>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  {f.content || f.sublabel}
+                  {displayContent || displaySublabel}
                 </p>
               </div>
             );
@@ -333,9 +380,9 @@ export function IntakeForm({
                   />
                   <div className="space-y-1">
                     <Label htmlFor={`terms_${f.id}`} className="text-xs font-semibold cursor-pointer">
-                      {f.label} {f.required && <span className="text-destructive">*</span>}
+                      {displayLabel} {f.required && <span className="text-destructive">*</span>}
                     </Label>
-                    {f.content && <p className="text-[11px] text-muted-foreground leading-relaxed">{f.content}</p>}
+                    {displayContent && <p className="text-[11px] text-muted-foreground leading-relaxed">{displayContent}</p>}
                   </div>
                 </div>
               </div>
@@ -346,17 +393,17 @@ export function IntakeForm({
             <div key={f.id} className={`${colClass} space-y-1.5`} style={fieldFontFamily ? { fontFamily: fieldFontFamily } : undefined}>
               <Label className={`text-xs text-foreground flex items-center justify-between ${fieldAlignClass} ${fieldSizeClass} ${textStyles}`}>
                 <span>
-                  {f.label} {f.required && <span className="text-destructive font-bold">*</span>}
+                  {displayLabel} {f.required && <span className="text-destructive font-bold">*</span>}
                 </span>
               </Label>
 
-              {f.sublabel && <p className={`text-[11px] text-muted-foreground ${fieldAlignClass}`}>{f.sublabel}</p>}
+              {displaySublabel && <p className={`text-[11px] text-muted-foreground ${fieldAlignClass}`}>{displaySublabel}</p>}
 
               {f.type === "text" && (
                 <Input
                   value={answers[f.id] || ""}
                   onChange={(e) => setFieldValue(f.id, e.target.value)}
-                  placeholder={f.placeholder || "Jawaban Anda..."}
+                  placeholder={displayPlaceholder || (lang === "en" ? "Your answer..." : "Jawaban Anda...")}
                   className="h-10 text-xs sm:text-sm bg-background"
                 />
               )}
@@ -365,7 +412,7 @@ export function IntakeForm({
                 <Textarea
                   value={answers[f.id] || ""}
                   onChange={(e) => setFieldValue(f.id, e.target.value)}
-                  placeholder={f.placeholder || "Tuliskan rincian di sini..."}
+                  placeholder={displayPlaceholder || (lang === "en" ? "Write details here..." : "Tuliskan rincian di sini...")}
                   rows={3}
                   className="text-xs sm:text-sm bg-background"
                 />
@@ -376,7 +423,7 @@ export function IntakeForm({
                   type="email"
                   value={answers[f.id] || ""}
                   onChange={(e) => setFieldValue(f.id, e.target.value)}
-                  placeholder={f.placeholder || "email@perusahaan.com"}
+                  placeholder={displayPlaceholder || "email@company.com"}
                   className="h-10 text-xs sm:text-sm bg-background"
                 />
               )}
@@ -386,7 +433,7 @@ export function IntakeForm({
                   type="tel"
                   value={answers[f.id] || ""}
                   onChange={(e) => setFieldValue(f.id, e.target.value)}
-                  placeholder={f.placeholder || "+62 812-3456-7890"}
+                  placeholder={displayPlaceholder || "+62 812-3456-7890"}
                   className="h-10 text-xs sm:text-sm bg-background"
                 />
               )}
@@ -438,8 +485,8 @@ export function IntakeForm({
                     <SelectValue placeholder={t("Pilih salah satu...", "Select an option...")} />
                   </SelectTrigger>
                   <SelectContent>
-                    {(f.options || []).map((opt, i) => (
-                      <SelectItem key={i} value={opt}>
+                    {(displayOptions || f.options || []).map((opt, i) => (
+                      <SelectItem key={i} value={(f.options || [])[i] || opt}>
                         {opt}
                       </SelectItem>
                     ))}
@@ -449,9 +496,10 @@ export function IntakeForm({
 
               {f.type === "multiselect" && (
                 <div className="space-y-2 pt-1">
-                  {(f.options || []).map((opt, i) => {
+                  {(displayOptions || f.options || []).map((opt, i) => {
+                    const originalOpt = (f.options || [])[i] || opt;
                     const current: string[] = Array.isArray(answers[f.id]) ? answers[f.id] : [];
-                    const isChecked = current.includes(opt);
+                    const isChecked = current.includes(originalOpt);
                     return (
                       <div key={i} className="flex items-center gap-2.5">
                         <Checkbox
@@ -459,16 +507,13 @@ export function IntakeForm({
                           checked={isChecked}
                           onCheckedChange={(checked) => {
                             if (checked) {
-                              setFieldValue(f.id, [...current, opt]);
+                              setFieldValue(f.id, [...current, originalOpt]);
                             } else {
-                              setFieldValue(f.id, current.filter((x) => x !== opt));
+                              setFieldValue(f.id, current.filter((x) => x !== originalOpt));
                             }
                           }}
                         />
-                        <Label
-                          htmlFor={`${f.id}_opt_${i}`}
-                          className="text-xs font-medium cursor-pointer text-foreground"
-                        >
+                        <Label htmlFor={`${f.id}_opt_${i}`} className="text-xs font-normal cursor-pointer">
                           {opt}
                         </Label>
                       </div>
@@ -577,14 +622,15 @@ export function IntakeForm({
                   <table className="w-full text-xs text-left">
                     <thead className="bg-muted/40 text-[10px] uppercase font-bold text-muted-foreground border-b border-border/70">
                       <tr>
-                        <th className="p-3">Aspek / Evaluasi</th>
-                        {(f.matrixCols || []).map((col, idx) => (
+                        <th className="p-3">{lang === "en" ? "Aspect / Evaluation" : "Aspek / Evaluasi"}</th>
+                        {(displayMatrixCols || f.matrixCols || []).map((col, idx) => (
                           <th key={idx} className="p-3 text-center">{col}</th>
                         ))}
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/60">
-                      {(f.matrixRows || []).map((row, rIdx) => {
+                      {(displayMatrixRows || f.matrixRows || []).map((row, rIdx) => {
+                        const originalRow = (f.matrixRows || [])[rIdx] || row;
                         const currentMatrixAns = answers[f.id] || {};
                         return (
                           <tr key={rIdx} className="hover:bg-muted/20">
@@ -594,14 +640,14 @@ export function IntakeForm({
                                 <input
                                   type="radio"
                                   name={`matrix_${f.id}_${rIdx}`}
-                                  checked={currentMatrixAns[row] === col}
-                                  onChange={() => {
+                                  checked={currentMatrixAns[originalRow] === col}
+                                  onChange={() =>
                                     setFieldValue(f.id, {
                                       ...currentMatrixAns,
-                                      [row]: col,
-                                    });
-                                  }}
-                                  className="h-4 w-4 text-primary cursor-pointer"
+                                      [originalRow]: col,
+                                    })
+                                  }
+                                  className="h-4 w-4 text-primary cursor-pointer accent-primary"
                                 />
                               </td>
                             ))}

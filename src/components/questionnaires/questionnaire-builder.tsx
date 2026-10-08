@@ -87,12 +87,14 @@ import {
   Coins,
   DollarSign,
   Eye,
+  Languages,
   Upload,
   Play,
   Search,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
+import { translateQuestionnaireFields } from "@/lib/actions/questionnaire-translation";
 import { getCurrentUserPlanForPortal } from "@/lib/actions/clients";
 import { useT } from "@/lib/i18n-client";
 import Link from "next/link";
@@ -741,7 +743,6 @@ export function QuestionnaireBuilder({
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
   const [livePreviewMode, setLivePreviewMode] = useState(false);
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
-
   // Form general state
   const [name, setName] = useState(initial?.name || "");
   const [description, setDescription] = useState(initial?.description || "");
@@ -758,14 +759,54 @@ export function QuestionnaireBuilder({
   );
   const [thankYouMessage, setThankYouMessage] = useState(
     initial?.thankYouMessage ||
-      t(
-        "Terima kasih! Tanggapan Anda telah berhasil kami terima dan akan segera kami proses.",
-        "Thank you! Your response has been received and will be processed shortly.",
-      ),
+      "Thank you! Your response has been received and will be processed shortly."
   );
   const [redirectUrl, setRedirectUrl] = useState(initial?.redirectUrl || "");
-  const [formStatus, setFormStatus] = useState<"active" | "disabled">(initial?.formStatus || "active");
   const [passwordProtection, setPasswordProtection] = useState(initial?.passwordProtection || "");
+  const [formStatus, setFormStatus] = useState<"active" | "disabled">((initial?.formStatus as any) || "active");
+
+  const [isTranslating, setIsTranslating] = useState(false);
+
+  const handleAiTranslate = async () => {
+    if (fields.length === 0) {
+      toast.error(t("Tidak ada pertanyaan untuk diterjemahkan.", "No fields to translate."));
+      return;
+    }
+
+    setIsTranslating(true);
+    const toastId = toast.loading(t("AI sedang menerjemahkan form ke Bahasa Inggris...", "AI is translating form to English..."));
+
+    try {
+      const res = await translateQuestionnaireFields({
+        targetLang: "en",
+        title: name,
+        description: description,
+        thankYouMessage: thankYouMessage,
+        fields,
+      });
+
+      setFields(res.fields);
+      if (res.title && !name.includes(" / ")) {
+        setName(`${name} / ${res.title}`);
+      }
+      if (res.description && !description.includes(" / ")) {
+        setDescription(`${description} / ${res.description}`);
+      }
+      if (res.thankYouMessage && !thankYouMessage.includes(" / ")) {
+        setThankYouMessage(`${thankYouMessage} / ${res.thankYouMessage}`);
+      }
+
+      toast.success(t("Form berhasil diterjemahkan & siap dwibahasa (ID/EN)!", "Form successfully translated & ready for bilingual (ID/EN)!"), {
+        id: toastId,
+      });
+    } catch (err: any) {
+      toast.error(err.message || t("Gagal menerjemahkan formulir.", "Failed to translate form."), {
+        id: toastId,
+      });
+    } finally {
+      setIsTranslating(false);
+    }
+  };
 
   const [fields, setFields] = useState<QuestionnaireField[]>(
     initial?.schema && initial.schema.length > 0
@@ -1128,8 +1169,21 @@ export function QuestionnaireBuilder({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => setTemplateDialogOpen(true)}
+            disabled={isTranslating}
+            onClick={handleAiTranslate}
             className="h-8 gap-1.5 text-xs font-semibold text-primary border-primary/30 hover:bg-primary/5 hidden sm:inline-flex"
+            title={t("Terjemahkan otomatis ke Bahasa Inggris dengan AI", "Translate form to English with AI")}
+          >
+            <Languages className="h-3.5 w-3.5" />
+            <span>{isTranslating ? t("Translating...", "Translating...") : t("Translate (ID ↔ EN)", "Translate (ID ↔ EN)")}</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setTemplateDialogOpen(true)}
+            className="h-8 gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground border-border/80 hidden sm:inline-flex"
           >
             <LayoutTemplate className="h-3.5 w-3.5" />
             <span>{t("Templates", "Templates")}</span>

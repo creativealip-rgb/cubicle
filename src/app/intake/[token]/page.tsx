@@ -69,20 +69,11 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
         />
 
         <div className={`w-full bg-card border border-border/80 ${radiusClass} p-6 sm:p-10 shadow-xl space-y-6`}>
-          <div className="border-b border-border/60 pb-4">
-            <h1 className="text-xl sm:text-2xl font-bold text-foreground">
-              {questionnaire.name || "Formulir"}
-            </h1>
-            {questionnaire.description && (
-              <p className="text-xs sm:text-sm text-muted-foreground mt-1 leading-relaxed">
-                {questionnaire.description}
-              </p>
-            )}
-          </div>
-
           <IntakeForm
             token={token}
             fields={fields}
+            formName={questionnaire.name}
+            formDescription={questionnaire.description}
             redirectUrl={questionnaire.redirectUrl}
             thankYouMessage={questionnaire.thankYouMessage}
             themePreset={questionnaire.themePreset}
