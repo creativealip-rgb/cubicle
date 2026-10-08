@@ -17,6 +17,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
   DndContext,
   closestCenter,
   KeyboardSensor,
@@ -88,6 +94,7 @@ import {
   DollarSign,
   Eye,
   Languages,
+  MoreHorizontal,
   Upload,
   Play,
   Search,
@@ -842,8 +849,8 @@ export function QuestionnaireBuilder({
   // Panels visibility: Elements sidebar (left) & Properties drawer (right)
   const [elementsOpen, setElementsOpen] = useState(true);
   const [elementSearch, setElementSearch] = useState("");
-  const [propertiesOpen, setPropertiesOpen] = useState(true);
-  const [selectedFieldId, setSelectedFieldId] = useState<string | null>(fields[0]?.id ?? null);
+  const [propertiesOpen, setPropertiesOpen] = useState(false);
+  const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
 
   // DnD Sensors setup
@@ -903,6 +910,7 @@ export function QuestionnaireBuilder({
     setFields((prev) => [...prev, newField]);
     setSelectedFieldId(newField.id);
     setPropertiesOpen(true);
+    setElementsOpen(false);
     toast.success(`${def.label} ${t("ditambahkan", "added")}`);
   }
 
@@ -1148,7 +1156,7 @@ export function QuestionnaireBuilder({
           </button>
         </div>
 
-        {/* Action Right: Templates, Live Preview, Drawers & Save */}
+        {/* Action Right: Clean, Ergonomic Controls */}
         <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Interactive Live Preview Switcher */}
           <button
@@ -1162,82 +1170,94 @@ export function QuestionnaireBuilder({
             title={t("Uji coba langsung pengisian formulir interaktif", "Interactive live form preview")}
           >
             <Eye className="h-3.5 w-3.5" />
-            <span>{t("Preview Form", "Preview Form")}</span>
+            <span>{t("Preview", "Preview")}</span>
           </button>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            disabled={isTranslating}
-            onClick={handleAiTranslate}
-            className="h-8 gap-1.5 text-xs font-semibold text-primary border-primary/30 hover:bg-primary/5 hidden sm:inline-flex"
-            title={t("Terjemahkan otomatis ke Bahasa Inggris dengan AI", "Translate form to English with AI")}
-          >
-            <Languages className="h-3.5 w-3.5" />
-            <span>{isTranslating ? t("Translating...", "Translating...") : t("Translate (ID ↔ EN)", "Translate (ID ↔ EN)")}</span>
-          </Button>
-
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setTemplateDialogOpen(true)}
-            className="h-8 gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground border-border/80 hidden sm:inline-flex"
-          >
-            <LayoutTemplate className="h-3.5 w-3.5" />
-            <span>{t("Templates", "Templates")}</span>
-          </Button>
+          {/* Quick Dropdown for Tools (AI Translate, Templates) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs font-semibold text-muted-foreground hover:text-foreground border-border/80 px-2.5"
+                title={t("Alat Tambahan & Template", "More Tools & Templates")}
+              >
+                <MoreHorizontal className="h-3.5 w-3.5" />
+                <span className="hidden xl:inline">{t("Tools", "Tools")}</span>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56 p-1.5 space-y-0.5">
+              <DropdownMenuItem
+                disabled={isTranslating}
+                onClick={handleAiTranslate}
+                className="flex items-center gap-2 cursor-pointer text-xs font-medium text-primary hover:bg-primary/5 py-2"
+              >
+                <Languages className="h-4 w-4 text-primary" />
+                <div className="flex flex-col">
+                  <span className="font-semibold">{isTranslating ? t("Translating...", "Translating...") : t("Translate (ID ↔ EN)", "Translate (ID ↔ EN)")}</span>
+                  <span className="text-[10px] text-muted-foreground">{t("1-Klik AI Terjemahan dwibahasa", "1-Click AI bilingual translate")}</span>
+                </div>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setTemplateDialogOpen(true)}
+                className="flex items-center gap-2 cursor-pointer text-xs font-medium py-2"
+              >
+                <LayoutTemplate className="h-4 w-4 text-muted-foreground" />
+                <div className="flex flex-col">
+                  <span className="font-semibold">{t("Form Templates", "Form Templates")}</span>
+                  <span className="text-[10px] text-muted-foreground">{t("Pilih dari template siap pakai", "Choose from starter templates")}</span>
+                </div>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {activeTab === "build" && !livePreviewMode && (
             <>
-              {/* Desktop / Mobile Switcher */}
-              <div className="hidden lg:flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/60">
-                <button
+              {/* Elements & Properties Toggle Buttons with exclusive auto-switch */}
+              <div className="flex items-center bg-muted/50 p-0.5 rounded-lg border border-border/60">
+                <Button
                   type="button"
-                  onClick={() => setPreviewDevice("desktop")}
-                  className={`p-1 rounded-md transition-all ${
-                    previewDevice === "desktop" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                  variant={elementsOpen ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => {
+                    if (!elementsOpen) {
+                      setElementsOpen(true);
+                      setPropertiesOpen(false);
+                    } else {
+                      setElementsOpen(false);
+                    }
+                  }}
+                  className={`h-7 px-2.5 gap-1.5 text-xs font-medium ${
+                    elementsOpen ? "bg-background text-foreground shadow-xs" : "text-muted-foreground"
                   }`}
-                  title="Desktop Preview"
+                  title={t("Katalog Elemen (+)", "Element Catalog (+)")}
                 >
-                  <Monitor className="h-3.5 w-3.5" />
-                </button>
-                <button
+                  <Plus className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">{t("Elemen", "Elements")}</span>
+                </Button>
+
+                <Button
                   type="button"
-                  onClick={() => setPreviewDevice("mobile")}
-                  className={`p-1 rounded-md transition-all ${
-                    previewDevice === "mobile" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                  variant={propertiesOpen ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => {
+                    if (!propertiesOpen) {
+                      setPropertiesOpen(true);
+                      setElementsOpen(false);
+                    } else {
+                      setPropertiesOpen(false);
+                    }
+                  }}
+                  className={`h-7 px-2.5 gap-1.5 text-xs font-medium ${
+                    propertiesOpen ? "bg-background text-foreground shadow-xs" : "text-muted-foreground"
                   }`}
-                  title="Mobile Preview"
+                  title={t("Properti Field", "Field Properties")}
                 >
-                  <Smartphone className="h-3.5 w-3.5" />
-                </button>
+                  <Settings className="h-3.5 w-3.5" />
+                  <span className="hidden md:inline">{t("Properti", "Properties")}</span>
+                </Button>
               </div>
-
-              <Button
-                type="button"
-                variant={elementsOpen ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => setElementsOpen(!elementsOpen)}
-                className="h-8 gap-1.5 text-xs font-medium hidden md:inline-flex"
-                title={t("Toggle Elemen", "Toggle Element Catalog")}
-              >
-                <Plus className="h-3.5 w-3.5" />
-                <span>{t("Elemen", "Elements")}</span>
-              </Button>
-
-              <Button
-                type="button"
-                variant={propertiesOpen ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => setPropertiesOpen(!propertiesOpen)}
-                className="h-8 gap-1.5 text-xs font-medium hidden md:inline-flex"
-                title={t("Toggle Properti", "Toggle Field Properties")}
-              >
-                <Settings className="h-3.5 w-3.5" />
-                <span>{t("Properti", "Properties")}</span>
-              </Button>
             </>
           )}
 
@@ -1595,10 +1615,12 @@ export function QuestionnaireBuilder({
                               onSelect={() => {
                                 setSelectedFieldId(field.id);
                                 setPropertiesOpen(true);
+                                setElementsOpen(false);
                               }}
                               onOpenProperties={() => {
                                 setSelectedFieldId(field.id);
                                 setPropertiesOpen(true);
+                                setElementsOpen(false);
                               }}
                               onUpdateLabel={(val) => {
                                 setFields((prev) =>
