@@ -1,6 +1,6 @@
 import { requireWorkspaceWritableOrRedirect } from "@/lib/require-workspace-owner";
 import { db } from "@/db";
-import { questionnaires } from "@/db/schema";
+import { questionnaires, workspaces } from "@/db/schema";
 import { eq, and } from "drizzle-orm";
 import { QuestionnaireBuilder } from "@/components/questionnaires/questionnaire-builder";
 import { safeParseQuestionnaireSchema } from "@/lib/questionnaire-schema";
@@ -19,11 +19,18 @@ export default async function QuestionnaireEditPage({ params }: { params: Promis
     .limit(1);
   if (!q) notFound();
 
+  const [workspace] = await db.select({ name: workspaces.name, logoUrl: workspaces.logoUrl })
+    .from(workspaces)
+    .where(eq(workspaces.id, workspaceId))
+    .limit(1);
+
   const fields = safeParseQuestionnaireSchema(q.schema);
 
   return (
     <QuestionnaireBuilder
       workspaceId={workspaceId}
+      workspaceName={workspace?.name}
+      workspaceLogoUrl={workspace?.logoUrl}
       questionnaireId={q.id}
       initial={{
         name: q.name,

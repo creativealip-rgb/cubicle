@@ -103,6 +103,8 @@ export type ClientOption = {
 type Props = {
   kind: "proposal" | "contract";
   workspaceId: string;
+  workspaceName?: string | null;
+  workspaceLogoUrl?: string | null;
   initialBlocks: DocumentBlock[];
   initialRevision?: number;
   backHref?: string;
@@ -354,6 +356,8 @@ function TableBlockEditor({
 export function DocumentBlockEditor({
   kind,
   workspaceId,
+  workspaceName,
+  workspaceLogoUrl,
   initialBlocks,
   initialRevision = 1,
   backHref,
@@ -1177,9 +1181,8 @@ export function DocumentBlockEditor({
                   <PublicDocumentHeader
                     badgeLabel={kind === "proposal" ? "Official Proposal" : "Official Contract"}
                     documentTitle={docTitle}
-                    workspaceName={typeof placeholderValues.workspaceName === "string" ? placeholderValues.workspaceName : "Cubiqlo Workspace"}
-                    workspaceLogoUrl={null}
-                    securityLabel={kind === "proposal" ? "Encrypted Document" : "Legally Binding"}
+                    workspaceName={workspaceName || (typeof placeholderValues.workspaceName === "string" ? placeholderValues.workspaceName : "Cubiqlo Workspace")}
+                    workspaceLogoUrl={workspaceLogoUrl || null}
                   />
 
                   <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-10 shadow-sm min-h-[700px]">

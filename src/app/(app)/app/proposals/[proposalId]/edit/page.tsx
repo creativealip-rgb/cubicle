@@ -39,7 +39,7 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
     .from(proposals).where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, workspaceId))).limit(1);
   if (!proposal) notFound();
   const blocks = normalizeDocumentBlocks(proposal.contentBlocks, "proposal");
-  const [workspace] = await db.select({ name: workspaces.name, billingAddress: workspaces.billingAddress }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const [workspace] = await db.select({ name: workspaces.name, billingAddress: workspaces.billingAddress, logoUrl: workspaces.logoUrl }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
   const existingClients = await db.select({ id: clients.id, name: clients.name, email: clients.email, companyName: clients.companyName }).from(clients).where(eq(clients.workspaceId, workspaceId));
   const downPaymentAmount = Number(proposal.total) * Number(proposal.downPaymentPercent) / 100;
   const placeholderValues = buildProposalPlaceholderValues({
@@ -63,6 +63,8 @@ export default async function ProposalEditPage({ params }: { params: Promise<{ p
     <DocumentBlockEditor
       kind="proposal"
       workspaceId={workspaceId}
+      workspaceName={workspace?.name}
+      workspaceLogoUrl={workspace?.logoUrl}
       initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("proposal")}
       initialRevision={proposal.contentRevision}
       backHref="/app/proposals"

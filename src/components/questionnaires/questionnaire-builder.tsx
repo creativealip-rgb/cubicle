@@ -695,10 +695,14 @@ function SortableCanvasField({
 
 export function QuestionnaireBuilder({
   workspaceId,
+  workspaceName,
+  workspaceLogoUrl,
   questionnaireId,
   initial,
 }: {
   workspaceId: string;
+  workspaceName?: string | null;
+  workspaceLogoUrl?: string | null;
   questionnaireId?: string;
   initial?: {
     name: string;
@@ -1396,9 +1400,8 @@ export function QuestionnaireBuilder({
                 <PublicDocumentHeader
                   badgeLabel="Official Form"
                   documentTitle={name || "Formulir"}
-                  workspaceName="Cubiqlo Workspace"
-                  workspaceLogoUrl={null}
-                  securityLabel="Secure Submission"
+                  workspaceName={workspaceName || "Cubiqlo Workspace"}
+                  workspaceLogoUrl={workspaceLogoUrl || null}
                 />
 
                 <div

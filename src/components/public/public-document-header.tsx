@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
-import { ShieldCheck, LockKeyhole } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 import { PortalLanguageSwitch } from "@/components/portal/portal-language-switch";
 import { useT } from "@/lib/i18n-client";
 
@@ -19,9 +20,9 @@ export function PublicDocumentHeader({
   documentTitle,
   workspaceName,
   workspaceLogoUrl,
-  securityLabel,
 }: PublicDocumentHeaderProps) {
   const { t } = useT();
+  const [imgError, setImgError] = useState(false);
 
   const brandDisplayName = workspaceName || "Cubiqlo Workspace";
   const initialLetter = (workspaceName || "C").trim().charAt(0).toUpperCase();
@@ -31,7 +32,7 @@ export function PublicDocumentHeader({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Left: Brand logo & official metadata */}
         <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
-          {workspaceLogoUrl ? (
+          {workspaceLogoUrl && !imgError ? (
             <div className="relative h-11 w-11 sm:h-12 sm:w-12 shrink-0 overflow-hidden rounded-xl border border-border/80 bg-background shadow-2xs">
               <Image
                 src={workspaceLogoUrl}
@@ -39,6 +40,7 @@ export function PublicDocumentHeader({
                 fill
                 sizes="48px"
                 className="object-contain p-1"
+                onError={() => setImgError(true)}
               />
             </div>
           ) : (
