@@ -659,7 +659,8 @@ export async function getPublicContract(token: string) {
     .where(
       or(
         eq(contracts.sharedTokenHash, tokenHash),
-        eq(sql`lower(${contracts.slug})`, token.toLowerCase())
+        eq(sql`lower(${contracts.slug})`, token.toLowerCase()),
+        eq(contracts.id, token)
       )
     )
     .limit(1);

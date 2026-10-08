@@ -56,7 +56,8 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
     .where(
       or(
         eq(proposals.sharedTokenHash, tokenHash),
-        eq(sql`lower(${proposals.slug})`, token.toLowerCase())
+        eq(sql`lower(${proposals.slug})`, token.toLowerCase()),
+        eq(proposals.id, token)
       )
     )
     .limit(1);
