@@ -21,6 +21,15 @@ function hashToken(token: string) {
 export default async function PublicProposalPage({ params }: ProposalPageProps) {
   const { token } = await params;
   const tokenHash = hashToken(token);
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token);
+  const whereClauses = [
+    eq(proposals.sharedTokenHash, tokenHash),
+    eq(sql`lower(${proposals.slug})`, token.toLowerCase()),
+  ];
+  if (isUuid) {
+    whereClauses.push(eq(proposals.id, token));
+  }
+
   const [proposal] = await db
     .select({
       id: proposals.id,
@@ -53,13 +62,7 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
     .from(proposals)
     .leftJoin(clients, eq(clients.id, proposals.clientId))
     .innerJoin(workspaces, eq(workspaces.id, proposals.workspaceId))
-    .where(
-      or(
-        eq(proposals.sharedTokenHash, tokenHash),
-        eq(sql`lower(${proposals.slug})`, token.toLowerCase()),
-        eq(proposals.id, token)
-      )
-    )
+    .where(or(...whereClauses))
     .limit(1);
   if (!proposal) notFound();
 

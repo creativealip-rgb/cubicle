@@ -655,14 +655,17 @@ export async function getContract(contractId: string) {
 
 export async function getPublicContract(token: string) {
   const tokenHash = hashToken(token);
+  const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(token);
+  const whereClauses = [
+    eq(contracts.sharedTokenHash, tokenHash),
+    eq(sql`lower(${contracts.slug})`, token.toLowerCase()),
+  ];
+  if (isUuid) {
+    whereClauses.push(eq(contracts.id, token));
+  }
+
   const [c] = await db.select().from(contracts)
-    .where(
-      or(
-        eq(contracts.sharedTokenHash, tokenHash),
-        eq(sql`lower(${contracts.slug})`, token.toLowerCase()),
-        eq(contracts.id, token)
-      )
-    )
+    .where(or(...whereClauses))
     .limit(1);
   if (!c) return { error: "not_found" as const };
   if (c.sharedTokenRevokedAt) return { error: "revoked" as const };
