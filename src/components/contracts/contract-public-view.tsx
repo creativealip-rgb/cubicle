@@ -50,6 +50,8 @@ function headingClass(level: number | undefined): string {
   return "text-lg";
 }
 
+import { useT } from "@/lib/i18n-client";
+
 export function ContractPublicView({
   contract,
   blocks,
@@ -65,6 +67,19 @@ export function ContractPublicView({
   topBar?: React.ReactNode;
   embedded?: boolean;
 }) {
+  const { lang, t } = useT();
+
+  function getLocalizedTitle(title: string): string {
+    if (!title) return "";
+    if (title.includes(" / ")) {
+      const parts = title.split(" / ");
+      if (parts.length >= 2) {
+        return lang === "en" ? parts[1].trim() : parts[0].trim();
+      }
+    }
+    return title;
+  }
+
   function renderBlock(block: DocumentBlock) {
     if (block.type === "signature") return null; // rendered in footer slot
     if (block.type === "heading") {
@@ -73,13 +88,13 @@ export function ContractPublicView({
           key={block.id}
           className={`${headingClass(block.level)} font-semibold text-slate-900 ${alignClass(block.align)}`}
         >
-          {renderDocumentBlockHtml(block, placeholderValues)}
+          {renderDocumentBlockHtml(block, placeholderValues, lang)}
         </div>
       );
     }
     return (
       <div key={block.id} className="text-slate-700">
-        {renderDocumentBlockHtml(block, placeholderValues)}
+        {renderDocumentBlockHtml(block, placeholderValues, lang)}
       </div>
     );
   }
@@ -104,21 +119,21 @@ export function ContractPublicView({
           <div className="border-b border-border/60 bg-muted/10 px-6 sm:px-8 py-5">
             <div className="flex items-center gap-2 mb-1.5">
               <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider px-2 py-0 h-5 border-primary/40 bg-primary/5 text-primary">
-                Contract Document
+                {t("Dokumen Kontrak Perjanjian", "Contract Agreement Document")}
               </Badge>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">{contract.title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">{getLocalizedTitle(contract.title)}</h1>
             {(contract.clientName || contract.clientEmail) && (
               <p className="text-xs sm:text-sm text-muted-foreground mt-1.5">
-                Prepared for: <span className="font-semibold text-foreground">{contract.clientName}</span>
+                {t("Disiapkan untuk", "Prepared for")}: <span className="font-semibold text-foreground">{contract.clientName}</span>
                 {contract.clientEmail && ` · ${contract.clientEmail}`}
               </p>
             )}
             {contract.validUntil && (
               <p className="text-xs text-muted-foreground mt-1">
-                Valid until:{" "}
+                {t("Berlaku hingga", "Valid until")}:{" "}
                 <span className="font-medium text-foreground">
-                  {new Date(contract.validUntil).toLocaleDateString("en-US", {
+                  {new Date(contract.validUntil).toLocaleDateString(lang === "en" ? "en-US" : "id-ID", {
                     day: "numeric",
                     month: "long",
                     year: "numeric",

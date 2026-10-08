@@ -15,6 +15,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { toast } from "sonner";
 import {
   buildContractStarterBlocks,
@@ -30,8 +36,9 @@ import {
 } from "@/lib/document-blocks";
 import { uploadOneFile, MAX_UPLOAD_BYTES } from "@/lib/files-upload";
 import { listContractTemplates } from "@/lib/actions/contract-templates";
-import { getCurrentUserPlanForPortal } from "@/lib/actions/clients";
 import { listProposalTemplates } from "@/lib/actions/proposal-templates";
+import { getCurrentUserPlanForPortal } from "@/lib/actions/clients";
+import { translateDocumentContent } from "@/lib/actions/document-translation";
 import { useT } from "@/lib/i18n-client";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
@@ -53,11 +60,14 @@ import {
   GripVertical,
   Heading,
   Image as ImageIcon,
+  ExternalLink,
+  Languages,
   LayoutTemplate,
   List,
   Loader2,
   Minus,
   Monitor,
+  MoreHorizontal,
   Paperclip,
   Plus,
   QrCode,
@@ -414,9 +424,10 @@ export function DocumentBlockEditor({
     }).catch(() => {});
   }, []);
 
-  // Left & Right Panels
+  // Left & Right Panels (Accordion-exclusive behavior)
   const [elementsOpen, setElementsOpen] = useState(true);
-  const [propertiesOpen, setPropertiesOpen] = useState(true);
+  const [propertiesOpen, setPropertiesOpen] = useState(false);
+  const [translating, setTranslating] = useState(false);
   const [elementSearch, setElementSearch] = useState("");
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(initialBlocks[0]?.id ?? null);
   const [device, setDevice] = useState<"desktop" | "tablet" | "mobile">("desktop");
@@ -445,10 +456,24 @@ export function DocumentBlockEditor({
   const blockRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const { lang, t } = useT();
 
+  const [customOrigin, setCustomOrigin] = useState("");
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setCustomOrigin(window.location.origin);
+    }
+  }, []);
+
   const docTitle = metaState.title || (kind === "proposal" ? "Proposal" : "Contract");
-  const docId = customSlug.trim() || proposalMeta?.slug || documentMeta?.slug || proposalMeta?.id || documentMeta?.id;
-  const sharePath = kind === "proposal" ? `/proposal/${docId || ""}` : `/contract/${docId || ""}`;
-  const fullShareUrl = docId ? `https://cubiqlo.com${sharePath}` : "";
+  const effectiveDocId =
+    customSlug.trim() ||
+    proposalMeta?.slug ||
+    documentMeta?.slug ||
+    proposalMeta?.id ||
+    documentMeta?.id ||
+    "";
+  const baseUrl = customOrigin || "https://cubiqlo.com";
+  const sharePath = kind === "proposal" ? `/proposal/${effectiveDocId}` : `/contract/${effectiveDocId}`;
+  const fullShareUrl = effectiveDocId ? `${baseUrl}${sharePath}` : "";
 
   // Dynamic Price Calculations for Settings
   const lineItemsSubtotal = metaState.lineItems.reduce((acc, item) => acc + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0), 0);
@@ -541,6 +566,31 @@ export function DocumentBlockEditor({
     }
   }
 
+  async function handleAiTranslate() {
+    if (translating) return;
+    setTranslating(true);
+    const toastId = toast.loading(t("Menerjemahkan dokumen dengan AI...", "Translating document with AI..."));
+    try {
+      const result = await translateDocumentContent({
+        targetLang: lang === "en" ? "id" : "en",
+        title: metaState.title,
+        blocks,
+      });
+
+      if (result.title && result.title !== metaState.title) {
+        setMetaState((prev) => ({ ...prev, title: result.title }));
+      }
+      setBlocks(result.blocks);
+      recordHistory(result.blocks);
+      setDirty(true);
+      toast.success(t("Dokumen berhasil diterjemahkan!", "Document translated successfully!"), { id: toastId });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Gagal menerjemahkan", "Translation failed"), { id: toastId });
+    } finally {
+      setTranslating(false);
+    }
+  }
+
   function update(id: string, content: string) {
     setBlocks((current) => current.map((block) => (block.id === id ? { ...block, content } : block)));
     setDirty(true);
@@ -580,6 +630,8 @@ export function DocumentBlockEditor({
     recordHistory(next);
     setDirty(true);
     setSelectedBlockId(block.id);
+    setPropertiesOpen(true);
+    setElementsOpen(false);
     toast.success(t(`Menambahkan ${blockLabel(type)}`, `Added ${blockLabel(type)}`));
   }
 
@@ -830,9 +882,9 @@ export function DocumentBlockEditor({
           </button>
         </div>
 
-        {/* Actions Right */}
+        {/* Actions Right: Clean, Ergonomic Layout */}
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Interactive Live Preview Switcher (Jotform Style) */}
+          {/* Interactive Live Preview Switcher */}
           <button
             type="button"
             onClick={() => setLivePreviewMode(!livePreviewMode)}
@@ -844,79 +896,92 @@ export function DocumentBlockEditor({
             title={t("Pratinjau", "Preview")}
           >
             <Eye className="h-3.5 w-3.5" />
-            <span>{kind === "proposal" ? t("Pratinjau Proposal", "Preview Proposal") : t("Pratinjau Kontrak", "Preview Contract")}</span>
+            <span>{t("Preview", "Preview")}</span>
           </button>
 
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => setTemplateDialogOpen(true)}
-            className="h-8 gap-1.5 text-xs font-semibold text-primary border-primary/30 hover:bg-primary/5 hidden md:inline-flex"
-          >
-            <LayoutTemplate className="h-3.5 w-3.5" />
-            <span>Templates</span>
-          </Button>
+          {/* Tools Dropdown (Translate ID ↔ EN + Templates) */}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold rounded-lg border border-border/70 bg-muted/40 text-muted-foreground hover:text-foreground transition-all"
+                title={t("Alat Dokumen", "Document Tools")}
+              >
+                <MoreHorizontal className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{t("Tools", "Tools")}</span>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem
+                onClick={() => void handleAiTranslate()}
+                disabled={translating}
+                className="gap-2 text-xs font-medium cursor-pointer"
+              >
+                {translating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Languages className="h-3.5 w-3.5 text-primary" />}
+                <span>{t("Translate (ID ↔ EN)", "Translate (ID ↔ EN)")}</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => setTemplateDialogOpen(true)}
+                className="gap-2 text-xs font-medium cursor-pointer"
+              >
+                <LayoutTemplate className="h-3.5 w-3.5 text-primary" />
+                <span>{t("Templates Dokumen", "Document Templates")}</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
           {activeTab === "build" && !livePreviewMode && (
-            <>
-              {/* Desktop / Mobile Switcher (Jotform Builder Style) */}
-              <div className="hidden lg:flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/60">
-                <button
-                  type="button"
-                  onClick={() => setDevice("desktop")}
-                  className={`p-1 rounded-md transition-all ${
-                    device === "desktop" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  title="Desktop Preview"
-                >
-                  <Monitor className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDevice("mobile")}
-                  className={`p-1 rounded-md transition-all ${
-                    device === "mobile" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  title="Mobile Preview"
-                >
-                  <Smartphone className="h-3.5 w-3.5" />
-                </button>
-              </div>
-
-              <Button
+            <div className="flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/70">
+              <button
                 type="button"
-                variant={elementsOpen ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => setElementsOpen(!elementsOpen)}
-                className="h-8 gap-1.5 text-xs font-medium hidden md:inline-flex"
-                title="Toggle Element Catalog"
+                onClick={() => {
+                  setElementsOpen(!elementsOpen);
+                  if (!elementsOpen) setPropertiesOpen(false);
+                }}
+                className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                  elementsOpen ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={t("Toggle Katalog Elemen", "Toggle Element Catalog")}
               >
                 <Plus className="h-3.5 w-3.5" />
-                <span>Elements</span>
-              </Button>
-
-              <Button
+                <span className="hidden md:inline">{t("Elemen", "Elements")}</span>
+              </button>
+              <button
                 type="button"
-                variant={propertiesOpen ? "secondary" : "outline"}
-                size="sm"
-                onClick={() => setPropertiesOpen(!propertiesOpen)}
-                className="h-8 gap-1.5 text-xs font-medium hidden md:inline-flex"
-                title="Toggle Field Properties"
+                onClick={() => {
+                  setPropertiesOpen(!propertiesOpen);
+                  if (!propertiesOpen) setElementsOpen(false);
+                }}
+                className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md transition-all ${
+                  propertiesOpen ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={t("Toggle Properti Blok", "Toggle Block Properties")}
               >
                 <Sliders className="h-3.5 w-3.5" />
-                <span>Properties</span>
-              </Button>
-            </>
+                <span className="hidden md:inline">{t("Properti", "Properties")}</span>
+              </button>
+            </div>
           )}
 
           <Button
             size="sm"
-            onClick={() => startTransition(() => { void save(); })}
-            disabled={!dirty || saving || pending || stale}
+            onClick={() => {
+              if (activeTab === "settings") {
+                void handleSaveSettings();
+              } else {
+                startTransition(() => { void save(); });
+              }
+            }}
+            disabled={
+              activeTab === "settings"
+                ? savingMeta
+                : !dirty || saving || pending || stale
+            }
             className="h-8 px-3 text-xs font-semibold bg-primary text-primary-foreground shadow-xs gap-1.5"
           >
-            {saving || pending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+            {saving || pending || (activeTab === "settings" && savingMeta) ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : null}
             <span>{t("Simpan", "Save")}</span>
           </Button>
         </div>
@@ -1818,13 +1883,7 @@ export function DocumentBlockEditor({
               </div>
             </div>
 
-            {/* Bottom Save Settings Button */}
-            <div className="flex justify-end pt-2">
-              <Button type="submit" disabled={savingMeta} className="gap-1.5 text-xs font-semibold px-5">
-                {savingMeta ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                <span>{t("Simpan Pengaturan", "Save Settings")}</span>
-              </Button>
-            </div>
+            {/* Bottom Save Button Removed - Unified 1 Save Button on Top Header */}
           </form>
         </div>
       )}
@@ -1862,6 +1921,18 @@ export function DocumentBlockEditor({
                     <Copy className="h-3.5 w-3.5" />
                     <span>{t("Salin", "Copy")}</span>
                   </Button>
+                  {fullShareUrl && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open(fullShareUrl, "_blank")}
+                      className="shrink-0 gap-1.5 text-xs font-semibold"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5" />
+                      <span>{t("Buka", "Open")}</span>
+                    </Button>
+                  )}
                 </div>
               </div>
 

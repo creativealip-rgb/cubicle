@@ -47,9 +47,21 @@ export function renderDocumentBlock(block: DocumentBlock, values: DocumentPlaceh
  */
 import { getFontFamily } from "@/lib/builder-fonts";
 
+function getLocalizedDocText(text: string, lang: string): string {
+  if (!text || typeof text !== "string") return "";
+  if (text.includes(" / ")) {
+    const parts = text.split(" / ");
+    if (parts.length >= 2) {
+      return lang === "en" ? parts[1].trim() : parts[0].trim();
+    }
+  }
+  return text;
+}
+
 export function renderDocumentBlockHtml(
   block: DocumentBlock,
   values: DocumentPlaceholderValues,
+  lang: string = "id"
 ): React.ReactNode {
   const textAlignClass = block.align === "center" ? "text-center" : block.align === "right" ? "text-right" : block.align === "left" ? "text-left" : "";
   const fontStyle = block.fontFamily ? { fontFamily: getFontFamily(block.fontFamily) } : undefined;
@@ -121,10 +133,10 @@ export function renderDocumentBlockHtml(
         <table className="w-full border-collapse text-sm">
           <tbody>
             {rows.map((row, i) => (
-              <tr key={i} className={i === 0 ? "bg-slate-50" : undefined}>
+              <tr key={i} className={i === 0 ? "bg-slate-50 font-bold" : undefined}>
                 {row.map((cell, j) => (
                   <td key={j} className="border border-slate-200 px-3 py-2">
-                    {resolveDocumentPlaceholders(cell, values)}
+                    {resolveDocumentPlaceholders(getLocalizedDocText(cell, lang), values)}
                   </td>
                 ))}
               </tr>
@@ -135,11 +147,13 @@ export function renderDocumentBlockHtml(
     );
   }
   if (block.type === "list") {
-    const items = (block.items ?? []).map((item) => resolveDocumentPlaceholders(item, values));
+    const items = (block.items ?? []).map((item) =>
+      resolveDocumentPlaceholders(getLocalizedDocText(item, lang), values)
+    );
     if (items.length === 0) return null;
     if (block.ordered) {
       return (
-        <ol className={`my-2 list-decimal pl-6 space-y-1 ${textAlignClass}`}>
+        <ol className={`my-2 list-decimal pl-6 space-y-1 ${textAlignClass}`} style={fontStyle}>
           {items.map((item, i) => (
             <li key={i}>{item}</li>
           ))}
@@ -147,7 +161,7 @@ export function renderDocumentBlockHtml(
       );
     }
     return (
-      <ul className={`my-2 list-disc pl-6 space-y-1 ${textAlignClass}`}>
+      <ul className={`my-2 list-disc pl-6 space-y-1 ${textAlignClass}`} style={fontStyle}>
         {items.map((item, i) => (
           <li key={i}>{item}</li>
         ))}
@@ -155,11 +169,11 @@ export function renderDocumentBlockHtml(
     );
   }
   if (block.type === "signature") {
-    return <div className="rounded border border-dashed p-6 text-center text-sm text-muted-foreground">Tempat tanda tangan client</div>;
+    return <div className="rounded border border-dashed p-6 text-center text-sm text-muted-foreground">{lang === "en" ? "Client digital signature slot" : "Tempat tanda tangan client"}</div>;
   }
   return (
     <div className={`whitespace-pre-wrap ${textAlignClass} ${fontSizeClass}`} style={fontStyle}>
-      {renderDocumentBlock(block, values)}
+      {resolveDocumentPlaceholders(getLocalizedDocText(block.content ?? "", lang), values)}
     </div>
   );
 }

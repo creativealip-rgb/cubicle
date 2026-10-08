@@ -62,6 +62,8 @@ function headingClass(level: number | undefined): string {
   return "text-lg";
 }
 
+import { useT } from "@/lib/i18n-client";
+
 export function ProposalPublicView({
   proposal,
   blocks,
@@ -77,12 +79,25 @@ export function ProposalPublicView({
   topBar?: React.ReactNode;
   embedded?: boolean;
 }) {
+  const { lang, t } = useT();
+
   const lineItems = proposal.lineItems ?? [];
   const currency = proposal.currency ?? "IDR";
   const subtotal = proposal.subtotal ?? lineItems.reduce((s, li) => s + Number(li.amount ?? 0), 0);
   const tax = proposal.tax ?? 0;
   const total = proposal.total ?? (Number(subtotal) + Number(tax));
   const dpPercent = Number(proposal.downPaymentPercent ?? 0);
+
+  function getLocalizedTitle(title: string): string {
+    if (!title) return "";
+    if (title.includes(" / ")) {
+      const parts = title.split(" / ");
+      if (parts.length >= 2) {
+        return lang === "en" ? parts[1].trim() : parts[0].trim();
+      }
+    }
+    return title;
+  }
 
   function renderBlock(block: DocumentBlock) {
     if (block.type === "heading") {
@@ -91,13 +106,13 @@ export function ProposalPublicView({
           key={block.id}
           className={`${headingClass(block.level)} font-semibold text-slate-900 ${alignClass(block.align)}`}
         >
-          {renderDocumentBlockHtml(block, placeholderValues)}
+          {renderDocumentBlockHtml(block, placeholderValues, lang)}
         </div>
       );
     }
     return (
       <div key={block.id} className="text-slate-700">
-        {renderDocumentBlockHtml(block, placeholderValues)}
+        {renderDocumentBlockHtml(block, placeholderValues, lang)}
       </div>
     );
   }
@@ -122,21 +137,21 @@ export function ProposalPublicView({
           <div className="border-b border-border/60 bg-muted/10 px-6 sm:px-8 py-5">
             <div className="flex items-center gap-2 mb-1.5">
               <Badge variant="outline" className="text-[10px] font-bold uppercase tracking-wider px-2 py-0 h-5 border-primary/40 bg-primary/5 text-primary">
-                Proposal Document
+                {t("Dokumen Proposal", "Proposal Document")}
               </Badge>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">{proposal.title}</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">{getLocalizedTitle(proposal.title)}</h1>
             {(proposal.clientName || proposal.clientEmail) && (
               <p className="text-xs sm:text-sm text-muted-foreground mt-1.5">
-                Prepared for: <span className="font-semibold text-foreground">{proposal.clientName}</span>
+                {t("Disiapkan untuk", "Prepared for")}: <span className="font-semibold text-foreground">{proposal.clientName}</span>
                 {proposal.clientEmail && ` · ${proposal.clientEmail}`}
               </p>
             )}
             {proposal.validUntil && (
               <p className="text-xs text-muted-foreground mt-1">
-                Valid until:{" "}
+                {t("Berlaku hingga", "Valid until")}:{" "}
                 <span className="font-medium text-foreground">
-                  {new Date(proposal.validUntil).toLocaleDateString("en-US", {
+                  {new Date(proposal.validUntil).toLocaleDateString(lang === "en" ? "en-US" : "id-ID", {
                     day: "numeric",
                     month: "long",
                     year: "numeric",
@@ -145,16 +160,16 @@ export function ProposalPublicView({
               </p>
             )}
             {proposal.status === "viewed" && (
-              <div className="mt-3"><Badge variant="secondary">Viewed — awaiting decision</Badge></div>
+              <div className="mt-3"><Badge variant="secondary">{t("Dilihat — menunggu keputusan", "Viewed — awaiting decision")}</Badge></div>
             )}
             {proposal.status === "sent" && (
-              <div className="mt-3"><Badge variant="secondary">Awaiting decision</Badge></div>
+              <div className="mt-3"><Badge variant="secondary">{t("Menunggu keputusan", "Awaiting decision")}</Badge></div>
             )}
             {proposal.status === "accepted" && (
-              <div className="mt-3"><Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50">Accepted</Badge></div>
+              <div className="mt-3"><Badge className="bg-emerald-50 text-emerald-700 hover:bg-emerald-50">{t("Diterima", "Accepted")}</Badge></div>
             )}
             {proposal.status === "declined" && (
-              <div className="mt-3"><Badge variant="destructive">Declined</Badge></div>
+              <div className="mt-3"><Badge variant="destructive">{t("Ditolak", "Declined")}</Badge></div>
             )}
           </div>
 

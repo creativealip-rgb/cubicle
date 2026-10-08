@@ -1090,8 +1090,8 @@ export function QuestionnaireBuilder({
     }
   }, []);
 
-  const activeSlugOrId = customSlug.trim() || initial?.slug || activeQuestionnaireId;
-  const baseUrl = customOrigin || "https://dev.cubiqlo.com";
+  const activeSlugOrId = customSlug.trim() || initial?.slug || activeQuestionnaireId || questionnaireId;
+  const baseUrl = customOrigin || "https://cubiqlo.com";
   const shareUrl = activeSlugOrId ? `${baseUrl}/intake/${activeSlugOrId}` : "";
   const embedCode = activeSlugOrId ? `<iframe src="${baseUrl}/intake/${activeSlugOrId}" width="100%" height="700px" frameborder="0" style="border:0;border-radius:12px;"></iframe>` : "";
 
