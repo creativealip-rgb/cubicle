@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { proposals, projects, projectServices, invoices, invoiceItems, workspaceInvoiceCounters, workspaces, proposalTemplates, clients } from "@/db/schema";
-import { eq, and, desc, sql, or } from "drizzle-orm";
+import { eq, and, desc, sql, or, notInArray, not } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
@@ -244,7 +244,9 @@ export async function updateProposal(proposalId: string, input: z.infer<typeof u
     .where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, workspaceId)))
     .limit(1);
   if (!existing) throw new Error("Proposal not found");
-  if (existing.status !== "draft") throw new Error("Only draft proposals can be edited");
+  if (existing.status === "accepted" || existing.status === "declined") {
+    throw new Error("Dokumen yang sudah disetujui atau ditolak tidak dapat diubah");
+  }
 
   const lineItems = parsed.lineItems ?? (existing.lineItems as Array<{ amount: number }>);
   const taxRate = parsed.taxRate ?? (existing.tax && existing.subtotal && parseFloat(existing.subtotal) > 0
@@ -443,7 +445,7 @@ export async function saveProposalBlocks(proposalId: string, input: z.infer<type
     .where(and(
       eq(proposals.id, proposalId),
       eq(proposals.workspaceId, workspaceId),
-      eq(proposals.status, "draft"),
+      notInArray(proposals.status, ["accepted", "declined"]),
       eq(proposals.contentRevision, expectedRevision),
     ))
     .returning();
@@ -452,7 +454,9 @@ export async function saveProposalBlocks(proposalId: string, input: z.infer<type
       .from(proposals)
       .where(and(eq(proposals.id, proposalId), eq(proposals.workspaceId, workspaceId)))
       .limit(1);
-    if (!existing || existing.status !== "draft") throw new Error("Proposal not found or not editable");
+    if (!existing || existing.status === "accepted" || existing.status === "declined") {
+      throw new Error("Dokumen yang sudah disetujui atau ditolak tidak dapat diubah");
+    }
     throw new Error("Perubahan sudah kedaluwarsa — dokumen diubah di tab lain. Muat ulang untuk melanjutkan.");
   }
   revalidatePath(`/app/proposals/${proposalId}`);

@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { contracts, contractTemplates, clients, projects, workspaces, workspaceInvoiceCounters } from "@/db/schema";
-import { eq, and, desc, sql, or } from "drizzle-orm";
+import { eq, and, desc, sql, or, notInArray } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";
@@ -300,7 +300,9 @@ export async function updateContract(contractId: string, input: { clientId?: str
     .where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId)))
     .limit(1);
   if (!existing) throw new Error("Contract not found");
-  if (existing.status !== "draft") throw new Error("Can only edit draft contracts");
+  if (existing.status === "signed" || existing.status === "declined") {
+    throw new Error("Dokumen yang sudah ditandatangani atau ditolak tidak dapat diubah");
+  }
   if (input.contractNumber !== undefined) {
     const normalized = input.contractNumber?.trim().toUpperCase() || null;
     if (normalized && (normalized.length > 100 || /[^\x20-\x7E]/.test(normalized))) {
@@ -351,7 +353,7 @@ export async function saveContractBlocks(contractId: string, input: z.infer<type
     .where(and(
       eq(contracts.id, contractId),
       eq(contracts.workspaceId, workspaceId),
-      eq(contracts.status, "draft"),
+      notInArray(contracts.status, ["signed", "declined"]),
       eq(contracts.contentRevision, expectedRevision),
     ))
     .returning();
@@ -360,7 +362,9 @@ export async function saveContractBlocks(contractId: string, input: z.infer<type
       .from(contracts)
       .where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId)))
       .limit(1);
-    if (!existing || existing.status !== "draft") throw new Error("Contract not found or not editable");
+    if (!existing || existing.status === "signed" || existing.status === "declined") {
+      throw new Error("Dokumen yang sudah ditandatangani atau ditolak tidak dapat diubah");
+    }
     throw new Error("Perubahan sudah kedaluwarsa — dokumen diubah di tab lain. Muat ulang untuk melanjutkan.");
   }
   revalidatePath(`/app/contracts/${contractId}`);

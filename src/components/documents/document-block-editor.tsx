@@ -559,8 +559,14 @@ export function DocumentBlockEditor({
       }
       await onUpdateMeta(payload);
       toast.success(kind === "proposal" ? t("Pengaturan proposal berhasil disimpan", "Proposal settings saved") : t("Pengaturan kontrak berhasil disimpan", "Contract settings saved"));
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : t("Gagal menyimpan pengaturan", "Failed to save settings"));
+    } catch (err: any) {
+      console.error("[Save Settings Error]", err);
+      const rawMsg = err?.message || "";
+      const isReactDigest = rawMsg.includes("441") || rawMsg.includes("Server Components render");
+      const errMsg = isReactDigest
+        ? t("Gagal menyimpan pengaturan. Silakan coba sesaat lagi.", "Failed to save settings. Please try again.")
+        : (rawMsg || t("Gagal menyimpan pengaturan", "Failed to save settings"));
+      toast.error(errMsg);
     } finally {
       setSavingMeta(false);
     }
