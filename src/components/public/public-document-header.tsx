@@ -63,15 +63,9 @@ export function PublicDocumentHeader({
           </div>
         </div>
 
-        {/* Right: Language switch & Security lock badge */}
+        {/* Right: Language switch */}
         <div className="flex items-center gap-2.5 self-start sm:self-center shrink-0">
           <PortalLanguageSwitch />
-          {securityLabel && (
-            <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2.5 py-1 rounded-lg border border-emerald-500/20">
-              <LockKeyhole className="h-3 w-3" />
-              <span>{securityLabel}</span>
-            </div>
-          )}
         </div>
       </div>
     </header>
