@@ -377,9 +377,9 @@ export function DocumentBlockEditor({
 
   // Workflow Tabs: BUILD (Canvas) | SETTINGS (Document Metadata & Pricing) | PUBLISH (Share / Send)
   const searchParams = useSearchParams();
-  const router = useRouter();
   const pathname = usePathname();
   const urlTab = searchParams.get("tab");
+  const urlPreview = searchParams.get("preview");
   const initialActiveTab = urlTab === "settings" || urlTab === "publish" ? urlTab : "build";
   const [activeTab, setActiveTabState] = useState<"build" | "settings" | "publish">(initialActiveTab);
 
@@ -397,7 +397,25 @@ export function DocumentBlockEditor({
     },
     [pathname]
   );
-  const [livePreviewMode, setLivePreviewMode] = useState(false);
+  const [livePreviewMode, setLivePreviewModeState] = useState(urlPreview === "1" || urlPreview === "true");
+
+  const setLivePreviewMode = useCallback(
+    (val: boolean | ((prev: boolean) => boolean)) => {
+      setLivePreviewModeState((prev) => {
+        const next = typeof val === "function" ? val(prev) : val;
+        const params = new URLSearchParams(window.location.search);
+        if (next) {
+          params.set("preview", "1");
+        } else {
+          params.delete("preview");
+        }
+        const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+        window.history.replaceState(null, "", newUrl);
+        return next;
+      });
+    },
+    [pathname]
+  );
 
   // Form Settings State (Live editable metadata & financial rules)
   const [metaState, setMetaState] = useState({
@@ -651,7 +669,6 @@ export function DocumentBlockEditor({
     setDirty(true);
     setSelectedBlockId(block.id);
     setPropertiesOpen(true);
-    setElementsOpen(false);
     toast.success(t(`Menambahkan ${blockLabel(type)}`, `Added ${blockLabel(type)}`));
   }
 
@@ -978,10 +995,7 @@ export function DocumentBlockEditor({
             <div className="flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/70">
               <button
                 type="button"
-                onClick={() => {
-                  setElementsOpen(!elementsOpen);
-                  if (!elementsOpen) setPropertiesOpen(false);
-                }}
+                onClick={() => setElementsOpen(!elementsOpen)}
                 className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md transition-all ${
                   elementsOpen ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
                 }`}
@@ -992,10 +1006,7 @@ export function DocumentBlockEditor({
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  setPropertiesOpen(!propertiesOpen);
-                  if (!propertiesOpen) setElementsOpen(false);
-                }}
+                onClick={() => setPropertiesOpen(!propertiesOpen)}
                 className={`flex items-center gap-1 px-2 py-1 text-xs font-medium rounded-md transition-all ${
                   propertiesOpen ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
                 }`}

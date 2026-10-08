@@ -728,6 +728,7 @@ export function QuestionnaireBuilder({
   const searchParams = useSearchParams();
   const pathname = usePathname();
   const urlTab = searchParams.get("tab");
+  const urlPreview = searchParams.get("preview");
   const initialActiveTab = urlTab === "settings" || urlTab === "publish" ? urlTab : "build";
   const [activeTab, setActiveTabState] = useState<"build" | "settings" | "publish">(initialActiveTab);
 
@@ -754,7 +755,25 @@ export function QuestionnaireBuilder({
     }).catch(() => {});
   }, []);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
-  const [livePreviewMode, setLivePreviewMode] = useState(false);
+  const [livePreviewMode, setLivePreviewModeState] = useState(urlPreview === "1" || urlPreview === "true");
+
+  const setLivePreviewMode = useCallback(
+    (val: boolean | ((prev: boolean) => boolean)) => {
+      setLivePreviewModeState((prev) => {
+        const next = typeof val === "function" ? val(prev) : val;
+        const params = new URLSearchParams(window.location.search);
+        if (next) {
+          params.set("preview", "1");
+        } else {
+          params.delete("preview");
+        }
+        const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+        window.history.replaceState(null, "", newUrl);
+        return next;
+      });
+    },
+    [pathname]
+  );
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   // Form general state
   const [name, setName] = useState(initial?.name || "");
@@ -916,7 +935,6 @@ export function QuestionnaireBuilder({
     setFields((prev) => [...prev, newField]);
     setSelectedFieldId(newField.id);
     setPropertiesOpen(true);
-    setElementsOpen(false);
     toast.success(`${def.label} ${t("ditambahkan", "added")}`);
   }
 
@@ -1244,20 +1262,13 @@ export function QuestionnaireBuilder({
 
           {activeTab === "build" && !livePreviewMode && (
             <>
-              {/* Elements & Properties Toggle Buttons with exclusive auto-switch */}
+              {/* Elements & Properties Toggle Buttons */}
               <div className="flex items-center bg-muted/50 p-0.5 rounded-lg border border-border/60">
                 <Button
                   type="button"
                   variant={elementsOpen ? "secondary" : "ghost"}
                   size="sm"
-                  onClick={() => {
-                    if (!elementsOpen) {
-                      setElementsOpen(true);
-                      setPropertiesOpen(false);
-                    } else {
-                      setElementsOpen(false);
-                    }
-                  }}
+                  onClick={() => setElementsOpen(!elementsOpen)}
                   className={`h-7 px-2.5 gap-1.5 text-xs font-medium ${
                     elementsOpen ? "bg-background text-foreground shadow-xs" : "text-muted-foreground"
                   }`}
@@ -1271,14 +1282,7 @@ export function QuestionnaireBuilder({
                   type="button"
                   variant={propertiesOpen ? "secondary" : "ghost"}
                   size="sm"
-                  onClick={() => {
-                    if (!propertiesOpen) {
-                      setPropertiesOpen(true);
-                      setElementsOpen(false);
-                    } else {
-                      setPropertiesOpen(false);
-                    }
-                  }}
+                  onClick={() => setPropertiesOpen(!propertiesOpen)}
                   className={`h-7 px-2.5 gap-1.5 text-xs font-medium ${
                     propertiesOpen ? "bg-background text-foreground shadow-xs" : "text-muted-foreground"
                   }`}
@@ -1292,19 +1296,10 @@ export function QuestionnaireBuilder({
           )}
 
           {/* Auto-save status indicator */}
-          {questionnaireId && (
+          {questionnaireId && savedStatus === "saving" && (
             <div className="hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-md text-[11px] font-medium text-muted-foreground bg-muted/40">
-              {savedStatus === "saving" ? (
-                <>
-                  <Loader2 className="h-3 w-3 animate-spin text-primary" />
-                  <span>{t("Menyimpan...", "Saving...")}</span>
-                </>
-              ) : savedStatus === "saved" ? (
-                <>
-                  <Check className="h-3 w-3 text-emerald-600" />
-                  <span className="text-emerald-600">{t("Tersimpan otomatis", "Auto-saved")}</span>
-                </>
-              ) : null}
+              <Loader2 className="h-3 w-3 animate-spin text-primary" />
+              <span>{t("Menyimpan...", "Saving...")}</span>
             </div>
           )}
 
@@ -1649,12 +1644,10 @@ export function QuestionnaireBuilder({
                               onSelect={() => {
                                 setSelectedFieldId(field.id);
                                 setPropertiesOpen(true);
-                                setElementsOpen(false);
                               }}
                               onOpenProperties={() => {
                                 setSelectedFieldId(field.id);
                                 setPropertiesOpen(true);
-                                setElementsOpen(false);
                               }}
                               onUpdateLabel={(val) => {
                                 setFields((prev) =>
