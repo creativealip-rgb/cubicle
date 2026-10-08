@@ -39,7 +39,7 @@ const PLAN_LIMITS: Record<PlanTier, PlanLimits> = {
     maxMembers: 1,
     hasClientPortal: true,
     hasAiAssistant: true,
-    aiRequestsPerMonth: 150,
+    aiRequestsPerMonth: 200,
     apiRequestsPerMinute: 120,
     maxClients: 0, // unlimited
     maxProjects: 0,

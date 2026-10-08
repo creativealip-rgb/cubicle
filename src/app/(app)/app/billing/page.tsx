@@ -49,7 +49,7 @@ const plans = [
       ["3 workspace", "3 workspaces"],
       ["Klien, proyek, proposal, kontrak, dan invoice unlimited", "Unlimited clients, projects, proposals, contracts, and invoices"],
       ["Client portal + AI", "Client portal + AI"],
-      ["150 AI request/bulan", "150 AI requests/month"],
+      ["200 AI request/bulan", "200 AI requests/month"],
       ["Kelola dan bagikan file klien", "Manage and share client files"],
     ],
   },
