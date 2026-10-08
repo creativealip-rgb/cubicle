@@ -626,9 +626,18 @@ function SortableCanvasField({
             </div>
           )}
           {field.type === "signature" && (
-            <div className="border border-border/80 rounded-xl p-3 text-center bg-muted/10 h-14 flex items-center justify-center gap-2">
-              <PenTool className="h-3.5 w-3.5 text-muted-foreground" />
-              <p className="text-[11px] text-muted-foreground italic">{t("Area Tanda Tangan Digital", "Digital Signature Pad Area")}</p>
+            <div className="border border-border/80 rounded-xl overflow-hidden bg-card text-center shadow-2xs">
+              <div className="flex items-center justify-between px-3 py-1.5 border-b border-border/60 bg-muted/20">
+                <div className="flex items-center gap-1.5 text-[10px] font-semibold text-muted-foreground">
+                  <span className="px-1.5 py-0.5 rounded bg-background shadow-2xs text-foreground font-bold">{t("Coret", "Draw")}</span>
+                  <span>{t("Ketik", "Type")}</span>
+                </div>
+                <span className="text-[10px] text-muted-foreground/60">E-Sign</span>
+              </div>
+              <div className="h-20 bg-muted/5 flex flex-col items-center justify-center gap-1 p-2">
+                <PenTool className="h-4 w-4 text-primary/70" />
+                <p className="text-[11px] text-muted-foreground italic font-serif">{t("Area Tanda Tangan Digital (Draw / Type)", "Digital Signature Pad (Draw / Type)")}</p>
+              </div>
             </div>
           )}
           {field.type === "rating" && (

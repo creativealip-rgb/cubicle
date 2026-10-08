@@ -16,6 +16,7 @@ import {
 import { toast } from "sonner";
 import { submitQuestionnaire } from "@/lib/actions/questionnaires";
 import { useT } from "@/lib/i18n-client";
+import { FormSignaturePad } from "@/components/questionnaires/form-signature-pad";
 import {
   CheckCircle,
   Loader2,
@@ -567,16 +568,10 @@ export function IntakeForm({
               )}
 
               {f.type === "signature" && (
-                <div className="border border-border/80 rounded-xl p-3 bg-muted/10 space-y-2">
-                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <PenTool className="h-3.5 w-3.5" />
-                    <span>{t("Ketik Nama Lengkap sebagai Tanda Tangan Digital:", "Type Full Name as Digital Signature:")}</span>
-                  </div>
-                  <Input
+                <div className="space-y-1.5 pt-1">
+                  <FormSignaturePad
                     value={answers[f.id] || ""}
-                    onChange={(e) => setFieldValue(f.id, e.target.value)}
-                    placeholder={t("Tanda tangan / Nama Penandatangan...", "Signature / Signer Name...")}
-                    className="h-10 font-serif italic text-sm sm:text-base bg-background"
+                    onChange={(val) => setFieldValue(f.id, val)}
                   />
                 </div>
               )}
