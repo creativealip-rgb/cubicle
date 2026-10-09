@@ -262,55 +262,21 @@ export function PortalFileManager({
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
-            <FolderOpen className="h-3.5 w-3.5" />
-          </div>
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-foreground leading-tight">{t("File & Dokumen", "Files & Documents")}</h2>
-            <p className="text-xs text-muted-foreground">
-              {t(
-                "Kelola dan unduh file proyek yang dibagikan. Total",
-                "Manage and download shared project files. Total",
-              )}{" "}
-              {totalFiles} file.
-            </p>
-          </div>
-        </div>
-        {canUpload && (
-          <div className="flex items-center gap-2">
-            <input
-              ref={inputRef}
-              type="file"
-              multiple
-              className="hidden"
-              onChange={(e) => {
-                if (e.target.files) void handleFiles(e.target.files);
-              }}
-            />
-            <Button
-              type="button"
-              size="sm"
-              disabled={uploading}
-              onClick={() => inputRef.current?.click()}
-              className="h-8.5 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs"
-            >
-              {uploading ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Upload className="h-3.5 w-3.5" />
-              )}
-              {uploading
-                ? t("Mengunggah…", "Uploading…")
-                : t("Unggah file", "Upload file")}
-            </Button>
-          </div>
-        )}
-      </div>
+    <div className="space-y-3.5">
+      {/* Hidden file input */}
+      {canUpload && (
+        <input
+          ref={inputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => {
+            if (e.target.files) void handleFiles(e.target.files);
+          }}
+        />
+      )}
 
-      {/* Breadcrumb Navigation Pill */}
+      {/* Breadcrumb Navigation Pill & Drive Controls in 1 Line */}
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <nav className="flex flex-wrap items-center gap-1.5 rounded-xl border border-border/80 bg-muted/20 px-3 py-1.5 text-xs text-muted-foreground">
           <button
@@ -363,8 +329,27 @@ export function PortalFileManager({
           ))}
         </nav>
 
-        {/* Drive Control Toolbar */}
+        {/* Drive Control Toolbar with Upload Button */}
         <div className="flex items-center gap-2">
+          {canUpload && (
+            <Button
+              type="button"
+              size="sm"
+              disabled={uploading}
+              onClick={() => inputRef.current?.click()}
+              className="h-8.5 gap-1.5 rounded-xl px-3 text-xs font-semibold shadow-xs"
+            >
+              {uploading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Upload className="h-3.5 w-3.5" />
+              )}
+              {uploading
+                ? t("Mengunggah…", "Uploading…")
+                : t("Unggah file", "Upload file")}
+            </Button>
+          )}
+
           {/* Sort Dropdown */}
           <Select
             value={`${sortBy}-${sortOrder}`}
