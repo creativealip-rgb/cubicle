@@ -772,35 +772,10 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
               </aside>
 
               {/* Canvas area */}
-              <div className="flex-1 flex flex-col h-full overflow-y-auto overflow-x-hidden bg-muted/30 p-4 sm:p-6 custom-scrollbar">
-                {/* Floating Canvas Top Bar: Readiness, Undo, Redo */}
+              <div className="flex-1 flex flex-col h-full overflow-y-auto overflow-x-hidden bg-muted/30 p-4 sm:p-6 custom-scrollbar relative">
+                {/* Floating Canvas Top Bar: Readiness */}
                 <div className="mx-auto mb-3 flex items-center justify-between gap-3 max-w-4xl w-full">
                   <ReadinessBadge site={site} onSelectIssue={handleSelectReadinessIssue} t={(id, fallback) => t(id, fallback)} />
-
-                  <div className="flex items-center gap-1 rounded-xl border border-border/70 bg-background/90 backdrop-blur p-1 shadow-2xs">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={undo}
-                      disabled={historyIndex <= 0}
-                      title={t("Urungkan", "Undo")}
-                    >
-                      <Undo2 className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7"
-                      onClick={redo}
-                      disabled={historyIndex >= history.length - 1}
-                      title={t("Ulangi", "Redo")}
-                    >
-                      <Redo2 className="h-3.5 w-3.5" />
-                    </Button>
-                  </div>
                 </div>
 
                 <div className="flex-1">
@@ -818,6 +793,37 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                     onReorderSections={reorderSections}
                     readinessTarget={readinessTarget}
                   />
+                </div>
+
+                {/* Floating Undo/Redo Widget in Canvas Area (Right Side) */}
+                <div
+                  className={`fixed bottom-6 z-30 flex items-center gap-1 rounded-xl border border-border/80 bg-background/95 backdrop-blur-md p-1 shadow-lg transition-all duration-200 ${
+                    selectedSectionId ? "right-[340px] sm:right-[380px]" : "right-6"
+                  }`}
+                >
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-lg hover:bg-muted"
+                    onClick={undo}
+                    disabled={historyIndex <= 0}
+                    title={t("Urungkan (Undo)", "Undo")}
+                  >
+                    <Undo2 className="h-4 w-4 text-foreground" />
+                  </Button>
+                  <div className="h-4 w-px bg-border/80" />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-lg hover:bg-muted"
+                    onClick={redo}
+                    disabled={historyIndex >= history.length - 1}
+                    title={t("Ulangi (Redo)", "Redo")}
+                  >
+                    <Redo2 className="h-4 w-4 text-foreground" />
+                  </Button>
                 </div>
               </div>
 

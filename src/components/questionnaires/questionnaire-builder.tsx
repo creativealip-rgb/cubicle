@@ -900,36 +900,74 @@ export function QuestionnaireBuilder({
   );
 
   // History Stack for Undo/Redo
-  const [history, setHistory] = useState<QuestionnaireField[][]>([
+  const [history, setHistory] = useState<QuestionnaireField[][]>(() => [
     initial?.schema && initial.schema.length > 0 ? initial.schema : fields,
   ]);
   const [historyIndex, setHistoryIndex] = useState(0);
 
+  // Track field changes into history stack (debounced)
+  const isHistoryUpdate = useRef(false);
+  useEffect(() => {
+    if (isHistoryUpdate.current) {
+      isHistoryUpdate.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      setHistory((curr) => {
+        const truncated = curr.slice(0, historyIndex + 1);
+        const last = truncated[truncated.length - 1];
+        if (last && JSON.stringify(last) === JSON.stringify(fields)) {
+          return curr;
+        }
+        return [...truncated, fields].slice(-30);
+      });
+      setHistoryIndex((curr) => Math.min(curr + 1, 29));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [fields, historyIndex]);
+
   const setFields = useCallback(
     (action: QuestionnaireField[] | ((prev: QuestionnaireField[]) => QuestionnaireField[])) => {
-      setFieldsState((prev) => {
-        const next = typeof action === "function" ? action(prev) : action;
-        setHistory((curr) => [...curr.slice(0, historyIndex + 1), next].slice(-30));
-        setHistoryIndex((curr) => Math.min(curr + 1, 29));
-        return next;
-      });
+      setFieldsState(action);
     },
-    [historyIndex]
+    []
   );
 
-  function undo() {
+  const undo = useCallback(() => {
     if (historyIndex <= 0) return;
     const prevFields = history[historyIndex - 1];
+    if (!prevFields) return;
+    isHistoryUpdate.current = true;
     setHistoryIndex(historyIndex - 1);
     setFieldsState(prevFields);
-  }
+  }, [historyIndex, history]);
 
-  function redo() {
+  const redo = useCallback(() => {
     if (historyIndex >= history.length - 1) return;
     const nextFields = history[historyIndex + 1];
+    if (!nextFields) return;
+    isHistoryUpdate.current = true;
     setHistoryIndex(historyIndex + 1);
     setFieldsState(nextFields);
-  }
+  }, [historyIndex, history]);
+
+  // Keyboard shortcut Ctrl+Z / Ctrl+Y
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if (
+        ((e.ctrlKey || e.metaKey) && e.key === "y") ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "z" || e.key === "Z"))
+      ) {
+        e.preventDefault();
+        redo();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undo, redo]);
 
   // Panels visibility: Elements sidebar (left) & Properties drawer (right)
   const [elementsOpen, setElementsOpen] = useState(true);
@@ -1754,8 +1792,12 @@ export function QuestionnaireBuilder({
                   </div>
                 </div>
 
-                {/* Floating Undo/Redo Widget Bottom Right */}
-                <div className="fixed bottom-6 right-6 z-30 flex items-center gap-1 rounded-xl border border-border/80 bg-background/95 backdrop-blur-md p-1 shadow-lg">
+                {/* Floating Undo/Redo Widget in Canvas Area (Right Side) */}
+                <div
+                  className={`fixed bottom-6 z-30 flex items-center gap-1 rounded-xl border border-border/80 bg-background/95 backdrop-blur-md p-1 shadow-lg transition-all duration-200 ${
+                    propertiesOpen ? "right-[300px] sm:right-[340px]" : "right-6"
+                  }`}
+                >
                   <Button
                     type="button"
                     variant="ghost"

@@ -646,7 +646,9 @@ export function DocumentBlockEditor({
   }
 
   function update(id: string, content: string) {
-    setBlocks((current) => current.map((block) => (block.id === id ? { ...block, content } : block)));
+    const next = blocks.map((block) => (block.id === id ? { ...block, content } : block));
+    setBlocks(next);
+    recordHistory(next);
     setDirty(true);
   }
 
@@ -807,23 +809,39 @@ export function DocumentBlockEditor({
     }
   }
 
-  const uploading = uploadingId !== null;
-
-  function undo() {
+  const undo = useCallback(() => {
     if (historyIndex <= 0) return;
     const next = history[historyIndex - 1];
     setHistoryIndex(historyIndex - 1);
     setBlocks(next);
     setDirty(true);
-  }
+  }, [historyIndex, history]);
 
-  function redo() {
+  const redo = useCallback(() => {
     if (historyIndex >= history.length - 1) return;
     const next = history[historyIndex + 1];
     setHistoryIndex(historyIndex + 1);
     setBlocks(next);
     setDirty(true);
-  }
+  }, [historyIndex, history]);
+
+  // Keyboard shortcut Ctrl+Z / Ctrl+Y
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if (
+        ((e.ctrlKey || e.metaKey) && e.key === "y") ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "z" || e.key === "Z"))
+      ) {
+        e.preventDefault();
+        redo();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undo, redo]);
 
   function recordHistory(next: DocumentBlock[]) {
     setHistory((current) => [...current.slice(0, historyIndex + 1), next].slice(-30));
@@ -1485,9 +1503,13 @@ export function DocumentBlockEditor({
               )}
             </div>
 
-            {/* Floating Undo/Redo Widget Bottom Right — ONLY in Edit/Build Mode */}
+            {/* Floating Undo/Redo Widget in Canvas Area (Right Side) — ONLY in Edit/Build Mode */}
             {!livePreviewMode && (
-              <div className="fixed bottom-6 right-6 z-30 flex items-center gap-1 rounded-xl border border-border/80 bg-background/95 backdrop-blur-md p-1 shadow-lg">
+              <div
+                className={`fixed bottom-6 z-30 flex items-center gap-1 rounded-xl border border-border/80 bg-background/95 backdrop-blur-md p-1 shadow-lg transition-all duration-200 ${
+                  propertiesOpen ? "right-[270px] sm:right-[300px]" : "right-6"
+                }`}
+              >
                 <Button
                   type="button"
                   variant="ghost"
