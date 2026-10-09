@@ -24,6 +24,7 @@ import { getClientPortalAccess, logPortalAccess } from "@/lib/actions/portal";
 import { pickReplyTo } from "@/lib/workspace-reply-to";
 import { Suspense } from "react";
 import { PortalTabsFallback } from "@/components/portal/portal-loading";
+import { ClientPortalHeader } from "@/components/client-portal/client-portal-header";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   FolderOpen,
@@ -866,65 +867,12 @@ export default async function ClientPortalPage({
       <div className="min-h-screen bg-muted/30">
         <div className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:space-y-8 sm:py-10">
           {/* Header — client identity with workspace branding */}
-          <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-gradient-to-r from-card via-card to-primary/5 p-5 sm:p-6 shadow-xs">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between relative z-10">
-              <div className="flex items-start gap-4 min-w-0">
-                {workspaceContact?.logoUrl ? (
-                  <div className="relative h-14 w-14 rounded-2xl overflow-hidden bg-white border border-border/80 shadow-xs shrink-0">
-                    <Image
-                      src={workspaceContact.logoUrl}
-                      alt={
-                        workspaceContact.billingName ||
-                        workspaceContact.name ||
-                        "Workspace logo"
-                      }
-                      fill
-                      sizes="56px"
-                      className="object-contain p-1"
-                    />
-                  </div>
-                ) : (
-                  <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-xl font-bold text-primary shadow-xs">
-                    {(
-                      workspaceContact?.billingName ||
-                      workspaceContact?.name ||
-                      client.companyName ||
-                      client.name ||
-                      "C"
-                    )
-                      .trim()
-                      .charAt(0)
-                      .toUpperCase()}
-                  </div>
-                )}
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2.5 py-0.5 text-[10px] font-semibold text-primary">
-                      <ShieldCheck className="h-3 w-3" />
-                      {t("Portal Klien Resmi", "Official Client Portal")}
-                    </span>
-                  </div>
-                  <h1 className="mt-1 text-xl font-bold tracking-tight text-foreground sm:text-2xl">
-                    {client.companyName || client.name}
-                  </h1>
-                  <p className="mt-0.5 text-xs text-muted-foreground sm:text-sm">
-                    {t("Dikelola oleh", "Managed by")}{" "}
-                    <span className="font-semibold text-foreground">
-                      {workspaceContact?.billingName?.trim() ||
-                        workspaceContact?.name?.trim() ||
-                        "Cubiqlo"}
-                    </span>
-                  </p>
-                </div>
-              </div>
-              <div className="flex shrink-0 items-center gap-2 self-start">
-                <PortalLanguageSwitch />
-                <div className="flex items-center gap-1.5 rounded-full border border-border/80 bg-background/80 px-3 py-1 text-[11px] font-medium text-muted-foreground shadow-xs backdrop-blur-xs">
-                  <LockKeyhole className="h-3 w-3 text-emerald-600" /> {t("Akses Terenkripsi", "Encrypted Access")}
-                </div>
-              </div>
-            </div>
-          </div>
+          <ClientPortalHeader
+            clientName={client.name}
+            clientCompanyName={client.companyName}
+            workspaceName={workspaceContact?.billingName?.trim() || workspaceContact?.name?.trim() || "Cubiqlo Labs"}
+            workspaceLogoUrl={workspaceContact?.logoUrl}
+          />
 
           {/* ─── 1. Compact client-focused 5-KPI summary ─── */}
           <div className="overflow-x-auto pb-1">
