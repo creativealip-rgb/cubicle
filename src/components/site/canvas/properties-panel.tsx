@@ -293,19 +293,19 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
 
           {/* Typography & Font Styling — EXACTLY LIKE FORM BUILDER */}
           <div className="space-y-3 pt-2 border-t border-border/60">
-            {/* Font Family Selector */}
+            {/* Font Family */}
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-foreground">{t("Gaya Font", "Font Family")}</Label>
               <Select
                 value={("fontFamily" in section ? (section as any).fontFamily : undefined) || "inter"}
-                onValueChange={(val) => onUpdate({ ...section, fontFamily: val } as any)}
+                onValueChange={(val) => onUpdate({ fontFamily: val } as any)}
               >
-                <SelectTrigger className="h-8.5 text-xs bg-background">
-                  <SelectValue />
+                <SelectTrigger className="w-full bg-background border-border/70 text-xs">
+                  <SelectValue placeholder="Pilih Font..." />
                 </SelectTrigger>
                 <SelectContent>
                   {CUBIQLO_FONTS.map((font) => (
-                    <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.fontFamily }}>
+                    <SelectItem key={font.id} value={font.id} className="text-xs">
                       {font.name}
                     </SelectItem>
                   ))}
@@ -321,7 +321,7 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
                   <button
                     key={sz}
                     type="button"
-                    onClick={() => onUpdate({ ...section, fontSize: sz } as any)}
+                    onClick={() => onUpdate({ fontSize: sz } as any)}
                     className={`py-1 text-xs font-bold rounded-md border transition-all ${
                       (("fontSize" in section ? (section as any).fontSize : undefined) || "base") === sz
                         ? "bg-primary text-primary-foreground border-primary shadow-xs"
@@ -342,7 +342,7 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
                   type="button"
                   onClick={() => {
                     const isBold = ("bold" in section ? (section as any).bold : false);
-                    onUpdate({ ...section, bold: !isBold } as any);
+                    onUpdate({ bold: !isBold } as any);
                   }}
                   className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
                     ("bold" in section && (section as any).bold) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted/50"
@@ -355,7 +355,7 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
                   type="button"
                   onClick={() => {
                     const isItalic = ("italic" in section ? (section as any).italic : false);
-                    onUpdate({ ...section, italic: !isItalic } as any);
+                    onUpdate({ italic: !isItalic } as any);
                   }}
                   className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
                     ("italic" in section && (section as any).italic) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted/50"
@@ -368,7 +368,7 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
                   type="button"
                   onClick={() => {
                     const isUnderline = ("underline" in section ? (section as any).underline : false);
-                    onUpdate({ ...section, underline: !isUnderline } as any);
+                    onUpdate({ underline: !isUnderline } as any);
                   }}
                   className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
                     ("underline" in section && (section as any).underline) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted/50"
@@ -381,7 +381,7 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
                   type="button"
                   onClick={() => {
                     const isStrike = ("strikethrough" in section ? (section as any).strikethrough : false);
-                    onUpdate({ ...section, strikethrough: !isStrike } as any);
+                    onUpdate({ strikethrough: !isStrike } as any);
                   }}
                   className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
                     ("strikethrough" in section && (section as any).strikethrough) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted/50"
@@ -393,7 +393,7 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
               </div>
             </div>
 
-            {/* Text Alignment setting */}
+            {/* Text Alignment */}
             <div className="space-y-1.5">
               <Label className="text-xs font-medium text-foreground">{t("Perataan Teks", "Text Alignment")}</Label>
               <div className="grid grid-cols-3 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
@@ -401,25 +401,25 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
                   <button
                     key={al}
                     type="button"
-                    onClick={() => onUpdate({ ...section, align: al } as any)}
-                    className={`py-1.5 text-xs capitalize rounded font-medium transition-colors flex items-center justify-center gap-1.5 ${
+                    onClick={() => onUpdate({ align: al } as any)}
+                    className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
                       (("align" in section ? (section as any).align : undefined) || "left") === al
-                        ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                        ? "bg-primary text-primary-foreground shadow-xs"
                         : "text-muted-foreground hover:bg-muted/50"
                     }`}
+                    title={al === "left" ? "Rata Kiri" : al === "center" ? "Rata Tengah" : "Rata Kanan"}
                   >
-                    {al === "left" && <AlignLeft className="h-3.5 w-3.5" />}
-                    {al === "center" && <AlignCenter className="h-3.5 w-3.5" />}
-                    {al === "right" && <AlignRight className="h-3.5 w-3.5" />}
-                    <span>{al}</span>
+                    {al === "left" ? (
+                      <AlignLeft className="h-3.5 w-3.5" />
+                    ) : al === "center" ? (
+                      <AlignCenter className="h-3.5 w-3.5" />
+                    ) : (
+                      <AlignRight className="h-3.5 w-3.5" />
+                    )}
                   </button>
                 ))}
               </div>
             </div>
-          </div>
-
-          <div className="space-y-1.5 pt-2 border-t border-border/60">
-            <Label className="text-xs font-medium text-foreground">{t("Animasi Tampilan", "Animation")}</Label>
             <select
               value={("animation" in section ? section.animation : undefined) ?? "none"}
               onChange={(e) => onUpdate({ animation: e.target.value as (typeof PERSONAL_SITE_ANIMATIONS)[number] })}
