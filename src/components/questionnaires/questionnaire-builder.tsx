@@ -100,6 +100,8 @@ import {
   Upload,
   Play,
   Search,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { createQuestionnaire, updateQuestionnaire } from "@/lib/actions/questionnaires";
@@ -866,7 +868,7 @@ export function QuestionnaireBuilder({
     }
   };
 
-  const [fields, setFields] = useState<QuestionnaireField[]>(
+  const [fields, setFieldsState] = useState<QuestionnaireField[]>(
     initial?.schema && initial.schema.length > 0
       ? initial.schema
       : [
@@ -896,6 +898,38 @@ export function QuestionnaireBuilder({
           },
         ],
   );
+
+  // History Stack for Undo/Redo
+  const [history, setHistory] = useState<QuestionnaireField[][]>([
+    initial?.schema && initial.schema.length > 0 ? initial.schema : fields,
+  ]);
+  const [historyIndex, setHistoryIndex] = useState(0);
+
+  const setFields = useCallback(
+    (action: QuestionnaireField[] | ((prev: QuestionnaireField[]) => QuestionnaireField[])) => {
+      setFieldsState((prev) => {
+        const next = typeof action === "function" ? action(prev) : action;
+        setHistory((curr) => [...curr.slice(0, historyIndex + 1), next].slice(-30));
+        setHistoryIndex((curr) => Math.min(curr + 1, 29));
+        return next;
+      });
+    },
+    [historyIndex]
+  );
+
+  function undo() {
+    if (historyIndex <= 0) return;
+    const prevFields = history[historyIndex - 1];
+    setHistoryIndex(historyIndex - 1);
+    setFieldsState(prevFields);
+  }
+
+  function redo() {
+    if (historyIndex >= history.length - 1) return;
+    const nextFields = history[historyIndex + 1];
+    setHistoryIndex(historyIndex + 1);
+    setFieldsState(nextFields);
+  }
 
   // Panels visibility: Elements sidebar (left) & Properties drawer (right)
   const [elementsOpen, setElementsOpen] = useState(true);
@@ -1718,6 +1752,33 @@ export function QuestionnaireBuilder({
                       <span className="text-[10px] text-muted-foreground">Powered by Cubiqlo Forms</span>
                     </div>
                   </div>
+                </div>
+
+                {/* Floating Undo/Redo Widget Bottom Left */}
+                <div className="fixed bottom-6 left-6 z-30 flex items-center gap-1 rounded-xl border border-border/80 bg-background/95 backdrop-blur-md p-1 shadow-lg">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-lg hover:bg-muted"
+                    onClick={undo}
+                    disabled={historyIndex <= 0}
+                    title={t("Urungkan (Undo)", "Undo")}
+                  >
+                    <Undo2 className="h-4 w-4 text-foreground" />
+                  </Button>
+                  <div className="h-4 w-px bg-border/80" />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-lg hover:bg-muted"
+                    onClick={redo}
+                    disabled={historyIndex >= history.length - 1}
+                    title={t("Ulangi (Redo)", "Redo")}
+                  >
+                    <Redo2 className="h-4 w-4 text-foreground" />
+                  </Button>
                 </div>
               </main>
 
