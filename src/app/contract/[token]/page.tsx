@@ -57,8 +57,9 @@ export default async function ContractPage({ params }: { params: Promise<{ token
       <div className="max-w-2xl mx-auto space-y-6">
         <PublicDocumentHeader
           badgeLabel="Official Contract"
+          documentType="contract"
           documentTitle={contract.title || "Kontrak"}
-          workspaceName={workspace?.name}
+          workspaceName={workspace?.billingName || workspace?.name}
           workspaceLogoUrl={workspace?.logoUrl}
         />
 

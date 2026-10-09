@@ -20,9 +20,9 @@ export default async function ContractEditPage({ params }: { params: Promise<{ c
     .from(contracts).where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId))).limit(1);
   if (!contract) notFound();
   const blocks = normalizeDocumentBlocks(contract.contentBlocks, "contract");
-  const [workspace] = await db.select({ name: workspaces.name, billingAddress: workspaces.billingAddress, logoUrl: workspaces.logoUrl }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  const [workspace] = await db.select({ name: workspaces.name, billingName: workspaces.billingName, billingAddress: workspaces.billingAddress, logoUrl: workspaces.logoUrl }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
   const existingClients = await db.select({ id: clients.id, name: clients.name, email: clients.email, companyName: clients.companyName }).from(clients).where(eq(clients.workspaceId, workspaceId));
-  const placeholderValues = buildContractPlaceholderValues({ ...contract, workspaceName: workspace?.name, workspaceAddress: workspace?.billingAddress });
+  const placeholderValues = buildContractPlaceholderValues({ ...contract, workspaceName: workspace?.billingName || workspace?.name, workspaceAddress: workspace?.billingAddress });
   async function saveBlocks(next: Parameters<typeof saveContractBlocks>[1]["contentBlocks"], revision: number) {
     "use server";
     return saveContractBlocks(contractId, { contentBlocks: next, revision });
@@ -31,7 +31,7 @@ export default async function ContractEditPage({ params }: { params: Promise<{ c
     <DocumentBlockEditor
       kind="contract"
       workspaceId={workspaceId}
-      workspaceName={workspace?.name}
+      workspaceName={workspace?.billingName || workspace?.name}
       workspaceLogoUrl={workspace?.logoUrl}
       initialBlocks={blocks.length ? blocks : defaultDocumentBlocks("contract")}
       initialRevision={contract.contentRevision}

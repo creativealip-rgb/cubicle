@@ -685,6 +685,7 @@ export async function getPublicContract(token: string) {
     .from(clients).where(eq(clients.id, c.clientId)).limit(1) : [null];
   const [workspace] = await db.select({
     name: workspaces.name,
+    billingName: workspaces.billingName,
     billingAddress: workspaces.billingAddress,
     logoUrl: workspaces.logoUrl,
   })

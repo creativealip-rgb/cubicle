@@ -1417,11 +1417,13 @@ export function QuestionnaireBuilder({
                   previewDevice === "mobile" ? "max-w-[400px]" : "max-w-2xl"
                 }`}
               >
+                {/* Public Header Preview Banner */}
                 <PublicDocumentHeader
                   badgeLabel="Official Form"
-                  documentTitle={name || "Formulir"}
+                  documentType="form"
+                  documentTitle={name || t("Formulir", "Form")}
                   workspaceName={workspaceName || "Cubiqlo Workspace"}
-                  workspaceLogoUrl={workspaceLogoUrl || null}
+                  workspaceLogoUrl={workspaceLogoUrl}
                 />
 
                 <div

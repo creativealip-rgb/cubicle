@@ -62,6 +62,7 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
       <div className="w-full max-w-2xl space-y-6">
         <PublicDocumentHeader
           badgeLabel="Official Form"
+          documentType="form"
           documentTitle={questionnaire.name || "Formulir"}
           workspaceName={workspaceName}
           workspaceLogoUrl={workspaceLogoUrl}

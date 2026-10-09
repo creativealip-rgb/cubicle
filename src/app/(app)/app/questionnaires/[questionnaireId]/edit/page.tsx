@@ -19,7 +19,11 @@ export default async function QuestionnaireEditPage({ params }: { params: Promis
     .limit(1);
   if (!q) notFound();
 
-  const [workspace] = await db.select({ name: workspaces.name, logoUrl: workspaces.logoUrl })
+  const [workspace] = await db.select({
+    name: workspaces.name,
+    billingName: workspaces.billingName,
+    logoUrl: workspaces.logoUrl,
+  })
     .from(workspaces)
     .where(eq(workspaces.id, workspaceId))
     .limit(1);
@@ -29,7 +33,7 @@ export default async function QuestionnaireEditPage({ params }: { params: Promis
   return (
     <QuestionnaireBuilder
       workspaceId={workspaceId}
-      workspaceName={workspace?.name}
+      workspaceName={workspace?.billingName || workspace?.name}
       workspaceLogoUrl={workspace?.logoUrl}
       questionnaireId={q.id}
       initial={{

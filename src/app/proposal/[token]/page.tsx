@@ -56,6 +56,7 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
       companyName: proposals.companyName,
       proposalNumber: proposals.proposalNumber,
       workspaceName: workspaces.name,
+      billingName: workspaces.billingName,
       workspaceLogoUrl: workspaces.logoUrl,
       workspaceAddress: workspaces.billingAddress,
     })
@@ -99,7 +100,7 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
     companyName: proposal.companyName,
     proposalNumber: proposal.proposalNumber,
     validUntil: proposal.validUntil,
-    workspaceName: proposal.workspaceName,
+    workspaceName: proposal.billingName || proposal.workspaceName,
     workspaceAddress: proposal.workspaceAddress,
     subtotal: Number(proposal.subtotal),
     tax: Number(proposal.tax),
@@ -112,8 +113,9 @@ export default async function PublicProposalPage({ params }: ProposalPageProps) 
       <div className="max-w-2xl mx-auto space-y-6">
         <PublicDocumentHeader
           badgeLabel="Official Proposal"
+          documentType="proposal"
           documentTitle={proposal.title || "Proposal"}
-          workspaceName={proposal.workspaceName}
+          workspaceName={proposal.billingName || proposal.workspaceName}
           workspaceLogoUrl={proposal.workspaceLogoUrl}
         />
 

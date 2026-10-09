@@ -423,6 +423,7 @@ export async function getPublicQuestionnaire(tokenOrId: string) {
       response: questionnaireResponses,
       questionnaire: questionnaires,
       workspaceName: workspaces.name,
+      billingName: workspaces.billingName,
       workspaceLogoUrl: workspaces.logoUrl,
     })
     .from(questionnaireResponses)
@@ -443,7 +444,7 @@ export async function getPublicQuestionnaire(tokenOrId: string) {
     return {
       response: resp.response,
       questionnaire: resp.questionnaire,
-      workspaceName: resp.workspaceName,
+      workspaceName: resp.billingName || resp.workspaceName,
       workspaceLogoUrl: resp.workspaceLogoUrl,
       isPublicMasterLink: false,
     };
@@ -455,6 +456,7 @@ export async function getPublicQuestionnaire(tokenOrId: string) {
     .select({
       questionnaire: questionnaires,
       workspaceName: workspaces.name,
+      billingName: workspaces.billingName,
       workspaceLogoUrl: workspaces.logoUrl,
     })
     .from(questionnaires)
@@ -475,7 +477,7 @@ export async function getPublicQuestionnaire(tokenOrId: string) {
     }
 
     if (qMaster.questionnaire.maxResponses) {
-      const [countResult] = await db
+      const [{ count }] = await db
         .select({ count: sql<number>`count(*)::int` })
         .from(questionnaireResponses)
         .where(
@@ -484,19 +486,19 @@ export async function getPublicQuestionnaire(tokenOrId: string) {
             eq(questionnaireResponses.status, "submitted")
           )
         );
-      if (countResult && countResult.count >= qMaster.questionnaire.maxResponses) {
-        return { error: "max_responses_reached" as const };
+
+      if (count >= qMaster.questionnaire.maxResponses) {
+        return { error: "expired" as const };
       }
     }
 
     return {
       questionnaire: qMaster.questionnaire,
-      workspaceName: qMaster.workspaceName,
+      workspaceName: qMaster.billingName || qMaster.workspaceName,
       workspaceLogoUrl: qMaster.workspaceLogoUrl,
       isPublicMasterLink: true,
     };
   }
-
   return { error: "not_found" as const };
 }
 

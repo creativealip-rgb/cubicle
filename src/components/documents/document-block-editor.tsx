@@ -1207,6 +1207,7 @@ export function DocumentBlockEditor({
                 <div className="space-y-6">
                   <PublicDocumentHeader
                     badgeLabel={kind === "proposal" ? "Official Proposal" : "Official Contract"}
+                    documentType={kind}
                     documentTitle={docTitle}
                     workspaceName={workspaceName || (typeof placeholderValues.workspaceName === "string" ? placeholderValues.workspaceName : "Cubiqlo Workspace")}
                     workspaceLogoUrl={workspaceLogoUrl || null}
