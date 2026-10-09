@@ -1754,8 +1754,8 @@ export function QuestionnaireBuilder({
                   </div>
                 </div>
 
-                {/* Floating Undo/Redo Widget Bottom Left */}
-                <div className="fixed bottom-6 left-6 z-30 flex items-center gap-1 rounded-xl border border-border/80 bg-background/95 backdrop-blur-md p-1 shadow-lg">
+                {/* Floating Undo/Redo Widget Bottom Right */}
+                <div className="fixed bottom-6 right-6 z-30 flex items-center gap-1 rounded-xl border border-border/80 bg-background/95 backdrop-blur-md p-1 shadow-lg">
                   <Button
                     type="button"
                     variant="ghost"
