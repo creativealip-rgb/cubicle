@@ -109,6 +109,7 @@ import { translateQuestionnaireFields } from "@/lib/actions/questionnaire-transl
 import { getCurrentUserPlanForPortal } from "@/lib/actions/clients";
 import { useT } from "@/lib/i18n-client";
 import Link from "next/link";
+import { useHistoryState } from "@/lib/use-history-state";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import type { QuestionnaireField, QuestionnaireFieldType } from "@/lib/questionnaire-schema";
 import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
@@ -868,88 +869,48 @@ export function QuestionnaireBuilder({
     }
   };
 
-  const [fields, setFieldsState] = useState<QuestionnaireField[]>(
-    initial?.schema && initial.schema.length > 0
-      ? initial.schema
-      : [
-          {
-            id: makeId(),
-            type: "text",
-            label: t("Nama Lengkap", "Full Name"),
-            required: false,
-            placeholder: t("Masukkan nama Anda", "Enter your full name"),
-            colSpan: "full",
-          },
-          {
-            id: makeId(),
-            type: "email",
-            label: t("Email Bisnis", "Business Email"),
-            required: false,
-            placeholder: "email@company.com",
-            colSpan: "half",
-          },
-          {
-            id: makeId(),
-            type: "phone",
-            label: t("Nomor WhatsApp", "WhatsApp / Phone"),
-            required: false,
-            placeholder: "+1 555-0199",
-            colSpan: "half",
-          },
-        ],
+  const defaultFields: QuestionnaireField[] = useMemo(
+    () =>
+      initial?.schema && initial.schema.length > 0
+        ? initial.schema
+        : [
+            {
+              id: makeId(),
+              type: "text",
+              label: t("Nama Lengkap", "Full Name"),
+              required: false,
+              placeholder: t("Masukkan nama Anda", "Enter your full name"),
+              colSpan: "full",
+            },
+            {
+              id: makeId(),
+              type: "email",
+              label: t("Email Bisnis", "Business Email"),
+              required: false,
+              placeholder: "email@company.com",
+              colSpan: "half",
+            },
+            {
+              id: makeId(),
+              type: "phone",
+              label: t("Nomor WhatsApp", "WhatsApp / Phone"),
+              required: false,
+              placeholder: "+1 555-0199",
+              colSpan: "half",
+            },
+          ],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
-  // History Stack for Undo/Redo
-  const [history, setHistory] = useState<QuestionnaireField[][]>(() => [
-    initial?.schema && initial.schema.length > 0 ? initial.schema : fields,
-  ]);
-  const [historyIndex, setHistoryIndex] = useState(0);
-
-  // Track field changes into history stack (debounced)
-  const isHistoryUpdate = useRef(false);
-  useEffect(() => {
-    if (isHistoryUpdate.current) {
-      isHistoryUpdate.current = false;
-      return;
-    }
-    const timer = setTimeout(() => {
-      setHistory((curr) => {
-        const truncated = curr.slice(0, historyIndex + 1);
-        const last = truncated[truncated.length - 1];
-        if (last && JSON.stringify(last) === JSON.stringify(fields)) {
-          return curr;
-        }
-        return [...truncated, fields].slice(-30);
-      });
-      setHistoryIndex((curr) => Math.min(curr + 1, 29));
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [fields, historyIndex]);
-
-  const setFields = useCallback(
-    (action: QuestionnaireField[] | ((prev: QuestionnaireField[]) => QuestionnaireField[])) => {
-      setFieldsState(action);
-    },
-    []
-  );
-
-  const undo = useCallback(() => {
-    if (historyIndex <= 0) return;
-    const prevFields = history[historyIndex - 1];
-    if (!prevFields) return;
-    isHistoryUpdate.current = true;
-    setHistoryIndex(historyIndex - 1);
-    setFieldsState(prevFields);
-  }, [historyIndex, history]);
-
-  const redo = useCallback(() => {
-    if (historyIndex >= history.length - 1) return;
-    const nextFields = history[historyIndex + 1];
-    if (!nextFields) return;
-    isHistoryUpdate.current = true;
-    setHistoryIndex(historyIndex + 1);
-    setFieldsState(nextFields);
-  }, [historyIndex, history]);
+  const {
+    state: fields,
+    set: setFields,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useHistoryState<QuestionnaireField[]>(defaultFields, 50);
 
   // Keyboard shortcut Ctrl+Z / Ctrl+Y
   useEffect(() => {
@@ -1804,7 +1765,7 @@ export function QuestionnaireBuilder({
                     size="icon"
                     className="h-8 w-8 rounded-lg hover:bg-muted"
                     onClick={undo}
-                    disabled={historyIndex <= 0}
+                    disabled={!canUndo}
                     title={t("Urungkan (Undo)", "Undo")}
                   >
                     <Undo2 className="h-4 w-4 text-foreground" />
@@ -1816,7 +1777,7 @@ export function QuestionnaireBuilder({
                     size="icon"
                     className="h-8 w-8 rounded-lg hover:bg-muted"
                     onClick={redo}
-                    disabled={historyIndex >= history.length - 1}
+                    disabled={!canRedo}
                     title={t("Ulangi (Redo)", "Redo")}
                   >
                     <Redo2 className="h-4 w-4 text-foreground" />

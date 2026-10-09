@@ -4,6 +4,7 @@ import { useState, useCallback, useEffect, useRef, useMemo } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
+import { useHistoryState } from "@/lib/use-history-state";
 import {
   Plus,
   Palette,
@@ -280,7 +281,21 @@ function matchesSearch(label: string, enLabel: string, query: string): boolean {
 export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSave, canEditSlug }: Props) {
   const { t } = useT();
   const { refresh } = useAppTransition();
-  const [site, setSite] = useState<PersonalSiteInput>(() => ({ ...initialSite, pages: normalizePages(initialSite) }));
+  const initialSiteNormalized = useMemo(
+    () => ({ ...initialSite, pages: normalizePages(initialSite) }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
+  );
+
+  const {
+    state: site,
+    set: setSite,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useHistoryState<PersonalSiteInput>(initialSiteNormalized, 50);
+
   const [activePageId, setActivePageId] = useState(() => normalizePages(initialSite).find((page) => page.isHome)?.id ?? normalizePages(initialSite)[0]?.id ?? "home");
   const [selectedSectionId, setSelectedSectionId] = useState<string | null>(null);
   const searchParams = useSearchParams();
@@ -309,8 +324,6 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   const [mobileSidebar, setMobileSidebar] = useState(false);
   const [lastSaved, setLastSaved] = useState<string>(() => JSON.stringify({ ...initialSite, pages: normalizePages(initialSite) }));
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [history, setHistory] = useState<string[]>(() => [JSON.stringify({ ...initialSite, pages: normalizePages(initialSite) })]);
-  const [historyIndex, setHistoryIndex] = useState(0);
   const [readinessTarget, setReadinessTarget] = useState<string | null>(null);
 
   // Drag state - track currently dragged item for preview
@@ -382,39 +395,23 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     setSelectedSectionId(null);
   }, [activePageId]);
 
-  // Push to history on site change (debounced)
-  const historyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Keyboard shortcut Ctrl+Z / Ctrl+Y
   useEffect(() => {
-    if (historyTimer.current) clearTimeout(historyTimer.current);
-    historyTimer.current = setTimeout(() => {
-      const serialized = JSON.stringify(site);
-      setHistory((prev) => {
-        const truncated = prev.slice(0, historyIndex + 1);
-        if (truncated[truncated.length - 1] === serialized) return prev;
-        return [...truncated, serialized].slice(-50); // max 50 states
-      });
-      setHistoryIndex((prev) => Math.min(prev + 1, 49));
-    }, 500);
-    return () => { if (historyTimer.current) clearTimeout(historyTimer.current); };
-  }, [site, historyIndex]);
-
-  const undo = useCallback(() => {
-    if (historyIndex <= 0) return;
-    const newIndex = historyIndex - 1;
-    const next = JSON.parse(history[newIndex]) as PersonalSiteInput;
-    setHistoryIndex(newIndex);
-    setSite(next);
-    setActivePageId((current) => normalizePages(next).some((page) => page.id === current) ? current : normalizePages(next)[0]?.id ?? "home");
-  }, [historyIndex, history]);
-
-  const redo = useCallback(() => {
-    if (historyIndex >= history.length - 1) return;
-    const newIndex = historyIndex + 1;
-    const next = JSON.parse(history[newIndex]) as PersonalSiteInput;
-    setHistoryIndex(newIndex);
-    setSite(next);
-    setActivePageId((current) => normalizePages(next).some((page) => page.id === current) ? current : normalizePages(next)[0]?.id ?? "home");
-  }, [historyIndex, history]);
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
+        e.preventDefault();
+        undo();
+      } else if (
+        ((e.ctrlKey || e.metaKey) && e.key === "y") ||
+        ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "z" || e.key === "Z"))
+      ) {
+        e.preventDefault();
+        redo();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [undo, redo]);
 
   // Auto-save after 2s of inactivity
   useEffect(() => {
@@ -807,7 +804,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                     size="icon"
                     className="h-8 w-8 rounded-lg hover:bg-muted"
                     onClick={undo}
-                    disabled={historyIndex <= 0}
+                    disabled={!canUndo}
                     title={t("Urungkan (Undo)", "Undo")}
                   >
                     <Undo2 className="h-4 w-4 text-foreground" />
@@ -819,7 +816,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                     size="icon"
                     className="h-8 w-8 rounded-lg hover:bg-muted"
                     onClick={redo}
-                    disabled={historyIndex >= history.length - 1}
+                    disabled={!canRedo}
                     title={t("Ulangi (Redo)", "Redo")}
                   >
                     <Redo2 className="h-4 w-4 text-foreground" />

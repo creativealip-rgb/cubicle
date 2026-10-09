@@ -41,6 +41,7 @@ import { listProposalTemplates } from "@/lib/actions/proposal-templates";
 import { getCurrentUserPlanForPortal } from "@/lib/actions/clients";
 import { translateDocumentContent } from "@/lib/actions/document-translation";
 import { useT } from "@/lib/i18n-client";
+import { useHistoryState } from "@/lib/use-history-state";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
@@ -368,7 +369,14 @@ export function DocumentBlockEditor({
   documentMeta,
   proposalMeta,
 }: Props) {
-  const [blocks, setBlocks] = useState(initialBlocks);
+  const {
+    state: blocks,
+    set: setBlocks,
+    undo,
+    redo,
+    canUndo,
+    canRedo,
+  } = useHistoryState<DocumentBlock[]>(initialBlocks, 50);
   const [dirty, setDirty] = useState(false);
   const [saving, setSaving] = useState(false);
   const [stale, setStale] = useState(false);
@@ -628,7 +636,7 @@ export function DocumentBlockEditor({
       }
       if (Array.isArray(result.blocks) && result.blocks.length > 0) {
         setBlocks(result.blocks);
-        recordHistory(result.blocks);
+
       }
       setDirty(true);
       toast.success(t("Dokumen berhasil diterjemahkan!", "Document translated successfully!"), { id: toastId });
@@ -648,14 +656,14 @@ export function DocumentBlockEditor({
   function update(id: string, content: string) {
     const next = blocks.map((block) => (block.id === id ? { ...block, content } : block));
     setBlocks(next);
-    recordHistory(next);
+
     setDirty(true);
   }
 
   function updateBlock(id: string, patch: Partial<DocumentBlock>) {
     const next = blocks.map((block) => (block.id === id ? { ...block, ...patch } : block));
     setBlocks(next);
-    recordHistory(next);
+
     setDirty(true);
   }
 
@@ -683,7 +691,7 @@ export function DocumentBlockEditor({
 
     const next = [...blocks, block];
     setBlocks(next);
-    recordHistory(next);
+
     setDirty(true);
     setSelectedBlockId(block.id);
     setPropertiesOpen(true);
@@ -701,7 +709,7 @@ export function DocumentBlockEditor({
     const next = [...blocks];
     next.splice(index + 1, 0, clone);
     setBlocks(next);
-    recordHistory(next);
+
     setDirty(true);
     setSelectedBlockId(clone.id);
     toast.success(t("Blok berhasil diduplikasi", "Block duplicated"));
@@ -722,7 +730,6 @@ export function DocumentBlockEditor({
 
   function applyStarterTemplate(customBlocks?: DocumentBlock[]) {
     const starter = customBlocks || (kind === "contract" ? buildContractStarterBlocks() : buildProposalStarterBlocks());
-    recordHistory(starter);
     setBlocks(starter);
     setDirty(true);
     setSelectedBlockId(starter[0]?.id ?? null);
@@ -743,7 +750,7 @@ export function DocumentBlockEditor({
       const block: DocumentBlock = { id: crypto.randomUUID(), type: "text", content: token };
       const next = [...blocks, block];
       setBlocks(next);
-      recordHistory(next);
+  
       setDirty(true);
       setSelectedBlockId(block.id);
       toast.success(t(`Menambahkan blok baru dengan ${token}`, `Added new block with ${token}`));
@@ -809,22 +816,6 @@ export function DocumentBlockEditor({
     }
   }
 
-  const undo = useCallback(() => {
-    if (historyIndex <= 0) return;
-    const next = history[historyIndex - 1];
-    setHistoryIndex(historyIndex - 1);
-    setBlocks(next);
-    setDirty(true);
-  }, [historyIndex, history]);
-
-  const redo = useCallback(() => {
-    if (historyIndex >= history.length - 1) return;
-    const next = history[historyIndex + 1];
-    setHistoryIndex(historyIndex + 1);
-    setBlocks(next);
-    setDirty(true);
-  }, [historyIndex, history]);
-
   // Keyboard shortcut Ctrl+Z / Ctrl+Y
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -843,11 +834,6 @@ export function DocumentBlockEditor({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [undo, redo]);
 
-  function recordHistory(next: DocumentBlock[]) {
-    setHistory((current) => [...current.slice(0, historyIndex + 1), next].slice(-30));
-    setHistoryIndex((current) => Math.min(current + 1, 29));
-  }
-
   function reorder(draggedId: string, targetId: string) {
     if (draggedId === targetId) return;
     const from = blocks.findIndex((block) => block.id === draggedId);
@@ -857,7 +843,6 @@ export function DocumentBlockEditor({
     const [moved] = next.splice(from, 1);
     next.splice(to, 0, moved);
     setBlocks(next);
-    recordHistory(next);
     setDirty(true);
     setDraggedBlockId(null);
     setSelectedBlockId(draggedId);
@@ -1516,7 +1501,7 @@ export function DocumentBlockEditor({
                   size="icon"
                   className="h-8 w-8 rounded-lg hover:bg-muted"
                   onClick={undo}
-                  disabled={historyIndex <= 0}
+                  disabled={!canUndo}
                   title={t("Urungkan (Undo)", "Undo")}
                 >
                   <Undo2 className="h-4 w-4 text-foreground" />
@@ -1528,7 +1513,7 @@ export function DocumentBlockEditor({
                   size="icon"
                   className="h-8 w-8 rounded-lg hover:bg-muted"
                   onClick={redo}
-                  disabled={historyIndex >= history.length - 1}
+                  disabled={!canRedo}
                   title={t("Ulangi (Redo)", "Redo")}
                 >
                   <Redo2 className="h-4 w-4 text-foreground" />
