@@ -1969,14 +1969,14 @@ export function DocumentBlockEditor({
         </div>
       )}
 
-      {/* ── TAB 3: PUBLISH (Sharing, WhatsApp, QR, & PDF) ── */}
+      {/* ── TAB 3: PUBLISH (Sharing, WhatsApp, QR, & Embed Widget) ── */}
       {activeTab === "publish" && (
         <UnifiedPublishView
           type={kind === "proposal" ? "proposal" : "contract"}
           title={docTitle}
           shareUrl={fullShareUrl}
           previewUrl={fullShareUrl}
-          pdfUrl={sharePath}
+          embedCode={`<iframe src="${fullShareUrl}" width="100%" height="700" frameborder="0" style="border-radius: 16px; border: 1px solid #e2e8f0; width: 100%;"></iframe>`}
           hasSaved={true}
         />
       )}

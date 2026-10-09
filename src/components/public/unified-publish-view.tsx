@@ -210,19 +210,8 @@ export function UnifiedPublishView({
               <span className="text-[10px] text-muted-foreground">{t("Scan di Perangkat Mobile", "Scan on Mobile Device")}</span>
             </Button>
 
-            {/* Context Action: PDF for Proposal/Contract, Embed for Form, Open Live for Site */}
-            {type === "form" ? (
-              <Button
-                type="button"
-                variant="outline"
-                className="h-auto py-3.5 px-3 flex-col gap-1.5 rounded-xl border-border/80 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-center group"
-                onClick={() => setShowEmbedModal(true)}
-              >
-                <Code2 className="h-4 w-4 text-blue-600 transition-transform group-hover:scale-110" />
-                <span className="text-xs font-bold text-foreground">Embed Widget</span>
-                <span className="text-[10px] text-muted-foreground">{t("Sematkan di Website", "Embed HTML iFrame")}</span>
-              </Button>
-            ) : type === "site" ? (
+            {/* Action 3: Embed Widget (Forms, Proposals, Contracts) or Live Website (Site) */}
+            {type === "site" ? (
               <Button
                 type="button"
                 variant="outline"
@@ -238,17 +227,11 @@ export function UnifiedPublishView({
                 type="button"
                 variant="outline"
                 className="h-auto py-3.5 px-3 flex-col gap-1.5 rounded-xl border-border/80 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-center group"
-                onClick={() => {
-                  if (pdfUrl) {
-                    window.open(pdfUrl, "_blank");
-                  } else {
-                    window.open(shareUrl, "_blank");
-                  }
-                }}
+                onClick={() => setShowEmbedModal(true)}
               >
-                <Download className="h-4 w-4 text-blue-600 transition-transform group-hover:scale-110" />
-                <span className="text-xs font-bold text-foreground">Open / Print PDF</span>
-                <span className="text-[10px] text-muted-foreground">{t("Format Siap Cetak", "View printable page")}</span>
+                <Code2 className="h-4 w-4 text-blue-600 transition-transform group-hover:scale-110" />
+                <span className="text-xs font-bold text-foreground">Embed Widget</span>
+                <span className="text-[10px] text-muted-foreground">{t("Sematkan di Website", "Embed HTML iFrame")}</span>
               </Button>
             )}
           </div>
