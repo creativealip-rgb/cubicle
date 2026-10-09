@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createClient, generatePortalToken, checkPortalSlugAvailability, getCurrentUserPlanForPortal, setClientPortalPassword, updateClient, revokePortalToken, restorePortalAccess, revealClientPortalPassword } from "@/lib/actions/clients";
+import { createClient, generatePortalToken, checkPortalSlugAvailability, getCurrentUserPlanForPortal, setClientPortalPassword, removeClientPortalPassword, updateClient, revokePortalToken, restorePortalAccess, revealClientPortalPassword } from "@/lib/actions/clients";
 import { isStaleServerActionError } from "@/lib/client-errors";
 import { Button } from "@/components/ui/button";
 import { LoadingButton } from "@/components/ui/loading-button";
@@ -62,6 +62,7 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
   const [hasPassword, setHasPassword] = useState(Boolean(defaultValues?.portalPasswordConfigured));
   const [revealingPassword, setRevealingPassword] = useState(false);
   const [revealedPassword, setRevealedPassword] = useState<string | null>(null);
+  const [removingPassword, setRemovingPassword] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(!defaultValues?.portalPasswordConfigured);
   const [form, setForm] = useState({
     clientNumber: defaultValues?.clientNumber ?? "",
@@ -103,6 +104,23 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
       toast.error(err instanceof Error ? err.message : t("Gagal melihat password", "Failed to reveal password"));
     } finally {
       setRevealingPassword(false);
+    }
+  }
+
+  async function handleRemovePassword() {
+    if (!defaultValues?.id) return;
+    setRemovingPassword(true);
+    try {
+      await removeClientPortalPassword(defaultValues.id);
+      setHasPassword(false);
+      setRevealedPassword(null);
+      setShowChangePassword(true);
+      setPortalPassword("");
+      toast.success(t("Password portal berhasil dihapus!", "Portal password removed successfully!"));
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : t("Gagal menghapus password portal", "Failed to remove portal password"));
+    } finally {
+      setRemovingPassword(false);
     }
   }
 
@@ -511,15 +529,27 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
                       <div className="flex items-center justify-between">
                         <Label className="text-xs font-medium">{t("Password Portal", "Portal Password")}</Label>
                         {hasPassword && !showChangePassword && (
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setShowChangePassword(true)}
-                            className="h-6 text-[11px] px-2 font-medium text-primary hover:text-primary"
-                          >
-                            {t("Ganti Password", "Change Password")}
-                          </Button>
+                          <div className="flex items-center gap-1.5">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              disabled={removingPassword}
+                              onClick={handleRemovePassword}
+                              className="h-6 text-[11px] px-2 font-medium text-destructive hover:text-destructive hover:bg-destructive/10"
+                            >
+                              {removingPassword ? t("Menghapus...", "Removing...") : t("Hapus Password", "Remove Password")}
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setShowChangePassword(true)}
+                              className="h-6 text-[11px] px-2 font-medium text-primary hover:text-primary"
+                            >
+                              {t("Ganti Password", "Change Password")}
+                            </Button>
+                          </div>
                         )}
                       </div>
 

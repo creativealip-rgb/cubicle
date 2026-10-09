@@ -471,6 +471,29 @@ export async function restorePortalAccess(clientId: string) {
   return { success: true, token: rawToken, expiresAt };
 }
 
+export async function removeClientPortalPassword(clientId: string) {
+  const session = await auth.api.getSession({ headers: await headers() });
+  const user = requireUser(session?.user);
+  const workspaceId = await getWorkspaceId();
+  await assertWorkspaceWritable(db, user.id, workspaceId);
+  await assertClientInWorkspace(db, user.id, workspaceId, clientId);
+
+  await db.transaction(async (tx) => {
+    await tx.update(clients).set({
+      portalPasswordHash: null,
+      portalPasswordCiphertext: null,
+      portalPasswordNonce: null,
+      portalPasswordEncryptionVersion: null,
+      portalPasswordEncryptedAt: null,
+      portalSessionVersion: randomBytes(16).toString("hex"),
+      updatedAt: new Date(),
+    }).where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)));
+  });
+
+  await writeActivityLog(workspaceId, user.id, "removed_portal_password", "client", clientId);
+  return { success: true };
+}
+
 export async function setClientPortalPassword(clientId: string, password: string) {
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
