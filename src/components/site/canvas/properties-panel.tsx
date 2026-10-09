@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Plus, X, Sparkles, Check, Loader2, Calendar } from "lucide-react";
+import { Plus, X, Sparkles, Check, Loader2, Calendar, Bold, Italic, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -260,6 +260,54 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
               placeholder={t("Judul bagian", "Section heading")}
             />
           </div>
+
+          {/* Quick Heading Formatting (Bold / Italic / Alignment) */}
+          <div className="space-y-1.5">
+            <Label className="text-xs text-muted-foreground">{t("Gaya Penulisan Judul", "Heading Style")}</Label>
+            <div className="flex items-center gap-1.5">
+              <div className="flex items-center rounded-lg border border-border/70 bg-muted/20 p-0.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = section.heading || "";
+                    if (current.startsWith("**") && current.endsWith("**")) {
+                      onUpdate({ heading: current.slice(2, -2) });
+                    } else {
+                      onUpdate({ heading: `**${current.replace(/\*\*/g, "")}**` });
+                    }
+                  }}
+                  className={`p-1.5 rounded text-xs transition-colors ${
+                    (section.heading || "").startsWith("**") && (section.heading || "").endsWith("**")
+                      ? "bg-primary text-primary-foreground font-bold"
+                      : "text-muted-foreground hover:bg-background hover:text-foreground"
+                  }`}
+                  title={t("Tebal (Bold)", "Bold")}
+                >
+                  <Bold className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const current = section.heading || "";
+                    if (current.startsWith("*") && current.endsWith("*") && !current.startsWith("**")) {
+                      onUpdate({ heading: current.slice(1, -1) });
+                    } else {
+                      onUpdate({ heading: `*${current.replace(/\*/g, "")}*` });
+                    }
+                  }}
+                  className={`p-1.5 rounded text-xs transition-colors ${
+                    (section.heading || "").startsWith("*") && (section.heading || "").endsWith("*") && !(section.heading || "").startsWith("**")
+                      ? "bg-primary text-primary-foreground italic"
+                      : "text-muted-foreground hover:bg-background hover:text-foreground"
+                  }`}
+                  title={t("Miring (Italic)", "Italic")}
+                >
+                  <Italic className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          </div>
+
           <div className="space-y-1">
             <Label className="text-xs text-muted-foreground">{t("Animasi", "Animation")}</Label>
             <select

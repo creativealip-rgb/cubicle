@@ -327,6 +327,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     [pathname]
   );
   const [previewDevice, setPreviewDevice] = useState<CanvasDevice>("desktop");
+  const [livePreviewMode, setLivePreviewMode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [sidebarTab, setSidebarTab] = useState("insert");
   const [mobileSidebar, setMobileSidebar] = useState(false);
@@ -691,42 +692,39 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
 
           {/* Actions Right */}
           <div className="flex items-center gap-2">
+            {/* Interactive Live Preview Switcher */}
             <Button
               type="button"
-              variant="outline"
+              variant={livePreviewMode ? "default" : "outline"}
               size="sm"
-              asChild
+              onClick={() => setLivePreviewMode(!livePreviewMode)}
               className="h-8 gap-1.5 text-xs font-semibold"
             >
-              <a href={previewUrl} target="_blank" rel="noopener noreferrer">
-                <Eye className="h-3.5 w-3.5" />
-                <span>{t("Preview Site", "Preview Site")}</span>
-              </a>
+              <Eye className="h-3.5 w-3.5" />
+              <span>{livePreviewMode ? t("Edit Mode", "Edit Mode") : t("Preview", "Preview")}</span>
             </Button>
 
-            {activeTab === "build" && (
-              <>
-                {/* Desktop / Tablet / Mobile Switcher */}
-                <div className="hidden lg:flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/60">
-                  {CANVAS_DEVICES.map((device) => {
-                    const DeviceIcon = device === "desktop" ? Monitor : device === "tablet" ? Tablet : Smartphone;
-                    const active = previewDevice === device;
-                    return (
-                      <button
-                        key={device}
-                        type="button"
-                        onClick={() => setPreviewDevice(device)}
-                        className={`p-1 rounded-md transition-all ${
-                          active ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-                        }`}
-                        title={CANVAS_DEVICE_LABELS[device]}
-                      >
-                        <DeviceIcon className="h-3.5 w-3.5" />
-                      </button>
-                    );
-                  })}
-                </div>
-              </>
+            {/* Desktop / Tablet / Mobile Viewport Switcher (ONLY in Preview Mode) */}
+            {livePreviewMode && (
+              <div className="flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/60 animate-in fade-in zoom-in-95 duration-150">
+                {CANVAS_DEVICES.map((device) => {
+                  const DeviceIcon = device === "desktop" ? Monitor : device === "tablet" ? Tablet : Smartphone;
+                  const active = previewDevice === device;
+                  return (
+                    <button
+                      key={device}
+                      type="button"
+                      onClick={() => setPreviewDevice(device)}
+                      className={`p-1 rounded-md transition-all ${
+                        active ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                      }`}
+                      title={CANVAS_DEVICE_LABELS[device]}
+                    >
+                      <DeviceIcon className="h-3.5 w-3.5" />
+                    </button>
+                  );
+                })}
+              </div>
             )}
 
             <Button
@@ -757,38 +755,42 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
               },
             }}
           >
-            <div className="flex flex-1 overflow-hidden">
-              {/* Left sidebar (desktop) */}
-              <aside className="hidden md:block w-64 shrink-0 border-r bg-background overflow-y-auto pb-16 custom-scrollbar">
-                <SidebarContent
-                  sidebarTab={sidebarTab}
-                  setSidebarTab={setSidebarTab}
-                  groupedWidgets={groupedWidgets}
-                  addSection={addSection}
-                  addSectionTemplate={addSectionTemplate}
-                  site={{ ...site, sections: activeSections }}
-                  activePageId={activePageId}
-                  setActivePageId={setActivePageId}
-                  updateSite={updateSite}
-                  publicUrl={publicUrl}
-                  onSelectSection={setSelectedSectionId}
-                  selectedSectionId={selectedSectionId}
-                />
-              </aside>
+            <div className="flex-1 flex overflow-hidden">
+              {/* Left sidebar: hidden in live preview mode */}
+              {!livePreviewMode && (
+                <aside className="hidden md:block w-64 shrink-0 border-r bg-background overflow-y-auto pb-16 custom-scrollbar">
+                  <SidebarContent
+                    sidebarTab={sidebarTab}
+                    setSidebarTab={setSidebarTab}
+                    groupedWidgets={groupedWidgets}
+                    addSection={addSection}
+                    addSectionTemplate={addSectionTemplate}
+                    site={site}
+                    activePageId={activePageId}
+                    setActivePageId={setActivePageId}
+                    updateSite={updateSite}
+                    publicUrl={publicSiteBaseUrl}
+                    onSelectSection={setSelectedSectionId}
+                    selectedSectionId={selectedSectionId}
+                  />
+                </aside>
+              )}
 
               {/* Canvas area */}
               <div className="flex-1 flex flex-col h-full overflow-y-auto overflow-x-hidden bg-muted/30 p-4 sm:p-6 custom-scrollbar relative">
                 {/* Floating Canvas Top Bar: Readiness */}
-                <div className="mx-auto mb-3 flex items-center justify-between gap-3 max-w-4xl w-full">
-                  <ReadinessBadge site={site} onSelectIssue={handleSelectReadinessIssue} t={(id, fallback) => t(id, fallback)} />
-                </div>
+                {!livePreviewMode && (
+                  <div className="mx-auto mb-3 flex items-center justify-between gap-3 max-w-4xl w-full">
+                    <ReadinessBadge site={site} onSelectIssue={handleSelectReadinessIssue} t={(id, fallback) => t(id, fallback)} />
+                  </div>
+                )}
 
-                <div className="flex-1">
+                <div className="flex-1 flex justify-center">
                   <CanvasRenderer
                     site={{ ...site, sections: activeSections }}
                     device={previewDevice}
-                    selectedSectionId={selectedSectionId}
-                    onSelectSection={setSelectedSectionId}
+                    selectedSectionId={livePreviewMode ? null : selectedSectionId}
+                    onSelectSection={livePreviewMode ? () => {} : setSelectedSectionId}
                     onUpdateSite={updateSite}
                     onUpdateSection={updateSection}
                     onAddSection={addSection}
@@ -796,48 +798,52 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                     onDuplicateSection={duplicateSection}
                     onDeleteSection={deleteSection}
                     onReorderSections={reorderSections}
-                    readinessTarget={readinessTarget}
+                    readinessTarget={livePreviewMode ? null : readinessTarget}
                   />
                 </div>
 
-                {/* Floating Undo/Redo Widget in Canvas Area (Right Side) */}
-                <div
-                  className={`fixed bottom-6 z-30 flex items-center gap-1 rounded-xl border border-border/80 bg-background/95 backdrop-blur-md p-1 shadow-lg transition-all duration-200 ${
-                    selectedSectionId ? "right-[340px] sm:right-[380px]" : "right-6"
-                  }`}
-                >
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-lg hover:bg-muted"
-                    onClick={undo}
-                    disabled={!canUndo}
-                    title={t("Urungkan (Undo)", "Undo")}
+                {/* Floating Undo/Redo Widget in Canvas Area (Right Side) — ONLY in Edit Mode */}
+                {!livePreviewMode && (
+                  <div
+                    className={`fixed bottom-6 z-30 flex items-center gap-1 rounded-xl border border-border/80 bg-background/95 backdrop-blur-md p-1 shadow-lg transition-all duration-200 ${
+                      selectedSectionId ? "right-[340px] sm:right-[380px]" : "right-6"
+                    }`}
                   >
-                    <Undo2 className="h-4 w-4 text-foreground" />
-                  </Button>
-                  <div className="h-4 w-px bg-border/80" />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-lg hover:bg-muted"
-                    onClick={redo}
-                    disabled={!canRedo}
-                    title={t("Ulangi (Redo)", "Redo")}
-                  >
-                    <Redo2 className="h-4 w-4 text-foreground" />
-                  </Button>
-                </div>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-lg hover:bg-muted"
+                      onClick={undo}
+                      disabled={!canUndo}
+                      title={t("Urungkan (Undo)", "Undo")}
+                    >
+                      <Undo2 className="h-4 w-4 text-foreground" />
+                    </Button>
+                    <div className="h-4 w-px bg-border/80" />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-lg hover:bg-muted"
+                      onClick={redo}
+                      disabled={!canRedo}
+                      title={t("Ulangi (Redo)", "Redo")}
+                    >
+                      <Redo2 className="h-4 w-4 text-foreground" />
+                    </Button>
+                  </div>
+                )}
               </div>
 
-              {/* Properties panel */}
-              <PropertiesPanel
-                section={selectedSection}
-                onUpdate={(patch) => { if (selectedSectionId) updateSection(selectedSectionId, patch); }}
-                onClose={() => setSelectedSectionId(null)}
-              />
+              {/* Properties panel: hidden in live preview mode */}
+              {!livePreviewMode && (
+                <PropertiesPanel
+                  section={selectedSection}
+                  onUpdate={(patch) => { if (selectedSectionId) updateSection(selectedSectionId, patch); }}
+                  onClose={() => setSelectedSectionId(null)}
+                />
+              )}
             </div>
 
             <DragOverlay dropAnimation={null}>
