@@ -231,10 +231,11 @@ export function IntakeForm({
           {t("Terima Kasih!", "Thank You!")}
         </h2>
         <p className="text-xs sm:text-sm text-muted-foreground max-w-md mx-auto leading-relaxed">
-          {thankYouMessage || t(
-            "Tanggapan Anda telah berhasil kami terima. Tim kami akan segera meninjau brief Anda dan menghubungi kembali secepatnya.",
-            "Your response has been received successfully. Our team will review your submission and follow up shortly."
-          )}
+          {getLocalizedText(thankYouMessage, lang) ||
+            t(
+              "Tanggapan Anda telah berhasil kami terima. Tim kami akan segera meninjau brief Anda dan menghubungi kembali secepatnya.",
+              "Your response has been received successfully. Our team will review your submission and follow up shortly."
+            )}
         </p>
         {redirectUrl && (
           <p className="text-[11px] text-primary font-medium animate-pulse">

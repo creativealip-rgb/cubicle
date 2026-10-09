@@ -28,7 +28,7 @@ export function PublicDocumentHeader({
   const initialLetter = (workspaceName || "C").trim().charAt(0).toUpperCase();
 
   return (
-    <header className="mb-6 rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-sm backdrop-blur-xs transition-all">
+    <header className="mb-6 rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs transition-all">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         {/* Left: Brand logo & official metadata */}
         <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
@@ -65,8 +65,12 @@ export function PublicDocumentHeader({
           </div>
         </div>
 
-        {/* Right: Language switch */}
+        {/* Right: Language switch & status indicator */}
         <div className="flex items-center gap-2.5 self-start sm:self-center shrink-0">
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-[11px] font-medium">
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span>{t("Aktif", "Active")}</span>
+          </div>
           <PortalLanguageSwitch />
         </div>
       </div>
