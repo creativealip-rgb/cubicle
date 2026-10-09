@@ -58,6 +58,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { CanvasRenderer, CANVAS_DEVICES, type CanvasDevice } from "./canvas-renderer";
 import { PropertiesPanel } from "./properties-panel";
 import { ReadinessBadge } from "../readiness-badge";
@@ -1384,14 +1392,54 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
 
           <div className="h-px bg-border my-4" />
 
-          <p className="text-xs font-medium text-muted-foreground uppercase mb-3">{t("Font", "Font")}</p>
+          <p className="text-xs font-medium text-muted-foreground uppercase mb-3">{t("Font & Tipografi", "Typography & Fonts")}</p>
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">{t("Font Judul", "Heading Font")}</Label>
-            <Input value={site.themeConfig?.fontHeading ?? ""} placeholder="Inter, ui-sans-serif" onChange={(e) => updateTheme({ fontHeading: e.target.value || undefined })} className="h-8 text-xs" />
+            <Label className="text-xs text-muted-foreground">{t("Font Judul (Heading)", "Heading Font")}</Label>
+            <Select
+              value={
+                CUBIQLO_FONTS.find((f) => f.fontFamily === site.themeConfig?.fontHeading || f.id === site.themeConfig?.fontHeading)?.id ||
+                "inter"
+              }
+              onValueChange={(val) => {
+                const font = CUBIQLO_FONTS.find((f) => f.id === val);
+                updateTheme({ fontHeading: font ? font.fontFamily : val });
+              }}
+            >
+              <SelectTrigger className="h-8 text-xs bg-background">
+                <SelectValue placeholder="Pilih Font Judul..." />
+              </SelectTrigger>
+              <SelectContent>
+                {CUBIQLO_FONTS.map((font) => (
+                  <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.fontFamily }}>
+                    {font.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="space-y-2">
-            <Label className="text-xs text-muted-foreground">{t("Font Isi", "Body Font")}</Label>
-            <Input value={site.themeConfig?.fontBody ?? ""} placeholder="Inter, ui-sans-serif" onChange={(e) => updateTheme({ fontBody: e.target.value || undefined })} className="h-8 text-xs" />
+            <Label className="text-xs text-muted-foreground">{t("Font Isi (Body)", "Body Font")}</Label>
+            <Select
+              value={
+                CUBIQLO_FONTS.find((f) => f.fontFamily === site.themeConfig?.fontBody || f.id === site.themeConfig?.fontBody)?.id ||
+                "inter"
+              }
+              onValueChange={(val) => {
+                const font = CUBIQLO_FONTS.find((f) => f.id === val);
+                updateTheme({ fontBody: font ? font.fontFamily : val });
+              }}
+            >
+              <SelectTrigger className="h-8 text-xs bg-background">
+                <SelectValue placeholder="Pilih Font Isi..." />
+              </SelectTrigger>
+              <SelectContent>
+                {CUBIQLO_FONTS.map((font) => (
+                  <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.fontFamily }}>
+                    {font.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
       </TabsContent>
