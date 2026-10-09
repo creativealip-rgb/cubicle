@@ -16,6 +16,10 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
         title: "Link Not Found / Tautan Tidak Ditemukan",
         body: "This form link is invalid or has been removed. / Tautan formulir ini tidak valid atau sudah dihapus.",
       },
+      disabled: {
+        title: "Form Closed / Formulir Ditutup",
+        body: "This form is currently closed and not accepting new responses. / Formulir ini sedang ditutup dan tidak menerima tanggapan baru.",
+      },
       revoked: {
         title: "Link Disabled / Tautan Dinonaktifkan",
         body: "This form link has been closed by the author. / Tautan formulir ini telah ditutup oleh pembuat formulir.",

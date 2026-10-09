@@ -440,6 +440,9 @@ export async function getPublicQuestionnaire(tokenOrId: string) {
     if (resp.response.status === "submitted") {
       return { error: "already_submitted" as const };
     }
+    if (resp.questionnaire.formStatus === "disabled") {
+      return { error: "disabled" as const };
+    }
 
     return {
       response: resp.response,
@@ -472,6 +475,9 @@ export async function getPublicQuestionnaire(tokenOrId: string) {
     .limit(1);
 
   if (qMaster) {
+    if (qMaster.questionnaire.formStatus === "disabled") {
+      return { error: "disabled" as const };
+    }
     if (qMaster.questionnaire.expiresAt && qMaster.questionnaire.expiresAt < new Date()) {
       return { error: "expired" as const };
     }
@@ -534,6 +540,9 @@ export async function submitQuestionnaire(input: {
       .where(eq(questionnaires.id, resp.questionnaireId))
       .limit(1);
     if (!q) throw new Error("Questionnaire not found");
+    if (q.formStatus === "disabled") {
+      throw new Error("Formulir ini sedang ditutup / Form is closed");
+    }
 
     const fields = safeParseQuestionnaireSchema(q.schema);
     for (const field of fields) {
@@ -588,6 +597,9 @@ export async function submitQuestionnaire(input: {
     .limit(1);
 
   if (!qMaster) throw new Error("Formulir tidak ditemukan");
+  if (qMaster.formStatus === "disabled") {
+    throw new Error("Formulir ini sedang ditutup / Form is closed");
+  }
 
   const fields = safeParseQuestionnaireSchema(qMaster.schema);
   for (const field of fields) {
