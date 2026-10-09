@@ -399,7 +399,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "portfolio":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
+          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="grid gap-4 sm:grid-cols-2">
             {section.projects.map((project, i) => (
               <div key={project.id} className="rounded-lg border bg-card p-4 shadow-sm">
@@ -414,7 +414,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "testimonials":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
+          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="space-y-4">
             {section.testimonials.map((t, i) => (
               <div key={t.id} className="rounded-lg border bg-card p-4 shadow-sm italic">
@@ -432,7 +432,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "faq":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
+          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="space-y-3">
             {section.items.map((item, i) => (
               <div key={item.id} className="rounded-lg border bg-card p-4 shadow-sm">
@@ -447,7 +447,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "contact":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
+          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="space-y-2">
             {section.methods.map((method, i) => (
               <div key={method.id} className="flex items-center gap-2">
@@ -468,7 +468,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
               <span className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                 <Calendar className="h-5 w-5" />
               </span>
-              <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-bold" />
+              <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
               <InlineText value={section.subtitle || ""} onChange={(v) => onUpdate({ subtitle: v })} tag="p" className="text-xs text-muted-foreground max-w-md" />
             </div>
             <div className="rounded-2xl border border-dashed border-border/80 bg-muted/30 p-6 flex flex-col items-center justify-center gap-2 text-muted-foreground">
@@ -482,7 +482,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "custom":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
+          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <InlineText value={section.content} onChange={(v) => onUpdate({ content: v })} tag="p" className="text-muted-foreground whitespace-pre-wrap" />
         </div>
       );
@@ -499,7 +499,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
       return (
         <div className="py-6">
           {section.heading && (
-            <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
+            <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           )}
           <div className={`flex flex-col ${section.align === "left" ? "items-start" : section.align === "right" ? "items-end" : "items-center"}`}>
             <div
@@ -667,7 +667,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "collapsible":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
+          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="space-y-2">
             {section.items.map((item) => (
               <details key={item.id} className="rounded-lg border bg-card shadow-sm">
@@ -679,32 +679,34 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
         </div>
       );
 
-    case "spacer":
-      return <div style={{ height: section.height ?? 40 }} />;
-
-    case "tableOfContents":
+    case "cta":
       return (
-        <div className="py-4">
-          <p className="text-sm font-medium text-muted-foreground mb-2">{t("Daftar Isi", "Table of Contents")}</p>
-          <div className="space-y-1 text-sm">
-            <p className="text-muted-foreground italic">{t("Dibuat otomatis dari judul bagian", "Auto-generated from section headings")}</p>
-          </div>
-        </div>
-      );
-
-    case "contentBlock":
-      return (
-        <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
-          <div className={`grid gap-4 ${section.columns === 2 ? "sm:grid-cols-2" : section.columns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}>
-            {section.items.map((item, i) => (
-              <div key={item.id} className="rounded-lg border bg-card p-4 shadow-sm">
-                <InlineText value={item.content} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, content: v } : it) })} tag="p" className="text-sm" />
+          <div className="py-6">
+            <div className="rounded-2xl border bg-card p-6 sm:p-8 shadow-sm space-y-4 text-center">
+              <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
+              <InlineText value={section.text} onChange={(v) => onUpdate({ text: v })} tag="p" className="text-muted-foreground text-sm max-w-xl mx-auto" />
+              <div className="pt-2">
+                <Button size="lg" className="rounded-xl px-6 font-semibold">
+                  <InlineText value={section.buttonLabel || "Click Here"} onChange={(v) => onUpdate({ buttonLabel: v })} tag="span" />
+                </Button>
               </div>
-            ))}
+            </div>
           </div>
-        </div>
-      );
+        );
+
+      case "contentBlock":
+        return (
+          <div className="py-6">
+            <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
+            <div className="grid gap-4 sm:grid-cols-2">
+              {section.items.map((item, i) => (
+                <div key={item.id} className="rounded-lg border bg-card p-4 shadow-sm">
+                  <InlineText value={item.content} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, content: v } : it) })} tag="p" className="text-sm leading-relaxed" />
+                </div>
+              ))}
+            </div>
+          </div>
+        );
 
     default:
       return <div className="py-4 text-muted-foreground text-sm">Unknown section type</div>;

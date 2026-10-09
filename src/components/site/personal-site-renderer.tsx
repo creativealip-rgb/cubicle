@@ -13,6 +13,7 @@ import {
 import { AnimateOnScroll } from "./animate-on-scroll";
 import { ContactForm } from "./contact-form";
 import { PublicBookingForm } from "@/components/calendar/public-booking-form";
+import { getFontFamily } from "@/lib/builder-fonts";
 import "@/styles/site-animations.css";
 
 const themeStyles = {
@@ -111,6 +112,50 @@ function looksLikeFakeProof(quote: string, author: string, role: string) {
   if (!text) return false;
   return /(budi santoso|siti rahmawati|andi wijaya|startupx|techcorp|ceo startup)/i.test(text)
     || /\b\d+\s*%|\b\d+\+\s*(project|tahun|klien)/i.test(text);
+}
+
+function getSectionHeadingStyle(section: any, baseHeadingStyle?: CSSProperties): { className: string; style?: CSSProperties } {
+  const isBold = section.bold;
+  const isItalic = section.italic;
+  const isUnderline = section.underline;
+  const isStrike = section.strikethrough;
+  const align = section.align || "left";
+  const fontSize = section.fontSize || "base";
+  const fontFamily = section.fontFamily ? getFontFamily(section.fontFamily) : undefined;
+
+  const sizeClass =
+    fontSize === "sm"
+      ? "text-xl sm:text-2xl"
+      : fontSize === "lg"
+      ? "text-3xl sm:text-4xl"
+      : fontSize === "xl"
+      ? "text-4xl sm:text-5xl"
+      : "text-2xl sm:text-3xl";
+
+  const alignClass =
+    align === "center"
+      ? "text-center"
+      : align === "right"
+      ? "text-right"
+      : "text-left";
+
+  const classes = [
+    "mb-7 font-bold tracking-[-0.01em]",
+    sizeClass,
+    alignClass,
+    isBold && "font-bold",
+    isItalic && "italic",
+    isUnderline && "underline",
+    isStrike && "line-through",
+  ].filter(Boolean).join(" ");
+
+  return {
+    className: classes,
+    style: {
+      ...baseHeadingStyle,
+      ...(fontFamily ? { fontFamily } : {}),
+    },
+  };
 }
 
 function SectionBody({
@@ -481,12 +526,13 @@ export function PersonalSiteRenderer({
           section.type === "gallery" ||
           (section.type === "image" && !section.heading) ||
           isPlaceholderHeading;
+        const secHeadingStyle = getSectionHeadingStyle(section as any, headingStyle);
         return (
           <AnimateOnScroll key={section.id} animation={section.animation}>
             <section data-section-type={section.type} className={`${index % 2 === 0 ? styles.sectionAlt : ""} px-6 py-14 sm:px-10 lg:px-16 lg:py-20`}>
               <div className="mx-auto max-w-6xl">
                 {!hideDefaultHeading && section.heading && (
-                  <h2 className="mb-7 text-2xl font-bold tracking-[-0.01em] sm:text-3xl" style={headingStyle}>
+                  <h2 className={secHeadingStyle.className} style={secHeadingStyle.style}>
                     {section.heading}
                   </h2>
                 )}

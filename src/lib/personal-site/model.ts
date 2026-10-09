@@ -38,6 +38,16 @@ const idSchema = z.string().trim().min(1).max(80);
 const headingSchema = z.string().trim().min(1).max(80);
 const shortTextSchema = z.string().trim().max(160);
 const descriptionSchema = z.string().trim().max(1_000);
+
+export const sectionTypographySchema = {
+  fontFamily: z.string().max(80).optional(),
+  fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
+  align: z.enum(["left", "center", "right"]).optional(),
+  bold: z.boolean().optional(),
+  italic: z.boolean().optional(),
+  underline: z.boolean().optional(),
+  strikethrough: z.boolean().optional(),
+};
 export const PERSONAL_SITE_ANIMATIONS = ["none", "fade-up", "fade-in", "slide-left", "slide-right", "zoom-in", "bounce"] as const;
 const animationSchema = z.enum(PERSONAL_SITE_ANIMATIONS).optional();
 const optionalPublicHrefSchema = z
@@ -98,6 +108,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("services"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     items: z.array(serviceItemSchema).max(12),
   }),
   z.object({
@@ -105,6 +116,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("process"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     steps: z.array(processStepSchema).max(12),
   }),
   z.object({
@@ -112,6 +124,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("pricing"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     offers: z.array(pricingOfferSchema).max(8),
   }),
   z.object({
@@ -119,6 +132,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("portfolio"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     projects: z.array(portfolioProjectSchema).max(12),
   }),
   z.object({
@@ -126,6 +140,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("testimonials"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     testimonials: z.array(testimonialSchema).max(8),
   }),
   z.object({
@@ -133,6 +148,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("faq"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     items: z.array(faqItemSchema).max(12),
   }),
   z.object({
@@ -140,6 +156,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("contact"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     methods: z.array(contactMethodSchema).max(8),
   }),
   z.object({
@@ -147,6 +164,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("booking"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     subtitle: z.string().trim().max(160).optional(),
     durationMinutes: z.number().min(15).max(720).optional(),
   }),
@@ -155,6 +173,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("custom"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     content: z.string().trim().max(4_000),
   }),
   z.object({
@@ -162,6 +181,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("gallery"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     layout: z.enum(["grid", "cards_1col", "cards_2col", "cards_3col", "cards_4col", "masonry"]).optional(),
     aspectRatio: z.enum(["square", "video", "wide", "portrait", "auto"]).optional(),
     columns: z.number().min(1).max(4).optional(),
@@ -181,6 +201,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("image"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     url: z.string().trim().max(2_000).optional(),
     alt: z.string().trim().max(200).optional(),
     caption: z.string().trim().max(500).optional(),
@@ -194,6 +215,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("mediaText"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     mediaPosition: z.enum(["left", "right"]).optional(),
     mediaWidth: z.enum(["30%", "40%", "50%", "60%"]).optional(),
     verticalAlign: z.enum(["top", "center", "bottom"]).optional(),
@@ -208,6 +230,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("embed"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     url: z.string().trim().max(2_000),
     height: z.number().min(100).max(800).optional(),
   }),
@@ -216,6 +239,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("social"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     links: z.array(z.object({
       id: idSchema,
       platform: z.string().trim().max(40),
@@ -227,6 +251,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("cta"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     text: z.string().trim().max(500),
     buttonLabel: z.string().trim().max(60),
     buttonUrl: optionalPublicHrefSchema,
@@ -236,12 +261,14 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("divider"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
   }),
   z.object({
     id: idSchema,
     type: z.literal("collapsible"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     items: z.array(z.object({
       id: idSchema,
       title: z.string().trim().min(1).max(200),
@@ -253,6 +280,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("spacer"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     height: z.number().min(16).max(200).optional(),
   }),
   z.object({
@@ -260,12 +288,14 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     type: z.literal("tableOfContents"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
   }),
   z.object({
     id: idSchema,
     type: z.literal("contentBlock"),
     heading: headingSchema,
     animation: animationSchema,
+    ...sectionTypographySchema,
     columns: z.number().min(2).max(4),
     layout: z.enum(["equal", "left-heavy", "right-heavy", "thirds"]),
     items: z.array(z.object({
