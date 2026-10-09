@@ -842,6 +842,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                 <PropertiesPanel
                   section={selectedSection}
                   onUpdate={(patch) => { if (selectedSectionId) updateSection(selectedSectionId, patch); }}
+                  onDelete={() => { if (selectedSectionId) deleteSection(selectedSectionId); }}
                   onClose={() => setSelectedSectionId(null)}
                 />
               )}

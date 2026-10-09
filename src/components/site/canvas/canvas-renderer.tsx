@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { InlineText } from "./inline-text";
 import { ImageUpload } from "./image-upload";
 import { useT } from "@/lib/i18n-client";
+import { getFontFamily } from "@/lib/builder-fonts";
 import { GoogleSitesGalleryCanvas } from "./google-sites-gallery";
 import type { PersonalSiteInput, PersonalSiteSection, ThemeConfig } from "@/lib/personal-site/model";
 import { isEditorialPlaceholderText, PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
@@ -303,13 +304,53 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
   );
 }
 
+function getHeadingStyle(section: any, defaultClass: string = "text-xl font-semibold mb-4") {
+  const isBold = section.bold;
+  const isItalic = section.italic;
+  const isUnderline = section.underline;
+  const isStrike = section.strikethrough;
+  const align = section.align || "left";
+  const fontSize = section.fontSize || "base";
+  const fontFamily = section.fontFamily ? getFontFamily(section.fontFamily) : undefined;
+
+  const sizeClass =
+    fontSize === "sm"
+      ? "text-sm"
+      : fontSize === "lg"
+      ? "text-2xl"
+      : fontSize === "xl"
+      ? "text-3xl"
+      : "text-xl";
+
+  const alignClass =
+    align === "center"
+      ? "text-center"
+      : align === "right"
+      ? "text-right"
+      : "text-left";
+
+  return {
+    className: cn(
+      defaultClass,
+      sizeClass,
+      alignClass,
+      isBold && "font-bold",
+      isItalic && "italic",
+      isUnderline && "underline",
+      isStrike && "line-through",
+    ),
+    style: fontFamily ? { fontFamily } : undefined,
+  };
+}
+
 function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSection; onUpdate: (patch: Partial<PersonalSiteSection>) => void; theme?: ThemeConfig }) {
   const { t } = useT();
+  const headingStyle = getHeadingStyle(section as any);
   switch (section.type) {
     case "services":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
+          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="grid gap-4 sm:grid-cols-2">
             {section.items.map((item, i) => (
               <div key={item.id} className="rounded-lg border bg-card p-4 shadow-sm">
@@ -324,7 +365,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "process":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
+          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="space-y-3">
             {section.steps.map((step, i) => (
               <div key={step.id} className="flex gap-3">
@@ -342,7 +383,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "pricing":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
+          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {section.offers.map((offer, i) => (
               <div key={offer.id} className="rounded-lg border bg-card p-4 shadow-sm text-center">

@@ -2,7 +2,23 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Plus, X, Sparkles, Check, Loader2, Calendar, Bold, Italic, AlignLeft, AlignCenter, AlignRight } from "lucide-react";
+import {
+  Plus,
+  X,
+  Sparkles,
+  Check,
+  Loader2,
+  Calendar,
+  Bold,
+  Italic,
+  Underline,
+  Strikethrough,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  Settings2,
+  Trash2,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,10 +29,19 @@ import { PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
 import { generatePersonalSiteCopy } from "@/lib/actions/personal-site-ai";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n-client";
+import { CUBIQLO_FONTS } from "@/lib/builder-fonts";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 type PropertiesPanelProps = {
   section: PersonalSiteSection | null;
   onUpdate: (patch: Partial<PersonalSiteSection>) => void;
+  onDelete?: () => void;
   onClose: () => void;
 };
 
@@ -57,7 +82,7 @@ interface AiGenerationState {
   pendingPatch: PersonalSiteSection | null; // what to apply after user clicks Apply
 }
 
-export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelProps) {
+export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: PropertiesPanelProps) {
   const { t } = useT();
   const [aiState, setAiState] = useState<AiGenerationState>({
     isGenerating: false,
@@ -122,17 +147,22 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
 
   return (
     <aside className="hidden md:flex w-80 shrink-0 flex-col border-l bg-background">
-      <div className="flex items-center justify-between border-b px-4 py-3">
-        <div className="min-w-0">
-          <h2 className="text-sm font-semibold">{t("Bagian", "Section")}</h2>
-          <p className="truncate text-xs text-muted-foreground capitalize">{section.type}</p>
+      <div className="flex items-center justify-between border-b px-4 py-3 bg-muted/20">
+        <div className="flex items-center gap-2 min-w-0">
+          <Settings2 className="h-4 w-4 text-primary shrink-0" />
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-wider text-foreground">{t("Properti Bagian", "Section Properties")}</h2>
+            <span className="inline-block px-1.5 py-0.5 rounded text-[10px] font-semibold bg-muted text-muted-foreground uppercase">
+              {section.type}
+            </span>
+          </div>
         </div>
-        <Button type="button" variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label={t("Tutup panel properti", "Close properties panel")}>
+        <Button type="button" variant="ghost" size="icon" className="h-7 w-7 rounded-full hover:bg-muted" onClick={onClose} aria-label={t("Tutup panel properti", "Close properties panel")}>
           <X className="h-4 w-4" />
         </Button>
       </div>
 
-      <div className="flex-1 space-y-6 overflow-y-auto p-4">
+      <div className="flex-1 space-y-6 overflow-y-auto p-4 custom-scrollbar">
         {/* AI Copy Generation */}
         <div className="rounded-lg border bg-muted/30 p-4">
           <div className="mb-3 flex items-center gap-2">
@@ -249,71 +279,151 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
         )}
 
         {/* Shared fields */}
-        <div className="space-y-3">
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">{t("Judul", "Heading")}</Label>
+        <div className="space-y-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs font-medium text-foreground">{t("Judul Bagian", "Heading")}</Label>
             <Input
               value={section.heading}
               maxLength={80}
               onChange={(e) => onUpdate({ heading: e.target.value })}
-              className="h-8 text-sm"
+              className="h-8.5 text-xs bg-background"
               placeholder={t("Judul bagian", "Section heading")}
             />
           </div>
 
-          {/* Quick Heading Formatting (Bold / Italic / Alignment) */}
-          <div className="space-y-1.5">
-            <Label className="text-xs text-muted-foreground">{t("Gaya Penulisan Judul", "Heading Style")}</Label>
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center rounded-lg border border-border/70 bg-muted/20 p-0.5">
+          {/* Typography & Font Styling — EXACTLY LIKE FORM BUILDER */}
+          <div className="space-y-3 pt-2 border-t border-border/60">
+            {/* Font Family Selector */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-foreground">{t("Gaya Font", "Font Family")}</Label>
+              <Select
+                value={("fontFamily" in section ? (section as any).fontFamily : undefined) || "inter"}
+                onValueChange={(val) => onUpdate({ ...section, fontFamily: val } as any)}
+              >
+                <SelectTrigger className="h-8.5 text-xs bg-background">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CUBIQLO_FONTS.map((font) => (
+                    <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.fontFamily }}>
+                      {font.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Font Size Selector (SM / BASE / LG / XL) */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-foreground">{t("Ukuran Teks", "Font Size")}</Label>
+              <div className="grid grid-cols-4 gap-1">
+                {(["sm", "base", "lg", "xl"] as const).map((sz) => (
+                  <button
+                    key={sz}
+                    type="button"
+                    onClick={() => onUpdate({ ...section, fontSize: sz } as any)}
+                    className={`py-1 text-xs font-bold rounded-md border transition-all ${
+                      (("fontSize" in section ? (section as any).fontSize : undefined) || "base") === sz
+                        ? "bg-primary text-primary-foreground border-primary shadow-xs"
+                        : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
+                    }`}
+                  >
+                    {sz.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Text Styles: Bold, Italic, Underline, Strikethrough */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-foreground">{t("Gaya Penulisan Teks", "Text Formatting")}</Label>
+              <div className="grid grid-cols-4 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
                 <button
                   type="button"
                   onClick={() => {
-                    const current = section.heading || "";
-                    if (current.startsWith("**") && current.endsWith("**")) {
-                      onUpdate({ heading: current.slice(2, -2) });
-                    } else {
-                      onUpdate({ heading: `**${current.replace(/\*\*/g, "")}**` });
-                    }
+                    const isBold = ("bold" in section ? (section as any).bold : false);
+                    onUpdate({ ...section, bold: !isBold } as any);
                   }}
-                  className={`p-1.5 rounded text-xs transition-colors ${
-                    (section.heading || "").startsWith("**") && (section.heading || "").endsWith("**")
-                      ? "bg-primary text-primary-foreground font-bold"
-                      : "text-muted-foreground hover:bg-background hover:text-foreground"
+                  className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
+                    ("bold" in section && (section as any).bold) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted/50"
                   }`}
-                  title={t("Tebal (Bold)", "Bold")}
+                  title="Bold"
                 >
                   <Bold className="h-3.5 w-3.5" />
                 </button>
                 <button
                   type="button"
                   onClick={() => {
-                    const current = section.heading || "";
-                    if (current.startsWith("*") && current.endsWith("*") && !current.startsWith("**")) {
-                      onUpdate({ heading: current.slice(1, -1) });
-                    } else {
-                      onUpdate({ heading: `*${current.replace(/\*/g, "")}*` });
-                    }
+                    const isItalic = ("italic" in section ? (section as any).italic : false);
+                    onUpdate({ ...section, italic: !isItalic } as any);
                   }}
-                  className={`p-1.5 rounded text-xs transition-colors ${
-                    (section.heading || "").startsWith("*") && (section.heading || "").endsWith("*") && !(section.heading || "").startsWith("**")
-                      ? "bg-primary text-primary-foreground italic"
-                      : "text-muted-foreground hover:bg-background hover:text-foreground"
+                  className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
+                    ("italic" in section && (section as any).italic) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted/50"
                   }`}
-                  title={t("Miring (Italic)", "Italic")}
+                  title="Italic"
                 >
                   <Italic className="h-3.5 w-3.5" />
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const isUnderline = ("underline" in section ? (section as any).underline : false);
+                    onUpdate({ ...section, underline: !isUnderline } as any);
+                  }}
+                  className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
+                    ("underline" in section && (section as any).underline) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted/50"
+                  }`}
+                  title="Underline"
+                >
+                  <Underline className="h-3.5 w-3.5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const isStrike = ("strikethrough" in section ? (section as any).strikethrough : false);
+                    onUpdate({ ...section, strikethrough: !isStrike } as any);
+                  }}
+                  className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
+                    ("strikethrough" in section && (section as any).strikethrough) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted/50"
+                  }`}
+                  title="Strikethrough"
+                >
+                  <Strikethrough className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Text Alignment setting */}
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium text-foreground">{t("Perataan Teks", "Text Alignment")}</Label>
+              <div className="grid grid-cols-3 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
+                {(["left", "center", "right"] as const).map((al) => (
+                  <button
+                    key={al}
+                    type="button"
+                    onClick={() => onUpdate({ ...section, align: al } as any)}
+                    className={`py-1.5 text-xs capitalize rounded font-medium transition-colors flex items-center justify-center gap-1.5 ${
+                      (("align" in section ? (section as any).align : undefined) || "left") === al
+                        ? "bg-primary text-primary-foreground font-bold shadow-xs"
+                        : "text-muted-foreground hover:bg-muted/50"
+                    }`}
+                  >
+                    {al === "left" && <AlignLeft className="h-3.5 w-3.5" />}
+                    {al === "center" && <AlignCenter className="h-3.5 w-3.5" />}
+                    {al === "right" && <AlignRight className="h-3.5 w-3.5" />}
+                    <span>{al}</span>
+                  </button>
+                ))}
               </div>
             </div>
           </div>
 
-          <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">{t("Animasi", "Animation")}</Label>
+          <div className="space-y-1.5 pt-2 border-t border-border/60">
+            <Label className="text-xs font-medium text-foreground">{t("Animasi Tampilan", "Animation")}</Label>
             <select
               value={("animation" in section ? section.animation : undefined) ?? "none"}
               onChange={(e) => onUpdate({ animation: e.target.value as (typeof PERSONAL_SITE_ANIMATIONS)[number] })}
-              className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-sm shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+              className="flex h-8.5 w-full rounded-md border border-input bg-background px-2 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
             >
               {PERSONAL_SITE_ANIMATIONS.map((a) => (
                 <option key={a} value={a}>{a === "none" ? t("Tanpa animasi", "None") : a}</option>
@@ -330,6 +440,21 @@ export function PropertiesPanel({ section, onUpdate, onClose }: PropertiesPanelP
         {section.type === "image" && <SingleImageEditor section={section} onUpdate={onUpdate} />}
         {section.type === "mediaText" && <MediaTextEditor section={section} onUpdate={onUpdate} />}
         {section.type === "booking" && <BookingEditor section={section} onUpdate={onUpdate} />}
+
+        {/* Delete Element Button at Bottom — EXACTLY LIKE FORM BUILDER */}
+        {onDelete && (
+          <div className="pt-4 border-t border-border/70">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={onDelete}
+              className="w-full justify-center gap-2 text-xs font-semibold text-destructive border-destructive/30 hover:bg-destructive/10 hover:border-destructive/60 transition-all h-9"
+            >
+              <Trash2 className="h-4 w-4" />
+              <span>{t("Hapus Bagian Ini", "Delete This Section")}</span>
+            </Button>
+          </div>
+        )}
       </div>
     </aside>
   );

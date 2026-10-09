@@ -11,9 +11,10 @@ type Props = {
   tag?: Tag;
   className?: string;
   placeholder?: string;
+  style?: React.CSSProperties;
 };
 
-export function InlineText({ value, onChange, tag: Tag = "p", className = "", placeholder = "Klik untuk edit..." }: Props) {
+export function InlineText({ value, onChange, tag: Tag = "p", className = "", placeholder = "Klik untuk edit...", style }: Props) {
   const ref = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export function InlineText({ value, onChange, tag: Tag = "p", className = "", pl
       ref={ref as React.Ref<HTMLHeadingElement & HTMLParagraphElement & HTMLSpanElement>}
       contentEditable
       suppressContentEditableWarning
+      style={style}
       className={cn(
         "outline-none focus:ring-1 focus:ring-primary/30 rounded px-1 -mx-1 cursor-text",
         "empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50",
