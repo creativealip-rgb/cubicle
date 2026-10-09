@@ -1130,12 +1130,16 @@ export function DocumentBlockEditor({
                           <button
                             key={item.type}
                             type="button"
+                            draggable
+                            onDragStart={(e) => {
+                              e.dataTransfer.setData("application/json", JSON.stringify(item));
+                            }}
                             onClick={() => {
                               if (item.type === "image") imageInputRef.current?.click();
                               else if (item.type === "attachment") attachmentInputRef.current?.click();
                               else add(item.type);
                             }}
-                            className="flex items-center gap-3 p-2.5 rounded-xl border border-border/70 hover:border-primary/50 hover:bg-primary/5 text-left transition-all group bg-background shadow-2xs"
+                            className="flex items-center gap-3 p-2.5 rounded-xl border border-border/70 hover:border-primary/50 hover:bg-primary/5 text-left transition-all group bg-background shadow-2xs cursor-grab active:cursor-grabbing"
                           >
                             <div className="h-8 w-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
                               <Icon className="h-4 w-4" />
@@ -1217,7 +1221,29 @@ export function DocumentBlockEditor({
                   </div>
                 </div>
               ) : (
-                <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-10 shadow-sm min-h-[750px] space-y-3">
+                <div
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "copy";
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    try {
+                      const data = e.dataTransfer.getData("application/json");
+                      if (data) {
+                        const item = JSON.parse(data);
+                        if (item && item.type) {
+                          if (item.type === "image") imageInputRef.current?.click();
+                          else if (item.type === "attachment") attachmentInputRef.current?.click();
+                          else add(item.type);
+                        }
+                      }
+                    } catch {
+                      // ignore
+                    }
+                  }}
+                  className="rounded-2xl border border-border/80 bg-background p-6 sm:p-10 shadow-sm min-h-[750px] space-y-3"
+                >
                   {blocks.length === 0 ? (
                     <div className="py-20 text-center space-y-3">
                       <FileText className="h-10 w-10 text-muted-foreground/40 mx-auto" />

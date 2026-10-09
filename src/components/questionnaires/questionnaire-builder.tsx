@@ -932,6 +932,7 @@ export function QuestionnaireBuilder({
 
   // Panels visibility: Elements sidebar (left) & Properties drawer (right)
   const [elementsOpen, setElementsOpen] = useState(true);
+  const [activeLeftTab, setActiveLeftTab] = useState<"elements" | "structure">("elements");
   const [elementSearch, setElementSearch] = useState("");
   const [propertiesOpen, setPropertiesOpen] = useState(false);
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
@@ -1500,15 +1501,31 @@ export function QuestionnaireBuilder({
             </main>
           ) : (
             <>
-              {/* PANEL KIRI: Element Catalog (Sticky & Independent Scroll) */}
+              {/* PANEL KIRI: Element Catalog & Structure */}
               {elementsOpen && (
-                <aside className="w-60 sm:w-64 h-full border-r border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-left-4 duration-150 overflow-hidden">
-                  <div className="p-2.5 border-b border-border/60 flex flex-col gap-2 shrink-0">
+                <aside className="w-64 sm:w-72 h-full border-r border-border/80 bg-background flex flex-col shrink-0 z-10 animate-in slide-in-from-left-4 duration-150 overflow-hidden">
+                  <div className="p-2.5 border-b border-border/60 flex flex-col gap-2 shrink-0 bg-muted/10">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                        <Plus className="h-3.5 w-3.5 text-primary" />
-                        <span>Form Elements</span>
-                      </h4>
+                      <div className="flex items-center gap-1 bg-muted/60 p-0.5 rounded-lg">
+                        <button
+                          type="button"
+                          onClick={() => setActiveLeftTab("elements")}
+                          className={`px-2 py-0.5 text-[11px] font-bold rounded ${
+                            activeLeftTab === "elements" ? "bg-background text-foreground shadow-2xs" : "text-muted-foreground"
+                          }`}
+                        >
+                          Elements
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setActiveLeftTab("structure")}
+                          className={`px-2 py-0.5 text-[11px] font-bold rounded ${
+                            activeLeftTab === "structure" ? "bg-background text-foreground shadow-2xs" : "text-muted-foreground"
+                          }`}
+                        >
+                          Structure ({fields.length})
+                        </button>
+                      </div>
                       <Button
                         type="button"
                         variant="ghost"
@@ -1519,21 +1536,48 @@ export function QuestionnaireBuilder({
                         <X className="h-3.5 w-3.5" />
                       </Button>
                     </div>
+
                     {/* Element Search Input */}
-                    <div className="relative">
-                      <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        value={elementSearch}
-                        onChange={(e) => setElementSearch(e.target.value)}
-                        placeholder={t("Cari elemen...", "Search elements...")}
-                        className="h-7.5 pl-8 text-xs bg-muted/20"
-                      />
-                    </div>
+                    {activeLeftTab === "elements" && (
+                      <div className="relative">
+                        <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          value={elementSearch}
+                          onChange={(e) => setElementSearch(e.target.value)}
+                          placeholder={t("Cari elemen...", "Search elements...")}
+                          className="h-7.5 pl-8 text-xs bg-muted/20"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="flex-1 overflow-y-auto p-3 space-y-4 custom-scrollbar">
-                    {/* Filtered Search Results or Categorized List */}
-                    {elementSearch ? (
+                    {activeLeftTab === "structure" ? (
+                      <div className="space-y-1">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2">
+                          {t("Urutan Field Formulir", "Form Field Order")}
+                        </p>
+                        {fields.map((field, index) => (
+                          <button
+                            key={field.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedFieldId(field.id);
+                              setPropertiesOpen(true);
+                            }}
+                            className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left text-xs transition-all ${
+                              selectedFieldId === field.id
+                                ? "bg-primary/10 font-bold text-primary border border-primary/30"
+                                : "text-muted-foreground hover:bg-muted/50 border border-transparent"
+                            }`}
+                          >
+                            <GripVertical className="h-3 w-3 shrink-0 text-muted-foreground/50" />
+                            <span className="w-4 text-[10px] text-muted-foreground/70">{index + 1}</span>
+                            <span className="truncate flex-1 font-medium">{field.label || field.type}</span>
+                          </button>
+                        ))}
+                      </div>
+                    ) : elementSearch ? (
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
                           {t("Hasil Pencarian", "Search Results")} ({ELEMENT_CATALOG.filter((e) => e.label.toLowerCase().includes(elementSearch.toLowerCase()) || e.description.toLowerCase().includes(elementSearch.toLowerCase())).length})
@@ -1543,11 +1587,15 @@ export function QuestionnaireBuilder({
                             <button
                               key={item.type}
                               type="button"
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData("application/json", JSON.stringify(item));
+                              }}
                               onClick={() => {
                                 handleAddField(item);
                                 setElementSearch("");
                               }}
-                              className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                              className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group cursor-grab active:cursor-grabbing"
                             >
                               <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
                                 <item.icon className="h-3.5 w-3.5" />
@@ -1574,8 +1622,12 @@ export function QuestionnaireBuilder({
                               <button
                                 key={item.type}
                                 type="button"
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData("application/json", JSON.stringify(item));
+                                }}
                                 onClick={() => handleAddField(item)}
-                                className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                                className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group cursor-grab active:cursor-grabbing"
                               >
                                 <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
                                   <item.icon className="h-3.5 w-3.5" />
@@ -1591,7 +1643,7 @@ export function QuestionnaireBuilder({
                           </div>
                         </div>
 
-                        {/* Choice Fields */}
+                        {/* Choices & Selection */}
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
                             Choices & Selection
@@ -1601,8 +1653,12 @@ export function QuestionnaireBuilder({
                               <button
                                 key={item.type}
                                 type="button"
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData("application/json", JSON.stringify(item));
+                                }}
                                 onClick={() => handleAddField(item)}
-                                className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                                className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group cursor-grab active:cursor-grabbing"
                               >
                                 <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
                                   <item.icon className="h-3.5 w-3.5" />
@@ -1618,7 +1674,7 @@ export function QuestionnaireBuilder({
                           </div>
                         </div>
 
-                        {/* Advanced & Interactive Fields */}
+                        {/* Advanced & Special Fields */}
                         <div>
                           <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground/80 mb-2">
                             Advanced & Special Fields
@@ -1628,8 +1684,12 @@ export function QuestionnaireBuilder({
                               <button
                                 key={item.type}
                                 type="button"
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData("application/json", JSON.stringify(item));
+                                }}
                                 onClick={() => handleAddField(item)}
-                                className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                                className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group cursor-grab active:cursor-grabbing"
                               >
                                 <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
                                   <item.icon className="h-3.5 w-3.5" />
@@ -1655,8 +1715,12 @@ export function QuestionnaireBuilder({
                               <button
                                 key={item.type}
                                 type="button"
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData("application/json", JSON.stringify(item));
+                                }}
                                 onClick={() => handleAddField(item)}
-                                className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group"
+                                className="flex items-center gap-2.5 p-2 rounded-lg border border-border/60 bg-muted/20 hover:bg-primary/5 hover:border-primary/40 text-left transition-all group cursor-grab active:cursor-grabbing"
                               >
                                 <div className="p-1.5 rounded-md bg-background border border-border/80 text-muted-foreground group-hover:text-primary group-hover:border-primary/40 shrink-0">
                                   <item.icon className="h-3.5 w-3.5" />
@@ -1682,6 +1746,24 @@ export function QuestionnaireBuilder({
                 <div className={`w-full transition-all duration-200 ${previewDevice === "mobile" ? "max-w-sm" : "max-w-3xl"}`}>
                   {/* Form Paper Sheet */}
                   <div
+                    onDragOver={(e) => {
+                      e.preventDefault();
+                      e.dataTransfer.dropEffect = "copy";
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      try {
+                        const data = e.dataTransfer.getData("application/json");
+                        if (data) {
+                          const item = JSON.parse(data) as ElementDefinition;
+                          if (item && item.type) {
+                            handleAddField(item);
+                          }
+                        }
+                      } catch {
+                        // ignore malformed drag data
+                      }
+                    }}
                     className={`border border-border/80 bg-background shadow-md p-5 sm:p-8 space-y-6 ${
                       cardRoundness === "normal"
                         ? "rounded-md"
