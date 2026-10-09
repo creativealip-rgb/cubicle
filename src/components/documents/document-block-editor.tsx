@@ -952,29 +952,41 @@ export function DocumentBlockEditor({
             <span>{t("Preview", "Preview")}</span>
           </button>
 
-          {/* Desktop & Mobile Viewport Switcher */}
-          <div className="flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/70">
-            <button
-              type="button"
-              onClick={() => setDevice("desktop")}
-              className={`p-1 rounded-md transition-all ${
-                device === "desktop" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
-              }`}
-              title={t("Tampilan Desktop", "Desktop View")}
-            >
-              <Monitor className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setDevice("mobile")}
-              className={`p-1 rounded-md transition-all ${
-                device === "mobile" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
-              }`}
-              title={t("Tampilan Mobile", "Mobile View")}
-            >
-              <Smartphone className="h-3.5 w-3.5" />
-            </button>
-          </div>
+          {/* Desktop, Tablet & Mobile Viewport Switcher — ONLY in Live Preview Mode */}
+          {livePreviewMode && (
+            <div className="flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/70 animate-in fade-in-0 duration-150">
+              <button
+                type="button"
+                onClick={() => setDevice("desktop")}
+                className={`p-1 rounded-md transition-all ${
+                  device === "desktop" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={t("Tampilan Desktop", "Desktop View")}
+              >
+                <Monitor className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setDevice("tablet")}
+                className={`p-1 rounded-md transition-all ${
+                  device === "tablet" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={t("Tampilan Tablet", "Tablet View")}
+              >
+                <Tablet className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setDevice("mobile")}
+                className={`p-1 rounded-md transition-all ${
+                  device === "mobile" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={t("Tampilan Mobile", "Mobile View")}
+              >
+                <Smartphone className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
 
           {/* Tools Dropdown (Translate ID ↔ EN + Templates) */}
           <DropdownMenu>

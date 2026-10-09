@@ -82,6 +82,7 @@ import {
   Globe,
   Smartphone,
   Monitor,
+  Tablet,
   Image as ImageIcon,
   Columns,
   Square,
@@ -764,16 +765,16 @@ export function QuestionnaireBuilder({
       setIsPaidPlan(res.isPaid);
     }).catch(() => {});
   }, []);
-  const [previewDevice, setPreviewDeviceState] = useState<"desktop" | "mobile">(urlDevice || "desktop");
+  const [previewDevice, setPreviewDeviceState] = useState<"desktop" | "tablet" | "mobile">(urlDevice || "desktop");
 
   const setPreviewDevice = useCallback(
-    (d: "desktop" | "mobile") => {
-      setPreviewDeviceState(d);
+    (dev: "desktop" | "tablet" | "mobile") => {
+      setPreviewDeviceState(dev);
       const params = new URLSearchParams(window.location.search);
-      if (d === "desktop") {
+      if (dev === "desktop") {
         params.delete("device");
       } else {
-        params.set("device", d);
+        params.set("device", dev);
       }
       const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
       window.history.replaceState(null, "", newUrl);
@@ -1222,29 +1223,41 @@ export function QuestionnaireBuilder({
             <span>{t("Preview", "Preview")}</span>
           </button>
 
-          {/* Desktop & Mobile Viewport Switcher */}
-          <div className="flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/70">
-            <button
-              type="button"
-              onClick={() => setPreviewDevice("desktop")}
-              className={`p-1 rounded-md transition-all ${
-                previewDevice === "desktop" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
-              }`}
-              title={t("Tampilan Desktop", "Desktop View")}
-            >
-              <Monitor className="h-3.5 w-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => setPreviewDevice("mobile")}
-              className={`p-1 rounded-md transition-all ${
-                previewDevice === "mobile" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
-              }`}
-              title={t("Tampilan Mobile", "Mobile View")}
-            >
-              <Smartphone className="h-3.5 w-3.5" />
-            </button>
-          </div>
+          {/* Desktop, Tablet & Mobile Viewport Switcher — ONLY in Live Preview Mode */}
+          {livePreviewMode && (
+            <div className="flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/70 animate-in fade-in-0 duration-150">
+              <button
+                type="button"
+                onClick={() => setPreviewDevice("desktop")}
+                className={`p-1 rounded-md transition-all ${
+                  previewDevice === "desktop" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={t("Tampilan Desktop", "Desktop View")}
+              >
+                <Monitor className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewDevice("tablet")}
+                className={`p-1 rounded-md transition-all ${
+                  previewDevice === "tablet" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={t("Tampilan Tablet", "Tablet View")}
+              >
+                <Tablet className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setPreviewDevice("mobile")}
+                className={`p-1 rounded-md transition-all ${
+                  previewDevice === "mobile" ? "bg-background text-foreground shadow-2xs font-semibold" : "text-muted-foreground hover:text-foreground"
+                }`}
+                title={t("Tampilan Mobile", "Mobile View")}
+              >
+                <Smartphone className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
 
           {/* Quick Dropdown for Tools (AI Translate, Templates) */}
           <DropdownMenu>
@@ -1414,7 +1427,11 @@ export function QuestionnaireBuilder({
             <main className="flex-1 overflow-y-auto p-4 sm:p-8 flex flex-col items-center justify-start bg-slate-900/10 custom-scrollbar">
               <div
                 className={`w-full transition-all duration-300 space-y-6 ${
-                  previewDevice === "mobile" ? "max-w-[400px]" : "max-w-2xl"
+                  previewDevice === "mobile"
+                    ? "max-w-[400px]"
+                    : previewDevice === "tablet"
+                    ? "max-w-[768px]"
+                    : "max-w-2xl"
                 }`}
               >
                 {/* Public Header Preview Banner */}
