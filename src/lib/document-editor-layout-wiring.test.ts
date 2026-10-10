@@ -20,13 +20,16 @@ describe("document editor layout wiring", () => {
     const contractEdit = read("src/app/(app)/app/contracts/[contractId]/edit/page.tsx");
 
     expect(editor).toContain('flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden');
-    expect(editor).toContain('flex min-h-0 flex-1');
-    expect(editor).toContain('hidden w-56 shrink-0 overflow-y-auto');
-    expect(editor).toContain('hidden w-72 shrink-0 overflow-y-auto');
+    // Panels are now responsive asides (w-64 sm:w-72) that clip internally and
+    // scroll their own body; the outer shell still confines the page scroll.
+    expect(editor).toMatch(/aside className="w-64 sm:w-72 border-r[^"]*shrink-0 h-full overflow-hidden/);
+    expect(editor).toMatch(/aside className="w-64 sm:w-72 border-l[^"]*shrink-0 h-full overflow-hidden/);
+    expect(editor).toContain("flex-1 overflow-y-auto");
     expect(editor).toContain('backHref?: string');
     expect(editor).toContain('href={backHref}');
-    expect(proposalEdit).toContain('backHref={`/app/proposals/${proposalId}`}');
-    expect(contractEdit).toContain('backHref={`/app/contracts/${contractId}`}');
+    // b76f7b0a points the back link at the list route, not the detail route.
+    expect(proposalEdit).toContain('backHref="/app/proposals"');
+    expect(contractEdit).toContain('backHref="/app/contracts"');
   });
 
   it("uses compact circular sidebar chevrons for collapse and expand", () => {

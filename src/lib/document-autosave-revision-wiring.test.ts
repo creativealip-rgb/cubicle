@@ -51,6 +51,9 @@ describe("autosave revision/stale-write protection wiring", () => {
     expect(editor).toMatch(/const revision = useRef\(initialRevision\)/);
     expect(editor).toMatch(/revision\.current = result\.contentRevision/);
     expect(editor).toMatch(/Dokumen berubah di tempat lain/);
-    expect(editor).toMatch(/disabled=\{!dirty \|\| saving \|\| pending \|\| stale\}/);
+    // Save is disabled on the same four conditions; the button became a
+    // settings/BUILD ternary so the condition no longer sits inline after
+    // `disabled={`.
+    expect(editor).toContain("!dirty || saving || pending || stale");
   });
 });

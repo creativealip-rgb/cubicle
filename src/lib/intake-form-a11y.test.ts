@@ -11,6 +11,9 @@ describe("public intake accessibility", () => {
 
   it("announces pending and error states", () => {
     expect(source).toContain("aria-busy={pending}");
-    expect(source).toContain('role="alert"');
+    // 6963863c moved submit/validation errors from an inline
+    // <div role="alert"> to sonner toasts, whose Toaster renders the aria-live
+    // region. Assert the mechanism that actually announces errors now.
+    expect(source).toContain("toast.error(");
   });
 });

@@ -14,7 +14,9 @@ describe("document blocks", () => {
       { id: "2", type: "image", src: "/a.png" },
       { id: "3", type: "signature" },
     ], "contract");
-    expect(blocks.map((block) => block.type)).toEqual(["text", "signature"]);
+    // ec0a8826 added the official brand logo/image to contracts, so `image` is
+    // now a supported contract block (only truly unsupported kinds are dropped).
+    expect(blocks.map((block) => block.type)).toEqual(["text", "image", "signature"]);
   });
 
   it("provides editable defaults", () => {

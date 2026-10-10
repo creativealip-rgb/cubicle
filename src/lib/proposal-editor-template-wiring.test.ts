@@ -10,16 +10,20 @@ const proposalEditPage = read("src/app/(app)/app/proposals/[proposalId]/edit/pag
 describe("proposal editor template wiring", () => {
   it("editor wires the starter template flow (button + confirm + buildProposalStarterBlocks)", () => {
     expect(editor).toContain("buildProposalStarterBlocks");
-    expect(editor).toContain("Mulai dari template");
-    expect(editor).toContain("Start from template");
-    expect(editor).toMatch(/handleStartFromTemplate/);
+    // b76f7b0a renamed the entry point to the starter-template CTA (+ a picker
+    // dialog); applyStarterTemplate replaced handleStartFromTemplate.
+    expect(editor).toContain("Gunakan Starter Template");
+    expect(editor).toContain("Use Starter Template");
+    expect(editor).toMatch(/applyStarterTemplate/);
     expect(editor).toMatch(/showTemplateConfirm/);
     expect(editor).toMatch(/Ganti dengan template\?/);
   });
 
   it("editor no longer exposes a manual pricing table preset (pricing lives in the form)", () => {
-    expect(editor).not.toContain("Pricing Table");
+    // bc0e542a removed the insert-preset ACTION. Later copy legitimately REFERS to
+    // the document's pricing table, so ban the action, not the words.
     expect(editor).not.toMatch(/addPricingTable/);
+    expect(editor).not.toMatch(/handleAddPricingTable/);
   });
 
   it("editor exposes placeholder chips for every proposal token", () => {

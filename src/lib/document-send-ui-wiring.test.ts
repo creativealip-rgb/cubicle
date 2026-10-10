@@ -81,11 +81,15 @@ describe("document-send UI wiring (preview + confirm, recipient/subject, pending
 
     const proposalList = read("src/components/proposals/proposals-list-table.tsx");
     expect(proposalList).toMatch(/clientEmail: string \| null/);
-    expect(proposalList).toMatch(/clientEmail=\{p\.clientEmail \?\? undefined\}/);
+    // The send dialog moved out of the table into ProposalRowActions, which is
+    // what forwards the resolved client email to the send button now.
+    const proposalRows = read("src/components/proposals/proposal-row-actions.tsx");
+    expect(proposalRows).toMatch(/clientEmail=\{proposal\.clientEmail \?\? undefined\}/);
 
     const contractList = read("src/components/contracts/contracts-list-table.tsx");
     expect(contractList).toMatch(/clientEmail: string \| null/);
-    expect(contractList).toMatch(/clientEmail=\{c\.clientEmail \?\? undefined\}/);
+    const contractRows = read("src/components/contracts/contract-row-actions.tsx");
+    expect(contractRows).toMatch(/clientEmail=\{contract\.clientEmail \?\? undefined\}/);
 
     const proposalsPage = read("src/app/(app)/app/proposals/page.tsx");
     expect(proposalsPage).toContain("clientEmail: proposals.clientEmail");

@@ -52,7 +52,9 @@ describe("proposal/contract/questionnaire send wiring (duplicate-send + email-re
       "src/lib/actions/questionnaires.ts",
     ]) {
       const src = read(file);
-      expect(src).toContain('import { sendNotification } from "@/lib/notifications"');
+      // sendNotification is imported alongside the other notify helper (e.g.
+      // notifyProposalAccepted), so assert the named import, not an exact line.
+      expect(src).toMatch(/import \{ sendNotification[^}]*\} from "@\/lib\/notifications";/);
       expect(src).toContain("resolveWorkspaceReplyTo");
     }
   });

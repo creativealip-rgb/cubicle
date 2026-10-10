@@ -15,13 +15,15 @@ describe("contract editor template wiring", () => {
     expect(editor).toContain("{{workspace_address}}");
   });
 
-  it("start-from-template button is not proposal-gated", () => {
-    expect(editor).toContain("Start from template");
-    expect(editor).toContain("Mulai dari template");
-    // The desktop Insert panel button must render for both kinds:
-    expect(editor).toContain('onClick={handleStartFromTemplate}>+ {t("Mulai dari template", "Start from template")}</Button>');
-    // ...and must not be wrapped in a proposal-only gate (either desktop panel or mobile drawer):
-    expect(editor).not.toContain('kind === "proposal" && <Button type="button" variant="outline" className="justify-start" onClick={handleStartFromTemplate}');
+  it("starter template is reachable for contracts too, never proposal-gated", () => {
+    // b76f7b0a renamed the entry point to the starter CTA + picker dialog, so the
+    // old handleStartFromTemplate / confirm-label anchors are obsolete. The
+    // INVARIANT (both kinds can start from a template) still holds: build the
+    // template per kind, and never behind a proposal-only gate.
+    expect(editor).toContain('t("Gunakan Starter Template", "Use Starter Template")');
+    expect(editor).toContain("applyStarterTemplate");
+    expect(editor).toContain('kind === "contract" ? buildContractStarterBlocks() : buildProposalStarterBlocks()');
+    expect(editor).not.toMatch(/kind === "proposal" && <Button[^>]*applyStarterTemplate/);
   });
 
   it("placeholder chips are branched by kind", () => {

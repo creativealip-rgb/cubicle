@@ -11,12 +11,17 @@ describe("proposal starter placeholder wiring", () => {
     const blocks = read("src/lib/document-blocks.ts");
     expect(blocks).toContain("buildProposalStarterBlocks");
     expect(blocks).toContain('align: "center"');
-    expect(blocks).toContain("Syarat & Ketentuan");
+    // Starter content is authored in English (the editor localizes at render).
+    expect(blocks).toContain("Terms & Conditions");
   });
 
   it("builds starter blocks without a manual pricing table (pricing lives in the form)", () => {
     const starter = buildProposalStarterBlocks();
-    expect(starter.some((block) => block.type === "table")).toBe(false);
+    // Pricing lives on the form and is injected through {{total_amount}}: the
+    // starter table must carry the token, never a hardcoded amount.
+    const tables = starter.filter((block) => block.type === "table");
+    expect(tables.length).toBeGreaterThan(0);
+    expect(tables.every((b) => JSON.stringify(b).includes("{{total_amount}}"))).toBe(true);
     // Placeholder tokens used by the cover and terms resolve later.
     expect(starter.some((block) => block.content?.includes("{{workspace_name}}"))).toBe(true);
     expect(starter.some((block) => block.content?.includes("{{valid_until}}"))).toBe(true);
