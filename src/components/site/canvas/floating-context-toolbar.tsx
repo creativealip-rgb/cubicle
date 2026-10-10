@@ -151,25 +151,43 @@ export function FloatingContextToolbar({
           <ChevronDown className="h-3 w-3 text-slate-400 shrink-0" />
         </button>
         {styleOpen && (
-          <div className="absolute top-full mt-1.5 left-0 w-32 bg-white border border-slate-200 rounded-md shadow-lg py-1 z-50">
+          <div
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="absolute bottom-full mb-1.5 left-0 w-36 bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col divide-y divide-slate-100"
+          >
             <button
               type="button"
-              onClick={() => { onChange({ fontSize: "xl", bold: true }); setStyleOpen(false); }}
-              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 font-bold text-sm text-slate-800"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onChange({ fontSize: "xl", bold: true });
+                setStyleOpen(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-slate-100 font-bold text-sm text-slate-800 transition-colors"
             >
               {t("Judul", "Heading")}
             </button>
             <button
               type="button"
-              onClick={() => { onChange({ fontSize: "lg", bold: true }); setStyleOpen(false); }}
-              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 font-semibold text-xs text-slate-700"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onChange({ fontSize: "lg", bold: true });
+                setStyleOpen(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-slate-100 font-semibold text-xs text-slate-700 transition-colors"
             >
               {t("Subjudul", "Subheading")}
             </button>
             <button
               type="button"
-              onClick={() => { onChange({ fontSize: "base", bold: false }); setStyleOpen(false); }}
-              className="w-full text-left px-3 py-1.5 hover:bg-slate-100 text-xs text-slate-600"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onChange({ fontSize: "base", bold: false });
+                setStyleOpen(false);
+              }}
+              className="w-full text-left px-3 py-2 hover:bg-slate-100 text-xs text-slate-600 transition-colors"
             >
               {t("Teks normal", "Normal text")}
             </button>
@@ -179,11 +197,13 @@ export function FloatingContextToolbar({
 
       <div className="w-px h-4 bg-slate-200 my-auto" />
 
-      {/* 2. Font Family Dropdown (Expanded list) */}
+      {/* 2. Font Family Dropdown (Expanded vertical list above toolbar) */}
       <div className="relative">
         <button
           type="button"
-          onClick={() => {
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             setFontOpen(!fontOpen);
             setStyleOpen(false);
             setSizeOpen(false);
@@ -198,14 +218,22 @@ export function FloatingContextToolbar({
           <ChevronDown className="h-3 w-3 text-slate-400 shrink-0" />
         </button>
         {fontOpen && (
-          <div className="absolute top-full mt-1.5 left-0 w-52 max-h-64 overflow-y-auto bg-white border border-slate-200 rounded-md shadow-lg py-1 z-50">
+          <div
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="absolute bottom-full mb-1.5 left-0 w-56 max-h-72 overflow-y-auto bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col"
+          >
             {CUBIQLO_FONTS.map((f) => (
               <button
                 key={f.id}
                 type="button"
                 style={{ fontFamily: getFontFamily(f.id) }}
-                onClick={() => { onChange({ fontFamily: f.id }); setFontOpen(false); }}
-                className={`w-full text-left px-3 py-1.5 text-xs transition-colors flex items-center justify-between ${
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onChange({ fontFamily: f.id });
+                  setFontOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-xs transition-colors flex items-center justify-between ${
                   currentFontObj.id === f.id ? "bg-primary/10 text-primary font-semibold" : "hover:bg-slate-100 text-slate-700"
                 }`}
               >
@@ -219,11 +247,13 @@ export function FloatingContextToolbar({
 
       <div className="w-px h-4 bg-slate-200 my-auto" />
 
-      {/* 3. Font Size Dropdown */}
+      {/* 3. Font Size Dropdown (Vertical list above toolbar) */}
       <div className="relative">
         <button
           type="button"
-          onClick={() => {
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             setSizeOpen(!sizeOpen);
             setFontOpen(false);
             setStyleOpen(false);
@@ -238,18 +268,26 @@ export function FloatingContextToolbar({
           <ChevronDown className="h-3 w-3 text-slate-400" />
         </button>
         {sizeOpen && (
-          <div className="absolute top-full mt-1.5 left-0 w-28 bg-white border border-slate-200 rounded-md shadow-lg py-1 z-50">
+          <div
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="absolute bottom-full mb-1.5 left-0 w-32 bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col"
+          >
             {[
-              { id: "sm", label: "14 (Small)" },
+              { id: "sm", label: "14 (Kecil)" },
               { id: "base", label: "16 (Normal)" },
-              { id: "lg", label: "24 (Large)" },
-              { id: "xl", label: "34 (Extra)" },
+              { id: "lg", label: "24 (Sedang)" },
+              { id: "xl", label: "34 (Besar)" },
             ].map((sz) => (
               <button
                 key={sz.id}
                 type="button"
-                onClick={() => { onChange({ fontSize: sz.id as any }); setSizeOpen(false); }}
-                className={`w-full text-left px-3 py-1.5 text-xs hover:bg-slate-100 transition-colors ${
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onChange({ fontSize: sz.id as any });
+                  setSizeOpen(false);
+                }}
+                className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-100 transition-colors ${
                   currentSize === sz.id ? "font-bold text-primary bg-primary/5" : "text-slate-700"
                 }`}
               >
@@ -464,11 +502,13 @@ export function FloatingContextToolbar({
 
       <div className="w-px h-4 bg-slate-200 my-auto" />
 
-      {/* 8. Text Alignment Dropdown */}
+      {/* 8. Text Alignment Dropdown (Vertical menu above toolbar) */}
       <div className="relative">
         <button
           type="button"
-          onClick={() => {
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             setAlignOpen(!alignOpen);
             setFontOpen(false);
             setSizeOpen(false);
@@ -490,25 +530,43 @@ export function FloatingContextToolbar({
           <ChevronDown className="h-2.5 w-2.5 text-slate-400" />
         </button>
         {alignOpen && (
-          <div className="absolute top-full mt-1.5 left-0 w-28 bg-white border border-slate-200 rounded-md shadow-lg py-1 z-50">
+          <div
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="absolute bottom-full mb-1.5 left-0 w-32 bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col divide-y divide-slate-100"
+          >
             <button
               type="button"
-              onClick={() => { onChange({ align: "left" }); setAlignOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-slate-100 text-slate-700"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onChange({ align: "left" });
+                setAlignOpen(false);
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-slate-100 text-slate-700 transition-colors"
             >
               <AlignLeft className="h-3.5 w-3.5" /> {t("Rata Kiri", "Left")}
             </button>
             <button
               type="button"
-              onClick={() => { onChange({ align: "center" }); setAlignOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-slate-100 text-slate-700"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onChange({ align: "center" });
+                setAlignOpen(false);
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-slate-100 text-slate-700 transition-colors"
             >
               <AlignCenter className="h-3.5 w-3.5" /> {t("Rata Tengah", "Center")}
             </button>
             <button
               type="button"
-              onClick={() => { onChange({ align: "right" }); setAlignOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-1.5 text-xs hover:bg-slate-100 text-slate-700"
+              onMouseDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onChange({ align: "right" });
+                setAlignOpen(false);
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs hover:bg-slate-100 text-slate-700 transition-colors"
             >
               <AlignRight className="h-3.5 w-3.5" /> {t("Rata Kanan", "Right")}
             </button>

@@ -597,20 +597,22 @@ function SortableCanvasField({
         <div className="space-y-2">
           <div className="flex items-center justify-between gap-2">
             <div className={`flex items-center gap-1.5 min-w-0 flex-1 ${fieldAlignClass === "text-center" ? "justify-center" : fieldAlignClass === "text-right" ? "justify-end" : "justify-start"}`}>
+              {field.listType === "bullet" && <span className="select-none text-primary font-bold">•</span>}
+              {field.listType === "number" && <span className="select-none text-muted-foreground font-semibold text-xs">1.</span>}
               <input
                 type="text"
                 value={field.label}
                 onChange={(e) => onUpdateLabel(e.target.value)}
                 className={`text-xs ${textStyles} ${fieldSizeClass} ${fieldAlignClass} text-foreground bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-primary rounded px-1 py-0.5 flex-1`}
               />
-              {field.required && <span className="text-destructive font-bold text-xs shrink-0">*</span>}
+              {field.required && <span className="text-destructive font-bold text-xs">*</span>}
             </div>
-            <Badge variant="outline" className="text-[9px] uppercase font-bold tracking-wider py-0 px-1.5 text-muted-foreground shrink-0">
-              {field.type}
-            </Badge>
+            <div className="flex items-center gap-1 shrink-0">
+              <Badge variant="outline" className="text-[10px] uppercase font-bold text-muted-foreground border-border bg-muted/30">
+                {field.type.replace("_", " ")}
+              </Badge>
+            </div>
           </div>
-
-          {field.sublabel && <p className={`text-[11px] text-muted-foreground px-1 ${fieldAlignClass}`}>{field.sublabel}</p>}
 
           {field.type === "text" && (
             <Input disabled placeholder={field.placeholder || t("Jawaban singkat...", "Short answer...")} className="h-9 text-xs bg-muted/20" />
