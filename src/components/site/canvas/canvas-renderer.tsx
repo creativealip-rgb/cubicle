@@ -280,26 +280,6 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
         hovered && !selected && "outline-1 outline-muted-foreground/20 outline-offset-2",
       )}
     >
-      {/* Floating Contextual Toolbar atop the selected section */}
-      {selected && onUpdate && (
-        <FloatingContextToolbar
-          active={selected}
-          value={{
-            fontFamily: section.fontFamily,
-            fontSize: section.fontSize,
-            align: section.align,
-            bold: section.bold,
-            italic: section.italic,
-            underline: section.underline,
-            strikethrough: section.strikethrough,
-          }}
-          onChange={(patch) => onUpdate(patch)}
-          onDuplicate={onDuplicate}
-          onDelete={onDelete}
-          tagType="heading"
-        />
-      )}
-
       {(hovered && !selected) && (
         <div className="absolute -top-3 right-2 z-20 flex items-center gap-0.5 rounded-lg border bg-background px-1 py-0.5 shadow-sm">
           <button type="button" onClick={(e) => { e.stopPropagation(); onMoveUp(); }} className="p-1 hover:bg-muted rounded" aria-label={t("Naikkan", "Move up")}>
@@ -320,11 +300,11 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
           </div>
         </div>
       )}
+
       {children}
     </div>
   );
 }
-
 function getHeadingStyle(section: any, defaultClass: string = "text-xl font-semibold mb-4") {
   const isBold = section.bold;
   const isItalic = section.italic;
