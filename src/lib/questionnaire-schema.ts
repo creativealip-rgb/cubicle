@@ -72,6 +72,9 @@ export const questionnaireFieldSchema = z.object({
   italic: z.boolean().optional(),
   underline: z.boolean().optional(),
   strikethrough: z.boolean().optional(),
+  color: z.string().max(30).optional(),
+  listType: z.enum(["none", "bullet", "number"]).optional(),
+  linkUrl: z.string().max(500).optional(),
   // Info text content (for 'info' type) or terms text (for 'terms' type)
   content: z.string().max(2000).optional(),
   // Currency symbol for calculation (e.g. "Rp", "$")

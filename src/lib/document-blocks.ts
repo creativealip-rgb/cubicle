@@ -18,6 +18,9 @@ export type DocumentBlock = {
   italic?: boolean;
   underline?: boolean;
   strikethrough?: boolean;
+  color?: string;
+  listType?: "none" | "bullet" | "number";
+  linkUrl?: string;
   src?: string;
   fileName?: string;
   fileId?: string;

@@ -2,20 +2,12 @@
 
 import { useRef, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
-import { FloatingContextToolbar } from "./floating-context-toolbar";
+import { FloatingContextToolbar, type TypographyState } from "./floating-context-toolbar";
 import { getFontFamily } from "@/lib/builder-fonts";
 
 type Tag = "h1" | "h2" | "h3" | "p" | "span" | "div";
 
-export type TextTypography = {
-  fontFamily?: string;
-  fontSize?: "sm" | "base" | "lg" | "xl";
-  align?: "left" | "center" | "right";
-  bold?: boolean;
-  italic?: boolean;
-  underline?: boolean;
-  strikethrough?: boolean;
-};
+export type TextTypography = TypographyState;
 
 type Props = {
   value: string;
@@ -58,6 +50,8 @@ export function InlineText({
   const isStrike = typography.strikethrough;
   const align = typography.align || "left";
   const fontSize = typography.fontSize;
+  const color = typography.color;
+  const listType = typography.listType;
 
   const sizeClass =
     fontSize === "sm"
@@ -82,7 +76,17 @@ export function InlineText({
   const combinedStyle: React.CSSProperties = {
     ...style,
     ...(fontFam ? { fontFamily: fontFam } : {}),
+    ...(color ? { color } : {}),
   };
+
+  function handleInsertEmoji(emoji: string) {
+    if (ref.current) {
+      const current = ref.current.textContent || "";
+      const updated = current + emoji;
+      ref.current.textContent = updated;
+      onChange(updated);
+    }
+  }
 
   return (
     <div className="relative group/inline-text inline-block w-full">
@@ -91,35 +95,41 @@ export function InlineText({
           active={isFocused}
           value={typography}
           onChange={onTypographyChange}
+          onInsertEmoji={handleInsertEmoji}
           tagType={tagType}
           className="-top-14"
         />
       )}
-      <Tag
-        ref={ref as React.Ref<HTMLHeadingElement & HTMLParagraphElement & HTMLSpanElement>}
-        contentEditable
-        suppressContentEditableWarning
-        style={combinedStyle}
-        className={cn(
-          "outline-none rounded px-1 -mx-1 cursor-text transition-all",
-          isFocused ? "ring-2 ring-primary ring-offset-2" : "hover:ring-1 hover:ring-primary/40",
-          sizeClass,
-          alignClass,
-          isBold && "font-bold",
-          isItalic && "italic",
-          isUnderline && "underline",
-          isStrike && "line-through",
-          "empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50",
-          className,
-        )}
-        data-placeholder={placeholder}
-        onFocus={() => setIsFocused(true)}
-        onBlur={(e) => {
-          // Delay un-focus slightly so clicks inside floating toolbar register
-          setTimeout(() => setIsFocused(false), 200);
-          onChange(e.currentTarget.textContent || "");
-        }}
-      />
+      <div className={cn("flex items-start gap-2", align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start")}>
+        {listType === "bullet" && <span className="select-none text-primary font-bold mt-0.5">•</span>}
+        {listType === "number" && <span className="select-none text-muted-foreground font-semibold text-xs mt-1">1.</span>}
+        <Tag
+          ref={ref as React.Ref<HTMLHeadingElement & HTMLParagraphElement & HTMLSpanElement>}
+          contentEditable
+          suppressContentEditableWarning
+          style={combinedStyle}
+          className={cn(
+            "outline-none rounded px-1 -mx-1 cursor-text transition-all flex-1",
+            isFocused ? "ring-2 ring-primary ring-offset-2" : "hover:ring-1 hover:ring-primary/40",
+            sizeClass,
+            alignClass,
+            isBold && "font-bold",
+            isItalic && "italic",
+            isUnderline && "underline",
+            isStrike && "line-through",
+            typography.linkUrl && "underline text-primary cursor-pointer",
+            "empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50",
+            className,
+          )}
+          data-placeholder={placeholder}
+          onFocus={() => setIsFocused(true)}
+          onBlur={(e) => {
+            // Delay un-focus slightly so clicks inside floating toolbar register
+            setTimeout(() => setIsFocused(false), 200);
+            onChange(e.currentTarget.textContent || "");
+          }}
+        />
+      </div>
     </div>
   );
 }

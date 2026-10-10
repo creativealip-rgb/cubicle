@@ -411,13 +411,14 @@ function SortableCanvasField({
   const fieldFontFamily = field.fontFamily ? getFontFamily(field.fontFamily) : undefined;
   const fieldAlignClass = field.align === "center" ? "text-center" : field.align === "right" ? "text-right" : "text-left";
   const fieldSizeClass = field.fontSize === "sm" ? "text-xs" : field.fontSize === "lg" ? "text-base" : field.fontSize === "xl" ? "text-lg" : "text-sm";
-  const textStyles = `${field.bold ? "font-bold" : "font-medium"} ${field.italic ? "italic" : ""} ${field.underline ? "underline" : ""} ${field.strikethrough ? "line-through" : ""}`;
+  const textStyles = `${field.bold ? "font-bold" : "font-medium"} ${field.italic ? "italic" : ""} ${field.underline || field.linkUrl ? "underline" : ""} ${field.strikethrough ? "line-through" : ""}`;
 
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.35 : 1,
     fontFamily: fieldFontFamily,
+    color: field.color || undefined,
   };
 
   const isPageBreak = field.type === "page_break";
@@ -459,10 +460,16 @@ function SortableCanvasField({
             italic: field.italic,
             underline: field.underline,
             strikethrough: field.strikethrough,
+            color: field.color,
+            listType: field.listType,
+            linkUrl: field.linkUrl,
           }}
           onChange={(patch) => onUpdateField && onUpdateField(patch)}
           onDuplicate={onDuplicate}
           onDelete={onDelete}
+          onInsertEmoji={(emoji) => {
+            onUpdateLabel((field.label || "") + emoji);
+          }}
           tagType={isHeading ? "heading" : isInfo || isTerms ? "body" : "card"}
           className="-top-14 left-4"
         />

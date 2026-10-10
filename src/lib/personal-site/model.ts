@@ -64,6 +64,9 @@ export const elementTypographySchema = {
   italic: z.boolean().optional(),
   underline: z.boolean().optional(),
   strikethrough: z.boolean().optional(),
+  color: z.string().max(30).optional(),
+  listType: z.enum(["none", "bullet", "number"]).optional(),
+  linkUrl: z.string().max(500).optional(),
 };
 
 export const itemTypographySchema = {

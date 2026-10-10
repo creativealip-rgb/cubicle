@@ -164,19 +164,19 @@ function resolveFieldStyle(section: any, item: any, fieldKey: "titleTypography" 
   const isItalic = field.italic !== undefined ? field.italic : (item.italic !== undefined ? item.italic : section.italic);
   const isUnderline = field.underline !== undefined ? field.underline : (item.underline !== undefined ? item.underline : section.underline);
   const isStrike = field.strikethrough !== undefined ? field.strikethrough : (item.strikethrough !== undefined ? item.strikethrough : section.strikethrough);
-  const align = field.align || item.align || section.align || "left";
   const fontSize = field.fontSize || item.fontSize || section.fontSize || defaultSize;
+  const align = field.align || item.align || section.align || "left";
 
-  const sizeClass =
+  const sizeCls =
     fontSize === "sm"
-      ? (fieldKey === "descTypography" ? "text-xs" : "text-base font-semibold")
+      ? "text-xs"
       : fontSize === "lg"
-      ? (fieldKey === "descTypography" ? "text-base" : "text-xl font-bold")
+      ? "text-xl font-bold"
       : fontSize === "xl"
-      ? (fieldKey === "descTypography" ? "text-lg font-medium" : "text-2xl font-extrabold")
-      : (fieldKey === "descTypography" ? "text-sm" : "text-lg font-semibold");
+      ? "text-2xl sm:text-3xl font-extrabold"
+      : "text-sm";
 
-  const alignClass =
+  const alignCls =
     align === "center"
       ? "text-center"
       : align === "right"
@@ -184,11 +184,11 @@ function resolveFieldStyle(section: any, item: any, fieldKey: "titleTypography" 
       : "text-left";
 
   return [
-    sizeClass,
-    alignClass,
+    sizeCls,
+    alignCls,
     isBold && "font-bold",
     isItalic && "italic",
-    isUnderline && "underline",
+    (isUnderline || field.linkUrl) && "underline",
     isStrike && "line-through",
   ].filter(Boolean).join(" ");
 }

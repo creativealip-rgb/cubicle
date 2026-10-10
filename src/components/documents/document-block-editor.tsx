@@ -48,6 +48,7 @@ import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
 import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
 import { FloatingContextToolbar } from "@/components/site/canvas/floating-context-toolbar";
 import { PublicDocumentHeader } from "@/components/public/public-document-header";
+import { cn } from "@/lib/utils";
 import {
   AlignCenter,
   AlignLeft,
@@ -1336,10 +1337,18 @@ export function DocumentBlockEditor({
                                 italic: block.italic,
                                 underline: block.underline,
                                 strikethrough: block.strikethrough,
+                                color: block.color,
+                                listType: block.listType,
+                                linkUrl: block.linkUrl,
                               }}
                               onChange={(patch) => updateBlock(block.id, patch)}
                               onDuplicate={() => duplicateBlock(block.id)}
                               onDelete={() => remove(block.id)}
+                              onInsertEmoji={(emoji) => {
+                                updateBlock(block.id, {
+                                  content: (block.content || "") + emoji,
+                                });
+                              }}
                               tagType={block.type === "heading" ? "heading" : block.type === "list" ? "card" : "body"}
                             />
                           )}
@@ -1351,10 +1360,11 @@ export function DocumentBlockEditor({
                               onChange={(e) => update(block.id, e.target.value)}
                               style={{
                                 fontFamily: block.fontFamily ? getFontFamily(block.fontFamily) : undefined,
+                                color: block.color || undefined,
                               }}
                               className={`border-none bg-transparent tracking-tight focus:bg-background focus:ring-1 focus:ring-primary/40 ${
                                 block.bold !== false ? "font-bold" : "font-normal"
-                              } ${block.italic ? "italic" : ""} ${block.underline ? "underline" : ""} ${block.strikethrough ? "line-through" : ""} ${
+                              } ${block.italic ? "italic" : ""} ${block.underline || block.linkUrl ? "underline" : ""} ${block.strikethrough ? "line-through" : ""} ${
                                 block.fontSize === "sm"
                                   ? "text-sm sm:text-base"
                                   : block.fontSize === "base"
@@ -1372,34 +1382,39 @@ export function DocumentBlockEditor({
                               placeholder={t("Judul bagian...", "Section heading...")}
                             />
                           ) : block.type === "text" || block.type === "placeholder" ? (
-                            <Textarea
-                              style={{
-                                fontFamily: block.fontFamily ? getFontFamily(block.fontFamily) : undefined,
-                              }}
-                              className={`w-full resize-y border-none bg-transparent leading-relaxed focus:bg-background focus:ring-1 focus:ring-primary/40 ${
-                                block.bold ? "font-bold" : "font-normal"
-                              } ${block.italic ? "italic" : ""} ${block.underline ? "underline" : ""} ${block.strikethrough ? "line-through" : ""} ${
-                                block.fontSize === "sm"
-                                  ? "text-xs"
-                                  : block.fontSize === "lg"
-                                  ? "text-base sm:text-lg font-medium"
-                                  : block.fontSize === "xl"
-                                  ? "text-lg sm:text-xl font-semibold"
-                                  : "text-xs sm:text-sm"
-                              } ${
-                                block.align === "center" ? "text-center" : block.align === "right" ? "text-right" : "text-left"
-                              }`}
-                              value={block.content ?? ""}
-                              onChange={(e) => update(block.id, e.target.value)}
-                              rows={Math.max(2, (block.content || "").split("\n").length)}
-                              placeholder={block.type === "placeholder" ? "{{client_name}}" : t("Tulis isi dokumen...", "Write document content...")}
-                            />
+                            <div className={cn("flex items-start gap-2", block.align === "center" ? "justify-center" : block.align === "right" ? "justify-end" : "justify-start")}>
+                              {block.listType === "bullet" && <span className="select-none text-primary font-bold mt-1">•</span>}
+                              {block.listType === "number" && <span className="select-none text-muted-foreground font-semibold text-xs mt-1.5">1.</span>}
+                              <Textarea
+                                style={{
+                                  fontFamily: block.fontFamily ? getFontFamily(block.fontFamily) : undefined,
+                                  color: block.color || undefined,
+                                }}
+                                className={`w-full resize-y border-none bg-transparent leading-relaxed focus:bg-background focus:ring-1 focus:ring-primary/40 ${
+                                  block.bold ? "font-bold" : "font-normal"
+                                } ${block.italic ? "italic" : ""} ${block.underline || block.linkUrl ? "underline" : ""} ${block.strikethrough ? "line-through" : ""} ${
+                                  block.fontSize === "sm"
+                                    ? "text-xs"
+                                    : block.fontSize === "lg"
+                                    ? "text-base sm:text-lg font-medium"
+                                    : block.fontSize === "xl"
+                                    ? "text-lg sm:text-xl font-semibold"
+                                    : "text-xs sm:text-sm"
+                                } ${
+                                  block.align === "center" ? "text-center" : block.align === "right" ? "text-right" : "text-left"
+                                }`}
+                                value={block.content ?? ""}
+                                onChange={(e) => update(block.id, e.target.value)}
+                                rows={Math.max(2, (block.content || "").split("\n").length)}
+                                placeholder={block.type === "placeholder" ? "{{client_name}}" : t("Tulis isi dokumen...", "Write document content...")}
+                              />
+                            </div>
                           ) : block.type === "list" ? (
-                            <div className="space-y-1.5 py-1" style={{ fontFamily: block.fontFamily ? getFontFamily(block.fontFamily) : undefined }}>
+                            <div className="space-y-1.5 py-1" style={{ fontFamily: block.fontFamily ? getFontFamily(block.fontFamily) : undefined, color: block.color || undefined }}>
                               {(block.items || []).map((item, idx) => (
                                 <div key={idx} className={`flex items-center gap-2.5 ${block.align === "center" ? "justify-center" : block.align === "right" ? "justify-end" : "justify-start"}`}>
                                   <span className="text-xs font-semibold text-muted-foreground w-4 text-right select-none shrink-0">
-                                    {block.ordered ? `${idx + 1}.` : "•"}
+                                    {block.listType === "number" || block.ordered ? `${idx + 1}.` : "•"}
                                   </span>
                                   <Input
                                     value={item}
@@ -1424,9 +1439,10 @@ export function DocumentBlockEditor({
                                         setDirty(true);
                                       }
                                     }}
+                                    style={{ color: block.color || undefined }}
                                     className={`h-8 border-none bg-transparent leading-relaxed px-1 focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-background rounded-md ${
                                       block.bold ? "font-bold" : "font-normal"
-                                    } ${block.italic ? "italic" : ""} ${block.underline ? "underline" : ""} ${block.strikethrough ? "line-through" : ""} ${
+                                    } ${block.italic ? "italic" : ""} ${block.underline || block.linkUrl ? "underline" : ""} ${block.strikethrough ? "line-through" : ""} ${
                                       block.fontSize === "sm"
                                         ? "text-xs"
                                         : block.fontSize === "lg"
