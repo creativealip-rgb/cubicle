@@ -91,16 +91,16 @@ export function FloatingContextToolbar({
     <div
       ref={containerRef}
       onClick={(e) => e.stopPropagation()}
-      className={`absolute -top-12 left-1/2 -translate-x-1/2 z-40 flex items-center bg-white text-slate-800 rounded-lg shadow-xl border border-slate-200/80 px-1.5 py-1 text-xs gap-1 select-none animate-in fade-in zoom-in-95 duration-100 ${className}`}
+      className={`absolute -top-12 left-0 sm:left-1/2 sm:-translate-x-1/2 z-50 flex items-center bg-white text-slate-800 rounded-lg shadow-2xl border border-slate-200/90 px-2 py-1 text-xs gap-1 select-none animate-in fade-in zoom-in-95 duration-100 max-w-none whitespace-nowrap ${className}`}
     >
       {/* 1. Tag / Text Type Dropdown */}
       <div className="relative shrink-0">
         <button
           type="button"
           onClick={() => { setStyleOpen(!styleOpen); setFontOpen(false); setSizeOpen(false); setAlignOpen(false); }}
-          className="flex items-center gap-1 px-2 py-1 hover:bg-slate-100 rounded font-medium text-slate-700 whitespace-nowrap justify-between transition-colors"
+          className="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-100 rounded font-medium text-slate-700 whitespace-nowrap justify-between transition-colors"
         >
-          <span>{tagLabels[tagType]}</span>
+          <span className="font-semibold">{tagLabels[tagType] || t("Paragraf", "Body")}</span>
           <ChevronDown className="h-3 w-3 text-slate-400 shrink-0" />
         </button>
         {styleOpen && (
