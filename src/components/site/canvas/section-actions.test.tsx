@@ -160,7 +160,9 @@ describe("mobile section parity", () => {
 
   it("exposes a duplicate action that copies the section", async () => {
     const onUpdateSite = renderMobile(makeSite(DEFAULT_PERSONAL_SITE.sections));
-    await userEvent.click(screen.getByRole("button", { name: "Sections" }));
+    // The mobile surface is canvas-first: the section list lives behind the
+    // Structure drawer rather than a wizard step.
+    await userEvent.click(screen.getByRole("button", { name: "Structure" }));
 
     await userEvent.click(screen.getAllByRole("button", { name: /Duplicate section/i })[0]);
 
@@ -179,7 +181,9 @@ describe("mobile section parity", () => {
       content: "x",
     }));
     renderMobile(makeSite(full));
-    await userEvent.click(screen.getByRole("button", { name: "Sections" }));
+    // Templates are added from the Elements drawer; Structure only lists and
+    // reorders what already exists.
+    await userEvent.click(screen.getByRole("button", { name: "Elements" }));
     toastError.mockClear();
 
     await userEvent.click(screen.getByRole("button", { name: /Three Service Cards/i }));
@@ -199,7 +203,7 @@ describe("mobile section parity", () => {
   }
 
   async function clickAddPage() {
-    await userEvent.click(screen.getByRole("button", { name: "Pages" }));
+    await userEvent.click(screen.getByRole("button", { name: "Elements" }));
     toastError.mockClear();
     await userEvent.click(screen.getByRole("button", { name: /Add Page/i }));
   }

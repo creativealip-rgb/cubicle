@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, FileText, Layers, Palette, Eye, ChevronLeft, ChevronRight, Trash2, Copy, Home, Search } from "lucide-react";
+import { Plus, Layers, Palette, Eye, Trash2, Copy, Home, Search, Globe, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
+import { DndContext, PointerSensor, KeyboardSensor, closestCenter, useSensor, useSensors, type DragEndEvent } from "@dnd-kit/core";
+import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage } from "@/lib/personal-site/model";
 import { normalizePersonalSiteSlug } from "@/lib/personal-site/model";
 import { SECTION_TEMPLATES, type SectionTemplate } from "@/lib/personal-site/section-templates";
@@ -22,28 +26,22 @@ import {
   removePage as removePageFromList,
   removeSection,
 } from "@/lib/personal-site/editor-mutations";
+import { CanvasRenderer } from "./canvas-renderer";
 import { SEOPanel } from "./seo-panel";
 import { MobilePropertiesDrawer } from "./mobile-properties-drawer";
 import { ReadinessBadge } from "../readiness-badge";
 import { isReadyToPublish, getPersonalSiteReadiness } from "@/lib/personal-site/readiness";
 import { useT } from "@/lib/i18n-client";
 
-const STEPS = ["pages", "sections", "theme", "publish"] as const;
-type Step = typeof STEPS[number];
+/** Space-constrained controls live in drawers over the canvas, matching the Forms builder. */
+type DrawerId = "elements" | "structure" | "theme" | "publish";
 
-const STEP_ICONS: Record<Step, typeof FileText> = {
-  pages: FileText,
-  sections: Layers,
-  theme: Palette,
-  publish: Eye,
-};
-
-const STEP_LABELS: Record<Step, { id: string; en: string }> = {
-  pages: { id: "Halaman", en: "Pages" },
-  sections: { id: "Bagian", en: "Sections" },
-  theme: { id: "Tema", en: "Theme" },
-  publish: { id: "Terbitkan", en: "Publish" },
-};
+const DRAWERS: Array<{ id: DrawerId; label: { id: string; en: string }; icon: typeof Plus }> = [
+  { id: "elements", label: { id: "Elemen", en: "Elements" }, icon: Plus },
+  { id: "structure", label: { id: "Struktur", en: "Structure" }, icon: Layers },
+  { id: "theme", label: { id: "Tema", en: "Theme" }, icon: Palette },
+  { id: "publish", label: { id: "Terbitkan", en: "Publish" }, icon: Eye },
+];
 
 function slugifyPageTitle(title: string, fallback: string) {
   const slug = title
@@ -83,6 +81,12 @@ type Props = {
   canEditSlug: boolean;
 };
 
+/**
+ * Canvas-first mobile Landing editor. The rendered site is the primary surface;
+ * every management capability from the old step wizard (pages, section
+ * add/reorder/duplicate/delete/templates, theme, publish) moved into a bottom
+ * drawer over the canvas. Properties opens on section selection (Task 6 drawer).
+ */
 export function MobileStepEditor({
   site,
   activePageId,
@@ -95,9 +99,14 @@ export function MobileStepEditor({
   canEditSlug,
 }: Props) {
   const { t } = useT();
-  const [step, setStep] = useState<Step>("pages");
+  const [drawer, setDrawer] = useState<DrawerId | null>(null);
   const [pendingSectionDeleteId, setPendingSectionDeleteId] = useState<string | null>(null);
-  const stepIndex = STEPS.indexOf(step);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  );
+
   const publicUrl = `${publicSiteBaseUrl}/${normalizePersonalSiteSlug(site.slug)}`;
 
   const pages = site.pages?.length ? site.pages : [{ id: "home", slug: "", title: "Home", isHome: true, sections: site.sections }];
@@ -174,98 +183,129 @@ export function MobileStepEditor({
     updatePages(nextPages);
   }
 
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const from = sections.findIndex((s) => s.id === active.id);
+    const to = sections.findIndex((s) => s.id === over.id);
+    if (from < 0 || to < 0) return;
+    reorderSections(from, to);
+  }
+
   return (
-    <div className="flex flex-col h-full">
-      {/* Step indicator */}
-      <div className="flex items-center gap-1 px-4 py-3 border-b bg-muted/30">
-        {STEPS.map((s, i) => {
-          const Icon = STEP_ICONS[s];
-          const active = s === step;
-          const done = i < stepIndex;
-          return (
-            <button
-              key={s}
-              type="button"
-              onClick={() => setStep(s)}
-              className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
-                active ? "bg-primary text-primary-foreground" : done ? "text-muted-foreground" : "text-muted-foreground/50"
-              }`}
-            >
-              <Icon className="h-3 w-3" />
-              {t(STEP_LABELS[s].id, STEP_LABELS[s].en)}
-            </button>
-          );
-        })}
+    <div className="flex flex-col h-full" data-testid="mobile-landing-editor">
+      {/* Compact header — canvas-first, no wizard steps */}
+      <div className="flex items-center gap-2 px-3 py-2 border-b bg-background shrink-0">
+        <Globe className="h-4 w-4 text-primary shrink-0" />
+        <span className="min-w-0 flex-1 truncate text-sm font-semibold">
+          {site.title || t("Landing Page", "Landing Page")}
+        </span>
+        <Badge variant="outline" className={`shrink-0 text-[10px] font-bold uppercase tracking-wider ${
+          site.published ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-muted text-muted-foreground"
+        }`}>
+          {site.published ? t("Live", "Live") : t("Draft", "Draft")}
+        </Badge>
       </div>
 
-      {/* Step content */}
-      <div className="flex-1 overflow-y-auto p-4 pb-20">
-        {step === "pages" && (
-          <PagesStep
-            pages={pages}
-            activePageId={activePageId}
-            onSetActivePageId={onSetActivePageId}
-            updatePages={updatePages}
-          />
-        )}
+      {/*
+        Contained toolbar: horizontally scrollable so it never overflows a 390px
+        viewport (jsdom can't measure pixels, so containment is asserted via
+        `overflow-x-auto` on this container in the tests).
+      */}
+      <div
+        data-testid="mobile-landing-toolbar"
+        role="toolbar"
+        aria-label={t("Alat editor", "Editor tools")}
+        className="flex items-center gap-1 overflow-x-auto px-2 py-1.5 border-b bg-muted/30 shrink-0"
+      >
+        {DRAWERS.map(({ id, label, icon: Icon }) => (
+          <button
+            key={id}
+            type="button"
+            id={`mobile-drawer-trigger-${id}`}
+            aria-expanded={drawer === id}
+            aria-haspopup="dialog"
+            onClick={() => setDrawer(drawer === id ? null : id)}
+            className={`shrink-0 flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors ${
+              drawer === id ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground hover:text-foreground"
+            }`}
+          >
+            <Icon className="h-3 w-3" />
+            {t(label.id, label.en)}
+          </button>
+        ))}
+      </div>
 
-        {step === "sections" && (
-          <SectionsStep
-            sections={sections}
+      {/* Primary surface: the rendered site, always visible */}
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+        <div
+          data-testid="mobile-landing-canvas"
+          className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-muted/30 p-2"
+        >
+          <CanvasRenderer
+            site={{ ...site, sections }}
+            device="mobile"
             selectedSectionId={selectedSectionId}
             onSelectSection={onSelectSection}
-            addSection={addSection}
-            duplicateSection={duplicateSection}
-            deleteSection={requestDeleteSection}
-            reorderSections={reorderSections}
-          />
-        )}
-
-        {step === "theme" && (
-          <ThemeStep
-            site={site}
             onUpdateSite={onUpdateSite}
+            onUpdateSection={updateSection}
+            onAddSection={(type) => addSection(type)}
+            onMoveSection={(id, direction) => {
+              const i = sections.findIndex((s) => s.id === id);
+              if (i < 0) return;
+              reorderSections(i, i + direction);
+            }}
+            onDuplicateSection={duplicateSection}
+            onDeleteSection={requestDeleteSection}
           />
-        )}
+        </div>
+      </DndContext>
 
-        {step === "publish" && (
-          <PublishStep
-            site={site}
-            publicUrl={publicUrl}
-            previewUrl={previewUrl}
-            onUpdateSite={onUpdateSite}
-            canEditSlug={canEditSlug}
-          />
-        )}
-      </div>
+      {/* Elements: pages + section templates */}
+      <MobileDrawer id="elements" open={drawer === "elements"} onOpenChange={(open) => setDrawer(open ? "elements" : null)} title={t("Elemen", "Elements")}>
+        <PagesStep
+          pages={pages}
+          activePageId={activePageId}
+          onSetActivePageId={onSetActivePageId}
+          updatePages={updatePages}
+        />
+        <div className="mt-5">
+          <SectionTemplatePicker addSection={addSection} />
+        </div>
+      </MobileDrawer>
 
-      {/* Bottom nav */}
-      <div className="flex items-center justify-between px-4 py-3 border-t bg-background">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => setStep(STEPS[Math.max(0, stepIndex - 1)])}
-          disabled={stepIndex === 0}
-        >
-          <ChevronLeft className="h-4 w-4" /> {t("Kembali", "Back")}
-        </Button>
-        <span className="text-xs text-muted-foreground">
-          {t("Langkah", "Step")} {stepIndex + 1} / {STEPS.length}
-        </span>
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => setStep(STEPS[Math.min(STEPS.length - 1, stepIndex + 1)])}
-          disabled={stepIndex === STEPS.length - 1}
-        >
-          {t("Lanjut", "Next")} <ChevronRight className="h-4 w-4 ml-1" />
-        </Button>
-      </div>
+      {/* Structure: section order + per-row actions */}
+      <MobileDrawer id="structure" open={drawer === "structure"} onOpenChange={(open) => setDrawer(open ? "structure" : null)} title={t("Struktur", "Structure")}>
+        <SectionList
+          sections={sections}
+          selectedSectionId={selectedSectionId}
+          onSelectSection={(id) => {
+            onSelectSection(id);
+            setDrawer(null);
+          }}
+          duplicateSection={duplicateSection}
+          deleteSection={requestDeleteSection}
+          reorderSections={reorderSections}
+        />
+      </MobileDrawer>
+
+      <MobileDrawer id="theme" open={drawer === "theme"} onOpenChange={(open) => setDrawer(open ? "theme" : null)} title={t("Tema", "Theme")}>
+        <ThemeStep site={site} onUpdateSite={onUpdateSite} />
+      </MobileDrawer>
+
+      <MobileDrawer id="publish" open={drawer === "publish"} onOpenChange={(open) => setDrawer(open ? "publish" : null)} title={t("Terbitkan", "Publish")}>
+        <PublishStep
+          site={site}
+          publicUrl={publicUrl}
+          previewUrl={previewUrl}
+          onUpdateSite={onUpdateSite}
+          canEditSlug={canEditSlug}
+        />
+      </MobileDrawer>
 
       <MobilePropertiesDrawer
         section={selectedSection}
+        focusReturnId="mobile-drawer-trigger-structure"
         onUpdate={(patch) => { if (selectedSection) updateSection(selectedSection.id, patch); }}
         onDelete={() => { if (selectedSection) requestDeleteSection(selectedSection.id); }}
         onClose={() => onSelectSection(null)}
@@ -284,6 +324,46 @@ export function MobileStepEditor({
         }}
       />
     </div>
+  );
+}
+
+/** Bottom drawer shell for one management panel; returns focus to its toolbar trigger on close. */
+function MobileDrawer({ id, open, onOpenChange, title, children }: {
+  id: DrawerId;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  title: string;
+  children: React.ReactNode;
+}) {
+  const { t } = useT();
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent
+        side="bottom"
+        aria-describedby={undefined}
+        data-testid={`mobile-drawer-${id}`}
+        className="flex max-h-[85vh] flex-col gap-0 rounded-t-2xl p-0 md:hidden [&>button]:hidden"
+        onCloseAutoFocus={(event) => {
+          const trigger = document.getElementById(`mobile-drawer-trigger-${id}`);
+          if (!trigger) return;
+          event.preventDefault();
+          trigger.focus();
+        }}
+      >
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b px-4 py-3">
+          <SheetTitle className="text-sm font-semibold">{title}</SheetTitle>
+          <button
+            type="button"
+            aria-label={t("Tutup panel", "Close panel")}
+            onClick={() => onOpenChange(false)}
+            className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4">{children}</div>
+      </SheetContent>
+    </Sheet>
   );
 }
 
@@ -310,7 +390,7 @@ function PagesStep({ pages, activePageId, onSetActivePageId, updatePages }: {
   return (
     <div className="space-y-3">
       <h2 className="text-sm font-semibold">{t("Halaman", "Pages")}</h2>
-      {pages.map((page, _i) => (
+      {pages.map((page) => (
         <div key={page.id} className={`flex items-center gap-2 rounded-lg border p-3 ${page.id === activePageId ? "border-primary/60 bg-primary/5" : ""}`}>
           <button type="button" className="flex-1 text-left" onClick={() => onSetActivePageId(page.id)}>
             <p className="text-sm font-medium">{page.title}</p>
@@ -349,11 +429,34 @@ function PagesStep({ pages, activePageId, onSetActivePageId, updatePages }: {
   );
 }
 
-function SectionsStep({ sections, selectedSectionId, onSelectSection, addSection, duplicateSection, deleteSection, reorderSections }: {
+const SECTION_TEMPLATE_EN: Record<string, string> = { "Layanan 3 Kartu": "3 Service Cards", "Pengembangan Software": "Software Development", "Proses 3 Langkah": "3-Step Process", "Metode Agile": "Agile Method", "Pricing 3 Paket": "3-Tier Pricing", "SaaS Pricing Tier": "SaaS Pricing Tiers", "FAQ 5 Pertanyaan": "5-Question FAQ", "FAQ Freelancer": "Freelancer FAQ", "CTA Utama": "Primary CTA", "CTA Kontak": "Contact CTA", "Testimoni 3 Klien": "3-Client Testimonials", "Portfolio Gallery": "Portfolio Gallery", "Embed Video": "Video Embed" };
+
+function SectionTemplatePicker({ addSection }: { addSection: (t: SectionTemplate | string) => void }) {
+  const { t } = useT();
+  return (
+    <div className="space-y-2">
+      <h3 className="text-xs font-medium text-muted-foreground uppercase">{t("Tambah Bagian", "Add Section")}</h3>
+      <div className="grid grid-cols-2 gap-1.5">
+        {SECTION_TEMPLATES.map((template) => (
+          <button
+            key={template.id}
+            type="button"
+            onClick={() => addSection(template)}
+            className="flex flex-col items-center gap-1 rounded-lg border p-2 text-[10px] hover:bg-muted transition-colors"
+          >
+            <Layers className="h-3 w-3 text-muted-foreground" />
+            <span className="line-clamp-2">{t(template.label, SECTION_TEMPLATE_EN[template.label] ?? template.label)}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function SectionList({ sections, selectedSectionId, onSelectSection, duplicateSection, deleteSection, reorderSections }: {
   sections: PersonalSiteSection[];
   selectedSectionId: string | null;
   onSelectSection: (id: string | null) => void;
-  addSection: (t: SectionTemplate | string) => void;
   duplicateSection: (id: string) => void;
   deleteSection: (id: string) => void;
   reorderSections: (from: number, to: number) => void;
@@ -362,8 +465,6 @@ function SectionsStep({ sections, selectedSectionId, onSelectSection, addSection
   return (
     <div className="space-y-4">
       <h2 className="text-sm font-semibold">{t("Bagian", "Sections")} ({sections.length})</h2>
-
-      {/* Section list */}
       <div className="space-y-1">
         {sections.map((section, i) => (
           <div key={section.id} className={`flex items-center gap-2 rounded-lg border p-2 text-xs ${selectedSectionId === section.id ? "border-primary/60 bg-primary/5" : ""}`}>
@@ -371,6 +472,7 @@ function SectionsStep({ sections, selectedSectionId, onSelectSection, addSection
               <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label={t("Naikkan bagian", "Move section up")} disabled={i === 0} onClick={() => reorderSections(i, i - 1)}>↑</Button>
               <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label={t("Turunkan bagian", "Move section down")} disabled={i === sections.length - 1} onClick={() => reorderSections(i, i + 1)}>↓</Button>
             </div>
+            {/* Task 6 drawer returns focus here when it can; the toolbar trigger is the mobile fallback. */}
             <button type="button" id={`section-row-${section.id}`} className="flex-1 text-left truncate" onClick={() => onSelectSection(section.id)}>
               {section.heading || section.type}
             </button>
@@ -383,32 +485,12 @@ function SectionsStep({ sections, selectedSectionId, onSelectSection, addSection
           </div>
         ))}
         {sections.length === 0 && (
-          <p className="text-xs text-muted-foreground text-center py-4">{t("Belum ada bagian. Tambahkan dari bawah.", "No sections yet. Add one below.")}</p>
+          <p className="text-xs text-muted-foreground text-center py-4">{t("Belum ada bagian. Tambahkan dari Elemen.", "No sections yet. Add one from Elements.")}</p>
         )}
-      </div>
-
-      {/* Add section buttons */}
-      <div className="space-y-2">
-        <h3 className="text-xs font-medium text-muted-foreground uppercase">{t("Tambah Bagian", "Add Section")}</h3>
-        <div className="grid grid-cols-2 gap-1.5">
-          {SECTION_TEMPLATES.map((template) => (
-            <button
-              key={template.id}
-              type="button"
-              onClick={() => addSection(template)}
-              className="flex flex-col items-center gap-1 rounded-lg border p-2 text-[10px] hover:bg-muted transition-colors"
-            >
-              <Layers className="h-3 w-3 text-muted-foreground" />
-              <span className="line-clamp-2">{t(template.label, SECTION_TEMPLATE_EN[template.label] ?? template.label)}</span>
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   );
 }
-
-const SECTION_TEMPLATE_EN: Record<string, string> = { "Layanan 3 Kartu": "3 Service Cards", "Pengembangan Software": "Software Development", "Proses 3 Langkah": "3-Step Process", "Metode Agile": "Agile Method", "Pricing 3 Paket": "3-Tier Pricing", "SaaS Pricing Tier": "SaaS Pricing Tiers", "FAQ 5 Pertanyaan": "5-Question FAQ", "FAQ Freelancer": "Freelancer FAQ", "CTA Utama": "Primary CTA", "CTA Kontak": "Contact CTA", "Testimoni 3 Klien": "3-Client Testimonials", "Portfolio Gallery": "Portfolio Gallery", "Embed Video": "Video Embed" };
 
 function ThemeStep({ site, onUpdateSite }: {
   site: PersonalSiteInput;

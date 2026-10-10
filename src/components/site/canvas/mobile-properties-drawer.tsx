@@ -11,6 +11,12 @@ type MobilePropertiesDrawerProps = {
   onUpdate: (patch: Partial<PersonalSiteSection>) => void;
   onDelete?: () => void;
   onClose: () => void;
+  /**
+   * Optional id of the element that opened the drawer. The canvas-first mobile
+   * surface opens it from a section row inside the Structure drawer or from the
+   * toolbar, so it points focus there. Defaults to the section row (`section-row-<id>`).
+   */
+  focusReturnId?: string;
 };
 
 /**
@@ -36,7 +42,7 @@ function useMobileViewport() {
  * rail, so all 20 section types are editable on mobile. Open state is driven by
  * `section` (null = closed). On close, focus returns to the section row.
  */
-export function MobilePropertiesDrawer({ section, onUpdate, onDelete, onClose }: MobilePropertiesDrawerProps) {
+export function MobilePropertiesDrawer({ section, onUpdate, onDelete, onClose, focusReturnId }: MobilePropertiesDrawerProps) {
   const { t } = useT();
   const isMobileViewport = useMobileViewport();
   // Last selected section id — kept after close so focus can return to its row.
@@ -50,11 +56,16 @@ export function MobilePropertiesDrawer({ section, onUpdate, onDelete, onClose }:
       <SheetContent
         side="bottom"
         aria-describedby={undefined}
+        data-testid="mobile-drawer-properties"
         className="flex max-h-[85vh] flex-col gap-0 rounded-t-2xl p-0 md:hidden [&>button]:hidden"
         onCloseAutoFocus={(event) => {
-          // Focus returns to the section row that opened the drawer.
-          const id = lastSectionIdRef.current;
-          const row = id ? document.getElementById(`section-row-${id}`) : null;
+          // Focus returns to the element that opened the drawer: an explicit
+          // trigger id when provided, otherwise the section row.
+          const row = focusReturnId
+            ? document.getElementById(focusReturnId)
+            : lastSectionIdRef.current
+              ? document.getElementById(`section-row-${lastSectionIdRef.current}`)
+              : null;
           if (!row) return;
           event.preventDefault();
           row.focus();
