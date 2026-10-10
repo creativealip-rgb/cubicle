@@ -45,7 +45,17 @@ describe("entitlement lifecycle wiring", () => {
       migration.match(/ALTER TABLE "user_extra_workspace_entitlements"[\s\S]*?ALTER COLUMN "auto_renew" SET DEFAULT false/),
     ).not.toBeNull();
     expect(migration.match(/SET "auto_renew" = false/g)?.length).toBe(2);
-    expect(schema.match(/autoRenew: boolean\("auto_renew"\)\.notNull\(\)\.default\(false\)/g)?.length).toBe(2);
+    // Every entitlement table must refuse auto-renew; 0070/0072 are the only two
+    // that were created DEFAULT true and are the ones this migration corrects.
+    // Assert the invariant, not a brittle count (a 3rd/4th table must not default true).
+    expect(schema).not.toMatch(/autoRenew: boolean\("auto_renew"\)\.notNull\(\)\.default\(true\)/);
+    const allAutoRenew = schema.match(/autoRenew: boolean\("auto_renew"\)[^,]*default\((?:true|false)\)/g) ?? [];
+    const allFalse = allAutoRenew.filter((d) => d.endsWith("default(false)"));
+    expect(allAutoRenew.length).toBeGreaterThanOrEqual(2);
+    expect(allFalse.length).toBe(allAutoRenew.length);
+    // 0070/0072 are the two legacy tables the corrective migration must undo.
+    expect(read("drizzle/0070_storage_entitlements.sql")).toContain('"auto_renew" boolean NOT NULL DEFAULT true');
+    expect(read("drizzle/0072_extra_workspace_entitlements.sql")).toContain('"auto_renew" boolean NOT NULL DEFAULT true');
   });
 });
 

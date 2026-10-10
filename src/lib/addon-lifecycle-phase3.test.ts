@@ -25,11 +25,15 @@ describe("Phase 3: no free renewal without payment (QRIS has no mandate)", () =>
     }
   });
 
-  it("schema default for auto_renew is false on BOTH entitlement tables (no unfunded renewal)", () => {
+  it("no entitlement table defaults auto_renew to true (no unfunded renewal)", () => {
     const src = schema();
-    // Both entitlement tables must stop defaulting new rows to auto-renew.
-    const matches = src.match(/autoRenew: boolean\("auto_renew"\)\.notNull\(\)\.default\(false\)/g);
-    expect(matches?.length).toBe(2);
+    // The two legacy tables (0070/0072) were created DEFAULT true and are fixed by
+    // 0077; every entitlement table since defaults false. Assert that invariant
+    // directly instead of pinning a table count that grows with each new add-on type.
+    expect(src).not.toMatch(/autoRenew: boolean\("auto_renew"\)\.notNull\(\)\.default\(true\)/);
+    const allAutoRenew = src.match(/autoRenew: boolean\("auto_renew"\)[^,]*default\((?:true|false)\)/g) ?? [];
+    expect(allAutoRenew.length).toBeGreaterThanOrEqual(2);
+    expect(allAutoRenew.filter((d) => d.endsWith("default(false)")).length).toBe(allAutoRenew.length);
   });
 });
 
