@@ -82,6 +82,8 @@ export default async function IntakePage({ params }: { params: Promise<{ token: 
             thankYouMessage={questionnaire.thankYouMessage}
             themePreset={questionnaire.themePreset}
             cardRadius={questionnaire.cardRadius}
+            workspaceId={questionnaire.workspaceId}
+            workspaceLogoUrl={workspaceLogoUrl}
           />
         </div>
       </div>

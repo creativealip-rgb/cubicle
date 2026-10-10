@@ -55,6 +55,8 @@ export function IntakeForm({
   thankYouMessage,
   themePreset,
   cardRadius,
+  workspaceId,
+  workspaceLogoUrl,
 }: {
   token: string;
   fields: QuestionnaireField[];
@@ -64,6 +66,8 @@ export function IntakeForm({
   thankYouMessage?: string | null;
   themePreset?: string | null;
   cardRadius?: string | null;
+  workspaceId?: string | null;
+  workspaceLogoUrl?: string | null;
 }) {
   const { t, lang } = useT();
   const [answers, setAnswers] = useState<Record<string, any>>({});
@@ -333,11 +337,16 @@ export function IntakeForm({
                 : "justify-start";
             const sizeClass =
               f.logoSize === "sm" ? "h-8" : f.logoSize === "lg" ? "h-16" : "h-12";
+            // Without a custom src the element falls back to the workspace logo.
+            // When the workspace has no logo the route 404s, so skip the <img>
+            // entirely instead of firing a request that can only fail.
+            const logoSrc = f.src || (workspaceId && workspaceLogoUrl ? `/api/public/workspace-logo/${workspaceId}` : "");
+            if (!logoSrc) return null;
             return (
               <div key={f.id} className={`col-span-12 py-2 flex items-center ${justifyClass}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={f.src || `/api/public/workspace-logo/${token}`}
+                  src={logoSrc}
                   alt="Brand Logo"
                   className={`${sizeClass} object-contain rounded`}
                   onError={(e) => {
@@ -491,7 +500,11 @@ export function IntakeForm({
                   value={answers[f.id] || ""}
                   onValueChange={(val) => setFieldValue(f.id, val)}
                 >
-                  <SelectTrigger id={`field-${f.id}`} className="h-10 text-xs sm:text-sm bg-background">
+                  <SelectTrigger
+                    id={`field-${f.id}`}
+                    aria-label={f.label}
+                    className="h-10 text-xs sm:text-sm bg-background"
+                  >
                     <SelectValue placeholder={t("Pilih salah satu...", "Select an option...")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -645,6 +658,7 @@ export function IntakeForm({
                                 <input
                                   type="radio"
                                   name={`matrix_${f.id}_${rIdx}`}
+                                  aria-label={`${row}: ${col}`}
                                   checked={currentMatrixAns[originalRow] === col}
                                   onChange={() =>
                                     setFieldValue(f.id, {

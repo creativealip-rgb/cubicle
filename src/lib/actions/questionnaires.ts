@@ -31,7 +31,6 @@ const createQuestionnaireSchema = z.object({
   cardRadius: z.string().optional().nullable(),
   thankYouMessage: z.string().max(2000).optional().nullable(),
   redirectUrl: z.string().url().or(z.string().max(0)).optional().nullable(),
-  passwordProtection: z.string().max(100).optional().nullable(),
   formStatus: z.enum(["active", "disabled"]).optional(),
   schema: questionnaireSchemaInput,
 });
@@ -49,7 +48,6 @@ const updateQuestionnaireSchema = z.object({
   cardRadius: z.string().optional().nullable(),
   thankYouMessage: z.string().max(2000).optional().nullable(),
   redirectUrl: z.string().url().or(z.string().max(0)).optional().nullable(),
-  passwordProtection: z.string().max(100).optional().nullable(),
   formStatus: z.enum(["active", "disabled"]).optional(),
   schema: questionnaireSchemaInput.optional(),
 });
@@ -84,7 +82,6 @@ export async function createQuestionnaire(input: {
   cardRadius?: string | null;
   thankYouMessage?: string | null;
   redirectUrl?: string | null;
-  passwordProtection?: string | null;
   formStatus?: "active" | "disabled";
   schema: QuestionnaireField[];
 }) {
@@ -107,7 +104,6 @@ export async function createQuestionnaire(input: {
     cardRadius: parsed.cardRadius || "rounded",
     thankYouMessage: parsed.thankYouMessage || null,
     redirectUrl: parsed.redirectUrl || null,
-    passwordProtection: parsed.passwordProtection || null,
     formStatus: parsed.formStatus || "active",
     schema: parsed.schema,
     createdBy: user.id,
@@ -590,10 +586,20 @@ export async function submitQuestionnaire(input: {
   }
 
   // 2. Submit via Public Master Link (Membuat entry respon baru di database secara dinamis)
+  // Mirror getPublicQuestionnaire: a master link carries either the UUID or the
+  // slug, and casting a slug straight into a uuid column raises PG 22P02.
+  const isUuidToken = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.token);
   const [qMaster] = await db
     .select()
     .from(questionnaires)
-    .where(eq(questionnaires.id, input.token))
+    .where(
+      isUuidToken
+        ? or(
+            eq(questionnaires.id, input.token),
+            eq(sql`lower(${questionnaires.slug})`, input.token.toLowerCase())
+          )
+        : eq(sql`lower(${questionnaires.slug})`, input.token.toLowerCase())
+    )
     .limit(1);
 
   if (!qMaster) throw new Error("Formulir tidak ditemukan");

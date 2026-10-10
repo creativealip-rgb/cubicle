@@ -2116,7 +2116,7 @@ export const questionnaires = pgTable("questionnaires", {
   expiresAt: timestamp("expires_at", { withTimezone: true }),
   maxResponses: integer("max_responses"),
   requireAll: boolean("require_all").notNull().default(false),
-  themePreset: text("theme_preset").default("purple"),
+  themePreset: text("theme_preset").default("blue"),
   cardRadius: text("card_radius").default("rounded"),
   thankYouMessage: text("thank_you_message"),
   redirectUrl: text("redirect_url"),

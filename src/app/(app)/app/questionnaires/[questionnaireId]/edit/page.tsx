@@ -47,7 +47,6 @@ export default async function QuestionnaireEditPage({ params }: { params: Promis
         cardRadius: q.cardRadius,
         thankYouMessage: q.thankYouMessage,
         redirectUrl: q.redirectUrl,
-        passwordProtection: q.passwordProtection,
         formStatus: (q.formStatus as "active" | "disabled") || "active",
         schema: fields,
       }}

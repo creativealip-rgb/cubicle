@@ -79,6 +79,7 @@ import {
   Smartphone,
   Monitor,
   Tablet,
+  GitBranch,
   Image as ImageIcon,
   Columns,
   Square,
@@ -313,6 +314,14 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     category: "structure",
     defaultConfig: { label: "Divider", colSpan: "full" },
   },
+  {
+    type: "logo",
+    label: "Brand Logo",
+    description: "Workspace brand mark at the top of the form",
+    icon: ImageIcon,
+    category: "structure",
+    defaultConfig: { label: "Brand Logo", align: "center", logoSize: "md", colSpan: "full" },
+  },
 ];
 
 const FORM_TEMPLATES = [
@@ -382,6 +391,8 @@ function SortableCanvasField({
   onUpdateField,
   cardRadius = "rounded",
   themeHex = "#2563EB",
+  workspaceId,
+  workspaceLogoUrl,
 }: {
   field: QuestionnaireField;
   isSelected: boolean;
@@ -389,6 +400,8 @@ function SortableCanvasField({
   onDuplicate: () => void;
   onDelete: () => void;
   onOpenProperties: () => void;
+  workspaceId: string;
+  workspaceLogoUrl?: string | null;
   onUpdateLabel: (val: string) => void;
   onUpdateField?: (patch: Partial<QuestionnaireField>) => void;
   cardRadius?: "normal" | "rounded" | "soft";
@@ -436,6 +449,7 @@ function SortableCanvasField({
     <div
       ref={setNodeRef}
       style={style}
+      data-field-id={field.id}
       onClick={onSelect}
       className={`group relative ${cardRadiusClass} border p-4 sm:p-5 transition-all cursor-pointer ${
         isPageBreak ? "col-span-12 border-dashed border-primary/60 bg-primary/[0.03]" : isHalf ? "col-span-12 md:col-span-6" : "col-span-12"
@@ -542,15 +556,20 @@ function SortableCanvasField({
       ) : isLogo ? (
         <div className={`py-1 flex items-center ${field.align === "center" ? "justify-center" : field.align === "right" ? "justify-end" : "justify-start"}`}>
           <div className="flex items-center gap-3 p-2 rounded-xl border border-dashed border-border/80 bg-muted/20">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={field.src || `/api/public/workspace-logo/${field.id ? "workspace" : ""}`}
-              alt="Logo"
-              className={`${field.logoSize === "sm" ? "h-8" : field.logoSize === "lg" ? "h-16" : "h-12"} object-contain rounded`}
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = "none";
-              }}
-            />
+            {/* With no custom src the element falls back to the workspace logo.
+                Skip the <img> when the workspace has none: the route can only
+                answer 404 and the request would surface as a console error. */}
+            {(field.src || workspaceLogoUrl) && (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img
+                src={field.src || `/api/public/workspace-logo/${workspaceId}`}
+                alt="Logo"
+                className={`${field.logoSize === "sm" ? "h-8" : field.logoSize === "lg" ? "h-16" : "h-12"} object-contain rounded`}
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = "none";
+                }}
+              />
+            )}
             <span className="text-xs font-semibold text-muted-foreground">{t("Header Logo Brand", "Brand Header Logo")}</span>
           </div>
         </div>
@@ -758,7 +777,6 @@ export function QuestionnaireBuilder({
     cardRadius?: string | null;
     thankYouMessage?: string | null;
     redirectUrl?: string | null;
-    passwordProtection?: string | null;
     formStatus?: "active" | "disabled";
     schema: QuestionnaireField[];
   };
@@ -841,9 +859,9 @@ export function QuestionnaireBuilder({
   const [maxResponses, setMaxResponses] = useState<string>(initial?.maxResponses ? String(initial.maxResponses) : "");
   const [requireAll, setRequireAll] = useState<boolean>(initial?.requireAll || false);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
-  const [selectedTheme, setSelectedTheme] = useState(initial?.themePreset || "purple");
+  const [selectedTheme, setSelectedTheme] = useState(initial?.themePreset || "blue");
   const [customHex, setCustomHex] = useState(
-    THEME_PRESETS.find((p) => p.id === (initial?.themePreset || "purple"))?.hex || "#6C5CE7"
+    THEME_PRESETS.find((p) => p.id === (initial?.themePreset || "blue"))?.hex || "#2563EB"
   );
   const [cardRoundness, setCardRoundness] = useState<"normal" | "rounded" | "soft">(
     (initial?.cardRadius as "normal" | "rounded" | "soft") || "rounded"
@@ -853,7 +871,6 @@ export function QuestionnaireBuilder({
       "Thank you! Your response has been received and will be processed shortly."
   );
   const [redirectUrl, setRedirectUrl] = useState(initial?.redirectUrl || "");
-  const [passwordProtection, setPasswordProtection] = useState(initial?.passwordProtection || "");
   const [formStatus, setFormStatus] = useState<"active" | "disabled">((initial?.formStatus as any) || "active");
 
   const [isTranslating, setIsTranslating] = useState(false);
@@ -1107,7 +1124,6 @@ export function QuestionnaireBuilder({
             cardRadius: cardRoundness,
             thankYouMessage: thankYouMessage.trim() || null,
             redirectUrl: redirectUrl.trim() || null,
-            passwordProtection: passwordProtection.trim() || null,
             formStatus,
             schema: fields,
           });
@@ -1125,7 +1141,6 @@ export function QuestionnaireBuilder({
             cardRadius: cardRoundness,
             thankYouMessage: thankYouMessage.trim() || null,
             redirectUrl: redirectUrl.trim() || null,
-            passwordProtection: passwordProtection.trim() || null,
             formStatus,
             schema: fields,
           });
@@ -1151,7 +1166,6 @@ export function QuestionnaireBuilder({
       cardRoundness,
       thankYouMessage,
       redirectUrl,
-      passwordProtection,
       formStatus,
       fields,
       activeQuestionnaireId,
@@ -1183,7 +1197,6 @@ export function QuestionnaireBuilder({
     cardRoundness,
     thankYouMessage,
     redirectUrl,
-    passwordProtection,
     formStatus,
     fields,
     questionnaireId,
@@ -1835,6 +1848,8 @@ export function QuestionnaireBuilder({
                               field={field}
                               cardRadius={cardRoundness}
                               themeHex={customHex}
+                              workspaceId={workspaceId}
+                              workspaceLogoUrl={workspaceLogoUrl}
                               isSelected={field.id === selectedFieldId}
                               onSelect={() => {
                                 setSelectedFieldId(field.id);
@@ -2431,6 +2446,89 @@ export function QuestionnaireBuilder({
                           </div>
                         )}
 
+                        {/* Conditional Logic (show/hide this field) */}
+                        {!["divider", "heading", "info", "page_break", "logo"].includes(selectedField.type) && (
+                          <div className="space-y-2 pt-2 border-t border-border/60">
+                            <Label className="text-xs font-medium flex items-center gap-1.5">
+                              <GitBranch className="h-3.5 w-3.5 text-primary" />
+                              {t("Logika Kondisional (Opsional)", "Conditional Logic (Optional)")}
+                            </Label>
+                            <Select
+                              value={selectedField.condition?.fieldId || "__none__"}
+                              onValueChange={(v) =>
+                                updateSelectedField({
+                                  condition:
+                                    v === "__none__"
+                                      ? undefined
+                                      : {
+                                          fieldId: v,
+                                          operator: selectedField.condition?.operator || "equals",
+                                          value: selectedField.condition?.value,
+                                        },
+                                })
+                              }
+                            >
+                              <SelectTrigger className="h-8.5 text-xs">
+                                <SelectValue placeholder={t("Selalu tampil", "Always visible")} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__none__">{t("Selalu tampil", "Always visible")}</SelectItem>
+                                {fields
+                                  .filter((f) => f.id !== selectedField.id && !["heading", "divider", "info", "page_break", "logo"].includes(f.type))
+                                  .map((f) => (
+                                    <SelectItem key={f.id} value={f.id}>
+                                      {f.label || t("Pertanyaan", "Question")}
+                                    </SelectItem>
+                                  ))}
+                              </SelectContent>
+                            </Select>
+                            {selectedField.condition?.fieldId && (
+                              <div className="grid grid-cols-2 gap-1.5">
+                                <Select
+                                  value={selectedField.condition.operator || "equals"}
+                                  onValueChange={(v: any) =>
+                                    updateSelectedField({
+                                      condition: { ...selectedField.condition!, operator: v },
+                                    })
+                                  }
+                                >
+                                  <SelectTrigger className="h-8.5 text-xs">
+                                    <SelectValue />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="equals">{t("Sama dengan", "Equals")}</SelectItem>
+                                    <SelectItem value="not_equals">{t("Tidak sama", "Not equals")}</SelectItem>
+                                    <SelectItem value="is_filled">{t("Terisi", "Is filled")}</SelectItem>
+                                    <SelectItem value="is_empty">{t("Kosong", "Is empty")}</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                {(selectedField.condition.operator || "equals") === "equals" ||
+                                (selectedField.condition.operator || "equals") === "not_equals" ? (
+                                  <Input
+                                    value={selectedField.condition.value || ""}
+                                    onChange={(e) =>
+                                      updateSelectedField({
+                                        condition: { ...selectedField.condition!, value: e.target.value },
+                                      })
+                                    }
+                                    placeholder={t("Nilai", "Value")}
+                                    className="h-8.5 text-xs"
+                                  />
+                                ) : null}
+                              </div>
+                            )}
+                            {selectedField.condition?.fieldId && (
+                              <button
+                                type="button"
+                                onClick={() => updateSelectedField({ condition: undefined })}
+                                className="text-[10px] text-muted-foreground hover:text-destructive"
+                              >
+                                {t("Reset logika", "Reset logic")}
+                              </button>
+                            )}
+                          </div>
+                        )}
+
                         {/* Quick Delete */}
                         <div className="pt-3 border-t border-border/60">
                           <Button
@@ -2566,19 +2664,6 @@ export function QuestionnaireBuilder({
                 </Select>
               </div>
 
-              <div className="space-y-1.5 pt-1">
-                <Label className="text-xs font-semibold">{t("Proteksi Password (Opsional)", "Password Protection (Optional)")}</Label>
-                <Input
-                  type="password"
-                  value={passwordProtection}
-                  onChange={(e) => setPasswordProtection(e.target.value)}
-                  placeholder={t("Biarkan kosong untuk akses publik tanpa password", "Leave empty for public access without password")}
-                  className="h-9 text-xs"
-                />
-                <p className="text-[10px] text-muted-foreground">
-                  {t("Jika diisi, responden wajib memasukkan passcode sebelum dapat mengisi form.", "If set, respondents must enter this passcode before accessing the form.")}
-                </p>
-              </div>
             </div>
 
             {/* Theme & Styling */}
