@@ -158,31 +158,23 @@ function getSectionHeadingStyle(section: any, baseHeadingStyle?: CSSProperties):
   };
 }
 
-function resolveItemStyle(section: any, item: any) {
-  const isBold = item.bold !== undefined ? item.bold : section.bold;
-  const isItalic = item.italic !== undefined ? item.italic : section.italic;
-  const isUnderline = item.underline !== undefined ? item.underline : section.underline;
-  const isStrike = item.strikethrough !== undefined ? item.strikethrough : section.strikethrough;
-  const align = item.align || section.align || "left";
-  const fontSize = item.fontSize || section.fontSize || "base";
+function resolveFieldStyle(section: any, item: any, fieldKey: "titleTypography" | "descTypography", defaultSize: "sm" | "base" | "lg" | "xl" = "base") {
+  const field = item[fieldKey] || {};
+  const isBold = field.bold !== undefined ? field.bold : (item.bold !== undefined ? item.bold : section.bold);
+  const isItalic = field.italic !== undefined ? field.italic : (item.italic !== undefined ? item.italic : section.italic);
+  const isUnderline = field.underline !== undefined ? field.underline : (item.underline !== undefined ? item.underline : section.underline);
+  const isStrike = field.strikethrough !== undefined ? field.strikethrough : (item.strikethrough !== undefined ? item.strikethrough : section.strikethrough);
+  const align = field.align || item.align || section.align || "left";
+  const fontSize = field.fontSize || item.fontSize || section.fontSize || defaultSize;
 
-  const titleSize =
+  const sizeClass =
     fontSize === "sm"
-      ? "text-base font-semibold"
+      ? (fieldKey === "descTypography" ? "text-xs" : "text-base font-semibold")
       : fontSize === "lg"
-      ? "text-xl font-bold"
+      ? (fieldKey === "descTypography" ? "text-base" : "text-xl font-bold")
       : fontSize === "xl"
-      ? "text-2xl font-extrabold"
-      : "text-lg font-semibold";
-
-  const descSize =
-    fontSize === "sm"
-      ? "text-xs"
-      : fontSize === "lg"
-      ? "text-base"
-      : fontSize === "xl"
-      ? "text-lg"
-      : "text-sm";
+      ? (fieldKey === "descTypography" ? "text-lg font-medium" : "text-2xl font-extrabold")
+      : (fieldKey === "descTypography" ? "text-sm" : "text-lg font-semibold");
 
   const alignClass =
     align === "center"
@@ -191,24 +183,14 @@ function resolveItemStyle(section: any, item: any) {
       ? "text-right"
       : "text-left";
 
-  const titleClass = [
-    titleSize,
+  return [
+    sizeClass,
     alignClass,
     isBold && "font-bold",
     isItalic && "italic",
     isUnderline && "underline",
     isStrike && "line-through",
   ].filter(Boolean).join(" ");
-
-  const descClass = [
-    descSize,
-    alignClass,
-    isItalic && "italic",
-    isUnderline && "underline",
-    "mt-2 whitespace-pre-wrap leading-6 opacity-70",
-  ].filter(Boolean).join(" ");
-
-  return { titleClass, descClass, titleSize, descSize, alignClass };
 }
 
 function SectionBody({
@@ -233,49 +215,56 @@ function SectionBody({
   switch (section.type) {
     case "services":
       return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{section.items.filter((item) => item.title || item.description).map((item) => {
-        const s = resolveItemStyle(section, item);
-        return <ItemCard key={item.id} panel={panel}>{marker}<h3 className={s.titleClass}>{item.title}</h3>{item.description && <p className={s.descClass}>{item.description}</p>}</ItemCard>;
+        const titleCls = resolveFieldStyle(section, item, "titleTypography", "base");
+        const descCls = resolveFieldStyle(section, item, "descTypography", "sm");
+        return <ItemCard key={item.id} panel={panel}>{marker}<h3 className={titleCls}>{item.title}</h3>{item.description && <p className={`mt-2 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`}>{item.description}</p>}</ItemCard>;
       })}</div>;
     case "process":
       return <ol className="grid gap-5 md:grid-cols-2">{section.steps.filter((step) => step.title || step.description).map((step, index) => {
-        const s = resolveItemStyle(section, step);
+        const titleCls = resolveFieldStyle(section, step, "titleTypography", "base");
+        const descCls = resolveFieldStyle(section, step, "descTypography", "sm");
         return (
           <li key={step.id} className="grid grid-cols-[44px_1fr] gap-4">
             <span className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold" style={{ backgroundColor: accent, color: accentForeground(accent) }}>{String(index + 1).padStart(2, "0")}</span>
-            <div className="pt-1"><h3 className={s.titleClass}>{step.title}</h3>{step.description && <p className={s.descClass}>{step.description}</p>}</div>
+            <div className="pt-1"><h3 className={titleCls}>{step.title}</h3>{step.description && <p className={`mt-1 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`}>{step.description}</p>}</div>
           </li>
         );
       })}</ol>;
     case "pricing":
       return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{section.offers.filter((offer) => offer.name || offer.price || offer.description).map((offer) => {
-        const s = resolveItemStyle(section, offer);
-        return <ItemCard key={offer.id} panel={panel}>{marker}<h3 className={s.titleClass}>{offer.name}</h3>{offer.price && <p className="mt-3 text-2xl font-bold" style={{ color: accent }}>{offer.price}</p>}{offer.description && <p className={s.descClass}>{offer.description}</p>}</ItemCard>;
+        const titleCls = resolveFieldStyle(section, offer, "titleTypography", "base");
+        const descCls = resolveFieldStyle(section, offer, "descTypography", "sm");
+        return <ItemCard key={offer.id} panel={panel}>{marker}<h3 className={titleCls}>{offer.name}</h3>{offer.price && <p className="mt-3 text-2xl font-bold" style={{ color: accent }}>{offer.price}</p>}{offer.description && <p className={`mt-3 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`}>{offer.description}</p>}</ItemCard>;
       })}</div>;
     case "portfolio":
       return <div className="grid gap-4 md:grid-cols-2">{section.projects.filter((project) => project.title || project.description || project.url).map((project) => {
-        const s = resolveItemStyle(section, project);
-        return <ItemCard key={project.id} panel={panel}>{marker}<h3 className={s.titleClass}>{project.title}</h3>{project.description && <p className={s.descClass}>{project.description}</p>}{project.url && !isPlaceholderHref(project.url) && <a className="mt-4 inline-flex min-h-10 items-center font-semibold underline underline-offset-4" href={safePublicHref(project.url)} target="_blank" rel="noreferrer">{labels.openProject}</a>}</ItemCard>;
+        const titleCls = resolveFieldStyle(section, project, "titleTypography", "base");
+        const descCls = resolveFieldStyle(section, project, "descTypography", "sm");
+        return <ItemCard key={project.id} panel={panel}>{marker}<h3 className={titleCls}>{project.title}</h3>{project.description && <p className={`mt-2 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`}>{project.description}</p>}{project.url && !isPlaceholderHref(project.url) && <a className="mt-4 inline-flex min-h-10 items-center font-semibold underline underline-offset-4" href={safePublicHref(project.url)} target="_blank" rel="noreferrer">{labels.openProject}</a>}</ItemCard>;
       })}</div>;
     case "testimonials":
       return <div className="grid gap-4 md:grid-cols-2">{section.testimonials.filter((item) => item.quote && (item.author || item.role) && !looksLikeFakeProof(item.quote, item.author, item.role)).map((item) => {
-        const s = resolveItemStyle(section, item);
+        const quoteCls = resolveFieldStyle(section, item, "descTypography", "base");
+        const authorCls = resolveFieldStyle(section, item, "titleTypography", "sm");
         return (
-          <figure key={item.id} className={`rounded-2xl p-6 ${panel}`}><blockquote className={`leading-8 ${s.titleSize}`}>“{item.quote}”</blockquote><figcaption className={`mt-5 ${s.descSize}`}><strong>{item.author}</strong>{item.role && <span className="opacity-65"> · {item.role}</span>}</figcaption></figure>
+          <figure key={item.id} className={`rounded-2xl p-6 ${panel}`}><blockquote className={`leading-8 ${quoteCls}`}>“{item.quote}”</blockquote><figcaption className={`mt-5 ${authorCls}`}><strong>{item.author}</strong>{item.role && <span className="opacity-65"> · {item.role}</span>}</figcaption></figure>
         );
       })}</div>;
     case "faq":
       return <div className="space-y-3">{section.items.filter((item) => item.question && item.answer).map((item) => {
-        const s = resolveItemStyle(section, item);
+        const qCls = resolveFieldStyle(section, item, "titleTypography", "base");
+        const aCls = resolveFieldStyle(section, item, "descTypography", "sm");
         return (
-          <details key={item.id} className={`group rounded-2xl px-5 py-4 ${panel}`}><summary className={`cursor-pointer list-none pr-8 marker:content-none ${s.titleClass}`}>{item.question}<span aria-hidden className="float-right text-xl group-open:rotate-45">+</span></summary><p className={s.descClass}>{item.answer}</p></details>
+          <details key={item.id} className={`group rounded-2xl px-5 py-4 ${panel}`}><summary className={`cursor-pointer list-none pr-8 marker:content-none ${qCls}`}>{item.question}<span aria-hidden className="float-right text-xl group-open:rotate-45">+</span></summary><p className={`mt-3 whitespace-pre-wrap leading-7 opacity-70 ${aCls}`}>{item.answer}</p></details>
         );
       })}</div>;
     case "contact":
       return <div className="flex flex-wrap gap-3">{section.methods.filter((item) => item.label && (item.value || item.url)).map((item) => {
-        const s = resolveItemStyle(section, item);
+        const labelCls = resolveFieldStyle(section, item, "titleTypography", "sm");
+        const valCls = resolveFieldStyle(section, item, "descTypography", "sm");
         return item.url && !isPlaceholderHref(item.url) ? (
-          <a key={item.id} className={`min-h-11 rounded-xl px-4 py-3 font-semibold ${panel} ${s.descSize}`} href={safePublicHref(item.url)}>{item.label}{item.value ? ` · ${item.value}` : ""}</a>
-        ) : <span key={item.id} className={`rounded-xl px-4 py-3 ${panel} ${s.descSize}`}><strong>{item.label}</strong>{item.value ? ` · ${item.value}` : ""}</span>;
+          <a key={item.id} className={`min-h-11 rounded-xl px-4 py-3 font-semibold ${panel} ${labelCls}`} href={safePublicHref(item.url)}>{item.label}{item.value ? ` · ${item.value}` : ""}</a>
+        ) : <span key={item.id} className={`rounded-xl px-4 py-3 ${panel} ${labelCls}`}><strong>{item.label}</strong>{item.value ? ` · ${item.value}` : ""}</span>;
       })}</div>;
     case "booking":
       if (!bookingData) return null;

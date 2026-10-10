@@ -56,18 +56,34 @@ const optionalPublicHrefSchema = z
   .max(2_000)
   .refine((value) => !value || isSafePublicHref(value), "Gunakan URL publik yang aman");
 
+export const elementTypographySchema = {
+  fontFamily: z.string().max(80).optional(),
+  fontSize: z.enum(["sm", "base", "lg", "xl"]).optional(),
+  align: z.enum(["left", "center", "right"]).optional(),
+  bold: z.boolean().optional(),
+  italic: z.boolean().optional(),
+  underline: z.boolean().optional(),
+  strikethrough: z.boolean().optional(),
+};
+
+export const itemTypographySchema = {
+  ...elementTypographySchema,
+  titleTypography: z.object(elementTypographySchema).optional(),
+  descTypography: z.object(elementTypographySchema).optional(),
+};
+
 const serviceItemSchema = z.object({
   id: idSchema,
   title: z.string().trim().min(1).max(100),
   description: descriptionSchema,
-  ...sectionTypographySchema,
+  ...itemTypographySchema,
 });
 
 const processStepSchema = z.object({
   id: idSchema,
   title: z.string().trim().min(1).max(100),
   description: descriptionSchema,
-  ...sectionTypographySchema,
+  ...itemTypographySchema,
 });
 
 const pricingOfferSchema = z.object({
@@ -75,7 +91,7 @@ const pricingOfferSchema = z.object({
   name: z.string().trim().min(1).max(100),
   price: z.string().trim().max(80),
   description: descriptionSchema,
-  ...sectionTypographySchema,
+  ...itemTypographySchema,
 });
 
 const portfolioProjectSchema = z.object({
@@ -83,7 +99,7 @@ const portfolioProjectSchema = z.object({
   title: z.string().trim().min(1).max(120),
   description: descriptionSchema,
   url: optionalPublicHrefSchema,
-  ...sectionTypographySchema,
+  ...itemTypographySchema,
 });
 
 const testimonialSchema = z.object({
@@ -91,14 +107,14 @@ const testimonialSchema = z.object({
   quote: z.string().trim().min(1).max(1_000),
   author: z.string().trim().max(100),
   role: z.string().trim().max(120),
-  ...sectionTypographySchema,
+  ...itemTypographySchema,
 });
 
 const faqItemSchema = z.object({
   id: idSchema,
   question: z.string().trim().min(1).max(200),
   answer: z.string().trim().min(1).max(2_000),
-  ...sectionTypographySchema,
+  ...itemTypographySchema,
 });
 
 const contactMethodSchema = z.object({
@@ -106,7 +122,7 @@ const contactMethodSchema = z.object({
   label: z.string().trim().min(1).max(80),
   value: z.string().trim().max(160),
   url: optionalPublicHrefSchema,
-  ...sectionTypographySchema,
+  ...itemTypographySchema,
 });
 
 export const personalSiteSectionSchema = z.discriminatedUnion("type", [

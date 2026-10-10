@@ -7,7 +7,7 @@ import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { InlineText } from "./inline-text";
+import { InlineText, type TextTypography } from "./inline-text";
 import { FloatingContextToolbar } from "./floating-context-toolbar";
 import { ImageUpload } from "./image-upload";
 import { useT } from "@/lib/i18n-client";
@@ -364,113 +364,73 @@ function getHeadingStyle(section: any, defaultClass: string = "text-xl font-semi
   };
 }
 
-function getResolvedItemStyle(section: any, item: any, baseClass: string = "font-medium mb-1") {
-  const isBold = item.bold !== undefined ? item.bold : section.bold;
-  const isItalic = item.italic !== undefined ? item.italic : section.italic;
-  const isUnderline = item.underline !== undefined ? item.underline : section.underline;
-  const isStrike = item.strikethrough !== undefined ? item.strikethrough : section.strikethrough;
-  const align = item.align || section.align || "left";
-  const fontSize = item.fontSize || section.fontSize || "base";
-
-  const sizeClass =
-    fontSize === "sm"
-      ? "text-xs"
-      : fontSize === "lg"
-      ? "text-lg"
-      : fontSize === "xl"
-      ? "text-xl font-bold"
-      : "text-sm";
-
-  const alignClass =
-    align === "center"
-      ? "text-center"
-      : align === "right"
-      ? "text-right"
-      : "text-left";
-
-  return cn(
-    baseClass,
-    sizeClass,
-    alignClass,
-    isBold && "font-bold",
-    isItalic && "italic",
-    isUnderline && "underline",
-    isStrike && "line-through",
-  );
-}
-
-function getResolvedItemDescStyle(section: any, item: any) {
-  const isItalic = item.italic !== undefined ? item.italic : section.italic;
-  const isUnderline = item.underline !== undefined ? item.underline : section.underline;
-  const align = item.align || section.align || "left";
-  const fontSize = item.fontSize || section.fontSize || "base";
-
-  const sizeClass =
-    fontSize === "sm"
-      ? "text-[11px]"
-      : fontSize === "lg"
-      ? "text-base"
-      : fontSize === "xl"
-      ? "text-lg"
-      : "text-xs";
-
-  const alignClass =
-    align === "center"
-      ? "text-center"
-      : align === "right"
-      ? "text-right"
-      : "text-left";
-
-  return cn(
-    "text-muted-foreground",
-    sizeClass,
-    alignClass,
-    isItalic && "italic",
-    isUnderline && "underline",
-  );
+function getResolvedFieldTypography(section: any, item: any, fieldKey: "titleTypography" | "descTypography", defaultSize: "sm" | "base" | "lg" | "xl" = "base"): TextTypography {
+  const field = item[fieldKey] || {};
+  return {
+    fontFamily: field.fontFamily || item.fontFamily || section.fontFamily,
+    fontSize: field.fontSize || item.fontSize || section.fontSize || defaultSize,
+    align: field.align || item.align || section.align || "left",
+    bold: field.bold !== undefined ? field.bold : (item.bold !== undefined ? item.bold : section.bold),
+    italic: field.italic !== undefined ? field.italic : (item.italic !== undefined ? item.italic : section.italic),
+    underline: field.underline !== undefined ? field.underline : (item.underline !== undefined ? item.underline : section.underline),
+    strikethrough: field.strikethrough !== undefined ? field.strikethrough : (item.strikethrough !== undefined ? item.strikethrough : section.strikethrough),
+  };
 }
 
 function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSection; onUpdate: (patch: Partial<PersonalSiteSection>) => void; theme?: ThemeConfig }) {
   const { t } = useT();
   const headingStyle = getHeadingStyle(section as any);
-  const [activeItemId, setActiveItemId] = useState<string | null>(null);
 
   switch (section.type) {
     case "services":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
+          <InlineText
+            value={section.heading}
+            onChange={(v) => onUpdate({ heading: v })}
+            typography={{
+              fontFamily: section.fontFamily,
+              fontSize: section.fontSize || "xl",
+              align: section.align,
+              bold: section.bold !== undefined ? section.bold : true,
+              italic: section.italic,
+              underline: section.underline,
+              strikethrough: section.strikethrough,
+            }}
+            onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
+            tag="h2"
+            tagType="heading"
+            className="mb-4"
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             {section.items.map((item, i) => {
-              const isItemActive = activeItemId === item.id;
+              const titleTypo = getResolvedFieldTypography(section, item, "titleTypography", "base");
+              const descTypo = getResolvedFieldTypography(section, item, "descTypography", "sm");
+
               return (
                 <div
                   key={item.id}
-                  onClick={(e) => { e.stopPropagation(); setActiveItemId(item.id); }}
-                  className={cn(
-                    "relative rounded-lg border bg-card p-4 shadow-sm transition-all group",
-                    isItemActive ? "ring-2 ring-primary ring-offset-2" : "hover:border-primary/50"
-                  )}
+                  className="relative rounded-lg border bg-card p-4 shadow-sm transition-all hover:border-primary/50"
                   style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
                 >
-                  {isItemActive && (
-                    <FloatingContextToolbar
-                      active={isItemActive}
-                      value={{
-                        fontSize: item.fontSize,
-                        align: item.align,
-                        bold: item.bold,
-                        italic: item.italic,
-                        underline: item.underline,
-                        strikethrough: item.strikethrough,
-                      }}
-                      onChange={(patch) => onUpdate({ items: patchItem(section.items, i, patch) })}
-                      tagType="card"
-                      onDelete={() => onUpdate({ items: removeItemAt(section.items, i) })}
-                    />
-                  )}
-                  <InlineText value={item.title} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, title: v } : it) })} tag="h3" className={getResolvedItemStyle(section, item, "font-semibold mb-1")} />
-                  <InlineText value={item.description} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, description: v } : it) })} tag="p" className={getResolvedItemDescStyle(section, item)} />
+                  <InlineText
+                    value={item.title}
+                    onChange={(v) => onUpdate({ items: patchItem(section.items, i, { title: v }) })}
+                    typography={titleTypo}
+                    onTypographyChange={(patch) => onUpdate({ items: patchItem(section.items, i, { titleTypography: { ...item.titleTypography, ...patch } }) })}
+                    tag="h3"
+                    tagType="card"
+                    className="font-semibold mb-1"
+                  />
+                  <InlineText
+                    value={item.description}
+                    onChange={(v) => onUpdate({ items: patchItem(section.items, i, { description: v }) })}
+                    typography={descTypo}
+                    onTypographyChange={(patch) => onUpdate({ items: patchItem(section.items, i, { descTypography: { ...item.descTypography, ...patch } }) })}
+                    tag="p"
+                    tagType="body"
+                    className="text-muted-foreground"
+                  />
                 </div>
               );
             })}
@@ -481,40 +441,54 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "process":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
+          <InlineText
+            value={section.heading}
+            onChange={(v) => onUpdate({ heading: v })}
+            typography={{
+              fontFamily: section.fontFamily,
+              fontSize: section.fontSize || "xl",
+              align: section.align,
+              bold: section.bold !== undefined ? section.bold : true,
+              italic: section.italic,
+              underline: section.underline,
+              strikethrough: section.strikethrough,
+            }}
+            onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
+            tag="h2"
+            tagType="heading"
+            className="mb-4"
+          />
           <div className="space-y-3">
             {section.steps.map((step, i) => {
-              const isItemActive = activeItemId === step.id;
+              const titleTypo = getResolvedFieldTypography(section, step, "titleTypography", "base");
+              const descTypo = getResolvedFieldTypography(section, step, "descTypography", "sm");
+
               return (
                 <div
                   key={step.id}
-                  onClick={(e) => { e.stopPropagation(); setActiveItemId(step.id); }}
-                  className={cn(
-                    "relative flex gap-3 p-2 rounded-lg transition-all",
-                    isItemActive ? "ring-2 ring-primary ring-offset-2 bg-muted/20" : "hover:bg-muted/10"
-                  )}
+                  className="relative flex gap-3 p-2 rounded-lg transition-all hover:bg-muted/10"
                   style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
                 >
-                  {isItemActive && (
-                    <FloatingContextToolbar
-                      active={isItemActive}
-                      value={{
-                        fontSize: step.fontSize,
-                        align: step.align,
-                        bold: step.bold,
-                        italic: step.italic,
-                        underline: step.underline,
-                        strikethrough: step.strikethrough,
-                      }}
-                      onChange={(patch) => onUpdate({ steps: patchItem(section.steps, i, patch) })}
-                      tagType="card"
-                      onDelete={() => onUpdate({ steps: removeItemAt(section.steps, i) })}
-                    />
-                  )}
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">{i + 1}</span>
                   <div className="flex-1">
-                    <InlineText value={step.title} onChange={(v) => onUpdate({ steps: section.steps.map((s, j) => j === i ? { ...s, title: v } : s) })} tag="h3" className={getResolvedItemStyle(section, step, "font-semibold mb-1")} />
-                    <InlineText value={step.description} onChange={(v) => onUpdate({ steps: section.steps.map((s, j) => j === i ? { ...s, description: v } : s) })} tag="p" className={getResolvedItemDescStyle(section, step)} />
+                    <InlineText
+                      value={step.title}
+                      onChange={(v) => onUpdate({ steps: patchItem(section.steps, i, { title: v }) })}
+                      typography={titleTypo}
+                      onTypographyChange={(patch) => onUpdate({ steps: patchItem(section.steps, i, { titleTypography: { ...step.titleTypography, ...patch } }) })}
+                      tag="h3"
+                      tagType="card"
+                      className="font-semibold mb-1"
+                    />
+                    <InlineText
+                      value={step.description}
+                      onChange={(v) => onUpdate({ steps: patchItem(section.steps, i, { description: v }) })}
+                      typography={descTypo}
+                      onTypographyChange={(patch) => onUpdate({ steps: patchItem(section.steps, i, { descTypography: { ...step.descTypography, ...patch } }) })}
+                      tag="p"
+                      tagType="body"
+                      className="text-muted-foreground"
+                    />
                   </div>
                 </div>
               );
@@ -526,39 +500,59 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "pricing":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
+          <InlineText
+            value={section.heading}
+            onChange={(v) => onUpdate({ heading: v })}
+            typography={{
+              fontFamily: section.fontFamily,
+              fontSize: section.fontSize || "xl",
+              align: section.align,
+              bold: section.bold !== undefined ? section.bold : true,
+              italic: section.italic,
+              underline: section.underline,
+              strikethrough: section.strikethrough,
+            }}
+            onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
+            tag="h2"
+            tagType="heading"
+            className="mb-4"
+          />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {section.offers.map((offer, i) => {
-              const isItemActive = activeItemId === offer.id;
+              const titleTypo = getResolvedFieldTypography(section, offer, "titleTypography", "base");
+              const descTypo = getResolvedFieldTypography(section, offer, "descTypography", "sm");
+
               return (
                 <div
                   key={offer.id}
-                  onClick={(e) => { e.stopPropagation(); setActiveItemId(offer.id); }}
-                  className={cn(
-                    "relative rounded-lg border bg-card p-4 shadow-sm text-center transition-all",
-                    isItemActive ? "ring-2 ring-primary ring-offset-2" : "hover:border-primary/50"
-                  )}
+                  className="relative rounded-lg border bg-card p-4 shadow-sm text-center transition-all hover:border-primary/50"
                   style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
                 >
-                  {isItemActive && (
-                    <FloatingContextToolbar
-                      active={isItemActive}
-                      value={{
-                        fontSize: offer.fontSize,
-                        align: offer.align,
-                        bold: offer.bold,
-                        italic: offer.italic,
-                        underline: offer.underline,
-                        strikethrough: offer.strikethrough,
-                      }}
-                      onChange={(patch) => onUpdate({ offers: patchItem(section.offers, i, patch) })}
-                      tagType="card"
-                      onDelete={() => onUpdate({ offers: removeItemAt(section.offers, i) })}
-                    />
-                  )}
-                  <InlineText value={offer.name} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, name: v } : o) })} tag="h3" className={getResolvedItemStyle(section, offer, "font-semibold mb-1")} />
-                  <InlineText value={offer.price} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, price: v } : o) })} tag="p" className="text-lg font-bold text-primary my-1" />
-                  <InlineText value={offer.description} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, description: v } : o) })} tag="p" className={getResolvedItemDescStyle(section, offer)} />
+                  <InlineText
+                    value={offer.name}
+                    onChange={(v) => onUpdate({ offers: patchItem(section.offers, i, { name: v }) })}
+                    typography={titleTypo}
+                    onTypographyChange={(patch) => onUpdate({ offers: patchItem(section.offers, i, { titleTypography: { ...offer.titleTypography, ...patch } }) })}
+                    tag="h3"
+                    tagType="card"
+                    className="font-semibold mb-1"
+                  />
+                  <InlineText
+                    value={offer.price}
+                    onChange={(v) => onUpdate({ offers: patchItem(section.offers, i, { price: v }) })}
+                    tag="p"
+                    tagType="card"
+                    className="text-lg font-bold text-primary my-1"
+                  />
+                  <InlineText
+                    value={offer.description}
+                    onChange={(v) => onUpdate({ offers: patchItem(section.offers, i, { description: v }) })}
+                    typography={descTypo}
+                    onTypographyChange={(patch) => onUpdate({ offers: patchItem(section.offers, i, { descTypography: { ...offer.descTypography, ...patch } }) })}
+                    tag="p"
+                    tagType="body"
+                    className="text-muted-foreground"
+                  />
                 </div>
               );
             })}
@@ -569,38 +563,52 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "portfolio":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
+          <InlineText
+            value={section.heading}
+            onChange={(v) => onUpdate({ heading: v })}
+            typography={{
+              fontFamily: section.fontFamily,
+              fontSize: section.fontSize || "xl",
+              align: section.align,
+              bold: section.bold !== undefined ? section.bold : true,
+              italic: section.italic,
+              underline: section.underline,
+              strikethrough: section.strikethrough,
+            }}
+            onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
+            tag="h2"
+            tagType="heading"
+            className="mb-4"
+          />
           <div className="grid gap-4 sm:grid-cols-2">
             {section.projects.map((project, i) => {
-              const isItemActive = activeItemId === project.id;
+              const titleTypo = getResolvedFieldTypography(section, project, "titleTypography", "base");
+              const descTypo = getResolvedFieldTypography(section, project, "descTypography", "sm");
+
               return (
                 <div
                   key={project.id}
-                  onClick={(e) => { e.stopPropagation(); setActiveItemId(project.id); }}
-                  className={cn(
-                    "relative rounded-lg border bg-card p-4 shadow-sm transition-all",
-                    isItemActive ? "ring-2 ring-primary ring-offset-2" : "hover:border-primary/50"
-                  )}
+                  className="relative rounded-lg border bg-card p-4 shadow-sm transition-all hover:border-primary/50"
                   style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
                 >
-                  {isItemActive && (
-                    <FloatingContextToolbar
-                      active={isItemActive}
-                      value={{
-                        fontSize: project.fontSize,
-                        align: project.align,
-                        bold: project.bold,
-                        italic: project.italic,
-                        underline: project.underline,
-                        strikethrough: project.strikethrough,
-                      }}
-                      onChange={(patch) => onUpdate({ projects: patchItem(section.projects, i, patch) })}
-                      tagType="card"
-                      onDelete={() => onUpdate({ projects: removeItemAt(section.projects, i) })}
-                    />
-                  )}
-                  <InlineText value={project.title} onChange={(v) => onUpdate({ projects: section.projects.map((p, j) => j === i ? { ...p, title: v } : p) })} tag="h3" className={getResolvedItemStyle(section, project, "font-semibold mb-1")} />
-                  <InlineText value={project.description} onChange={(v) => onUpdate({ projects: section.projects.map((p, j) => j === i ? { ...p, description: v } : p) })} tag="p" className={getResolvedItemDescStyle(section, project)} />
+                  <InlineText
+                    value={project.title}
+                    onChange={(v) => onUpdate({ projects: patchItem(section.projects, i, { title: v }) })}
+                    typography={titleTypo}
+                    onTypographyChange={(patch) => onUpdate({ projects: patchItem(section.projects, i, { titleTypography: { ...project.titleTypography, ...patch } }) })}
+                    tag="h3"
+                    tagType="card"
+                    className="font-semibold mb-1"
+                  />
+                  <InlineText
+                    value={project.description}
+                    onChange={(v) => onUpdate({ projects: patchItem(section.projects, i, { description: v }) })}
+                    typography={descTypo}
+                    onTypographyChange={(patch) => onUpdate({ projects: patchItem(section.projects, i, { descTypography: { ...project.descTypography, ...patch } }) })}
+                    tag="p"
+                    tagType="body"
+                    className="text-muted-foreground"
+                  />
                 </div>
               );
             })}
@@ -611,40 +619,65 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "testimonials":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
+          <InlineText
+            value={section.heading}
+            onChange={(v) => onUpdate({ heading: v })}
+            typography={{
+              fontFamily: section.fontFamily,
+              fontSize: section.fontSize || "xl",
+              align: section.align,
+              bold: section.bold !== undefined ? section.bold : true,
+              italic: section.italic,
+              underline: section.underline,
+              strikethrough: section.strikethrough,
+            }}
+            onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
+            tag="h2"
+            tagType="heading"
+            className="mb-4"
+          />
           <div className="space-y-4">
             {section.testimonials.map((t, i) => {
-              const isItemActive = activeItemId === t.id;
+              const quoteTypo = getResolvedFieldTypography(section, t, "descTypography", "base");
+              const authorTypo = getResolvedFieldTypography(section, t, "titleTypography", "sm");
+
               return (
                 <div
                   key={t.id}
-                  onClick={(e) => { e.stopPropagation(); setActiveItemId(t.id); }}
-                  className={cn(
-                    "relative rounded-lg border bg-card p-4 shadow-sm italic transition-all",
-                    isItemActive ? "ring-2 ring-primary ring-offset-2 not-italic" : "hover:border-primary/50"
-                  )}
+                  className="relative rounded-lg border bg-card p-4 shadow-sm italic transition-all hover:border-primary/50"
                   style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
                 >
-                  {isItemActive && (
-                    <FloatingContextToolbar
-                      active={isItemActive}
-                      value={{
-                        fontSize: t.fontSize,
-                        align: t.align,
-                        bold: t.bold,
-                        italic: t.italic,
-                        underline: t.underline,
-                        strikethrough: t.strikethrough,
-                      }}
-                      onChange={(patch) => onUpdate({ testimonials: patchItem(section.testimonials, i, patch) })}
+                  <InlineText
+                    value={t.quote}
+                    onChange={(v) => onUpdate({ testimonials: patchItem(section.testimonials, i, { quote: v }) })}
+                    typography={quoteTypo}
+                    onTypographyChange={(patch) => onUpdate({ testimonials: patchItem(section.testimonials, i, { descTypography: { ...t.descTypography, ...patch } }) })}
+                    tag="p"
+                    tagType="body"
+                    className="mb-2 not-italic text-foreground"
+                  />
+                  <div className="text-sm text-muted-foreground not-italic flex items-center gap-1" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
+                    <InlineText
+                      value={t.author}
+                      onChange={(v) => onUpdate({ testimonials: patchItem(section.testimonials, i, { author: v }) })}
+                      typography={authorTypo}
+                      onTypographyChange={(patch) => onUpdate({ testimonials: patchItem(section.testimonials, i, { titleTypography: { ...t.titleTypography, ...patch } }) })}
+                      tag="span"
                       tagType="card"
-                      onDelete={() => onUpdate({ testimonials: removeItemAt(section.testimonials, i) })}
+                      className="font-medium inline-block w-auto"
                     />
-                  )}
-                  <InlineText value={t.quote} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, quote: v } : tt) })} tag="p" className={cn(getResolvedItemDescStyle(section, t), "mb-2 not-italic text-foreground")} />
-                  <div className="text-sm text-muted-foreground not-italic" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                    <InlineText value={t.author} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, author: v } : tt) })} tag="span" className={getResolvedItemStyle(section, t, "font-medium")} />
-                    {t.role && <span> — <InlineText value={t.role} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, role: v } : tt) })} tag="span" className={getResolvedItemDescStyle(section, t)} /></span>}
+                    {t.role && (
+                      <>
+                        <span> — </span>
+                        <InlineText
+                          value={t.role}
+                          onChange={(v) => onUpdate({ testimonials: patchItem(section.testimonials, i, { role: v }) })}
+                          tag="span"
+                          tagType="body"
+                          className="inline-block w-auto"
+                        />
+                      </>
+                    )}
                   </div>
                 </div>
               );
@@ -656,38 +689,52 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "faq":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
+          <InlineText
+            value={section.heading}
+            onChange={(v) => onUpdate({ heading: v })}
+            typography={{
+              fontFamily: section.fontFamily,
+              fontSize: section.fontSize || "xl",
+              align: section.align,
+              bold: section.bold !== undefined ? section.bold : true,
+              italic: section.italic,
+              underline: section.underline,
+              strikethrough: section.strikethrough,
+            }}
+            onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
+            tag="h2"
+            tagType="heading"
+            className="mb-4"
+          />
           <div className="space-y-3">
             {section.items.map((item, i) => {
-              const isItemActive = activeItemId === item.id;
+              const qTypo = getResolvedFieldTypography(section, item, "titleTypography", "base");
+              const aTypo = getResolvedFieldTypography(section, item, "descTypography", "sm");
+
               return (
                 <div
                   key={item.id}
-                  onClick={(e) => { e.stopPropagation(); setActiveItemId(item.id); }}
-                  className={cn(
-                    "relative rounded-lg border bg-card p-4 shadow-sm transition-all",
-                    isItemActive ? "ring-2 ring-primary ring-offset-2" : "hover:border-primary/50"
-                  )}
+                  className="relative rounded-lg border bg-card p-4 shadow-sm transition-all hover:border-primary/50"
                   style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
                 >
-                  {isItemActive && (
-                    <FloatingContextToolbar
-                      active={isItemActive}
-                      value={{
-                        fontSize: item.fontSize,
-                        align: item.align,
-                        bold: item.bold,
-                        italic: item.italic,
-                        underline: item.underline,
-                        strikethrough: item.strikethrough,
-                      }}
-                      onChange={(patch) => onUpdate({ items: patchItem(section.items, i, patch) })}
-                      tagType="card"
-                      onDelete={() => onUpdate({ items: removeItemAt(section.items, i) })}
-                    />
-                  )}
-                  <InlineText value={item.question} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, question: v } : it) })} tag="h3" className={getResolvedItemStyle(section, item, "font-semibold mb-1")} />
-                  <InlineText value={item.answer} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, answer: v } : it) })} tag="p" className={getResolvedItemDescStyle(section, item)} />
+                  <InlineText
+                    value={item.question}
+                    onChange={(v) => onUpdate({ items: patchItem(section.items, i, { question: v }) })}
+                    typography={qTypo}
+                    onTypographyChange={(patch) => onUpdate({ items: patchItem(section.items, i, { titleTypography: { ...item.titleTypography, ...patch } }) })}
+                    tag="h3"
+                    tagType="card"
+                    className="font-semibold mb-1"
+                  />
+                  <InlineText
+                    value={item.answer}
+                    onChange={(v) => onUpdate({ items: patchItem(section.items, i, { answer: v }) })}
+                    typography={aTypo}
+                    onTypographyChange={(patch) => onUpdate({ items: patchItem(section.items, i, { descTypography: { ...item.descTypography, ...patch } }) })}
+                    tag="p"
+                    tagType="body"
+                    className="text-muted-foreground"
+                  />
                 </div>
               );
             })}
@@ -698,39 +745,53 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
     case "contact":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
+          <InlineText
+            value={section.heading}
+            onChange={(v) => onUpdate({ heading: v })}
+            typography={{
+              fontFamily: section.fontFamily,
+              fontSize: section.fontSize || "xl",
+              align: section.align,
+              bold: section.bold !== undefined ? section.bold : true,
+              italic: section.italic,
+              underline: section.underline,
+              strikethrough: section.strikethrough,
+            }}
+            onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
+            tag="h2"
+            tagType="heading"
+            className="mb-4"
+          />
           <div className="space-y-2">
             {section.methods.map((method, i) => {
-              const isItemActive = activeItemId === method.id;
+              const labelTypo = getResolvedFieldTypography(section, method, "titleTypography", "sm");
+              const valTypo = getResolvedFieldTypography(section, method, "descTypography", "sm");
+
               return (
                 <div
                   key={method.id}
-                  onClick={(e) => { e.stopPropagation(); setActiveItemId(method.id); }}
-                  className={cn(
-                    "relative flex items-center gap-2 p-2 rounded-lg transition-all",
-                    isItemActive ? "ring-2 ring-primary ring-offset-2 bg-muted/20" : "hover:bg-muted/10"
-                  )}
+                  className="relative flex items-center gap-2 p-2 rounded-lg transition-all hover:bg-muted/10"
                   style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
                 >
-                  {isItemActive && (
-                    <FloatingContextToolbar
-                      active={isItemActive}
-                      value={{
-                        fontSize: method.fontSize,
-                        align: method.align,
-                        bold: method.bold,
-                        italic: method.italic,
-                        underline: method.underline,
-                        strikethrough: method.strikethrough,
-                      }}
-                      onChange={(patch) => onUpdate({ methods: patchItem(section.methods, i, patch) })}
-                      tagType="card"
-                      onDelete={() => onUpdate({ methods: removeItemAt(section.methods, i) })}
-                    />
-                  )}
-                  <InlineText value={method.label} onChange={(v) => onUpdate({ methods: section.methods.map((m, j) => j === i ? { ...m, label: v } : m) })} tag="span" className={getResolvedItemStyle(section, method, "font-medium")} />
+                  <InlineText
+                    value={method.label}
+                    onChange={(v) => onUpdate({ methods: patchItem(section.methods, i, { label: v }) })}
+                    typography={labelTypo}
+                    onTypographyChange={(patch) => onUpdate({ methods: patchItem(section.methods, i, { titleTypography: { ...method.titleTypography, ...patch } }) })}
+                    tag="span"
+                    tagType="card"
+                    className="font-medium inline-block w-auto"
+                  />
                   <span className="text-muted-foreground">:</span>
-                  <InlineText value={method.value} onChange={(v) => onUpdate({ methods: section.methods.map((m, j) => j === i ? { ...m, value: v } : m) })} tag="span" className={getResolvedItemDescStyle(section, method)} />
+                  <InlineText
+                    value={method.value}
+                    onChange={(v) => onUpdate({ methods: patchItem(section.methods, i, { value: v }) })}
+                    typography={valTypo}
+                    onTypographyChange={(patch) => onUpdate({ methods: patchItem(section.methods, i, { descTypography: { ...method.descTypography, ...patch } }) })}
+                    tag="span"
+                    tagType="body"
+                    className="text-muted-foreground inline-block w-auto"
+                  />
                 </div>
               );
             })}
