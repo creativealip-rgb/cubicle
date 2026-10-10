@@ -342,6 +342,11 @@ export function PropertiesContent({ section, onUpdate, onDelete, onClose }: Prop
         {section.type === "image" && <SingleImageEditor section={section} onUpdate={onUpdate} />}
         {section.type === "mediaText" && <MediaTextEditor section={section} onUpdate={onUpdate} />}
         {section.type === "booking" && <BookingEditor section={section} onUpdate={onUpdate} />}
+        {section.type === "embed" && <EmbedEditor section={section} onUpdate={onUpdate} />}
+        {section.type === "social" && <SocialEditor section={section} onUpdate={onUpdate} />}
+        {section.type === "collapsible" && <CollapsibleEditor section={section} onUpdate={onUpdate} />}
+        {section.type === "spacer" && <SpacerEditor section={section} onUpdate={onUpdate} />}
+        {section.type === "contentBlock" && <ContentBlockEditor section={section} onUpdate={onUpdate} />}
 
         {/* Delete Element Button at Bottom — EXACTLY LIKE FORM BUILDER */}
         {onDelete && (
@@ -406,6 +411,16 @@ const TESTIMONIALS_MAX = 8;
 const FAQ_MAX = 12;
 const CONTACT_MAX = 10;
 const GALLERY_MAX = 12;
+const SOCIAL_MAX = 10;
+const COLLAPSIBLE_MAX = 12;
+const CONTENT_BLOCK_MAX = 4;
+
+/** Clamp a numeric input's raw string to a schema-valid integer, ignoring non-numbers. */
+function onNumberChange(raw: string, min: number, max: number, fallback: number, apply: (value: number) => void) {
+  const value = raw === "" ? fallback : Number(raw);
+  if (!Number.isFinite(value)) return;
+  apply(Math.min(max, Math.max(min, Math.round(value))));
+}
 
 
 
@@ -1120,6 +1135,212 @@ function MediaTextEditor({ section, onUpdate }: EditorProps<Extract<PersonalSite
           />
         </div>
       </div>
+    </div>
+  );
+}
+
+function EmbedEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "embed" }>>) {
+  const { t } = useT();
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("URL Sematan", "Embed URL")}</Label>
+        <Input
+          value={section.url}
+          maxLength={2000}
+          onChange={(e) => onUpdate({ url: e.target.value })}
+          className="h-8 text-xs font-mono"
+          placeholder="https://..."
+        />
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Tinggi (px)", "Height (px)")}</Label>
+        <Input
+          type="number"
+          min={100}
+          max={800}
+          value={section.height ?? 400}
+          onChange={(e) => onNumberChange(e.target.value, 100, 800, 400, (height) => onUpdate({ height }))}
+          className="h-8 text-xs"
+        />
+      </div>
+    </div>
+  );
+}
+
+function SpacerEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "spacer" }>>) {
+  const { t } = useT();
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Tinggi Spacer (px)", "Spacer height (px)")}</Label>
+        <Input
+          type="number"
+          min={16}
+          max={200}
+          value={section.height ?? 40}
+          onChange={(e) => onNumberChange(e.target.value, 16, 200, 40, (height) => onUpdate({ height }))}
+          className="h-8 text-xs"
+        />
+      </div>
+    </div>
+  );
+}
+
+function SocialEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "social" }>>) {
+  const { t } = useT();
+  const atMax = section.links.length >= SOCIAL_MAX;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Tautan Sosial", "Social Links")} ({section.links.length}/{SOCIAL_MAX})</Label>
+        <AddItemButton
+          label={t("Tambah tautan sosial", "Add social link")}
+          onClick={() => {
+            if (atMax) {
+              toast.error(t(`Batas maksimal ${SOCIAL_MAX} tautan sosial tercapai.`, `Maximum of ${SOCIAL_MAX} social links reached.`));
+              return;
+            }
+            onUpdate({ links: appendItem(section.links, () => ({ id: makeItemId("link"), platform: "", url: "" })) });
+          }}
+        />
+      </div>
+      {section.links.map((link, i) => (
+        <div key={link.id} className="relative space-y-2 rounded-lg border p-3">
+          <RemoveItemButton label={t(`Hapus tautan ${i + 1}`, `Remove link ${i + 1}`)} onClick={() => onUpdate({ links: removeItemAt(section.links, i) })} />
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">{t("Platform", "Platform")}</Label>
+            <Input
+              value={link.platform}
+              maxLength={40}
+              onChange={(e) => onUpdate({ links: patchItem(section.links, i, { platform: e.target.value }) })}
+              className="h-8 text-sm"
+              placeholder={t("Instagram / LinkedIn / X", "Instagram / LinkedIn / X")}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">{t("URL Profil", "Profile URL")}</Label>
+            <Input
+              value={link.url}
+              maxLength={2000}
+              onChange={(e) => onUpdate({ links: patchItem(section.links, i, { url: e.target.value }) })}
+              className="h-8 text-xs font-mono"
+              placeholder="https://..."
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CollapsibleEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "collapsible" }>>) {
+  const { t } = useT();
+  const atMax = section.items.length >= COLLAPSIBLE_MAX;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Item Lipat", "Collapsible Items")} ({section.items.length}/{COLLAPSIBLE_MAX})</Label>
+        <AddItemButton
+          label={t("Tambah item", "Add collapsible item")}
+          onClick={() => {
+            if (atMax) {
+              toast.error(t(`Batas maksimal ${COLLAPSIBLE_MAX} item tercapai.`, `Maximum of ${COLLAPSIBLE_MAX} items reached.`));
+              return;
+            }
+            onUpdate({ items: appendItem(section.items, () => ({ id: makeItemId("collapse"), title: "", content: "" })) });
+          }}
+        />
+      </div>
+      {section.items.map((item, i) => (
+        <div key={item.id} className="relative space-y-2 rounded-lg border p-3">
+          <RemoveItemButton label={t(`Hapus item ${i + 1}`, `Remove item ${i + 1}`)} onClick={() => onUpdate({ items: removeItemAt(section.items, i) })} />
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">{t("Judul", "Title")}</Label>
+            <Input
+              value={item.title}
+              maxLength={200}
+              onChange={(e) => onUpdate({ items: patchItem(section.items, i, { title: e.target.value }) })}
+              className="h-8 text-sm"
+              placeholder={t("Judul yang bisa dibuka-tutup", "Toggle heading")}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">{t("Isi", "Content")}</Label>
+            <Textarea
+              value={item.content}
+              maxLength={2000}
+              onChange={(e) => onUpdate({ items: patchItem(section.items, i, { content: e.target.value }) })}
+              className="min-h-16 resize-none text-sm"
+              placeholder={t("Konten yang muncul saat dibuka", "Content revealed when expanded")}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ContentBlockEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "contentBlock" }>>) {
+  const { t } = useT();
+  const atMax = section.items.length >= CONTENT_BLOCK_MAX;
+  return (
+    <div className="space-y-3">
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">{t("Jumlah Kolom", "Columns")}</Label>
+          <select
+            value={section.columns}
+            onChange={(e) => onUpdate({ columns: Number(e.target.value) as 2 | 3 | 4 })}
+            className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+          >
+            <option value={2}>2</option>
+            <option value={3}>3</option>
+            <option value={4}>4</option>
+          </select>
+        </div>
+        <div className="space-y-1">
+          <Label className="text-xs text-muted-foreground">{t("Tata Letak", "Layout")}</Label>
+          <select
+            value={section.layout}
+            onChange={(e) => onUpdate({ layout: e.target.value as any })}
+            className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+          >
+            <option value="equal">{t("Seimbang", "Equal")}</option>
+            <option value="left-heavy">{t("Kiri Lebih Besar", "Left heavy")}</option>
+            <option value="right-heavy">{t("Kanan Lebih Besar", "Right heavy")}</option>
+            <option value="thirds">{t("Sepertiga", "Thirds")}</option>
+          </select>
+        </div>
+      </div>
+      <div className="flex items-center justify-between">
+        <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Kolom Konten", "Content Columns")} ({section.items.length}/{CONTENT_BLOCK_MAX})</Label>
+        <AddItemButton
+          label={t("Tambah kolom", "Add column")}
+          onClick={() => {
+            if (atMax) {
+              toast.error(t(`Batas maksimal ${CONTENT_BLOCK_MAX} kolom tercapai.`, `Maximum of ${CONTENT_BLOCK_MAX} columns reached.`));
+              return;
+            }
+            onUpdate({ items: appendItem(section.items, () => ({ id: makeItemId("col"), content: "" })) });
+          }}
+        />
+      </div>
+      {section.items.map((item, i) => (
+        <div key={item.id} className="relative space-y-2 rounded-lg border p-3">
+          <RemoveItemButton label={t(`Hapus kolom ${i + 1}`, `Remove column ${i + 1}`)} onClick={() => onUpdate({ items: removeItemAt(section.items, i) })} />
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">{t("Konten Kolom", "Column Content")}</Label>
+            <Textarea
+              value={item.content}
+              maxLength={2000}
+              onChange={(e) => onUpdate({ items: patchItem(section.items, i, { content: e.target.value }) })}
+              className="min-h-16 resize-none text-sm"
+              placeholder={t("Isi kolom...", "Column content...")}
+            />
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

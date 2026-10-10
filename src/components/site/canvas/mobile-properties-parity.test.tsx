@@ -49,13 +49,15 @@ const MOBILE_PARITY: Record<PersonalSiteSection["type"], string | null> = {
   image: "Image Size",
   mediaText: "Media Position",
   booking: "Calendar Integration",
-  embed: null,
-  social: null,
+  embed: "Embed URL",
+  social: "Add social link",
+  // divider and tableOfContents carry no content fields — heading/animation is
+  // their whole property set. This is intentional, not a missing editor.
   divider: null,
-  collapsible: null,
-  spacer: null,
+  collapsible: "Add collapsible item",
+  spacer: "Spacer height (px)",
   tableOfContents: null,
-  contentBlock: null,
+  contentBlock: "Add column",
 };
 
 const ALL_TYPES = Object.keys(MOBILE_PARITY) as PersonalSiteSection["type"][];
@@ -96,6 +98,18 @@ describe("mobile properties drawer parity", () => {
     const marker = MOBILE_PARITY[type];
     if (marker) expect(screen.getByText(marker)).toBeTruthy();
   });
+
+  it.each(["embed", "social", "collapsible", "spacer", "contentBlock"] as const)(
+    "%s: exposes a real editable control, not only heading/animation",
+    (type) => {
+      const { unmount } = render(<Harness initial={emptySection(type)} />);
+      // Radix renders the sheet in a body portal; heading is always control #1,
+      // so a type-specific field must add at least one more.
+      const controls = document.body.querySelectorAll("input, textarea, select");
+      expect(controls.length).toBeGreaterThan(1);
+      unmount();
+    }
+  );
 
   it("does not gate drawer content behind the desktop-only rail classes", () => {
     const section = emptySection("services");
