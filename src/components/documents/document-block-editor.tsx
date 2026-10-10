@@ -1349,8 +1349,21 @@ export function DocumentBlockEditor({
                             <Input
                               value={block.content ?? ""}
                               onChange={(e) => update(block.id, e.target.value)}
-                              className={`border-none bg-transparent font-bold tracking-tight focus:bg-background focus:ring-1 focus:ring-primary/40 ${
-                                block.level === 1
+                              style={{
+                                fontFamily: block.fontFamily ? getFontFamily(block.fontFamily) : undefined,
+                              }}
+                              className={`border-none bg-transparent tracking-tight focus:bg-background focus:ring-1 focus:ring-primary/40 ${
+                                block.bold !== false ? "font-bold" : "font-normal"
+                              } ${block.italic ? "italic" : ""} ${block.underline ? "underline" : ""} ${block.strikethrough ? "line-through" : ""} ${
+                                block.fontSize === "sm"
+                                  ? "text-sm sm:text-base"
+                                  : block.fontSize === "base"
+                                  ? "text-base sm:text-lg"
+                                  : block.fontSize === "lg"
+                                  ? "text-xl sm:text-2xl"
+                                  : block.fontSize === "xl"
+                                  ? "text-2xl sm:text-3xl"
+                                  : block.level === 1
                                   ? "text-2xl sm:text-3xl"
                                   : block.level === 3
                                   ? "text-base sm:text-lg"
@@ -1360,7 +1373,20 @@ export function DocumentBlockEditor({
                             />
                           ) : block.type === "text" || block.type === "placeholder" ? (
                             <Textarea
-                              className={`w-full resize-y border-none bg-transparent text-xs sm:text-sm leading-relaxed focus:bg-background focus:ring-1 focus:ring-primary/40 ${
+                              style={{
+                                fontFamily: block.fontFamily ? getFontFamily(block.fontFamily) : undefined,
+                              }}
+                              className={`w-full resize-y border-none bg-transparent leading-relaxed focus:bg-background focus:ring-1 focus:ring-primary/40 ${
+                                block.bold ? "font-bold" : "font-normal"
+                              } ${block.italic ? "italic" : ""} ${block.underline ? "underline" : ""} ${block.strikethrough ? "line-through" : ""} ${
+                                block.fontSize === "sm"
+                                  ? "text-xs"
+                                  : block.fontSize === "lg"
+                                  ? "text-base sm:text-lg font-medium"
+                                  : block.fontSize === "xl"
+                                  ? "text-lg sm:text-xl font-semibold"
+                                  : "text-xs sm:text-sm"
+                              } ${
                                 block.align === "center" ? "text-center" : block.align === "right" ? "text-right" : "text-left"
                               }`}
                               value={block.content ?? ""}
@@ -1369,9 +1395,9 @@ export function DocumentBlockEditor({
                               placeholder={block.type === "placeholder" ? "{{client_name}}" : t("Tulis isi dokumen...", "Write document content...")}
                             />
                           ) : block.type === "list" ? (
-                            <div className="space-y-1.5 py-1">
+                            <div className="space-y-1.5 py-1" style={{ fontFamily: block.fontFamily ? getFontFamily(block.fontFamily) : undefined }}>
                               {(block.items || []).map((item, idx) => (
-                                <div key={idx} className="flex items-center gap-2.5">
+                                <div key={idx} className={`flex items-center gap-2.5 ${block.align === "center" ? "justify-center" : block.align === "right" ? "justify-end" : "justify-start"}`}>
                                   <span className="text-xs font-semibold text-muted-foreground w-4 text-right select-none shrink-0">
                                     {block.ordered ? `${idx + 1}.` : "•"}
                                   </span>
@@ -1398,7 +1424,17 @@ export function DocumentBlockEditor({
                                         setDirty(true);
                                       }
                                     }}
-                                    className="h-8 border-none bg-transparent text-xs sm:text-sm leading-relaxed px-1 focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-background rounded-md"
+                                    className={`h-8 border-none bg-transparent leading-relaxed px-1 focus-visible:ring-1 focus-visible:ring-primary/40 focus-visible:bg-background rounded-md ${
+                                      block.bold ? "font-bold" : "font-normal"
+                                    } ${block.italic ? "italic" : ""} ${block.underline ? "underline" : ""} ${block.strikethrough ? "line-through" : ""} ${
+                                      block.fontSize === "sm"
+                                        ? "text-xs"
+                                        : block.fontSize === "lg"
+                                        ? "text-base font-medium"
+                                        : block.fontSize === "xl"
+                                        ? "text-lg font-semibold"
+                                        : "text-xs sm:text-sm"
+                                    } ${block.align === "center" ? "text-center" : block.align === "right" ? "text-right" : "text-left"}`}
                                     placeholder={t("Tulis item...", "Type item...")}
                                   />
                                   <Button
