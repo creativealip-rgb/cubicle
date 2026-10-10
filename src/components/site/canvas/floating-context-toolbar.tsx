@@ -300,7 +300,9 @@ export function FloatingContextToolbar({
       <div className="relative">
         <button
           type="button"
-          onClick={() => {
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             setColorOpen(!colorOpen);
             setFontOpen(false);
             setSizeOpen(false);
@@ -316,7 +318,10 @@ export function FloatingContextToolbar({
           <div className="h-0.5 w-3.5 rounded-full mt-0.5" style={{ backgroundColor: value.color || "#2563EB" }} />
         </button>
         {colorOpen && (
-          <div className="absolute top-full mt-1.5 left-0 w-44 bg-white border border-slate-200 rounded-md shadow-lg p-2 z-50">
+          <div 
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="absolute top-full mt-1.5 left-0 w-44 bg-white border border-slate-200 rounded-md shadow-lg p-2 z-50"
+          >
             <p className="text-[10px] font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">{t("Pilih Warna", "Select Color")}</p>
             <div className="grid grid-cols-5 gap-1.5">
               {PALETTE_COLORS.map((col) => (
@@ -324,7 +329,9 @@ export function FloatingContextToolbar({
                   key={col.name}
                   type="button"
                   title={col.name}
-                  onClick={() => {
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     onChange({ color: col.hex });
                     setColorOpen(false);
                   }}
@@ -345,7 +352,9 @@ export function FloatingContextToolbar({
       <div className="relative">
         <button
           type="button"
-          onClick={() => {
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             setLinkOpen(!linkOpen);
             setFontOpen(false);
             setSizeOpen(false);
@@ -360,19 +369,25 @@ export function FloatingContextToolbar({
           <LinkIcon className="h-3.5 w-3.5" />
         </button>
         {linkOpen && (
-          <div className="absolute top-full mt-1.5 left-0 w-64 bg-white border border-slate-200 rounded-md shadow-xl p-2 z-50">
+          <div 
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="absolute top-full mt-1.5 left-0 w-64 bg-white border border-slate-200 rounded-md shadow-xl p-2 z-50"
+          >
             <p className="text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">{t("Tautan URL", "URL Link")}</p>
             <div className="flex items-center gap-1">
               <input
                 type="text"
                 value={linkInput}
                 onChange={(e) => setLinkInput(e.target.value)}
+                onMouseDown={(e) => e.stopPropagation()}
                 placeholder="https://example.com"
                 className="flex-1 text-xs border border-slate-300 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-primary"
               />
               <button
                 type="button"
-                onClick={() => {
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
                   onChange({ linkUrl: linkInput.trim() });
                   setLinkOpen(false);
                 }}
@@ -383,7 +398,9 @@ export function FloatingContextToolbar({
               {value.linkUrl && (
                 <button
                   type="button"
-                  onClick={() => {
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     onChange({ linkUrl: undefined });
                     setLinkInput("");
                     setLinkOpen(false);
@@ -403,7 +420,9 @@ export function FloatingContextToolbar({
       <div className="relative">
         <button
           type="button"
-          onClick={() => {
+          onMouseDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
             setEmojiOpen(!emojiOpen);
             setFontOpen(false);
             setSizeOpen(false);
@@ -418,13 +437,18 @@ export function FloatingContextToolbar({
           <Smile className="h-3.5 w-3.5" />
         </button>
         {emojiOpen && (
-          <div className="absolute top-full mt-1.5 left-0 w-44 bg-white border border-slate-200 rounded-md shadow-lg p-2 z-50">
+          <div 
+            onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+            className="absolute top-full mt-1.5 left-0 w-44 bg-white border border-slate-200 rounded-md shadow-lg p-2 z-50"
+          >
             <div className="grid grid-cols-4 gap-1">
               {EMOJI_LIST.map((em) => (
                 <button
                   key={em}
                   type="button"
-                  onClick={() => {
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
                     if (onInsertEmoji) onInsertEmoji(em);
                     setEmojiOpen(false);
                   }}
