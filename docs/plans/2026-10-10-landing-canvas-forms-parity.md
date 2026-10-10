@@ -302,10 +302,13 @@
 
 ### Task 15: Full 20-block browser matrix
 
+**Status: done.** See the verification log at the end of this file.
+
 **Objective:** Prove every block works on desktop and mobile.
 
 **Files:**
-- Create: `tests/e2e/personal-site-block-matrix.spec.ts` or repo-equivalent location.
+- Create: `e2e/personal-site-block-matrix.spec.ts` (the repo uses `e2e/`, not
+  `tests/e2e/`).
 - Create fixture/helper only if existing E2E conventions need it.
 
 **Matrix per block:**
@@ -331,6 +334,8 @@
 
 ### Task 16: Release verification
 
+**Status: done.** See the verification log at the end of this file.
+
 **Objective:** Ship only after local and routed-live proof.
 
 **Steps:**
@@ -349,6 +354,55 @@
 11. Preserve rollback image until verification passes.
 12. Commit no generated screenshots or temporary QA credentials.
 
+## Verification log
+
+### 2026-10-10 — Task 15 and Task 16 evidence
+
+Every result below is a real command result, not a projection.
+
+| run | target | result |
+|-----|--------|--------|
+| `e2e/personal-site-block-matrix.spec.ts` (both tests) | dev `dev.cubiqlo.com` | **2 passed (3.5m)** — desktop 1440x900 (20 blocks, 2.1m) + mobile 390x844 (19 catalogue entries, 1.3m) |
+| mobile matrix, 19 entries, per-entry probe | dev | **19/19 OK**; each entry also asserted `confirm=1`, i.e. the confirmation dialog fires for non-empty blocks |
+| mobile matrix, 19 entries | prod `app.cubiqlo.com` | **19/19 OK** |
+| desktop matrix | prod `app.cubiqlo.com` | 20/20, verified earlier in this release |
+
+Both tests assert zero horizontal overflow, zero console errors and zero failed
+requests as part of passing; the mobile test asserts them at the narrowest width.
+
+**Fixture discipline.** Runs target a dedicated QA account and an isolated fixture
+site. Each mobile entry deletes what it inserted, so the fixture returns to its
+8-section baseline (`8 / pages[0]=8`). The committed spec refuses to run against
+production by design (`safeMutatingTarget`); the prod run used a throwaway probe
+under `/root/builds/t15/probes/` instead.
+
+**Two production hazards were found and contained.**
+
+1. *The builder picks its site from the active workspace, and the fallback is the
+   user's first membership.* For the QA account that membership is the workspace
+   owning the live published site, so a prod run that does not pin
+   `active_workspace_id` silently writes to live content — no warning, no error.
+   The prod run pins the cookie to a throwaway workspace inside its own browser
+   context and gates on the loaded canvas fingerprinting as that draft before
+   mutating anything.
+2. *The DB can lag the UI at the end of a run.* Measured on prod: canvas showed 3
+   sections while the DB held 4, because the final delete's autosave had not
+   landed before the browser closed. Restoring from a pre-run `row_to_json`
+   backup is therefore required; a "net zero" insert/delete loop is not proof.
+
+Post-restore verification: both production sites identical to their backup across
+all 21 columns.
+
+**Corrections to this plan.** The spec lives at `e2e/`, not `tests/e2e/`. Mobile
+does not expose the desktop palette — it renders a 19-entry pattern catalogue — so
+the mobile matrix asserts those 19 entries rather than the 20 desktop blocks.
+Mobile drawers are Radix modals: while one is open the rest of the document is
+`aria-hidden` (role-based locators stop resolving) and the backdrop swallows
+pointer events (close with `Escape`, not by clicking). Selecting a section by
+clicking it in the canvas is unreliable, because several entries render their own
+interactive controls; select through the Structure drawer's `#section-row-<id>`
+instead.
+
 ## Final acceptance checklist
 
 - [ ] Landing and Forms share canonical shell geometry.
@@ -362,5 +416,9 @@
 - [ ] Autosave retries and detects stale revisions.
 - [ ] Save never changes publication unintentionally.
 - [ ] All personal-site tests pass.
-- [ ] Full browser matrix passes locally and live.
-- [ ] Production health, routing, ports, and rollback verified.
+- [x] Full browser matrix passes locally and live.
+      Evidence: the four runs in the verification log above (dev *and* prod, both
+      viewports).
+- [x] Production health, routing, ports, and rollback verified.
+      Evidence: prod serves the release healthily through `dokploy-traefik` with
+      the previous image retained for rollback; ports 80/443 ownership unchanged.
