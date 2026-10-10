@@ -6,6 +6,7 @@ const read = (path: string) => readFileSync(path, "utf8");
 it("localizes personal-site editor chrome and accessibility labels", () => {
   const files = [
     "src/components/site/canvas/canvas-page-client.tsx",
+    "src/components/site/canvas/canvas-editor.tsx",
     "src/components/site/canvas/properties-panel.tsx",
     "src/components/site/canvas/canvas-renderer.tsx",
     "src/components/site/canvas/canvas-section.tsx",

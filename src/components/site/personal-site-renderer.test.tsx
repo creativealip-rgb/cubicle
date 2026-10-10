@@ -8,12 +8,13 @@ describe("PersonalSiteRenderer", () => {
     const site: PersonalSiteInput = {
       ...DEFAULT_PERSONAL_SITE,
       ctaUrl: "https://cal.com/owner/book",
-      sections: [
+      pages: [{ id: "home", slug: "", title: "Home", isHome: true, sections: [
         { id: "s", type: "services", heading: "Services", items: [{ id: "s1", title: "Design", description: "Product design" }] },
         { id: "p", type: "process", heading: "Process", steps: [{ id: "p1", title: "Brief", description: "Align" }] },
         { id: "f", type: "faq", heading: "FAQ", items: [{ id: "f1", question: "How?", answer: "Together" }] },
         { id: "t", type: "testimonials", heading: "Proof", testimonials: [] },
-      ],
+      ] }],
+      sections: [],
     };
     const html = renderToStaticMarkup(<PersonalSiteRenderer site={site} />);
     expect(html).toContain('data-section-type="services"');
@@ -33,8 +34,7 @@ describe("PersonalSiteRenderer", () => {
   it("hides fake-proof testimonials from the public page", () => {
     const site = {
       ...DEFAULT_PERSONAL_SITE,
-      sections: [
-        {
+      pages: [{ id: "home", slug: "", title: "Home", isHome: true, sections: [{
           id: "t",
           type: "testimonials" as const,
           heading: "Apa kata klien",
@@ -42,8 +42,8 @@ describe("PersonalSiteRenderer", () => {
             { id: "real", quote: "Kolaborasi sangat lancar dan hasilnya tepat sasaran.", author: "Rina", role: "Founder Toko Rina" },
             { id: "fake", quote: "Website yang dibangun meningkatkan konversi kita hingga 40%.", author: "Andi Wijaya", role: "Founder TechCorp" },
           ],
-        },
-      ],
+        }], }],
+      sections: [],
     } as PersonalSiteInput;
     const html = renderToStaticMarkup(<PersonalSiteRenderer site={site} />);
     expect(html).toContain("Rina");

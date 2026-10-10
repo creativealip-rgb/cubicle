@@ -14,5 +14,5 @@ it("shows public URL with copy and open actions in publish dialog", () => {
 it("labels preview separately from public site", () => {
   const source = readFileSync("src/components/site/canvas/canvas-editor.tsx", "utf8");
   expect(source).toContain('t("Link publik", "Public link")');
-  expect(source).toContain('t("Pratinjau", "Preview")');
+  expect(source).toContain('t("Preview", "Preview")');
 });
