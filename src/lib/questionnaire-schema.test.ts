@@ -78,14 +78,26 @@ describe("safeParseQuestionnaireSchema (stored JSONB fallback)", () => {
     expect(safeParseQuestionnaireSchema("corrupt")).toEqual([]);
   });
 
+  it("loads fields stored in the legacy { fields: [...] } wrapper", () => {
+    // Rows written before the builder stored a bare array. Reading these as "no
+    // fields" showed a blank builder, and the next save overwrote the row with
+    // the editor's defaults — silent data loss.
+    expect(safeParseQuestionnaireSchema({ fields: [validField] })).toEqual(
+      safeParseQuestionnaireSchema([validField]),
+    );
+  });
+
+  it("still returns [] for an object that is not the wrapper", () => {
+    expect(safeParseQuestionnaireSchema({ fields: "nope" })).toEqual([]);
+    expect(safeParseQuestionnaireSchema({ fields: [{ id: 1, type: "nope", label: 42 }] })).toEqual([]);
+  });
+
   it("returns [] when any entry is corrupt (all-or-nothing fallback)", () => {
     expect(safeParseQuestionnaireSchema([validField, { id: 1, type: "nope", label: 42 }])).toEqual([]);
   });
 
   it("preserves valid stored fields", () => {
-    expect(safeParseQuestionnaireSchema([validField])).toEqual([
-      { id: "f1", type: "text", label: "Full name", required: true },
-    ]);
+    expect(safeParseQuestionnaireSchema([validField])).toEqual([questionnaireFieldSchema.parse(validField)]);
   });
 
   it("accepts a stored empty array", () => {

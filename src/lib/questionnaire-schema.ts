@@ -131,7 +131,18 @@ export type QuestionnaireSettings = z.infer<typeof questionnaireSettingsSchema>;
 const storedSchemaList = z.array(questionnaireFieldSchema).max(50);
 
 export function safeParseQuestionnaireSchema(value: unknown): QuestionnaireField[] {
-  if (!Array.isArray(value)) return [];
-  const result = storedSchemaList.safeParse(value);
+  // Stored rows exist in TWO shapes: a bare field array (what the builder writes
+  // today) and an older `{ fields: [...] }` wrapper. Rows in the wrapper shape
+  // hold real content and are still reachable from the list, so reading them as
+  // "no fields" showed a blank builder and the next save overwrote the row with
+  // the editor's defaults — silent data loss. Unwrap before validating so both
+  // shapes load; anything else still falls back to an empty array.
+  const list = Array.isArray(value)
+    ? value
+    : value && typeof value === "object" && Array.isArray((value as { fields?: unknown }).fields)
+      ? (value as { fields: unknown[] }).fields
+      : null;
+  if (!list) return [];
+  const result = storedSchemaList.safeParse(list);
   return result.success ? result.data : [];
 }
