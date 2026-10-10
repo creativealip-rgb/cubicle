@@ -113,6 +113,7 @@ import { useHistoryState } from "@/lib/use-history-state";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import type { QuestionnaireField, QuestionnaireFieldType } from "@/lib/questionnaire-schema";
 import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
+import { FloatingContextToolbar } from "@/components/site/canvas/floating-context-toolbar";
 import { PublicDocumentHeader } from "@/components/public/public-document-header";
 import { IntakeForm } from "@/components/questionnaires/intake-form";
 
@@ -381,6 +382,7 @@ function SortableCanvasField({
   onDelete,
   onOpenProperties,
   onUpdateLabel,
+  onUpdateField,
   cardRadius = "rounded",
   themeHex = "#2563EB",
 }: {
@@ -391,6 +393,7 @@ function SortableCanvasField({
   onDelete: () => void;
   onOpenProperties: () => void;
   onUpdateLabel: (val: string) => void;
+  onUpdateField?: (patch: Partial<QuestionnaireField>) => void;
   cardRadius?: "normal" | "rounded" | "soft";
   themeHex?: string;
 }) {
@@ -444,6 +447,26 @@ function SortableCanvasField({
           : "border-border/70 bg-card hover:border-primary/40 hover:shadow-xs"
       }`}
     >
+      {/* Floating Contextual Toolbar on Active Field Selection */}
+      {isSelected && onUpdateField && (
+        <FloatingContextToolbar
+          active={isSelected}
+          value={{
+            fontFamily: field.fontFamily,
+            fontSize: field.fontSize,
+            align: field.align,
+            bold: field.bold,
+            italic: field.italic,
+            underline: field.underline,
+            strikethrough: field.strikethrough,
+          }}
+          onChange={(patch) => onUpdateField(patch)}
+          onDuplicate={onDuplicate}
+          onDelete={onDelete}
+          tagType={isHeading ? "heading" : isInfo || isTerms ? "body" : "card"}
+        />
+      )}
+
       {/* Top action toolbar */}
       <div
         className={`absolute -top-3.5 right-4 flex items-center gap-1 bg-background border border-border shadow-xs rounded-lg px-1.5 py-0.5 z-10 transition-opacity ${
@@ -1815,6 +1838,11 @@ export function QuestionnaireBuilder({
                               }}
                               onDuplicate={() => handleDuplicateField(field.id)}
                               onDelete={() => handleDeleteField(field.id)}
+                              onUpdateField={(patch) => {
+                                setFields((prev) =>
+                                  prev.map((f) => (f.id === field.id ? { ...f, ...patch } : f)),
+                                );
+                              }}
                             />
                           ))}
                         </div>

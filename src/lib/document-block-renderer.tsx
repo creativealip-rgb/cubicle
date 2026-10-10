@@ -65,6 +65,13 @@ export function renderDocumentBlockHtml(
 ): React.ReactNode {
   const textAlignClass = block.align === "center" ? "text-center" : block.align === "right" ? "text-right" : block.align === "left" ? "text-left" : "";
   const fontStyle = block.fontFamily ? { fontFamily: getFontFamily(block.fontFamily) } : undefined;
+  const formattingClass = [
+    block.bold && "font-bold",
+    block.italic && "italic",
+    block.underline && "underline",
+    block.strikethrough && "line-through",
+  ].filter(Boolean).join(" ");
+
   const fontSizeClass =
     block.fontSize === "sm"
       ? "text-xs"
@@ -172,7 +179,7 @@ export function renderDocumentBlockHtml(
     return <div className="rounded border border-dashed p-6 text-center text-sm text-muted-foreground">{lang === "en" ? "Client digital signature slot" : "Tempat tanda tangan client"}</div>;
   }
   return (
-    <div className={`whitespace-pre-wrap ${textAlignClass} ${fontSizeClass}`} style={fontStyle}>
+    <div className={`whitespace-pre-wrap ${textAlignClass} ${fontSizeClass} ${formattingClass}`} style={fontStyle}>
       {resolveDocumentPlaceholders(getLocalizedDocText(block.content ?? "", lang), values)}
     </div>
   );

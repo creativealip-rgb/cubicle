@@ -46,6 +46,7 @@ import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
 import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
+import { FloatingContextToolbar } from "@/components/site/canvas/floating-context-toolbar";
 import { PublicDocumentHeader } from "@/components/public/public-document-header";
 import {
   AlignCenter,
@@ -1323,6 +1324,26 @@ export function DocumentBlockEditor({
                             </button>
                           </div>
 
+                          {/* Floating Contextual Toolbar on Canvas Block Selection */}
+                          {isSelected && (block.type === "heading" || block.type === "text" || block.type === "placeholder" || block.type === "list") && (
+                            <FloatingContextToolbar
+                              active={isSelected}
+                              value={{
+                                fontFamily: block.fontFamily,
+                                fontSize: block.fontSize,
+                                align: block.align,
+                                bold: block.bold,
+                                italic: block.italic,
+                                underline: block.underline,
+                                strikethrough: block.strikethrough,
+                              }}
+                              onChange={(patch) => updateBlock(block.id, patch)}
+                              onDuplicate={() => duplicateBlock(block.id)}
+                              onDelete={() => remove(block.id)}
+                              tagType={block.type === "heading" ? "heading" : block.type === "list" ? "card" : "body"}
+                            />
+                          )}
+
                           {/* Block In-Canvas Editors */}
                           {block.type === "heading" ? (
                             <Input
@@ -1696,6 +1717,48 @@ export function DocumentBlockEditor({
                                       {sz.toUpperCase()}
                                     </button>
                                   ))}
+                                </div>
+                              </div>
+
+                              <div className="mt-3 space-y-1">
+                                <label className="text-[11px] font-semibold text-muted-foreground">{t("Format Teks", "Text Formatting")}</label>
+                                <div className="grid grid-cols-4 gap-1">
+                                  <button
+                                    type="button"
+                                    onClick={() => updateBlock(sel.id, { bold: !sel.bold })}
+                                    className={`py-1 text-xs font-bold rounded-md border transition-all ${
+                                      sel.bold ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
+                                    }`}
+                                  >
+                                    B
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateBlock(sel.id, { italic: !sel.italic })}
+                                    className={`py-1 text-xs font-serif italic rounded-md border transition-all ${
+                                      sel.italic ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
+                                    }`}
+                                  >
+                                    I
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateBlock(sel.id, { underline: !sel.underline })}
+                                    className={`py-1 text-xs underline rounded-md border transition-all ${
+                                      sel.underline ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
+                                    }`}
+                                  >
+                                    U
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => updateBlock(sel.id, { strikethrough: !sel.strikethrough })}
+                                    className={`py-1 text-xs line-through rounded-md border transition-all ${
+                                      sel.strikethrough ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
+                                    }`}
+                                  >
+                                    S
+                                  </button>
                                 </div>
                               </div>
 

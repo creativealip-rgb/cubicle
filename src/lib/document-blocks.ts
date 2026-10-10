@@ -14,6 +14,10 @@ export type DocumentBlock = {
   align?: DocumentBlockAlign;
   fontFamily?: string;
   fontSize?: "sm" | "base" | "lg" | "xl";
+  bold?: boolean;
+  italic?: boolean;
+  underline?: boolean;
+  strikethrough?: boolean;
   src?: string;
   fileName?: string;
   fileId?: string;
