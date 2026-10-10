@@ -12,6 +12,7 @@ import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage } from "@
 import { normalizePersonalSiteSlug } from "@/lib/personal-site/model";
 import { SECTION_TEMPLATES, type SectionTemplate } from "@/lib/personal-site/section-templates";
 import {
+  MAX_PAGES,
   MAX_SECTIONS,
   addPage as addPageToList,
   addSection as addSectionToList,
@@ -277,6 +278,10 @@ function PagesStep({ pages, activePageId, onSetActivePageId, updatePages }: {
   updatePages: (pages: PersonalSitePage[]) => void;
 }) {
   function addPage() {
+    if (pages.length >= MAX_PAGES) {
+      toast.error(t(`Batas maksimal ${MAX_PAGES} halaman tercapai.`, `Maximum of ${MAX_PAGES} pages reached.`));
+      return;
+    }
     const id = makeId().replace(/^s_/, "p_");
     const title = `${t("Halaman", "Page")} ${pages.length + 1}`;
     const nextPages = addPageToList(pages, { id, slug: slugifyPageTitle(title, `page-${pages.length + 1}`), title, isHome: false, sections: [] });

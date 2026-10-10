@@ -18,7 +18,7 @@ import {
   type PersonalSiteInput,
   type PersonalSiteSection,
 } from "@/lib/personal-site/model";
-import { MAX_SECTIONS, isSectionEmpty } from "@/lib/personal-site/editor-mutations";
+import { MAX_PAGES, MAX_SECTIONS, isSectionEmpty } from "@/lib/personal-site/editor-mutations";
 
 const { toastError } = vi.hoisted(() => ({ toastError: vi.fn() }));
 vi.mock("sonner", () => ({ toast: { success: vi.fn(), error: toastError } }));
@@ -186,5 +186,42 @@ describe("mobile section parity", () => {
 
     expect(toastError).toHaveBeenCalledTimes(1);
     expect(String(toastError.mock.calls[0][0])).toContain(String(MAX_SECTIONS));
+  });
+
+  function pagesOf(count: number) {
+    return Array.from({ length: count }, (_, i) => ({
+      id: i === 0 ? "home" : `p${i}`,
+      slug: i === 0 ? "" : `p${i}`,
+      title: `Page ${i}`,
+      isHome: i === 0,
+      sections: [],
+    }));
+  }
+
+  async function clickAddPage() {
+    await userEvent.click(screen.getByRole("button", { name: "Pages" }));
+    toastError.mockClear();
+    await userEvent.click(screen.getByRole("button", { name: /Add Page/i }));
+  }
+
+  it("announces the max-limit at the page cap and adds nothing", async () => {
+    const onUpdateSite = renderMobile({ ...DEFAULT_PERSONAL_SITE, sections: [], pages: pagesOf(MAX_PAGES) });
+
+    await clickAddPage();
+
+    expect(toastError).toHaveBeenCalledTimes(1);
+    expect(String(toastError.mock.calls[0][0])).toContain(String(MAX_PAGES));
+    expect(onUpdateSite).not.toHaveBeenCalled();
+  });
+
+  it("adds a page below the cap without announcing a limit", async () => {
+    const onUpdateSite = renderMobile({ ...DEFAULT_PERSONAL_SITE, sections: [], pages: pagesOf(1) });
+
+    await clickAddPage();
+
+    expect(toastError).not.toHaveBeenCalled();
+    expect(onUpdateSite).toHaveBeenCalled();
+    const patch = onUpdateSite.mock.calls.at(-1)?.[0] as Partial<PersonalSiteInput>;
+    expect(patch.pages).toHaveLength(2);
   });
 });
