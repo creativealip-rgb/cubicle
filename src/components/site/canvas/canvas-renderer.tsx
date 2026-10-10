@@ -8,12 +8,21 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { InlineText } from "./inline-text";
+import { FloatingContextToolbar } from "./floating-context-toolbar";
 import { ImageUpload } from "./image-upload";
 import { useT } from "@/lib/i18n-client";
-import { getFontFamily } from "@/lib/builder-fonts";
+import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
 import { GoogleSitesGalleryCanvas } from "./google-sites-gallery";
 import type { PersonalSiteInput, PersonalSiteSection, ThemeConfig } from "@/lib/personal-site/model";
 import { isEditorialPlaceholderText, PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
+
+function patchItem<T>(arr: T[], idx: number, patch: any): T[] {
+  return arr.map((item, i) => (i === idx ? { ...item, ...patch } : item));
+}
+
+function removeItemAt<T>(arr: T[], idx: number): T[] {
+  return arr.filter((_, i) => i !== idx);
+}
 
 // --- Device preview (Phase 5) ---------------------------------------------
 // Preview-only viewport widths for the editor canvas. This state never touches
@@ -228,6 +237,7 @@ function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDo
         onDuplicate={onDuplicate}
         onDelete={onDelete}
         section={section}
+        onUpdate={onUpdate}
         animation={"animation" in section ? section.animation : undefined}
         onAnimationChange={(anim) => onUpdate({ animation: anim } as Partial<PersonalSiteSection>)}
         dragHandleProps={listeners}
@@ -238,7 +248,7 @@ function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDo
   );
 }
 
-function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, animation, onAnimationChange, dragHandleProps, section, children }: {
+function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, animation, onAnimationChange, dragHandleProps, section, onUpdate, children }: {
   id: string;
   selected: boolean;
   onSelect: () => void;
@@ -250,6 +260,7 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
   onAnimationChange?: (animation: string) => void;
   dragHandleProps?: Record<string, unknown>;
   section?: any;
+  onUpdate?: (patch: any) => void;
   children: React.ReactNode;
 }) {
   const { t } = useT();
@@ -265,11 +276,31 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
       style={fontFamily ? { fontFamily } : undefined}
       className={cn(
         "relative group transition-[outline] rounded-lg",
-        selected ? "outline-2 outline-primary outline-offset-2" : "outline-transparent",
+        selected ? "outline-2 outline-primary outline-offset-4" : "outline-transparent",
         hovered && !selected && "outline-1 outline-muted-foreground/20 outline-offset-2",
       )}
     >
-      {(hovered || selected) && (
+      {/* Floating Contextual Toolbar atop the selected section */}
+      {selected && onUpdate && (
+        <FloatingContextToolbar
+          active={selected}
+          value={{
+            fontFamily: section.fontFamily,
+            fontSize: section.fontSize,
+            align: section.align,
+            bold: section.bold,
+            italic: section.italic,
+            underline: section.underline,
+            strikethrough: section.strikethrough,
+          }}
+          onChange={(patch) => onUpdate(patch)}
+          onDuplicate={onDuplicate}
+          onDelete={onDelete}
+          tagType="heading"
+        />
+      )}
+
+      {(hovered && !selected) && (
         <div className="absolute -top-3 right-2 z-20 flex items-center gap-0.5 rounded-lg border bg-background px-1 py-0.5 shadow-sm">
           <button type="button" onClick={(e) => { e.stopPropagation(); onMoveUp(); }} className="p-1 hover:bg-muted rounded" aria-label={t("Naikkan", "Move up")}>
             <ChevronUp className="h-3 w-3" />
@@ -277,20 +308,6 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
           <button type="button" onClick={(e) => { e.stopPropagation(); onMoveDown(); }} className="p-1 hover:bg-muted rounded" aria-label={t("Turunkan", "Move down")}>
             <ChevronDown className="h-3 w-3" />
           </button>
-          <div className="w-px h-3 bg-border mx-0.5" />
-          {onAnimationChange && (
-            <select
-              value={animation || "none"}
-              onChange={(e) => { e.stopPropagation(); onAnimationChange(e.target.value); }}
-              onClick={(e) => e.stopPropagation()}
-              className="h-6 text-[10px] bg-transparent border-none cursor-pointer hover:bg-muted rounded px-0.5"
-              title={t("Animasi", "Animation")}
-            >
-              {PERSONAL_SITE_ANIMATIONS.map((a) => (
-                <option key={a} value={a}>{a === "none" ? `✦ ${t("Tanpa animasi", "None")}` : `✦ ${a}`}</option>
-              ))}
-            </select>
-          )}
           <div className="w-px h-3 bg-border mx-0.5" />
           <button type="button" onClick={(e) => { e.stopPropagation(); onDuplicate(); }} className="p-1 hover:bg-muted rounded" aria-label={t("Duplikat", "Duplicate")}>
             <Copy className="h-3 w-3" />
@@ -416,6 +433,7 @@ function getResolvedItemDescStyle(section: any, item: any) {
 function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSection; onUpdate: (patch: Partial<PersonalSiteSection>) => void; theme?: ThemeConfig }) {
   const { t } = useT();
   const headingStyle = getHeadingStyle(section as any);
+  const [activeItemId, setActiveItemId] = useState<string | null>(null);
 
   switch (section.type) {
     case "services":
@@ -423,12 +441,39 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
         <div className="py-6">
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="grid gap-4 sm:grid-cols-2">
-            {section.items.map((item, i) => (
-              <div key={item.id} className="rounded-lg border bg-card p-4 shadow-sm" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                <InlineText value={item.title} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, title: v } : it) })} tag="h3" className={getResolvedItemStyle(section, item, "font-semibold mb-1")} />
-                <InlineText value={item.description} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, description: v } : it) })} tag="p" className={getResolvedItemDescStyle(section, item)} />
-              </div>
-            ))}
+            {section.items.map((item, i) => {
+              const isItemActive = activeItemId === item.id;
+              return (
+                <div
+                  key={item.id}
+                  onClick={(e) => { e.stopPropagation(); setActiveItemId(item.id); }}
+                  className={cn(
+                    "relative rounded-lg border bg-card p-4 shadow-sm transition-all group",
+                    isItemActive ? "ring-2 ring-primary ring-offset-2" : "hover:border-primary/50"
+                  )}
+                  style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
+                >
+                  {isItemActive && (
+                    <FloatingContextToolbar
+                      active={isItemActive}
+                      value={{
+                        fontSize: item.fontSize,
+                        align: item.align,
+                        bold: item.bold,
+                        italic: item.italic,
+                        underline: item.underline,
+                        strikethrough: item.strikethrough,
+                      }}
+                      onChange={(patch) => onUpdate({ items: patchItem(section.items, i, patch) })}
+                      tagType="card"
+                      onDelete={() => onUpdate({ items: removeItemAt(section.items, i) })}
+                    />
+                  )}
+                  <InlineText value={item.title} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, title: v } : it) })} tag="h3" className={getResolvedItemStyle(section, item, "font-semibold mb-1")} />
+                  <InlineText value={item.description} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, description: v } : it) })} tag="p" className={getResolvedItemDescStyle(section, item)} />
+                </div>
+              );
+            })}
           </div>
         </div>
       );
@@ -438,15 +483,42 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
         <div className="py-6">
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="space-y-3">
-            {section.steps.map((step, i) => (
-              <div key={step.id} className="flex gap-3" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">{i + 1}</span>
-                <div className="flex-1">
-                  <InlineText value={step.title} onChange={(v) => onUpdate({ steps: section.steps.map((s, j) => j === i ? { ...s, title: v } : s) })} tag="h3" className={getResolvedItemStyle(section, step, "font-semibold mb-1")} />
-                  <InlineText value={step.description} onChange={(v) => onUpdate({ steps: section.steps.map((s, j) => j === i ? { ...s, description: v } : s) })} tag="p" className={getResolvedItemDescStyle(section, step)} />
+            {section.steps.map((step, i) => {
+              const isItemActive = activeItemId === step.id;
+              return (
+                <div
+                  key={step.id}
+                  onClick={(e) => { e.stopPropagation(); setActiveItemId(step.id); }}
+                  className={cn(
+                    "relative flex gap-3 p-2 rounded-lg transition-all",
+                    isItemActive ? "ring-2 ring-primary ring-offset-2 bg-muted/20" : "hover:bg-muted/10"
+                  )}
+                  style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
+                >
+                  {isItemActive && (
+                    <FloatingContextToolbar
+                      active={isItemActive}
+                      value={{
+                        fontSize: step.fontSize,
+                        align: step.align,
+                        bold: step.bold,
+                        italic: step.italic,
+                        underline: step.underline,
+                        strikethrough: step.strikethrough,
+                      }}
+                      onChange={(patch) => onUpdate({ steps: patchItem(section.steps, i, patch) })}
+                      tagType="card"
+                      onDelete={() => onUpdate({ steps: removeItemAt(section.steps, i) })}
+                    />
+                  )}
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">{i + 1}</span>
+                  <div className="flex-1">
+                    <InlineText value={step.title} onChange={(v) => onUpdate({ steps: section.steps.map((s, j) => j === i ? { ...s, title: v } : s) })} tag="h3" className={getResolvedItemStyle(section, step, "font-semibold mb-1")} />
+                    <InlineText value={step.description} onChange={(v) => onUpdate({ steps: section.steps.map((s, j) => j === i ? { ...s, description: v } : s) })} tag="p" className={getResolvedItemDescStyle(section, step)} />
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       );
@@ -456,13 +528,40 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
         <div className="py-6">
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {section.offers.map((offer, i) => (
-              <div key={offer.id} className="rounded-lg border bg-card p-4 shadow-sm text-center" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                <InlineText value={offer.name} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, name: v } : o) })} tag="h3" className={getResolvedItemStyle(section, offer, "font-semibold mb-1")} />
-                <InlineText value={offer.price} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, price: v } : o) })} tag="p" className="text-lg font-bold text-primary my-1" />
-                <InlineText value={offer.description} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, description: v } : o) })} tag="p" className={getResolvedItemDescStyle(section, offer)} />
-              </div>
-            ))}
+            {section.offers.map((offer, i) => {
+              const isItemActive = activeItemId === offer.id;
+              return (
+                <div
+                  key={offer.id}
+                  onClick={(e) => { e.stopPropagation(); setActiveItemId(offer.id); }}
+                  className={cn(
+                    "relative rounded-lg border bg-card p-4 shadow-sm text-center transition-all",
+                    isItemActive ? "ring-2 ring-primary ring-offset-2" : "hover:border-primary/50"
+                  )}
+                  style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
+                >
+                  {isItemActive && (
+                    <FloatingContextToolbar
+                      active={isItemActive}
+                      value={{
+                        fontSize: offer.fontSize,
+                        align: offer.align,
+                        bold: offer.bold,
+                        italic: offer.italic,
+                        underline: offer.underline,
+                        strikethrough: offer.strikethrough,
+                      }}
+                      onChange={(patch) => onUpdate({ offers: patchItem(section.offers, i, patch) })}
+                      tagType="card"
+                      onDelete={() => onUpdate({ offers: removeItemAt(section.offers, i) })}
+                    />
+                  )}
+                  <InlineText value={offer.name} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, name: v } : o) })} tag="h3" className={getResolvedItemStyle(section, offer, "font-semibold mb-1")} />
+                  <InlineText value={offer.price} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, price: v } : o) })} tag="p" className="text-lg font-bold text-primary my-1" />
+                  <InlineText value={offer.description} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, description: v } : o) })} tag="p" className={getResolvedItemDescStyle(section, offer)} />
+                </div>
+              );
+            })}
           </div>
         </div>
       );
@@ -472,12 +571,39 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
         <div className="py-6">
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="grid gap-4 sm:grid-cols-2">
-            {section.projects.map((project, i) => (
-              <div key={project.id} className="rounded-lg border bg-card p-4 shadow-sm" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                <InlineText value={project.title} onChange={(v) => onUpdate({ projects: section.projects.map((p, j) => j === i ? { ...p, title: v } : p) })} tag="h3" className={getResolvedItemStyle(section, project, "font-semibold mb-1")} />
-                <InlineText value={project.description} onChange={(v) => onUpdate({ projects: section.projects.map((p, j) => j === i ? { ...p, description: v } : p) })} tag="p" className={getResolvedItemDescStyle(section, project)} />
-              </div>
-            ))}
+            {section.projects.map((project, i) => {
+              const isItemActive = activeItemId === project.id;
+              return (
+                <div
+                  key={project.id}
+                  onClick={(e) => { e.stopPropagation(); setActiveItemId(project.id); }}
+                  className={cn(
+                    "relative rounded-lg border bg-card p-4 shadow-sm transition-all",
+                    isItemActive ? "ring-2 ring-primary ring-offset-2" : "hover:border-primary/50"
+                  )}
+                  style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
+                >
+                  {isItemActive && (
+                    <FloatingContextToolbar
+                      active={isItemActive}
+                      value={{
+                        fontSize: project.fontSize,
+                        align: project.align,
+                        bold: project.bold,
+                        italic: project.italic,
+                        underline: project.underline,
+                        strikethrough: project.strikethrough,
+                      }}
+                      onChange={(patch) => onUpdate({ projects: patchItem(section.projects, i, patch) })}
+                      tagType="card"
+                      onDelete={() => onUpdate({ projects: removeItemAt(section.projects, i) })}
+                    />
+                  )}
+                  <InlineText value={project.title} onChange={(v) => onUpdate({ projects: section.projects.map((p, j) => j === i ? { ...p, title: v } : p) })} tag="h3" className={getResolvedItemStyle(section, project, "font-semibold mb-1")} />
+                  <InlineText value={project.description} onChange={(v) => onUpdate({ projects: section.projects.map((p, j) => j === i ? { ...p, description: v } : p) })} tag="p" className={getResolvedItemDescStyle(section, project)} />
+                </div>
+              );
+            })}
           </div>
         </div>
       );
@@ -487,15 +613,42 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
         <div className="py-6">
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="space-y-4">
-            {section.testimonials.map((t, i) => (
-              <div key={t.id} className="rounded-lg border bg-card p-4 shadow-sm italic" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                <InlineText value={t.quote} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, quote: v } : tt) })} tag="p" className={cn(getResolvedItemDescStyle(section, t), "mb-2 not-italic text-foreground")} />
-                <div className="text-sm text-muted-foreground not-italic" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                  <InlineText value={t.author} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, author: v } : tt) })} tag="span" className={getResolvedItemStyle(section, t, "font-medium")} />
-                  {t.role && <span> — <InlineText value={t.role} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, role: v } : tt) })} tag="span" className={getResolvedItemDescStyle(section, t)} /></span>}
+            {section.testimonials.map((t, i) => {
+              const isItemActive = activeItemId === t.id;
+              return (
+                <div
+                  key={t.id}
+                  onClick={(e) => { e.stopPropagation(); setActiveItemId(t.id); }}
+                  className={cn(
+                    "relative rounded-lg border bg-card p-4 shadow-sm italic transition-all",
+                    isItemActive ? "ring-2 ring-primary ring-offset-2 not-italic" : "hover:border-primary/50"
+                  )}
+                  style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
+                >
+                  {isItemActive && (
+                    <FloatingContextToolbar
+                      active={isItemActive}
+                      value={{
+                        fontSize: t.fontSize,
+                        align: t.align,
+                        bold: t.bold,
+                        italic: t.italic,
+                        underline: t.underline,
+                        strikethrough: t.strikethrough,
+                      }}
+                      onChange={(patch) => onUpdate({ testimonials: patchItem(section.testimonials, i, patch) })}
+                      tagType="card"
+                      onDelete={() => onUpdate({ testimonials: removeItemAt(section.testimonials, i) })}
+                    />
+                  )}
+                  <InlineText value={t.quote} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, quote: v } : tt) })} tag="p" className={cn(getResolvedItemDescStyle(section, t), "mb-2 not-italic text-foreground")} />
+                  <div className="text-sm text-muted-foreground not-italic" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
+                    <InlineText value={t.author} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, author: v } : tt) })} tag="span" className={getResolvedItemStyle(section, t, "font-medium")} />
+                    {t.role && <span> — <InlineText value={t.role} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, role: v } : tt) })} tag="span" className={getResolvedItemDescStyle(section, t)} /></span>}
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       );
@@ -505,12 +658,39 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
         <div className="py-6">
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="space-y-3">
-            {section.items.map((item, i) => (
-              <div key={item.id} className="rounded-lg border bg-card p-4 shadow-sm" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                <InlineText value={item.question} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, question: v } : it) })} tag="h3" className={getResolvedItemStyle(section, item, "font-semibold mb-1")} />
-                <InlineText value={item.answer} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, answer: v } : it) })} tag="p" className={getResolvedItemDescStyle(section, item)} />
-              </div>
-            ))}
+            {section.items.map((item, i) => {
+              const isItemActive = activeItemId === item.id;
+              return (
+                <div
+                  key={item.id}
+                  onClick={(e) => { e.stopPropagation(); setActiveItemId(item.id); }}
+                  className={cn(
+                    "relative rounded-lg border bg-card p-4 shadow-sm transition-all",
+                    isItemActive ? "ring-2 ring-primary ring-offset-2" : "hover:border-primary/50"
+                  )}
+                  style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
+                >
+                  {isItemActive && (
+                    <FloatingContextToolbar
+                      active={isItemActive}
+                      value={{
+                        fontSize: item.fontSize,
+                        align: item.align,
+                        bold: item.bold,
+                        italic: item.italic,
+                        underline: item.underline,
+                        strikethrough: item.strikethrough,
+                      }}
+                      onChange={(patch) => onUpdate({ items: patchItem(section.items, i, patch) })}
+                      tagType="card"
+                      onDelete={() => onUpdate({ items: removeItemAt(section.items, i) })}
+                    />
+                  )}
+                  <InlineText value={item.question} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, question: v } : it) })} tag="h3" className={getResolvedItemStyle(section, item, "font-semibold mb-1")} />
+                  <InlineText value={item.answer} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, answer: v } : it) })} tag="p" className={getResolvedItemDescStyle(section, item)} />
+                </div>
+              );
+            })}
           </div>
         </div>
       );
@@ -520,13 +700,40 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
         <div className="py-6">
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="space-y-2">
-            {section.methods.map((method, i) => (
-              <div key={method.id} className="flex items-center gap-2" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                <InlineText value={method.label} onChange={(v) => onUpdate({ methods: section.methods.map((m, j) => j === i ? { ...m, label: v } : m) })} tag="span" className={getResolvedItemStyle(section, method, "font-medium")} />
-                <span className="text-muted-foreground">:</span>
-                <InlineText value={method.value} onChange={(v) => onUpdate({ methods: section.methods.map((m, j) => j === i ? { ...m, value: v } : m) })} tag="span" className={getResolvedItemDescStyle(section, method)} />
-              </div>
-            ))}
+            {section.methods.map((method, i) => {
+              const isItemActive = activeItemId === method.id;
+              return (
+                <div
+                  key={method.id}
+                  onClick={(e) => { e.stopPropagation(); setActiveItemId(method.id); }}
+                  className={cn(
+                    "relative flex items-center gap-2 p-2 rounded-lg transition-all",
+                    isItemActive ? "ring-2 ring-primary ring-offset-2 bg-muted/20" : "hover:bg-muted/10"
+                  )}
+                  style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}
+                >
+                  {isItemActive && (
+                    <FloatingContextToolbar
+                      active={isItemActive}
+                      value={{
+                        fontSize: method.fontSize,
+                        align: method.align,
+                        bold: method.bold,
+                        italic: method.italic,
+                        underline: method.underline,
+                        strikethrough: method.strikethrough,
+                      }}
+                      onChange={(patch) => onUpdate({ methods: patchItem(section.methods, i, patch) })}
+                      tagType="card"
+                      onDelete={() => onUpdate({ methods: removeItemAt(section.methods, i) })}
+                    />
+                  )}
+                  <InlineText value={method.label} onChange={(v) => onUpdate({ methods: section.methods.map((m, j) => j === i ? { ...m, label: v } : m) })} tag="span" className={getResolvedItemStyle(section, method, "font-medium")} />
+                  <span className="text-muted-foreground">:</span>
+                  <InlineText value={method.value} onChange={(v) => onUpdate({ methods: section.methods.map((m, j) => j === i ? { ...m, value: v } : m) })} tag="span" className={getResolvedItemDescStyle(section, method)} />
+                </div>
+              );
+            })}
           </div>
         </div>
       );
