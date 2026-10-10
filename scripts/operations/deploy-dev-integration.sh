@@ -65,8 +65,15 @@ revision=$(docker image inspect cubicle-dev:prod --format '{{index .Config.Label
 [[ "$revision" == "$local_sha" ]] || { echo "ERROR: built image revision mismatch" >&2; exit 8; }
 
 docker rm -f cubicle-dev >/dev/null 2>&1 || true
-docker compose -p cubicle-dev -f docker-compose.dev.yml create --no-build cubicle-dev
-docker compose -p cubicle-dev -f docker-compose.dev.yml start cubicle-dev
+# --no-deps is REQUIRED here. `cubicle-dev-redis` is declared in this compose
+# file but is actually managed outside the project: the running container
+# carries no com.docker.compose.* labels, so a plain `compose create` tries to
+# recreate it and aborts with
+#   Conflict. The container name "/cubicle-dev-redis" is already in use
+# That abort happens AFTER `docker rm -f cubicle-dev` above, which leaves dev
+# with no app container at all -> dev.cubiqlo.com returns 502. Verified
+# 2026-10-10: the previous create/start pair took dev down this way.
+docker compose -p cubicle-dev -f docker-compose.dev.yml up -d --no-deps --no-build cubicle-dev
 
 state=""
 for _ in $(seq 1 "$WAIT_SECONDS"); do
