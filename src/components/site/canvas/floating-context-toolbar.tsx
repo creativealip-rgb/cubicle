@@ -94,14 +94,14 @@ export function FloatingContextToolbar({
       className={`absolute -top-12 left-1/2 -translate-x-1/2 z-40 flex items-center bg-white text-slate-800 rounded-lg shadow-xl border border-slate-200/80 px-1.5 py-1 text-xs gap-1 select-none animate-in fade-in zoom-in-95 duration-100 ${className}`}
     >
       {/* 1. Tag / Text Type Dropdown */}
-      <div className="relative">
+      <div className="relative shrink-0">
         <button
           type="button"
           onClick={() => { setStyleOpen(!styleOpen); setFontOpen(false); setSizeOpen(false); setAlignOpen(false); }}
-          className="flex items-center gap-1 px-2 py-1 hover:bg-slate-100 rounded font-medium text-slate-700 min-w-[65px] justify-between transition-colors"
+          className="flex items-center gap-1 px-2 py-1 hover:bg-slate-100 rounded font-medium text-slate-700 whitespace-nowrap justify-between transition-colors"
         >
           <span>{tagLabels[tagType]}</span>
-          <ChevronDown className="h-3 w-3 text-slate-400" />
+          <ChevronDown className="h-3 w-3 text-slate-400 shrink-0" />
         </button>
         {styleOpen && (
           <div className="absolute top-full mt-1.5 left-0 w-32 bg-white border border-slate-200 rounded-md shadow-lg py-1 z-50">
