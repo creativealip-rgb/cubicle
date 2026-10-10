@@ -87,7 +87,7 @@ import { MobileStepEditor } from "./mobile-step-editor";
 import { useT } from "@/lib/i18n-client";
 import { isReadyToPublish, getPersonalSiteReadiness } from "@/lib/personal-site/readiness";
 import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage, ThemeConfig } from "@/lib/personal-site/model";
-import { normalizePersonalSiteSlug } from "@/lib/personal-site/model";
+import { emptySection, normalizePersonalSiteSlug } from "@/lib/personal-site/model";
 import { PAGE_TEMPLATES, getPageTemplatesByCategory, getPageTemplateCategories, type PageTemplate } from "@/lib/personal-site/page-templates";
 import { SECTION_TEMPLATES, type SectionTemplate } from "@/lib/personal-site/section-templates";
 
@@ -149,32 +149,6 @@ function syncSiteSections(site: PersonalSiteInput, activePageId: string, section
 function withThemeConfig(site: PersonalSiteInput, patch: Partial<ThemeConfig>): Partial<PersonalSiteInput> {
   const themeConfig = { ...DEFAULT_THEME_CONFIG, ...(site.themeConfig ?? {}), ...patch };
   return { themeConfig, accent: themeConfig.primaryColor };
-}
-
-function emptySection(type: PersonalSiteSection["type"]): PersonalSiteSection {
-  const base = { id: makeId(), heading: "Section" };
-  switch (type) {
-    case "services": return { ...base, type, items: [{ id: makeId(), title: "", description: "" }] };
-    case "process": return { ...base, type, steps: [{ id: makeId(), title: "", description: "" }] };
-    case "pricing": return { ...base, type, offers: [{ id: makeId(), name: "", price: "", description: "" }] };
-    case "portfolio": return { ...base, type, projects: [{ id: makeId(), title: "", description: "", url: "" }] };
-    case "testimonials": return { ...base, type, testimonials: [{ id: makeId(), quote: "", author: "", role: "" }] };
-    case "faq": return { ...base, type, items: [{ id: makeId(), question: "", answer: "" }] };
-    case "contact": return { ...base, type, methods: [{ id: makeId(), label: "", value: "", url: "" }] };
-    case "booking": return { ...base, type, heading: "Schedule Appointment", subtitle: "Choose your preferred date and time slot", durationMinutes: 30 };
-    case "custom": return { ...base, type, content: "" };
-    case "gallery": return { ...base, type, images: [{ id: makeId(), url: "", alt: "" }] };
-    case "image": return { ...base, type, url: "", alt: "", caption: "", linkUrl: "", align: "center", size: "md", aspectRatio: "auto" };
-    case "mediaText": return { ...base, type, mediaPosition: "left", mediaWidth: "50%", verticalAlign: "center", imageUrl: "", imageAlt: "", content: "", buttonLabel: "", buttonUrl: "" };
-    case "embed": return { ...base, type, url: "", height: 400 };
-    case "social": return { ...base, type, links: [{ id: makeId(), platform: "Instagram", url: "" }] };
-    case "cta": return { ...base, type, text: "", buttonLabel: "", buttonUrl: "" };
-    case "divider": return { ...base, type };
-    case "collapsible": return { ...base, type, items: [{ id: makeId(), title: "", content: "" }] };
-    case "spacer": return { ...base, type, height: 40 };
-    case "tableOfContents": return { ...base, type };
-    case "contentBlock": return { ...base, type, columns: 2, layout: "equal", items: [{ id: makeId(), content: "" }, { id: makeId(), content: "" }] };
-  }
 }
 
 const WIDGET_LIST: Array<{ type: PersonalSiteSection["type"]; label: string; icon: React.ElementType; category: string }> = [

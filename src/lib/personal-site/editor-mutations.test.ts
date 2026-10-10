@@ -1,11 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PERSONAL_SITE, personalSiteInputSchema, type PersonalSitePage, type PersonalSiteSection } from "./model";
+import {
+  DEFAULT_PERSONAL_SITE,
+  PERSONAL_SITE_SECTION_TYPES,
+  emptySection,
+  personalSiteInputSchema,
+  type PersonalSitePage,
+  type PersonalSiteSection,
+} from "./model";
 import {
   MAX_PAGES,
   MAX_SECTIONS,
   addPage,
   addSection,
   duplicateSection,
+  isSectionEmpty,
   moveSection,
   moveSectionByOffset,
   normalizeContentBlock,
@@ -206,5 +214,70 @@ describe("addPage / removePage", () => {
     expect(removePage(input, "p2").map((p) => p.id)).toEqual(["home"]);
     expect(input).toHaveLength(2);
     expect(removePage(input, "nope")).toBe(input);
+  });
+});
+
+// Exhaustive over the section-type union: `Record` requires every key, so
+// adding a 21st type to `personalSiteSectionSchema` without listing it here
+// fails to compile (and the coverage assertion below fails at runtime).
+const ALL_SECTION_TYPES: Record<PersonalSiteSection["type"], true> = {
+  services: true,
+  process: true,
+  pricing: true,
+  portfolio: true,
+  testimonials: true,
+  faq: true,
+  contact: true,
+  booking: true,
+  custom: true,
+  gallery: true,
+  image: true,
+  mediaText: true,
+  embed: true,
+  social: true,
+  cta: true,
+  divider: true,
+  collapsible: true,
+  spacer: true,
+  tableOfContents: true,
+  contentBlock: true,
+};
+
+describe("isSectionEmpty", () => {
+  const types = Object.keys(ALL_SECTION_TYPES) as PersonalSiteSection["type"][];
+
+  it("covers every section type in the schema", () => {
+    expect(new Set(types)).toEqual(new Set(PERSONAL_SITE_SECTION_TYPES));
+  });
+
+  it("treats a freshly created section of every type as empty", () => {
+    for (const type of types) {
+      expect(isSectionEmpty(emptySection(type)), `${type} should be empty`).toBe(true);
+    }
+  });
+
+  it("is non-empty once a single user string is set", () => {
+    // Booking's prefilled heading/subtitle are defaults; touching the subtitle
+    // makes it user content.
+    const booking = emptySection("booking");
+    expect(isSectionEmpty({ ...booking, subtitle: "Pick a slot" } as PersonalSiteSection)).toBe(false);
+
+    const services = emptySection("services") as Extract<PersonalSiteSection, { type: "services" }>;
+    expect(isSectionEmpty({ ...services, items: [{ id: "i1", title: "Design", description: "" }] })).toBe(false);
+
+    const custom = emptySection("custom") as Extract<PersonalSiteSection, { type: "custom" }>;
+    expect(isSectionEmpty({ ...custom, content: "Hello" })).toBe(false);
+
+    const image = emptySection("image") as Extract<PersonalSiteSection, { type: "image" }>;
+    expect(isSectionEmpty({ ...image, url: "https://example.test/a.png" })).toBe(false);
+  });
+
+  it("treats a duplicate of an empty section as NON-empty (heading gains \" (copy)\")", () => {
+    // Decision: a duplicate is never pristine — duplicateSection mutates the
+    // heading, so it is deliberately non-empty and still prompts on delete.
+    const original = emptySection("booking");
+    const copy = duplicateSection([original], original.id, () => "copy-id")[1];
+    expect(copy.heading).toBe("Schedule Appointment (copy)");
+    expect(isSectionEmpty(copy)).toBe(false);
   });
 });

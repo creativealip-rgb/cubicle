@@ -333,6 +333,44 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
 
 export type PersonalSiteSection = z.infer<typeof personalSiteSectionSchema>;
 
+function makeSectionId(prefix = "s") {
+  return `${prefix}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
+/**
+ * Default content for a newly added section, for every section type. Single
+ * source of truth for the desktop canvas editor, the legacy `SectionEditor`,
+ * and `isSectionEmpty`'s structural comparison. These defaults define what
+ * "empty" means, so they must stay byte-identical per type — do not "improve"
+ * any value (e.g. booking's prefilled heading/subtitle are defaults, not user
+ * content).
+ */
+export function emptySection(type: PersonalSiteSection["type"]): PersonalSiteSection {
+  const base = { id: makeSectionId(), heading: "Section" };
+  switch (type) {
+    case "services": return { ...base, type, items: [{ id: makeSectionId(), title: "", description: "" }] };
+    case "process": return { ...base, type, steps: [{ id: makeSectionId(), title: "", description: "" }] };
+    case "pricing": return { ...base, type, offers: [{ id: makeSectionId(), name: "", price: "", description: "" }] };
+    case "portfolio": return { ...base, type, projects: [{ id: makeSectionId(), title: "", description: "", url: "" }] };
+    case "testimonials": return { ...base, type, testimonials: [{ id: makeSectionId(), quote: "", author: "", role: "" }] };
+    case "faq": return { ...base, type, items: [{ id: makeSectionId(), question: "", answer: "" }] };
+    case "contact": return { ...base, type, methods: [{ id: makeSectionId(), label: "", value: "", url: "" }] };
+    case "booking": return { ...base, type, heading: "Schedule Appointment", subtitle: "Choose your preferred date and time slot", durationMinutes: 30 };
+    case "custom": return { ...base, type, content: "" };
+    case "gallery": return { ...base, type, images: [{ id: makeSectionId(), url: "", alt: "" }] };
+    case "image": return { ...base, type, url: "", alt: "", caption: "", linkUrl: "", align: "center", size: "md", aspectRatio: "auto" };
+    case "mediaText": return { ...base, type, mediaPosition: "left", mediaWidth: "50%", verticalAlign: "center", imageUrl: "", imageAlt: "", content: "", buttonLabel: "", buttonUrl: "" };
+    case "embed": return { ...base, type, url: "", height: 400 };
+    case "social": return { ...base, type, links: [{ id: makeSectionId(), platform: "Instagram", url: "" }] };
+    case "cta": return { ...base, type, text: "", buttonLabel: "", buttonUrl: "" };
+    case "divider": return { ...base, type };
+    case "collapsible": return { ...base, type, items: [{ id: makeSectionId(), title: "", content: "" }] };
+    case "spacer": return { ...base, type, height: 40 };
+    case "tableOfContents": return { ...base, type };
+    case "contentBlock": return { ...base, type, columns: 2, layout: "equal", items: [{ id: makeSectionId(), content: "" }, { id: makeSectionId(), content: "" }] };
+  }
+}
+
 export const personalSiteLinkSchema = z.object({
   id: idSchema,
   label: z.string().trim().min(1).max(80),

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
+  emptySection,
   PERSONAL_SITE_SECTION_TYPES,
   type PersonalSiteSection,
 } from "@/lib/personal-site/model";
@@ -14,32 +15,6 @@ import { useConfirm } from "@/lib/hooks/use-confirm";
 
 function id() {
   return crypto.randomUUID();
-}
-
-function emptySection(type: PersonalSiteSection["type"]): PersonalSiteSection {
-  const base = { id: id(), heading: "Section" };
-  switch (type) {
-    case "services": return { ...base, type, items: [{ id: id(), title: "", description: "" }] };
-    case "process": return { ...base, type, steps: [{ id: id(), title: "", description: "" }] };
-    case "pricing": return { ...base, type, offers: [{ id: id(), name: "", price: "", description: "" }] };
-    case "portfolio": return { ...base, type, projects: [{ id: id(), title: "", description: "", url: "" }] };
-    case "testimonials": return { ...base, type, testimonials: [{ id: id(), quote: "", author: "", role: "" }] };
-    case "faq": return { ...base, type, items: [{ id: id(), question: "", answer: "" }] };
-    case "contact": return { ...base, type, methods: [{ id: id(), label: "", value: "", url: "" }] };
-    case "booking": return { ...base, type, heading: "Schedule Appointment", subtitle: "Choose your preferred date and time slot", durationMinutes: 30 };
-    case "custom": return { ...base, type, content: "" };
-    case "gallery": return { ...base, type, images: [{ id: id(), url: "", alt: "" }] };
-    case "image": return { ...base, type, url: "", alt: "", caption: "", linkUrl: "", align: "center", size: "md", aspectRatio: "auto" };
-    case "mediaText": return { ...base, type, mediaPosition: "left", mediaWidth: "50%", verticalAlign: "center", imageUrl: "", imageAlt: "", content: "", buttonLabel: "", buttonUrl: "" };
-    case "embed": return { ...base, type, url: "", height: 400 };
-    case "social": return { ...base, type, links: [{ id: id(), platform: "Instagram", url: "" }] };
-    case "cta": return { ...base, type, text: "", buttonLabel: "", buttonUrl: "" };
-    case "divider": return { ...base, type };
-    case "collapsible": return { ...base, type, items: [{ id: id(), title: "", content: "" }] };
-    case "spacer": return { ...base, type, height: 40 };
-    case "tableOfContents": return { ...base, type };
-    case "contentBlock": return { ...base, type, columns: 2, layout: "equal", items: [{ id: id(), content: "" }, { id: id(), content: "" }] };
-  }
 }
 
 function Field({ label, children }: { label: string; children: React.ReactNode }) {

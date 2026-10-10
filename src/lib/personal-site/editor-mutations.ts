@@ -1,4 +1,4 @@
-import type { PersonalSitePage, PersonalSiteSection } from "./model";
+import { emptySection, type PersonalSitePage, type PersonalSiteSection } from "./model";
 
 /**
  * Client-side mirror of the Zod caps in `model.ts` (`sections: … .max(12)`,
@@ -121,38 +121,40 @@ export function removePage(pages: PersonalSitePage[], id: string): PersonalSiteP
   return pages.filter((page) => page.id !== id);
 }
 
-/** Keys that are structural/enum metadata, never user-authored text. */
-const SECTION_NON_CONTENT_KEYS = new Set([
-  "id",
-  "type",
-  "heading",
-  "layout",
-  "align",
-  "size",
-  "aspectRatio",
-  "mediaPosition",
-  "mediaWidth",
-  "verticalAlign",
-]);
-
-function hasUserText(value: unknown, key = ""): boolean {
-  if (typeof value === "string") return !SECTION_NON_CONTENT_KEYS.has(key) && value.trim() !== "";
-  if (Array.isArray(value)) return value.some((item) => hasUserText(item));
-  if (value && typeof value === "object") {
-    return Object.entries(value as Record<string, unknown>).some(([k, v]) => hasUserText(v, k));
-  }
-  return false;
-}
-
 /**
- * True when a section carries no text the user typed — i.e. exactly what
- * `emptySection()` produces (placeholder heading "Section" + blank items).
- * Deleting one of those is safe to do without the confirmation prompt.
- * `heading` is scanned separately because its default is a placeholder, not
- * user content; any other heading means the user touched the section.
+ * True when a section is still exactly what `emptySection(type)` produces,
+ * ignoring every `id` (section id and array element ids alike). Deleting such a
+ * section is safe to do without the confirmation prompt.
+ *
+ * Structural comparison is used instead of an ignore-list of "non-content"
+ * string keys because each type stores user text under different fields and
+ * carries different defaults: booking's prefilled `heading`/`subtitle` are
+ * placeholders (not user content) while services' item `title` is user text.
+ * An ignore-list has to know, per type, which fields are defaults — that is
+ * exactly the assumption that made a fresh booking section read as non-empty.
+ * "Equal to the pristine default" needs no such knowledge.
  */
 export function isSectionEmpty(section: PersonalSiteSection): boolean {
-  const heading = section.heading?.trim() ?? "";
-  if (heading !== "" && heading !== "Section") return false;
-  return !hasUserText(section);
+  return sameIgnoringIds(section, emptySection(section.type));
+}
+
+/** Deep equality that skips every `id` key (objects and array elements). */
+function sameIgnoringIds(a: unknown, b: unknown): boolean {
+  if (a === b) return true;
+  if (Array.isArray(a) || Array.isArray(b)) {
+    if (!Array.isArray(a) || !Array.isArray(b) || a.length !== b.length) return false;
+    return a.every((item, index) => sameIgnoringIds(item, b[index]));
+  }
+  if (a && b && typeof a === "object" && typeof b === "object") {
+    const aKeys = Object.keys(a as Record<string, unknown>).filter((key) => key !== "id");
+    const bKeys = Object.keys(b as Record<string, unknown>).filter((key) => key !== "id");
+    if (aKeys.length !== bKeys.length) return false;
+    return aKeys.every((key) =>
+      sameIgnoringIds(
+        (a as Record<string, unknown>)[key],
+        (b as Record<string, unknown>)[key],
+      ),
+    );
+  }
+  return false;
 }
