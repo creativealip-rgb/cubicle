@@ -16,23 +16,23 @@ describe("billing add-on purchase controls wiring", () => {
     // Prices must come from the source-of-truth period label helper
     // (billing-plans.test.ts pins 10/20/30rb monthly, ×12 yearly) so UI and
     // checkout can't drift.
-    expect(src).toContain("getStorageAddonPeriodLabel(gb, period)");
+    expect(src).toContain("getStorageAddonPeriodLabel(selectedStorage, period, lang)");
     expect(src).toContain("+{gb} GB");
   });
 
-  it("lets the user pick monthly or yearly (shared product-wide period key)", () => {
+  it("locks add-on purchases to the yearly period (79521193) via the shared BillingPeriod type", () => {
     const src = controls();
-    // Visible monthly/yearly selection, same shared storage key as the plan
-    // checkout button (single source in billing-pricing.ts).
-    expect(src).toContain("loadStoredPeriod()");
-    expect(src).toContain("persistPeriod(next)");
-    expect(src).toContain('const [period, setPeriod] = useState<BillingPeriod>("yearly")');
-    expect(src).toContain('option === "monthly" ? t("Bulanan", "Monthly") : t("Tahunan", "Yearly")');
+    // 79521193 "default addons tab to yearly pricing" deliberately dropped the
+    // monthly/yearly toggle in THIS component (the plan checkout keeps its own).
+    // Pin the decision so the pricing basis cannot drift back silently.
+    expect(src).toContain('const period: BillingPeriod = "yearly";');
+    expect(src).not.toContain("loadStoredPeriod()");
+    expect(src).not.toContain("persistPeriod(next)");
   });
 
   it("quotes extra workspace from the period-aware catalog pricing", () => {
     const src = controls();
-    expect(src).toContain("getExtraWorkspacePeriodLabel(period)");
+    expect(src).toContain("getExtraWorkspacePeriodLabel(period, lang)");
   });
 
   it("gates extra workspace on the effective Team plan, disabled + explained otherwise", () => {
@@ -40,8 +40,7 @@ describe("billing add-on purchase controls wiring", () => {
     expect(src).toContain('effectivePlan === "team"');
     expect(src).toMatch(/disabled=\{busy \|\| !isTeam\}/);
     // Bilingual explanation when not Team.
-    expect(src).toContain("Hanya tersedia untuk plan Team");
-    expect(src).toContain("Only available on the Team plan");
+    expect(src).toContain('t("Perlu upgrade ke plan Team.", "Requires active Team plan.")');
   });
 
   it("POSTs same-origin to the correct checkout routes with the selected period", () => {
@@ -52,7 +51,7 @@ describe("billing add-on purchase controls wiring", () => {
     expect(src).toContain("const res = await fetch(path, {");
     // The period-selected body is passed to the shared helper and stringified
     // there (single source for both routes).
-    expect(src).toContain("{ addon: gb, period }");
+    expect(src).toContain("{ addon: selectedStorage, period }");
     expect(src).toContain("{ period }");
     expect(src).toContain("body: JSON.stringify(body),");
   });
@@ -88,7 +87,7 @@ describe("billing page wiring", () => {
 
   it("keeps the add-on management (list/cancel) wired alongside purchase controls", () => {
     const src = page();
-    expect(src).toContain("<AddonManagement storageAddons={addons.storageAddons}");
+    expect(src).toMatch(/storageAddons=\{addons\.storageAddons\}/);
     expect(src).toContain("extraWorkspaceEntitlements={addons.extraWorkspaceEntitlements}");
     expect(src.indexOf("<AddonPurchaseControls")).toBeLessThan(
       src.indexOf("<AddonManagement"),
@@ -115,13 +114,17 @@ describe("extra-workspace entitlement list wiring", () => {
   it("AddonManagement renders a cancel button per entitlement, disabled when cancel_scheduled", () => {
     const src = component();
     expect(src).toContain("extraWorkspaceEntitlements.map((entitlement) =>");
-    expect(src).toContain("entitlement.status !== \"active\"");
+    expect(src).toContain('entitlement.status === "cancel_scheduled"');
     expect(src).toContain("cancelWorkspace(entitlement.id)");
     expect(src).toContain("entitlement.endsAt.toLocaleDateString()");
-    expect(src).toContain("aktif hingga akhir periode");
+    expect(src).toContain('t("Berakhir", "Ends")');
     // Cancel action is user-scoped: the action passes the session user id.
     expect(actions()).toMatch(/cancelExtraWorkspaceEntitlement\(entitlementId,\s*user\.id\)/);
   });
 });
 
 // Self-check: source-wiring only, no live DB/provider calls.
+// Re-pointed 2026-10-10 after the i18n migration added a `lang` argument to the
+// pricing helpers and 79521193 defaulted the add-ons tab to yearly: the pricing
+// helpers, Team gate, checkout routes and bodies are all unchanged, so the
+// behavioural contracts above were kept and only obsolete anchors replaced.

@@ -45,9 +45,9 @@ describe("billing UI/copy alignment", () => {
     expect(btn).toContain("loadStoredPeriod()");
     expect(btn).toContain("persistPeriod(next)");
     // Exact amount labels for the selected period on both.
-    expect(addon).toContain("getStorageAddonPeriodLabel(gb, period)");
-    expect(addon).toContain("getExtraWorkspacePeriodLabel(period)");
-    expect(addon).toContain("getAiRequestsAddonPeriodLabel()");
+    expect(addon).toContain("getStorageAddonPeriodLabel(selectedStorage, period, lang)");
+    expect(addon).toContain("getExtraWorkspacePeriodLabel(period, lang)");
+    expect(addon).toContain("getAiRequestsAddonPeriodLabel(selectedAi, lang)");
   });
 
   it("no stale abbreviated prices or fake discount copy remain in scoped UI files", () => {
