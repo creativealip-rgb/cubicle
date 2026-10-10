@@ -999,13 +999,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                 </div>
               </div>
 
-              {/* Bottom Save Settings Button */}
-              <div className="flex justify-end pt-2">
-                <Button onClick={handleSave} disabled={saving || !isDirty} className="gap-1.5 text-xs font-semibold px-5">
-                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-                  <span>{t("Simpan Pengaturan", "Save Settings")}</span>
-                </Button>
-              </div>
+              {/* Bottom Save Settings Button Removed - Unified 1 Save Button on Top Header */}
             </div>
           </div>
         )}
@@ -1017,6 +1011,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
             title={site.title || "Landing Page"}
             shareUrl={publicUrl}
             previewUrl={publicUrl}
+            embedCode={`<iframe src="${publicUrl}" width="100%" height="800" frameborder="0" style="border-radius: 16px; border: 1px solid #e2e8f0; width: 100%;"></iframe>`}
             hasSaved={true}
             publishedStatusNode={
               <Button

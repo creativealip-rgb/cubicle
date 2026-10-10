@@ -210,30 +210,17 @@ export function UnifiedPublishView({
               <span className="text-[10px] text-muted-foreground">{t("Scan di Perangkat Mobile", "Scan on Mobile Device")}</span>
             </Button>
 
-            {/* Action 3: Embed Widget (Forms, Proposals, Contracts) or Live Website (Site) */}
-            {type === "site" ? (
-              <Button
-                type="button"
-                variant="outline"
-                className="h-auto py-3.5 px-3 flex-col gap-1.5 rounded-xl border-border/80 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-center group"
-                onClick={() => window.open(shareUrl, "_blank")}
-              >
-                <Globe className="h-4 w-4 text-blue-600 transition-transform group-hover:scale-110" />
-                <span className="text-xs font-bold text-foreground">Live Website</span>
-                <span className="text-[10px] text-muted-foreground">{t("Buka Halaman Publik", "Open Live Page")}</span>
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                variant="outline"
-                className="h-auto py-3.5 px-3 flex-col gap-1.5 rounded-xl border-border/80 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-center group"
-                onClick={() => setShowEmbedModal(true)}
-              >
-                <Code2 className="h-4 w-4 text-blue-600 transition-transform group-hover:scale-110" />
-                <span className="text-xs font-bold text-foreground">Embed Widget</span>
-                <span className="text-[10px] text-muted-foreground">{t("Sematkan di Website", "Embed HTML iFrame")}</span>
-              </Button>
-            )}
+            {/* Action 3: Embed Widget (Forms, Proposals, Contracts, Site) */}
+            <Button
+              type="button"
+              variant="outline"
+              className="h-auto py-3.5 px-3 flex-col gap-1.5 rounded-xl border-border/80 hover:border-blue-500/50 hover:bg-blue-500/5 transition-all text-center group"
+              onClick={() => setShowEmbedModal(true)}
+            >
+              <Code2 className="h-4 w-4 text-blue-600 transition-transform group-hover:scale-110" />
+              <span className="text-xs font-bold text-foreground">Embed Widget</span>
+              <span className="text-[10px] text-muted-foreground">{t("Sematkan di Website", "Embed HTML iFrame")}</span>
+            </Button>
           </div>
         </div>
       </div>
