@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useT } from "@/lib/i18n-client";
+import { quotaBlockMessage } from "@/lib/upload-quota-messages";
 import { Textarea } from "@/components/ui/textarea";
 import {
   acceptMeetingCounterProposal,
@@ -149,7 +150,13 @@ export function PortalRequestList({
         method: "POST",
         body: fd,
       });
-      if (!res.ok) throw new Error(t("Upload gagal", "Upload failed"));
+      if (!res.ok) {
+        // The route ships QUOTA_BLOCK_CODE inside `error`; without mapping it the
+        // client showed a generic failure and the quota explanation was lost.
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        const error = data.error || t("Upload gagal", "Upload failed");
+        throw new Error(quotaBlockMessage(error, lang) ?? error);
+      }
       await completePortalRequest({ token, requestId: id });
       setItems((p) =>
         p.map((r) => (r.id === id ? { ...r, status: "completed" } : r)),
