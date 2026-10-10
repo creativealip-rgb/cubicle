@@ -152,6 +152,7 @@ describe("mobile section parity", () => {
         onUpdateSite={onUpdateSite}
         onSetActivePageId={vi.fn()}
         onSelectSection={vi.fn()}
+        onPublish={vi.fn(async () => {})}
         canEditSlug
       />,
     );

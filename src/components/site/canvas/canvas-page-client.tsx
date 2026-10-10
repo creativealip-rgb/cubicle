@@ -5,6 +5,7 @@ import dynamic from "next/dynamic";
 import { Loader2 } from "lucide-react";
 import type { PersonalSiteInput } from "@/lib/personal-site/model";
 import type { PersonalSiteActionState } from "@/lib/actions/personal-site";
+import { readPublicationIntent } from "@/lib/personal-site/publication-intent";
 import { useT } from "@/lib/i18n-client";
 
 function EditorLoading() {
@@ -40,8 +41,11 @@ export function CanvasPageClient({ initialSite, action, publicSiteBaseUrl, previ
 
   const handleSave = useCallback(async (site: PersonalSiteInput) => {
     const formData = new FormData();
+    // Explicit toggles carry a non-enumerable marker; plain autosave sends
+    // "save" so the server preserves the stored publication state.
+    const intent = readPublicationIntent(site) ?? "save";
     formData.set("site", JSON.stringify(site));
-    formData.set("intent", site.published ? "publish" : "draft");
+    formData.set("intent", intent);
     const result = await actionRef.current({ status: "idle" }, formData);
     if (result.status === "error") {
       if (result.fieldErrors?.slug?.length) throw new Error("PERSONAL_SITE_SLUG_TAKEN");

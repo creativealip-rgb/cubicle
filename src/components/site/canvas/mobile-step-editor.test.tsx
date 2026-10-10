@@ -64,6 +64,7 @@ function Harness({ initialSite = DEFAULT_PERSONAL_SITE, canEditSlug = true, onUp
         onUpdateSite={(patch) => { onUpdateSite(patch); setSite((s) => ({ ...s, ...patch })); }}
         onSetActivePageId={setActivePageId}
         onSelectSection={setSelectedSectionId}
+        onPublish={vi.fn(async () => {})}
         canEditSlug={canEditSlug}
       />
     </main>

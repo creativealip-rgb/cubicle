@@ -89,6 +89,7 @@ import { useT } from "@/lib/i18n-client";
 import { isReadyToPublish, getPersonalSiteReadiness } from "@/lib/personal-site/readiness";
 import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage, ThemeConfig } from "@/lib/personal-site/model";
 import { emptySection, normalizePersonalSiteSlug } from "@/lib/personal-site/model";
+import { withPublicationIntent } from "@/lib/personal-site/publication-intent";
 import { PAGE_TEMPLATES, getPageTemplatesByCategory, getPageTemplateCategories, type PageTemplate } from "@/lib/personal-site/page-templates";
 import { SECTION_TEMPLATES, type SectionTemplate } from "@/lib/personal-site/section-templates";
 
@@ -506,7 +507,6 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
       await onSave(site);
       setLastSaved(JSON.stringify(site));
       toast.success(t("Tersimpan", "Saved"));
-      refresh();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
     } finally {
@@ -515,7 +515,9 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   }, [onSave, refresh, site, t]);
 
   const handlePublication = useCallback(async (published: boolean) => {
-    const next = { ...site, published };
+    // Explicit toggle: the intent rides out-of-band (non-enumerable) so it never
+    // enters the stored document. Autosave stays intent-free.
+    const next = withPublicationIntent({ ...site, published }, published ? "publish" : "unpublish");
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     setSaving(true);
     try {
@@ -615,6 +617,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
           onUpdateSite={updateSite}
           onSetActivePageId={setActivePageId}
           onSelectSection={setSelectedSectionId}
+          onPublish={handlePublication}
           canEditSlug={canEditSlug}
         />
       </div>

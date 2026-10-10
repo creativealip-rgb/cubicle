@@ -78,6 +78,7 @@ type Props = {
   onUpdateSite: (patch: Partial<PersonalSiteInput>) => void;
   onSetActivePageId: (id: string) => void;
   onSelectSection: (id: string | null) => void;
+  onPublish: (published: boolean) => Promise<void>;
   canEditSlug: boolean;
 };
 
@@ -96,6 +97,7 @@ export function MobileStepEditor({
   onUpdateSite,
   onSetActivePageId,
   onSelectSection,
+  onPublish,
   canEditSlug,
 }: Props) {
   const { t } = useT();
@@ -299,6 +301,7 @@ export function MobileStepEditor({
           publicUrl={publicUrl}
           previewUrl={previewUrl}
           onUpdateSite={onUpdateSite}
+          onPublish={onPublish}
           canEditSlug={canEditSlug}
         />
       </MobileDrawer>
@@ -574,14 +577,28 @@ function ThemeStep({ site, onUpdateSite }: {
   );
 }
 
-function PublishStep({ site, publicUrl, previewUrl, onUpdateSite, canEditSlug }: {
+function PublishStep({ site, publicUrl, previewUrl, onUpdateSite, onPublish, canEditSlug }: {
   site: PersonalSiteInput;
   publicUrl: string;
   previewUrl: string;
   onUpdateSite: (patch: Partial<PersonalSiteInput>) => void;
+  onPublish: (published: boolean) => Promise<void>;
   canEditSlug: boolean;
 }) {
   const { t } = useT();
+  const [publishing, setPublishing] = useState(false);
+
+  // Same explicit publication path as desktop: await the server result and only
+  // then flip the local state (via the shared site state the parent owns).
+  async function togglePublication() {
+    setPublishing(true);
+    try {
+      await onPublish(!site.published);
+    } finally {
+      setPublishing(false);
+    }
+  }
+
   return (
     <div className="space-y-5">
       <h2 className="text-sm font-semibold">{t("Terbitkan", "Publish")}</h2>
@@ -594,8 +611,9 @@ function PublishStep({ site, publicUrl, previewUrl, onUpdateSite, canEditSlug }:
       {/* Publish toggle */}
       <button
         type="button"
-        onClick={() => onUpdateSite({ published: !site.published })}
-        disabled={!site.published && !isReadyToPublish(getPersonalSiteReadiness(site))}
+        onClick={() => void togglePublication()}
+        disabled={publishing || (!site.published && !isReadyToPublish(getPersonalSiteReadiness(site)))}
+        aria-busy={publishing}
         className={`w-full flex items-center justify-center gap-2 rounded-lg border px-4 py-3 text-sm font-medium transition-colors ${
           site.published
             ? "border-emerald-300 bg-emerald-50 text-emerald-700"
@@ -605,7 +623,11 @@ function PublishStep({ site, publicUrl, previewUrl, onUpdateSite, canEditSlug }:
         }`}
       >
         <span className={`h-2.5 w-2.5 rounded-full ${site.published ? "bg-emerald-500" : "bg-muted-foreground/30"}`} />
-        {site.published ? t("Tayang — ketuk untuk sembunyikan", "Live — tap to unpublish") : t("Draft — ketuk untuk terbitkan", "Draft — tap to publish")}
+        {publishing
+          ? t("Menyimpan...", "Saving...")
+          : site.published
+            ? t("Tayang — ketuk untuk sembunyikan", "Live — tap to unpublish")
+            : t("Draft — ketuk untuk terbitkan", "Draft — tap to publish")}
       </button>
 
 

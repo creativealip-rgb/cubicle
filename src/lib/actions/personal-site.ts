@@ -19,6 +19,7 @@ import { getEffectivePlan } from "@/lib/plan";
 import { getPersonalSiteOwnerPlanContext, listPersonalSiteRows } from "@/lib/personal-site/plan-context";
 import { canEditPersonalSiteSlug, getEffectivePersonalSiteSlug } from "@/lib/personal-site/slug-policy";
 import { findPersonalSiteByEffectiveSlug, hasEffectiveSlugCollision } from "@/lib/personal-site/slug-records";
+import { resolvePublicationState } from "@/lib/personal-site/publication-intent";
 export type PersonalSiteActionState = {
   status: "idle" | "success" | "error";
   message?: string;
@@ -101,7 +102,8 @@ export async function savePersonalSite(
   formData: FormData,
 ): Promise<PersonalSiteActionState> {
   const rawPayload = formData.get("site");
-  const intent = String(formData.get("intent") || "draft");
+  // Omitted intent === plain autosave === preserve (see resolvePublicationState).
+  const intent = String(formData.get("intent") || "save");
   let decoded: unknown;
   try {
     decoded = JSON.parse(String(rawPayload || "{}"));
@@ -110,6 +112,10 @@ export async function savePersonalSite(
   }
 
   const { userId, workspaceId, planContext } = await ownerContext();
+  // Fetch the stored row BEFORE deciding `published`: autosave must preserve
+  // whatever is already stored, so the current value is an input to the decision.
+  const rows = await listPersonalSiteRows();
+  const currentRow = rows.find((row) => row.workspaceId === workspaceId && row.userId === userId);
   const effectiveSlug = getEffectivePersonalSiteSlug(
     getEffectivePlan(planContext.plan, planContext.planExpiresAt),
     planContext.workspaceSlug,
@@ -118,7 +124,7 @@ export async function savePersonalSite(
   const payload = personalSiteInputSchema.safeParse({
     ...(decoded as Record<string, unknown>),
     slug: effectiveSlug,
-    published: intent === "publish" ? true : intent === "unpublish" || intent === "draft" ? false : false,
+    published: resolvePublicationState(intent, currentRow?.published ?? false),
   });
   if (!payload.success) {
     return {
@@ -129,8 +135,6 @@ export async function savePersonalSite(
   }
   const data = payload.data;
 
-  const rows = await listPersonalSiteRows();
-  const currentRow = rows.find((row) => row.workspaceId === workspaceId && row.userId === userId);
   if (hasEffectiveSlugCollision(rows, data.slug, currentRow?.id)) {
     return {
       status: "error",
