@@ -270,13 +270,13 @@ export function FloatingContextToolbar({
         {sizeOpen && (
           <div
             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            className="absolute bottom-full mb-1.5 left-0 w-32 bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col"
+            className="absolute bottom-full mb-1.5 left-0 w-28 bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col divide-y divide-slate-100"
           >
             {[
-              { id: "sm", label: "14 (Kecil)" },
-              { id: "base", label: "16 (Normal)" },
-              { id: "lg", label: "24 (Sedang)" },
-              { id: "xl", label: "34 (Besar)" },
+              { id: "sm", label: "14" },
+              { id: "base", label: "16" },
+              { id: "lg", label: "24" },
+              { id: "xl", label: "34" },
             ].map((sz) => (
               <button
                 key={sz.id}
@@ -287,11 +287,12 @@ export function FloatingContextToolbar({
                   onChange({ fontSize: sz.id as any });
                   setSizeOpen(false);
                 }}
-                className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-100 transition-colors ${
+                className={`w-full text-left px-3 py-2 text-xs hover:bg-slate-100 transition-colors flex items-center justify-between ${
                   currentSize === sz.id ? "font-bold text-primary bg-primary/5" : "text-slate-700"
                 }`}
               >
-                {sz.label}
+                <span>{sz.label}</span>
+                {currentSize === sz.id && <Check className="h-3 w-3 text-primary" />}
               </button>
             ))}
           </div>
