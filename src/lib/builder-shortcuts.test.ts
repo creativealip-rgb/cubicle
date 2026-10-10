@@ -102,6 +102,13 @@ describe("resolveBuilderShortcut — document editing", () => {
     expect(resolveBuilderShortcut(press("d", { ctrl: true }), { target: chrome(), hasSelection: false })).toBeNull();
   });
 
+  it("matches keys case-insensitively, so CapsLock does not swallow undo", () => {
+    // Caps Lock (or a shifted layout) reports "Z"/"Y". The per-builder copies
+    // this replaced compared lowercase only, so undo silently did nothing.
+    expect(resolveBuilderShortcut(press("Z", { ctrl: true }), { target: chrome() })).toBe("undo");
+    expect(resolveBuilderShortcut(press("Y", { ctrl: true }), { target: chrome() })).toBe("redo");
+  });
+
   it("deselects on Escape and ignores unbound keys", () => {
     expect(resolveBuilderShortcut(press("Escape"), { target: chrome() })).toBe("deselect");
     expect(resolveBuilderShortcut(press("a"), { target: chrome() })).toBeNull();

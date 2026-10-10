@@ -110,6 +110,7 @@ import { getCurrentUserPlanForPortal } from "@/lib/actions/clients";
 import { useT } from "@/lib/i18n-client";
 import Link from "next/link";
 import { useHistoryState } from "@/lib/use-history-state";
+import { resolveBuilderShortcut } from "@/lib/builder-shortcuts";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import type { QuestionnaireField, QuestionnaireFieldType } from "@/lib/questionnaire-schema";
 import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
@@ -945,19 +946,18 @@ export function QuestionnaireBuilder({
     canRedo,
   } = useHistoryState<QuestionnaireField[]>(defaultFields, 50);
 
-  // Keyboard shortcut Ctrl+Z / Ctrl+Y
+  // Keyboard shortcut Ctrl+Z / Ctrl+Y.
+  // Document-level only: `resolveBuilderShortcut` returns null while a field has
+  // focus, so a text input keeps its own native undo instead of having the
+  // document revert underneath the caret. It also matches keys case-insensitively,
+  // so CapsLock or a shifted layout no longer swallows the shortcut.
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-      } else if (
-        ((e.ctrlKey || e.metaKey) && e.key === "y") ||
-        ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "z" || e.key === "Z"))
-      ) {
-        e.preventDefault();
-        redo();
-      }
+      const action = resolveBuilderShortcut(e, { target: e.target });
+      if (action !== "undo" && action !== "redo") return;
+      e.preventDefault();
+      if (action === "undo") undo();
+      else redo();
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
