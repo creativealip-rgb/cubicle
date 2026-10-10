@@ -165,6 +165,19 @@ export function FloatingContextToolbar({
       onClick={(e) => e.stopPropagation()}
       style={{ left: position.left, top: position.top }}
       data-placement={position.below ? "bottom" : "top"}
+      role="toolbar"
+      aria-label={t("Alat pemformatan teks", "Text formatting toolbar")}
+      onKeyDown={(e) => {
+        if (e.key !== "Escape") return;
+        e.stopPropagation();
+        setFontOpen(false);
+        setSizeOpen(false);
+        setAlignOpen(false);
+        setStyleOpen(false);
+        setColorOpen(false);
+        setLinkOpen(false);
+        setEmojiOpen(false);
+      }}
       className={`fixed z-[100] flex items-center bg-white text-slate-800 rounded-xl shadow-2xl border border-slate-200/90 px-2 py-1.5 text-sm gap-1 select-none animate-in fade-in zoom-in-95 duration-100 w-max max-w-[calc(100vw-1.5rem)] flex-wrap justify-center sm:flex-nowrap ${className}`}
     >
       {/* 1. Tag / Text Type Dropdown */}
@@ -181,6 +194,7 @@ export function FloatingContextToolbar({
             setEmojiOpen(false);
           }}
           className="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-100 rounded font-semibold text-slate-700 whitespace-nowrap justify-between transition-colors"
+          aria-expanded={styleOpen}
         >
           <span>{tagLabels[tagType] || t("Teks normal", "Normal text")}</span>
           <ChevronDown className="h-3 w-3 text-slate-400 shrink-0" />
@@ -236,7 +250,7 @@ export function FloatingContextToolbar({
       <div className="relative">
         <button
           type="button"
-          onMouseDown={(e) => {
+          onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             setFontOpen(!fontOpen);
@@ -262,7 +276,7 @@ export function FloatingContextToolbar({
                 key={f.id}
                 type="button"
                 style={{ fontFamily: getFontFamily(f.id) }}
-                onMouseDown={(e) => {
+                onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
                   onChange({ fontFamily: f.id });
@@ -286,7 +300,7 @@ export function FloatingContextToolbar({
       <div className="relative">
         <button
           type="button"
-          onMouseDown={(e) => {
+          onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             setSizeOpen(!sizeOpen);
@@ -341,6 +355,7 @@ export function FloatingContextToolbar({
         type="button"
         title={t("Tebal", "Bold")}
         onClick={() => onChange({ bold: !value.bold })}
+        aria-pressed={!!value.bold}
         className={`p-1.5 rounded hover:bg-slate-100 transition-colors ${value.bold ? "bg-slate-200 text-slate-900 font-bold" : "text-slate-600"}`}
       >
         <Bold className="h-3.5 w-3.5" />
@@ -349,6 +364,7 @@ export function FloatingContextToolbar({
         type="button"
         title={t("Miring", "Italic")}
         onClick={() => onChange({ italic: !value.italic })}
+        aria-pressed={!!value.italic}
         className={`p-1.5 rounded hover:bg-slate-100 transition-colors ${value.italic ? "bg-slate-200 text-slate-900 font-bold" : "text-slate-600"}`}
       >
         <Italic className="h-3.5 w-3.5" />
@@ -357,6 +373,7 @@ export function FloatingContextToolbar({
         type="button"
         title={t("Garis Bawah", "Underline")}
         onClick={() => onChange({ underline: !value.underline })}
+        aria-pressed={!!value.underline}
         className={`p-1.5 rounded hover:bg-slate-100 transition-colors ${value.underline ? "bg-slate-200 text-slate-900 font-bold" : "text-slate-600"}`}
       >
         <Underline className="h-3.5 w-3.5" />
@@ -365,6 +382,7 @@ export function FloatingContextToolbar({
         type="button"
         title={t("Coret", "Strikethrough")}
         onClick={() => onChange({ strikethrough: !value.strikethrough })}
+        aria-pressed={!!value.strikethrough}
         className={`p-1.5 rounded hover:bg-slate-100 transition-colors ${value.strikethrough ? "bg-slate-200 text-slate-900 font-bold" : "text-slate-600"}`}
       >
         <Strikethrough className="h-3.5 w-3.5" />
@@ -374,7 +392,7 @@ export function FloatingContextToolbar({
       <div className="relative">
         <button
           type="button"
-          onMouseDown={(e) => {
+          onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             setColorOpen(!colorOpen);
@@ -387,6 +405,7 @@ export function FloatingContextToolbar({
           }}
           className={`flex flex-col items-center justify-center p-1 rounded hover:bg-slate-100 transition-colors ${colorOpen ? "bg-slate-100 ring-1 ring-primary/40" : ""}`}
           title={t("Warna Teks", "Text Color")}
+          aria-label={t("Warna Teks", "Text Color")}
         >
           <span className="font-bold text-[11px] leading-none" style={{ color: value.color || "#0F172A" }}>A</span>
           <div className="h-0.5 w-3.5 rounded-full mt-0.5" style={{ backgroundColor: value.color || "#2563EB" }} />
@@ -426,7 +445,7 @@ export function FloatingContextToolbar({
       <div className="relative">
         <button
           type="button"
-          onMouseDown={(e) => {
+          onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             setLinkOpen(!linkOpen);
@@ -494,7 +513,7 @@ export function FloatingContextToolbar({
       <div className="relative">
         <button
           type="button"
-          onMouseDown={(e) => {
+          onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             setEmojiOpen(!emojiOpen);
@@ -526,6 +545,7 @@ export function FloatingContextToolbar({
                     if (onInsertEmoji) onInsertEmoji(em);
                     setEmojiOpen(false);
                   }}
+                  aria-label={t("Sisipkan emoji", "Insert emoji")}
                   className="text-base p-1 hover:bg-slate-100 rounded transition-transform hover:scale-125"
                 >
                   {em}
@@ -542,7 +562,7 @@ export function FloatingContextToolbar({
       <div className="relative">
         <button
           type="button"
-          onMouseDown={(e) => {
+          onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
             setAlignOpen(!alignOpen);
@@ -615,6 +635,7 @@ export function FloatingContextToolbar({
         type="button"
         title={t("List Bernomor (1, 2, 3)", "Numbered List")}
         onClick={() => onChange({ listType: value.listType === "number" ? "none" : "number" })}
+        aria-pressed={value.listType === "number"}
         className={`p-1.5 rounded hover:bg-slate-100 transition-colors ${value.listType === "number" ? "bg-slate-200 text-slate-900 font-bold" : "text-slate-600"}`}
       >
         <ListOrdered className="h-3.5 w-3.5" />
@@ -623,6 +644,7 @@ export function FloatingContextToolbar({
         type="button"
         title={t("List Bulet (•)", "Bullet List")}
         onClick={() => onChange({ listType: value.listType === "bullet" ? "none" : "bullet" })}
+        aria-pressed={value.listType === "bullet"}
         className={`p-1.5 rounded hover:bg-slate-100 transition-colors ${value.listType === "bullet" ? "bg-slate-200 text-slate-900 font-bold" : "text-slate-600"}`}
       >
         <List className="h-3.5 w-3.5" />

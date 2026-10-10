@@ -91,6 +91,14 @@ function StructureRow({ section, selected, onSelect }: {
       ref={setNodeRef}
       style={style}
       data-section-row={section.id}
+      tabIndex={0}
+      aria-label={t("Pilih bagian", "Select section")}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onSelect();
+        }
+      }}
       className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs cursor-pointer transition-colors group ${
         selected ? "border-primary/60 bg-primary/5" : "hover:bg-muted"
       }`}

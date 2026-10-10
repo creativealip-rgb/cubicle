@@ -334,6 +334,9 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
 
   const [showPublishConfirm, setShowPublishConfirm] = useState<boolean | null>(null); // null=hidden, true=publish, false=unpublish
   const [pendingSectionDeleteId, setPendingSectionDeleteId] = useState<string | null>(null);
+  // Polite live region: screen-reader announcements for structural mutations
+  // (reorder/duplicate/delete/limit) that a toast cannot reliably surface.
+  const [liveMessage, setLiveMessage] = useState("");
   const [showQrModal, setShowQrModal] = useState(false);
 
   const sensors = useSensors(
@@ -379,7 +382,10 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     if (!over || typeof active.id !== "string" || typeof over.id !== "string") return;
     const sections = pageSections(site, activePageId);
     const next = moveSectionInList(sections, active.id, over.id);
-    if (next !== sections) reorderSections(next);
+    if (next !== sections) {
+      reorderSections(next);
+      setLiveMessage(t("Bagian dipindahkan.", "Section moved."));
+    }
   }
 
   const activeSections = useMemo(() => pageSections(site, activePageId), [site, activePageId]);
@@ -484,7 +490,9 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   }, [activePageId]);
 
   const notifySectionLimit = useCallback(() => {
-    toast.error(t("Batas maksimal 12 bagian tercapai.", "Maximum of 12 sections reached."));
+    const message = t("Batas maksimal 12 bagian tercapai.", "Maximum of 12 sections reached.");
+    setLiveMessage(message);
+    toast.error(message);
   }, [t]);
 
   const addSection = useCallback((type: PersonalSiteSection["type"]) => {
@@ -504,12 +512,12 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   }, [activePageId, site, notifySectionLimit, setSite]);
 
   const moveSection = useCallback((id: string, direction: -1 | 1) => {
-    setSite((prev) => {
-      const sections = pageSections(prev, activePageId);
-      const next = moveSectionByOffset(sections, id, direction);
-      return next === sections ? prev : syncSiteSections(prev, activePageId, next);
-    });
-  }, [activePageId]);
+    const sections = pageSections(site, activePageId);
+    const next = moveSectionByOffset(sections, id, direction);
+    if (next === sections) return;
+    setSite((prev) => syncSiteSections(prev, activePageId, next));
+    setLiveMessage(t("Bagian dipindahkan.", "Section moved."));
+  }, [site, activePageId, t]);
 
   const duplicateSection = useCallback((id: string) => {
     if (pageSections(site, activePageId).length >= MAX_SECTIONS) {
@@ -521,16 +529,18 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
       const next = duplicateSectionInList(sections, id, makeId);
       return next === sections ? prev : syncSiteSections(prev, activePageId, next);
     });
-  }, [activePageId, site, notifySectionLimit, setSite]);
+    setLiveMessage(t("Bagian diduplikasi.", "Section duplicated."));
+  }, [activePageId, site, notifySectionLimit, setSite, t]);
 
   const deleteSection = useCallback((id: string) => {
-    setSite((prev) => {
-      const sections = pageSections(prev, activePageId);
-      const next = removeSection(sections, id);
-      return next === sections ? prev : syncSiteSections(prev, activePageId, next);
-    });
+    const sections = pageSections(site, activePageId);
+    const next = removeSection(sections, id);
+    if (next !== sections) {
+      setSite((prev) => syncSiteSections(prev, activePageId, next));
+      setLiveMessage(t("Bagian dihapus.", "Section deleted."));
+    }
     setSelectedSectionId(null);
-  }, [activePageId, setSite]);
+  }, [site, activePageId, setSite, t]);
 
   /**
    * Delete gate for every desktop affordance (canvas wrapper, properties panel,
@@ -858,6 +868,11 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                     )}
                   </div>
                 )}
+
+                {/* Structural mutations are announced politely, not only toasted. */}
+                <div data-testid="canvas-announcer" role="status" aria-live="polite" className="sr-only">
+                  {liveMessage}
+                </div>
 
                 <Button
                   size="sm"
