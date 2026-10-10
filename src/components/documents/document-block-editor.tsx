@@ -1732,113 +1732,11 @@ export function DocumentBlockEditor({
                           )}
 
                           {isTextLike && (
-                            <>
-                              <div className="mt-3 space-y-1">
-                                <label className="text-[11px] font-semibold text-muted-foreground">{t("Gaya Font", "Font Family")}</label>
-                                <Select
-                                  value={sel.fontFamily || "inter"}
-                                  onValueChange={(val) => updateBlock(sel.id, { fontFamily: val })}
-                                >
-                                  <SelectTrigger className="h-8 text-xs bg-background">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    {CUBIQLO_FONTS.map((font) => (
-                                      <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.fontFamily }}>
-                                        {font.name}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                              </div>
-
-                              <div className="mt-3 space-y-1">
-                                <label className="text-[11px] font-semibold text-muted-foreground">{t("Ukuran Teks", "Font Size")}</label>
-                                <div className="grid grid-cols-4 gap-1">
-                                  {(["sm", "base", "lg", "xl"] as const).map((sz) => (
-                                    <button
-                                      key={sz}
-                                      type="button"
-                                      onClick={() => updateBlock(sel.id, { fontSize: sz })}
-                                      className={`py-1 text-xs font-bold rounded-md border transition-all ${
-                                        (sel.fontSize || "base") === sz
-                                          ? "bg-primary text-primary-foreground border-primary"
-                                          : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
-                                      }`}
-                                    >
-                                      {sz.toUpperCase()}
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-
-                              <div className="mt-3 space-y-1">
-                                <label className="text-[11px] font-semibold text-muted-foreground">{t("Format Teks", "Text Formatting")}</label>
-                                <div className="grid grid-cols-4 gap-1">
-                                  <button
-                                    type="button"
-                                    onClick={() => updateBlock(sel.id, { bold: !sel.bold })}
-                                    className={`py-1 text-xs font-bold rounded-md border transition-all ${
-                                      sel.bold ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
-                                    }`}
-                                  >
-                                    B
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => updateBlock(sel.id, { italic: !sel.italic })}
-                                    className={`py-1 text-xs font-serif italic rounded-md border transition-all ${
-                                      sel.italic ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
-                                    }`}
-                                  >
-                                    I
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => updateBlock(sel.id, { underline: !sel.underline })}
-                                    className={`py-1 text-xs underline rounded-md border transition-all ${
-                                      sel.underline ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
-                                    }`}
-                                  >
-                                    U
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => updateBlock(sel.id, { strikethrough: !sel.strikethrough })}
-                                    className={`py-1 text-xs line-through rounded-md border transition-all ${
-                                      sel.strikethrough ? "bg-primary text-primary-foreground border-primary" : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
-                                    }`}
-                                  >
-                                    S
-                                  </button>
-                                </div>
-                              </div>
-
-                              <div className="mt-3 space-y-1">
-                                <label className="text-[11px] font-semibold text-muted-foreground">{t("Perataan Teks", "Text Alignment")}</label>
-                                <div className="grid grid-cols-3 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
-                                  {(
-                                    [
-                                      ["left", AlignLeft],
-                                      ["center", AlignCenter],
-                                      ["right", AlignRight],
-                                    ] as const
-                                  ).map(([align, Icon]) => (
-                                    <button
-                                      key={align}
-                                      type="button"
-                                      onClick={() => updateBlock(sel.id, { align })}
-                                      className={`flex items-center justify-center py-1 rounded text-xs transition-colors ${
-                                        sel.align === align ? "bg-primary text-primary-foreground font-bold" : "text-muted-foreground hover:bg-muted/50"
-                                      }`}
-                                      title={align}
-                                    >
-                                      <Icon className="h-3.5 w-3.5" />
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            </>
+                            <div className="mt-3 p-2.5 rounded-lg bg-muted/30 border border-border/60 text-center">
+                              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                                {t("Format teks, ukuran, font, warna, & link kini langsung diatur melalui toolbar melayang di atas teks pada kanvas.", "Text formatting, size, font, color, & link are now edited directly via floating toolbar on the canvas.")}
+                              </p>
+                            </div>
                           )}
                         </div>
                       </div>

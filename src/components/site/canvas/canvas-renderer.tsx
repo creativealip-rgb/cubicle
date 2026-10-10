@@ -354,6 +354,9 @@ function getResolvedFieldTypography(section: any, item: any, fieldKey: "titleTyp
     italic: field.italic !== undefined ? field.italic : (item.italic !== undefined ? item.italic : section.italic),
     underline: field.underline !== undefined ? field.underline : (item.underline !== undefined ? item.underline : section.underline),
     strikethrough: field.strikethrough !== undefined ? field.strikethrough : (item.strikethrough !== undefined ? item.strikethrough : section.strikethrough),
+    color: field.color || item.color || section.color,
+    listType: field.listType || item.listType || section.listType,
+    linkUrl: field.linkUrl || item.linkUrl,
   };
 }
 

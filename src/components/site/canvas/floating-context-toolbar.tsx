@@ -130,7 +130,7 @@ export function FloatingContextToolbar({
         e.stopPropagation();
       }}
       onClick={(e) => e.stopPropagation()}
-      className={`absolute -top-14 left-4 z-50 flex items-center bg-white text-slate-800 rounded-lg shadow-2xl border border-slate-200/90 px-2 py-1 text-xs gap-1 select-none animate-in fade-in zoom-in-95 duration-100 max-w-none whitespace-nowrap ${className}`}
+      className={`absolute -top-14 left-0 sm:left-2 z-50 flex items-center bg-white text-slate-800 rounded-lg shadow-2xl border border-slate-200/90 p-1 text-xs gap-0.5 select-none animate-in fade-in zoom-in-95 duration-100 max-w-[calc(100vw-2rem)] flex-wrap sm:flex-nowrap ${className}`}
     >
       {/* 1. Tag / Text Type Dropdown */}
       <div className="relative shrink-0">

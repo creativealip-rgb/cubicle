@@ -282,153 +282,42 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
         <div className="space-y-4">
           <div className="space-y-1.5">
             <Label className="text-xs font-medium text-foreground">{t("Judul Bagian", "Heading")}</Label>
-            <Input
-              value={section.heading}
-              maxLength={80}
-              onChange={(e) => onUpdate({ heading: e.target.value })}
-              className="h-8.5 text-xs bg-background"
-              placeholder={t("Judul bagian", "Section heading")}
-            />
-          </div>
-
-          {/* Typography & Font Styling — EXACTLY LIKE FORM BUILDER */}
-          <div className="space-y-3 pt-2 border-t border-border/60">
-            {/* Font Family */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-foreground">{t("Gaya Font", "Font Family")}</Label>
-              <Select
-                value={("fontFamily" in section ? (section as any).fontFamily : undefined) || "inter"}
-                onValueChange={(val) => onUpdate({ fontFamily: val } as any)}
-              >
-                <SelectTrigger className="w-full bg-background border-border/70 text-xs">
-                  <SelectValue placeholder="Pilih Font..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {CUBIQLO_FONTS.map((font) => (
-                    <SelectItem key={font.id} value={font.id} className="text-xs">
-                      {font.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Font Size Selector (SM / BASE / LG / XL) */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-foreground">{t("Ukuran Teks", "Font Size")}</Label>
-              <div className="grid grid-cols-4 gap-1">
-                {(["sm", "base", "lg", "xl"] as const).map((sz) => (
-                  <button
-                    key={sz}
-                    type="button"
-                    onClick={() => onUpdate({ fontSize: sz } as any)}
-                    className={`py-1 text-xs font-bold rounded-md border transition-all ${
-                      (("fontSize" in section ? (section as any).fontSize : undefined) || "base") === sz
-                        ? "bg-primary text-primary-foreground border-primary shadow-xs"
-                        : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
-                    }`}
-                  >
-                    {sz.toUpperCase()}
-                  </button>
-                ))}
+            {/* Heading text & font styling is now handled inline on canvas */}
+            {"heading" in section && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-foreground">{t("Judul Bagian", "Section Heading")}</Label>
+                <Input
+                  value={(section as any).heading ?? ""}
+                  onChange={(e) => onUpdate({ heading: e.target.value } as any)}
+                  className="bg-background border-border/70 text-xs"
+                  placeholder={t("Judul bagian...", "Section heading...")}
+                />
               </div>
-            </div>
+            )}
 
-            {/* Text Styles: Bold, Italic, Underline, Strikethrough */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-foreground">{t("Gaya Penulisan Teks", "Text Formatting")}</Label>
-              <div className="grid grid-cols-4 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
-                <button
-                  type="button"
-                  onClick={() => {
-                    const isBold = ("bold" in section ? (section as any).bold : false);
-                    onUpdate({ bold: !isBold } as any);
-                  }}
-                  className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
-                    ("bold" in section && (section as any).bold) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted/50"
-                  }`}
-                  title="Bold"
+            {/* Animation Selector */}
+            {"animation" in section && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-medium text-foreground">{t("Animasi Muncul", "Transition Animation")}</Label>
+                <Select
+                  value={(section as any).animation || "none"}
+                  onValueChange={(val) => onUpdate({ animation: val } as any)}
                 >
-                  <Bold className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const isItalic = ("italic" in section ? (section as any).italic : false);
-                    onUpdate({ italic: !isItalic } as any);
-                  }}
-                  className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
-                    ("italic" in section && (section as any).italic) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted/50"
-                  }`}
-                  title="Italic"
-                >
-                  <Italic className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const isUnderline = ("underline" in section ? (section as any).underline : false);
-                    onUpdate({ underline: !isUnderline } as any);
-                  }}
-                  className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
-                    ("underline" in section && (section as any).underline) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted/50"
-                  }`}
-                  title="Underline"
-                >
-                  <Underline className="h-3.5 w-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    const isStrike = ("strikethrough" in section ? (section as any).strikethrough : false);
-                    onUpdate({ strikethrough: !isStrike } as any);
-                  }}
-                  className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
-                    ("strikethrough" in section && (section as any).strikethrough) ? "bg-primary text-primary-foreground shadow-xs" : "text-muted-foreground hover:bg-muted/50"
-                  }`}
-                  title="Strikethrough"
-                >
-                  <Strikethrough className="h-3.5 w-3.5" />
-                </button>
+                  <SelectTrigger className="w-full bg-background border-border/70 text-xs">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none" className="text-xs">None (Static)</SelectItem>
+                    <SelectItem value="fade-in" className="text-xs">Fade In</SelectItem>
+                    <SelectItem value="slide-up" className="text-xs">Slide Up</SelectItem>
+                    <SelectItem value="slide-down" className="text-xs">Slide Down</SelectItem>
+                    <SelectItem value="slide-left" className="text-xs">Slide Left</SelectItem>
+                    <SelectItem value="slide-right" className="text-xs">Slide Right</SelectItem>
+                    <SelectItem value="scale-up" className="text-xs">Scale Up</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            </div>
-
-            {/* Text Alignment */}
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-foreground">{t("Perataan Teks", "Text Alignment")}</Label>
-              <div className="grid grid-cols-3 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
-                {(["left", "center", "right"] as const).map((al) => (
-                  <button
-                    key={al}
-                    type="button"
-                    onClick={() => onUpdate({ align: al } as any)}
-                    className={`py-1.5 text-xs rounded font-bold transition-colors flex items-center justify-center ${
-                      (("align" in section ? (section as any).align : undefined) || "left") === al
-                        ? "bg-primary text-primary-foreground shadow-xs"
-                        : "text-muted-foreground hover:bg-muted/50"
-                    }`}
-                    title={al === "left" ? "Rata Kiri" : al === "center" ? "Rata Tengah" : "Rata Kanan"}
-                  >
-                    {al === "left" ? (
-                      <AlignLeft className="h-3.5 w-3.5" />
-                    ) : al === "center" ? (
-                      <AlignCenter className="h-3.5 w-3.5" />
-                    ) : (
-                      <AlignRight className="h-3.5 w-3.5" />
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <select
-              value={("animation" in section ? section.animation : undefined) ?? "none"}
-              onChange={(e) => onUpdate({ animation: e.target.value as (typeof PERSONAL_SITE_ANIMATIONS)[number] })}
-              className="flex h-8.5 w-full rounded-md border border-input bg-background px-2 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-            >
-              {PERSONAL_SITE_ANIMATIONS.map((a) => (
-                <option key={a} value={a}>{a === "none" ? t("Tanpa animasi", "None") : a}</option>
-              ))}
-            </select>
+            )}
           </div>
         </div>
 
