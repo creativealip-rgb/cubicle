@@ -1000,7 +1000,7 @@ export function QuestionnaireBuilder({
     [name, description, fields, initial],
   );
 
-  useUnsavedChanges(dirty);
+  useUnsavedChanges(dirty && !pending);
 
   function handleAddField(def: ElementDefinition) {
     const newField: QuestionnaireField = {
@@ -1214,7 +1214,14 @@ export function QuestionnaireBuilder({
       <header className="h-13 border-b border-border/80 bg-background px-3 sm:px-4 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <Button variant="ghost" size="icon" asChild className="h-8 w-8 rounded-lg shrink-0">
-            <Link href="/app/questionnaires">
+            <Link
+              href="/app/questionnaires"
+              onClick={(event) => {
+                if (dirty && !window.confirm(t("Perubahan belum tersimpan. Tinggalkan editor?", "Unsaved changes. Leave editor?"))) {
+                  event.preventDefault();
+                }
+              }}
+            >
               <ArrowLeft className="h-4 w-4" />
             </Link>
           </Button>
@@ -2464,13 +2471,13 @@ export function QuestionnaireBuilder({
               </h3>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">{t("Nama Formulir", "Form Name")}</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} className="h-9 text-xs sm:text-sm" />
+                <Label htmlFor="questionnaire-name" className="text-xs font-semibold">{t("Nama Formulir", "Form Name")}</Label>
+                <Input id="questionnaire-name" value={name} onChange={(e) => setName(e.target.value)} className="h-9 text-xs sm:text-sm" />
               </div>
 
               <div className="space-y-1.5">
-                <Label className="text-xs font-semibold">{t("Deskripsi & Petunjuk", "Description & Instructions")}</Label>
-                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="text-xs" />
+                <Label htmlFor="questionnaire-description" className="text-xs font-semibold">{t("Deskripsi & Petunjuk", "Description & Instructions")}</Label>
+                <Textarea id="questionnaire-description" value={description} onChange={(e) => setDescription(e.target.value)} rows={3} className="text-xs" />
               </div>
             </div>
 

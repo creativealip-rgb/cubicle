@@ -886,7 +886,14 @@ export function DocumentBlockEditor({
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {backHref && (
             <Button asChild type="button" variant="ghost" size="icon" className="h-8 w-8 shrink-0" aria-label={t("Kembali", "Back")}>
-              <Link href={backHref}>
+              <Link
+                href={backHref}
+                onClick={(event) => {
+                  if ((dirty || saving) && !window.confirm(t("Perubahan masih disimpan. Tinggalkan editor?", "Changes are still saving. Leave editor?"))) {
+                    event.preventDefault();
+                  }
+                }}
+              >
                 <ArrowLeft className="h-4 w-4" />
               </Link>
             </Button>
