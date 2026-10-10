@@ -9,6 +9,13 @@ import { Label } from "@/components/ui/label";
 import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage } from "@/lib/personal-site/model";
 import { normalizePersonalSiteSlug } from "@/lib/personal-site/model";
 import { SECTION_TEMPLATES, type SectionTemplate } from "@/lib/personal-site/section-templates";
+import {
+  addPage as addPageToList,
+  addSection as addSectionToList,
+  moveSectionByOffset,
+  removePage as removePageFromList,
+  removeSection,
+} from "@/lib/personal-site/editor-mutations";
 import { SEOPanel } from "./seo-panel";
 import { ReadinessBadge } from "../readiness-badge";
 import { isReadyToPublish, getPersonalSiteReadiness } from "@/lib/personal-site/readiness";
@@ -98,22 +105,24 @@ export function MobileStepEditor({
     const newSection = typeof templateOrType === "string"
       ? { id: makeId(), type: templateOrType as PersonalSiteSection["type"], heading: "Section" } as PersonalSiteSection
       : templateOrType.build();
-    const nextSections = [...sections, newSection];
+    const nextSections = addSectionToList(sections, newSection);
+    if (nextSections === sections) return;
     const nextPages = pages.map((p) => p.id === activePageId ? { ...p, sections: nextSections } : p);
     updatePages(nextPages);
   }
 
   function deleteSection(id: string) {
-    const nextSections = sections.filter((s) => s.id !== id);
+    const nextSections = removeSection(sections, id);
+    if (nextSections === sections) return;
     const nextPages = pages.map((p) => p.id === activePageId ? { ...p, sections: nextSections } : p);
     updatePages(nextPages);
     if (selectedSectionId === id) onSelectSection(null);
   }
 
   function reorderSections(from: number, to: number) {
-    const next = [...sections];
-    const [moved] = next.splice(from, 1);
-    next.splice(to, 0, moved);
+    const moved = sections[from];
+    const next = moved ? moveSectionByOffset(sections, moved.id, to - from) : sections;
+    if (next === sections) return;
     const nextPages = pages.map((p) => p.id === activePageId ? { ...p, sections: next } : p);
     updatePages(nextPages);
   }
@@ -219,7 +228,9 @@ function PagesStep({ pages, activePageId, onSetActivePageId, updatePages }: {
   function addPage() {
     const id = makeId().replace(/^s_/, "p_");
     const title = `${t("Halaman", "Page")} ${pages.length + 1}`;
-    updatePages([...pages, { id, slug: slugifyPageTitle(title, `page-${pages.length + 1}`), title, isHome: false, sections: [] }]);
+    const nextPages = addPageToList(pages, { id, slug: slugifyPageTitle(title, `page-${pages.length + 1}`), title, isHome: false, sections: [] });
+    if (nextPages === pages) return;
+    updatePages(nextPages);
     onSetActivePageId(id);
   }
 
@@ -246,7 +257,8 @@ function PagesStep({ pages, activePageId, onSetActivePageId, updatePages }: {
             {pages.length > 1 && (
               <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive"
                 onClick={() => {
-                  const next = pages.filter((p) => p.id !== page.id);
+                  const next = removePageFromList(pages, page.id);
+                  if (next === pages) return;
                   if (!next.some((p) => p.isHome)) next[0] = { ...next[0], isHome: true, slug: "" };
                   updatePages(next);
                   if (activePageId === page.id) onSetActivePageId(next[0].id);

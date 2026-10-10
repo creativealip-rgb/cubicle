@@ -72,6 +72,16 @@ import { CanvasRenderer, CANVAS_DEVICES, type CanvasDevice } from "./canvas-rend
 import { PropertiesPanel } from "./properties-panel";
 import { ReadinessBadge } from "../readiness-badge";
 import { StructurePanel } from "./structure-panel";
+import {
+  addPage as addPageToList,
+  addSection as addSectionToList,
+  duplicateSection as duplicateSectionInList,
+  moveSection as moveSectionInList,
+  moveSectionByOffset,
+  normalizeContentBlock,
+  removePage as removePageFromList,
+  removeSection,
+} from "@/lib/personal-site/editor-mutations";
 import { MobileStepEditor } from "./mobile-step-editor";
 import { useT } from "@/lib/i18n-client";
 import { isReadyToPublish, getPersonalSiteReadiness } from "@/lib/personal-site/readiness";
@@ -376,21 +386,17 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
           }
         }
         // Append to end if no section target
-        return syncSiteSections(prev, activePageId, [...sections, template.build()]);
+        return syncSiteSections(prev, activePageId, addSectionToList(sections, template.build()));
       });
       return;
     }
 
-    // Section reorder (existing behavior from canvas-renderer)
-    if (!over || typeof active.id !== "string" || !active.id.startsWith("s_")) return;
+    // Section reorder (existing behavior from canvas-renderer) — routed through
+    // the same pure helper the mobile editor uses.
+    if (!over || typeof active.id !== "string" || typeof over.id !== "string") return;
     const sections = pageSections(site, activePageId);
-    const oldIndex = sections.findIndex((s) => s.id === active.id);
-    const newIndex = sections.findIndex((s) => s.id === over.id);
-    if (oldIndex === -1 || newIndex === -1 || oldIndex === newIndex) return;
-    const next = [...sections];
-    const [moved] = next.splice(oldIndex, 1);
-    next.splice(newIndex, 0, moved);
-    reorderSections(next);
+    const next = moveSectionInList(sections, active.id, over.id);
+    if (next !== sections) reorderSections(next);
   }
 
   const activeSections = useMemo(() => pageSections(site, activePageId), [site, activePageId]);
@@ -462,45 +468,39 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   }, []);
 
   const updateSection = useCallback((sectionId: string, patch: Partial<PersonalSiteSection>) => {
-    setSite((prev) => syncSiteSections(prev, activePageId, pageSections(prev, activePageId).map((s) => s.id === sectionId ? { ...s, ...patch } as PersonalSiteSection : s)));
+    setSite((prev) => syncSiteSections(prev, activePageId, pageSections(prev, activePageId).map((s) => (s.id === sectionId ? normalizeContentBlock({ ...s, ...patch } as PersonalSiteSection) : s))));
   }, [activePageId]);
 
   const addSection = useCallback((type: PersonalSiteSection["type"]) => {
-    setSite((prev) => syncSiteSections(prev, activePageId, [...pageSections(prev, activePageId), emptySection(type)]));
+    setSite((prev) => syncSiteSections(prev, activePageId, addSectionToList(pageSections(prev, activePageId), emptySection(type))));
   }, [activePageId]);
 
   const addSectionTemplate = useCallback((template: SectionTemplate) => {
-    setSite((prev) => syncSiteSections(prev, activePageId, [...pageSections(prev, activePageId), template.build()]));
+    setSite((prev) => syncSiteSections(prev, activePageId, addSectionToList(pageSections(prev, activePageId), template.build())));
   }, [activePageId]);
 
   const moveSection = useCallback((id: string, direction: -1 | 1) => {
     setSite((prev) => {
       const sections = pageSections(prev, activePageId);
-      const idx = sections.findIndex((s) => s.id === id);
-      if (idx < 0) return prev;
-      const target = idx + direction;
-      if (target < 0 || target >= sections.length) return prev;
-      const next = [...sections];
-      [next[idx], next[target]] = [next[target], next[idx]];
-      return syncSiteSections(prev, activePageId, next);
+      const next = moveSectionByOffset(sections, id, direction);
+      return next === sections ? prev : syncSiteSections(prev, activePageId, next);
     });
   }, [activePageId]);
 
   const duplicateSection = useCallback((id: string) => {
     setSite((prev) => {
       const sections = pageSections(prev, activePageId);
-      const idx = sections.findIndex((s) => s.id === id);
-      if (idx < 0) return prev;
-      const original = sections[idx];
-      const copy = { ...structuredClone(original), id: makeId(), heading: `${original.heading} (copy)` };
-      const next = [...sections];
-      next.splice(idx + 1, 0, copy);
-      return syncSiteSections(prev, activePageId, next);
+      const next = duplicateSectionInList(sections, id, makeId);
+      return next === sections ? prev : syncSiteSections(prev, activePageId, next);
     });
   }, [activePageId]);
 
   const deleteSection = useCallback((id: string) => {
-    setSite((prev) => syncSiteSections(prev, activePageId, pageSections(prev, activePageId).filter((s) => s.id !== id)));
+    setSite((prev) => {
+      const sections = pageSections(prev, activePageId);
+      const next = removeSection(sections, id);
+      return next === sections ? prev : syncSiteSections(prev, activePageId, next);
+    });
     setSelectedSectionId(null);
   }, [activePageId]);
 
@@ -1161,6 +1161,9 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
 }) {
   const { t } = useT();
   const pages = normalizePages(site);
+  // Structure list must mirror the page being edited so reorder/selection match
+  // the canvas (dnd drops are handled by the shared DndContext handleDragEnd).
+  const activeSections = pages.find((page) => page.id === activePageId)?.sections ?? site.sections;
   // Block library IA: primitives (Blok) vs ready-made patterns (Blok Siap
   // Pakai) are separate views, plus a dependency-free local search that
   // matches both the ID and EN label.
@@ -1188,13 +1191,15 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
     const id = makeId().replace(/^s_/, "p_");
     const title = `Page ${pages.length + 1}`;
     const page = { id, slug: slugifyPageTitle(title, `page-${pages.length + 1}`), title, isHome: false, sections: [] };
-    updatePages([...pages, page]);
+    const nextPages = addPageToList(pages, page);
+    if (nextPages === pages) return;
+    updatePages(nextPages);
     setActivePageId(id);
   }
 
   function _deletePage(id: string) {
-    const nextPages = pages.filter((p) => p.id !== id);
-    if (nextPages.length === 0) return;
+    const nextPages = removePageFromList(pages, id);
+    if (nextPages === pages || nextPages.length === 0) return;
     if (!nextPages.some((p) => p.isHome)) nextPages[0] = { ...nextPages[0], isHome: true, slug: "" };
     updatePages(nextPages);
     if (activePageId === id) setActivePageId(nextPages[0].id);
@@ -1461,7 +1466,7 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
 
       <TabsContent value="structure" className="m-0 p-0">
         <StructurePanel
-          sections={site.sections}
+          sections={activeSections}
           selectedSectionId={selectedSectionId ?? null}
           onSelectSection={(id) => onSelectSection?.(id)}
         />
