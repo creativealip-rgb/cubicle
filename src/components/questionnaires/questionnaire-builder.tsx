@@ -41,10 +41,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
   RotateCcw,
   Type,
   AlignLeft,
@@ -113,7 +109,7 @@ import { useHistoryState } from "@/lib/use-history-state";
 import { resolveBuilderShortcut } from "@/lib/builder-shortcuts";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import type { QuestionnaireField, QuestionnaireFieldType } from "@/lib/questionnaire-schema";
-import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
+import { getFontFamily } from "@/lib/builder-fonts";
 import { FloatingContextToolbar } from "@/components/site/canvas/floating-context-toolbar";
 import { PublicDocumentHeader } from "@/components/public/public-document-header";
 import { IntakeForm } from "@/components/questionnaires/intake-form";
@@ -2045,113 +2041,9 @@ export function QuestionnaireBuilder({
                             </div>
                           )}
 
-                        {/* Typography & Font Styling */}
-                        <div className="space-y-2 pt-2 border-t border-border/60">
-                          <Label className="text-xs font-medium">{t("Gaya Font", "Font Family")}</Label>
-                          <Select
-                            value={selectedField.fontFamily || "inter"}
-                            onValueChange={(val) => updateSelectedField({ fontFamily: val })}
-                          >
-                            <SelectTrigger className="h-8.5 text-xs bg-background">
-                              <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {CUBIQLO_FONTS.map((font) => (
-                                <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.fontFamily }}>
-                                  {font.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div className="space-y-1.5 pt-1">
-                          <Label className="text-xs font-medium">{t("Ukuran Teks", "Font Size")}</Label>
-                          <div className="grid grid-cols-4 gap-1">
-                            {(["sm", "base", "lg", "xl"] as const).map((sz) => (
-                              <button
-                                key={sz}
-                                type="button"
-                                onClick={() => updateSelectedField({ fontSize: sz })}
-                                className={`py-1 text-xs font-bold rounded-md border transition-all ${
-                                  (selectedField.fontSize || "base") === sz
-                                    ? "bg-primary text-primary-foreground border-primary"
-                                    : "bg-background text-muted-foreground hover:bg-muted/50 border-border/70"
-                                }`}
-                              >
-                                {sz.toUpperCase()}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        {/* Text Styles: Bold, Italic, Underline, Strikethrough */}
-                        <div className="space-y-1.5 pt-1">
-                          <Label className="text-xs font-medium">{t("Gaya Penulisan Teks", "Text Formatting")}</Label>
-                          <div className="grid grid-cols-4 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
-                            <button
-                              type="button"
-                              onClick={() => updateSelectedField({ bold: !selectedField.bold })}
-                              className={`py-1 text-xs rounded font-bold transition-colors flex items-center justify-center ${
-                                selectedField.bold ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50"
-                              }`}
-                              title="Bold"
-                            >
-                              <Bold className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => updateSelectedField({ italic: !selectedField.italic })}
-                              className={`py-1 text-xs rounded font-bold transition-colors flex items-center justify-center ${
-                                selectedField.italic ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50"
-                              }`}
-                              title="Italic"
-                            >
-                              <Italic className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => updateSelectedField({ underline: !selectedField.underline })}
-                              className={`py-1 text-xs rounded font-bold transition-colors flex items-center justify-center ${
-                                selectedField.underline ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50"
-                              }`}
-                              title="Underline"
-                            >
-                              <Underline className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => updateSelectedField({ strikethrough: !selectedField.strikethrough })}
-                              className={`py-1 text-xs rounded font-bold transition-colors flex items-center justify-center ${
-                                selectedField.strikethrough ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted/50"
-                              }`}
-                              title="Strikethrough"
-                            >
-                              <Strikethrough className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Alignment setting */}
-                        <div className="space-y-1.5 pt-2 border-t border-border/60">
-                          <Label className="text-xs font-medium">{t("Perataan Teks", "Text Alignment")}</Label>
-                          <div className="grid grid-cols-3 gap-1 rounded-lg border border-border/70 bg-background p-0.5">
-                            {(["left", "center", "right"] as const).map((al) => (
-                              <button
-                                key={al}
-                                type="button"
-                                onClick={() => updateSelectedField({ align: al })}
-                                className={`py-1 text-xs capitalize rounded font-medium transition-colors ${
-                                  (selectedField.align || "left") === al
-                                    ? "bg-primary text-primary-foreground font-bold"
-                                    : "text-muted-foreground hover:bg-muted/50"
-                                }`}
-                              >
-                                {al}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
+                        {/* Typography (font, size, weight, alignment) lives in the inline
+                            floating toolbar only — src/components/site/canvas/floating-context-toolbar.tsx.
+                            It used to be duplicated here; two sources for one setting drifted. */}
 
                         {/* Rating Scale Max setting */}
                         {selectedField.type === "rating" && (
