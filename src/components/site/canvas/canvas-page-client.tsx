@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import type { PersonalSiteInput } from "@/lib/personal-site/model";
 import type { PersonalSiteActionState } from "@/lib/actions/personal-site";
 import { readPublicationIntent } from "@/lib/personal-site/publication-intent";
+import { STALE_REVISION_MESSAGE } from "@/lib/personal-site/save-revision";
 import { AutosaveSaveError } from "@/lib/use-retrying-autosave";
 import { useT } from "@/lib/i18n-client";
 
@@ -31,25 +32,38 @@ const CanvasEditor = dynamic(
 
 type Props = {
   initialSite: PersonalSiteInput;
+  /** Stale-tab revision token (updated_at) of the loaded document. */
+  initialRevision: string | null;
   action: (state: PersonalSiteActionState, formData: FormData) => Promise<PersonalSiteActionState>;
   publicSiteBaseUrl: string;
   previewUrl: string;
   canEditSlug: boolean;
 };
 
-export function CanvasPageClient({ initialSite, action, publicSiteBaseUrl, previewUrl, canEditSlug }: Props) {
+export function CanvasPageClient({ initialSite, initialRevision, action, publicSiteBaseUrl, previewUrl, canEditSlug }: Props) {
   const actionRef = useRef(action);
+  // Revision the editor last loaded or successfully wrote. Sent on every save so
+  // the server can refuse a write from a tab that fell behind (no last-write-wins).
+  const revisionRef = useRef(initialRevision);
 
-  const handleSave = useCallback(async (site: PersonalSiteInput) => {
+  const submit = useCallback(async (site: PersonalSiteInput, force: boolean) => {
     const formData = new FormData();
     // Explicit toggles carry a non-enumerable marker; plain autosave sends
     // "save" so the server preserves the stored publication state.
     const intent = readPublicationIntent(site) ?? "save";
     formData.set("site", JSON.stringify(site));
     formData.set("intent", intent);
+    formData.set("revision", revisionRef.current ?? "");
+    // Keep local: an explicit, user-chosen overwrite — never implied, never a merge.
+    if (force) formData.set("force", "1");
     const result = await actionRef.current({ status: "idle" }, formData);
     if (result.status === "error") {
       if (result.fieldErrors?.slug?.length) throw new Error("PERSONAL_SITE_SLUG_TAKEN");
+      // Stale revision is terminal: the same token can never succeed, so the
+      // editor resolves it (Reload or explicit Keep local) instead of retrying.
+      if (result.conflict) {
+        throw new AutosaveSaveError(STALE_REVISION_MESSAGE, { retryable: false });
+      }
       // Structured field paths travel with the error so the editor can jump to
       // the offending section/property. Validation failures are terminal.
       const issuePaths = result.issuePaths ?? [];
@@ -60,7 +74,12 @@ export function CanvasPageClient({ initialSite, action, publicSiteBaseUrl, previ
         retryable: !terminal,
       });
     }
+    // Adopt the revision the server just wrote.
+    if (result.revision) revisionRef.current = result.revision;
   }, []);
+
+  const handleSave = useCallback((site: PersonalSiteInput) => submit(site, false), [submit]);
+  const handleForceSave = useCallback((site: PersonalSiteInput) => submit(site, true), [submit]);
 
   return (
     <CanvasEditor
@@ -69,6 +88,7 @@ export function CanvasPageClient({ initialSite, action, publicSiteBaseUrl, previ
       previewUrl={previewUrl}
       publicSiteBaseUrl={publicSiteBaseUrl}
       onSave={handleSave}
+      onForceSave={handleForceSave}
       canEditSlug={canEditSlug}
     />
   );

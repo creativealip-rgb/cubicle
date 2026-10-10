@@ -20,6 +20,7 @@ import { getPersonalSiteOwnerPlanContext, listPersonalSiteRows } from "@/lib/per
 import { canEditPersonalSiteSlug, getEffectivePersonalSiteSlug } from "@/lib/personal-site/slug-policy";
 import { findPersonalSiteByEffectiveSlug, hasEffectiveSlugCollision } from "@/lib/personal-site/slug-records";
 import { resolvePublicationState } from "@/lib/personal-site/publication-intent";
+import { resolveSaveConflict, STALE_REVISION_MESSAGE } from "@/lib/personal-site/save-revision";
 export type PersonalSiteActionState = {
   status: "idle" | "success" | "error";
   message?: string;
@@ -28,6 +29,11 @@ export type PersonalSiteActionState = {
   issuePaths?: (string | number)[][];
   slug?: string;
   published?: boolean;
+  /** Set when the row moved on since this editor loaded it. Never auto-merged. */
+  conflict?: boolean;
+  /** The revision written by a successful save, or the current stored revision
+   *  on a conflict, so the editor can refresh its stale token. */
+  revision?: string;
 };
 
 async function ownerContext() {
@@ -65,6 +71,18 @@ export async function getPersonalSiteForCurrentOwner(): Promise<PersonalSiteInpu
     ctaLabel: site.ctaLabel ?? "",
     ctaUrl: site.ctaUrl ?? "",
   });
+}
+
+/**
+ * Revision token of the current owner's stored row, threaded to the editor as a
+ * separate prop (the `PersonalSiteInput` storage contract stays unchanged).
+ * `null` means no row yet, so the first save has nothing to conflict with.
+ */
+export async function getPersonalSiteRevisionForCurrentOwner(): Promise<string | null> {
+  const { userId, workspaceId } = await ownerContext();
+  const rows = await listPersonalSiteRows();
+  const current = rows.find((row) => row.workspaceId === workspaceId && row.userId === userId);
+  return current?.updatedAt ? new Date(current.updatedAt).toISOString() : null;
 }
 
 export async function getSuggestedPersonalSiteDefaults(): Promise<PersonalSiteInput> {
@@ -106,6 +124,11 @@ export async function savePersonalSite(
   const rawPayload = formData.get("site");
   // Omitted intent === plain autosave === preserve (see resolvePublicationState).
   const intent = String(formData.get("intent") || "save");
+  // Optimistic-concurrency revision the editor loaded (updated_at ISO string).
+  const revisionRaw = String(formData.get("revision") || "") || null;
+  // Explicit Keep-local override. Never implied, never an auto-merge.
+  const force = formData.get("force") === "1";
+  const expectedRevision = revisionRaw ? new Date(revisionRaw) : null;
   let decoded: unknown;
   try {
     decoded = JSON.parse(String(rawPayload || "{}"));
@@ -146,6 +169,19 @@ export async function savePersonalSite(
   }
   const data = payload.data;
 
+  // Stale-tab guard: refuse to write unless the row is still at the revision
+  // this editor loaded. Explicit Keep-local (`force`) is the only bypass, and
+  // the two JSON documents are never merged.
+  const staleRevisionState = (): PersonalSiteActionState => ({
+    status: "error",
+    conflict: true,
+    message: STALE_REVISION_MESSAGE,
+    revision: currentRow?.updatedAt ? new Date(currentRow.updatedAt).toISOString() : undefined,
+  });
+  if (!force && resolveSaveConflict(revisionRaw, currentRow?.updatedAt ?? null) === "conflict") {
+    return staleRevisionState();
+  }
+
   if (hasEffectiveSlugCollision(rows, data.slug, currentRow?.id)) {
     return {
       status: "error",
@@ -154,6 +190,8 @@ export async function savePersonalSite(
     };
   }
   let previousSlug: string | null = null;
+  let conflictDetected = false;
+  const nextRevision = new Date();
 
   try {
     await db.transaction(async (tx) => {
@@ -172,11 +210,24 @@ export async function savePersonalSite(
         about: data.about || null,
         ctaLabel: data.ctaLabel || null,
         ctaUrl: data.ctaUrl || null,
-        updatedAt: new Date(),
+        updatedAt: nextRevision,
       };
 
       if (current) {
-        await tx.update(personalSites).set(values).where(eq(personalSites.id, current.id));
+        // Optimistic concurrency: only write while the row still carries the
+        // revision this editor loaded. Rows-affected is the authority, so a
+        // concurrent write between the read above and this UPDATE is caught
+        // too. `force` is the explicit Keep-local override; no merge ever.
+        const revisionGuard =
+          force || expectedRevision === null
+            ? eq(personalSites.id, current.id)
+            : and(eq(personalSites.id, current.id), eq(personalSites.updatedAt, expectedRevision));
+        const applied = await tx
+          .update(personalSites)
+          .set(values)
+          .where(revisionGuard)
+          .returning({ id: personalSites.id });
+        if (applied.length === 0) conflictDetected = true;
       } else {
         await tx.insert(personalSites).values(values);
       }
@@ -202,6 +253,9 @@ export async function savePersonalSite(
     return { status: "error", message: "Landing page gagal disimpan. Coba lagi." };
   }
 
+  // Lost the race inside the transaction (the row moved on after the pre-check).
+  if (conflictDetected) return staleRevisionState();
+
   revalidatePath("/app/personal-site");
   revalidatePath("/site/preview");
   if (previousSlug && previousSlug !== data.slug) revalidatePath(`/site/${previousSlug}`);
@@ -212,6 +266,8 @@ export async function savePersonalSite(
     message: data.published ? "Landing page berhasil dipublikasikan." : "Draft landing page berhasil disimpan.",
     slug: data.slug,
     published: data.published,
+    // New revision token, so the editor's next save is not stale.
+    revision: nextRevision.toISOString(),
   };
 }
 

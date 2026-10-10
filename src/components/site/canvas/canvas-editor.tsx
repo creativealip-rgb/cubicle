@@ -93,6 +93,7 @@ import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage, ThemeCon
 import { emptySection, normalizePersonalSiteSlug } from "@/lib/personal-site/model";
 import { withPublicationIntent } from "@/lib/personal-site/publication-intent";
 import { useRetryingAutosave } from "@/lib/use-retrying-autosave";
+import { STALE_REVISION_MESSAGE } from "@/lib/personal-site/save-revision";
 import { PAGE_TEMPLATES, getPageTemplatesByCategory, getPageTemplateCategories, type PageTemplate } from "@/lib/personal-site/page-templates";
 import { SECTION_TEMPLATES, type SectionTemplate } from "@/lib/personal-site/section-templates";
 
@@ -101,6 +102,8 @@ type Props = {
   previewUrl: string;
   publicSiteBaseUrl: string;
   onSave: (site: PersonalSiteInput) => Promise<void>;
+  /** Explicit Keep-local overwrite used only to resolve a save conflict. */
+  onForceSave?: (site: PersonalSiteInput) => Promise<void>;
   canEditSlug: boolean;
 };
 
@@ -278,7 +281,7 @@ function matchesSearch(label: string, enLabel: string, query: string): boolean {
   return label.toLowerCase().includes(q) || enLabel.toLowerCase().includes(q);
 }
 
-export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSave, canEditSlug }: Props) {
+export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSave, onForceSave, canEditSlug }: Props) {
   const { t } = useT();
   const { refresh } = useAppTransition();
   const initialSiteNormalized = useMemo(
@@ -382,6 +385,8 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   const activeSections = useMemo(() => pageSections(site, activePageId), [site, activePageId]);
   const activePage = useMemo(() => normalizePages(site).find((page) => page.id === activePageId) ?? normalizePages(site)[0], [site, activePageId]);
   const selectedSection = useMemo(() => activeSections.find((s) => s.id === selectedSectionId) ?? null, [activeSections, selectedSectionId]);
+  // Set when the stored row moved on since this editor loaded it.
+  const [saveConflict, setSaveConflict] = useState(false);
   const {
     status: autosaveStatus,
     issuePaths: autosaveIssuePaths,
@@ -392,6 +397,12 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     value: site,
     save: onSave,
     onError: (error) => {
+      // Stale revision is terminal — the same token can never succeed, so show
+      // the Reload / Keep local choice instead of a retry toast.
+      if (error instanceof Error && error.message === STALE_REVISION_MESSAGE) {
+        setSaveConflict(true);
+        return;
+      }
       toast.error(
         error instanceof Error && error.message === "PERSONAL_SITE_SLUG_TAKEN"
           ? t("Slug sudah dipakai. Pilih alamat publik lain.", "Slug is already in use. Choose another public address.")
@@ -572,6 +583,28 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
       setSaving(false);
     }
   }, [onSave, refresh, site, t, markSaved]);
+
+  // Conflict resolution: Reload discards local edits and takes the server
+  // document; Keep local is an explicit, one-shot force save. The two JSON
+  // documents are never merged.
+  const handleConflictReload = useCallback(() => {
+    window.location.reload();
+  }, []);
+
+  const handleKeepLocal = useCallback(async () => {
+    if (!onForceSave) return;
+    setSaving(true);
+    try {
+      await onForceSave(site);
+      markSaved(site);
+      setSaveConflict(false);
+      toast.success(t("Perubahan lokal disimpan dan menimpa versi tab lain.", "Local changes saved and overwrote the other tab's version."));
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
+    } finally {
+      setSaving(false);
+    }
+  }, [onForceSave, site, t, markSaved]);
 
   const handleSelectReadinessIssue = useCallback((issue: { id: string }) => {
     if (issue.id.startsWith("cta") || issue.id === "placeholder-example-destination" || issue.id === "no-contact-method") {
@@ -775,6 +808,20 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                         </button>
                       );
                     })}
+                  </div>
+                )}
+
+                {/* Stale-tab conflict: never retried, never merged — the user picks. */}
+                {saveConflict && (
+                  <div data-testid="save-conflict" role="alert" className="flex items-center gap-1.5 rounded-lg border border-amber-300 bg-amber-50 px-2 py-1 text-xs font-medium text-amber-900">
+                    <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+                    <span className="hidden sm:inline">{t("Halaman berubah di tab lain.", "Page changed in another tab.")}</span>
+                    <Button type="button" size="sm" variant="outline" data-testid="conflict-reload" onClick={handleConflictReload} className="h-7 px-2 text-xs font-semibold">
+                      {t("Muat ulang", "Reload")}
+                    </Button>
+                    <Button type="button" size="sm" data-testid="conflict-keep-local" onClick={handleKeepLocal} disabled={saving} className="h-7 px-2 text-xs font-semibold">
+                      {t("Pakai versi lokal", "Keep local")}
+                    </Button>
                   </div>
                 )}
 

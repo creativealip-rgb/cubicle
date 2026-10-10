@@ -28,7 +28,7 @@ export class AutosaveSaveError extends Error {
 }
 
 /** Server sentinels that a retry can never fix. */
-const TERMINAL_MESSAGES = new Set(["PERSONAL_SITE_SLUG_TAKEN"]);
+const TERMINAL_MESSAGES = new Set(["PERSONAL_SITE_SLUG_TAKEN", "PERSONAL_SITE_STALE_REVISION"]);
 
 /** Transient = worth retrying; terminal = never retry. */
 export function isTransientSaveError(error: unknown): boolean {

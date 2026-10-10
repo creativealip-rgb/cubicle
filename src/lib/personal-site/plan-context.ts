@@ -25,6 +25,8 @@ export async function listPersonalSiteRows() {
       userId: personalSites.userId,
       slug: personalSites.slug,
       published: personalSites.published,
+      // Revision token for stale-tab conflict detection (optimistic concurrency).
+      updatedAt: personalSites.updatedAt,
       plan: users.plan,
       planExpiresAt: users.planExpiresAt,
       workspaceSlug: workspaces.slug,
