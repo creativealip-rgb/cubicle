@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import { personalSiteSectionSchema, type PersonalSiteSection } from "@/lib/personal-site/model";
 import { PropertiesPanel, makeItemId, appendItem, patchItem, removeItemAt } from "./properties-panel";
 import { renderToStaticMarkup } from "react-dom/server";
