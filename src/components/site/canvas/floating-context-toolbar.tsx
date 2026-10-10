@@ -81,26 +81,36 @@ export function FloatingContextToolbar({
   const [linkInput, setLinkInput] = useState(value.linkUrl || "");
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [viewportOffset, setViewportOffset] = useState(0);
+  const [position, setPosition] = useState({ left: 12, top: 12, below: false });
 
   useLayoutEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+    const toolbar = containerRef.current;
+    const anchor = toolbar?.parentElement;
+    if (!toolbar || !anchor) return;
 
-    const keepInsideViewport = () => {
-      const rect = el.getBoundingClientRect();
+    const updatePosition = () => {
+      const anchorRect = anchor.getBoundingClientRect();
+      const toolbarRect = toolbar.getBoundingClientRect();
       const gutter = 12;
-      const nextOffset = rect.left < gutter
-        ? viewportOffset + gutter - rect.left
-        : rect.right > window.innerWidth - gutter
-          ? viewportOffset + window.innerWidth - gutter - rect.right
-          : viewportOffset;
-      setViewportOffset((current) => Math.abs(current - nextOffset) < 1 ? current : nextOffset);
+      const centeredLeft = anchorRect.left + (anchorRect.width - toolbarRect.width) / 2;
+      const left = Math.min(
+        Math.max(gutter, centeredLeft),
+        Math.max(gutter, window.innerWidth - toolbarRect.width - gutter),
+      );
+      const below = anchorRect.top < toolbarRect.height + gutter + 8;
+      const top = below
+        ? Math.min(window.innerHeight - toolbarRect.height - gutter, anchorRect.bottom + 8)
+        : anchorRect.top - toolbarRect.height - 8;
+      setPosition({ left, top: Math.max(gutter, top), below });
     };
 
-    keepInsideViewport();
-    window.addEventListener("resize", keepInsideViewport);
-    return () => window.removeEventListener("resize", keepInsideViewport);
+    updatePosition();
+    window.addEventListener("resize", updatePosition);
+    window.addEventListener("scroll", updatePosition, true);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      window.removeEventListener("scroll", updatePosition, true);
+    };
   }, [active, fontOpen, sizeOpen, alignOpen, styleOpen, colorOpen, linkOpen, emojiOpen]);
 
   useEffect(() => {
@@ -151,8 +161,9 @@ export function FloatingContextToolbar({
         e.stopPropagation();
       }}
       onClick={(e) => e.stopPropagation()}
-      style={{ transform: `translateX(calc(-50% + ${viewportOffset}px))` }}
-      className={`absolute -top-16 left-1/2 z-50 flex items-center bg-white text-slate-800 rounded-xl shadow-2xl border border-slate-200/90 px-2 py-1.5 text-sm gap-1 select-none animate-in fade-in zoom-in-95 duration-100 w-max max-w-[calc(100vw-1.5rem)] flex-wrap justify-center sm:flex-nowrap ${className}`}
+      style={{ left: position.left, top: position.top }}
+      data-placement={position.below ? "bottom" : "top"}
+      className={`fixed z-[100] flex items-center bg-white text-slate-800 rounded-xl shadow-2xl border border-slate-200/90 px-2 py-1.5 text-sm gap-1 select-none animate-in fade-in zoom-in-95 duration-100 w-max max-w-[calc(100vw-1.5rem)] flex-wrap justify-center sm:flex-nowrap ${className}`}
     >
       {/* 1. Tag / Text Type Dropdown */}
       <div className="relative shrink-0">
