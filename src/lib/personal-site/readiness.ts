@@ -11,6 +11,40 @@ export type ReadinessIssue = {
 };
 
 /**
+ * What an empty block means for publishing, per block type. Exhaustive so a new
+ * section type must be classified deliberately rather than defaulting silently.
+ *
+ * - `error`: the storage schema rejected blank content here, so no published
+ *   site can contain an empty one — flagging it keeps that guarantee now that
+ *   drafts may save incomplete.
+ * - `warning`: always savable while empty, so treating it as an error would
+ *   newly block sites that publish today.
+ * - `never`: `sectionHasContent` returns true by design; nothing to flag.
+ */
+const EMPTY_BLOCK_SEVERITY: Record<PersonalSiteSection["type"], "error" | "warning" | "never"> = {
+  services: "error",
+  process: "error",
+  pricing: "error",
+  portfolio: "error",
+  testimonials: "error",
+  faq: "error",
+  contact: "error",
+  collapsible: "error",
+  booking: "error",
+  image: "warning",
+  gallery: "warning",
+  embed: "warning",
+  custom: "warning",
+  mediaText: "warning",
+  cta: "warning",
+  social: "warning",
+  contentBlock: "warning",
+  divider: "never",
+  spacer: "never",
+  tableOfContents: "never",
+};
+
+/**
  * Evaluates a PersonalSiteInput for publish-readiness.
  * Returns issues that should be addressed before publishing.
  * 
@@ -160,22 +194,21 @@ export function getPersonalSiteReadiness(site: PersonalSiteInput): ReadinessIssu
     });
   }
 
-  // The storage schema used to reject blank item rows outright (`.min(1)` on
-  // services.title, pricing.name, faq.answer, collapsible.content, ...). Drafts
-  // can now save, so completeness moves to the publish gate: an empty block is
-  // invisible on the public page (the renderer filters it), and an error tells
-  // the user why before they publish. `error` (not `warning`) because this is
-  // exactly the guarantee the schema used to provide — `isReadyToPublish`
-  // blocks until the block is filled or removed.
+  // An empty block is invisible on the public page (the renderer filters it via
+  // `sectionHasContent`), so flag it and tell the user why.
+  //
+  // Severity comes from `EMPTY_BLOCK_SEVERITY`, see the table above.
   const flaggedEmptySectionIds = new Set<string>();
-  const flagEmptyBlock = (section: PersonalSiteSection) => {
+  const flagEmptyBlock = (section: PersonalSiteSection, index: number) => {
+    const severity = EMPTY_BLOCK_SEVERITY[section.type];
+    if (severity === "never") return;
     if (sectionHasContent(section)) return;
     if (flaggedEmptySectionIds.has(section.id)) return;
     flaggedEmptySectionIds.add(section.id);
     issues.push({
       id: `section-empty-${section.id}`,
-      severity: "error",
-      label: `Bagian "${section.heading || section.type}" belum punya konten sehingga tidak akan tampil di halaman publik`,
+      severity,
+      label: `Bagian ${index + 1} belum punya konten sehingga tidak akan tampil di halaman publik`,
     });
   };
 

@@ -141,3 +141,21 @@ describe("pristine block savability", () => {
     }
   });
 });
+
+// A section heading is editable and clearable in the properties panel, and the
+// public renderer already hides an empty or default heading, so the storage
+// schema must accept one — otherwise clearing a heading blocks the whole save.
+describe("section heading is optional", () => {
+  it("saves a site holding a section whose heading was cleared", () => {
+    const cleared: PersonalSiteSection = { ...emptySection("services"), heading: "" };
+    const parsed = personalSiteInputSchema.safeParse({
+      ...DEFAULT_PERSONAL_SITE,
+      sections: [cleared],
+      pages: [{ id: "home", slug: "", title: "Home", isHome: true, sections: [cleared] }],
+    });
+    expect(
+      parsed.success,
+      parsed.success ? "" : JSON.stringify(parsed.error.issues),
+    ).toBe(true);
+  });
+});

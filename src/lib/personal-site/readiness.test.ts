@@ -714,4 +714,32 @@ describe("empty block readiness (Task 6b)", () => {
     expect(issues.some((issue) => issue.id === `section-empty-${freshFaq.id}`)).toBe(false);
     expect(isReadyToPublish(issues)).toBe(true);
   });
+
+  it("only warns for a block type that was always savable while empty", () => {
+    // The old schema never rejected a blank image block, so a site like this can
+    // publish today — flagging it as an error would be a new regression.
+    const freshImage = emptySection("image");
+    const issues = getPersonalSiteReadiness({
+      ...siteWithFreshBlock,
+      pages: [{ ...siteWithFreshBlock.pages[0], sections: [...baseSections, freshImage] }],
+    });
+    const issue = issues.find((item) => item.id === `section-empty-${freshImage.id}`);
+    expect(issue?.severity).toBe("warning");
+    expect(isReadyToPublish(issues)).toBe(true);
+  });
+
+  it("numbers flagged blocks so several empty blocks are distinguishable", () => {
+    const first = emptySection("faq");
+    const second = emptySection("services");
+    const issues = getPersonalSiteReadiness({
+      ...siteWithFreshBlock,
+      pages: [{ ...siteWithFreshBlock.pages[0], sections: [first, second] }],
+    });
+    expect(
+      issues.filter((issue) => issue.id.startsWith("section-empty-")).map((issue) => issue.label),
+    ).toEqual([
+      "Bagian 1 belum punya konten sehingga tidak akan tampil di halaman publik",
+      "Bagian 2 belum punya konten sehingga tidak akan tampil di halaman publik",
+    ]);
+  });
 });

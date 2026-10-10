@@ -35,7 +35,7 @@ export const RESERVED_PERSONAL_SITE_SLUGS = new Set([
 ]);
 
 const idSchema = z.string().trim().min(1).max(80);
-const headingSchema = z.string().trim().min(1).max(80);
+const headingSchema = z.string().trim().max(80);
 const shortTextSchema = z.string().trim().max(160);
 const descriptionSchema = z.string().trim().max(1_000);
 
