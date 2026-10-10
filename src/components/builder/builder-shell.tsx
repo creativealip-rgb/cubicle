@@ -18,11 +18,7 @@ export function BuilderShell({ header, leftRail, canvas, rightRail, mobileDrawer
         {canvas}
         {rightRail}
       </div>
-      {mobileDrawer ? (
-        <div aria-label="Mobile builder tools" className="hidden" role="dialog">
-          {mobileDrawer}
-        </div>
-      ) : null}
+      {mobileDrawer}
     </div>
   );
 }
@@ -35,9 +31,12 @@ export function BuilderCanvasViewport({ children }: { children: ReactNode }) {
   return <main className="min-w-0 min-h-0 flex-1 overflow-y-auto overflow-x-hidden">{children}</main>;
 }
 
-export function BuilderRail({ children, side }: { children: ReactNode; side: "left" | "right" }) {
+export function BuilderRail({ children, side, widthClass = "w-64" }: { children: ReactNode; side: "left" | "right"; widthClass?: string }) {
   return (
-    <aside aria-label={side === "left" ? "Left builder tools" : "Properties"} className="min-h-0 shrink-0 overflow-y-auto border-r bg-background">
+    <aside
+      aria-label={side === "left" ? "Left builder tools" : "Properties"}
+      className={`min-h-0 shrink-0 overflow-y-auto bg-background ${widthClass} ${side === "left" ? "border-r" : "border-l"}`}
+    >
       {children}
     </aside>
   );

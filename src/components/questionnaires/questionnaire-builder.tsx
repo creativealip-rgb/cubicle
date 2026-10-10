@@ -116,9 +116,6 @@ import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
 import { FloatingContextToolbar } from "@/components/site/canvas/floating-context-toolbar";
 import { PublicDocumentHeader } from "@/components/public/public-document-header";
 import { IntakeForm } from "@/components/questionnaires/intake-form";
-import { BuilderShell } from "@/components/builder/builder-shell";
-
-void BuilderShell;
 
 function makeId() {
   return `f_${Math.random().toString(36).slice(2, 10)}`;
