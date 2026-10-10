@@ -10,7 +10,10 @@ const FINAL_INVOICE_STATUSES = new Set([
 /**
  * Allowed status transitions for the manual updateInvoice edit path.
  * - Same-status saves are no-ops and always allowed.
- * - paid/cancelled/archived are terminal: nothing may leave them.
+ * - paid/cancelled are terminal: they may only be archived, never moved back
+ *   into an editable state.
+ * - archived may be restored to draft/sent/paid: that is the deliberate
+ *   un-archive path (f4a220f4), mirrored by the audited unarchiveInvoice action.
  * - draft -> cancelled is intentionally excluded — it is delegated to the
  *   dedicated cancelDraftInvoice action (which also reverts time entries).
  * - sent -> viewed/overdue and viewed -> overdue are allowed here for manual

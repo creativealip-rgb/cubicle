@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { readFileSync } from "node:fs";
 import {
   assertInvoiceFinancialsMutable,
   calculateInvoiceTotals,
@@ -66,13 +67,31 @@ describe("invoice finance rules", () => {
       expect(isInvoiceStatusTransitionAllowed("overdue", "archived")).toBe(true);
     });
 
-    it("forbids leaving terminal paid/cancelled/archived states", () => {
-      for (const terminal of ["paid", "cancelled", "archived"]) {
+    it("forbids leaving paid/cancelled except by archiving", () => {
+      // paid and cancelled may only be archived (soft-hide); every other move
+      // out of them is refused.
+      for (const terminal of ["paid", "cancelled"]) {
         for (const target of STATUSES) {
-          if (target === terminal) continue;
+          if (target === terminal || target === "archived") continue;
           expect(isInvoiceStatusTransitionAllowed(terminal, target)).toBe(false);
         }
+        expect(isInvoiceStatusTransitionAllowed(terminal, "archived")).toBe(true);
       }
+    });
+
+    it("un-archives only to the three documented fallback statuses, via the audited action", () => {
+      // archived -> draft/sent/paid is deliberate (f4a220f4) and mirrored by
+      // unarchiveInvoice, whose fallback union is exactly draft|sent|paid and
+      // which writes the "unarchived_invoice" activity log.
+      for (const target of ["draft", "sent", "paid"]) {
+        expect(isInvoiceStatusTransitionAllowed("archived", target)).toBe(true);
+      }
+      for (const target of ["viewed", "overdue", "cancelled"]) {
+        expect(isInvoiceStatusTransitionAllowed("archived", target)).toBe(false);
+      }
+      const actions = readFileSync("src/lib/actions/invoices.ts", "utf8");
+      expect(actions).toContain("export async function unarchiveInvoice(");
+      expect(actions).toContain('"unarchived_invoice"');
     });
 
     it("forbids invalid backwards transitions", () => {
@@ -85,7 +104,6 @@ describe("invoice finance rules", () => {
       expect(isInvoiceStatusTransitionAllowed("paid", "draft")).toBe(false);
       expect(isInvoiceStatusTransitionAllowed("paid", "sent")).toBe(false);
       expect(isInvoiceStatusTransitionAllowed("cancelled", "sent")).toBe(false);
-      expect(isInvoiceStatusTransitionAllowed("archived", "paid")).toBe(false);
     });
 
     it("keeps draft -> cancelled delegated to cancelDraftInvoice (disallowed here)", () => {
