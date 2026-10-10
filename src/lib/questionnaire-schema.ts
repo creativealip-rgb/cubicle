@@ -130,19 +130,28 @@ export type QuestionnaireSettings = z.infer<typeof questionnaireSettingsSchema>;
 // A stored empty array is legitimate (DB default is '[]'), so it is preserved.
 const storedSchemaList = z.array(questionnaireFieldSchema).max(50);
 
+// Legacy stored rows predate the required `id` on a field. Give each entry one so
+// the row loads; without it validation fails wholesale and the reader returns [].
+function withFieldIds(list: unknown[]): unknown[] {
+  return list.map((entry, i) => {
+    if (!entry || typeof entry !== "object") return entry;
+    const id = (entry as { id?: unknown }).id;
+    return typeof id === "string" && id.length > 0 ? entry : { ...entry, id: `legacy_field_${i + 1}` };
+  });
+}
+
 export function safeParseQuestionnaireSchema(value: unknown): QuestionnaireField[] {
   // Stored rows exist in TWO shapes: a bare field array (what the builder writes
-  // today) and an older `{ fields: [...] }` wrapper. Rows in the wrapper shape
-  // hold real content and are still reachable from the list, so reading them as
-  // "no fields" showed a blank builder and the next save overwrote the row with
-  // the editor's defaults — silent data loss. Unwrap before validating so both
-  // shapes load; anything else still falls back to an empty array.
-  const list = Array.isArray(value)
+  // today) and an older `{ fields: [...] }` wrapper whose entries also lack `id`.
+  // Reading either as "no fields" showed a blank builder, and the next save
+  // overwrote the row with the editor's defaults — silent data loss. Unwrap,
+  // backfill legacy ids, then validate. Anything else still falls back to [].
+  const raw = Array.isArray(value)
     ? value
     : value && typeof value === "object" && Array.isArray((value as { fields?: unknown }).fields)
       ? (value as { fields: unknown[] }).fields
       : null;
-  if (!list) return [];
-  const result = storedSchemaList.safeParse(list);
+  if (!raw) return [];
+  const result = storedSchemaList.safeParse(withFieldIds(raw));
   return result.success ? result.data : [];
 }

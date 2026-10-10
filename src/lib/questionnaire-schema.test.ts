@@ -78,13 +78,29 @@ describe("safeParseQuestionnaireSchema (stored JSONB fallback)", () => {
     expect(safeParseQuestionnaireSchema("corrupt")).toEqual([]);
   });
 
-  it("loads fields stored in the legacy { fields: [...] } wrapper", () => {
-    // Rows written before the builder stored a bare array. Reading these as "no
-    // fields" showed a blank builder, and the next save overwrote the row with
-    // the editor's defaults — silent data loss.
-    expect(safeParseQuestionnaireSchema({ fields: [validField] })).toEqual(
-      safeParseQuestionnaireSchema([validField]),
-    );
+  // The exact payload in the seeded legacy rows: a { fields: [...] } wrapper
+  // whose entries carry no `id` at all.
+  const legacyWrapper = {
+    fields: [
+      { type: "text", label: "Nama Perusahaan", required: true },
+      { type: "select", label: "Budget Range", options: ["< 10 juta"], required: true },
+    ],
+  };
+
+  it("loads the legacy { fields: [...] } wrapper and backfills missing ids", () => {
+    // Reading these as "no fields" showed a blank builder, and the next save
+    // overwrote the row with the editor's defaults — silent data loss.
+    const parsed = safeParseQuestionnaireSchema(legacyWrapper);
+    expect(parsed).toHaveLength(2);
+    expect(parsed[0]).toMatchObject({ type: "text", label: "Nama Perusahaan", required: true });
+    expect(parsed[1]).toMatchObject({ type: "select", label: "Budget Range" });
+    expect(parsed.every((f) => typeof f.id === "string" && f.id.length > 0)).toBe(true);
+  });
+
+  it("backfills ids on a bare array of legacy fields too", () => {
+    const parsed = safeParseQuestionnaireSchema([{ type: "text", label: "Legacy" }]);
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0]).toMatchObject({ type: "text", label: "Legacy" });
   });
 
   it("still returns [] for an object that is not the wrapper", () => {
