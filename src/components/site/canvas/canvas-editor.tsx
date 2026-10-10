@@ -78,6 +78,9 @@ import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage, ThemeCon
 import { normalizePersonalSiteSlug } from "@/lib/personal-site/model";
 import { PAGE_TEMPLATES, getPageTemplatesByCategory, getPageTemplateCategories, type PageTemplate } from "@/lib/personal-site/page-templates";
 import { SECTION_TEMPLATES, type SectionTemplate } from "@/lib/personal-site/section-templates";
+import { BuilderShell } from "@/components/builder/builder-shell";
+
+void BuilderShell;
 
 type Props = {
   initialSite: PersonalSiteInput;
