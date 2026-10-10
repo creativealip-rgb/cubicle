@@ -857,7 +857,7 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
             /* eslint-disable-next-line @next/next/no-img-element */
             <img
               src={section.url}
-              alt={section.alt || section.heading || "Image"}
+              alt={section.decorative ? "" : section.alt || section.heading || "Image"}
               className={`w-full object-cover transition-all ${
                 section.aspectRatio === "square"
                   ? "aspect-square"
@@ -926,7 +926,7 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
                 /* eslint-disable-next-line @next/next/no-img-element */
                 <img
                   src={section.imageUrl}
-                  alt={section.imageAlt || section.heading || "Media"}
+                  alt={section.decorative ? "" : section.imageAlt || section.heading || "Media"}
                   className="w-full h-auto max-h-[420px] object-cover rounded-xl"
                 />
               ) : (

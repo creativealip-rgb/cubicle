@@ -187,3 +187,26 @@ describe("section heading is optional", () => {
     ).toBe(true);
   });
 });
+
+// `decorative` is new metadata, so it must be optional: an already-saved
+// document that never had it has to keep validating on the next autosave.
+describe("image decorative flag is optional", () => {
+  it("parses stored image documents with and without the flag", () => {
+    const plain = { ...emptySection("image"), url: "https://cdn.example.com/a.png" };
+    const decorative = { ...emptySection("image"), url: "https://cdn.example.com/a.png", decorative: true };
+    const gallery = { ...emptySection("gallery"), images: [{ id: "g1", url: "https://cdn.example.com/g.png" }] };
+    const media = { ...emptySection("mediaText"), imageUrl: "https://cdn.example.com/m.png" };
+
+    const parsed = personalSiteInputSchema.safeParse({
+      ...DEFAULT_PERSONAL_SITE,
+      sections: [plain, decorative, gallery, media],
+      pages: [{ id: "home", slug: "", title: "Home", isHome: true, sections: [plain, decorative, gallery, media] }],
+    });
+    expect(
+      parsed.success,
+      parsed.success ? "" : JSON.stringify(parsed.error.issues),
+    ).toBe(true);
+    // The flag survives parsing (not silently stripped by a permissive schema).
+    expect(parsed.success && parsed.data.pages![0].sections[1]).toMatchObject({ type: "image", decorative: true });
+  });
+});

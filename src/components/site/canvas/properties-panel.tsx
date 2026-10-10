@@ -469,7 +469,26 @@ function NumberField({
   );
 }
 
-
+/**
+ * Decorative opt-out for an image: when checked the image is exposed as
+ * decorative to assistive tech and its alt field is disabled (readiness then
+ * stops requiring alt text for it).
+ */
+function DecorativeToggle({ checked, onChange }: { checked: boolean; onChange: (checked: boolean) => void }) {
+  const { t } = useT();
+  return (
+    <label className="flex items-center gap-2 text-xs text-muted-foreground">
+      <input
+        type="checkbox"
+        checked={checked}
+        aria-label={t("Dekoratif", "Decorative")}
+        onChange={(e) => onChange(e.target.checked)}
+        className="h-3.5 w-3.5 rounded border-input accent-primary"
+      />
+      {t("Dekoratif (gambar hiasan, tanpa teks alternatif)", "Decorative (image is ornamental, no alt text)")}
+    </label>
+  );
+}
 
 function ServicesEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "services" }>>) {
   const { t } = useT();
@@ -987,11 +1006,16 @@ function GalleryEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
             <Input
               value={image.alt ?? ""}
               maxLength={200}
+              disabled={image.decorative ?? false}
               onChange={(e) => onUpdate({ images: patchItem(section.images, i, { alt: e.target.value }) })}
               className="h-8 text-xs font-mono"
               placeholder={t("Deskripsi gambar", "Image description")}
             />
           </div>
+          <DecorativeToggle
+            checked={image.decorative ?? false}
+            onChange={(decorative) => onUpdate({ images: patchItem(section.images, i, { decorative }) })}
+          />
         </div>
       ))}
     </div>
@@ -1041,6 +1065,19 @@ function SingleImageEditor({ section, onUpdate }: EditorProps<Extract<PersonalSi
           label={t("Unggah", "Upload")}
         />
       </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Teks alternatif", "Alt text")}</Label>
+        <Input
+          value={section.alt ?? ""}
+          maxLength={200}
+          disabled={section.decorative ?? false}
+          onChange={(e) => onUpdate({ alt: e.target.value })}
+          className="h-8 text-xs font-mono"
+          placeholder={t("Deskripsi gambar", "Image description")}
+        />
+      </div>
+      <DecorativeToggle checked={section.decorative ?? false} onChange={(decorative) => onUpdate({ decorative })} />
 
       <div className="space-y-1">
         <Label className="text-xs text-muted-foreground">{t("Ukuran Gambar", "Image Size")}</Label>
@@ -1121,6 +1158,19 @@ function MediaTextEditor({ section, onUpdate }: EditorProps<Extract<PersonalSite
           label={t("Unggah", "Upload")}
         />
       </div>
+
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Teks alternatif", "Alt text")}</Label>
+        <Input
+          value={section.imageAlt ?? ""}
+          maxLength={200}
+          disabled={section.decorative ?? false}
+          onChange={(e) => onUpdate({ imageAlt: e.target.value })}
+          className="h-8 text-xs font-mono"
+          placeholder={t("Deskripsi gambar", "Image description")}
+        />
+      </div>
+      <DecorativeToggle checked={section.decorative ?? false} onChange={(decorative) => onUpdate({ decorative })} />
 
       <div className="space-y-1">
         <Label className="text-xs text-muted-foreground">{t("Posisi Media (Gambar)", "Media Position")}</Label>

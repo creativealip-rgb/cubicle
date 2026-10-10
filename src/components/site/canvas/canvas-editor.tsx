@@ -542,6 +542,16 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
       return;
     }
 
+    // Image-alt issues carry the section id, so jump straight to that block.
+    if (issue.id.startsWith("image-alt-")) {
+      const imageSectionId = issue.id.slice("image-alt-".length);
+      setSelectedSectionId(imageSectionId);
+      window.setTimeout(() => {
+        document.querySelector(`[data-section-id="${imageSectionId}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      }, 50);
+      return;
+    }
+
     const target = issue.id.startsWith("cta") || issue.id === "placeholder-example-destination"
       ? "cta"
       : issue.id.startsWith("hero") || issue.id.startsWith("title")

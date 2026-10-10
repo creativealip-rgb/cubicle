@@ -830,3 +830,49 @@ describe("empty block readiness (Task 6b)", () => {
     ]);
   });
 });
+
+describe("image accessibility contract", () => {
+  const baseSections: PersonalSiteSection[] = DEFAULT_PERSONAL_SITE.pages![0].sections;
+
+  const siteWith = (section: PersonalSiteSection) => ({
+    ...DEFAULT_PERSONAL_SITE,
+    slug: "draft-site",
+    title: "Draft Studio",
+    hero: "Hero text",
+    published: true,
+    pages: [{ id: "home", slug: "", title: "Home", isHome: true, sections: [...baseSections, section] }],
+    themeConfig: DEFAULT_PERSONAL_SITE.themeConfig!,
+  });
+
+  // Full defaults + patch keeps every required field present without type noise.
+  const image = (patch: Record<string, unknown> = {}): PersonalSiteSection =>
+    ({ ...(emptySection("image") as Record<string, unknown>), id: "img-1", heading: "Foto", url: "https://cdn.example.com/a.png", ...patch }) as PersonalSiteSection;
+  const gallery = (patch: Record<string, unknown> = {}): PersonalSiteSection =>
+    ({ ...(emptySection("gallery") as Record<string, unknown>), id: "gal-1", heading: "Galeri", images: [{ id: "g1", url: "https://cdn.example.com/g.png", alt: "" }], ...patch }) as PersonalSiteSection;
+  const mediaText = (): PersonalSiteSection =>
+    ({ ...(emptySection("mediaText") as Record<string, unknown>), id: "med-1", heading: "Media", imageUrl: "https://cdn.example.com/m.png", imageAlt: "" }) as PersonalSiteSection;
+
+  it("flags a meaningful image without alt text as a publish blocker", () => {
+    const issues = getPersonalSiteReadiness(siteWith(image()));
+    const issue = issues.find((i) => i.id === "image-alt-img-1");
+    expect(issue?.severity).toBe("error");
+    expect(isReadyToPublish(issues)).toBe(false);
+  });
+
+  it("clears the issue once alt text is set or the image is marked decorative", () => {
+    const noIssue = (section: PersonalSiteSection) =>
+      getPersonalSiteReadiness(siteWith(section)).some((i) => i.id === "image-alt-img-1");
+    expect(noIssue(image({ alt: "Foto studio" }))).toBe(false);
+    expect(noIssue(image({ decorative: true }))).toBe(false);
+  });
+
+  it("does not flag an image block that has no upload yet", () => {
+    expect(getPersonalSiteReadiness(siteWith(image({ url: "" }))).some((i) => i.id === "image-alt-img-1")).toBe(false);
+  });
+
+  it("flags gallery items and mediaText images that lack alt text", () => {
+    expect(getPersonalSiteReadiness(siteWith(gallery())).some((i) => i.id === "image-alt-gal-1")).toBe(true);
+    expect(getPersonalSiteReadiness(siteWith(mediaText())).some((i) => i.id === "image-alt-med-1")).toBe(true);
+    expect(getPersonalSiteReadiness(siteWith(gallery({ images: [{ id: "g1", url: "https://cdn.example.com/g.png", decorative: true }] }))).some((i) => i.id === "image-alt-gal-1")).toBe(false);
+  });
+});

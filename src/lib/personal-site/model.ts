@@ -216,6 +216,9 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
       id: idSchema,
       url: z.string().trim().max(2_000),
       alt: z.string().trim().max(200).optional(),
+      // Optional, never required: an already-saved document has no flag and must
+      // keep validating on autosave. Absent means "meaningful image".
+      decorative: z.boolean().optional(),
       title: z.string().trim().max(100).optional(),
       description: z.string().trim().max(1000).optional(),
       height: z.number().min(80).max(800).optional(),
@@ -230,6 +233,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     ...sectionTypographySchema,
     url: z.string().trim().max(2_000).optional(),
     alt: z.string().trim().max(200).optional(),
+    decorative: z.boolean().optional(),
     caption: z.string().trim().max(500).optional(),
     linkUrl: optionalPublicHrefSchema,
     align: z.enum(["left", "center", "right"]).optional(),
@@ -247,6 +251,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     verticalAlign: z.enum(["top", "center", "bottom"]).optional(),
     imageUrl: z.string().trim().max(2_000).optional(),
     imageAlt: z.string().trim().max(200).optional(),
+    decorative: z.boolean().optional(),
     content: z.string().trim().max(2_000).optional(),
     buttonLabel: z.string().trim().max(60).optional(),
     buttonUrl: optionalPublicHrefSchema,

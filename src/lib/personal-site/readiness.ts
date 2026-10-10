@@ -237,15 +237,42 @@ export function getPersonalSiteReadiness(site: PersonalSiteInput): ReadinessIssu
     });
   };
 
-  if (pages.length === 0) {
-    topLevelSections.forEach((section, index) => flagEmptyBlock(section, index));
-  } else {
-    const nameThePage = pages.length > 1;
-    for (const page of pages) {
-      (page.sections.length > 0 ? page.sections : topLevelSections).forEach((section, index) =>
-        flagEmptyBlock(section, index, nameThePage ? page.title : undefined),
-      );
-    }
+  // A meaningful image needs a text alternative unless the author marks it
+  // decorative. Same split as the URL checks above — the storage schema stays
+  // permissive so an autosave never fails, and the refusal lives in this gate.
+  const imageNeedsAlt = (section: PersonalSiteSection): boolean => {
+    if (section.type === "image") return Boolean(section.url?.trim());
+    if (section.type === "mediaText") return Boolean(section.imageUrl?.trim());
+    if (section.type === "gallery") return section.images.some((img) => Boolean(img.url.trim()));
+    return false;
+  };
+  // Mirrors the renderer fallbacks: gallery images may fall back to their title.
+  const sectionHasAlt = (section: PersonalSiteSection): boolean => {
+    if (section.type === "image") return Boolean(section.alt?.trim()) || section.decorative === true;
+    if (section.type === "mediaText") return Boolean(section.imageAlt?.trim()) || section.decorative === true;
+    if (section.type === "gallery") return section.images.every((img) => Boolean(img.alt?.trim() || img.title?.trim()) || img.decorative === true);
+    return true;
+  };
+  const flagMissingImageAlt = (section: PersonalSiteSection, index: number, pageTitle?: string) => {
+    if (!imageNeedsAlt(section) || sectionHasAlt(section)) return;
+    issues.push({
+      id: `image-alt-${section.id}`,
+      severity: "error",
+      label: `Bagian ${index + 1}${pageTitle ? ` di halaman "${pageTitle}"` : ""} punya gambar tanpa teks alternatif — isi "Teks alternatif" atau tandai gambar sebagai dekoratif`,
+    });
+  };
+
+  const visibleSectionGroups = pages.length === 0
+    ? [{ title: undefined as string | undefined, sections: topLevelSections }]
+    : pages.map((page) => ({
+        title: pages.length > 1 ? page.title : undefined,
+        sections: page.sections.length > 0 ? page.sections : topLevelSections,
+      }));
+  for (const group of visibleSectionGroups) {
+    group.sections.forEach((section, index) => {
+      flagEmptyBlock(section, index, group.title);
+      flagMissingImageAlt(section, index, group.title);
+    });
   }
 
   // Home page check only applies to page-based sites; the renderer

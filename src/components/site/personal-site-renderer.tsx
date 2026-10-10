@@ -342,7 +342,7 @@ function SectionBody({
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                       src={img.url.startsWith("http") ? img.url : img.url.startsWith("/") ? img.url : `/${img.url}`}
-                      alt={img.alt || img.title || ""}
+                      alt={img.decorative ? "" : img.alt || img.title || ""}
                       className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
                       loading="lazy"
                     />
@@ -377,7 +377,7 @@ function SectionBody({
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
               src={section.url}
-              alt={section.alt || section.heading || "Image"}
+              alt={section.decorative ? "" : section.alt || section.heading || "Image"}
               className={`w-full object-cover transition-all ${
                 section.aspectRatio === "square"
                   ? "aspect-square"
@@ -425,7 +425,7 @@ function SectionBody({
               /* eslint-disable-next-line @next/next/no-img-element */
               <img
                 src={section.imageUrl}
-                alt={section.imageAlt || section.heading || "Media"}
+                alt={section.decorative ? "" : section.imageAlt || section.heading || "Media"}
                 className="w-full h-auto max-h-[420px] object-cover rounded-xl"
                 loading="lazy"
               />

@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 import { describe, it, expect, vi } from "vitest";
-import { personalSiteSectionSchema, type PersonalSiteSection } from "@/lib/personal-site/model";
+import { emptySection, personalSiteSectionSchema, type PersonalSiteSection } from "@/lib/personal-site/model";
 import { PropertiesPanel, makeItemId, appendItem, patchItem, removeItemAt } from "./properties-panel";
 import { renderToStaticMarkup } from "react-dom/server";
 import { render, screen } from "@testing-library/react";
@@ -254,5 +254,28 @@ describe("PropertiesPanel rendering", () => {
     await user.tab();
 
     expect(onUpdate).toHaveBeenCalledWith({ height: 200 });
+  });
+
+  it("shows a Decorative control in the image and mediaText editors", () => {
+    const imageHtml = renderToStaticMarkup(<PropertiesPanel section={emptySection("image")} onUpdate={() => {}} onClose={() => {}} />);
+    expect(imageHtml).toContain("Decorative");
+    const mediaHtml = renderToStaticMarkup(<PropertiesPanel section={emptySection("mediaText")} onUpdate={() => {}} onClose={() => {}} />);
+    expect(mediaHtml).toContain("Decorative");
+  });
+
+  it("offers a decorative toggle that disables the alt field for gallery images", async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn();
+    const gallery: Extract<PersonalSiteSection, { type: "gallery" }> = {
+      id: "gal-1", type: "gallery", heading: "Galeri",
+      images: [{ id: "im1", url: "", alt: "" }],
+    };
+    const { rerender } = render(<PropertiesPanel section={gallery} onUpdate={onUpdate} onClose={() => {}} />);
+
+    await user.click(screen.getByRole("checkbox", { name: "Decorative" }));
+    expect(onUpdate).toHaveBeenCalledWith({ images: [{ id: "im1", url: "", alt: "", decorative: true }] });
+
+    rerender(<PropertiesPanel section={{ ...gallery, images: [{ id: "im1", url: "", alt: "", decorative: true }] }} onUpdate={onUpdate} onClose={() => {}} />);
+    expect((screen.getByPlaceholderText("Image description") as HTMLInputElement).disabled).toBe(true);
   });
 });

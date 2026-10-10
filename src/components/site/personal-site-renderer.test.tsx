@@ -129,4 +129,39 @@ describe("PersonalSiteRenderer", () => {
       expect(html).not.toContain(url);
     });
   });
+
+  describe("image accessibility", () => {
+    function renderImages(sections: unknown[]) {
+      const site = {
+        ...DEFAULT_PERSONAL_SITE,
+        heroImage: "https://cdn.example.com/hero.png",
+        sections: [],
+        pages: [{ id: "home", slug: "", title: "Home", isHome: true, sections }],
+      } as PersonalSiteInput;
+      return renderToStaticMarkup(<PersonalSiteRenderer site={site} />);
+    }
+
+    it("keeps the hero image decorative (empty alt, aria-hidden)", () => {
+      const html = renderToStaticMarkup(
+        <PersonalSiteRenderer
+          site={{ ...DEFAULT_PERSONAL_SITE, heroImage: "https://cdn.example.com/hero.png", sections: [], pages: [{ id: "home", slug: "", title: "Home", isHome: true, sections: [] }] } as PersonalSiteInput}
+        />,
+      );
+      expect(html).toContain('aria-hidden="true"');
+      // Only the hero image is present, and it must stay decorative.
+      expect(html.match(/alt=""/g) ?? []).toHaveLength(1);
+    });
+
+    it("emits an empty alt only for images marked decorative", () => {
+      const html = renderImages([
+        { id: "img-dec", type: "image", heading: "Ornamen", url: "https://cdn.example.com/dec.png", decorative: true },
+        { id: "img-alt", type: "image", heading: "Tim", url: "https://cdn.example.com/team.png", alt: "Foto tim" },
+        { id: "img-plain", type: "image", heading: "Kantor", url: "https://cdn.example.com/office.png" },
+      ]);
+      expect(html).toMatch(/src="https:\/\/cdn\.example\.com\/dec\.png"[^>]*alt=""/);
+      expect(html).toMatch(/src="https:\/\/cdn\.example\.com\/team\.png"[^>]*alt="Foto tim"/);
+      // Unchanged fallback for content that never set `decorative`.
+      expect(html).toMatch(/src="https:\/\/cdn\.example\.com\/office\.png"[^>]*alt="Kantor"/);
+    });
+  });
 });
