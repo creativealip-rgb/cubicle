@@ -433,8 +433,13 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
         </div>
 
         {section.type === "services" && <ServicesEditor section={section} onUpdate={onUpdate} />}
+        {section.type === "process" && <ProcessEditor section={section} onUpdate={onUpdate} />}
         {section.type === "pricing" && <PricingEditor section={section} onUpdate={onUpdate} />}
+        {section.type === "portfolio" && <PortfolioEditor section={section} onUpdate={onUpdate} />}
+        {section.type === "testimonials" && <TestimonialsEditor section={section} onUpdate={onUpdate} />}
         {section.type === "faq" && <FaqEditor section={section} onUpdate={onUpdate} />}
+        {section.type === "contact" && <ContactEditor section={section} onUpdate={onUpdate} />}
+        {section.type === "custom" && <CustomEditor section={section} onUpdate={onUpdate} />}
         {section.type === "cta" && <CtaEditor section={section} onUpdate={onUpdate} />}
         {section.type === "gallery" && <GalleryEditor section={section} onUpdate={onUpdate} />}
         {section.type === "image" && <SingleImageEditor section={section} onUpdate={onUpdate} />}
@@ -487,8 +492,12 @@ function AddItemButton({ onClick, label, disabled }: { onClick: () => void; labe
 }
 
 const SERVICES_MAX = 12;
+const PROCESS_MAX = 12;
 const PRICING_MAX = 8;
+const PORTFOLIO_MAX = 12;
+const TESTIMONIALS_MAX = 8;
 const FAQ_MAX = 12;
+const CONTACT_MAX = 10;
 const GALLERY_MAX = 12;
 
 function ServicesEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "services" }>>) {
@@ -533,6 +542,48 @@ function ServicesEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteS
   );
 }
 
+function ProcessEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "process" }>>) {
+  const { t } = useT();
+  const atMax = section.steps.length >= PROCESS_MAX;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Langkah Kerja", "Process Steps")} ({section.steps.length}/{PROCESS_MAX})</Label>
+        <AddItemButton
+          label={t("Tambah langkah", "Add step")}
+          disabled={atMax}
+          onClick={() => onUpdate({ steps: appendItem(section.steps, () => ({ id: makeItemId("step"), title: "", description: "" })) })}
+        />
+      </div>
+      {section.steps.map((step, i) => (
+        <div key={step.id} className="relative space-y-2 rounded-lg border p-3">
+          <RemoveItemButton label={`Remove step ${i + 1}`} onClick={() => onUpdate({ steps: removeItemAt(section.steps, i) })} />
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">{t("Judul Langkah", "Step Title")}</Label>
+            <Input
+              value={step.title}
+              maxLength={100}
+              onChange={(e) => onUpdate({ steps: patchItem(section.steps, i, { title: e.target.value }) })}
+              className="h-8 text-sm"
+              placeholder={t("Nama langkah", "Step title")}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">{t("Deskripsi", "Description")}</Label>
+            <Textarea
+              value={step.description}
+              maxLength={1000}
+              onChange={(e) => onUpdate({ steps: patchItem(section.steps, i, { description: e.target.value }) })}
+              className="min-h-16 resize-none text-sm"
+              placeholder={t("Penjelasan proses...", "Process explanation...")}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function PricingEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "pricing" }>>) {
   const { t } = useT();
   const atMax = section.offers.length >= PRICING_MAX;
@@ -566,7 +617,7 @@ function PricingEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
               maxLength={80}
               onChange={(e) => onUpdate({ offers: patchItem(section.offers, i, { price: e.target.value }) })}
               className="h-8 text-sm"
-              placeholder={t("Rp2.500.000 / Kustom", "$150 / Custom")}
+              placeholder={t("Contoh: Rp 2.500.000 / $199", "e.g. $199")}
             />
           </div>
           <div className="space-y-1">
@@ -576,11 +627,189 @@ function PricingEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
               maxLength={1000}
               onChange={(e) => onUpdate({ offers: patchItem(section.offers, i, { description: e.target.value }) })}
               className="min-h-16 resize-none text-sm"
-              placeholder={t("Apa yang termasuk?", "What is included?")}
+              placeholder={t("Apa yang didapat klien?", "What does the client get?")}
             />
           </div>
         </div>
       ))}
+    </div>
+  );
+}
+
+function PortfolioEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "portfolio" }>>) {
+  const { t } = useT();
+  const atMax = section.projects.length >= PORTFOLIO_MAX;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Daftar Proyek", "Projects")} ({section.projects.length}/{PORTFOLIO_MAX})</Label>
+        <AddItemButton
+          label={t("Tambah proyek", "Add project")}
+          disabled={atMax}
+          onClick={() => onUpdate({ projects: appendItem(section.projects, () => ({ id: makeItemId("proj"), title: "", description: "", url: "" })) })}
+        />
+      </div>
+      {section.projects.map((proj, i) => (
+        <div key={proj.id} className="relative space-y-2 rounded-lg border p-3">
+          <RemoveItemButton label={`Remove project ${i + 1}`} onClick={() => onUpdate({ projects: removeItemAt(section.projects, i) })} />
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">{t("Judul Proyek", "Project Title")}</Label>
+            <Input
+              value={proj.title}
+              maxLength={120}
+              onChange={(e) => onUpdate({ projects: patchItem(section.projects, i, { title: e.target.value }) })}
+              className="h-8 text-sm"
+              placeholder={t("Nama proyek / brand", "Project / client name")}
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">{t("Tautan URL Proyek", "Project URL")}</Label>
+            <Input
+              value={proj.url || ""}
+              maxLength={2000}
+              onChange={(e) => onUpdate({ projects: patchItem(section.projects, i, { url: e.target.value }) })}
+              className="h-8 text-xs font-mono"
+              placeholder="https://..."
+            />
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">{t("Deskripsi", "Description")}</Label>
+            <Textarea
+              value={proj.description}
+              maxLength={1000}
+              onChange={(e) => onUpdate({ projects: patchItem(section.projects, i, { description: e.target.value }) })}
+              className="min-h-16 resize-none text-sm"
+              placeholder={t("Hasil karya atau ringkasan solusi...", "Summary of project results...")}
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TestimonialsEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "testimonials" }>>) {
+  const { t } = useT();
+  const atMax = section.testimonials.length >= TESTIMONIALS_MAX;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Testimoni Klien", "Client Testimonials")} ({section.testimonials.length}/{TESTIMONIALS_MAX})</Label>
+        <AddItemButton
+          label={t("Tambah testimoni", "Add testimonial")}
+          disabled={atMax}
+          onClick={() => onUpdate({ testimonials: appendItem(section.testimonials, () => ({ id: makeItemId("testi"), quote: "", author: "", role: "" })) })}
+        />
+      </div>
+      {section.testimonials.map((testi, i) => (
+        <div key={testi.id} className="relative space-y-2 rounded-lg border p-3">
+          <RemoveItemButton label={`Remove testimonial ${i + 1}`} onClick={() => onUpdate({ testimonials: removeItemAt(section.testimonials, i) })} />
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">{t("Kutipan Testimoni", "Quote")}</Label>
+            <Textarea
+              value={testi.quote}
+              maxLength={1000}
+              onChange={(e) => onUpdate({ testimonials: patchItem(section.testimonials, i, { quote: e.target.value }) })}
+              className="min-h-16 resize-none text-sm italic"
+              placeholder={t("Hasil kerja sangat memuaskan...", "Great work delivered on time...")}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">{t("Nama Pemberi Testimoni", "Author")}</Label>
+              <Input
+                value={testi.author}
+                maxLength={100}
+                onChange={(e) => onUpdate({ testimonials: patchItem(section.testimonials, i, { author: e.target.value }) })}
+                className="h-8 text-sm"
+                placeholder={t("Budi Santoso", "John Doe")}
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">{t("Jabatan / Perusahaan", "Role")}</Label>
+              <Input
+                value={testi.role}
+                maxLength={120}
+                onChange={(e) => onUpdate({ testimonials: patchItem(section.testimonials, i, { role: e.target.value }) })}
+                className="h-8 text-sm"
+                placeholder={t("CEO StartupX", "Founder")}
+              />
+            </div>
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function ContactEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "contact" }>>) {
+  const { t } = useT();
+  const atMax = section.methods.length >= CONTACT_MAX;
+  return (
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Kanal Kontak", "Contact Channels")} ({section.methods.length}/{CONTACT_MAX})</Label>
+        <AddItemButton
+          label={t("Tambah kontak", "Add contact")}
+          disabled={atMax}
+          onClick={() => onUpdate({ methods: appendItem(section.methods, () => ({ id: makeItemId("contact"), label: "Email", value: "", url: "" })) })}
+        />
+      </div>
+      {section.methods.map((method, i) => (
+        <div key={method.id} className="relative space-y-2 rounded-lg border p-3">
+          <RemoveItemButton label={`Remove contact ${i + 1}`} onClick={() => onUpdate({ methods: removeItemAt(section.methods, i) })} />
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">{t("Label", "Label")}</Label>
+              <Input
+                value={method.label}
+                maxLength={80}
+                onChange={(e) => onUpdate({ methods: patchItem(section.methods, i, { label: e.target.value }) })}
+                className="h-8 text-sm"
+                placeholder="Email / WA / Phone"
+              />
+            </div>
+            <div className="space-y-1">
+              <Label className="text-xs text-muted-foreground">{t("Nilai / Teks", "Value")}</Label>
+              <Input
+                value={method.value}
+                maxLength={160}
+                onChange={(e) => onUpdate({ methods: patchItem(section.methods, i, { value: e.target.value }) })}
+                className="h-8 text-sm"
+                placeholder="halo@example.com"
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <Label className="text-xs text-muted-foreground">{t("Tautan URL Kontak (Opsional)", "Contact Link URL")}</Label>
+            <Input
+              value={method.url || ""}
+              maxLength={2000}
+              onChange={(e) => onUpdate({ methods: patchItem(section.methods, i, { url: e.target.value }) })}
+              className="h-8 text-xs font-mono"
+              placeholder="mailto:..., https://wa.me/..."
+            />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function CustomEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "custom" }>>) {
+  const { t } = useT();
+  return (
+    <div className="space-y-3">
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Isi Konten Kustom", "Custom Content")}</Label>
+        <Textarea
+          value={section.content}
+          maxLength={1000}
+          onChange={(e) => onUpdate({ content: e.target.value })}
+          className="min-h-28 resize-none text-sm leading-relaxed"
+          placeholder={t("Tulis paragraf bebas di sini...", "Write custom paragraph content here...")}
+        />
+      </div>
     </div>
   );
 }
