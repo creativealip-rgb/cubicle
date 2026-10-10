@@ -3,6 +3,10 @@
  * one workflow header (BUILD / SETTINGS / PUBLISH), a left tools rail, a center
  * canvas scroller, and a right properties rail — with preview mode hiding the
  * mutation affordances while keeping the canvas scroller alive.
+ *
+ * The editor is mounted inside an AppShell-like `<main>` because that is how
+ * `/app/personal-site` actually renders it; the builder must not add a second
+ * `main` landmark inside it.
  */
 /** @vitest-environment jsdom */
 import { describe, expect, it, vi } from "vitest";
@@ -29,17 +33,20 @@ import { CanvasEditor } from "./canvas-editor";
 
 function renderEditor() {
   return render(
-    <CanvasEditor
-      initialSite={DEFAULT_PERSONAL_SITE}
-      previewUrl="https://example.test/site/my-studio"
-      publicSiteBaseUrl="https://example.test"
-      onSave={vi.fn(async () => {})}
-      canEditSlug
-    />,
+    <main id="main-content">
+      <CanvasEditor
+        initialSite={DEFAULT_PERSONAL_SITE}
+        previewUrl="https://example.test/site/my-studio"
+        publicSiteBaseUrl="https://example.test"
+        onSave={vi.fn(async () => {})}
+        canEditSlug
+      />
+    </main>,
   );
 }
 
 const shell = () => screen.getByTestId("builder-shell");
+const canvasViewport = () => screen.getByTestId("builder-canvas-viewport");
 const leftRail = () => screen.queryByRole("complementary", { name: /left builder tools/i });
 
 describe("landing desktop shell", () => {
@@ -53,20 +60,22 @@ describe("landing desktop shell", () => {
 
     expect(leftRail()).not.toBeNull();
 
-    const main = screen.getByRole("main");
-    expect(main.className).toContain("overflow-y-auto");
+    expect(canvasViewport().className).toContain("overflow-y-auto");
 
     // The properties rail is the existing panel; it only mounts once a section is selected.
     // Select through the Structure tab (a real user path) because canvas selection needs pointer events.
     expect(screen.queryByText("Section Properties")).toBeNull();
     await userEvent.click(screen.getByRole("tab", { name: /structure/i }));
-    fireEvent.click(screen.getAllByRole("button", { name: /drag to reorder/i })[0].parentElement!);
+    fireEvent.click(container.querySelector("[data-section-row]")!);
     const rails = screen.getAllByRole("complementary");
     expect(rails.some((el) => el.textContent?.includes("Section Properties"))).toBe(true);
 
-    // Rails and canvas scroll independently: main is the scroller, not the shell.
+    // Rails and canvas scroll independently: the viewport is the scroller, not the shell.
     expect(shell().className).not.toContain("overflow-y-auto");
     expect(leftRail()!.className).toContain("overflow-y-auto");
+
+    // Mounted inside the app shell's main, the builder adds no second main landmark.
+    expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(container.querySelectorAll("main")).toHaveLength(1);
   });
 
@@ -79,7 +88,7 @@ describe("landing desktop shell", () => {
     expect(shell().getAttribute("data-preview-mode")).toBe("true");
     expect(leftRail()).toBeNull();
     expect(screen.queryByText("Section Properties")).toBeNull();
-    expect(screen.getByRole("main").className).toContain("overflow-y-auto");
+    expect(canvasViewport().className).toContain("overflow-y-auto");
   });
 
   it("keeps the workflow header on every tab while the build rails stay build-only", () => {
@@ -91,6 +100,6 @@ describe("landing desktop shell", () => {
     expect(banner.textContent).toContain("BUILD");
     expect(banner.textContent).toContain("PUBLISH");
     expect(leftRail()).toBeNull();
-    expect(screen.getByRole("main")).not.toBeNull();
+    expect(canvasViewport()).not.toBeNull();
   });
 });

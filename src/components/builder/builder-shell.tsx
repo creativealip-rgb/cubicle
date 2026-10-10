@@ -35,8 +35,18 @@ export function BuilderWorkflowHeader({ children, className }: { children: React
   return <header className={cx("flex h-14 shrink-0 items-center border-b bg-background px-4", className)}>{children}</header>;
 }
 
+/**
+ * Scrolling canvas region. Deliberately NOT a `main` landmark: every `/app/*`
+ * surface is already wrapped in `<main id="main-content">` by AppShell, so a
+ * second `main` here would nest landmarks. Consumers that need a main landmark
+ * wrap the shell themselves.
+ */
 export function BuilderCanvasViewport({ children, className }: { children: ReactNode; className?: string }) {
-  return <main className={cx("min-w-0 min-h-0 flex-1 overflow-y-auto overflow-x-hidden", className)}>{children}</main>;
+  return (
+    <div data-testid="builder-canvas-viewport" className={cx("min-w-0 min-h-0 flex-1 overflow-y-auto overflow-x-hidden", className)}>
+      {children}
+    </div>
+  );
 }
 
 export function BuilderRail({

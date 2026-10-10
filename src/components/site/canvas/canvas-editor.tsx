@@ -644,8 +644,9 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
           },
         }}
       >
+        {/* Height comes from AppShell's sized <main> via the shell's own h-full. */}
         <BuilderShell
-          className="max-md:hidden h-[calc(100vh-3.5rem)] overflow-hidden bg-background"
+          className="max-md:hidden overflow-hidden bg-background"
           previewMode={livePreviewMode}
           header={
             <BuilderWorkflowHeader className="border-border/80 bg-background/95 backdrop-blur-md px-4 sm:px-6 justify-between gap-3 z-30">

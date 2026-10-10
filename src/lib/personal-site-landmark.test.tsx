@@ -1,6 +1,7 @@
 /**
- * The Landing canvas must expose exactly one `main` landmark and keep the
- * scrolling canvas on it. Rendered assertions, not source-string matching, so a
+ * The Landing canvas must not add a `main` landmark: `/app/personal-site` is
+ * already wrapped in `<main id="main-content">` by AppShell, and the scrolling
+ * canvas lives inside it. Rendered assertions, not source-string matching, so a
  * legitimate layout refactor cannot break this test.
  */
 /** @vitest-environment jsdom */
@@ -25,31 +26,35 @@ if (!HTMLElement.prototype.scrollIntoView) {
 
 import { CanvasEditor } from "@/components/site/canvas/canvas-editor";
 
-function renderEditor() {
+function renderInsideAppShell() {
   return render(
-    <CanvasEditor
-      initialSite={DEFAULT_PERSONAL_SITE}
-      previewUrl="https://example.test/site/my-studio"
-      publicSiteBaseUrl="https://example.test"
-      onSave={vi.fn(async () => {})}
-      canEditSlug
-    />,
+    <main id="main-content">
+      <CanvasEditor
+        initialSite={DEFAULT_PERSONAL_SITE}
+        previewUrl="https://example.test/site/my-studio"
+        publicSiteBaseUrl="https://example.test"
+        onSave={vi.fn(async () => {})}
+        canEditSlug
+      />
+    </main>,
   );
 }
 
 describe("personal site landmarks", () => {
-  it("renders exactly one main landmark and never nests one", () => {
-    const { container } = renderEditor();
+  it("does not nest a second main landmark inside the app shell", () => {
+    const { container } = renderInsideAppShell();
 
-    const mains = screen.getAllByRole("main");
-    expect(mains).toHaveLength(1);
+    expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(container.querySelectorAll("main")).toHaveLength(1);
-    expect(mains[0].querySelector("main")).toBeNull();
+    expect(container.querySelector("main")!.querySelector("main")).toBeNull();
+    expect(screen.getByRole("main").getAttribute("id")).toBe("main-content");
   });
 
-  it("keeps the scrolling canvas on that single main landmark", () => {
-    renderEditor();
+  it("keeps the scrolling canvas viewport inside that single main landmark", () => {
+    const { container } = renderInsideAppShell();
 
-    expect(screen.getByRole("main").className).toContain("overflow-y-auto");
+    const viewport = screen.getByTestId("builder-canvas-viewport");
+    expect(viewport.className).toContain("overflow-y-auto");
+    expect(container.querySelector("main")!.contains(viewport)).toBe(true);
   });
 });

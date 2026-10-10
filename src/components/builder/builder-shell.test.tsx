@@ -4,6 +4,8 @@ import { describe, expect, it } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { BuilderCanvasViewport, BuilderMobileDrawer, BuilderRail, BuilderShell, BuilderWorkflowHeader } from "./builder-shell";
 
+const viewport = () => screen.getByTestId("builder-canvas-viewport");
+
 describe("builder shell", () => {
   it("renders accessible workflow header and three builder regions", () => {
     render(
@@ -16,7 +18,7 @@ describe("builder shell", () => {
     );
     expect(screen.getByRole("banner").textContent).toContain("Header slot");
     expect(screen.getByRole("complementary", { name: /left/i }).textContent).toContain("Left slot");
-    expect(screen.getByRole("main").textContent).toContain("Canvas slot");
+    expect(viewport().textContent).toContain("Canvas slot");
     expect(screen.getByRole("complementary", { name: /properties/i }).textContent).toContain("Properties slot");
   });
 
@@ -39,6 +41,11 @@ describe("builder shell", () => {
     expect(right.className).toContain("w-80");
   });
 
+  it("keeps canvas viewport independently scrollable", () => {
+    render(<BuilderCanvasViewport>Canvas</BuilderCanvasViewport>);
+    expect(viewport().className).toContain("overflow-y-auto");
+  });
+
   it("merges caller className instead of dropping it", () => {
     render(
       <BuilderShell
@@ -51,9 +58,8 @@ describe("builder shell", () => {
     expect(screen.getByTestId("builder-shell").className).toContain("flex");
     expect(screen.getByTestId("builder-shell").className).toContain("bg-muted/30");
     expect(screen.getByRole("banner").className).toContain("z-30");
-    const main = screen.getByRole("main");
-    expect(main.className).toContain("overflow-y-auto");
-    expect(main.className).toContain("justify-center");
+    expect(viewport().className).toContain("overflow-y-auto");
+    expect(viewport().className).toContain("justify-center");
     const drawer = screen.getByRole("dialog", { name: /mobile builder/i });
     expect(drawer.className).toContain("md:hidden");
     expect(drawer.className).toContain("fixed");
@@ -61,14 +67,24 @@ describe("builder shell", () => {
 
   it("renders with only a canvas and no optional slots", () => {
     render(<BuilderShell canvas={<BuilderCanvasViewport>Canvas</BuilderCanvasViewport>} />);
-    expect(screen.getByRole("main").textContent).toContain("Canvas");
+    expect(viewport().textContent).toContain("Canvas");
     expect(screen.queryByRole("banner")).toBeNull();
     expect(screen.queryByRole("complementary")).toBeNull();
     expect(screen.queryByRole("dialog")).toBeNull();
   });
-});
 
-it("keeps canvas viewport independently scrollable", () => {
-  render(<BuilderCanvasViewport>Canvas</BuilderCanvasViewport>);
-  expect(screen.getByRole("main").className).toContain("overflow-y-auto");
+  it("never adds a nested main landmark when mounted inside the app shell", () => {
+    const { container } = render(
+      <main id="main-content">
+        <BuilderShell
+          header={<BuilderWorkflowHeader>H</BuilderWorkflowHeader>}
+          canvas={<BuilderCanvasViewport>Canvas</BuilderCanvasViewport>}
+        />
+      </main>,
+    );
+
+    expect(screen.getAllByRole("main")).toHaveLength(1);
+    expect(container.querySelectorAll("main")).toHaveLength(1);
+    expect(container.querySelector("main")!.querySelector("main")).toBeNull();
+  });
 });

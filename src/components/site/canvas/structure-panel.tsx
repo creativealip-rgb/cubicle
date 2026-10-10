@@ -90,6 +90,7 @@ function StructureRow({ section, selected, onSelect }: {
     <div
       ref={setNodeRef}
       style={style}
+      data-section-row={section.id}
       className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs cursor-pointer transition-colors group ${
         selected ? "border-primary/60 bg-primary/5" : "hover:bg-muted"
       }`}
