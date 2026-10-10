@@ -74,7 +74,19 @@ interface AiGenerationState {
   pendingPatch: PersonalSiteSection | null; // what to apply after user clicks Apply
 }
 
-export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: PropertiesPanelProps) {
+type PropertiesContentProps = {
+  section: PersonalSiteSection;
+  onUpdate: (patch: Partial<PersonalSiteSection>) => void;
+  onDelete?: () => void;
+  onClose?: () => void;
+};
+
+/**
+ * Reusable section-properties body: header + scrollable field list, with no
+ * outer rail/positioning chrome. Rendered by the desktop `<aside>` rail and by
+ * the mobile bottom drawer, so both share identical 20-type parity.
+ */
+export function PropertiesContent({ section, onUpdate, onDelete, onClose }: PropertiesContentProps) {
   const { t } = useT();
   const [aiState, setAiState] = useState<AiGenerationState>({
     isGenerating: false,
@@ -85,9 +97,7 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
   // Reset AI preview when section changes
   useEffect(() => {
     setAiState({ isGenerating: false, preview: null, pendingPatch: null });
-  }, [section?.id]);
-
-  if (!section) return null;
+  }, [section.id]);
 
   const handleGenerateCopy = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -138,7 +148,7 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
   };
 
   return (
-    <aside className="hidden md:flex w-80 shrink-0 flex-col border-l bg-background">
+    <div className="flex min-h-0 flex-1 flex-col">
       <div className="flex items-center justify-between border-b px-4 py-3 bg-muted/20">
         <div className="flex items-center gap-2 min-w-0">
           <Settings2 className="h-4 w-4 text-primary shrink-0" />
@@ -348,6 +358,16 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
           </div>
         )}
       </div>
+    </div>
+  );
+}
+
+export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: PropertiesPanelProps) {
+  if (!section) return null;
+
+  return (
+    <aside className="hidden md:flex w-80 shrink-0 flex-col border-l bg-background">
+      <PropertiesContent section={section} onUpdate={onUpdate} onDelete={onDelete} onClose={onClose} />
     </aside>
   );
 }

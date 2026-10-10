@@ -23,6 +23,7 @@ import {
   removeSection,
 } from "@/lib/personal-site/editor-mutations";
 import { SEOPanel } from "./seo-panel";
+import { MobilePropertiesDrawer } from "./mobile-properties-drawer";
 import { ReadinessBadge } from "../readiness-badge";
 import { isReadyToPublish, getPersonalSiteReadiness } from "@/lib/personal-site/readiness";
 import { useT } from "@/lib/i18n-client";
@@ -102,10 +103,18 @@ export function MobileStepEditor({
   const pages = site.pages?.length ? site.pages : [{ id: "home", slug: "", title: "Home", isHome: true, sections: site.sections }];
   const activePage = pages.find((p) => p.id === activePageId) ?? pages[0];
   const sections = activePage.sections;
+  const selectedSection = sections.find((s) => s.id === selectedSectionId) ?? null;
 
   function updatePages(nextPages: PersonalSitePage[]) {
     const normalized = nextPages.map((p, i) => ({ ...p, isHome: p.isHome || (i === 0 && !nextPages.some((pp) => pp.isHome)) }));
     onUpdateSite({ pages: normalized, sections: normalized.find((p) => p.isHome)?.sections ?? normalized[0]?.sections ?? [] });
+  }
+
+  /** Patch a single section in the active page (mobile parity with desktop rail). */
+  function updateSection(id: string, patch: Partial<PersonalSiteSection>) {
+    const nextSections = sections.map((s) => (s.id === id ? ({ ...s, ...patch } as PersonalSiteSection) : s));
+    const nextPages = pages.map((p) => (p.id === activePageId ? { ...p, sections: nextSections } : p));
+    updatePages(nextPages);
   }
 
   function notifySectionLimit() {
@@ -255,6 +264,13 @@ export function MobileStepEditor({
         </Button>
       </div>
 
+      <MobilePropertiesDrawer
+        section={selectedSection}
+        onUpdate={(patch) => { if (selectedSection) updateSection(selectedSection.id, patch); }}
+        onDelete={() => { if (selectedSection) requestDeleteSection(selectedSection.id); }}
+        onClose={() => onSelectSection(null)}
+      />
+
       <ConfirmDialog
         open={pendingSectionDeleteId !== null}
         onOpenChange={(open) => { if (!open) setPendingSectionDeleteId(null); }}
@@ -355,7 +371,7 @@ function SectionsStep({ sections, selectedSectionId, onSelectSection, addSection
               <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label={t("Naikkan bagian", "Move section up")} disabled={i === 0} onClick={() => reorderSections(i, i - 1)}>↑</Button>
               <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label={t("Turunkan bagian", "Move section down")} disabled={i === sections.length - 1} onClick={() => reorderSections(i, i + 1)}>↓</Button>
             </div>
-            <button type="button" className="flex-1 text-left truncate" onClick={() => onSelectSection(section.id)}>
+            <button type="button" id={`section-row-${section.id}`} className="flex-1 text-left truncate" onClick={() => onSelectSection(section.id)}>
               {section.heading || section.type}
             </button>
             <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label={t("Duplikat bagian", "Duplicate section")} onClick={() => duplicateSection(section.id)}>
