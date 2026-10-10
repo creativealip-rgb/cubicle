@@ -61,6 +61,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
+import { resolveBuilderShortcut } from "@/lib/builder-shortcuts";
 import {
   Select,
   SelectContent,
@@ -388,23 +389,6 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     setSelectedSectionId(null);
   }, [activePageId]);
 
-  // Keyboard shortcut Ctrl+Z / Ctrl+Y
-  useEffect(() => {
-    function handleKeyDown(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-      } else if (
-        ((e.ctrlKey || e.metaKey) && e.key === "y") ||
-        ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === "z" || e.key === "Z"))
-      ) {
-        e.preventDefault();
-        redo();
-      }
-    }
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [undo, redo]);
 
   // Auto-save after 2s of inactivity
   useEffect(() => {
@@ -573,43 +557,31 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   // Keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      // Escape — deselect
-      if (e.key === "Escape") {
+      // Document shortcuts only. `resolveBuilderShortcut` returns null for text
+      // fields and contenteditable hosts, so typing keeps its own undo/redo —
+      // except Ctrl/Cmd+S, which always saves.
+      const action = resolveBuilderShortcut(e, {
+        target: e.target,
+        hasSelection: selectedSectionId !== null,
+      });
+      if (!action) return;
+
+      if (action === "deselect") {
         setSelectedSectionId(null);
         return;
       }
-      // Delete — delete selected section
-      if ((e.key === "Delete" || e.key === "Backspace") && selectedSectionId) {
-        const target = e.target as HTMLElement;
-        if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
+      if (action === "save" || action === "undo" || action === "redo") {
         e.preventDefault();
-        requestDeleteSection(selectedSectionId);
+        if (action === "save") handleSave();
+        else if (action === "undo") undo();
+        else redo();
         return;
       }
-      // Ctrl+D / Cmd+D — duplicate selected section
-      if ((e.ctrlKey || e.metaKey) && e.key === "d" && selectedSectionId) {
-        e.preventDefault();
-        duplicateSection(selectedSectionId);
-        return;
-      }
-      // Ctrl+S / Cmd+S — manual save
-      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-        e.preventDefault();
-        handleSave();
-        return;
-      }
-      // Ctrl+Z / Cmd+Z — undo
-      if ((e.ctrlKey || e.metaKey) && e.key === "z" && !e.shiftKey) {
-        e.preventDefault();
-        undo();
-        return;
-      }
-      // Ctrl+Shift+Z / Cmd+Shift+Z or Ctrl+Y — redo
-      if ((e.ctrlKey || e.metaKey) && (e.key === "y" || (e.key === "z" && e.shiftKey))) {
-        e.preventDefault();
-        redo();
-        return;
-      }
+      // delete | duplicate — the resolver only returns these with a selection.
+      if (!selectedSectionId) return;
+      e.preventDefault();
+      if (action === "delete") requestDeleteSection(selectedSectionId);
+      else duplicateSection(selectedSectionId);
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
