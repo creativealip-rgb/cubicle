@@ -393,7 +393,7 @@ export function IntakeForm({
 
           return (
             <div key={f.id} className={`${colClass} space-y-1.5`} style={fieldFontFamily ? { fontFamily: fieldFontFamily } : undefined}>
-              <Label className={`text-xs text-foreground flex items-center justify-between ${fieldAlignClass} ${fieldSizeClass} ${textStyles}`}>
+              <Label htmlFor={`field-${f.id}`} className={`text-xs text-foreground flex items-center justify-between ${fieldAlignClass} ${fieldSizeClass} ${textStyles}`}>
                 <span>
                   {displayLabel} {f.required && <span className="text-destructive font-bold">*</span>}
                 </span>
@@ -403,6 +403,7 @@ export function IntakeForm({
 
               {f.type === "text" && (
                 <Input
+                  id={`field-${f.id}`}
                   value={answers[f.id] || ""}
                   onChange={(e) => setFieldValue(f.id, e.target.value)}
                   placeholder={displayPlaceholder || (lang === "en" ? "Your answer..." : "Jawaban Anda...")}
@@ -412,6 +413,7 @@ export function IntakeForm({
 
               {f.type === "textarea" && (
                 <Textarea
+                  id={`field-${f.id}`}
                   value={answers[f.id] || ""}
                   onChange={(e) => setFieldValue(f.id, e.target.value)}
                   placeholder={displayPlaceholder || (lang === "en" ? "Write details here..." : "Tuliskan rincian di sini...")}
@@ -422,6 +424,7 @@ export function IntakeForm({
 
               {f.type === "email" && (
                 <Input
+                  id={`field-${f.id}`}
                   type="email"
                   value={answers[f.id] || ""}
                   onChange={(e) => setFieldValue(f.id, e.target.value)}
@@ -432,6 +435,7 @@ export function IntakeForm({
 
               {f.type === "phone" && (
                 <Input
+                  id={`field-${f.id}`}
                   type="tel"
                   value={answers[f.id] || ""}
                   onChange={(e) => setFieldValue(f.id, e.target.value)}
@@ -442,6 +446,7 @@ export function IntakeForm({
 
               {f.type === "number" && (
                 <Input
+                  id={`field-${f.id}`}
                   type="number"
                   value={answers[f.id] || ""}
                   onChange={(e) => setFieldValue(f.id, e.target.value)}
@@ -452,6 +457,7 @@ export function IntakeForm({
 
               {f.type === "date" && (
                 <Input
+                  id={`field-${f.id}`}
                   type="date"
                   value={answers[f.id] || ""}
                   onChange={(e) => setFieldValue(f.id, e.target.value)}
@@ -461,6 +467,7 @@ export function IntakeForm({
 
               {f.type === "time" && (
                 <Input
+                  id={`field-${f.id}`}
                   type="time"
                   value={answers[f.id] || ""}
                   onChange={(e) => setFieldValue(f.id, e.target.value)}
@@ -470,6 +477,7 @@ export function IntakeForm({
 
               {f.type === "url" && (
                 <Input
+                  id={`field-${f.id}`}
                   type="url"
                   value={answers[f.id] || ""}
                   onChange={(e) => setFieldValue(f.id, e.target.value)}
@@ -483,7 +491,7 @@ export function IntakeForm({
                   value={answers[f.id] || ""}
                   onValueChange={(val) => setFieldValue(f.id, val)}
                 >
-                  <SelectTrigger className="h-10 text-xs sm:text-sm bg-background">
+                  <SelectTrigger id={`field-${f.id}`} className="h-10 text-xs sm:text-sm bg-background">
                     <SelectValue placeholder={t("Pilih salah satu...", "Select an option...")} />
                   </SelectTrigger>
                   <SelectContent>
@@ -532,6 +540,7 @@ export function IntakeForm({
                     <p className="text-[10px] text-muted-foreground">{f.acceptFiles || "Format: PDF, DOC, PNG, JPG, ZIP"}</p>
                   </div>
                   <Input
+                  id={`field-${f.id}`}
                     type="file"
                     accept={f.acceptFiles}
                     onChange={async (e) => {
