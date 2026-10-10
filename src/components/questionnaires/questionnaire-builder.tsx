@@ -439,12 +439,12 @@ function SortableCanvasField({
       ref={setNodeRef}
       style={style}
       onClick={onSelect}
-      className={`group relative ${cardRadiusClass} border p-4 sm:p-5 transition-all cursor-pointer ${
+      className={`group relative ${cardRadiusClass} border p-4 sm:p-5 pt-8 transition-all cursor-pointer overflow-visible ${
         isPageBreak ? "col-span-12 border-dashed border-primary/60 bg-primary/[0.03]" : isHalf ? "col-span-12 md:col-span-6" : "col-span-12"
       } ${
         isSelected
-          ? "border-primary bg-primary/[0.02] ring-2 ring-primary/20 shadow-xs"
-          : "border-border/70 bg-card hover:border-primary/40 hover:shadow-xs"
+          ? "border-primary bg-primary/[0.02] ring-2 ring-primary/20 shadow-xs z-20"
+          : "border-border/70 bg-card hover:border-primary/40 hover:shadow-xs z-0"
       }`}
     >
       {/* Floating Contextual Toolbar on Active Field Selection */}
