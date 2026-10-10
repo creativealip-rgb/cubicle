@@ -421,9 +421,9 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="space-y-4">
             {section.testimonials.map((t, i) => (
-              <div key={t.id} className="rounded-lg border bg-card p-4 shadow-sm italic">
+              <div key={t.id} className="rounded-lg border bg-card p-4 shadow-sm italic" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
                 <InlineText value={t.quote} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, quote: v } : tt) })} tag="p" className="mb-2" />
-                <div className="text-sm text-muted-foreground not-italic">
+                <div className="text-sm text-muted-foreground not-italic" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
                   <InlineText value={t.author} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, author: v } : tt) })} tag="span" className="font-medium" />
                   {t.role && <span> — <InlineText value={t.role} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, role: v } : tt) })} tag="span" /></span>}
                 </div>
