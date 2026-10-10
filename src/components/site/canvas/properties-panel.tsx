@@ -308,12 +308,12 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none" className="text-xs">None (Static)</SelectItem>
+                    <SelectItem value="fade-up" className="text-xs">Fade Up</SelectItem>
                     <SelectItem value="fade-in" className="text-xs">Fade In</SelectItem>
-                    <SelectItem value="slide-up" className="text-xs">Slide Up</SelectItem>
-                    <SelectItem value="slide-down" className="text-xs">Slide Down</SelectItem>
                     <SelectItem value="slide-left" className="text-xs">Slide Left</SelectItem>
                     <SelectItem value="slide-right" className="text-xs">Slide Right</SelectItem>
-                    <SelectItem value="scale-up" className="text-xs">Scale Up</SelectItem>
+                    <SelectItem value="zoom-in" className="text-xs">Zoom In</SelectItem>
+                    <SelectItem value="bounce" className="text-xs">Bounce</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

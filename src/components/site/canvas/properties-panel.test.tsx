@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import { personalSiteSectionSchema, type PersonalSiteSection } from "@/lib/personal-site/model";
 import { PropertiesPanel, makeItemId, appendItem, patchItem, removeItemAt } from "./properties-panel";
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
 
 describe("properties panel pure helpers", () => {
   describe("makeItemId", () => {
@@ -176,8 +177,18 @@ describe("PropertiesPanel rendering", () => {
     expect(html).toContain("Layanan Saya");
     // Heading input carries current value.
     expect(html).toContain('value="Layanan Saya"');
-    // Radix Select exposes current animation through combobox state, not selected HTML option.
+    // Radix Select exposes current animation through trigger state, not selected HTML option.
     expect(html).toContain('role="combobox"');
+
+  });
+
+  it("binds animation value callback and renders schema options", () => {
+    const source = readFileSync("src/components/site/canvas/properties-panel.tsx", "utf8");
+    expect(source).toMatch(/value=\{\(section as any\)\.animation \|\| "none"\}/);
+    expect(source).toMatch(/onValueChange=\{\(val\) => onUpdate\(\{ animation: val \} as any\)\}/);
+    for (const option of ["none", "fade-up", "fade-in", "slide-left", "slide-right", "zoom-in", "bounce"]) {
+      expect(source).toContain(`value="${option}"`);
+    }
   });
 
   it("renders structured editors for supported section types", () => {
