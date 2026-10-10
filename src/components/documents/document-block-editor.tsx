@@ -1189,7 +1189,7 @@ export function DocumentBlockEditor({
           )}
 
           {/* KANVAS TENGAH: WYSIWYG Document Paper */}
-          <main ref={canvasScrollRef} className="flex-1 flex flex-col h-full overflow-y-auto bg-muted/30 p-4 sm:p-8">
+          <main ref={canvasScrollRef} className="flex-1 flex flex-col h-full overflow-y-auto overflow-x-visible bg-muted/30 p-4 sm:p-8">
             {/* Document Paper Canvas */}
             <div
               className={`mx-auto w-full transition-all duration-300 ${

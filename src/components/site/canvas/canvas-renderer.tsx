@@ -78,7 +78,7 @@ export function CanvasRenderer({
   return (
     <div
       data-preview-device={device}
-      className={cn("mx-auto w-full min-w-0 bg-background shadow-sm rounded-xl overflow-hidden", getCanvasMaxWidthClass(device))}
+      className={cn("mx-auto w-full min-w-0 bg-background shadow-sm rounded-xl overflow-visible", getCanvasMaxWidthClass(device))}
       style={{
         backgroundColor: theme?.backgroundColor ?? "#ffffff",
         color: theme?.textColor ?? "#111827",

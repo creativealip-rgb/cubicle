@@ -97,7 +97,7 @@ export function InlineText({
           onChange={onTypographyChange}
           onInsertEmoji={handleInsertEmoji}
           tagType={tagType}
-          className="-top-14"
+          className="-top-16"
         />
       )}
       <div className={cn("flex items-start gap-2", align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start")}>

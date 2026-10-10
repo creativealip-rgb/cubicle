@@ -389,138 +389,7 @@ const FAQ_MAX = 12;
 const CONTACT_MAX = 10;
 const GALLERY_MAX = 12;
 
-function ItemTypographyControl({
-  item,
-  onChange,
-}: {
-  item: any;
-  onChange: (patch: any) => void;
-}) {
-  const { t } = useT();
-  const currentSize = item.fontSize || "base";
-  const currentAlign = item.align || "left";
 
-  return (
-    <div className="pt-2 mt-2 border-t border-dashed border-border/60 space-y-2">
-      <div className="flex items-center justify-between">
-        <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">
-          {t("Styling Item", "Item Styling")}
-        </span>
-        <div className="flex items-center gap-1">
-          {/* Font Size Pills */}
-          {(["sm", "base", "lg", "xl"] as const).map((s) => (
-            <button
-              key={s}
-              type="button"
-              onClick={() => onChange({ fontSize: item.fontSize === s ? undefined : s })}
-              className={`h-5 px-1.5 text-[10px] font-medium rounded transition-all ${
-                currentSize === s
-                  ? "bg-primary text-primary-foreground font-semibold shadow-xs"
-                  : "bg-muted/60 text-muted-foreground hover:bg-muted"
-              }`}
-            >
-              {s.toUpperCase()}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex items-center justify-between gap-1">
-        {/* Formatting B/I/U/S */}
-        <div className="flex items-center border rounded bg-muted/20 p-0.5 gap-0.5">
-          <button
-            type="button"
-            title="Bold"
-            onClick={() => onChange({ bold: !item.bold })}
-            className={`h-5 w-5 flex items-center justify-center rounded text-xs transition-all ${
-              item.bold
-                ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            <Bold className="h-2.5 w-2.5" />
-          </button>
-          <button
-            type="button"
-            title="Italic"
-            onClick={() => onChange({ italic: !item.italic })}
-            className={`h-5 w-5 flex items-center justify-center rounded text-xs transition-all ${
-              item.italic
-                ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            <Italic className="h-2.5 w-2.5" />
-          </button>
-          <button
-            type="button"
-            title="Underline"
-            onClick={() => onChange({ underline: !item.underline })}
-            className={`h-5 w-5 flex items-center justify-center rounded text-xs transition-all ${
-              item.underline
-                ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            <Underline className="h-2.5 w-2.5" />
-          </button>
-          <button
-            type="button"
-            title="Strikethrough"
-            onClick={() => onChange({ strikethrough: !item.strikethrough })}
-            className={`h-5 w-5 flex items-center justify-center rounded text-xs transition-all ${
-              item.strikethrough
-                ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            <Strikethrough className="h-2.5 w-2.5" />
-          </button>
-        </div>
-
-        {/* Alignment Left / Center / Right */}
-        <div className="flex items-center border rounded bg-muted/20 p-0.5 gap-0.5">
-          <button
-            type="button"
-            title="Left"
-            onClick={() => onChange({ align: "left" })}
-            className={`h-5 w-5 flex items-center justify-center rounded text-xs transition-all ${
-              currentAlign === "left"
-                ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            <AlignLeft className="h-2.5 w-2.5" />
-          </button>
-          <button
-            type="button"
-            title="Center"
-            onClick={() => onChange({ align: "center" })}
-            className={`h-5 w-5 flex items-center justify-center rounded text-xs transition-all ${
-              currentAlign === "center"
-                ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            <AlignCenter className="h-2.5 w-2.5" />
-          </button>
-          <button
-            type="button"
-            title="Right"
-            onClick={() => onChange({ align: "right" })}
-            className={`h-5 w-5 flex items-center justify-center rounded text-xs transition-all ${
-              currentAlign === "right"
-                ? "bg-primary text-primary-foreground font-bold shadow-xs"
-                : "text-muted-foreground hover:bg-muted"
-            }`}
-          >
-            <AlignRight className="h-2.5 w-2.5" />
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 function ServicesEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSection, { type: "services" }>>) {
   const { t } = useT();
@@ -558,10 +427,6 @@ function ServicesEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteS
               placeholder={t("Apa yang termasuk dalam layanan ini?", "What does this service include?")}
             />
           </div>
-          <ItemTypographyControl
-            item={item}
-            onChange={(patch) => onUpdate({ items: patchItem(section.items, i, patch) })}
-          />
         </div>
       ))}
     </div>
@@ -604,10 +469,6 @@ function ProcessEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
               placeholder={t("Penjelasan proses...", "Process explanation...")}
             />
           </div>
-          <ItemTypographyControl
-            item={step}
-            onChange={(patch) => onUpdate({ steps: patchItem(section.steps, i, patch) })}
-          />
         </div>
       ))}
     </div>
@@ -660,10 +521,6 @@ function PricingEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
               placeholder={t("Apa yang didapat klien?", "What does the client get?")}
             />
           </div>
-          <ItemTypographyControl
-            item={offer}
-            onChange={(patch) => onUpdate({ offers: patchItem(section.offers, i, patch) })}
-          />
         </div>
       ))}
     </div>
@@ -716,10 +573,6 @@ function PortfolioEditor({ section, onUpdate }: EditorProps<Extract<PersonalSite
               placeholder={t("Hasil karya atau ringkasan solusi...", "Summary of project results...")}
             />
           </div>
-          <ItemTypographyControl
-            item={proj}
-            onChange={(patch) => onUpdate({ projects: patchItem(section.projects, i, patch) })}
-          />
         </div>
       ))}
     </div>
@@ -774,10 +627,6 @@ function TestimonialsEditor({ section, onUpdate }: EditorProps<Extract<PersonalS
               />
             </div>
           </div>
-          <ItemTypographyControl
-            item={testi}
-            onChange={(patch) => onUpdate({ testimonials: patchItem(section.testimonials, i, patch) })}
-          />
         </div>
       ))}
     </div>
@@ -832,10 +681,6 @@ function ContactEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
               placeholder="mailto:..., https://wa.me/..."
             />
           </div>
-          <ItemTypographyControl
-            item={method}
-            onChange={(patch) => onUpdate({ methods: patchItem(section.methods, i, patch) })}
-          />
         </div>
       ))}
     </div>

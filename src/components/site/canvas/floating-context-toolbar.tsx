@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import {
   ChevronDown,
   Bold,
@@ -81,6 +81,27 @@ export function FloatingContextToolbar({
   const [linkInput, setLinkInput] = useState(value.linkUrl || "");
 
   const containerRef = useRef<HTMLDivElement>(null);
+  const [viewportOffset, setViewportOffset] = useState(0);
+
+  useLayoutEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    const keepInsideViewport = () => {
+      const rect = el.getBoundingClientRect();
+      const gutter = 12;
+      const nextOffset = rect.left < gutter
+        ? viewportOffset + gutter - rect.left
+        : rect.right > window.innerWidth - gutter
+          ? viewportOffset + window.innerWidth - gutter - rect.right
+          : viewportOffset;
+      setViewportOffset((current) => Math.abs(current - nextOffset) < 1 ? current : nextOffset);
+    };
+
+    keepInsideViewport();
+    window.addEventListener("resize", keepInsideViewport);
+    return () => window.removeEventListener("resize", keepInsideViewport);
+  }, [active, fontOpen, sizeOpen, alignOpen, styleOpen, colorOpen, linkOpen, emojiOpen]);
 
   useEffect(() => {
     setLinkInput(value.linkUrl || "");
@@ -130,7 +151,8 @@ export function FloatingContextToolbar({
         e.stopPropagation();
       }}
       onClick={(e) => e.stopPropagation()}
-      className={`absolute -top-14 left-0 sm:left-2 z-50 flex items-center bg-white text-slate-800 rounded-lg shadow-2xl border border-slate-200/90 p-1 text-xs gap-0.5 select-none animate-in fade-in zoom-in-95 duration-100 max-w-[calc(100vw-2rem)] flex-wrap sm:flex-nowrap ${className}`}
+      style={{ transform: `translateX(calc(-50% + ${viewportOffset}px))` }}
+      className={`absolute -top-16 left-1/2 z-50 flex items-center bg-white text-slate-800 rounded-xl shadow-2xl border border-slate-200/90 px-2 py-1.5 text-sm gap-1 select-none animate-in fade-in zoom-in-95 duration-100 w-max max-w-[calc(100vw-1.5rem)] flex-wrap justify-center sm:flex-nowrap ${className}`}
     >
       {/* 1. Tag / Text Type Dropdown */}
       <div className="relative shrink-0">
