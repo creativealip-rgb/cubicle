@@ -221,4 +221,38 @@ describe("PropertiesPanel rendering", () => {
     expect(ctaHtml).toContain("Hubungi");
     expect(ctaHtml).toContain("https://example.com");
   });
+
+  it("commits a typed numeric value on blur instead of clamping every keystroke", async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn();
+    const spacer: Extract<PersonalSiteSection, { type: "spacer" }> = {
+      id: "spacer-1", type: "spacer", heading: "Spacer", height: 40,
+    };
+    render(<PropertiesPanel section={spacer} onUpdate={onUpdate} onClose={() => {}} />);
+
+    const field = screen.getByRole("spinbutton");
+    await user.clear(field);
+    // 120 is unreachable when clamping on change: the leading "1" snaps to the
+    // 16 minimum first, so the next keystroke builds on "16".
+    await user.type(field, "120");
+    await user.tab();
+
+    expect(onUpdate).toHaveBeenCalledWith({ height: 120 });
+  });
+
+  it("clamps an out-of-range numeric value on blur", async () => {
+    const user = userEvent.setup();
+    const onUpdate = vi.fn();
+    const spacer: Extract<PersonalSiteSection, { type: "spacer" }> = {
+      id: "spacer-2", type: "spacer", heading: "Spacer", height: 40,
+    };
+    render(<PropertiesPanel section={spacer} onUpdate={onUpdate} onClose={() => {}} />);
+
+    const field = screen.getByRole("spinbutton");
+    await user.clear(field);
+    await user.type(field, "5000");
+    await user.tab();
+
+    expect(onUpdate).toHaveBeenCalledWith({ height: 200 });
+  });
 });

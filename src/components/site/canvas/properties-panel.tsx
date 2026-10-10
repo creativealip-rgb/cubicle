@@ -415,11 +415,58 @@ const SOCIAL_MAX = 10;
 const COLLAPSIBLE_MAX = 12;
 const CONTENT_BLOCK_MAX = 4;
 
-/** Clamp a numeric input's raw string to a schema-valid integer, ignoring non-numbers. */
-function onNumberChange(raw: string, min: number, max: number, fallback: number, apply: (value: number) => void) {
-  const value = raw === "" ? fallback : Number(raw);
-  if (!Number.isFinite(value)) return;
-  apply(Math.min(max, Math.max(min, Math.round(value))));
+/**
+ * Numeric input that lets the user type freely and commits a schema-valid value
+ * on blur or Enter. Clamping on every keystroke left most values unreachable:
+ * typing "4" toward a 40px spacer snapped to the 16 minimum first, so the next
+ * keystroke built on "16" instead of "4".
+ *
+ * The draft is local so the committed value in site state is never transiently
+ * out of range, which would fail the storage schema mid-autosave.
+ */
+function NumberField({
+  value,
+  min,
+  max,
+  fallback,
+  onCommit,
+  className,
+}: {
+  value: number | undefined;
+  min: number;
+  max: number;
+  fallback: number;
+  onCommit: (value: number) => void;
+  className?: string;
+}) {
+  const committed = value ?? fallback;
+  const [draft, setDraft] = useState(String(committed));
+  useEffect(() => setDraft(String(committed)), [committed]);
+
+  const commit = () => {
+    const parsed = Number(draft);
+    const next =
+      draft.trim() === "" || !Number.isFinite(parsed)
+        ? fallback
+        : Math.min(max, Math.max(min, Math.round(parsed)));
+    setDraft(String(next));
+    if (next !== committed) onCommit(next);
+  };
+
+  return (
+    <Input
+      type="number"
+      min={min}
+      max={max}
+      value={draft}
+      className={className}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") commit();
+      }}
+    />
+  );
 }
 
 
@@ -1155,12 +1202,12 @@ function EmbedEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSect
       </div>
       <div className="space-y-1">
         <Label className="text-xs text-muted-foreground">{t("Tinggi (px)", "Height (px)")}</Label>
-        <Input
-          type="number"
+        <NumberField
           min={100}
           max={800}
-          value={section.height ?? 400}
-          onChange={(e) => onNumberChange(e.target.value, 100, 800, 400, (height) => onUpdate({ height }))}
+          fallback={400}
+          value={section.height}
+          onCommit={(height) => onUpdate({ height })}
           className="h-8 text-xs"
         />
       </div>
@@ -1174,12 +1221,12 @@ function SpacerEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSec
     <div className="space-y-3">
       <div className="space-y-1">
         <Label className="text-xs text-muted-foreground">{t("Tinggi Spacer (px)", "Spacer height (px)")}</Label>
-        <Input
-          type="number"
+        <NumberField
           min={16}
           max={200}
-          value={section.height ?? 40}
-          onChange={(e) => onNumberChange(e.target.value, 16, 200, 40, (height) => onUpdate({ height }))}
+          fallback={40}
+          value={section.height}
+          onCommit={(height) => onUpdate({ height })}
           className="h-8 text-xs"
         />
       </div>
