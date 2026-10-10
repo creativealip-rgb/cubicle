@@ -347,9 +347,59 @@ function getHeadingStyle(section: any, defaultClass: string = "text-xl font-semi
   };
 }
 
+function getSectionItemStyle(section: any, baseClass: string = "font-medium mb-1") {
+  const isBold = section.bold;
+  const isItalic = section.italic;
+  const isUnderline = section.underline;
+  const isStrike = section.strikethrough;
+  const align = section.align || "left";
+  const fontSize = section.fontSize || "base";
+
+  const sizeClass =
+    fontSize === "sm"
+      ? "text-xs"
+      : fontSize === "lg"
+      ? "text-lg"
+      : fontSize === "xl"
+      ? "text-xl font-bold"
+      : "text-sm";
+
+  const alignClass =
+    align === "center"
+      ? "text-center"
+      : align === "right"
+      ? "text-right"
+      : "text-left";
+
+  return cn(
+    baseClass,
+    sizeClass,
+    alignClass,
+    isBold && "font-bold",
+    isItalic && "italic",
+    isUnderline && "underline",
+    isStrike && "line-through",
+  );
+}
+
 function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSection; onUpdate: (patch: Partial<PersonalSiteSection>) => void; theme?: ThemeConfig }) {
   const { t } = useT();
   const headingStyle = getHeadingStyle(section as any);
+  const itemTitleClass = getSectionItemStyle(section as any, "font-semibold mb-1");
+  const itemDescClass = cn(
+    "text-muted-foreground",
+    (section as any).fontSize === "sm"
+      ? "text-[11px]"
+      : (section as any).fontSize === "lg"
+      ? "text-base"
+      : (section as any).fontSize === "xl"
+      ? "text-lg"
+      : "text-xs",
+    (section as any).align === "center" ? "text-center" : (section as any).align === "right" ? "text-right" : "text-left",
+    (section as any).italic && "italic",
+    (section as any).underline && "underline",
+  );
+
   switch (section.type) {
     case "services":
       return (
@@ -358,8 +408,8 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <div className="grid gap-4 sm:grid-cols-2">
             {section.items.map((item, i) => (
               <div key={item.id} className="rounded-lg border bg-card p-4 shadow-sm" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                <InlineText value={item.title} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, title: v } : it) })} tag="h3" className="font-medium mb-1" />
-                <InlineText value={item.description} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, description: v } : it) })} tag="p" className="text-sm text-muted-foreground" />
+                <InlineText value={item.title} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, title: v } : it) })} tag="h3" className={itemTitleClass} />
+                <InlineText value={item.description} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, description: v } : it) })} tag="p" className={itemDescClass} />
               </div>
             ))}
           </div>
@@ -374,9 +424,9 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
             {section.steps.map((step, i) => (
               <div key={step.id} className="flex gap-3" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
                 <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground text-xs font-medium">{i + 1}</span>
-                <div>
-                  <InlineText value={step.title} onChange={(v) => onUpdate({ steps: section.steps.map((s, j) => j === i ? { ...s, title: v } : s) })} tag="h3" className="font-medium" />
-                  <InlineText value={step.description} onChange={(v) => onUpdate({ steps: section.steps.map((s, j) => j === i ? { ...s, description: v } : s) })} tag="p" className="text-sm text-muted-foreground" />
+                <div className="flex-1">
+                  <InlineText value={step.title} onChange={(v) => onUpdate({ steps: section.steps.map((s, j) => j === i ? { ...s, title: v } : s) })} tag="h3" className={itemTitleClass} />
+                  <InlineText value={step.description} onChange={(v) => onUpdate({ steps: section.steps.map((s, j) => j === i ? { ...s, description: v } : s) })} tag="p" className={itemDescClass} />
                 </div>
               </div>
             ))}
@@ -391,9 +441,9 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {section.offers.map((offer, i) => (
               <div key={offer.id} className="rounded-lg border bg-card p-4 shadow-sm text-center" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                <InlineText value={offer.name} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, name: v } : o) })} tag="h3" className="font-medium mb-1" />
-                <InlineText value={offer.price} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, price: v } : o) })} tag="p" className="text-lg font-bold text-primary" />
-                <InlineText value={offer.description} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, description: v } : o) })} tag="p" className="text-sm text-muted-foreground mt-2" />
+                <InlineText value={offer.name} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, name: v } : o) })} tag="h3" className={itemTitleClass} />
+                <InlineText value={offer.price} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, price: v } : o) })} tag="p" className="text-lg font-bold text-primary my-1" />
+                <InlineText value={offer.description} onChange={(v) => onUpdate({ offers: section.offers.map((o, j) => j === i ? { ...o, description: v } : o) })} tag="p" className={itemDescClass} />
               </div>
             ))}
           </div>
@@ -407,8 +457,8 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <div className="grid gap-4 sm:grid-cols-2">
             {section.projects.map((project, i) => (
               <div key={project.id} className="rounded-lg border bg-card p-4 shadow-sm" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                <InlineText value={project.title} onChange={(v) => onUpdate({ projects: section.projects.map((p, j) => j === i ? { ...p, title: v } : p) })} tag="h3" className="font-medium mb-1" />
-                <InlineText value={project.description} onChange={(v) => onUpdate({ projects: section.projects.map((p, j) => j === i ? { ...p, description: v } : p) })} tag="p" className="text-sm text-muted-foreground" />
+                <InlineText value={project.title} onChange={(v) => onUpdate({ projects: section.projects.map((p, j) => j === i ? { ...p, title: v } : p) })} tag="h3" className={itemTitleClass} />
+                <InlineText value={project.description} onChange={(v) => onUpdate({ projects: section.projects.map((p, j) => j === i ? { ...p, description: v } : p) })} tag="p" className={itemDescClass} />
               </div>
             ))}
           </div>
@@ -422,10 +472,10 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <div className="space-y-4">
             {section.testimonials.map((t, i) => (
               <div key={t.id} className="rounded-lg border bg-card p-4 shadow-sm italic" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                <InlineText value={t.quote} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, quote: v } : tt) })} tag="p" className="mb-2" />
+                <InlineText value={t.quote} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, quote: v } : tt) })} tag="p" className={cn(itemDescClass, "mb-2 not-italic text-foreground")} />
                 <div className="text-sm text-muted-foreground not-italic" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                  <InlineText value={t.author} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, author: v } : tt) })} tag="span" className="font-medium" />
-                  {t.role && <span> — <InlineText value={t.role} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, role: v } : tt) })} tag="span" /></span>}
+                  <InlineText value={t.author} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, author: v } : tt) })} tag="span" className={itemTitleClass} />
+                  {t.role && <span> — <InlineText value={t.role} onChange={(v) => onUpdate({ testimonials: section.testimonials.map((tt, j) => j === i ? { ...tt, role: v } : tt) })} tag="span" className={itemDescClass} /></span>}
                 </div>
               </div>
             ))}
@@ -440,8 +490,8 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <div className="space-y-3">
             {section.items.map((item, i) => (
               <div key={item.id} className="rounded-lg border bg-card p-4 shadow-sm" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                <InlineText value={item.question} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, question: v } : it) })} tag="h3" className="font-medium mb-1" />
-                <InlineText value={item.answer} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, answer: v } : it) })} tag="p" className="text-sm text-muted-foreground" />
+                <InlineText value={item.question} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, question: v } : it) })} tag="h3" className={itemTitleClass} />
+                <InlineText value={item.answer} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, answer: v } : it) })} tag="p" className={itemDescClass} />
               </div>
             ))}
           </div>
@@ -455,9 +505,9 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <div className="space-y-2">
             {section.methods.map((method, i) => (
               <div key={method.id} className="flex items-center gap-2" style={headingStyle.style?.fontFamily ? { fontFamily: headingStyle.style.fontFamily } : undefined}>
-                <InlineText value={method.label} onChange={(v) => onUpdate({ methods: section.methods.map((m, j) => j === i ? { ...m, label: v } : m) })} tag="span" className="font-medium" />
+                <InlineText value={method.label} onChange={(v) => onUpdate({ methods: section.methods.map((m, j) => j === i ? { ...m, label: v } : m) })} tag="span" className={itemTitleClass} />
                 <span className="text-muted-foreground">:</span>
-                <InlineText value={method.value} onChange={(v) => onUpdate({ methods: section.methods.map((m, j) => j === i ? { ...m, value: v } : m) })} tag="span" className="text-muted-foreground" />
+                <InlineText value={method.value} onChange={(v) => onUpdate({ methods: section.methods.map((m, j) => j === i ? { ...m, value: v } : m) })} tag="span" className={itemDescClass} />
               </div>
             ))}
           </div>

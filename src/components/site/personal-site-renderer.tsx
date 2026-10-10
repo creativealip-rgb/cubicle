@@ -176,39 +176,88 @@ function SectionBody({
   lang: string;
 }) {
   const marker = <span aria-hidden className="mb-4 block h-1 w-10 rounded-full" style={{ backgroundColor: accent }} />;
+  const sec = section as any;
+  const isBold = sec.bold;
+  const isItalic = sec.italic;
+  const isUnderline = sec.underline;
+  const isStrike = sec.strikethrough;
+  const align = sec.align || "left";
+  const fontSize = sec.fontSize || "base";
+
+  const itemTitleSizeClass =
+    fontSize === "sm"
+      ? "text-base font-semibold"
+      : fontSize === "lg"
+      ? "text-xl font-bold"
+      : fontSize === "xl"
+      ? "text-2xl font-extrabold"
+      : "text-lg font-semibold";
+
+  const itemDescSizeClass =
+    fontSize === "sm"
+      ? "text-xs"
+      : fontSize === "lg"
+      ? "text-base"
+      : fontSize === "xl"
+      ? "text-lg"
+      : "text-sm";
+
+  const alignClass =
+    align === "center"
+      ? "text-center"
+      : align === "right"
+      ? "text-right"
+      : "text-left";
+
+  const itemTitleClass = [
+    itemTitleSizeClass,
+    alignClass,
+    isBold && "font-bold",
+    isItalic && "italic",
+    isUnderline && "underline",
+    isStrike && "line-through",
+  ].filter(Boolean).join(" ");
+
+  const itemDescClass = [
+    itemDescSizeClass,
+    alignClass,
+    isItalic && "italic",
+    isUnderline && "underline",
+    "mt-2 whitespace-pre-wrap leading-6 opacity-70",
+  ].filter(Boolean).join(" ");
 
   switch (section.type) {
     case "services":
       return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{section.items.filter((item) => item.title || item.description).map((item) => (
-        <ItemCard key={item.id} panel={panel}>{marker}<h3 className="text-lg font-semibold">{item.title}</h3>{item.description && <p className="mt-2 whitespace-pre-wrap text-sm leading-6 opacity-70">{item.description}</p>}</ItemCard>
+        <ItemCard key={item.id} panel={panel}>{marker}<h3 className={itemTitleClass}>{item.title}</h3>{item.description && <p className={itemDescClass}>{item.description}</p>}</ItemCard>
       ))}</div>;
     case "process":
       return <ol className="grid gap-5 md:grid-cols-2">{section.steps.filter((step) => step.title || step.description).map((step, index) => (
         <li key={step.id} className="grid grid-cols-[44px_1fr] gap-4">
           <span className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold" style={{ backgroundColor: accent, color: accentForeground(accent) }}>{String(index + 1).padStart(2, "0")}</span>
-          <div className="pt-1"><h3 className="font-semibold">{step.title}</h3>{step.description && <p className="mt-1 whitespace-pre-wrap text-sm leading-6 opacity-70">{step.description}</p>}</div>
+          <div className="pt-1"><h3 className={itemTitleClass}>{step.title}</h3>{step.description && <p className={itemDescClass}>{step.description}</p>}</div>
         </li>
       ))}</ol>;
     case "pricing":
       return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{section.offers.filter((offer) => offer.name || offer.price || offer.description).map((offer) => (
-        <ItemCard key={offer.id} panel={panel}>{marker}<h3 className="font-semibold">{offer.name}</h3>{offer.price && <p className="mt-3 text-2xl font-bold" style={{ color: accent }}>{offer.price}</p>}{offer.description && <p className="mt-3 whitespace-pre-wrap text-sm leading-6 opacity-70">{offer.description}</p>}</ItemCard>
+        <ItemCard key={offer.id} panel={panel}>{marker}<h3 className={itemTitleClass}>{offer.name}</h3>{offer.price && <p className="mt-3 text-2xl font-bold" style={{ color: accent }}>{offer.price}</p>}{offer.description && <p className={itemDescClass}>{offer.description}</p>}</ItemCard>
       ))}</div>;
     case "portfolio":
       return <div className="grid gap-4 md:grid-cols-2">{section.projects.filter((project) => project.title || project.description || project.url).map((project) => (
-        <ItemCard key={project.id} panel={panel}>{marker}<h3 className="text-lg font-semibold">{project.title}</h3>{project.description && <p className="mt-2 whitespace-pre-wrap text-sm leading-6 opacity-70">{project.description}</p>}{project.url && !isPlaceholderHref(project.url) && <a className="mt-4 inline-flex min-h-10 items-center font-semibold underline underline-offset-4" href={safePublicHref(project.url)} target="_blank" rel="noreferrer">{labels.openProject}</a>}</ItemCard>
+        <ItemCard key={project.id} panel={panel}>{marker}<h3 className={itemTitleClass}>{project.title}</h3>{project.description && <p className={itemDescClass}>{project.description}</p>}{project.url && !isPlaceholderHref(project.url) && <a className="mt-4 inline-flex min-h-10 items-center font-semibold underline underline-offset-4" href={safePublicHref(project.url)} target="_blank" rel="noreferrer">{labels.openProject}</a>}</ItemCard>
       ))}</div>;
     case "testimonials":
       return <div className="grid gap-4 md:grid-cols-2">{section.testimonials.filter((item) => item.quote && (item.author || item.role) && !looksLikeFakeProof(item.quote, item.author, item.role)).map((item) => (
-        <figure key={item.id} className={`rounded-2xl p-6 ${panel}`}><blockquote className="text-lg leading-8">“{item.quote}”</blockquote><figcaption className="mt-5 text-sm"><strong>{item.author}</strong>{item.role && <span className="opacity-65"> · {item.role}</span>}</figcaption></figure>
+        <figure key={item.id} className={`rounded-2xl p-6 ${panel}`}><blockquote className={`leading-8 ${itemTitleSizeClass}`}>“{item.quote}”</blockquote><figcaption className={`mt-5 ${itemDescSizeClass}`}><strong>{item.author}</strong>{item.role && <span className="opacity-65"> · {item.role}</span>}</figcaption></figure>
       ))}</div>;
     case "faq":
       return <div className="space-y-3">{section.items.filter((item) => item.question && item.answer).map((item) => (
-        <details key={item.id} className={`group rounded-2xl px-5 py-4 ${panel}`}><summary className="cursor-pointer list-none pr-8 font-semibold marker:content-none">{item.question}<span aria-hidden className="float-right text-xl group-open:rotate-45">+</span></summary><p className="mt-3 whitespace-pre-wrap text-sm leading-7 opacity-70">{item.answer}</p></details>
+        <details key={item.id} className={`group rounded-2xl px-5 py-4 ${panel}`}><summary className={`cursor-pointer list-none pr-8 marker:content-none ${itemTitleClass}`}>{item.question}<span aria-hidden className="float-right text-xl group-open:rotate-45">+</span></summary><p className={itemDescClass}>{item.answer}</p></details>
       ))}</div>;
     case "contact":
       return <div className="flex flex-wrap gap-3">{section.methods.filter((item) => item.label && (item.value || item.url)).map((item) => item.url && !isPlaceholderHref(item.url) ? (
-        <a key={item.id} className={`min-h-11 rounded-xl px-4 py-3 text-sm font-semibold ${panel}`} href={safePublicHref(item.url)}>{item.label}{item.value ? ` · ${item.value}` : ""}</a>
-      ) : <span key={item.id} className={`rounded-xl px-4 py-3 text-sm ${panel}`}><strong>{item.label}</strong>{item.value ? ` · ${item.value}` : ""}</span>)}</div>;
+        <a key={item.id} className={`min-h-11 rounded-xl px-4 py-3 font-semibold ${panel} ${itemDescSizeClass}`} href={safePublicHref(item.url)}>{item.label}{item.value ? ` · ${item.value}` : ""}</a>
+      ) : <span key={item.id} className={`rounded-xl px-4 py-3 ${panel} ${itemDescSizeClass}`}><strong>{item.label}</strong>{item.value ? ` · ${item.value}` : ""}</span>)}</div>;
     case "booking":
       if (!bookingData) return null;
       return (
