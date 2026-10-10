@@ -227,6 +227,7 @@ function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDo
         onMoveDown={onMoveDown}
         onDuplicate={onDuplicate}
         onDelete={onDelete}
+        section={section}
         animation={"animation" in section ? section.animation : undefined}
         onAnimationChange={(anim) => onUpdate({ animation: anim } as Partial<PersonalSiteSection>)}
         dragHandleProps={listeners}
@@ -237,7 +238,7 @@ function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDo
   );
 }
 
-function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, animation, onAnimationChange, dragHandleProps, children }: {
+function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, animation, onAnimationChange, dragHandleProps, section, children }: {
   id: string;
   selected: boolean;
   onSelect: () => void;
@@ -248,10 +249,12 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
   animation?: string;
   onAnimationChange?: (animation: string) => void;
   dragHandleProps?: Record<string, unknown>;
+  section?: any;
   children: React.ReactNode;
 }) {
   const { t } = useT();
   const [hovered, setHovered] = useState(false);
+  const fontFamily = section?.fontFamily ? getFontFamily(section.fontFamily) : undefined;
 
   return (
     <div
@@ -259,6 +262,7 @@ function CanvasSectionWrapper({ id, selected, onSelect, onMoveUp, onMoveDown, on
       onClick={(e) => { e.stopPropagation(); onSelect(); }}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
+      style={fontFamily ? { fontFamily } : undefined}
       className={cn(
         "relative group transition-[outline] rounded-lg",
         selected ? "outline-2 outline-primary outline-offset-2" : "outline-transparent",

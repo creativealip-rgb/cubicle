@@ -527,9 +527,14 @@ export function PersonalSiteRenderer({
           (section.type === "image" && !section.heading) ||
           isPlaceholderHeading;
         const secHeadingStyle = getSectionHeadingStyle(section as any, headingStyle);
+        const secFontFamily = (section as any).fontFamily ? getFontFamily((section as any).fontFamily) : undefined;
         return (
           <AnimateOnScroll key={section.id} animation={section.animation}>
-            <section data-section-type={section.type} className={`${index % 2 === 0 ? styles.sectionAlt : ""} px-6 py-14 sm:px-10 lg:px-16 lg:py-20`}>
+            <section
+              data-section-type={section.type}
+              className={`${index % 2 === 0 ? styles.sectionAlt : ""} px-6 py-14 sm:px-10 lg:px-16 lg:py-20`}
+              style={secFontFamily ? { fontFamily: secFontFamily } : undefined}
+            >
               <div className="mx-auto max-w-6xl">
                 {!hideDefaultHeading && section.heading && (
                   <h2 className={secHeadingStyle.className} style={secHeadingStyle.style}>
