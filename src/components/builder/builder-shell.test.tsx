@@ -38,6 +38,34 @@ describe("builder shell", () => {
     expect(right.className).toContain("border-l");
     expect(right.className).toContain("w-80");
   });
+
+  it("merges caller className instead of dropping it", () => {
+    render(
+      <BuilderShell
+        className="bg-muted/30"
+        header={<BuilderWorkflowHeader className="z-30">H</BuilderWorkflowHeader>}
+        canvas={<BuilderCanvasViewport className="flex justify-center p-6">C</BuilderCanvasViewport>}
+        mobileDrawer={<BuilderMobileDrawer className="fixed inset-x-0 bottom-0">M</BuilderMobileDrawer>}
+      />,
+    );
+    expect(screen.getByTestId("builder-shell").className).toContain("flex");
+    expect(screen.getByTestId("builder-shell").className).toContain("bg-muted/30");
+    expect(screen.getByRole("banner").className).toContain("z-30");
+    const main = screen.getByRole("main");
+    expect(main.className).toContain("overflow-y-auto");
+    expect(main.className).toContain("justify-center");
+    const drawer = screen.getByRole("dialog", { name: /mobile builder/i });
+    expect(drawer.className).toContain("md:hidden");
+    expect(drawer.className).toContain("fixed");
+  });
+
+  it("renders with only a canvas and no optional slots", () => {
+    render(<BuilderShell canvas={<BuilderCanvasViewport>Canvas</BuilderCanvasViewport>} />);
+    expect(screen.getByRole("main").textContent).toContain("Canvas");
+    expect(screen.queryByRole("banner")).toBeNull();
+    expect(screen.queryByRole("complementary")).toBeNull();
+    expect(screen.queryByRole("dialog")).toBeNull();
+  });
 });
 
 it("keeps canvas viewport independently scrollable", () => {
