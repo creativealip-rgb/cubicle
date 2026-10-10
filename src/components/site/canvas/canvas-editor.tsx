@@ -73,13 +73,11 @@ import { PropertiesPanel } from "./properties-panel";
 import { ReadinessBadge } from "../readiness-badge";
 import { StructurePanel } from "./structure-panel";
 import {
-  addPage as addPageToList,
   addSection as addSectionToList,
   duplicateSection as duplicateSectionInList,
   moveSection as moveSectionInList,
   moveSectionByOffset,
   normalizeContentBlock,
-  removePage as removePageFromList,
   removeSection,
 } from "@/lib/personal-site/editor-mutations";
 import { MobileStepEditor } from "./mobile-step-editor";
@@ -1186,24 +1184,6 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
     updateSite({ pages: normalized, sections: normalized.find((page) => page.isHome)?.sections ?? normalized[0]?.sections ?? [] });
   }
 
-  // These functions are defined for mobile step editor API consistency but NOT called from desktop sidebar
-  function _addPage() {
-    const id = makeId().replace(/^s_/, "p_");
-    const title = `Page ${pages.length + 1}`;
-    const page = { id, slug: slugifyPageTitle(title, `page-${pages.length + 1}`), title, isHome: false, sections: [] };
-    const nextPages = addPageToList(pages, page);
-    if (nextPages === pages) return;
-    updatePages(nextPages);
-    setActivePageId(id);
-  }
-
-  function _deletePage(id: string) {
-    const nextPages = removePageFromList(pages, id);
-    if (nextPages === pages || nextPages.length === 0) return;
-    if (!nextPages.some((p) => p.isHome)) nextPages[0] = { ...nextPages[0], isHome: true, slug: "" };
-    updatePages(nextPages);
-    if (activePageId === id) setActivePageId(nextPages[0].id);
-  }
 
   function _renamePage(id: string, title: string) {
     updatePages(pages.map((p) => p.id === id ? { ...p, title, slug: p.isHome ? "" : slugifyPageTitle(title, p.slug || "page") } : p));

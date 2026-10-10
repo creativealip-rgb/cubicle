@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { PersonalSitePage, PersonalSiteSection } from "./model";
+import { DEFAULT_PERSONAL_SITE, personalSiteInputSchema, type PersonalSitePage, type PersonalSiteSection } from "./model";
 import {
   MAX_PAGES,
   MAX_SECTIONS,
@@ -22,9 +22,18 @@ function page(id: string, overrides: Partial<PersonalSitePage> = {}): PersonalSi
 }
 
 describe("MAX_* limits match the Zod schema", () => {
-  it("exposes the section/page caps used by model.ts", () => {
-    expect(MAX_SECTIONS).toBe(12);
-    expect(MAX_PAGES).toBe(10);
+  const sectionsOf = (count: number) => Array.from({ length: count }, (_, i) => section(`s${i}`));
+  const pagesOf = (count: number) =>
+    Array.from({ length: count }, (_, i) => page(`p${i}`, { isHome: i === 0, sections: [section(`p${i}-s`)] }));
+
+  it("uses exactly the schema's section cap", () => {
+    expect(personalSiteInputSchema.safeParse({ ...DEFAULT_PERSONAL_SITE, sections: sectionsOf(MAX_SECTIONS) }).success).toBe(true);
+    expect(personalSiteInputSchema.safeParse({ ...DEFAULT_PERSONAL_SITE, sections: sectionsOf(MAX_SECTIONS + 1) }).success).toBe(false);
+  });
+
+  it("uses exactly the schema's page cap", () => {
+    expect(personalSiteInputSchema.safeParse({ ...DEFAULT_PERSONAL_SITE, pages: pagesOf(MAX_PAGES) }).success).toBe(true);
+    expect(personalSiteInputSchema.safeParse({ ...DEFAULT_PERSONAL_SITE, pages: pagesOf(MAX_PAGES + 1) }).success).toBe(false);
   });
 });
 
@@ -56,11 +65,29 @@ describe("duplicateSection", () => {
     expect(input.map((s) => s.id)).toEqual(["a", "b"]);
   });
 
-  it("deep-clones the original so nested blocks are not shared", () => {
-    const original = section("a", { type: "custom", content: "hi" } as Partial<PersonalSiteSection>);
+  it("deep-clones the original so nested block content is not shared", () => {
+    type Item = { id: string; title: string };
+    type WithItems = { items: Item[] };
+    const original = {
+      id: "a",
+      type: "services",
+      heading: "Services",
+      items: [{ id: "i1", title: "One" }],
+    } as unknown as PersonalSiteSection;
+    const originalItems = (original as unknown as WithItems).items;
+
     const next = duplicateSection([original], "a", () => "copy");
-    expect(next[1]).not.toBe(original);
-    expect(next[1]).toEqual({ ...original, id: "copy", heading: `${original.heading} (copy)` });
+    const copy = next[1] as unknown as WithItems;
+
+    expect(copy).not.toBe(original as unknown as WithItems);
+    expect(copy.items).not.toBe(originalItems);
+    expect(copy.items[0]).not.toBe(originalItems[0]);
+
+    // A shallow clone would let this mutation leak into the original.
+    copy.items[0].title = "Mutated";
+    expect(originalItems[0].title).toBe("One");
+    expect(next[1].id).toBe("copy");
+    expect(next[1].heading).toBe("Services (copy)");
   });
 
   it("is a no-op for an unknown id", () => {
