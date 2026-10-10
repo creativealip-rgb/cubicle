@@ -2,7 +2,17 @@ import { describe, it, expect } from "vitest";
 import { personalSiteSectionSchema, type PersonalSiteSection } from "@/lib/personal-site/model";
 import { PropertiesPanel, makeItemId, appendItem, patchItem, removeItemAt } from "./properties-panel";
 import { renderToStaticMarkup } from "react-dom/server";
-import { readFileSync } from "node:fs";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+
+if (!HTMLElement.prototype.hasPointerCapture) {
+  HTMLElement.prototype.hasPointerCapture = () => false;
+  HTMLElement.prototype.setPointerCapture = () => {};
+  HTMLElement.prototype.releasePointerCapture = () => {};
+}
+if (!HTMLElement.prototype.scrollIntoView) {
+  HTMLElement.prototype.scrollIntoView = () => {};
+}
 
 describe("properties panel pure helpers", () => {
   describe("makeItemId", () => {
@@ -182,13 +192,19 @@ describe("PropertiesPanel rendering", () => {
 
   });
 
-  it("binds animation value callback and renders schema options", () => {
-    const source = readFileSync("src/components/site/canvas/properties-panel.tsx", "utf8");
-    expect(source).toMatch(/value=\{\(section as any\)\.animation \|\| "none"\}/);
-    expect(source).toMatch(/onValueChange=\{\(val\) => onUpdate\(\{ animation: val \} as any\)\}/);
-    for (const option of ["none", "fade-up", "fade-in", "slide-left", "slide-right", "zoom-in", "bounce"]) {
-      expect(source).toContain(`value="${option}"`);
-    }
+  it("updates animation through selector interaction", async () => {
+    const onUpdate = vi.fn();
+    const user = userEvent.setup();
+    render(<PropertiesPanel section={servicesSection} onUpdate={onUpdate} onClose={() => {}} />);
+
+    const trigger = screen.getByRole("combobox", { name: "Transition Animation" });
+    expect(trigger.getAttribute("aria-label")).toBe("Transition Animation");
+    expect(trigger.textContent).toContain("Fade Up");
+    await user.click(trigger);
+    const option = await screen.findByRole("option", { name: "Zoom In" });
+    expect(option).toBeTruthy();
+    await user.click(option);
+    expect(onUpdate).toHaveBeenCalledWith({ animation: "zoom-in" });
   });
 
   it("renders structured editors for supported section types", () => {

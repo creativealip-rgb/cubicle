@@ -9,13 +9,6 @@ import {
   Check,
   Loader2,
   Calendar,
-  Bold,
-  Italic,
-  Underline,
-  Strikethrough,
-  AlignLeft,
-  AlignCenter,
-  AlignRight,
   Settings2,
   Trash2,
 } from "lucide-react";
@@ -29,7 +22,6 @@ import { PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
 import { generatePersonalSiteCopy } from "@/lib/actions/personal-site-ai";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n-client";
-import { CUBIQLO_FONTS } from "@/lib/builder-fonts";
 import {
   Select,
   SelectContent,
@@ -303,17 +295,23 @@ export function PropertiesPanel({ section, onUpdate, onDelete, onClose }: Proper
                   value={(section as any).animation || "none"}
                   onValueChange={(val) => onUpdate({ animation: val } as any)}
                 >
-                  <SelectTrigger className="w-full bg-background border-border/70 text-xs">
+                  <SelectTrigger aria-label={t("Animasi Muncul", "Transition Animation")} className="w-full bg-background border-border/70 text-xs">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none" className="text-xs">None (Static)</SelectItem>
-                    <SelectItem value="fade-up" className="text-xs">Fade Up</SelectItem>
-                    <SelectItem value="fade-in" className="text-xs">Fade In</SelectItem>
-                    <SelectItem value="slide-left" className="text-xs">Slide Left</SelectItem>
-                    <SelectItem value="slide-right" className="text-xs">Slide Right</SelectItem>
-                    <SelectItem value="zoom-in" className="text-xs">Zoom In</SelectItem>
-                    <SelectItem value="bounce" className="text-xs">Bounce</SelectItem>
+                    {PERSONAL_SITE_ANIMATIONS.map((animation) => (
+                      <SelectItem key={animation} value={animation} className="text-xs">
+                        {{
+                          none: "None (Static)",
+                          "fade-up": "Fade Up",
+                          "fade-in": "Fade In",
+                          "slide-left": "Slide Left",
+                          "slide-right": "Slide Right",
+                          "zoom-in": "Zoom In",
+                          bounce: "Bounce",
+                        }[animation]}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
