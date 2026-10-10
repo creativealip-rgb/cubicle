@@ -54,6 +54,7 @@ import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, 
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { Button } from "@/components/ui/button";
 import { UnifiedPublishView } from "@/components/public/unified-publish-view";
+import { BuilderCanvasViewport, BuilderRail, BuilderShell, BuilderWorkflowHeader } from "@/components/builder/builder-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -628,157 +629,158 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
         />
       </div>
 
-      {/* Desktop: DnD canvas + sidebar */}
-      <div className="hidden md:flex flex-col h-[calc(100vh-3.5rem)] overflow-hidden bg-background">
-        {/* Top Navbar Header (Standardized 3-Tab Workflow) */}
-        <header className="h-14 border-b border-border/80 bg-background/95 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between gap-3 shrink-0 z-30">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
-              <Globe className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
+      {/* Desktop: shared builder shell + DnD canvas */}
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+        accessibility={{
+          screenReaderInstructions: {
+            draggable: t(
+              "Untuk mengambil item yang dapat diseret, tekan spasi. Gunakan tombol panah untuk memindahkan. Tekan spasi lagi untuk meletakkan, atau Escape untuk membatalkan.",
+              "To pick up a draggable item, press space. Use the arrow keys to move it. Press space again to drop it, or Escape to cancel.",
+            ),
+          },
+        }}
+      >
+        <BuilderShell
+          className="max-md:hidden h-[calc(100vh-3.5rem)] overflow-hidden bg-background"
+          previewMode={livePreviewMode}
+          header={
+            <BuilderWorkflowHeader className="border-border/80 bg-background/95 backdrop-blur-md px-4 sm:px-6 justify-between gap-3 z-30">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/10 text-primary shrink-0">
+                  <Globe className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-sm font-bold text-foreground truncate max-w-[12rem] sm:max-w-[18rem]">
+                      {site.title || t("Landing Page", "Landing Page")}
+                    </h1>
+                    <Badge variant="outline" className={`text-[10px] font-bold uppercase tracking-wider ${
+                      site.published ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-muted text-muted-foreground"
+                    }`}>
+                      {site.published ? t("Live", "Live") : t("Draft", "Draft")}
+                    </Badge>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground truncate">
+                    {isDirty ? (
+                      <span className="text-amber-600 font-medium">● {t("Perubahan belum disimpan", "Unsaved changes")}</span>
+                    ) : (
+                      <span className="text-emerald-600 font-medium">✓ {t("Semua perubahan tersimpan", "All changes saved")}</span>
+                    )}
+                  </p>
+                </div>
+              </div>
+
+              {/* 3 Main Workflow Tabs */}
+              <div className="flex items-center gap-1 bg-muted/70 p-0.5 sm:p-1 rounded-xl border border-border/70">
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("build")}
+                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-1 text-xs font-bold rounded-lg transition-all ${
+                    activeTab === "build" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Sliders className="h-3.5 w-3.5 text-primary" />
+                  <span>BUILD</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("settings")}
+                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-1 text-xs font-bold rounded-lg transition-all ${
+                    activeTab === "settings" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Settings className="h-3.5 w-3.5" />
+                  <span>SETTINGS</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveTab("publish")}
+                  className={`flex items-center gap-1.5 px-3 sm:px-4 py-1 text-xs font-bold rounded-lg transition-all ${
+                    activeTab === "publish" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  <span>PUBLISH</span>
+                </button>
+              </div>
+
+              {/* Actions Right */}
               <div className="flex items-center gap-2">
-                <h1 className="text-sm font-bold text-foreground truncate max-w-[12rem] sm:max-w-[18rem]">
-                  {site.title || t("Landing Page", "Landing Page")}
-                </h1>
-                <Badge variant="outline" className={`text-[10px] font-bold uppercase tracking-wider ${
-                  site.published ? "bg-emerald-50 text-emerald-700 border-emerald-300" : "bg-muted text-muted-foreground"
-                }`}>
-                  {site.published ? t("Live", "Live") : t("Draft", "Draft")}
-                </Badge>
-              </div>
-              <p className="text-[11px] text-muted-foreground truncate">
-                {isDirty ? (
-                  <span className="text-amber-600 font-medium">● {t("Perubahan belum disimpan", "Unsaved changes")}</span>
-                ) : (
-                  <span className="text-emerald-600 font-medium">✓ {t("Semua perubahan tersimpan", "All changes saved")}</span>
+                {/* Interactive Live Preview Switcher */}
+                <Button
+                  type="button"
+                  variant={livePreviewMode ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setLivePreviewMode(!livePreviewMode)}
+                  className="h-8 gap-1.5 text-xs font-semibold"
+                >
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>{livePreviewMode ? t("Edit Mode", "Edit Mode") : t("Preview", "Preview")}</span>
+                </Button>
+
+                {/* Desktop / Tablet / Mobile Viewport Switcher (ONLY in Preview Mode) */}
+                {livePreviewMode && (
+                  <div className="flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/60 animate-in fade-in zoom-in-95 duration-150">
+                    {CANVAS_DEVICES.map((device) => {
+                      const DeviceIcon = device === "desktop" ? Monitor : device === "tablet" ? Tablet : Smartphone;
+                      const active = previewDevice === device;
+                      return (
+                        <button
+                          key={device}
+                          type="button"
+                          onClick={() => setPreviewDevice(device)}
+                          className={`p-1 rounded-md transition-all ${
+                            active ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
+                          }`}
+                          title={CANVAS_DEVICE_LABELS[device]}
+                        >
+                          <DeviceIcon className="h-3.5 w-3.5" />
+                        </button>
+                      );
+                    })}
+                  </div>
                 )}
-              </p>
-            </div>
-          </div>
 
-          {/* 3 Main Workflow Tabs */}
-          <div className="flex items-center gap-1 bg-muted/70 p-0.5 sm:p-1 rounded-xl border border-border/70">
-            <button
-              type="button"
-              onClick={() => setActiveTab("build")}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1 text-xs font-bold rounded-lg transition-all ${
-                activeTab === "build" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Sliders className="h-3.5 w-3.5 text-primary" />
-              <span>BUILD</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("settings")}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1 text-xs font-bold rounded-lg transition-all ${
-                activeTab === "settings" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Settings className="h-3.5 w-3.5" />
-              <span>SETTINGS</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveTab("publish")}
-              className={`flex items-center gap-1.5 px-3 sm:px-4 py-1 text-xs font-bold rounded-lg transition-all ${
-                activeTab === "publish" ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Share2 className="h-3.5 w-3.5" />
-              <span>PUBLISH</span>
-            </button>
-          </div>
-
-          {/* Actions Right */}
-          <div className="flex items-center gap-2">
-            {/* Interactive Live Preview Switcher */}
-            <Button
-              type="button"
-              variant={livePreviewMode ? "default" : "outline"}
-              size="sm"
-              onClick={() => setLivePreviewMode(!livePreviewMode)}
-              className="h-8 gap-1.5 text-xs font-semibold"
-            >
-              <Eye className="h-3.5 w-3.5" />
-              <span>{livePreviewMode ? t("Edit Mode", "Edit Mode") : t("Preview", "Preview")}</span>
-            </Button>
-
-            {/* Desktop / Tablet / Mobile Viewport Switcher (ONLY in Preview Mode) */}
-            {livePreviewMode && (
-              <div className="flex items-center bg-muted/60 p-0.5 rounded-lg border border-border/60 animate-in fade-in zoom-in-95 duration-150">
-                {CANVAS_DEVICES.map((device) => {
-                  const DeviceIcon = device === "desktop" ? Monitor : device === "tablet" ? Tablet : Smartphone;
-                  const active = previewDevice === device;
-                  return (
-                    <button
-                      key={device}
-                      type="button"
-                      onClick={() => setPreviewDevice(device)}
-                      className={`p-1 rounded-md transition-all ${
-                        active ? "bg-background text-foreground shadow-xs" : "text-muted-foreground hover:text-foreground"
-                      }`}
-                      title={CANVAS_DEVICE_LABELS[device]}
-                    >
-                      <DeviceIcon className="h-3.5 w-3.5" />
-                    </button>
-                  );
-                })}
+                <Button
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={saving || !isDirty}
+                  className="h-8 px-4 text-xs font-semibold bg-primary text-primary-foreground shadow-xs gap-1.5"
+                >
+                  {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+                  <span>{saving ? t("Menyimpan...", "Saving...") : t("Simpan", "Save")}</span>
+                </Button>
               </div>
-            )}
-
-            <Button
-              size="sm"
-              onClick={handleSave}
-              disabled={saving || !isDirty}
-              className="h-8 px-4 text-xs font-semibold bg-primary text-primary-foreground shadow-xs gap-1.5"
-            >
-              {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-              <span>{saving ? t("Menyimpan...", "Saving...") : t("Simpan", "Save")}</span>
-            </Button>
-          </div>
-        </header>
-
-        {/* ── TAB 1: BUILD ── */}
-        {activeTab === "build" && (
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-            accessibility={{
-              screenReaderInstructions: {
-                draggable: t(
-                  "Untuk mengambil item yang dapat diseret, tekan spasi. Gunakan tombol panah untuk memindahkan. Tekan spasi lagi untuk meletakkan, atau Escape untuk membatalkan.",
-                  "To pick up a draggable item, press space. Use the arrow keys to move it. Press space again to drop it, or Escape to cancel.",
-                ),
-              },
-            }}
-          >
-            <div className="flex-1 flex overflow-hidden">
-              {/* Left sidebar: hidden in live preview mode */}
-              {!livePreviewMode && (
-                <aside className="hidden md:block w-64 shrink-0 border-r bg-background overflow-y-auto pb-16 custom-scrollbar">
-                  <SidebarContent
-                    sidebarTab={sidebarTab}
-                    setSidebarTab={setSidebarTab}
-                    groupedWidgets={groupedWidgets}
-                    addSection={addSection}
-                    addSectionTemplate={addSectionTemplate}
-                    site={site}
-                    activePageId={activePageId}
-                    setActivePageId={setActivePageId}
-                    updateSite={updateSite}
-                    publicUrl={publicSiteBaseUrl}
-                    onSelectSection={setSelectedSectionId}
-                    selectedSectionId={selectedSectionId}
-                  />
-                </aside>
-              )}
-
-              {/* Canvas area */}
-              <div className="flex-1 flex flex-col h-full overflow-y-auto overflow-x-hidden bg-muted/30 p-4 sm:p-6 custom-scrollbar relative">
+            </BuilderWorkflowHeader>
+          }
+          leftRail={
+            activeTab === "build" && !livePreviewMode ? (
+              <BuilderRail side="left" className="hidden md:block pb-16 custom-scrollbar">
+                <SidebarContent
+                  sidebarTab={sidebarTab}
+                  setSidebarTab={setSidebarTab}
+                  groupedWidgets={groupedWidgets}
+                  addSection={addSection}
+                  addSectionTemplate={addSectionTemplate}
+                  site={site}
+                  activePageId={activePageId}
+                  setActivePageId={setActivePageId}
+                  updateSite={updateSite}
+                  publicUrl={publicSiteBaseUrl}
+                  onSelectSection={setSelectedSectionId}
+                  selectedSectionId={selectedSectionId}
+                />
+              </BuilderRail>
+            ) : null
+          }
+          canvas={
+            <>
+              {activeTab === "build" && (
+                <BuilderCanvasViewport className="flex flex-col h-full bg-muted/30 p-4 sm:p-6 custom-scrollbar relative">
                 {/* Floating Canvas Top Bar: Readiness */}
                 {!livePreviewMode && (
                   <div className="mx-auto mb-3 flex items-center justify-between gap-3 max-w-4xl w-full">
@@ -835,208 +837,209 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                     </Button>
                   </div>
                 )}
-              </div>
-
-              {/* Properties panel: hidden in live preview mode */}
-              {!livePreviewMode && (
-                <PropertiesPanel
-                  section={selectedSection}
-                  onUpdate={(patch) => { if (selectedSectionId) updateSection(selectedSectionId, patch); }}
-                  onDelete={() => { if (selectedSectionId) deleteSection(selectedSectionId); }}
-                  onClose={() => setSelectedSectionId(null)}
-                />
+                </BuilderCanvasViewport>
               )}
-            </div>
 
-            <DragOverlay dropAnimation={null}>
-              {activeDrag ? (
-                <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 shadow-lg text-sm font-medium">
-                  <Layers className="h-4 w-4 text-muted-foreground" />
-                  {activeDrag.label}
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-        )}
-
-        {/* ── TAB 2: SETTINGS (General, SEO, & Slug Config) ── */}
-        {activeTab === "settings" && (
-          <div className="flex-1 overflow-y-auto bg-muted/30 p-4 sm:p-8">
-            <div className="mx-auto max-w-3xl space-y-6">
-              {/* Site General & SEO Card */}
-              <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
-                <div>
-                  <h3 className="text-base font-bold text-foreground">{t("Informasi Umum & SEO", "General Info & SEO")}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t("Kelola judul website, deskripsi meta untuk Google, dan konfigurasi brand.", "Manage site title, meta description for Google, and brand configuration.")}
-                  </p>
-                </div>
-
-                <div className="space-y-4 pt-1">
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-foreground">{t("Judul Website / Nama Agensi", "Site Title / Agency Name")}</Label>
-                    <Input
-                      value={site.title || ""}
-                      onChange={(e) => updateSite({ title: e.target.value })}
-                      placeholder="e.g. Nggawe Web Studio"
-                      className="text-xs sm:text-sm font-medium"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-foreground">{t("Subheadline / Tagline", "Subheadline / Tagline")}</Label>
-                    <Input
-                      value={site.subtitle || ""}
-                      onChange={(e) => updateSite({ subtitle: e.target.value })}
-                      placeholder="e.g. Digital Agency & Web Development"
-                      className="text-xs sm:text-sm"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-foreground">{t("Hero Headline Utama", "Hero Headline")}</Label>
-                    <Input
-                      value={site.hero || ""}
-                      onChange={(e) => updateSite({ hero: e.target.value })}
-                      placeholder={t("e.g. Kami Membangun Solusi Digital untuk Bisnis Anda", "e.g. We Build Digital Solutions for Your Business")}
-                      className="text-xs sm:text-sm"
-                    />
-                  </div>
-
-                  <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-foreground">{t("Tentang Agensi / About Bio", "About Agency Bio")}</Label>
-                    <Textarea
-                      value={site.about || ""}
-                      onChange={(e) => updateSite({ about: e.target.value })}
-                      placeholder={t("Tuliskan profil singkat agensi Anda...", "Write a brief profile about your agency...")}
-                      rows={3}
-                      className="text-xs sm:text-sm"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              {/* Contact Form Settings Card */}
-              <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
-                <div>
-                  <h3 className="text-base font-bold text-foreground">{t("Formulir Pesan Footer (Contact Form)", "Footer Contact Form Settings")}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t("Atur tampilan formulir kirim pesan langsung di bagian paling bawah landing page Anda.", "Configure the direct message contact form at the bottom of your landing page.")}
-                  </p>
-                </div>
-
-                <div className="space-y-4 pt-1">
-                  <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/30 p-3.5">
-                    <div className="space-y-0.5">
-                      <Label htmlFor="toggle-contact-form" className="text-xs font-semibold cursor-pointer">
-                        {t("Tampilkan Formulir Pesan Bawah", "Enable Footer Contact Form")}
-                      </Label>
-                      <p className="text-[11px] text-muted-foreground">
-                        {t("Jika dimatikan, form kirim pesan di footer tidak akan muncul di website publik.", "If disabled, the message form at the footer will be hidden on your public website.")}
+              {activeTab === "settings" && (
+                <BuilderCanvasViewport className="bg-muted/30 p-4 sm:p-8">
+                <div className="mx-auto max-w-3xl space-y-6">
+                  {/* Site General & SEO Card */}
+                  <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
+                    <div>
+                      <h3 className="text-base font-bold text-foreground">{t("Informasi Umum & SEO", "General Info & SEO")}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {t("Kelola judul website, deskripsi meta untuk Google, dan konfigurasi brand.", "Manage site title, meta description for Google, and brand configuration.")}
                       </p>
                     </div>
-                    <input
-                      id="toggle-contact-form"
-                      type="checkbox"
-                      checked={site.showContactForm ?? true}
-                      onChange={(e) => updateSite({ showContactForm: e.target.checked })}
-                      className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
-                    />
+
+                    <div className="space-y-4 pt-1">
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-foreground">{t("Judul Website / Nama Agensi", "Site Title / Agency Name")}</Label>
+                        <Input
+                          value={site.title || ""}
+                          onChange={(e) => updateSite({ title: e.target.value })}
+                          placeholder="e.g. Nggawe Web Studio"
+                          className="text-xs sm:text-sm font-medium"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-foreground">{t("Subheadline / Tagline", "Subheadline / Tagline")}</Label>
+                        <Input
+                          value={site.subtitle || ""}
+                          onChange={(e) => updateSite({ subtitle: e.target.value })}
+                          placeholder="e.g. Digital Agency & Web Development"
+                          className="text-xs sm:text-sm"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-foreground">{t("Hero Headline Utama", "Hero Headline")}</Label>
+                        <Input
+                          value={site.hero || ""}
+                          onChange={(e) => updateSite({ hero: e.target.value })}
+                          placeholder={t("e.g. Kami Membangun Solusi Digital untuk Bisnis Anda", "e.g. We Build Digital Solutions for Your Business")}
+                          className="text-xs sm:text-sm"
+                        />
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold text-foreground">{t("Tentang Agensi / About Bio", "About Agency Bio")}</Label>
+                        <Textarea
+                          value={site.about || ""}
+                          onChange={(e) => updateSite({ about: e.target.value })}
+                          placeholder={t("Tuliskan profil singkat agensi Anda...", "Write a brief profile about your agency...")}
+                          rows={3}
+                          className="text-xs sm:text-sm"
+                        />
+                      </div>
+                    </div>
                   </div>
 
-                  {(site.showContactForm ?? true) && (
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold text-foreground">
-                        {t("Judul Formulir Kontak", "Contact Form Heading")}
-                      </Label>
-                      <Input
-                        value={site.contactFormHeading || ""}
-                        onChange={(e) => updateSite({ contactFormHeading: e.target.value })}
-                        placeholder={t("Contact me (Default)", "Contact me (Default)")}
-                        className="text-xs sm:text-sm"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Slug & URL Settings Card */}
-              <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
-                <div>
-                  <h3 className="text-base font-bold text-foreground">{t("Pengaturan URL & Slug", "URL & Slug Settings")}</h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    {t("Tentukan alamat slug unik untuk tautan landing page publik Anda.", "Define the unique URL slug for your public landing page.")}
-                  </p>
-                </div>
-
-                <div className="space-y-3 pt-1">
-                  <div className="space-y-1.5">
-                    <Label htmlFor="desktop-personal-site-slug" className="text-xs font-semibold text-foreground">
-                      {t("Slug URL", "URL Slug")}
-                    </Label>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-mono text-muted-foreground bg-muted px-2.5 py-2 rounded-lg border border-border/60">
-                        {publicSiteBaseUrl.replace(/\/$/, "")}/site/
-                      </span>
-                      <Input
-                        id="desktop-personal-site-slug"
-                        data-testid="personal-site-slug-input"
-                        value={site.slug || ""}
-                        onChange={(event) => updateSite({ slug: normalizePersonalSiteSlug(event.target.value) })}
-                        disabled={!canEditSlug}
-                        readOnly={!canEditSlug}
-                        placeholder="your-url"
-                        className="font-mono text-xs sm:text-sm"
-                      />
-                    </div>
-                    {!canEditSlug && (
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {t("Upgrade untuk memakai slug / URL kustom.", "Upgrade to use a custom slug / URL.")}{" "}
-                        <a href="/app/billing" className="font-medium text-primary underline">{t("Upgrade Plan", "Upgrade Plan")}</a>
+                  {/* Contact Form Settings Card */}
+                  <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
+                    <div>
+                      <h3 className="text-base font-bold text-foreground">{t("Formulir Pesan Footer (Contact Form)", "Footer Contact Form Settings")}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {t("Atur tampilan formulir kirim pesan langsung di bagian paling bawah landing page Anda.", "Configure the direct message contact form at the bottom of your landing page.")}
                       </p>
-                    )}
+                    </div>
+
+                    <div className="space-y-4 pt-1">
+                      <div className="flex items-center justify-between gap-3 rounded-xl border border-border/60 bg-muted/30 p-3.5">
+                        <div className="space-y-0.5">
+                          <Label htmlFor="toggle-contact-form" className="text-xs font-semibold cursor-pointer">
+                            {t("Tampilkan Formulir Pesan Bawah", "Enable Footer Contact Form")}
+                          </Label>
+                          <p className="text-[11px] text-muted-foreground">
+                            {t("Jika dimatikan, form kirim pesan di footer tidak akan muncul di website publik.", "If disabled, the message form at the footer will be hidden on your public website.")}
+                          </p>
+                        </div>
+                        <input
+                          id="toggle-contact-form"
+                          type="checkbox"
+                          checked={site.showContactForm ?? true}
+                          onChange={(e) => updateSite({ showContactForm: e.target.checked })}
+                          className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer"
+                        />
+                      </div>
+
+                      {(site.showContactForm ?? true) && (
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold text-foreground">
+                            {t("Judul Formulir Kontak", "Contact Form Heading")}
+                          </Label>
+                          <Input
+                            value={site.contactFormHeading || ""}
+                            onChange={(e) => updateSite({ contactFormHeading: e.target.value })}
+                            placeholder={t("Contact me (Default)", "Contact me (Default)")}
+                            className="text-xs sm:text-sm"
+                          />
+                        </div>
+                      )}
+                    </div>
                   </div>
+
+                  {/* Slug & URL Settings Card */}
+                  <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
+                    <div>
+                      <h3 className="text-base font-bold text-foreground">{t("Pengaturan URL & Slug", "URL & Slug Settings")}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {t("Tentukan alamat slug unik untuk tautan landing page publik Anda.", "Define the unique URL slug for your public landing page.")}
+                      </p>
+                    </div>
+
+                    <div className="space-y-3 pt-1">
+                      <div className="space-y-1.5">
+                        <Label htmlFor="desktop-personal-site-slug" className="text-xs font-semibold text-foreground">
+                          {t("Slug URL", "URL Slug")}
+                        </Label>
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono text-muted-foreground bg-muted px-2.5 py-2 rounded-lg border border-border/60">
+                            {publicSiteBaseUrl.replace(/\/$/, "")}/site/
+                          </span>
+                          <Input
+                            id="desktop-personal-site-slug"
+                            data-testid="personal-site-slug-input"
+                            value={site.slug || ""}
+                            onChange={(event) => updateSite({ slug: normalizePersonalSiteSlug(event.target.value) })}
+                            disabled={!canEditSlug}
+                            readOnly={!canEditSlug}
+                            placeholder="your-url"
+                            className="font-mono text-xs sm:text-sm"
+                          />
+                        </div>
+                        {!canEditSlug && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {t("Upgrade untuk memakai slug / URL kustom.", "Upgrade to use a custom slug / URL.")}{" "}
+                            <a href="/app/billing" className="font-medium text-primary underline">{t("Upgrade Plan", "Upgrade Plan")}</a>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Bottom Save Settings Button Removed - Unified 1 Save Button on Top Header */}
                 </div>
-              </div>
+                </BuilderCanvasViewport>
+              )}
 
-              {/* Bottom Save Settings Button Removed - Unified 1 Save Button on Top Header */}
+              {activeTab === "publish" && (
+                <BuilderCanvasViewport className="flex flex-col h-full">
+              <UnifiedPublishView
+                type="site"
+                title={site.title || "Landing Page"}
+                shareUrl={publicUrl}
+                previewUrl={publicUrl}
+                embedCode={`<iframe src="${publicUrl}" width="100%" height="800" frameborder="0" style="border-radius: 16px; border: 1px solid #e2e8f0; width: 100%;"></iframe>`}
+                hasSaved={true}
+                publishedStatusNode={
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      if (site.published) {
+                        setShowPublishConfirm(false);
+                      } else {
+                        if (!isReadyToPublish(getPersonalSiteReadiness(site))) {
+                          toast.error(t("Periksa kelengkapan konten sebelum mempublikasikan.", "Complete required content before publishing."));
+                          return;
+                        }
+                        setShowPublishConfirm(true);
+                      }
+                    }}
+                    variant={site.published ? "outline" : "default"}
+                    size="sm"
+                    className={site.published ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50" : "bg-emerald-600 hover:bg-emerald-700 text-white"}
+                  >
+                    {site.published ? t("Unpublish / Sembunyikan", "Unpublish Page") : t("Publikasikan Sekarang", "Publish Now")}
+                  </Button>
+                }
+              />
+                </BuilderCanvasViewport>
+              )}
+            </>
+          }
+          rightRail={
+            activeTab === "build" && !livePreviewMode ? (
+              <PropertiesPanel
+                section={selectedSection}
+                onUpdate={(patch) => { if (selectedSectionId) updateSection(selectedSectionId, patch); }}
+                onDelete={() => { if (selectedSectionId) deleteSection(selectedSectionId); }}
+                onClose={() => setSelectedSectionId(null)}
+              />
+            ) : null
+          }
+        />
+
+        <DragOverlay dropAnimation={null}>
+          {activeDrag ? (
+            <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2 shadow-lg text-sm font-medium">
+              <Layers className="h-4 w-4 text-muted-foreground" />
+              {activeDrag.label}
             </div>
-          </div>
-        )}
-
-        {/* ── TAB 3: PUBLISH (Publication Status, Share Links, QR Code) ── */}
-        {activeTab === "publish" && (
-          <UnifiedPublishView
-            type="site"
-            title={site.title || "Landing Page"}
-            shareUrl={publicUrl}
-            previewUrl={publicUrl}
-            embedCode={`<iframe src="${publicUrl}" width="100%" height="800" frameborder="0" style="border-radius: 16px; border: 1px solid #e2e8f0; width: 100%;"></iframe>`}
-            hasSaved={true}
-            publishedStatusNode={
-              <Button
-                type="button"
-                onClick={() => {
-                  if (site.published) {
-                    setShowPublishConfirm(false);
-                  } else {
-                    if (!isReadyToPublish(getPersonalSiteReadiness(site))) {
-                      toast.error(t("Periksa kelengkapan konten sebelum mempublikasikan.", "Complete required content before publishing."));
-                      return;
-                    }
-                    setShowPublishConfirm(true);
-                  }
-                }}
-                variant={site.published ? "outline" : "default"}
-                size="sm"
-                className={site.published ? "border-emerald-300 text-emerald-700 hover:bg-emerald-50" : "bg-emerald-600 hover:bg-emerald-700 text-white"}
-              >
-                {site.published ? t("Unpublish / Sembunyikan", "Unpublish Page") : t("Publikasikan Sekarang", "Publish Now")}
-              </Button>
-            }
-          />
-        )}
-      </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
 
     {/* Publish / Unpublish confirmation dialog */}
     {showPublishConfirm !== null && (

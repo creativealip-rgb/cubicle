@@ -1,11 +1,55 @@
-import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+/**
+ * The Landing canvas must expose exactly one `main` landmark and keep the
+ * scrolling canvas on it. Rendered assertions, not source-string matching, so a
+ * legitimate layout refactor cannot break this test.
+ */
+/** @vitest-environment jsdom */
+import { describe, expect, it, vi } from "vitest";
+import { render, screen } from "@testing-library/react";
+import { DEFAULT_PERSONAL_SITE } from "@/lib/personal-site/model";
 
-const source = readFileSync("src/components/site/canvas/canvas-editor.tsx", "utf8");
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(),
+  usePathname: () => "/app/personal-site",
+  useRouter: () => ({ push: vi.fn(), replace: vi.fn(), refresh: vi.fn(), back: vi.fn(), prefetch: vi.fn() }),
+}));
+
+if (!HTMLElement.prototype.hasPointerCapture) {
+  HTMLElement.prototype.hasPointerCapture = () => false;
+  HTMLElement.prototype.setPointerCapture = () => {};
+  HTMLElement.prototype.releasePointerCapture = () => {};
+}
+if (!HTMLElement.prototype.scrollIntoView) {
+  HTMLElement.prototype.scrollIntoView = () => {};
+}
+
+import { CanvasEditor } from "@/components/site/canvas/canvas-editor";
+
+function renderEditor() {
+  return render(
+    <CanvasEditor
+      initialSite={DEFAULT_PERSONAL_SITE}
+      previewUrl="https://example.test/site/my-studio"
+      publicSiteBaseUrl="https://example.test"
+      onSave={vi.fn(async () => {})}
+      canEditSlug
+    />,
+  );
+}
 
 describe("personal site landmarks", () => {
-  it("does not nest a second main landmark inside the app shell", () => {
-    expect(source).not.toContain('<main className="flex-1 overflow-y-auto overflow-x-hidden');
-    expect(source).toContain('className="flex-1 flex flex-col h-full overflow-y-auto overflow-x-hidden');
+  it("renders exactly one main landmark and never nests one", () => {
+    const { container } = renderEditor();
+
+    const mains = screen.getAllByRole("main");
+    expect(mains).toHaveLength(1);
+    expect(container.querySelectorAll("main")).toHaveLength(1);
+    expect(mains[0].querySelector("main")).toBeNull();
+  });
+
+  it("keeps the scrolling canvas on that single main landmark", () => {
+    renderEditor();
+
+    expect(screen.getByRole("main").className).toContain("overflow-y-auto");
   });
 });
