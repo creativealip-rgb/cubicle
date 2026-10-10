@@ -49,6 +49,8 @@ import {
   Globe,
   Send,
   QrCode,
+  AlertCircle,
+  RotateCw,
 } from "lucide-react";
 import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, useDraggable, type DragStartEvent, type DragEndEvent } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -90,6 +92,7 @@ import { isReadyToPublish, getPersonalSiteReadiness } from "@/lib/personal-site/
 import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage, ThemeConfig } from "@/lib/personal-site/model";
 import { emptySection, normalizePersonalSiteSlug } from "@/lib/personal-site/model";
 import { withPublicationIntent } from "@/lib/personal-site/publication-intent";
+import { useRetryingAutosave } from "@/lib/use-retrying-autosave";
 import { PAGE_TEMPLATES, getPageTemplatesByCategory, getPageTemplateCategories, type PageTemplate } from "@/lib/personal-site/page-templates";
 import { SECTION_TEMPLATES, type SectionTemplate } from "@/lib/personal-site/section-templates";
 
@@ -320,8 +323,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   const [saving, setSaving] = useState(false);
   const [sidebarTab, setSidebarTab] = useState("insert");
   const [mobileSidebar, setMobileSidebar] = useState(false);
-  const [lastSaved, setLastSaved] = useState<string>(() => JSON.stringify({ ...initialSite, pages: normalizePages(initialSite) }));
-  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastIssueJump = useRef<string | null>(null);
   const [readinessTarget, setReadinessTarget] = useState<string | null>(null);
 
   // Drag state - track currently dragged item for preview
@@ -380,7 +382,23 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   const activeSections = useMemo(() => pageSections(site, activePageId), [site, activePageId]);
   const activePage = useMemo(() => normalizePages(site).find((page) => page.id === activePageId) ?? normalizePages(site)[0], [site, activePageId]);
   const selectedSection = useMemo(() => activeSections.find((s) => s.id === selectedSectionId) ?? null, [activeSections, selectedSectionId]);
-  const isDirty = useMemo(() => JSON.stringify(site) !== lastSaved, [site, lastSaved]);
+  const {
+    status: autosaveStatus,
+    issuePaths: autosaveIssuePaths,
+    isDirty,
+    retry: retryAutosave,
+    markSaved,
+  } = useRetryingAutosave({
+    value: site,
+    save: onSave,
+    onError: (error) => {
+      toast.error(
+        error instanceof Error && error.message === "PERSONAL_SITE_SLUG_TAKEN"
+          ? t("Slug sudah dipakai. Pilih alamat publik lain.", "Slug is already in use. Choose another public address.")
+          : t("Perubahan belum tersimpan. Coba lagi.", "Changes were not saved. Try again."),
+      );
+    },
+  });
   // Phase 7: real public URL (derived from the live slug) for the SEO panel's
   // share preview + copy button — not the draft preview URL.
   const publicUrl = useMemo(() => `${publicSiteBaseUrl}/${normalizePersonalSiteSlug(site.slug)}`, [publicSiteBaseUrl, site.slug]);
@@ -391,27 +409,49 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   }, [activePageId]);
 
 
-  // Auto-save after 2s of inactivity
+  // Field-path errors: save failures carry structured Zod paths, so jump to the
+  // offending section/property instead of only showing a toast. Site-level
+  // fields (title/hero/...) have no canvas anchor and are left to the toast.
   useEffect(() => {
-    if (!isDirty) return;
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
-    autoSaveTimer.current = setTimeout(async () => {
-      setSaving(true);
-      try {
-        await onSave(site);
-        setLastSaved(JSON.stringify(site));
-      } catch (error) {
-        toast.error(
-          error instanceof Error && error.message === "PERSONAL_SITE_SLUG_TAKEN"
-            ? t("Slug sudah dipakai. Pilih alamat publik lain.", "Slug is already in use. Choose another public address.")
-            : t("Perubahan belum tersimpan. Coba lagi.", "Changes were not saved. Try again."),
-        );
-      } finally {
-        setSaving(false);
-      }
-    }, 2000);
-    return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current); };
-  }, [site, isDirty, onSave, t]);
+    const issue = autosaveIssuePaths[0];
+    const key = issue ? JSON.stringify(issue) : null;
+    if (key === null) {
+      lastIssueJump.current = null;
+      return;
+    }
+    if (key === lastIssueJump.current) return;
+    lastIssueJump.current = key;
+
+    const [root, index, ...rest] = issue;
+    if (root === "slug") {
+      setActiveTab("settings");
+      window.setTimeout(() => {
+        const input = document.querySelector<HTMLElement>('[data-testid="personal-site-slug-input"]');
+        input?.scrollIntoView({ behavior: "smooth", block: "center" });
+        input?.focus();
+      }, 50);
+      return;
+    }
+
+    const pages = normalizePages(site);
+    let pageId: string | null = null;
+    let sectionIndex: number | null = null;
+    if (root === "pages" && typeof index === "number" && rest[0] === "sections" && typeof rest[1] === "number") {
+      pageId = pages[index]?.id ?? null;
+      sectionIndex = rest[1];
+    } else if (root === "sections" && typeof index === "number") {
+      pageId = pages.find((page) => page.isHome)?.id ?? pages[0]?.id ?? null;
+      sectionIndex = index;
+    }
+    if (pageId === null || sectionIndex === null) return;
+    const sectionId = pages.find((page) => page.id === pageId)?.sections[sectionIndex]?.id;
+    if (!sectionId) return;
+    if (pageId !== activePageId) setActivePageId(pageId);
+    setSelectedSectionId(sectionId);
+    window.setTimeout(() => {
+      document.querySelector(`[data-section-id="${sectionId}"]`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 50);
+  }, [autosaveIssuePaths, site, activePageId, setActiveTab]);
 
   // Warn before leaving with unsaved changes
   useEffect(() => {
@@ -505,25 +545,24 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     setSaving(true);
     try {
       await onSave(site);
-      setLastSaved(JSON.stringify(site));
+      markSaved(site);
       toast.success(t("Tersimpan", "Saved"));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Gagal simpan", "Save failed"));
     } finally {
       setSaving(false);
     }
-  }, [onSave, refresh, site, t]);
+  }, [onSave, refresh, site, t, markSaved]);
 
   const handlePublication = useCallback(async (published: boolean) => {
     // Explicit toggle: the intent rides out-of-band (non-enumerable) so it never
     // enters the stored document. Autosave stays intent-free.
     const next = withPublicationIntent({ ...site, published }, published ? "publish" : "unpublish");
-    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current);
     setSaving(true);
     try {
       await onSave(next);
       setSite(next);
-      setLastSaved(JSON.stringify(next));
+      markSaved(next);
       setShowPublishConfirm(null);
       toast.success(published ? t("Halaman berhasil dipublikasikan", "Page published") : t("Halaman berhasil disembunyikan", "Page unpublished"));
       refresh();
@@ -532,7 +571,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     } finally {
       setSaving(false);
     }
-  }, [onSave, refresh, site, t]);
+  }, [onSave, refresh, site, t, markSaved]);
 
   const handleSelectReadinessIssue = useCallback((issue: { id: string }) => {
     if (issue.id.startsWith("cta") || issue.id === "placeholder-example-destination" || issue.id === "no-contact-method") {
@@ -736,6 +775,40 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                         </button>
                       );
                     })}
+                  </div>
+                )}
+
+                {/* Autosave state: truthful, and a persistent Retry affordance on failure. */}
+                {autosaveStatus !== "idle" && (
+                  <div data-testid="autosave-status" role="status" aria-live="polite" className="flex items-center gap-2">
+                    {autosaveStatus === "saved" && (
+                      <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                        <Check className="h-3.5 w-3.5" /> {t("Tersimpan", "Saved")}
+                      </span>
+                    )}
+                    {(autosaveStatus === "pending" || autosaveStatus === "retrying") && (
+                      <span className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        {autosaveStatus === "retrying" ? t("Mencoba lagi...", "Retrying...") : t("Menyimpan...", "Saving...")}
+                      </span>
+                    )}
+                    {autosaveStatus === "failed" && (
+                      <>
+                        <span className="flex items-center gap-1 text-xs font-medium text-destructive">
+                          <AlertCircle className="h-3.5 w-3.5" /> {t("Belum tersimpan", "Not saved")}
+                        </span>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          data-testid="autosave-retry"
+                          onClick={retryAutosave}
+                          className="h-8 px-3 text-xs font-semibold gap-1.5"
+                        >
+                          <RotateCw className="h-3.5 w-3.5" /> {t("Coba lagi", "Retry")}
+                        </Button>
+                      </>
+                    )}
                   </div>
                 )}
 

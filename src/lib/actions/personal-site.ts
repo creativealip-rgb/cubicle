@@ -24,6 +24,8 @@ export type PersonalSiteActionState = {
   status: "idle" | "success" | "error";
   message?: string;
   fieldErrors?: Record<string, string[]>;
+  /** Structured Zod issue paths (e.g. ["pages", 0, "sections", 3, "alt"]). */
+  issuePaths?: (string | number)[][];
   slug?: string;
   published?: boolean;
 };
@@ -131,6 +133,15 @@ export async function savePersonalSite(
       status: "error",
       message: "Periksa kembali field yang ditandai.",
       fieldErrors: payload.error.flatten().fieldErrors,
+      // flatten() collapses nested issues under their top-level key; keep the
+      // full paths so the client can jump to the offending section/property.
+      // Zod v4 types a path segment as PropertyKey; only strings and numbers can
+      // occur in this schema, so narrow rather than widen the public type.
+      issuePaths: payload.error.issues.map((issue) =>
+        issue.path.filter(
+          (segment): segment is string | number => typeof segment === "string" || typeof segment === "number",
+        ),
+      ),
     };
   }
   const data = payload.data;

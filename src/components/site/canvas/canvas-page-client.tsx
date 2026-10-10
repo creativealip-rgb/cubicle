@@ -6,6 +6,7 @@ import { Loader2 } from "lucide-react";
 import type { PersonalSiteInput } from "@/lib/personal-site/model";
 import type { PersonalSiteActionState } from "@/lib/actions/personal-site";
 import { readPublicationIntent } from "@/lib/personal-site/publication-intent";
+import { AutosaveSaveError } from "@/lib/use-retrying-autosave";
 import { useT } from "@/lib/i18n-client";
 
 function EditorLoading() {
@@ -49,7 +50,15 @@ export function CanvasPageClient({ initialSite, action, publicSiteBaseUrl, previ
     const result = await actionRef.current({ status: "idle" }, formData);
     if (result.status === "error") {
       if (result.fieldErrors?.slug?.length) throw new Error("PERSONAL_SITE_SLUG_TAKEN");
-      throw new Error(result.message);
+      // Structured field paths travel with the error so the editor can jump to
+      // the offending section/property. Validation failures are terminal.
+      const issuePaths = result.issuePaths ?? [];
+      const fieldPaths = Object.keys(result.fieldErrors ?? {}).map((key) => [key]);
+      const terminal = issuePaths.length > 0 || fieldPaths.length > 0;
+      throw new AutosaveSaveError(result.message ?? "", {
+        issuePaths: issuePaths.length > 0 ? issuePaths : fieldPaths,
+        retryable: !terminal,
+      });
     }
   }, []);
 
