@@ -46,7 +46,7 @@ export function MobilePropertiesDrawer({ section, onUpdate, onDelete, onClose }:
   }, [section]);
 
   return (
-    <Sheet open={isMobileViewport && section !== null} modal={false} onOpenChange={(open) => { if (!open) onClose(); }}>
+    <Sheet open={isMobileViewport && section !== null} onOpenChange={(open) => { if (!open) onClose(); }}>
       <SheetContent
         side="bottom"
         aria-describedby={undefined}
