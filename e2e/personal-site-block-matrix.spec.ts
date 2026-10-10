@@ -159,6 +159,38 @@ const deleteLast = async (page: Page, expected: number) => {
   return (await sectionCount(page)) === expected;
 };
 
+const MOBILE_CANVAS = '[data-testid="mobile-landing-canvas"]';
+/**
+ * While a Radix drawer is open it marks the rest of the document aria-hidden and
+ * its backdrop (`fixed inset-0`) swallows pointer events — including clicks on
+ * the very toolbar trigger that opened it. So mobile drawers are opened by
+ * stable id and always closed with Escape, never by clicking.
+ */
+const MOBILE_BACKDROP = 'div.fixed.inset-0[data-state="open"]';
+const MOBILE_SECTION_IDS = `${MOBILE_CANVAS} [data-section-id]`;
+
+/**
+ * Section ids inside the mobile canvas. `data-section-id` repeats on nested
+ * nodes, hence the dedupe, and scoping to the mobile canvas excludes the hidden
+ * desktop mirror (which renders the same sites at the same time).
+ */
+const mobileSectionIds = (page: Page) =>
+  page.locator(MOBILE_SECTION_IDS).evaluateAll((els) =>
+    Array.from(new Set(els.map((e) => e.getAttribute("data-section-id")).filter(Boolean))),
+  );
+
+const mobileSectionCount = async (page: Page) => (await mobileSectionIds(page)).length;
+
+/** Escape is the only reliable exit from a mobile drawer (see MOBILE_BACKDROP). */
+const closeMobileDrawers = async (page: Page) => {
+  for (let i = 0; i < 6; i++) {
+    if ((await page.locator(MOBILE_BACKDROP).count()) === 0) return true;
+    await page.keyboard.press("Escape");
+    await page.waitForTimeout(600);
+  }
+  return (await page.locator(MOBILE_BACKDROP).count()) === 0;
+};
+
 test.describe("Landing block matrix", () => {
   test.skip(!enabled, "Requires explicit mutating-E2E opt-in, owner QA credentials, and localhost/dev target");
 
@@ -263,58 +295,56 @@ test.describe("Landing block matrix", () => {
     expect(await sectionCount(page)).toBe(baseline);
   });
 
-  // Not yet functional: the mobile delete/undo path through
-  // mobile-drawer-properties is not driven, and without a working delete the
-  // fixture grows past MAX_SECTIONS and every later insert legitimately fails.
-  // Marked fixme rather than left red so the suite stays trustworthy. See
-  // references/mobile-and-undo-findings.md in the cubiqlo-landing-matrix-qa skill.
-  test.fixme(
-    "mobile 390x844: every catalogue entry inserts, opens its drawer and never overflows",
-    async ({ page }) => {
+  test("mobile 390x844: every catalogue entry inserts, opens its drawer, deletes and never overflows", async ({ page }) => {
     const noise = attachNoise(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto("/app/personal-site", { waitUntil: "domcontentloaded" });
     await expect(page.getByTestId("mobile-landing-editor")).toBeVisible();
 
-    // The Elements button is a TOGGLE and the properties drawer also renders a
-    // "Close panel" button, so detect the Elements drawer by one of its entries.
-    const elementsOpen = async () =>
-      (await page.getByRole("button", { name: MOBILE_ENTRIES[0], exact: true }).count()) > 0;
-    const openElements = async () => {
-      if (await elementsOpen()) return;
-      const close = page.getByRole("button", { name: /close panel/i }).first();
-      if (await close.count()) await close.click();
-      await page.waitForTimeout(700);
-      if (await elementsOpen()) return;
-      await page.getByRole("button", { name: "Elements", exact: true }).first().click();
-      await page.waitForTimeout(1500);
-    };
+    const baseline = await mobileSectionCount(page);
 
     for (const entry of MOBILE_ENTRIES) {
-      const before = await sectionCount(page);
-      await openElements();
+      const beforeIds = await mobileSectionIds(page);
+
+      // Insert from the Elements drawer.
+      await page.locator("#mobile-drawer-trigger-elements").click();
+      await page.waitForTimeout(1200);
       await page.getByRole("button", { name: entry, exact: true }).first().click();
       await expect
-        .poll(() => sectionCount(page), { message: `${entry}: section tidak bertambah`, timeout: 25_000 })
-        .toBe(before + 1);
+        .poll(() => mobileSectionCount(page), { message: `${entry}: section tidak bertambah`, timeout: 25_000 })
+        .toBe(beforeIds.length + 1);
+      expect(await closeMobileDrawers(page), `${entry}: drawer tidak bisa ditutup`).toBe(true);
 
-      // Tapping a section opens the mobile properties drawer.
-      const close = page.getByRole("button", { name: /close panel/i }).first();
-      if (await close.count()) await close.click();
-      await page.waitForTimeout(700);
-      const section = page.locator(SECTION).last();
-      await section.scrollIntoViewIfNeeded();
-      await section.click();
-      await expect(page.getByTestId("mobile-drawer-properties")).toBeVisible({ timeout: 10_000 });
+      // Identify the new section by id rather than position: a catalogue entry
+      // is free to insert anywhere, so "the last one" is not a safe assumption.
+      const addedId = (await mobileSectionIds(page)).find((id) => !beforeIds.includes(id));
+      expect(addedId, `${entry}: id section baru tidak ditemukan`).toBeTruthy();
 
-      // TODO(landing-parity): the mobile delete confirmation flow is not driven
-      // yet — see references/mobile-and-undo-findings.md in the
-      // cubiqlo-landing-matrix-qa skill. Remove this entry's section once that
-      // path is asserted, otherwise the fixture grows without bound.
-      await page.reload({ waitUntil: "domcontentloaded" });
-      await page.waitForTimeout(2500);
+      // Select through the Structure drawer's row button. Clicking the section
+      // inside the canvas is unreliable: several catalogue entries render their
+      // own interactive controls (a booking form, a gallery) which swallow the
+      // click, so the canvas `onSelectSection` never fires. The row calls it
+      // explicitly, and the drawer closes itself as it opens the properties.
+      await page.locator("#mobile-drawer-trigger-structure").click();
+      await page.waitForTimeout(1000);
+      await page.locator(`#section-row-${addedId}`).click();
+      const drawer = page.getByTestId("mobile-drawer-properties");
+      await expect(drawer).toBeVisible({ timeout: 10_000 });
+
+      // Delete it again through that drawer, confirming when asked: catalogue
+      // entries are non-empty, so the confirmation dialog is expected. This is
+      // what keeps the fixture bounded across all 19 entries.
+      await drawer.getByRole("button", { name: "Delete This Section" }).first().click();
+      await page.waitForTimeout(800);
+      const confirm = page.getByRole("button", { name: "Delete Section", exact: true });
+      if (await confirm.count()) await confirm.first().click();
+      await expect
+        .poll(() => mobileSectionCount(page), { message: `${entry}: section tidak terhapus`, timeout: 25_000 })
+        .toBe(beforeIds.length);
+      await closeMobileDrawers(page);
     }
 
+    expect(await mobileSectionCount(page)).toBe(baseline);
     expect(await overflow(page), "horizontal overflow at 390x844").toBe(0);
     expect(noise.errors, `console errors: ${noise.errors.join(" | ")}`).toEqual([]);
     expect(noise.failed, `failed requests: ${noise.failed.join(" | ")}`).toEqual([]);
