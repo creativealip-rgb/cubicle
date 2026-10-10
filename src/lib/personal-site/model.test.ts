@@ -1,14 +1,17 @@
 import { describe, expect, it } from "vitest";
 import {
   DEFAULT_PERSONAL_SITE,
+  emptySection,
   isEditorialPlaceholderText,
   isPlaceholderHref,
   isSafePublicHref,
   normalizeLegacyLinks,
   normalizeLegacySections,
   normalizePersonalSiteSlug,
+  PERSONAL_SITE_SECTION_TYPES,
   personalSiteInputSchema,
   sectionHasContent,
+  type PersonalSiteSection,
 } from "./model";
 
 describe("personal site model", () => {
@@ -93,5 +96,48 @@ describe("personal site model", () => {
     expect(isEditorialPlaceholderText(DEFAULT_PERSONAL_SITE.hero)).toBe(false);
     expect(isEditorialPlaceholderText(DEFAULT_PERSONAL_SITE.about)).toBe(false);
     expect(DEFAULT_PERSONAL_SITE.sections[0].type).toBe("services");
+  });
+});
+
+// Exhaustive over the section-type union: `Record` requires every key, so a
+// 21st type added to `personalSiteSectionSchema` without listing it here fails
+// to compile with TS2741, and the coverage assertion below fails at runtime.
+const ALL_SECTION_TYPES: Record<PersonalSiteSection["type"], true> = {
+  services: true,
+  process: true,
+  pricing: true,
+  portfolio: true,
+  testimonials: true,
+  faq: true,
+  contact: true,
+  booking: true,
+  custom: true,
+  gallery: true,
+  image: true,
+  mediaText: true,
+  embed: true,
+  social: true,
+  cta: true,
+  divider: true,
+  collapsible: true,
+  spacer: true,
+  tableOfContents: true,
+  contentBlock: true,
+};
+
+describe("pristine block savability", () => {
+  it("covers every section type exactly once", () => {
+    expect(Object.keys(ALL_SECTION_TYPES).sort()).toEqual([...PERSONAL_SITE_SECTION_TYPES].sort());
+  });
+
+  it("lets a freshly added block of every type save through the storage schema", () => {
+    for (const type of PERSONAL_SITE_SECTION_TYPES) {
+      const section = emptySection(type);
+      const parsed = personalSiteInputSchema.safeParse({ ...DEFAULT_PERSONAL_SITE, sections: [section] });
+      expect(
+        parsed.success,
+        `${type} fresh block failed storage schema: ${parsed.success ? "" : JSON.stringify(parsed.error.issues)}`,
+      ).toBe(true);
+    }
   });
 });

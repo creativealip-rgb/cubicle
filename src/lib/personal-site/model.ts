@@ -77,21 +77,21 @@ export const itemTypographySchema = {
 
 const serviceItemSchema = z.object({
   id: idSchema,
-  title: z.string().trim().min(1).max(100),
+  title: z.string().trim().max(100),
   description: descriptionSchema,
   ...itemTypographySchema,
 });
 
 const processStepSchema = z.object({
   id: idSchema,
-  title: z.string().trim().min(1).max(100),
+  title: z.string().trim().max(100),
   description: descriptionSchema,
   ...itemTypographySchema,
 });
 
 const pricingOfferSchema = z.object({
   id: idSchema,
-  name: z.string().trim().min(1).max(100),
+  name: z.string().trim().max(100),
   price: z.string().trim().max(80),
   description: descriptionSchema,
   ...itemTypographySchema,
@@ -99,7 +99,7 @@ const pricingOfferSchema = z.object({
 
 const portfolioProjectSchema = z.object({
   id: idSchema,
-  title: z.string().trim().min(1).max(120),
+  title: z.string().trim().max(120),
   description: descriptionSchema,
   url: optionalPublicHrefSchema,
   ...itemTypographySchema,
@@ -107,7 +107,7 @@ const portfolioProjectSchema = z.object({
 
 const testimonialSchema = z.object({
   id: idSchema,
-  quote: z.string().trim().min(1).max(1_000),
+  quote: z.string().trim().max(1_000),
   author: z.string().trim().max(100),
   role: z.string().trim().max(120),
   ...itemTypographySchema,
@@ -115,14 +115,14 @@ const testimonialSchema = z.object({
 
 const faqItemSchema = z.object({
   id: idSchema,
-  question: z.string().trim().min(1).max(200),
-  answer: z.string().trim().min(1).max(2_000),
+  question: z.string().trim().max(200),
+  answer: z.string().trim().max(2_000),
   ...itemTypographySchema,
 });
 
 const contactMethodSchema = z.object({
   id: idSchema,
-  label: z.string().trim().min(1).max(80),
+  label: z.string().trim().max(80),
   value: z.string().trim().max(160),
   url: optionalPublicHrefSchema,
   ...itemTypographySchema,
@@ -297,8 +297,8 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     ...sectionTypographySchema,
     items: z.array(z.object({
       id: idSchema,
-      title: z.string().trim().min(1).max(200),
-      content: z.string().trim().min(1).max(2_000),
+      title: z.string().trim().max(200),
+      content: z.string().trim().max(2_000),
     })).max(12),
   }),
   z.object({

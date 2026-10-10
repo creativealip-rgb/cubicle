@@ -1,4 +1,4 @@
-import type { PersonalSiteInput } from "./model";
+import type { PersonalSiteInput, PersonalSiteSection } from "./model";
 import { isSafePublicHref, isPlaceholderHref, RESERVED_PERSONAL_SITE_SLUGS, sectionHasContent } from "./model";
 
 /**
@@ -158,6 +158,33 @@ export function getPersonalSiteReadiness(site: PersonalSiteInput): ReadinessIssu
       severity: "warning",
       label: "Semua halaman masih kosong — tambahkan setidaknya satu bagian yang memiliki konten",
     });
+  }
+
+  // The storage schema used to reject blank item rows outright (`.min(1)` on
+  // services.title, pricing.name, faq.answer, collapsible.content, ...). Drafts
+  // can now save, so completeness moves to the publish gate: an empty block is
+  // invisible on the public page (the renderer filters it), and an error tells
+  // the user why before they publish. `error` (not `warning`) because this is
+  // exactly the guarantee the schema used to provide — `isReadyToPublish`
+  // blocks until the block is filled or removed.
+  const flaggedEmptySectionIds = new Set<string>();
+  const flagEmptyBlock = (section: PersonalSiteSection) => {
+    if (sectionHasContent(section)) return;
+    if (flaggedEmptySectionIds.has(section.id)) return;
+    flaggedEmptySectionIds.add(section.id);
+    issues.push({
+      id: `section-empty-${section.id}`,
+      severity: "error",
+      label: `Bagian "${section.heading || section.type}" belum punya konten sehingga tidak akan tampil di halaman publik`,
+    });
+  };
+
+  if (pages.length === 0) {
+    topLevelSections.forEach(flagEmptyBlock);
+  } else {
+    for (const page of pages) {
+      (page.sections.length > 0 ? page.sections : topLevelSections).forEach(flagEmptyBlock);
+    }
   }
 
   // Home page check only applies to page-based sites; the renderer

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { getPersonalSiteReadiness, isReadyToPublish, countReadinessIssues } from "./readiness";
-import { DEFAULT_PERSONAL_SITE, type ThemeConfig } from "./model";
+import { DEFAULT_PERSONAL_SITE, emptySection, type PersonalSiteSection, type ThemeConfig } from "./model";
 
 const createThemeConfig = (): ThemeConfig => ({
   primaryColor: "#2563EB",
@@ -661,5 +661,57 @@ describe("countReadinessIssues", () => {
     const counts = countReadinessIssues([]);
     expect(counts.errors).toBe(0);
     expect(counts.warnings).toBe(0);
+  });
+});
+
+describe("empty block readiness (Task 6b)", () => {
+  const freshFaq = emptySection("faq");
+  const baseSections: PersonalSiteSection[] = DEFAULT_PERSONAL_SITE.pages![0].sections;
+
+  const siteWithFreshBlock = {
+    ...DEFAULT_PERSONAL_SITE,
+    slug: "draft-site",
+    title: "Draft Studio",
+    hero: "Hero text",
+    published: true,
+    // Home keeps the content-bearing default sections plus one blank FAQ block:
+    // the pristine state a user lands in right after adding a block.
+    pages: [
+      {
+        id: "home",
+        slug: "",
+        title: "Home",
+        isHome: true,
+        sections: [...baseSections, freshFaq],
+      },
+    ],
+    themeConfig: DEFAULT_PERSONAL_SITE.themeConfig!,
+  };
+
+  it("flags each empty block as an error explaining it will not render", () => {
+    const issues = getPersonalSiteReadiness(siteWithFreshBlock);
+    const emptyIssue = issues.find((issue) => issue.id === `section-empty-${freshFaq.id}`);
+    expect(emptyIssue).toBeDefined();
+    expect(emptyIssue!.severity).toBe("error");
+  });
+
+  it("blocks publishing while an empty block remains", () => {
+    const issues = getPersonalSiteReadiness(siteWithFreshBlock);
+    expect(isReadyToPublish(issues)).toBe(false);
+  });
+
+  it("clears the error once the block has content", () => {
+    const filledFaq: PersonalSiteSection = {
+      id: freshFaq.id,
+      type: "faq",
+      heading: freshFaq.heading,
+      items: [{ id: "faq-1", question: "Jam buka?", answer: "Setiap hari 09.00-17.00." }],
+    };
+    const issues = getPersonalSiteReadiness({
+      ...siteWithFreshBlock,
+      pages: [{ ...siteWithFreshBlock.pages[0], sections: [...baseSections, filledFaq] }],
+    });
+    expect(issues.some((issue) => issue.id === `section-empty-${freshFaq.id}`)).toBe(false);
+    expect(isReadyToPublish(issues)).toBe(true);
   });
 });
