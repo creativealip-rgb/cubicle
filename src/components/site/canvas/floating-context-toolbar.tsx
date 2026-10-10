@@ -71,7 +71,7 @@ export function FloatingContextToolbar({
   if (!active) return null;
 
   const currentFontObj = CUBIQLO_FONTS.find((f) => f.id === value.fontFamily) || CUBIQLO_FONTS[0];
-  const currentSize = value.fontSize || "base";
+  const currentSize = value.fontSize || (tagType === "heading" ? "xl" : tagType === "card" ? "base" : "sm");
   const currentAlign = value.align || "left";
 
   const sizeLabels: Record<string, string> = {
@@ -84,23 +84,23 @@ export function FloatingContextToolbar({
   const tagLabels: Record<string, string> = {
     heading: t("Judul", "Heading"),
     card: t("Subjudul", "Subheading"),
-    body: t("Paragraf", "Body"),
+    body: t("Paragraf", "Body Text"),
   };
 
   return (
     <div
       ref={containerRef}
       onClick={(e) => e.stopPropagation()}
-      className={`absolute -top-12 left-0 sm:left-1/2 sm:-translate-x-1/2 z-50 flex items-center bg-white text-slate-800 rounded-lg shadow-2xl border border-slate-200/90 px-2 py-1 text-xs gap-1 select-none animate-in fade-in zoom-in-95 duration-100 max-w-none whitespace-nowrap ${className}`}
+      className={`absolute -top-14 left-4 z-50 flex items-center bg-white text-slate-800 rounded-lg shadow-2xl border border-slate-200/90 px-2 py-1 text-xs gap-1 select-none animate-in fade-in zoom-in-95 duration-100 max-w-none whitespace-nowrap ${className}`}
     >
       {/* 1. Tag / Text Type Dropdown */}
       <div className="relative shrink-0">
         <button
           type="button"
           onClick={() => { setStyleOpen(!styleOpen); setFontOpen(false); setSizeOpen(false); setAlignOpen(false); }}
-          className="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-100 rounded font-medium text-slate-700 whitespace-nowrap justify-between transition-colors"
+          className="flex items-center gap-1.5 px-2 py-1 hover:bg-slate-100 rounded font-semibold text-slate-700 whitespace-nowrap justify-between transition-colors"
         >
-          <span className="font-semibold">{tagLabels[tagType] || t("Paragraf", "Body")}</span>
+          <span>{tagLabels[tagType] || t("Paragraf", "Body Text")}</span>
           <ChevronDown className="h-3 w-3 text-slate-400 shrink-0" />
         </button>
         {styleOpen && (
