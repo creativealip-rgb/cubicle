@@ -439,7 +439,7 @@ function SortableCanvasField({
       ref={setNodeRef}
       style={style}
       onClick={onSelect}
-      className={`group relative ${cardRadiusClass} border p-4 sm:p-5 pt-8 transition-all cursor-pointer overflow-visible ${
+      className={`group relative ${cardRadiusClass} border p-4 sm:p-5 transition-all cursor-pointer ${
         isPageBreak ? "col-span-12 border-dashed border-primary/60 bg-primary/[0.03]" : isHalf ? "col-span-12 md:col-span-6" : "col-span-12"
       } ${
         isSelected
@@ -448,7 +448,7 @@ function SortableCanvasField({
       }`}
     >
       {/* Floating Contextual Toolbar on Active Field Selection */}
-      {isSelected && onUpdateField && (
+      {isSelected && (
         <FloatingContextToolbar
           active={isSelected}
           value={{
@@ -460,51 +460,52 @@ function SortableCanvasField({
             underline: field.underline,
             strikethrough: field.strikethrough,
           }}
-          onChange={(patch) => onUpdateField(patch)}
+          onChange={(patch) => onUpdateField && onUpdateField(patch)}
           onDuplicate={onDuplicate}
           onDelete={onDelete}
           tagType={isHeading ? "heading" : isInfo || isTerms ? "body" : "card"}
+          className="-top-14 left-4"
         />
       )}
 
-      {/* Top action toolbar */}
-      <div
-        className={`absolute -top-3.5 right-4 flex items-center gap-1 bg-background border border-border shadow-xs rounded-lg px-1.5 py-0.5 z-10 transition-opacity ${
-          isSelected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-        }`}
-      >
-        <button
-          type="button"
-          {...attributes}
-          {...listeners}
-          className="p-1 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing rounded"
-          title={t("Drag untuk geser posisi", "Drag to reorder")}
+      {/* Top action toolbar (Hidden when FloatingContextToolbar is active to avoid duplicate controls) */}
+      {!isSelected && (
+        <div
+          className="absolute -top-3.5 right-4 flex items-center gap-1 bg-background border border-border shadow-xs rounded-lg px-1.5 py-0.5 z-10 transition-opacity opacity-0 group-hover:opacity-100"
         >
-          <GripVertical className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDuplicate();
-          }}
-          className="p-1 text-muted-foreground hover:text-primary rounded"
-          title={t("Duplikasi", "Duplicate")}
-        >
-          <Copy className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onDelete();
-          }}
-          className="p-1 text-muted-foreground hover:text-destructive rounded"
-          title={t("Hapus", "Delete")}
-        >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-      </div>
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            className="p-1 text-muted-foreground hover:text-foreground cursor-grab active:cursor-grabbing rounded"
+            title={t("Drag untuk geser posisi", "Drag to reorder")}
+          >
+            <GripVertical className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDuplicate();
+            }}
+            className="p-1 text-muted-foreground hover:text-primary rounded"
+            title={t("Duplikasi", "Duplicate")}
+          >
+            <Copy className="h-3.5 w-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onDelete();
+            }}
+            className="p-1 text-muted-foreground hover:text-destructive rounded"
+            title={t("Hapus", "Delete")}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        </div>
+      )}
 
       {/* Field Layout Indicator Badge */}
       {isHalf && (
