@@ -2,16 +2,21 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, FileText, Layers, Palette, Eye, ChevronLeft, ChevronRight, Trash2, Home, Search } from "lucide-react";
+import { Plus, FileText, Layers, Palette, Eye, ChevronLeft, ChevronRight, Trash2, Copy, Home, Search } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { PersonalSiteInput, PersonalSiteSection, PersonalSitePage } from "@/lib/personal-site/model";
 import { normalizePersonalSiteSlug } from "@/lib/personal-site/model";
 import { SECTION_TEMPLATES, type SectionTemplate } from "@/lib/personal-site/section-templates";
 import {
+  MAX_SECTIONS,
   addPage as addPageToList,
   addSection as addSectionToList,
+  duplicateSection as duplicateSectionToList,
+  isSectionEmpty,
   moveSectionByOffset,
   removePage as removePageFromList,
   removeSection,
@@ -89,6 +94,7 @@ export function MobileStepEditor({
 }: Props) {
   const { t } = useT();
   const [step, setStep] = useState<Step>("pages");
+  const [pendingSectionDeleteId, setPendingSectionDeleteId] = useState<string | null>(null);
   const stepIndex = STEPS.indexOf(step);
   const publicUrl = `${publicSiteBaseUrl}/${normalizePersonalSiteSlug(site.slug)}`;
 
@@ -101,7 +107,15 @@ export function MobileStepEditor({
     onUpdateSite({ pages: normalized, sections: normalized.find((p) => p.isHome)?.sections ?? normalized[0]?.sections ?? [] });
   }
 
+  function notifySectionLimit() {
+    toast.error(t("Batas maksimal 12 bagian tercapai.", "Maximum of 12 sections reached."));
+  }
+
   function addSection(templateOrType: SectionTemplate | string) {
+    if (sections.length >= MAX_SECTIONS) {
+      notifySectionLimit();
+      return;
+    }
     const newSection = typeof templateOrType === "string"
       ? { id: makeId(), type: templateOrType as PersonalSiteSection["type"], heading: "Section" } as PersonalSiteSection
       : templateOrType.build();
@@ -111,12 +125,35 @@ export function MobileStepEditor({
     updatePages(nextPages);
   }
 
-  function deleteSection(id: string) {
+  /** Desktop parity: copy a section directly below the original. */
+  function duplicateSection(id: string) {
+    if (sections.length >= MAX_SECTIONS) {
+      notifySectionLimit();
+      return;
+    }
+    const nextSections = duplicateSectionToList(sections, id, makeId);
+    if (nextSections === sections) return;
+    const nextPages = pages.map((p) => p.id === activePageId ? { ...p, sections: nextSections } : p);
+    updatePages(nextPages);
+  }
+
+  function removeSectionNow(id: string) {
     const nextSections = removeSection(sections, id);
     if (nextSections === sections) return;
     const nextPages = pages.map((p) => p.id === activePageId ? { ...p, sections: nextSections } : p);
     updatePages(nextPages);
     if (selectedSectionId === id) onSelectSection(null);
+  }
+
+  /** Same gate as desktop: empty sections delete directly, others confirm. */
+  function requestDeleteSection(id: string) {
+    const target = sections.find((section) => section.id === id);
+    if (!target) return;
+    if (isSectionEmpty(target)) {
+      removeSectionNow(id);
+      return;
+    }
+    setPendingSectionDeleteId(id);
   }
 
   function reorderSections(from: number, to: number) {
@@ -168,7 +205,8 @@ export function MobileStepEditor({
             selectedSectionId={selectedSectionId}
             onSelectSection={onSelectSection}
             addSection={addSection}
-            deleteSection={deleteSection}
+            duplicateSection={duplicateSection}
+            deleteSection={requestDeleteSection}
             reorderSections={reorderSections}
           />
         )}
@@ -215,6 +253,19 @@ export function MobileStepEditor({
           {t("Lanjut", "Next")} <ChevronRight className="h-4 w-4 ml-1" />
         </Button>
       </div>
+
+      <ConfirmDialog
+        open={pendingSectionDeleteId !== null}
+        onOpenChange={(open) => { if (!open) setPendingSectionDeleteId(null); }}
+        title={t("Hapus bagian ini?", "Delete this section?")}
+        description={t("Bagian beserta seluruh isinya akan dihapus.", "The section and all its content will be removed.")}
+        confirmLabel={t("Hapus Bagian", "Delete Section")}
+        destructive
+        onConfirm={() => {
+          if (pendingSectionDeleteId) removeSectionNow(pendingSectionDeleteId);
+          setPendingSectionDeleteId(null);
+        }}
+      />
     </div>
   );
 }
@@ -277,11 +328,12 @@ function PagesStep({ pages, activePageId, onSetActivePageId, updatePages }: {
   );
 }
 
-function SectionsStep({ sections, selectedSectionId, onSelectSection, addSection, deleteSection, reorderSections }: {
+function SectionsStep({ sections, selectedSectionId, onSelectSection, addSection, duplicateSection, deleteSection, reorderSections }: {
   sections: PersonalSiteSection[];
   selectedSectionId: string | null;
   onSelectSection: (id: string | null) => void;
   addSection: (t: SectionTemplate | string) => void;
+  duplicateSection: (id: string) => void;
   deleteSection: (id: string) => void;
   reorderSections: (from: number, to: number) => void;
 }) {
@@ -301,7 +353,10 @@ function SectionsStep({ sections, selectedSectionId, onSelectSection, addSection
             <button type="button" className="flex-1 text-left truncate" onClick={() => onSelectSection(section.id)}>
               {section.heading || section.type}
             </button>
-            <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => deleteSection(section.id)}>
+            <Button type="button" variant="ghost" size="icon" className="h-6 w-6" aria-label={t("Duplikat bagian", "Duplicate section")} onClick={() => duplicateSection(section.id)}>
+              <Copy className="h-3 w-3" />
+            </Button>
+            <Button type="button" variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" aria-label={t("Hapus bagian", "Delete section")} onClick={() => deleteSection(section.id)}>
               <Trash2 className="h-3 w-3" />
             </Button>
           </div>

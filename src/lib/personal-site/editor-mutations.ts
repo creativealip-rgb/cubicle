@@ -120,3 +120,39 @@ export function removePage(pages: PersonalSitePage[], id: string): PersonalSiteP
   if (!pages.some((page) => page.id === id)) return pages;
   return pages.filter((page) => page.id !== id);
 }
+
+/** Keys that are structural/enum metadata, never user-authored text. */
+const SECTION_NON_CONTENT_KEYS = new Set([
+  "id",
+  "type",
+  "heading",
+  "layout",
+  "align",
+  "size",
+  "aspectRatio",
+  "mediaPosition",
+  "mediaWidth",
+  "verticalAlign",
+]);
+
+function hasUserText(value: unknown, key = ""): boolean {
+  if (typeof value === "string") return !SECTION_NON_CONTENT_KEYS.has(key) && value.trim() !== "";
+  if (Array.isArray(value)) return value.some((item) => hasUserText(item));
+  if (value && typeof value === "object") {
+    return Object.entries(value as Record<string, unknown>).some(([k, v]) => hasUserText(v, k));
+  }
+  return false;
+}
+
+/**
+ * True when a section carries no text the user typed — i.e. exactly what
+ * `emptySection()` produces (placeholder heading "Section" + blank items).
+ * Deleting one of those is safe to do without the confirmation prompt.
+ * `heading` is scanned separately because its default is a placeholder, not
+ * user content; any other heading means the user touched the section.
+ */
+export function isSectionEmpty(section: PersonalSiteSection): boolean {
+  const heading = section.heading?.trim() ?? "";
+  if (heading !== "" && heading !== "Section") return false;
+  return !hasUserText(section);
+}

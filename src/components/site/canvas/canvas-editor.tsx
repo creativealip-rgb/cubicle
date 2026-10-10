@@ -73,13 +73,16 @@ import { PropertiesPanel } from "./properties-panel";
 import { ReadinessBadge } from "../readiness-badge";
 import { StructurePanel } from "./structure-panel";
 import {
+  MAX_SECTIONS,
   addSection as addSectionToList,
   duplicateSection as duplicateSectionInList,
+  isSectionEmpty,
   moveSection as moveSectionInList,
   moveSectionByOffset,
   normalizeContentBlock,
   removeSection,
 } from "@/lib/personal-site/editor-mutations";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { MobileStepEditor } from "./mobile-step-editor";
 import { useT } from "@/lib/i18n-client";
 import { isReadyToPublish, getPersonalSiteReadiness } from "@/lib/personal-site/readiness";
@@ -349,6 +352,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   const [activeDrag, setActiveDrag] = useState<{ id: string; label: string } | null>(null);
 
   const [showPublishConfirm, setShowPublishConfirm] = useState<boolean | null>(null); // null=hidden, true=publish, false=unpublish
+  const [pendingSectionDeleteId, setPendingSectionDeleteId] = useState<string | null>(null);
   const [showQrModal, setShowQrModal] = useState(false);
 
   const sensors = useSensors(
@@ -469,13 +473,25 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     setSite((prev) => syncSiteSections(prev, activePageId, pageSections(prev, activePageId).map((s) => (s.id === sectionId ? normalizeContentBlock({ ...s, ...patch } as PersonalSiteSection) : s))));
   }, [activePageId]);
 
+  const notifySectionLimit = useCallback(() => {
+    toast.error(t("Batas maksimal 12 bagian tercapai.", "Maximum of 12 sections reached."));
+  }, [t]);
+
   const addSection = useCallback((type: PersonalSiteSection["type"]) => {
+    if (pageSections(site, activePageId).length >= MAX_SECTIONS) {
+      notifySectionLimit();
+      return;
+    }
     setSite((prev) => syncSiteSections(prev, activePageId, addSectionToList(pageSections(prev, activePageId), emptySection(type))));
-  }, [activePageId]);
+  }, [activePageId, site, notifySectionLimit, setSite]);
 
   const addSectionTemplate = useCallback((template: SectionTemplate) => {
+    if (pageSections(site, activePageId).length >= MAX_SECTIONS) {
+      notifySectionLimit();
+      return;
+    }
     setSite((prev) => syncSiteSections(prev, activePageId, addSectionToList(pageSections(prev, activePageId), template.build())));
-  }, [activePageId]);
+  }, [activePageId, site, notifySectionLimit, setSite]);
 
   const moveSection = useCallback((id: string, direction: -1 | 1) => {
     setSite((prev) => {
@@ -486,12 +502,16 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   }, [activePageId]);
 
   const duplicateSection = useCallback((id: string) => {
+    if (pageSections(site, activePageId).length >= MAX_SECTIONS) {
+      notifySectionLimit();
+      return;
+    }
     setSite((prev) => {
       const sections = pageSections(prev, activePageId);
       const next = duplicateSectionInList(sections, id, makeId);
       return next === sections ? prev : syncSiteSections(prev, activePageId, next);
     });
-  }, [activePageId]);
+  }, [activePageId, site, notifySectionLimit, setSite]);
 
   const deleteSection = useCallback((id: string) => {
     setSite((prev) => {
@@ -500,7 +520,23 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
       return next === sections ? prev : syncSiteSections(prev, activePageId, next);
     });
     setSelectedSectionId(null);
-  }, [activePageId]);
+  }, [activePageId, setSite]);
+
+  /**
+   * Delete gate for every desktop affordance (canvas wrapper, properties panel,
+   * Delete/Backspace shortcut). A section still holding user content opens the
+   * ConfirmDialog; a section that is still empty (straight out of
+   * `emptySection()`) is removed immediately.
+   */
+  const requestDeleteSection = useCallback((id: string) => {
+    const target = pageSections(site, activePageId).find((section) => section.id === id);
+    if (!target) return;
+    if (isSectionEmpty(target)) {
+      deleteSection(id);
+      return;
+    }
+    setPendingSectionDeleteId(id);
+  }, [site, activePageId, deleteSection]);
 
   const reorderSections = useCallback((sections: PersonalSiteSection[]) => {
     setSite((prev) => syncSiteSections(prev, activePageId, sections));
@@ -573,7 +609,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
         const target = e.target as HTMLElement;
         if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) return;
         e.preventDefault();
-        deleteSection(selectedSectionId);
+        requestDeleteSection(selectedSectionId);
         return;
       }
       // Ctrl+D / Cmd+D — duplicate selected section
@@ -603,7 +639,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedSectionId, deleteSection, duplicateSection, handleSave, undo, redo]);
+  }, [selectedSectionId, requestDeleteSection, duplicateSection, handleSave, undo, redo]);
 
   const groupedWidgets = WIDGET_LIST.reduce<Record<string, typeof WIDGET_LIST>>((acc, w) => {
     (acc[w.category] ??= []).push(w);
@@ -798,7 +834,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                     onAddSection={addSection}
                     onMoveSection={moveSection}
                     onDuplicateSection={duplicateSection}
-                    onDeleteSection={deleteSection}
+                    onDeleteSection={requestDeleteSection}
                     onReorderSections={reorderSections}
                     readinessTarget={livePreviewMode ? null : readinessTarget}
                   />
@@ -1023,7 +1059,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
               <PropertiesPanel
                 section={selectedSection}
                 onUpdate={(patch) => { if (selectedSectionId) updateSection(selectedSectionId, patch); }}
-                onDelete={() => { if (selectedSectionId) deleteSection(selectedSectionId); }}
+                onDelete={() => { if (selectedSectionId) requestDeleteSection(selectedSectionId); }}
                 onClose={() => setSelectedSectionId(null)}
               />
             ) : null
@@ -1109,6 +1145,20 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
         </div>
       </div>
     )}
+
+      {/* Destructive section delete confirmation */}
+      <ConfirmDialog
+        open={pendingSectionDeleteId !== null}
+        onOpenChange={(open) => { if (!open) setPendingSectionDeleteId(null); }}
+        title={t("Hapus bagian ini?", "Delete this section?")}
+        description={t("Bagian beserta seluruh isinya akan dihapus. Tindakan ini bisa diurungkan dengan Undo.", "The section and all its content will be removed. You can still undo this.")}
+        confirmLabel={t("Hapus Bagian", "Delete Section")}
+        destructive
+        onConfirm={() => {
+          if (pendingSectionDeleteId) deleteSection(pendingSectionDeleteId);
+          setPendingSectionDeleteId(null);
+        }}
+      />
     </>
   );
 }
