@@ -44,9 +44,30 @@ on item fields, while the editor legitimately creates blank item rows and
 3. Compensate in readiness: publishing must still require the content the schema
    used to enforce. Add a readiness error per block that has a required-but-empty
    item, and prove `isReadyToPublish` is false for a site containing one.
+
 4. Verify the public renderer tolerates empty item strings (no "undefined", no
    dangling separators) for all eight types.
 5. Commit: `fix(site): let freshly added blocks save`.
+
+**Resolution — severity is per block type, not uniform.** A blanket `error` was
+wrong: only the eight types above ever had their blank content rejected by the
+storage schema, so only those are guaranteed absent from an already-published
+site. The rest were always savable while empty, so erroring on them would newly
+block sites that publish fine today. `EMPTY_BLOCK_SEVERITY` in `readiness.ts` is
+an exhaustive `Record` over the section-type union (a new type fails `tsc` until
+classified):
+
+- `error` — services, process, pricing, portfolio, testimonials, faq, contact,
+  collapsible, booking. (Booking counts because its only content *is* the
+  heading, which the schema required.)
+- `warning` — image, gallery, embed, custom, mediaText, cta, social, contentBlock.
+- `never` — divider, spacer, tableOfContents (`sectionHasContent` is true by design).
+
+Two follow-ups landed with it. `headingSchema` lost its `.min(1)` for the same
+reason: the heading is clearable in the panel and the public renderer already
+hides an empty or default heading, so requiring one blocked the whole save. And
+the empty-block label now carries an ordinal, plus the page title when a site has
+more than one page, so several empty blocks are distinguishable.
 
 **Do not** solve this by seeding placeholder text into `emptySection` — that
 would publish invented copy to a user's public site.

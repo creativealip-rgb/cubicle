@@ -1350,7 +1350,7 @@ function ContentBlockEditor({ section, onUpdate }: EditorProps<Extract<PersonalS
           <Label className="text-xs text-muted-foreground">{t("Tata Letak", "Layout")}</Label>
           <select
             value={section.layout}
-            onChange={(e) => onUpdate({ layout: e.target.value as any })}
+            onChange={(e) => onUpdate({ layout: e.target.value as typeof section.layout })}
             className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-xs focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
           >
             <option value="equal">{t("Seimbang", "Equal")}</option>

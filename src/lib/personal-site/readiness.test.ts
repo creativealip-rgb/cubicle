@@ -742,4 +742,22 @@ describe("empty block readiness (Task 6b)", () => {
       "Bagian 2 belum punya konten sehingga tidak akan tampil di halaman publik",
     ]);
   });
+
+  it("names the page when a site has more than one", () => {
+    // The ordinal restarts per page, so without the page name two blocks on
+    // different pages would both read "Bagian 1".
+    const issues = getPersonalSiteReadiness({
+      ...siteWithFreshBlock,
+      pages: [
+        { id: "home", slug: "", title: "Home", isHome: true, sections: [emptySection("faq")] },
+        { id: "about", slug: "about", title: "About", isHome: false, sections: [emptySection("services")] },
+      ],
+    });
+    expect(
+      issues.filter((issue) => issue.id.startsWith("section-empty-")).map((issue) => issue.label),
+    ).toEqual([
+      'Bagian 1 di halaman "Home" belum punya konten sehingga tidak akan tampil di halaman publik',
+      'Bagian 1 di halaman "About" belum punya konten sehingga tidak akan tampil di halaman publik',
+    ]);
+  });
 });

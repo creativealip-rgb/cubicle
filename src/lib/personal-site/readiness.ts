@@ -199,7 +199,9 @@ export function getPersonalSiteReadiness(site: PersonalSiteInput): ReadinessIssu
   //
   // Severity comes from `EMPTY_BLOCK_SEVERITY`, see the table above.
   const flaggedEmptySectionIds = new Set<string>();
-  const flagEmptyBlock = (section: PersonalSiteSection, index: number) => {
+  // The ordinal restarts on every page, so name the page once a site has more
+  // than one — otherwise two blocks on different pages both read "Bagian 1".
+  const flagEmptyBlock = (section: PersonalSiteSection, index: number, pageTitle?: string) => {
     const severity = EMPTY_BLOCK_SEVERITY[section.type];
     if (severity === "never") return;
     if (sectionHasContent(section)) return;
@@ -208,15 +210,18 @@ export function getPersonalSiteReadiness(site: PersonalSiteInput): ReadinessIssu
     issues.push({
       id: `section-empty-${section.id}`,
       severity,
-      label: `Bagian ${index + 1} belum punya konten sehingga tidak akan tampil di halaman publik`,
+      label: `Bagian ${index + 1}${pageTitle ? ` di halaman "${pageTitle}"` : ""} belum punya konten sehingga tidak akan tampil di halaman publik`,
     });
   };
 
   if (pages.length === 0) {
-    topLevelSections.forEach(flagEmptyBlock);
+    topLevelSections.forEach((section, index) => flagEmptyBlock(section, index));
   } else {
+    const nameThePage = pages.length > 1;
     for (const page of pages) {
-      (page.sections.length > 0 ? page.sections : topLevelSections).forEach(flagEmptyBlock);
+      (page.sections.length > 0 ? page.sections : topLevelSections).forEach((section, index) =>
+        flagEmptyBlock(section, index, nameThePage ? page.title : undefined),
+      );
     }
   }
 

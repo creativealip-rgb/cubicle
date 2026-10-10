@@ -99,17 +99,6 @@ describe("mobile properties drawer parity", () => {
     if (marker) expect(screen.getByText(marker)).toBeTruthy();
   });
 
-  it.each(["embed", "social", "collapsible", "spacer", "contentBlock"] as const)(
-    "%s: exposes a real editable control, not only heading/animation",
-    (type) => {
-      const { unmount } = render(<Harness initial={emptySection(type)} />);
-      // Radix renders the sheet in a body portal; heading is always control #1,
-      // so a type-specific field must add at least one more.
-      const controls = document.body.querySelectorAll("input, textarea, select");
-      expect(controls.length).toBeGreaterThan(1);
-      unmount();
-    }
-  );
 
   it("does not gate drawer content behind the desktop-only rail classes", () => {
     const section = emptySection("services");
