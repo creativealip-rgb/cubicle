@@ -151,6 +151,8 @@ export function FloatingContextToolbar({
     card: t("Subjudul", "Subheading"),
     body: t("Teks normal", "Normal text"),
   };
+  const openDown = position.top < 320;
+  const verticalPopoverClass = openDown ? "top-full mt-1.5" : "bottom-full mb-1.5";
 
   return (
     <div
@@ -186,7 +188,7 @@ export function FloatingContextToolbar({
         {styleOpen && (
           <div
             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            className="absolute bottom-full mb-1.5 left-0 w-36 bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col divide-y divide-slate-100"
+            className={`absolute ${verticalPopoverClass} left-0 w-36 bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col divide-y divide-slate-100`}
           >
             <button
               type="button"
@@ -253,7 +255,7 @@ export function FloatingContextToolbar({
         {fontOpen && (
           <div
             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            className="absolute bottom-full mb-1.5 left-0 w-56 max-h-72 overflow-y-auto bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col"
+            className={`absolute ${verticalPopoverClass} left-0 w-56 max-h-[min(18rem,calc(100vh-8rem))] overflow-y-auto bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col`}
           >
             {CUBIQLO_FONTS.map((f) => (
               <button
@@ -303,7 +305,7 @@ export function FloatingContextToolbar({
         {sizeOpen && (
           <div
             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            className="absolute bottom-full mb-1.5 left-0 w-28 bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col divide-y divide-slate-100"
+            className={`absolute ${verticalPopoverClass} left-0 w-28 bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col divide-y divide-slate-100`}
           >
             {[
               { id: "sm", label: "14" },
@@ -566,7 +568,7 @@ export function FloatingContextToolbar({
         {alignOpen && (
           <div
             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
-            className="absolute bottom-full mb-1.5 left-0 w-32 bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col divide-y divide-slate-100"
+            className={`absolute ${verticalPopoverClass} right-0 w-32 bg-white border border-slate-200 rounded-md shadow-xl py-1 z-50 flex flex-col divide-y divide-slate-100`}
           >
             <button
               type="button"
