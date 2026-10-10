@@ -783,6 +783,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                     onDeleteSection={requestDeleteSection}
                     onReorderSections={reorderSections}
                     readinessTarget={livePreviewMode ? null : readinessTarget}
+                    previewMode={livePreviewMode}
                   />
                 </div>
 

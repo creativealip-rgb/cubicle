@@ -1,5 +1,5 @@
 import type { PersonalSiteInput, PersonalSiteSection } from "./model";
-import { isSafePublicHref, isPlaceholderHref, RESERVED_PERSONAL_SITE_SLUGS, sectionHasContent } from "./model";
+import { isSafePublicHref, isPlaceholderHref, isSafeEmbedUrl, RESERVED_PERSONAL_SITE_SLUGS, sectionHasContent } from "./model";
 
 /**
  * Readiness issue identified in a personal site configuration.
@@ -158,6 +158,29 @@ export function getPersonalSiteReadiness(site: PersonalSiteInput): ReadinessIssu
           label: "URL CTA masih memakai contoh (example.com / hello@example.com) — ganti dengan alamat asli",
         });
       }
+    }
+
+    // Unsafe URLs in other URL-bearing section fields (social links, embed
+    // sources) are publish blockers too. The storage schema deliberately stays
+    // permissive — an already-saved document must never fail validation on
+    // autosave — so the refusal lives in this publish gate, not in Zod.
+    const publishedSections = [
+      ...(site.pages ?? []).flatMap((page) => page.sections),
+      ...(site.sections ?? []),
+    ];
+    if (publishedSections.some((section) => section.type === "social" && section.links.some((link) => Boolean(link.url) && !isSafePublicHref(link.url)))) {
+      issues.push({
+        id: "social-link-invalid",
+        severity: "error",
+        label: "Salah satu tautan sosial memakai protokol yang tidak aman (hanya http/https, mailto, atau tel yang diizinkan)",
+      });
+    }
+    if (publishedSections.some((section) => section.type === "embed" && Boolean(section.url) && !isSafeEmbedUrl(section.url))) {
+      issues.push({
+        id: "embed-url-invalid",
+        severity: "error",
+        label: "URL embed tidak aman — hanya alamat http(s) yang boleh ditampilkan di iframe",
+      });
     }
 
   }

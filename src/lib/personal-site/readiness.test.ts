@@ -169,6 +169,75 @@ describe("getPersonalSiteReadiness", () => {
     expect(issues.some((i) => i.id === "cta-url-invalid")).toBe(true);
   });
 
+  describe("unsafe URLs on URL-bearing section fields", () => {
+    // The storage schema stays permissive on purpose: rejecting these in Zod
+    // would make an already-saved document fail every autosave. The refusal to
+    // *publish* lives here instead.
+    function publishedWith(sections: PersonalSiteSection[]) {
+      return {
+        ...DEFAULT_PERSONAL_SITE,
+        slug: "unsafe-urls",
+        title: "Test Studio",
+        hero: "Hero text",
+        published: true,
+        ctaLabel: "Contact Me",
+        ctaUrl: "https://cal.com/acme",
+        pages: [{ id: "home", slug: "", title: "Home", isHome: true, sections }],
+        themeConfig: DEFAULT_PERSONAL_SITE.themeConfig!,
+      };
+    }
+
+    it.each(["javascript:alert(1)", "data:text/html,<script>alert(1)</script>", "vbscript:msgbox(1)"])(
+      "blocks publishing an embed sourced from %s",
+      (url) => {
+        const issues = getPersonalSiteReadiness(
+          publishedWith([{ ...emptySection("embed"), heading: "Video", url } as PersonalSiteSection]),
+        );
+        expect(issues.some((i) => i.id === "embed-url-invalid")).toBe(true);
+        expect(isReadyToPublish(issues)).toBe(false);
+      },
+    );
+
+    it("does not flag an embed that points at a real http(s) page", () => {
+      const issues = getPersonalSiteReadiness(
+        publishedWith([
+          { ...emptySection("embed"), heading: "Video", url: "https://www.youtube.com/embed/abc" } as PersonalSiteSection,
+        ]),
+      );
+      expect(issues.some((i) => i.id === "embed-url-invalid")).toBe(false);
+    });
+
+    it("blocks publishing a social link with a script scheme", () => {
+      const issues = getPersonalSiteReadiness(
+        publishedWith([
+          {
+            ...emptySection("social"),
+            heading: "Find me",
+            links: [{ id: "l1", platform: "Instagram", url: "javascript:alert(1)" }],
+          } as PersonalSiteSection,
+        ]),
+      );
+      expect(issues.some((i) => i.id === "social-link-invalid")).toBe(true);
+      expect(isReadyToPublish(issues)).toBe(false);
+    });
+
+    it("accepts mailto and https social links", () => {
+      const issues = getPersonalSiteReadiness(
+        publishedWith([
+          {
+            ...emptySection("social"),
+            heading: "Find me",
+            links: [
+              { id: "l1", platform: "Email", url: "mailto:hi@acme.test" },
+              { id: "l2", platform: "Instagram", url: "https://instagram.com/acme" },
+            ],
+          } as PersonalSiteSection,
+        ]),
+      );
+      expect(issues.some((i) => i.id === "social-link-invalid")).toBe(false);
+    });
+  });
+
   it("requires at least one contact link or CTA URL when published", () => {
     // No contacts anywhere
     const siteNoContact = {

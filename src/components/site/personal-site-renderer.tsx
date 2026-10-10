@@ -6,6 +6,7 @@ import {
   isPlaceholderHref,
   isEditorialPlaceholderText,
   safePublicHref,
+  safeEmbedSrc,
   sectionHasContent,
   type PersonalSiteInput,
   type PersonalSiteSection,
@@ -466,8 +467,10 @@ function SectionBody({
         </div>
       );
     }
-    case "embed":
-      return section.url ? <iframe src={section.url} className="w-full rounded-2xl" style={{ height: section.height || 400 }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy" /> : null;
+    case "embed": {
+      const embedSrc = safeEmbedSrc(section.url);
+      return embedSrc ? <iframe src={embedSrc} className="w-full rounded-2xl" style={{ height: section.height || 400 }} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen loading="lazy" /> : null;
+    }
     case "social":
       return <div className="flex flex-wrap gap-3">{section.links.filter((link) => link.url).map((link) => (
         <a key={link.id} className={`inline-flex min-h-11 items-center rounded-xl px-5 py-3 text-sm font-semibold ${panel}`} href={safePublicHref(link.url)} target="_blank" rel="noreferrer">{link.platform}</a>

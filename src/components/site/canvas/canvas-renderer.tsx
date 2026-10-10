@@ -14,7 +14,7 @@ import { useT } from "@/lib/i18n-client";
 import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
 import { GoogleSitesGalleryCanvas } from "./google-sites-gallery";
 import type { PersonalSiteInput, PersonalSiteSection, ThemeConfig } from "@/lib/personal-site/model";
-import { isEditorialPlaceholderText, PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
+import { isEditorialPlaceholderText, isPlaceholderHref, PERSONAL_SITE_ANIMATIONS, safeEmbedSrc, safePublicHref } from "@/lib/personal-site/model";
 
 function patchItem<T>(arr: T[], idx: number, patch: any): T[] {
   return arr.map((item, i) => (i === idx ? { ...item, ...patch } : item));
@@ -54,6 +54,13 @@ type Props = {
   onDuplicateSection: (id: string) => void;
   onDeleteSection: (id: string) => void;
   readinessTarget?: string | null;
+  /**
+   * When true the canvas renders like the public page: CTA/social/image links
+   * become real anchors. When false (edit mode) they stay non-navigating and
+   * only expose the real destination as an affordance, so editing never
+   * navigates away. Mirrors the public renderer's `safePublicHref` policy.
+   */
+  previewMode?: boolean;
 };
 
 export function CanvasRenderer({
@@ -68,6 +75,7 @@ export function CanvasRenderer({
   onDuplicateSection,
   onDeleteSection,
   readinessTarget,
+  previewMode = false,
   onReorderSections: _onReorderSections,
 }: Props & { onReorderSections?: (sections: PersonalSiteSection[]) => void }) { // reserved for future use
   const { t } = useT();
@@ -162,6 +170,7 @@ export function CanvasRenderer({
               onDelete={() => onDeleteSection(section.id)}
               onUpdate={(patch) => onUpdateSection(section.id, patch)}
               theme={theme}
+              previewMode={previewMode}
             />
           ))}
         </SortableContext>
@@ -183,13 +192,25 @@ export function CanvasRenderer({
       {/* CTA */}
       {(site.ctaLabel || site.ctaUrl) && (
         <div data-readiness-target="cta" className={cn("px-8 py-8 text-center", readinessTarget === "cta" && "ring-4 ring-red-400 ring-offset-2")}>
-          <InlineText
-            value={site.ctaLabel}
-            onChange={(v) => onUpdateSite({ ctaLabel: v })}
-            tag="p"
-            className="text-lg font-semibold mb-2"
-            placeholder={t("Label tombol...", "Button label...")}
-          />
+          {previewMode && site.ctaLabel && site.ctaUrl && !isPlaceholderHref(site.ctaUrl) && safePublicHref(site.ctaUrl) !== "#" ? (
+            /* Preview mirrors the public hero CTA: a real, navigable anchor. */
+            <a
+              href={safePublicHref(site.ctaUrl)}
+              title={safePublicHref(site.ctaUrl)}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl px-6 py-3 text-lg font-semibold"
+              style={{ backgroundColor: theme?.primaryColor ?? "#2563EB", color: "#ffffff" }}
+            >
+              {site.ctaLabel}
+            </a>
+          ) : (
+            <InlineText
+              value={site.ctaLabel}
+              onChange={(v) => onUpdateSite({ ctaLabel: v })}
+              tag="p"
+              className="text-lg font-semibold mb-2"
+              placeholder={t("Label tombol...", "Button label...")}
+            />
+          )}
         </div>
       )}
 
@@ -207,7 +228,7 @@ export function CanvasRenderer({
   );
 }
 
-function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, onUpdate, theme }: {
+function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, onUpdate, theme, previewMode }: {
   section: PersonalSiteSection;
   selected: boolean;
   onSelect: () => void;
@@ -217,6 +238,7 @@ function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDo
   onDelete: () => void;
   onUpdate: (patch: Partial<PersonalSiteSection>) => void;
   theme?: ThemeConfig;
+  previewMode?: boolean;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: section.id });
 
@@ -242,7 +264,7 @@ function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDo
         onAnimationChange={(anim) => onUpdate({ animation: anim } as Partial<PersonalSiteSection>)}
         dragHandleProps={listeners}
       >
-        <SectionRenderer section={section} onUpdate={onUpdate} theme={theme} />
+        <SectionRenderer section={section} onUpdate={onUpdate} theme={theme} previewMode={previewMode} />
       </CanvasSectionWrapper>
     </div>
   );
@@ -360,7 +382,7 @@ function getResolvedFieldTypography(section: any, item: any, fieldKey: "titleTyp
   };
 }
 
-function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSection; onUpdate: (patch: Partial<PersonalSiteSection>) => void; theme?: ThemeConfig }) {
+function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { section: PersonalSiteSection; onUpdate: (patch: Partial<PersonalSiteSection>) => void; theme?: ThemeConfig; previewMode?: boolean }) {
   const { t } = useT();
   const headingStyle = getHeadingStyle(section as any);
 
@@ -817,48 +839,59 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
         />
       );
 
-    case "image":
+    case "image": {
+      const linkHref = previewMode && section.linkUrl && !isPlaceholderHref(section.linkUrl) ? safePublicHref(section.linkUrl) : "";
+      const imageBox = (
+        <div
+          className={`relative overflow-hidden rounded-2xl border border-border/80 bg-muted/20 ${
+            section.size === "sm"
+              ? "w-full max-w-sm"
+              : section.size === "md"
+              ? "w-full max-w-xl"
+              : section.size === "lg"
+              ? "w-full max-w-3xl"
+              : "w-full"
+          }`}
+        >
+          {section.url ? (
+            /* eslint-disable-next-line @next/next/no-img-element */
+            <img
+              src={section.url}
+              alt={section.alt || section.heading || "Image"}
+              className={`w-full object-cover transition-all ${
+                section.aspectRatio === "square"
+                  ? "aspect-square"
+                  : section.aspectRatio === "video"
+                  ? "aspect-video"
+                  : section.aspectRatio === "wide"
+                  ? "aspect-[21/9]"
+                  : section.aspectRatio === "portrait"
+                  ? "aspect-[3/4]"
+                  : "h-auto max-h-[550px]"
+              }`}
+            />
+          ) : (
+            <div className="py-16 flex flex-col items-center justify-center text-muted-foreground gap-2">
+              <ImageIcon className="h-8 w-8 text-muted-foreground/60" />
+              <p className="text-xs font-medium">{t("Pilih atau unggah gambar di panel kanan", "Select or upload an image in the right panel")}</p>
+            </div>
+          )}
+        </div>
+      );
       return (
         <div className="py-6">
           {section.heading && (
             <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
           )}
           <div className={`flex flex-col ${section.align === "left" ? "items-start" : section.align === "right" ? "items-end" : "items-center"}`}>
-            <div
-              className={`relative overflow-hidden rounded-2xl border border-border/80 bg-muted/20 ${
-                section.size === "sm"
-                  ? "w-full max-w-sm"
-                  : section.size === "md"
-                  ? "w-full max-w-xl"
-                  : section.size === "lg"
-                  ? "w-full max-w-3xl"
-                  : "w-full"
-              }`}
-            >
-              {section.url ? (
-                /* eslint-disable-next-line @next/next/no-img-element */
-                <img
-                  src={section.url}
-                  alt={section.alt || section.heading || "Image"}
-                  className={`w-full object-cover transition-all ${
-                    section.aspectRatio === "square"
-                      ? "aspect-square"
-                      : section.aspectRatio === "video"
-                      ? "aspect-video"
-                      : section.aspectRatio === "wide"
-                      ? "aspect-[21/9]"
-                      : section.aspectRatio === "portrait"
-                      ? "aspect-[3/4]"
-                      : "h-auto max-h-[550px]"
-                  }`}
-                />
-              ) : (
-                <div className="py-16 flex flex-col items-center justify-center text-muted-foreground gap-2">
-                  <ImageIcon className="h-8 w-8 text-muted-foreground/60" />
-                  <p className="text-xs font-medium">{t("Pilih atau unggah gambar di panel kanan", "Select or upload an image in the right panel")}</p>
-                </div>
-              )}
-            </div>
+            {/* Preview mode mirrors the public page: the image becomes a real link. Edit mode stays non-navigating. */}
+            {linkHref && linkHref !== "#" ? (
+              <a href={linkHref} title={linkHref} className="block">
+                {imageBox}
+              </a>
+            ) : (
+              imageBox
+            )}
             {section.caption && (
               <InlineText
                 value={section.caption}
@@ -870,6 +903,7 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           </div>
         </div>
       );
+    }
 
     case "mediaText": {
       const isLeft = (section.mediaPosition || "left") === "left";
@@ -943,19 +977,23 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
       );
     }
 
-    case "embed":
+    case "embed": {
+      const embedSrc = safeEmbedSrc(section.url);
       return (
         <div className="py-6">
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
           <div className="rounded-lg border overflow-hidden" style={{ height: section.height ?? 400 }}>
-            {section.url ? (
-              <iframe src={section.url} className="w-full h-full" title={section.heading} />
+            {embedSrc ? (
+              <iframe src={embedSrc} className="w-full h-full" title={section.heading} />
+            ) : section.url ? (
+              <div className="w-full h-full flex items-center justify-center px-4 text-center text-amber-600 text-sm">{t("URL embed tidak aman — hanya alamat http(s) yang diizinkan", "Unsafe embed URL — only http(s) addresses are allowed")}</div>
             ) : (
               <div className="w-full h-full flex items-center justify-center text-muted-foreground text-sm">{t("Masukkan URL embed", "Enter an embed URL")}</div>
             )}
           </div>
         </div>
       );
+    }
 
     case "social":
       return (
@@ -963,9 +1001,17 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
           <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
           <div className="flex flex-wrap gap-2">
             {section.links.map((link) => (
-              <span key={link.id} className="rounded-full border px-3 py-1 text-sm">
-                {link.platform}
-              </span>
+              previewMode && !isPlaceholderHref(link.url) && safePublicHref(link.url) !== "#" ? (
+                /* Preview mirrors the public page: a real, navigable link. */
+                <a key={link.id} href={safePublicHref(link.url)} title={safePublicHref(link.url)} target="_blank" rel="noreferrer" className="rounded-full border px-3 py-1 text-sm">
+                  {link.platform}
+                </a>
+              ) : (
+                /* Edit mode stays non-navigating but still shows the real destination. */
+                <span key={link.id} title={safePublicHref(link.url)} className="rounded-full border px-3 py-1 text-sm">
+                  {link.platform}
+                </span>
+              )
             ))}
           </div>
         </div>
@@ -976,9 +1022,16 @@ function SectionRenderer({ section, onUpdate, theme }: { section: PersonalSiteSe
         <div className="py-8 text-center">
           <InlineText value={section.text} onChange={(v) => onUpdate({ text: v })} tag="p" className="text-lg mb-4" />
           {section.buttonLabel && (
-            <span className="inline-flex items-center rounded-lg px-6 py-2.5 text-sm font-medium text-white" style={{ backgroundColor: theme?.primaryColor ?? "#2563EB" }}>
-              {section.buttonLabel}
-            </span>
+            previewMode && section.buttonUrl && !isPlaceholderHref(section.buttonUrl) && safePublicHref(section.buttonUrl) !== "#" ? (
+              /* Preview mirrors the public CTA: a real, navigable anchor. */
+              <a href={safePublicHref(section.buttonUrl)} title={safePublicHref(section.buttonUrl)} className="inline-flex items-center rounded-lg px-6 py-2.5 text-sm font-medium text-white" style={{ backgroundColor: theme?.primaryColor ?? "#2563EB" }}>
+                {section.buttonLabel}
+              </a>
+            ) : (
+              <span className="inline-flex items-center rounded-lg px-6 py-2.5 text-sm font-medium text-white" style={{ backgroundColor: theme?.primaryColor ?? "#2563EB" }}>
+                {section.buttonLabel}
+              </span>
+            )
           )}
         </div>
       );

@@ -553,6 +553,26 @@ export function safePublicHref(value: string) {
 }
 
 /**
+ * Single source of truth for embed sources (`<iframe src>`). A `#anchor`,
+ * `mailto:`, or app-relative path is a legitimate public *href* but is never a
+ * valid embed target, and `javascript:`/`data:`/`vbscript:` must never reach an
+ * iframe. Only an absolute http(s) URL qualifies.
+ */
+export function isSafeEmbedUrl(value: string) {
+  try {
+    const url = new URL(value.trim());
+    return url.protocol === "https:" || url.protocol === "http:";
+  } catch {
+    return false;
+  }
+}
+
+/** Returns the embed source when safe, otherwise empty so the iframe is not rendered. */
+export function safeEmbedSrc(value: string) {
+  return isSafeEmbedUrl(value) ? value.trim() : "";
+}
+
+/**
  * True when a public href still points at an example/placeholder destination
  * (example.com / example.org / hello@example.com), which must never ship as
  * real public copy.

@@ -5,6 +5,8 @@ import {
   isEditorialPlaceholderText,
   isPlaceholderHref,
   isSafePublicHref,
+  isSafeEmbedUrl,
+  safeEmbedSrc,
   normalizeLegacyLinks,
   normalizeLegacySections,
   normalizePersonalSiteSlug,
@@ -139,6 +141,32 @@ describe("pristine block savability", () => {
         `${type} fresh block failed storage schema: ${parsed.success ? "" : JSON.stringify(parsed.error.issues)}`,
       ).toBe(true);
     }
+  });
+});
+
+describe("embed URL safety", () => {
+  // An embed source is a different contract from an href: only an absolute
+  // http(s) address is a valid iframe target, so `#anchor`, mailto and
+  // app-relative paths are refused here even though they are legitimate links.
+  it.each([
+    ["https://www.youtube.com/embed/abc", true],
+    ["http://example.test/embed", true],
+    [" #pricing", false],
+    ["mailto:hi@acme.test", false],
+    ["/booking/acme", false],
+    ["javascript:alert(1)", false],
+    ["data:text/html,<script>alert(1)</script>", false],
+    ["VBscript:msgbox(1)", false],
+    ["", false],
+    ["not a url", false],
+  ])("isSafeEmbedUrl(%s) === %s", (value, expected) => {
+    expect(isSafeEmbedUrl(value)).toBe(expected);
+  });
+
+  it("returns an empty source instead of an unsafe one", () => {
+    expect(safeEmbedSrc("https://www.youtube.com/embed/abc")).toBe("https://www.youtube.com/embed/abc");
+    expect(safeEmbedSrc("javascript:alert(1)")).toBe("");
+    expect(safeEmbedSrc("#pricing")).toBe("");
   });
 });
 

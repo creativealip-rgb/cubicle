@@ -88,4 +88,45 @@ describe("PersonalSiteRenderer", () => {
     const html = renderToStaticMarkup(<PersonalSiteRenderer site={{ ...DEFAULT_PERSONAL_SITE, theme }} />);
     expect(html).toContain(`data-theme="${theme}"`);
   });
+
+  describe("embed sources", () => {
+    function renderEmbed(url: string) {
+      const site: PersonalSiteInput = {
+        ...DEFAULT_PERSONAL_SITE,
+        ctaUrl: "https://cal.com/owner/book",
+        sections: [],
+        pages: [
+          {
+            id: "home",
+            slug: "",
+            title: "Home",
+            isHome: true,
+            sections: [{ id: "e", type: "embed", heading: "Video", url, height: 400 }],
+          },
+        ],
+      };
+      return renderToStaticMarkup(<PersonalSiteRenderer site={site} />);
+    }
+
+    it("renders an iframe for an absolute http(s) source", () => {
+      const html = renderEmbed("https://www.youtube.com/embed/abc");
+      expect(html).toContain("<iframe");
+      expect(html).toContain('src="https://www.youtube.com/embed/abc"');
+    });
+
+    it.each([
+      "javascript:alert(1)",
+      "data:text/html,<script>alert(1)</script>",
+      "vbscript:msgbox(1)",
+      "#pricing",
+      "/booking/acme",
+    ])("renders no iframe for %s", (url) => {
+      // Only absolute http(s) is a valid iframe target. `#anchor`, mailto and
+      // app-relative paths are legitimate hrefs but would render a blank frame,
+      // and the script schemes must never reach the sink at all.
+      const html = renderEmbed(url);
+      expect(html).not.toContain("<iframe");
+      expect(html).not.toContain(url);
+    });
+  });
 });
