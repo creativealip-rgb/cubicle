@@ -19,9 +19,9 @@ describe("document editor layout wiring", () => {
     const proposalEdit = read("src/app/(app)/app/proposals/[proposalId]/edit/page.tsx");
     const contractEdit = read("src/app/(app)/app/contracts/[contractId]/edit/page.tsx");
 
-    expect(editor).toContain('flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden');
-    // Panels are now responsive asides (w-64 sm:w-72) that clip internally and
-    // scroll their own body; the outer shell still confines the page scroll.
+    expect(editor).toContain('flex h-full min-h-0 flex-col overflow-hidden');
+    // Panels inherit the viewport-contained app shell, clip internally, and
+    // scroll their own body; the outer shell prevents page-level scrolling.
     expect(editor).toMatch(/aside className="w-64 sm:w-72 border-r[^"]*shrink-0 h-full overflow-hidden/);
     expect(editor).toMatch(/aside className="w-64 sm:w-72 border-l[^"]*shrink-0 h-full overflow-hidden/);
     expect(editor).toContain("flex-1 overflow-y-auto");
