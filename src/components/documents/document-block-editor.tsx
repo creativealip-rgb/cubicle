@@ -900,7 +900,7 @@ export function DocumentBlockEditor({
   );
 
   return (
-    <div className="flex h-[calc(100vh-3.5rem)] flex-col overflow-hidden bg-muted/20">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-muted/20">
       {/* ── TOPBAR HEADER (Forms-style 3-Tabs + Device Switcher + Actions) ── */}
       <header className="h-14 border-b border-border/70 bg-background/95 backdrop-blur px-3 sm:px-5 flex items-center justify-between shrink-0 z-30 shadow-2xs">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">

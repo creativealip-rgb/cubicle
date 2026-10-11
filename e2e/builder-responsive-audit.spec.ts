@@ -15,6 +15,24 @@ async function assertSurface(page: Page, name: string) {
   await expect(page.getByRole("button", { name: /^(Save|Simpan)$/ })).toHaveCount(1);
   const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
   expect(overflow, `${name} horizontal overflow`).toBeLessThanOrEqual(1);
+  if (page.viewportSize()!.width >= 768) {
+    const containment = await page.evaluate(() => {
+      const header = document.querySelector("#main-content header");
+      const rails = Array.from(document.querySelectorAll("#main-content aside"));
+      const scrollable = Array.from(document.querySelectorAll<HTMLElement>("#main-content *")).find((el) => {
+        const style = getComputedStyle(el);
+        return /auto|scroll/.test(style.overflowY) && el.scrollHeight > el.clientHeight + 20;
+      });
+      const before = { windowY: window.scrollY, headerY: header?.getBoundingClientRect().y, railY: rails.map((el) => el.getBoundingClientRect().y) };
+      scrollable?.scrollTo({ top: Math.min(500, scrollable.scrollHeight) });
+      const after = { windowY: window.scrollY, headerY: header?.getBoundingClientRect().y, railY: rails.map((el) => el.getBoundingClientRect().y), canvasY: scrollable?.scrollTop ?? 0 };
+      return { before, after };
+    });
+    expect(containment.after.windowY, `${name} page must not scroll`).toBe(0);
+    expect(containment.after.headerY, `${name} header must remain fixed`).toBe(containment.before.headerY);
+    expect(containment.after.railY, `${name} rails must remain fixed`).toEqual(containment.before.railY);
+    expect(containment.after.canvasY, `${name} canvas must own scrolling`).toBeGreaterThan(0);
+  }
   await page.screenshot({ path: `/tmp/${name}-${page.viewportSize()!.width}.png`, fullPage: true });
 }
 

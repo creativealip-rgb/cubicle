@@ -119,7 +119,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
       >
         Lompati ke konten utama
       </a>
-      <div className="flex min-h-screen">
+      <div className={cn("flex min-h-screen", focusEditor && "h-screen overflow-hidden")}>
         {/* Mobile overlay backdrop */}
         {mobileOpen && (
           <div
@@ -137,7 +137,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
         />
         <div
           className={cn(
-            "flex min-w-0 flex-1 flex-col transition-all duration-200",
+            "flex min-h-0 min-w-0 flex-1 flex-col transition-all duration-200",
             // Desktop (lg+): shift for sidebar width; tablet/mobile overlay
             "lg:ml-[260px]",
             collapsed && "lg:ml-[68px]",
@@ -146,7 +146,7 @@ export function AppShell({ children, lang, user, badgeCounts }: AppShellProps) {
           )}
         >
           <AppTopbar user={user} />
-          <main id="main-content" className={cn("min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28", (focusEditor || documentEditor || onBrainPage) && "p-0 pb-0 sm:p-0 md:p-0 md:pb-0 h-[calc(100vh-56px)] overflow-hidden", isFilesPage && "p-3 pb-3 sm:p-4 sm:pb-4 md:p-6 md:pb-6 h-[calc(100vh-56px)] overflow-hidden flex flex-col")}>{children}</main>
+          <main id="main-content" className={cn("min-h-0 min-w-0 flex-1 p-3 pb-24 sm:p-4 md:p-6 md:pb-28", (focusEditor || documentEditor || onBrainPage) && "p-0 pb-0 sm:p-0 md:p-0 md:pb-0 overflow-hidden", isFilesPage && "p-3 pb-3 sm:p-4 sm:pb-4 md:p-6 md:pb-6 h-[calc(100vh-56px)] overflow-hidden flex flex-col")}>{children}</main>
         </div>
         {!onBrainPage && <AIChatPanel variant="floating" />}
       </div>

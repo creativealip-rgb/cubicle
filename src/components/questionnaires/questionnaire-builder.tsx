@@ -1217,7 +1217,7 @@ export function QuestionnaireBuilder({
   const embedCode = activeSlugOrId ? `<iframe src="${baseUrl}/intake/${activeSlugOrId}" width="100%" height="700px" frameborder="0" style="border:0;border-radius:12px;"></iframe>` : "";
 
   return (
-    <div className="flex flex-col h-[calc(100vh-56px)] w-full bg-slate-100/70 dark:bg-zinc-950 overflow-hidden select-none">
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden bg-slate-100/70 dark:bg-zinc-950 select-none">
       {/* ─── Top Jotform Bar: Brand, Tabs, Device Switcher, Actions ─── */}
       <header className="h-13 border-b border-border/80 bg-background px-3 sm:px-4 flex items-center justify-between shrink-0 z-20">
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
