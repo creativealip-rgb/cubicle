@@ -28,6 +28,8 @@ import { AcquisitionTracker } from "@/components/analytics/acquisition-tracker";
 
 export const dynamic = "force-dynamic";
 
+const APP_URL = "https://app.cubiqlo.com";
+
 const workflow = [
   {
     number: "01",
@@ -177,34 +179,34 @@ const workflowCopy = [
             <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-10 w-auto object-contain" priority />
           </Link>
           <nav aria-label="Navigasi utama" className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
-            <a href="#workflow" className="hover:text-[#2563EB]">{t("Alur kerja", "Workflow")}</a>
-            <a href="#portal" className="hover:text-[#2563EB]">{t("Portal", "Portal")}</a>
-            <a href="#compare" className="hover:text-[#2563EB]">{t("Perbandingan", "Compare")}</a>
-            <a href="#pricing" className="hover:text-[#2563EB]">{t("Harga", "Pricing")}</a>
+            <a href="#workflow" className="inline-flex min-h-11 items-center hover:text-[#2563EB]">{t("Alur kerja", "Workflow")}</a>
+            <a href="#portal" className="inline-flex min-h-11 items-center hover:text-[#2563EB]">{t("Portal", "Portal")}</a>
+            <a href="#compare" className="inline-flex min-h-11 items-center hover:text-[#2563EB]">{t("Perbandingan", "Compare")}</a>
+            <a href="#pricing" className="inline-flex min-h-11 items-center hover:text-[#2563EB]">{t("Harga", "Pricing")}</a>
           </nav>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <LandingLanguageSwitch initialLang={lang} />
             
             {/* Direct visible Log in button on mobile & desktop */}
-            <Button asChild variant="ghost" size="sm" className="h-9 px-3 text-xs sm:text-sm font-semibold rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100">
-              <Link href="/login">{tx("Masuk", "Log in")}</Link>
+            <Button asChild variant="ghost" size="sm" className="h-11 px-3 text-xs sm:text-sm font-semibold rounded-xl text-slate-700 hover:text-slate-900 hover:bg-slate-100">
+              <a href={`${APP_URL}/login`}>{tx("Masuk", "Log in")}</a>
             </Button>
 
             <details className="relative md:hidden">
-              <summary aria-label="Buka menu" className="flex h-9 w-9 cursor-pointer list-none items-center justify-center rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
+              <summary aria-label="Buka menu" className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
                 <Menu className="h-4 w-4" />
               </summary>
               <nav className="absolute right-0 top-11 w-52 rounded-2xl bg-white p-2 text-sm shadow-2xl ring-1 ring-slate-950/10 z-50">
                 {[[tx("Alur kerja", "Workflow"), "#workflow"], [tx("Portal", "Portal"), "#portal"], [tx("Perbandingan", "Compare"), "#compare"], [tx("Harga", "Pricing"), "#pricing"]].map(([label, href]) => (
-                  <a key={href} href={href} className="block rounded-xl px-3 py-2.5 font-medium hover:bg-blue-50">{label}</a>
+                  <a key={href} href={href} className="flex min-h-11 items-center rounded-xl px-3 py-2.5 font-medium hover:bg-blue-50">{label}</a>
                 ))}
                 <div className="my-1 border-t border-slate-100" />
-                <Link href="/signup" className="block rounded-xl px-3 py-2.5 font-semibold text-[#2563EB] hover:bg-blue-50">{tx("Buat akun gratis", "Create free account")}</Link>
+                <a href={`${APP_URL}/signup`} className="flex min-h-11 items-center rounded-xl px-3 py-2.5 font-semibold text-[#2563EB] hover:bg-blue-50">{tx("Buat akun gratis", "Create free account")}</a>
               </nav>
             </details>
 
             <Button asChild className="hidden rounded-xl bg-[#292D34] text-white hover:bg-[#17191E] md:inline-flex">
-              <Link href="/signup">{tx("Mulai gratis", "Start free")} <ArrowRight className="h-4 w-4 ml-1" /></Link>
+              <a href={`${APP_URL}/signup`}>{tx("Mulai gratis", "Start free")} <ArrowRight className="h-4 w-4 ml-1" /></a>
             </Button>
           </div>
         </div>
@@ -212,7 +214,7 @@ const workflowCopy = [
 
       <main className="pt-16">
         <section className="relative overflow-hidden px-4 pb-16 pt-14 sm:px-6 sm:pb-24 sm:pt-20 lg:px-8 lg:pb-28 lg:pt-24">
-          <div className="pointer-events-none absolute inset-0" aria-hidden="true" style={{ background: "radial-gradient(circle at 9% 10%, rgba(102,71,240,.15), transparent 28%), radial-gradient(circle at 88% 8%, rgba(255,118,87,.12), transparent 24%)" }} />
+          <div className="pointer-events-none absolute inset-0" aria-hidden="true" style={{ background: "radial-gradient(circle at 9% 10%, rgba(37,99,235,.15), transparent 28%), radial-gradient(circle at 88% 8%, rgba(255,118,87,.12), transparent 24%)" }} />
           <div className="relative mx-auto grid max-w-7xl items-center gap-12 lg:grid-cols-[0.82fr_1.18fr] lg:gap-10">
             <div className="min-w-0">
               <div className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-[#2563EB] shadow-sm ring-1 ring-[#2563EB]/15">
@@ -229,7 +231,7 @@ const workflowCopy = [
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg" className="h-12 w-full rounded-xl bg-[#292D34] px-6 text-white shadow-[0_12px_30px_rgba(41,45,52,.18)] hover:-translate-y-0.5 hover:bg-[#17191E] sm:w-auto">
-                  <Link href="/signup">{tx("Buat workspace gratis", "Create free workspace")} <ArrowRight className="h-4 w-4 ml-1" /></Link>
+                  <a href={`${APP_URL}/signup`}>{tx("Buat workspace gratis", "Create free workspace")} <ArrowRight className="h-4 w-4 ml-1" /></a>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="h-12 w-full rounded-xl border-slate-300 bg-white/80 px-6 sm:w-auto"><Link href="#workflow">{tx("Lihat alur kerja", "See workflow")}</Link></Button>
               </div>
@@ -355,7 +357,7 @@ const workflowCopy = [
 
         <section className="px-4 pb-20 sm:px-6 sm:pb-28 lg:px-8">
           <div className="mx-auto grid max-w-7xl gap-6 rounded-[2rem] bg-slate-100/80 p-6 sm:p-10 lg:grid-cols-[.7fr_1.3fr] lg:items-center">
-            <div><CheckCircle2 className="h-6 w-6 text-[#2563EB]" /><p className="mt-6 text-xs font-semibold uppercase tracking-[.18em] text-[#2563EB]">{tx("Bukti produk, bukan janji", "Product proof, not promises")}</p><h2 className="mt-3 text-3xl font-semibold tracking-[-.03em] sm:text-4xl">{tx("Lihat bagaimana satu update mengalir ke seluruh workspace.", "See how one update flows across your workspace.")}</h2><Link href="/signup" className="mt-6 inline-flex items-center gap-2 font-semibold text-[#2563EB]">{tx("Coba dengan data sendiri", "Try it with your own data")} <ChevronRight className="h-4 w-4" /></Link></div>
+            <div><CheckCircle2 className="h-6 w-6 text-[#2563EB]" /><p className="mt-6 text-xs font-semibold uppercase tracking-[.18em] text-[#2563EB]">{tx("Bukti produk, bukan janji", "Product proof, not promises")}</p><h2 className="mt-3 text-3xl font-semibold tracking-[-.03em] sm:text-4xl">{tx("Lihat bagaimana satu update mengalir ke seluruh workspace.", "See how one update flows across your workspace.")}</h2><a href={`${APP_URL}/signup`} className="mt-6 inline-flex min-h-11 items-center gap-2 font-semibold text-[#2563EB]">{tx("Coba dengan data sendiri", "Try it with your own data")} <ChevronRight className="h-4 w-4" /></a></div>
             <div className="grid gap-3 sm:grid-cols-3">{workflow.map((step, i) => <div key={step.number} className="rounded-2xl bg-white p-5 shadow-sm"><span className="text-xs font-semibold text-[#2563EB]">{step.number} · {tx(workflowCopy[i][0], workflowCopy[i][1])}</span><h3 className="mt-8 font-semibold">{tx(workflowCopy[i][2], workflowCopy[i][3])}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{tx(workflowCopy[i][4], workflowCopy[i][5])}</p></div>)}</div>
           </div>
         </section>
@@ -382,16 +384,16 @@ const workflowCopy = [
         <section id="pricing" className="bg-white px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#2563EB]">{tx("Harga transparan", "Transparent pricing")}</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Mulai gratis. Upgrade saat klien bertambah.", "Start free. Upgrade as your client work grows.")}</h2><p className="mt-5 text-lg text-slate-600">{tx("Tidak perlu kartu kredit untuk mulai.", "No credit card required.")}</p></div>
-            <div className="mt-12 grid gap-5 lg:grid-cols-3">{pricing.map(plan => <div key={plan.name} className={`relative flex flex-col rounded-3xl p-6 ${plan.featured ? "bg-[#0F172A] text-white shadow-[0_24px_70px_rgba(15,23,42,.22)] lg:-translate-y-3" : "bg-[#F8FAFC] ring-1 ring-slate-200"}`}>{plan.featured && <span className="absolute right-5 top-5 rounded-full bg-[#2563EB] px-3 py-1 text-xs font-semibold">{tx("Paling populer", "Most popular")}</span>}<p className={`text-sm font-semibold ${plan.featured ? "text-blue-300" : "text-[#2563EB]"}`}>{tx(plan.name, plan.name === "Free" ? "Free" : plan.name)}</p><p className={`mt-3 text-sm ${plan.featured ? "text-slate-300" : "text-slate-600"}`}>{plan.name === "Free" ? tx("Coba dulu untuk client work kecil.", "Try it for small client work.") : plan.name === "Solo" ? tx("Untuk freelancer yang punya banyak klien.", "For freelancers with many clients.") : tx("Untuk tim kecil yang kerja bareng.", "For small teams working together.")}</p><div className="mt-7"><strong className="block text-3xl tracking-[-.03em]">{getLandingPrice(plan.name.toLowerCase() as "free" | "solo" | "team", "monthly", currency)}</strong><span className={`mt-1 block text-xs ${plan.featured ? "text-slate-400" : "text-slate-500"}`}>{plan.name === "Solo" || plan.name === "Team" ? `${getLandingPrice(plan.name.toLowerCase() as "solo" | "team", "yearly", currency)} / ${tx("tahun", "year")}` : tx("selamanya", "forever")}</span></div><div className={`my-6 h-px ${plan.featured ? "bg-white/10" : "bg-slate-200"}`} /><div className="flex-1 space-y-3">{plan.items.map(item => <div key={item} className={`flex items-center gap-2 text-sm ${plan.featured ? "text-slate-200" : "text-slate-700"}`}><Check className={`h-4 w-4 ${plan.featured ? "text-emerald-400" : "text-[#2563EB]"}`} />{tx(item, landingEn[item] ?? item)}</div>)}</div><Button asChild className={`mt-8 h-11 rounded-xl ${plan.featured ? "bg-white text-[#0F172A] hover:bg-blue-50" : "bg-[#0F172A] text-white hover:bg-slate-800"}`}><Link href="/signup">{tx(plan.cta, plan.name === "Free" ? "Start free" : plan.name === "Solo" ? "Choose Solo" : "Choose Team")}</Link></Button></div>)}</div>
+            <div className="mt-12 grid gap-5 lg:grid-cols-3">{pricing.map(plan => <div key={plan.name} className={`relative flex flex-col rounded-3xl p-6 ${plan.featured ? "bg-[#0F172A] text-white shadow-[0_24px_70px_rgba(15,23,42,.22)] lg:-translate-y-3" : "bg-[#F8FAFC] ring-1 ring-slate-200"}`}>{plan.featured && <span className="absolute right-5 top-5 rounded-full bg-[#2563EB] px-3 py-1 text-xs font-semibold">{tx("Paling populer", "Most popular")}</span>}<p className={`text-sm font-semibold ${plan.featured ? "text-blue-300" : "text-[#2563EB]"}`}>{tx(plan.name, plan.name === "Free" ? "Free" : plan.name)}</p><p className={`mt-3 text-sm ${plan.featured ? "text-slate-300" : "text-slate-600"}`}>{plan.name === "Free" ? tx("Coba dulu untuk client work kecil.", "Try it for small client work.") : plan.name === "Solo" ? tx("Untuk freelancer yang punya banyak klien.", "For freelancers with many clients.") : tx("Untuk tim kecil yang kerja bareng.", "For small teams working together.")}</p><div className="mt-7"><strong className="block text-3xl tracking-[-.03em]">{getLandingPrice(plan.name.toLowerCase() as "free" | "solo" | "team", "monthly", currency)}</strong><span className={`mt-1 block text-xs ${plan.featured ? "text-slate-400" : "text-slate-500"}`}>{plan.name === "Solo" || plan.name === "Team" ? `${getLandingPrice(plan.name.toLowerCase() as "solo" | "team", "yearly", currency)} / ${tx("tahun", "year")}` : tx("selamanya", "forever")}</span></div><div className={`my-6 h-px ${plan.featured ? "bg-white/10" : "bg-slate-200"}`} /><div className="flex-1 space-y-3">{plan.items.map(item => <div key={item} className={`flex items-center gap-2 text-sm ${plan.featured ? "text-slate-200" : "text-slate-700"}`}><Check className={`h-4 w-4 ${plan.featured ? "text-emerald-400" : "text-[#2563EB]"}`} />{tx(item, landingEn[item] ?? item)}</div>)}</div><Button asChild className={`mt-8 h-11 rounded-xl ${plan.featured ? "bg-white text-[#0F172A] hover:bg-blue-50" : "bg-[#0F172A] text-white hover:bg-slate-800"}`}><a href={`${APP_URL}/signup`}>{tx(plan.cta, plan.name === "Free" ? "Start free" : plan.name === "Solo" ? "Choose Solo" : "Choose Team")}</a></Button></div>)}</div>
           </div>
         </section>
 
         <section className="px-4 py-20 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-5xl overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#2563EB] px-6 py-14 text-center text-white shadow-[0_30px_90px_rgba(37,99,235,.20)] sm:px-12 sm:py-16"><p className="text-xs font-semibold uppercase tracking-[.2em] text-white/70">{tx("Kerja klien, lebih rapi", "Cleaner client work")}</p><h2 className="mx-auto mt-4 max-w-3xl text-3xl font-semibold tracking-[-.035em] sm:text-5xl">{tx("Kerja klien nggak harus tercecer di banyak aplikasi.", "Client work does not have to be scattered across apps.")}</h2><p className="mx-auto mt-5 max-w-xl text-lg text-white/80">{tx("Mulai gratis. Rapikan satu klien hari ini.", "Start free. Organize one client today.")}</p><Button asChild size="lg" className="mt-8 h-12 rounded-xl bg-white px-6 text-[#0F172A] hover:bg-blue-50"><Link href="/signup">{tx("Buat workspace gratis", "Create free workspace")} <ArrowRight className="h-4 w-4" /></Link></Button></div>
+          <div className="mx-auto max-w-5xl overflow-hidden rounded-[2.25rem] bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#2563EB] px-6 py-14 text-center text-white shadow-[0_30px_90px_rgba(37,99,235,.20)] sm:px-12 sm:py-16"><p className="text-xs font-semibold uppercase tracking-[.2em] text-white/70">{tx("Kerja klien, lebih rapi", "Cleaner client work")}</p><h2 className="mx-auto mt-4 max-w-3xl text-3xl font-semibold tracking-[-.035em] sm:text-5xl">{tx("Kerja klien nggak harus tercecer di banyak aplikasi.", "Client work does not have to be scattered across apps.")}</h2><p className="mx-auto mt-5 max-w-xl text-lg text-white/80">{tx("Mulai gratis. Rapikan satu klien hari ini.", "Start free. Organize one client today.")}</p><Button asChild size="lg" className="mt-8 h-12 rounded-xl bg-white px-6 text-[#0F172A] hover:bg-blue-50"><a href={`${APP_URL}/signup`}>{tx("Buat workspace gratis", "Create free workspace")} <ArrowRight className="h-4 w-4" /></a></Button></div>
         </section>
       </main>
 
-      <footer className="border-t border-slate-200 bg-white px-4 py-12 sm:px-6 lg:px-8"><div className="mx-auto flex max-w-7xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between"><div><Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-9 w-auto" /><p className="mt-3 max-w-md text-sm leading-6 text-slate-500">{tx("Hub kerja klien all-in-one untuk pekerja remote & tim.", "All-in-one client hub for remote workers & teams.")}</p></div><div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-slate-500"><a href="#workflow">{tx("Alur kerja", "Workflow")}</a><a href="#pricing">{tx("Harga", "Pricing")}</a><Link href="/terms">{tx("Syarat", "Terms")}</Link><Link href="/privacy">{tx("Privasi", "Privacy")}</Link><span>© 2026 Cubiqlo</span></div></div></footer>
+      <footer className="border-t border-slate-200 bg-white px-4 py-12 sm:px-6 lg:px-8"><div className="mx-auto flex max-w-7xl flex-col gap-8 sm:flex-row sm:items-end sm:justify-between"><div><Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-9 w-auto" /><p className="mt-3 max-w-md text-sm leading-6 text-slate-500">{tx("Hub kerja klien all-in-one untuk pekerja remote & tim.", "All-in-one client hub for remote workers & teams.")}</p></div><div className="flex flex-wrap gap-x-6 gap-y-3 text-sm text-slate-500"><a href="#workflow" className="inline-flex min-h-11 items-center">{tx("Alur kerja", "Workflow")}</a><a href="#pricing" className="inline-flex min-h-11 items-center">{tx("Harga", "Pricing")}</a><Link href="/terms" className="inline-flex min-h-11 items-center">{tx("Syarat", "Terms")}</Link><Link href="/privacy" className="inline-flex min-h-11 items-center">{tx("Privasi", "Privacy")}</Link><span>© 2026 Cubiqlo</span></div></div></footer>
     </div>
   );
 }
