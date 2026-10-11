@@ -38,6 +38,7 @@ export function ImageCropModal({
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const [aspectRatio, setAspectRatio] = useState<number | null>(16 / 9);
   const [saving, setSaving] = useState(false);
+  const [imageReady, setImageReady] = useState(false);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
@@ -48,16 +49,28 @@ export function ImageCropModal({
   // Reset when modal opens or aspect ratio changes
   useEffect(() => {
     if (open && imageUrl) {
+      setImageReady(false);
       setZoom(1);
       setPan({ x: 0, y: 0 });
+      let objectUrl = "";
       const img = new window.Image();
-      img.crossOrigin = "anonymous";
-      img.src = imageUrl;
-      img.onload = () => {
-        imageObjRef.current = img;
+      fetch(imageUrl)
+        .then((response) => {
+          if (!response.ok) throw new Error(t("Gagal memuat gambar", "Failed to load image"));
+          return response.blob();
+        })
+        .then((blob) => {
+          objectUrl = URL.createObjectURL(blob);
+          img.src = objectUrl;
+          img.onload = () => { imageObjRef.current = img; setImageReady(true); };
+        })
+        .catch((error) => toast.error(error instanceof Error ? error.message : t("Gagal memuat gambar", "Failed to load image")));
+      return () => {
+        imageObjRef.current = null;
+        if (objectUrl) URL.revokeObjectURL(objectUrl);
       };
     }
-  }, [open, imageUrl]);
+  }, [open, imageUrl, t]);
 
   // When changing aspect ratio, reset pan & zoom to maintain centering
   const handleSelectAspect = (val: number | null) => {
@@ -96,7 +109,7 @@ export function ImageCropModal({
       const img = imageObjRef.current;
 
       const width = rect.width;
-      const height = rect.height;
+      const height = aspectRatio ? width / aspectRatio : rect.height;
 
       // Create high-res canvas (max 2400px width/height for clean clarity)
       const scaleFactor = Math.min(2.5, Math.max(1.5, 1600 / Math.max(width, height)));
@@ -142,23 +155,20 @@ export function ImageCropModal({
           return;
         }
 
-        const fd = new FormData();
-        fd.append("file", blob, "cropped-image.webp");
-
-        const res = await fetch("/api/site/upload", {
-          method: "POST",
-          body: fd,
-        });
-
-        const data = await res.json().catch(() => ({}));
-        if (!res.ok || !data.ok || !data.url) {
-          throw new Error(data.error || t("Gagal menyimpan hasil crop", "Failed to save cropped image"));
+        try {
+          const fd = new FormData();
+          fd.append("file", blob, "cropped-image.webp");
+          const res = await fetch("/api/site/upload", { method: "POST", body: fd });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || !data.ok || !data.url) throw new Error(data.error || t("Gagal menyimpan hasil crop", "Failed to save cropped image"));
+          onCropComplete(data.url);
+          toast.success(t("Gambar berhasil di-crop", "Image cropped successfully"));
+          onOpenChange(false);
+        } catch (error) {
+          toast.error(error instanceof Error ? error.message : t("Gagal menyimpan hasil crop", "Failed to save cropped image"));
+        } finally {
+          setSaving(false);
         }
-
-        onCropComplete(data.url);
-        toast.success(t("Gambar berhasil di-crop", "Image cropped successfully"));
-        onOpenChange(false);
-        setSaving(false);
       }, "image/webp", 0.92);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : t("Gagal memproses crop", "Failed to process crop"));
@@ -218,8 +228,8 @@ export function ImageCropModal({
               ref={containerRef}
               style={{
                 aspectRatio: aspectRatio ? `${aspectRatio}` : "auto",
-                width: aspectRatio && aspectRatio < 1 ? "auto" : "85%",
-                height: aspectRatio && aspectRatio < 1 ? "85%" : "auto",
+                width: aspectRatio === null ? "85%" : aspectRatio < 16 / 9 ? "auto" : "85%",
+                height: aspectRatio === null ? "85%" : aspectRatio < 16 / 9 ? "85%" : "auto",
                 maxHeight: "85%",
                 maxWidth: "85%",
               }}
@@ -313,11 +323,11 @@ export function ImageCropModal({
             type="button"
             size="sm"
             onClick={handleApplyCrop}
-            disabled={saving}
+            disabled={saving || !imageReady}
             className="gap-1.5"
           >
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
-            {t("Terapkan Hasil Crop", "Apply Crop")}
+            {saving || !imageReady ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Check className="h-3.5 w-3.5" />}
+            {!imageReady ? t("Memuat gambar...", "Loading image...") : t("Terapkan Hasil Crop", "Apply Crop")}
           </Button>
         </DialogFooter>
       </DialogContent>
