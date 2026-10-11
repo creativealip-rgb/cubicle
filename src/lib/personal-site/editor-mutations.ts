@@ -5,7 +5,7 @@ import { emptySection, type PersonalSitePage, type PersonalSiteSection } from ".
  * `pages: … .max(10)`). Single source of truth for the editor so over-limit
  * documents never reach save. Keep in sync with `personalSiteInputSchema`.
  */
-export const MAX_SECTIONS = 12;
+export const MAX_SECTIONS = 14;
 export const MAX_PAGES = 10;
 
 /** contentBlock `columns` / `items` are 1:1; schema allows 2–4 columns. */

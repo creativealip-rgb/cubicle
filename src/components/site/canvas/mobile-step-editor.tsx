@@ -129,7 +129,7 @@ export function MobileStepEditor({
   }
 
   function notifySectionLimit() {
-    toast.error(t("Batas maksimal 12 bagian tercapai.", "Maximum of 12 sections reached."));
+    toast.error(t(`Batas maksimal ${MAX_SECTIONS} bagian tercapai.`, `Maximum of ${MAX_SECTIONS} sections reached.`));
   }
 
   function addSection(templateOrType: SectionTemplate | string) {

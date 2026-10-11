@@ -221,6 +221,8 @@ describe("addPage / removePage", () => {
 // adding a 21st type to `personalSiteSectionSchema` without listing it here
 // fails to compile (and the coverage assertion below fails at runtime).
 const ALL_SECTION_TYPES: Record<PersonalSiteSection["type"], true> = {
+  hero: true,
+  about: true,
   services: true,
   process: true,
   pricing: true,

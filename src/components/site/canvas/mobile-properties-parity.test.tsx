@@ -36,6 +36,8 @@ if (!window.matchMedia) {
  * (null = shared heading/animation fields are that type's whole property set).
  */
 const MOBILE_PARITY: Record<PersonalSiteSection["type"], string | null> = {
+  hero: null,
+  about: null,
   services: "Add service",
   process: "Add step",
   pricing: "Add offer",
@@ -83,7 +85,7 @@ function Harness({ initial }: { initial: PersonalSiteSection }) {
 describe("mobile properties drawer parity", () => {
   it("table covers every section type in the schema", () => {
     expect(new Set(ALL_TYPES)).toEqual(new Set(PERSONAL_SITE_SECTION_TYPES));
-    expect(ALL_TYPES).toHaveLength(20);
+    expect(ALL_TYPES).toHaveLength(22);
   });
 
   it.each(ALL_TYPES)("%s: mobile drawer exposes its properties", (type) => {

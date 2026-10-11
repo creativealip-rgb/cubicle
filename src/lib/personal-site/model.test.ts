@@ -105,6 +105,8 @@ describe("personal site model", () => {
 // 21st type added to `personalSiteSectionSchema` without listing it here fails
 // to compile with TS2741, and the coverage assertion below fails at runtime.
 const ALL_SECTION_TYPES: Record<PersonalSiteSection["type"], true> = {
+  hero: true,
+  about: true,
   services: true,
   process: true,
   pricing: true,

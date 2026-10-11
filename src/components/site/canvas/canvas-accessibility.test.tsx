@@ -150,11 +150,11 @@ describe("canvas live announcements", () => {
   });
 
   it("announces the section limit instead of relying on a toast", async () => {
-    const sections = Array.from({ length: 12 }, (_, i) => ({ ...emptySection("custom"), id: `sec-${i}` }));
+    const sections = Array.from({ length: 14 }, (_, i) => ({ ...emptySection("custom"), id: `sec-${i}` }));
     const { container } = renderEditor(siteWith(sections));
     hoverSection(container, "sec-0");
     await userEvent.click(screen.getByRole("button", { name: "Duplicate" }));
-    expect(announcer().textContent).toMatch(/maximum of 12 sections/i);
+    expect(announcer().textContent).toMatch(/maximum of 14 sections/i);
   });
 });
 

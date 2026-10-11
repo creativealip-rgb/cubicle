@@ -7,7 +7,6 @@ import { toast } from "sonner";
 import { useHistoryState } from "@/lib/use-history-state";
 import {
   Plus,
-  Type,
   Palette,
   FileText,
   Layers,
@@ -47,6 +46,7 @@ import {
   Globe,
   AlertCircle,
   RotateCw,
+  X,
 } from "lucide-react";
 import { DndContext, DragOverlay, closestCenter, KeyboardSensor, PointerSensor, useSensor, useSensors, useDraggable, type DragStartEvent, type DragEndEvent } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
@@ -55,18 +55,10 @@ import { UnifiedPublishView } from "@/components/public/unified-publish-view";
 import { BuilderCanvasViewport, BuilderRail, BuilderShell, BuilderWorkflowHeader } from "@/components/builder/builder-shell";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CUBIQLO_FONTS } from "@/lib/builder-fonts";
+
 import { resolveBuilderShortcut } from "@/lib/builder-shortcuts";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { CanvasRenderer, CANVAS_DEVICES, type CanvasDevice } from "./canvas-renderer";
 import { PropertiesPanel } from "./properties-panel";
 import { ReadinessBadge } from "../readiness-badge";
@@ -156,6 +148,8 @@ function withThemeConfig(site: PersonalSiteInput, patch: Partial<ThemeConfig>): 
 }
 
 const WIDGET_LIST: Array<{ type: PersonalSiteSection["type"]; label: string; icon: React.ElementType; category: string }> = [
+  { type: "hero", label: "Hero", icon: LayoutTemplate, category: "basic" },
+  { type: "about", label: "Tentang", icon: FileText, category: "basic" },
   { type: "custom", label: "Teks", icon: FileText, category: "basic" },
   { type: "services", label: "Layanan", icon: Briefcase, category: "content" },
   { type: "process", label: "Proses", icon: ListOrdered, category: "content" },
@@ -180,6 +174,8 @@ const WIDGET_LIST: Array<{ type: PersonalSiteSection["type"]; label: string; ico
 
 // EN labels for primitive blocks — used for EN mode and for search matching.
 const WIDGET_EN_LABELS: Record<string, string> = {
+  Hero: "Hero",
+  Tentang: "About",
   Teks: "Text",
   Layanan: "Services",
   Proses: "Process",
@@ -328,7 +324,8 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   // Drag state - track currently dragged item for preview
   const [activeDrag, setActiveDrag] = useState<{ id: string; label: string } | null>(null);
 
-  const [showPublishConfirm, setShowPublishConfirm] = useState<boolean | null>(null); // null=hidden, true=publish, false=unpublish
+  const [showPublishConfirm, setShowPublishConfirm] = useState<boolean | null>(null);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
   const [pendingSectionDeleteId, setPendingSectionDeleteId] = useState<string | null>(null);
   // Polite live region: screen-reader announcements for structural mutations
   // (reorder/duplicate/delete/limit) that a toast cannot reliably surface.
@@ -486,7 +483,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   }, [activePageId]);
 
   const notifySectionLimit = useCallback(() => {
-    const message = t("Batas maksimal 12 bagian tercapai.", "Maximum of 12 sections reached.");
+    const message = t(`Batas maksimal ${MAX_SECTIONS} bagian tercapai.`, `Maximum of ${MAX_SECTIONS} sections reached.`);
     setLiveMessage(message);
     toast.error(message);
   }, [t]);
@@ -784,6 +781,17 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
 
               {/* Actions Right */}
               <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  data-testid="page-templates-trigger"
+                  onClick={() => setTemplatesOpen(true)}
+                  className="h-8 gap-1.5 text-xs font-semibold"
+                >
+                  <LayoutTemplate className="h-3.5 w-3.5" />
+                  <span>{t("Template", "Templates")}</span>
+                </Button>
                 {/* Interactive Live Preview Switcher */}
                 <Button
                   type="button"
@@ -971,59 +979,6 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
               {activeTab === "settings" && (
                 <BuilderCanvasViewport className="bg-muted/30 p-4 sm:p-8">
                 <div className="mx-auto max-w-3xl space-y-6">
-                  {/* Site General & SEO Card */}
-                  <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
-                    <div>
-                      <h3 className="text-base font-bold text-foreground">{t("Informasi Umum & SEO", "General Info & SEO")}</h3>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {t("Kelola judul website, deskripsi meta untuk Google, dan konfigurasi brand.", "Manage site title, meta description for Google, and brand configuration.")}
-                      </p>
-                    </div>
-
-                    <div className="space-y-4 pt-1">
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold text-foreground">{t("Judul Website / Nama Agensi", "Site Title / Agency Name")}</Label>
-                        <Input
-                          value={site.title || ""}
-                          onChange={(e) => updateSite({ title: e.target.value })}
-                          placeholder="e.g. Nggawe Web Studio"
-                          className="text-xs sm:text-sm font-medium"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold text-foreground">{t("Subheadline / Tagline", "Subheadline / Tagline")}</Label>
-                        <Input
-                          value={site.subtitle || ""}
-                          onChange={(e) => updateSite({ subtitle: e.target.value })}
-                          placeholder="e.g. Digital Agency & Web Development"
-                          className="text-xs sm:text-sm"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold text-foreground">{t("Hero Headline Utama", "Hero Headline")}</Label>
-                        <Input
-                          value={site.hero || ""}
-                          onChange={(e) => updateSite({ hero: e.target.value })}
-                          placeholder={t("e.g. Kami Membangun Solusi Digital untuk Bisnis Anda", "e.g. We Build Digital Solutions for Your Business")}
-                          className="text-xs sm:text-sm"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label className="text-xs font-semibold text-foreground">{t("Tentang Agensi / About Bio", "About Agency Bio")}</Label>
-                        <Textarea
-                          value={site.about || ""}
-                          onChange={(e) => updateSite({ about: e.target.value })}
-                          placeholder={t("Tuliskan profil singkat agensi Anda...", "Write a brief profile about your agency...")}
-                          rows={3}
-                          className="text-xs sm:text-sm"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
                   {/* Slug & URL Settings Card */}
                   <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
                     <div>
@@ -1124,6 +1079,18 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
           ) : null}
         </DragOverlay>
       </DndContext>
+
+    {templatesOpen && (
+      <div data-testid="page-templates-dialog" className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setTemplatesOpen(false)}>
+        <div role="dialog" aria-modal="true" aria-label={t("Template Halaman", "Page Templates")} className="flex max-h-[85dvh] w-full max-w-3xl flex-col overflow-hidden rounded-2xl border bg-background shadow-2xl" onClick={(event) => event.stopPropagation()}>
+          <div className="flex items-center justify-between border-b px-5 py-4">
+            <div><h2 className="font-bold">{t("Template Halaman", "Page Templates")}</h2><p className="text-xs text-muted-foreground">{t("Pilih fondasi halaman siap pakai.", "Choose a ready-made page foundation.")}</p></div>
+            <Button type="button" variant="ghost" size="icon" onClick={() => setTemplatesOpen(false)} aria-label={t("Tutup template", "Close templates")}><X className="h-4 w-4" /></Button>
+          </div>
+          <div className="overflow-y-auto p-5"><TemplateTabContent site={site} updateSite={(patch) => { updateSite(patch); setTemplatesOpen(false); }} setActivePageId={setActivePageId} /></div>
+        </div>
+      </div>
+    )}
 
     {/* Publish / Unpublish confirmation dialog */}
     {showPublishConfirm !== null && (
@@ -1428,74 +1395,6 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
       </TabsContent>
 
       <TabsContent value="style" className="m-0 p-3 space-y-5">
-        {/* Font & Typography Section (Placed at top for instant discovery) */}
-        <div>
-          <p className="text-xs font-semibold text-foreground uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
-            <Type className="h-3.5 w-3.5 text-primary" />
-            <span>{t("Font & Tipografi", "Typography & Fonts")}</span>
-          </p>
-          <div className="space-y-3 rounded-xl border bg-muted/20 p-3">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-foreground">{t("Font Judul (Heading)", "Heading Font")}</Label>
-              <Select
-                value={
-                  CUBIQLO_FONTS.find((f) => f.fontFamily === site.themeConfig?.fontHeading || f.id === site.themeConfig?.fontHeading)?.id ||
-                  "inter"
-                }
-                onValueChange={(val) => {
-                  const font = CUBIQLO_FONTS.find((f) => f.id === val);
-                  updateTheme({ fontHeading: font ? font.fontFamily : val });
-                }}
-              >
-                <SelectTrigger className="h-8 text-xs bg-background">
-                  <SelectValue placeholder="Pilih Font Judul..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {CUBIQLO_FONTS.map((font) => (
-                    <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.fontFamily }}>
-                      {font.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs font-medium text-foreground">{t("Font Isi (Body)", "Body Font")}</Label>
-              <Select
-                value={
-                  CUBIQLO_FONTS.find((f) => f.fontFamily === site.themeConfig?.fontBody || f.id === site.themeConfig?.fontBody)?.id ||
-                  "inter"
-                }
-                onValueChange={(val) => {
-                  const font = CUBIQLO_FONTS.find((f) => f.id === val);
-                  updateTheme({ fontBody: font ? font.fontFamily : val });
-                }}
-              >
-                <SelectTrigger className="h-8 text-xs bg-background">
-                  <SelectValue placeholder="Pilih Font Isi..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {CUBIQLO_FONTS.map((font) => (
-                    <SelectItem key={font.id} value={font.id} style={{ fontFamily: font.fontFamily }}>
-                      {font.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-        </div>
-
-        <div className="h-px bg-border" />
-
-        {/* Templates section */}
-        <div>
-          <p className="text-xs font-medium text-muted-foreground uppercase mb-2">{t("Template Halaman", "Page Templates")}</p>
-          <TemplateTabContent site={site} updateSite={updateSite} setActivePageId={setActivePageId} />
-        </div>
-
-        <div className="h-px bg-border" />
-
         {/* Theme section */}
         <div>
           <p className="text-xs font-medium text-muted-foreground uppercase mb-3">{t("Tema Siap Pakai", "Ready-made Themes")}</p>
@@ -1627,7 +1526,8 @@ function TemplateTabContent({ site, updateSite, setActivePageId }: { site: Perso
 
   function applyTemplate(template: PageTemplate) {
     const patch = template.build(site);
-    const nextPages = patch.pages ?? [];
+    const identitySections = site.sections.filter((section) => section.type === "hero" || section.type === "about");
+    const nextPages = (patch.pages ?? []).map((page) => page.isHome ? { ...page, sections: [...identitySections, ...page.sections.filter((section) => section.type !== "hero" && section.type !== "about")] } : page);
     const homePage = nextPages.find((p) => p.isHome) ?? nextPages[0];
     // Top-level sections must mirror the new home page sections; slug/published/links/theme/accent/themeConfig are untouched by the patch merge.
     const nextPatch: Partial<PersonalSiteInput> = {

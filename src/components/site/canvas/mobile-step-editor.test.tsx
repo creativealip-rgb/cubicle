@@ -102,7 +102,7 @@ describe("mobile canvas-first surface", () => {
     render(<Harness />);
 
     expect(canvas()).toBeTruthy();
-    expect(canvas().textContent).toContain(DEFAULT_PERSONAL_SITE.title);
+    expect(canvas().textContent).toContain("Services");
     expect(toolbar()).toBeTruthy();
     // Canvas-first: the old wizard's step chrome is gone, and no management
     // drawer is mounted until the user asks for one.

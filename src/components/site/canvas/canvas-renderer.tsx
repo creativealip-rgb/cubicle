@@ -79,8 +79,6 @@ export function CanvasRenderer({
 }: Props & { onReorderSections?: (sections: PersonalSiteSection[]) => void }) { // reserved for future use
   const { t } = useT();
   const theme = site.themeConfig ?? undefined;
-  const heroCopy = isEditorialPlaceholderText(site.hero) ? "" : site.hero;
-  const aboutCopy = isEditorialPlaceholderText(site.about) ? "" : site.about;
 
   return (
     <div
@@ -93,67 +91,6 @@ export function CanvasRenderer({
       }}
       onClick={() => onSelectSection(null)}
     >
-      {/* Hero section */}
-      <div data-readiness-target="hero" className={cn("relative px-8 pt-20 pb-16 text-center overflow-hidden", readinessTarget === "hero" && "ring-4 ring-red-400 ring-offset-2")} style={{ backgroundColor: theme?.primaryColor ?? "#2563EB" }}>
-        {site.heroImage && (
-          <>
-            <Image
-              src={site.heroImage}
-              alt=""
-              fill
-              sizes="100vw"
-              aria-hidden="true"
-              className="object-cover opacity-85"
-            />
-            {/* Gentle Dark Gradient Overlay so text stays 100% legible */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60 pointer-events-none" />
-          </>
-        )}
-        <div className="relative z-10">
-          <InlineText
-            value={site.title}
-            onChange={(v) => onUpdateSite({ title: v })}
-            tag="h1"
-            className="text-3xl font-bold text-white mb-2"
-            placeholder={t("Judul...", "Title...")}
-          />
-          <InlineText
-            value={site.subtitle}
-            onChange={(v) => onUpdateSite({ subtitle: v })}
-            tag="p"
-            className="text-lg text-white/80 mb-4"
-            placeholder="Subtitle..."
-          />
-          <InlineText
-            value={heroCopy}
-            onChange={(v) => onUpdateSite({ hero: v })}
-            tag="p"
-            className="text-white/90 max-w-2xl mx-auto"
-            placeholder={t("Deskripsi hero...", "Hero description...")}
-          />
-          <div className="mt-6 flex justify-center">
-            <ImageUpload
-              value={site.heroImage ?? ""}
-              onChange={(url) => onUpdateSite({ heroImage: url || undefined })}
-              label={t("Unggah gambar hero", "Upload hero image")}
-            />
-          </div>
-        </div>
-      </div>
-
-      {/* About */}
-      {aboutCopy && (
-        <div className="px-8 py-8">
-          <InlineText
-            value={aboutCopy}
-            onChange={(v) => onUpdateSite({ about: v })}
-            tag="p"
-            className="text-muted-foreground leading-relaxed"
-            placeholder={t("Tentang kamu...", "About you...")}
-          />
-        </div>
-      )}
-
       {/* Sections */}
       <div className="px-8 py-4 space-y-6">
         <SortableContext items={site.sections.map((s) => s.id)} strategy={verticalListSortingStrategy}>
@@ -386,6 +323,27 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
   const headingStyle = getHeadingStyle(section as any);
 
   switch (section.type) {
+    case "hero":
+      return (
+        <div className="relative -mx-8 -mt-4 overflow-hidden px-8 py-16 text-center" style={{ backgroundColor: theme?.primaryColor ?? "#2563EB" }}>
+          {section.imageUrl && <><Image src={section.imageUrl} alt="" fill sizes="100vw" aria-hidden="true" className="object-cover opacity-85" /><div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" /></>}
+          <div className="relative z-10">
+            <InlineText value={section.heading} onChange={(heading) => onUpdate({ heading })} typography={section.titleTypography} onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })} tag="h1" tagType="heading" className="mb-2 text-3xl font-bold text-white" placeholder={t("Judul...", "Title...")} />
+            <InlineText value={section.subtitle} onChange={(subtitle) => onUpdate({ subtitle })} typography={section.subtitleTypography} onTypographyChange={(patch) => onUpdate({ subtitleTypography: { ...section.subtitleTypography, ...patch } })} tag="p" tagType="body" className="mb-4 text-lg text-white/80" placeholder={t("Subjudul...", "Subtitle...")} />
+            <InlineText value={isEditorialPlaceholderText(section.content) ? "" : section.content} onChange={(content) => onUpdate({ content })} typography={section.contentTypography} onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })} tag="p" tagType="body" className="mx-auto max-w-2xl text-white/90" placeholder={t("Deskripsi hero...", "Hero description...")} />
+            <div className="mt-6 flex justify-center"><ImageUpload value={section.imageUrl ?? ""} onChange={(imageUrl) => onUpdate({ imageUrl })} label={t("Unggah gambar hero", "Upload hero image")} /></div>
+          </div>
+        </div>
+      );
+
+    case "about":
+      return (
+        <div className="py-6">
+          <InlineText value={section.heading} onChange={(heading) => onUpdate({ heading })} typography={{ fontFamily: section.fontFamily, fontSize: section.fontSize || "xl", align: section.align, bold: section.bold ?? true, italic: section.italic, underline: section.underline, strikethrough: section.strikethrough }} onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)} tag="h2" tagType="heading" className="mb-3" />
+          <InlineText value={isEditorialPlaceholderText(section.content) ? "" : section.content} onChange={(content) => onUpdate({ content })} typography={section.contentTypography} onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })} tag="p" tagType="body" className="leading-relaxed text-muted-foreground" placeholder={t("Tentang kamu...", "About you...")} />
+        </div>
+      );
+
     case "services":
       return (
         <div className="py-6">

@@ -4,6 +4,8 @@ export const PERSONAL_SITE_THEMES = ["midnight", "paper", "studio", "ocean", "fo
 export const PERSONAL_SITE_HEADER_STYLES = ["full-width", "contained", "minimal"] as const;
 export const PERSONAL_SITE_BUTTON_STYLES = ["rounded", "pill", "square"] as const;
 export const PERSONAL_SITE_SECTION_TYPES = [
+  "hero",
+  "about",
   "services",
   "process",
   "pricing",
@@ -129,6 +131,28 @@ const contactMethodSchema = z.object({
 });
 
 export const personalSiteSectionSchema = z.discriminatedUnion("type", [
+  z.object({
+    id: idSchema,
+    type: z.literal("hero"),
+    heading: z.string().trim().max(100),
+    subtitle: shortTextSchema,
+    content: z.string().trim().max(500),
+    imageUrl: z.string().trim().max(2_000).nullish(),
+    animation: animationSchema,
+    ...sectionTypographySchema,
+    titleTypography: z.object(elementTypographySchema).optional(),
+    subtitleTypography: z.object(elementTypographySchema).optional(),
+    contentTypography: z.object(elementTypographySchema).optional(),
+  }),
+  z.object({
+    id: idSchema,
+    type: z.literal("about"),
+    heading: headingSchema,
+    content: z.string().trim().max(2_000),
+    animation: animationSchema,
+    ...sectionTypographySchema,
+    contentTypography: z.object(elementTypographySchema).optional(),
+  }),
   z.object({
     id: idSchema,
     type: z.literal("services"),
@@ -353,6 +377,8 @@ function makeSectionId(prefix = "s") {
 export function emptySection(type: PersonalSiteSection["type"]): PersonalSiteSection {
   const base = { id: makeSectionId(), heading: "Section" };
   switch (type) {
+    case "hero": return { ...base, type, heading: "Hero title", subtitle: "", content: "", imageUrl: "" };
+    case "about": return { ...base, type, heading: "About", content: "" };
     case "services": return { ...base, type, items: [{ id: makeSectionId(), title: "", description: "" }] };
     case "process": return { ...base, type, steps: [{ id: makeSectionId(), title: "", description: "" }] };
     case "pricing": return { ...base, type, offers: [{ id: makeSectionId(), name: "", price: "", description: "" }] };
@@ -398,6 +424,7 @@ export const themeConfigSchema = z.object({
   fontBody: z.string().max(60).optional(),
   headerStyle: z.enum(PERSONAL_SITE_HEADER_STYLES).optional(),
   buttonStyle: z.enum(PERSONAL_SITE_BUTTON_STYLES).optional(),
+  sectionizedHeroAbout: z.boolean().optional(),
 });
 
 export type ThemeConfig = z.infer<typeof themeConfigSchema>;
@@ -407,7 +434,7 @@ export const personalSitePageSchema = z.object({
   slug: z.string().trim().max(48).regex(/^$|^[a-z0-9]+(?:-[a-z0-9]+)*$/),
   title: z.string().trim().min(1).max(100),
   isHome: z.boolean(),
-  sections: z.array(personalSiteSectionSchema).max(12),
+  sections: z.array(personalSiteSectionSchema).max(14),
 });
 
 export type PersonalSitePage = z.infer<typeof personalSitePageSchema>;
@@ -448,11 +475,12 @@ export const personalSiteInputSchema = z.object({
   ctaUrl: optionalPublicHrefSchema,
   theme: z.enum(PERSONAL_SITE_THEMES),
   accent: z.string().trim().regex(/^#[0-9a-fA-F]{6}$/, "Gunakan warna hex enam digit"),
-  sections: z.array(personalSiteSectionSchema).max(12),
+  sections: z.array(personalSiteSectionSchema).max(14),
   links: z.array(personalSiteLinkSchema).max(8),
   pages: z.array(personalSitePageSchema).max(10).optional(),
   themeConfig: themeConfigSchema.nullish(),
   seo: seoMetadataSchema.optional().nullish(),
+  sectionizedHeroAbout: z.boolean().optional().default(true),
 });
 
 export type PersonalSiteInput = z.infer<typeof personalSiteInputSchema>;
@@ -494,7 +522,7 @@ export const DEFAULT_PERSONAL_SITE: PersonalSiteInput = {
     title: "Home",
     isHome: true,
     sections: [
-      {
+          {
         id: "default-services",
         type: "services",
         heading: "Services",
@@ -522,6 +550,7 @@ export const DEFAULT_PERSONAL_SITE: PersonalSiteInput = {
     buttonStyle: "rounded",
   },
   seo: undefined,
+  sectionizedHeroAbout: false,
 };
 
 export function normalizePersonalSiteSlug(value: string) {
@@ -677,7 +706,7 @@ export function normalizeLegacySections(value: unknown): PersonalSiteSection[] {
   return rawSections
     .map(legacySection)
     .filter((section): section is PersonalSiteSection => Boolean(section))
-    .slice(0, 12);
+    .slice(0, 14);
 }
 
 export function normalizeLegacyLinks(value: unknown): PersonalSiteLink[] {
@@ -709,6 +738,18 @@ export function normalizeLegacyLinks(value: unknown): PersonalSiteLink[] {
 export function normalizeStoredPersonalSite(value: unknown): PersonalSiteInput {
   const raw: Record<string, unknown> = value && typeof value === "object" ? (value as Record<string, unknown>) : {};
   const rawSeo: Record<string, unknown> | null = raw.seo && typeof raw.seo === "object" ? (raw.seo as Record<string, unknown>) : null;
+  const rawThemeConfig = raw.themeConfig && typeof raw.themeConfig === "object" ? raw.themeConfig as Record<string, unknown> : null;
+  const sectionized = raw.sectionizedHeroAbout === true || rawThemeConfig?.sectionizedHeroAbout === true;
+  const migrateSections = (value: unknown) => {
+    const sections = normalizeLegacySections(value);
+    if (sectionized || sections.some((section) => section.type === "hero" || section.type === "about")) return sections;
+    return [
+      { id: "legacy-hero", type: "hero" as const, heading: String(raw.title || DEFAULT_PERSONAL_SITE.title), subtitle: String(raw.subtitle ?? DEFAULT_PERSONAL_SITE.subtitle), content: String(raw.hero ?? DEFAULT_PERSONAL_SITE.hero), imageUrl: raw.heroImage ? String(raw.heroImage) : "" },
+      { id: "legacy-about", type: "about" as const, heading: "About", content: String(raw.about ?? DEFAULT_PERSONAL_SITE.about) },
+      ...sections,
+    ];
+  };
+  const rawPages = Array.isArray(raw.pages) ? raw.pages : [];
   const candidate: Partial<PersonalSiteInput> & { background?: string } = {
     ...DEFAULT_PERSONAL_SITE,
     ...raw,
@@ -723,10 +764,14 @@ export function normalizeStoredPersonalSite(value: unknown): PersonalSiteInput {
     theme: PERSONAL_SITE_THEMES.includes(raw.theme as (typeof PERSONAL_SITE_THEMES)[number])
       ? (raw.theme as PersonalSiteInput["theme"])
       : (raw.background as string | undefined) === "Paper" ? "paper" : "midnight",
-    sections: normalizeLegacySections(raw.sections),
+    sections: migrateSections(raw.sections),
     links: normalizeLegacyLinks(raw.links),
-    pages: Array.isArray(raw.pages) && raw.pages.length ? (raw.pages as PersonalSiteInput["pages"]) : undefined,
-    themeConfig: raw.themeConfig && typeof raw.themeConfig === "object" ? (raw.themeConfig as PersonalSiteInput["themeConfig"]) : undefined,
+    pages: rawPages.length ? rawPages.map((page) => {
+      const item = page as PersonalSitePage;
+      return { ...item, sections: item.isHome ? migrateSections(item.sections) : normalizeLegacySections(item.sections) };
+    }) : undefined,
+    sectionizedHeroAbout: true,
+    themeConfig: rawThemeConfig ? { ...rawThemeConfig, sectionizedHeroAbout: true } as PersonalSiteInput["themeConfig"] : { ...DEFAULT_PERSONAL_SITE.themeConfig!, sectionizedHeroAbout: true },
     seo: rawSeo
       ? {
           title: String(rawSeo.title ?? ""),
@@ -744,6 +789,8 @@ export function normalizeStoredPersonalSite(value: unknown): PersonalSiteInput {
 
 export function sectionHasContent(section: PersonalSiteSection) {
   switch (section.type) {
+    case "hero": return Boolean(section.heading.trim() || section.subtitle.trim() || section.content.trim() || section.imageUrl);
+    case "about": return Boolean(section.heading.trim() || section.content.trim());
     case "services": return section.items.some((item) => item.title || item.description);
     case "process": return section.steps.some((item) => item.title || item.description);
     case "pricing": return section.offers.some((item) => item.name || item.price || item.description);

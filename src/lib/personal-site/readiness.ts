@@ -22,6 +22,8 @@ export type ReadinessIssue = {
  * - `never`: `sectionHasContent` returns true by design; nothing to flag.
  */
 const EMPTY_BLOCK_SEVERITY: Record<PersonalSiteSection["type"], "error" | "warning" | "never"> = {
+  hero: "error",
+  about: "warning",
   services: "error",
   process: "error",
   pricing: "error",

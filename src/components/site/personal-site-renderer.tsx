@@ -4,7 +4,6 @@ import type { CSSProperties, ReactNode } from "react";
 import {
   accentForeground,
   isPlaceholderHref,
-  isEditorialPlaceholderText,
   safePublicHref,
   safeEmbedSrc,
   sectionHasContent,
@@ -201,6 +200,8 @@ function SectionBody({
   labels,
   bookingData,
   lang,
+  ctaLabel,
+  ctaUrl,
 }: {
   section: PersonalSiteSection;
   accent: string;
@@ -209,10 +210,22 @@ function SectionBody({
   labels: PersonalSiteRendererLabels;
   bookingData?: any;
   lang: string;
+  ctaLabel?: string;
+  ctaUrl?: string;
 }) {
   const marker = <span aria-hidden className="mb-4 block h-1 w-10 rounded-full" style={{ backgroundColor: accent }} />;
 
   switch (section.type) {
+    case "hero": {
+      const titleCls = resolveFieldStyle(section, section, "titleTypography", "xl");
+      const subtitleCls = resolveFieldStyle(section, { ...section, titleTypography: section.subtitleTypography }, "titleTypography", "base");
+      const contentCls = resolveFieldStyle(section, { ...section, descTypography: section.contentTypography }, "descTypography", "base");
+      return <div className="relative z-10 mx-auto max-w-6xl"><p className={`text-xs font-semibold uppercase tracking-[0.2em] sm:text-sm ${subtitleCls}`}>{section.subtitle}</p><h1 className={`mt-5 max-w-4xl text-4xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-6xl lg:text-7xl ${titleCls}`}>{section.heading}</h1>{section.content && <p className={`mt-6 max-w-2xl text-base leading-7 sm:text-xl sm:leading-8 ${contentCls}`}>{section.content}</p>}{ctaLabel && ctaUrl && !isPlaceholderHref(ctaUrl) && safePublicHref(ctaUrl) !== "#" && <a className="mt-8 inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-lg" style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }} href={safePublicHref(ctaUrl)}>{ctaLabel}</a>}</div>;
+    }
+    case "about": {
+      const contentCls = resolveFieldStyle(section, { ...section, descTypography: section.contentTypography }, "descTypography", "base");
+      return <p className={`whitespace-pre-wrap text-base leading-8 opacity-70 ${contentCls}`}>{section.content}</p>;
+    }
     case "services":
       return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{section.items.filter((item) => item.title || item.description).map((item) => {
         const titleCls = resolveFieldStyle(section, item, "titleTypography", "base");
@@ -514,12 +527,9 @@ export function PersonalSiteRenderer({
   const visiblePages = pages.filter((page) => page.title);
   const visibleSections = (activePage?.sections?.length ? activePage.sections : site.sections).filter(sectionHasContent);
   const visibleLinks = site.links.filter((link) => link.label && !isPlaceholderHref(link.url) && safePublicHref(link.url) !== "#");
-  const heroCopy = isEditorialPlaceholderText(site.hero) ? "" : site.hero;
-  const aboutCopy = isEditorialPlaceholderText(site.about) ? "" : site.about;
   const themeConfig = site.themeConfig;
   const accent = themeConfig?.primaryColor ?? site.accent;
   const buttonRadius = themeConfig?.buttonStyle === "pill" ? "999px" : themeConfig?.buttonStyle === "square" ? "0.25rem" : "0.75rem";
-  const heroShellClass = themeConfig?.headerStyle === "contained" ? "mx-auto my-6 max-w-6xl rounded-[2rem]" : themeConfig?.headerStyle === "minimal" ? "bg-transparent" : "";
   const accentStyle = {
     "--site-accent": accent,
     "--site-button-radius": buttonRadius,
@@ -531,56 +541,15 @@ export function PersonalSiteRenderer({
 
   return (
     <main data-testid="personal-site-renderer" data-theme={site.theme} style={accentStyle} className={`${embedded ? "min-h-0" : "min-h-screen"} overflow-hidden ${styles.page}`}>
-      <section className={`relative ${styles.hero} ${heroShellClass} px-6 py-14 sm:px-10 sm:py-20 lg:px-16 lg:py-24`} style={{ backgroundColor: themeConfig?.headerStyle === "minimal" ? "transparent" : accent }}>
-        {site.heroImage && (
-          <>
-            <Image
-              src={site.heroImage}
-              alt=""
-              fill
-              sizes="100vw"
-              aria-hidden="true"
-              className="object-cover opacity-85"
-            />
-            <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60 pointer-events-none" />
-          </>
-        )}
-        <div className="relative z-10 mx-auto max-w-6xl">
-          {site.subtitle && <p className={`text-xs font-semibold uppercase tracking-[0.2em] sm:text-sm ${styles.eyebrow}`}>{site.subtitle}</p>}
-          <h1 className={`${site.subtitle ? "mt-5" : ""} max-w-4xl text-4xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-6xl lg:text-7xl`} style={headingStyle}>{site.title}</h1>
-          {heroCopy && <p className={`mt-6 max-w-2xl text-base leading-7 sm:text-xl sm:leading-8 ${styles.heroMuted}`}>{heroCopy}</p>}
-          {site.ctaLabel && site.ctaUrl && !isPlaceholderHref(site.ctaUrl) && safePublicHref(site.ctaUrl) !== "#" && (
-            <a className="mt-8 inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-lg transition-transform hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2" style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }} href={safePublicHref(site.ctaUrl)}>{site.ctaLabel}</a>
-          )}
-        {visiblePages.length > 1 && (
-          <nav className="mt-8 flex flex-wrap gap-2" aria-label={labels.pageNav}>
-            {visiblePages.map((page) => {
-              const href = page.slug ? `/site/${site.slug}/${page.slug}` : `/site/${site.slug}`;
-              const active = page.id === activePage?.id;
-              return (
-                <Link
-                  key={page.id}
-                  href={href}
-                  className={`inline-flex min-h-10 items-center rounded-full border px-4 py-2 text-sm font-semibold transition ${active ? "bg-white text-slate-950" : "border-white/30 text-white hover:bg-white/10"}`}
-                >
-                  {page.title}
-                </Link>
-              );
-            })}
-          </nav>
-        )}
-
-        </div>
-      </section>
-
-      {aboutCopy && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[0.65fr_1.35fr]"><div><p className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>{labels.about}</p><h2 className="mt-3 text-3xl font-bold tracking-[-0.01em]" style={headingStyle}>{site.title}</h2></div><p className="whitespace-pre-wrap text-base leading-8 opacity-70">{aboutCopy}</p></div></section>}
-
+      {visiblePages.length > 1 && <nav className="mx-auto flex max-w-6xl flex-wrap gap-2 px-6 py-4" aria-label={labels.pageNav}>{visiblePages.map((page) => <Link key={page.id} href={page.slug ? `/site/${site.slug}/${page.slug}` : `/site/${site.slug}`} className="rounded-full border px-4 py-2 text-sm font-semibold">{page.title}</Link>)}</nav>}
       {visibleSections.map((section, index) => {
         const isPlaceholderHeading =
           !section.heading ||
           section.heading.toLowerCase().trim() === "section" ||
           section.heading.toLowerCase().trim() === "seksi";
         const hideDefaultHeading =
+          section.type === "hero" ||
+          section.type === "about" ||
           section.type === "mediaText" ||
           section.type === "gallery" ||
           (section.type === "image" && !section.heading) ||
@@ -591,10 +560,11 @@ export function PersonalSiteRenderer({
           <AnimateOnScroll key={section.id} animation={section.animation}>
             <section
               data-section-type={section.type}
-              className={`${index % 2 === 0 ? styles.sectionAlt : ""} px-6 py-14 sm:px-10 lg:px-16 lg:py-20`}
-              style={secFontFamily ? { fontFamily: secFontFamily } : undefined}
+              className={`${section.type === "hero" ? `${styles.hero} relative overflow-hidden` : index % 2 === 0 ? styles.sectionAlt : ""} px-6 py-14 sm:px-10 lg:px-16 lg:py-20`}
+              style={{ ...(secFontFamily ? { fontFamily: secFontFamily } : {}), ...(section.type === "hero" ? { backgroundColor: accent } : {}) }}
             >
-              <div className="mx-auto max-w-6xl">
+              {section.type === "hero" && section.imageUrl && <><Image src={section.imageUrl} alt="" fill sizes="100vw" aria-hidden="true" className="object-cover opacity-85" /><div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" /></>}
+              <div className="relative mx-auto max-w-6xl">
                 {!hideDefaultHeading && section.heading && (
                   <h2 className={secHeadingStyle.className} style={secHeadingStyle.style}>
                     {section.heading}
@@ -608,6 +578,8 @@ export function PersonalSiteRenderer({
                   labels={labels}
                   bookingData={bookingData}
                   lang={lang}
+                  ctaLabel={site.ctaLabel}
+                  ctaUrl={site.ctaUrl}
                 />
               </div>
             </section>

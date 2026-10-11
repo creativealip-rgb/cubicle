@@ -142,7 +142,7 @@ describe("PersonalSiteRenderer", () => {
     it("keeps the hero image decorative (empty alt, aria-hidden)", () => {
       const html = renderToStaticMarkup(
         <PersonalSiteRenderer
-          site={{ ...DEFAULT_PERSONAL_SITE, heroImage: "https://cdn.example.com/hero.png", sections: [], pages: [{ id: "home", slug: "", title: "Home", isHome: true, sections: [] }] } as PersonalSiteInput}
+          site={{ ...DEFAULT_PERSONAL_SITE, heroImage: "https://cdn.example.com/hero.png", sections: [{ id: "hero", type: "hero", heading: "Hero", subtitle: "", content: "", imageUrl: "https://cdn.example.com/hero.png" }], pages: [{ id: "home", slug: "", title: "Home", isHome: true, sections: [{ id: "hero", type: "hero", heading: "Hero", subtitle: "", content: "", imageUrl: "https://cdn.example.com/hero.png" }] }] } as PersonalSiteInput}
         />,
       );
       expect(html).toContain('aria-hidden="true"');
