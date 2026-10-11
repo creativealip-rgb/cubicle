@@ -5,6 +5,8 @@ import Link from "next/link";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { UnifiedPublishView } from "@/components/public/unified-publish-view";
+import { SendProposalButton } from "@/components/proposals/send-proposal-button";
+import { SendContractButton } from "@/components/contracts/send-contract-button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
@@ -54,11 +56,13 @@ import { cn } from "@/lib/utils";
 import {
   AlignCenter,
   AlignLeft,
+  AlertTriangle,
   AlignRight,
   ArrowDown,
   ArrowLeft,
   ArrowUp,
   CheckCircle,
+  ChevronLeft,
   Coins,
   Copy,
   Download,
@@ -454,6 +458,11 @@ export function DocumentBlockEditor({
   const [customSlug, setCustomSlug] = useState(
     proposalMeta?.slug || documentMeta?.slug || ""
   );
+  // Document status only moves through the send flow; optimistic local state keeps
+  // the PUBLISH tab truthful without a refresh (contracts expose no status prop).
+  const [docStatus, setDocStatus] = useState<string>(
+    proposalMeta?.status || "draft"
+  );
   // The custom-slug box is disabled (and hidden behind an upgrade CTA) on a free
   // plan, yet the settings form used to submit `slug: null` on every save. That
   // silently destroyed the server-generated share slug, so the public link the
@@ -522,6 +531,7 @@ export function DocumentBlockEditor({
   }, []);
 
   const docTitle = metaState.title || (kind === "proposal" ? "Proposal" : "Contract");
+  const isDraftDoc = docStatus === "draft";
   const effectiveDocId =
     customSlug.trim() ||
     proposalMeta?.slug ||
@@ -2053,14 +2063,72 @@ export function DocumentBlockEditor({
 
       {/* ── TAB 3: PUBLISH (Sharing, WhatsApp, QR, & Embed Widget) ── */}
       {activeTab === "publish" && (
-        <UnifiedPublishView
+        <div className="flex-1 overflow-y-auto bg-muted/30 p-4 sm:p-8 custom-scrollbar">
+          <div className="mx-auto max-w-2xl space-y-4">
+            {/* A draft URL is reachable but has no approval/signature controls;
+                sendProposal/sendContract writes the token that activates it. */}
+            {isDraftDoc && (
+              <div className="w-full rounded-xl border border-amber-500/30 bg-amber-500/5 p-3.5 flex items-start gap-2.5">
+                <AlertTriangle className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="min-w-0 space-y-0.5">
+                  <p className="text-xs font-bold text-amber-700">{t("Link belum aktif", "Link not active yet")}</p>
+                  <p className="text-[11px] text-amber-700/80 leading-relaxed">
+                    {kind === "proposal"
+                      ? t(
+                          "Kirim proposal ke klien untuk mengaktifkan link. Selama masih draft, halaman publik belum bisa menerima persetujuan.",
+                          "Send the proposal to activate the link. While still a draft, the public page cannot accept an approval."
+                        )
+                      : t(
+                          "Kirim kontrak untuk mengaktifkan link penandatanganan. Selama masih draft, halaman publik belum bisa ditandatangani.",
+                          "Send the contract to activate the signing link. While still a draft, the public page cannot be signed."
+                        )}
+                  </p>
+                </div>
+              </div>
+            )}
+            <UnifiedPublishView
           type={kind === "proposal" ? "proposal" : "contract"}
           title={docTitle}
           shareUrl={fullShareUrl}
           previewUrl={fullShareUrl}
           embedCode={`<iframe src="${fullShareUrl}" width="100%" height="700" frameborder="0" style="border-radius: 16px; border: 1px solid #e2e8f0; width: 100%;"></iframe>`}
           hasSaved={true}
-        />
+          sendSlot={
+            kind === "proposal" ? (
+              <SendProposalButton
+                proposalId={proposalMeta?.id || ""}
+                status={docStatus}
+                title={metaState.title || undefined}
+                clientName={metaState.clientName || undefined}
+                clientEmail={metaState.clientEmail || null}
+                labelSend={t("Kirim proposal", "Send proposal")}
+                labelResend={t("Kirim ulang", "Resend")}
+                successMessage={t(
+                  "Proposal siap dibagikan. Salin tautan ke klien.",
+                  "Proposal is ready to share. Copy the link for your client."
+                )}
+                onSent={() => setDocStatus("sent")}
+              />
+            ) : (
+              <SendContractButton
+                contractId={documentMeta?.id || ""}
+                status={docStatus}
+                title={metaState.title || undefined}
+                clientName={metaState.clientName || undefined}
+                clientEmail={metaState.clientEmail || null}
+                labelSend={t("Kirim untuk tanda tangan", "Send for signature")}
+                labelResend={t("Kirim ulang", "Resend")}
+                successMessage={t(
+                  "Kontrak siap ditandatangani klien. Salin tautannya.",
+                  "Contract is ready for the client's signature. Copy the link."
+                )}
+                onSent={() => setDocStatus("sent")}
+              />
+            )
+          }
+            />
+          </div>
+        </div>
       )}
 
       {/* ── MODAL: STARTER TEMPLATES SELECTOR ── */}

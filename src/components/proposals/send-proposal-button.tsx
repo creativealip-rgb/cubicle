@@ -33,6 +33,7 @@ export function SendProposalButton({
   hideTrigger = false,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
+  onSent,
 }: {
   proposalId: string;
   status?: string;
@@ -49,6 +50,7 @@ export function SendProposalButton({
   hideTrigger?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onSent?: (url: string) => void;
 }) {
   const { refresh } = useAppTransition();
   const { t, lang } = useT();
@@ -76,6 +78,7 @@ export function SendProposalButton({
         const result = await sendProposal(proposalId, message.trim() || undefined);
         const url = `${window.location.origin}/proposal/${result.token}`;
         setLink(url);
+        onSent?.(url);
         setOpen(false);
         toast.success(
           successMessage ||

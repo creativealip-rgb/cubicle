@@ -97,7 +97,15 @@ export function FloatingContextToolbar({
         Math.max(gutter, centeredLeft),
         Math.max(gutter, window.innerWidth - toolbarRect.width - gutter),
       );
-      const below = anchorRect.top < toolbarRect.height + gutter + 8;
+      // Hosts render their own chrome above the canvas (the document editor's
+      // BUILD/SETTINGS/PUBLISH tab row ends at ~96px). Placing the toolbar "above"
+      // the anchor must not push it into that zone: on a narrow viewport a
+      // low-lying anchor used to compute `top = anchor.top - height - 8 = 73`,
+      // which landed exactly on the tab row with a higher z-index and swallowed
+      // its clicks. Only stay above when the toolbar actually clears the chrome.
+      const reservedTop = 104;
+      const fitsAbove = anchorRect.top - toolbarRect.height - 8 >= reservedTop;
+      const below = !fitsAbove;
       const top = below
         ? Math.min(window.innerHeight - toolbarRect.height - gutter, anchorRect.bottom + 8)
         : anchorRect.top - toolbarRect.height - 8;

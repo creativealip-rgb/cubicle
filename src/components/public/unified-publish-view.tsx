@@ -29,6 +29,10 @@ export interface UnifiedPublishViewProps {
   embedCode?: string;
   hasSaved?: boolean;
   publishedStatusNode?: React.ReactNode;
+  /** Rendered between the header and the link card. Hosts the document's
+   *  type-specific send control (`SendProposalButton` / `SendContractButton`),
+   *  which owns the dialog + message editor. */
+  sendSlot?: React.ReactNode;
 }
 
 export function UnifiedPublishView({
@@ -40,6 +44,7 @@ export function UnifiedPublishView({
   embedCode,
   hasSaved = true,
   publishedStatusNode,
+  sendSlot,
 }: UnifiedPublishViewProps) {
   const { t } = useT();
   const [showQrModal, setShowQrModal] = useState(false);
@@ -142,6 +147,11 @@ export function UnifiedPublishView({
             </div>
             {publishedStatusNode && <div className="shrink-0">{publishedStatusNode}</div>}
           </div>
+
+          {/* Send control. The public link is inert until the document is actually
+              sent (sendProposal/sendContract are what write `shared_token_hash`),
+              so the host may pair this with a "not active yet" notice. */}
+          {sendSlot && <div className="pt-0.5">{sendSlot}</div>}
 
           {/* Universal Link Card */}
           <div className="p-4 rounded-xl border border-border/80 bg-muted/20 space-y-3">

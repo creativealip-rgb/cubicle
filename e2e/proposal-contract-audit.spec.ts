@@ -159,18 +159,37 @@ test.describe.serial("documents", () => {
     await page.getByRole("button", { name: /Copy|Salin/ }).first().click();
     await expect(page.getByText(/copied|disalin/i).first()).toBeVisible({ timeout: 10_000 });
 
+    // The PUBLISH tab must warn that the link is inert while the document is a
+    // draft, AND must offer the send action itself. Sending is what writes
+    // `shared_token_hash`; without it the advertised link reaches a page with no
+    // accept control. Previously the builder had no send button at all — the only
+    // one lived on the list page's row actions.
+    await expect(
+      page.getByText(/Link not active yet|Link belum aktif/).first(),
+      "draft PUBLISH tab warns the link is inert",
+    ).toBeVisible({ timeout: 10_000 });
+
+    // Element catalogue / structure rows also render a "Send" label (the block
+    // type), so scope to the publishing panel.
+    await page.getByRole("button", { name: /^(Send proposal|Kirim proposal)$/ }).first().click();
+    await page.waitForTimeout(600);
+    await page.getByRole("button", { name: /^(Kirim|Send)$/ }).last().click();
+    await page.waitForTimeout(4000);
+
+    const [sent] = sql("select status, shared_token_hash from proposals where id = $1", [proposalId]);
+    expect(sent.status, "sending from the builder moved the proposal off draft").not.toBe("draft");
+    expect(
+      String(sent.shared_token_hash ?? "").length,
+      "sending from the builder wrote the share token (this is what makes the link valid)",
+    ).toBeGreaterThan(0);
+
     // Every block offered by the (kind-filtered) catalogue round-trips.
     const stored = blockTypes(saved);
     expect(stored, "proposal blocks round-trip").toEqual(expect.arrayContaining(["heading", "text", "list", "table", "divider", "placeholder"]));
 
-    // 5. Public page renders the blocks and the settings.
-    //    A public link only becomes valid once the document is SENT: `sendProposal`
-    //    is what writes `shared_token_hash` and flips the status off draft. Until
-    //    then `assertPublicTokenLifecycle` correctly refuses with "Invalid token"
-    //    (and the accept/decline buttons are not rendered at all). Model that here
-    //    rather than pretending an unsent draft is shareable — the send flow itself
-    //    is exercised by the Settings/PUBLISH steps above.
-    sql("update proposals set status = 'sent', shared_token_hash = 'qa-proposal-hash' where id = $1", [proposalId]);
+    // 5. Public page renders the blocks and the settings. The link is live because
+    //    step 4 sent the document through the real sendProposal flow (asserted in
+    //    the DB above) — nothing is faked here.
     await page.goto(`/proposal/${proposalRef}`, { waitUntil: "domcontentloaded" });
     await expect(page.getByText(PROPOSAL_TITLE).first()).toBeVisible({ timeout: 30_000 });
 
@@ -237,6 +256,7 @@ test.describe.serial("documents", () => {
     await page.getByRole("button", { name: "SETTINGS" }).click();
     await page.waitForTimeout(400);
     await page.getByPlaceholder("e.g. Website Revamp & Maintenance").fill(CONTRACT_TITLE);
+    await page.getByPlaceholder("e.g. client@example.com").fill(REAL_EMAIL);
     await page.getByRole("button", { name: /^(Save|Simpan)$/ }).first().click();
     await page.waitForTimeout(2500);
 
@@ -250,10 +270,28 @@ test.describe.serial("documents", () => {
     expect(stored, "starter blocks persisted").toContain("heading");
     expect(stored, "contract starter keeps its signature block").toContain("signature");
 
-    // 3. Public page + guards. Same rule as proposals: the public link is only
-    //    valid after the document is sent (`shared_token_hash` present, status off
-    //    draft). An unsent contract resolves to the "Not ready" guard.
-    sql("update contracts set status = 'sent', shared_token_hash = 'qa-contract-hash' where id = $1", [contractId]);
+    // 3. Send from the builder's PUBLISH tab. Same rule as proposals: the public
+    //    link is inert until the document is sent, because `sendContract` is what
+    //    writes `shared_token_hash`. This used to be impossible from the builder.
+    await page.getByRole("button", { name: "PUBLISH" }).click();
+    await page.waitForTimeout(800);
+    await expect(
+      page.getByText(/Link not active yet|Link belum aktif/).first(),
+      "draft PUBLISH tab warns the link is inert",
+    ).toBeVisible({ timeout: 10_000 });
+
+    await page.getByRole("button", { name: /^(Send for signature|Kirim untuk tanda tangan)$/ }).first().click();
+    await page.waitForTimeout(600);
+    await page.getByRole("button", { name: /^(Kirim|Send)$/ }).last().click();
+    await page.waitForTimeout(4000);
+
+    const [sent] = sql("select status, shared_token_hash from contracts where id = $1", [contractId]);
+    expect(sent.status, "sending from the builder moved the contract off draft").not.toBe("draft");
+    expect(
+      String(sent.shared_token_hash ?? "").length,
+      "sending from the builder wrote the signing token",
+    ).toBeGreaterThan(0);
+
     const publicUrl = `/contract/${contractRef}`;
     await page.goto(publicUrl, { waitUntil: "domcontentloaded" });
     await expect(page.getByText(CONTRACT_TITLE).first()).toBeVisible({ timeout: 30_000 });

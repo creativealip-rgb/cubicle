@@ -33,6 +33,7 @@ export function SendContractButton({
   hideTrigger = false,
   open: controlledOpen,
   onOpenChange: setControlledOpen,
+  onSent,
 }: {
   contractId: string;
   status?: string;
@@ -49,6 +50,7 @@ export function SendContractButton({
   hideTrigger?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  onSent?: (url: string) => void;
 }) {
   const { refresh } = useAppTransition();
   const { t, lang } = useT();
@@ -78,6 +80,7 @@ export function SendContractButton({
         const { token } = await sendContract({ contractId, customMessage: message.trim() || undefined });
         const url = `${window.location.origin}/contract/${token}`;
         setLink(url);
+        onSent?.(url);
         setOpen(false);
         toast.success(
           successMessage ||
