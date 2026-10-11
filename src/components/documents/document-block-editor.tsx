@@ -32,6 +32,7 @@ import {
   buildNdaContractBlocks,
   buildRetainerContractBlocks,
   isSafeImageBlock,
+  allowedDocumentBlockTypes,
   type DocumentBlock,
   type DocumentTableRow,
 } from "@/lib/document-blocks";
@@ -453,6 +454,12 @@ export function DocumentBlockEditor({
   const [customSlug, setCustomSlug] = useState(
     proposalMeta?.slug || documentMeta?.slug || ""
   );
+  // The custom-slug box is disabled (and hidden behind an upgrade CTA) on a free
+  // plan, yet the settings form used to submit `slug: null` on every save. That
+  // silently destroyed the server-generated share slug, so the public link the
+  // PUBLISH tab advertises started 404-ing. Only send the field when the user
+  // actually changed it.
+  const loadedSlug = proposalMeta?.slug || documentMeta?.slug || "";
 
   useEffect(() => {
     getCurrentUserPlanForPortal().then((res) => {
@@ -593,8 +600,10 @@ export function DocumentBlockEditor({
         clientEmail: metaState.clientEmail || null,
         companyName: metaState.companyName || null,
         validUntil: metaState.validUntil || null,
-        slug: isPaidPlan && customSlug.trim() ? customSlug.trim().toLowerCase() : null,
       };
+      if (customSlug.trim() !== loadedSlug) {
+        payload.slug = customSlug.trim().toLowerCase() || null;
+      }
       if (kind === "proposal") {
         payload.taxRate = Number(metaState.taxRate) || 0;
         payload.downPaymentPercent = Number(metaState.downPaymentPercent) || 0;
@@ -861,6 +870,11 @@ export function DocumentBlockEditor({
 
   const availableTokens = kind === "contract" ? contractTokens : proposalTokens;
 
+  // `AddableBlock` is the editor's superset; each kind only accepts a subset
+  // (proposals have no signature pad, contracts have no file attachment). Filter
+  // through the same allow-list the read path enforces, otherwise a catalogue
+  // entry saves and then disappears on reload.
+  const allowedTypes = new Set<string>(allowedDocumentBlockTypes(kind));
   const catalogItems: { type: AddableBlock; label: string; desc: string; icon: typeof Type; category: "basic" | "media" | "special" }[] = [
     { type: "heading", label: "Heading", desc: "Section title (H1, H2, H3)", icon: Heading, category: "basic" },
     { type: "text", label: "Paragraph / Text", desc: "Standard text content with placeholders", icon: Type, category: "basic" },
@@ -875,8 +889,10 @@ export function DocumentBlockEditor({
 
   const filteredCatalog = catalogItems.filter(
     (item) =>
-      item.label.toLowerCase().includes(elementSearch.toLowerCase()) ||
+      allowedTypes.has(item.type) &&
+      (item.label.toLowerCase().includes(elementSearch.toLowerCase()) ||
       item.desc.toLowerCase().includes(elementSearch.toLowerCase())
+      )
   );
 
   return (

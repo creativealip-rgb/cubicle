@@ -317,6 +317,14 @@ export async function updateContract(contractId: string, input: { clientId?: str
     input = { ...input, contractNumber: normalized };
   }
 
+  // `input` is spread straight into the UPDATE, so a `slug: null` coming from the
+  // settings form (sent unconditionally for free-plan workspaces, where the field
+  // is disabled) would wipe the share slug and 404 the public link. Only an
+  // explicitly CHANGED value may clear it.
+  if (input.slug === undefined || input.slug === null) {
+    input = { ...input, slug: existing.slug ?? generateDefaultSlug("contract") };
+  }
+
   const [updated] = await db.update(contracts)
     .set({ ...input, updatedAt: new Date() })
     .where(and(eq(contracts.id, contractId), eq(contracts.workspaceId, workspaceId)))

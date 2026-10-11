@@ -37,6 +37,13 @@ const allowed: Record<"proposal" | "contract", DocumentBlockType[]> = {
 
 const KNOWN_TYPES = new Set(Object.values(allowed).flat());
 
+/** Block types a given document kind accepts. The editor's element catalogue must
+ *  be filtered through this: offering a type the read path drops means the block
+ *  saves and then silently vanishes on reload. */
+export function allowedDocumentBlockTypes(kind: "proposal" | "contract"): DocumentBlockType[] {
+  return allowed[kind];
+}
+
 /** True when the value is a well-formed document block of a known type. */
 export function isDocumentBlock(value: unknown): value is DocumentBlock {
   if (!value || typeof value !== "object") return false;

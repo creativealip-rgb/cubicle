@@ -254,6 +254,14 @@ export async function updateProposal(proposalId: string, input: z.infer<typeof u
     : 0);
   const { subtotal, tax, total } = computeTotals(lineItems, taxRate);
 
+  // A null slug silently kills the public share link. The settings form used to
+  // send `slug: null` on every save for free-plan workspaces (where the field is
+  // disabled), so only an explicitly CHANGED value may clear it.
+  const nextSlug =
+    parsed.slug === undefined || parsed.slug === null
+      ? existing.slug ?? generateDefaultSlug("proposal")
+      : parsed.slug;
+
   const [proposal] = await db.update(proposals)
     .set({
       clientId: parsed.clientId !== undefined ? parsed.clientId : existing.clientId,
@@ -261,7 +269,7 @@ export async function updateProposal(proposalId: string, input: z.infer<typeof u
       clientEmail: parsed.clientEmail !== undefined ? parsed.clientEmail : existing.clientEmail,
       companyName: parsed.companyName !== undefined ? parsed.companyName : existing.companyName,
       title: parsed.title ?? existing.title,
-      slug: parsed.slug !== undefined ? parsed.slug : existing.slug,
+      slug: nextSlug,
       body: parsed.body !== undefined ? parsed.body : existing.body,
       lineItems,
       subtotal: subtotal.toFixed(2),
@@ -593,6 +601,7 @@ export async function acceptProposalPublic(proposalId: string, token: string) {
       id: invoiceId,
       workspaceId: p.workspaceId,
       clientId,
+      projectId,
       invoiceNumber,
       issueDate: new Date().toISOString().slice(0, 10),
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
