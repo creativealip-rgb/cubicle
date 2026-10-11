@@ -1,21 +1,25 @@
 "use client";
 
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useRef } from "react";
 
 export function useHistoryState<T>(initialPresent: T, maxHistory = 30) {
   const [past, setPast] = useState<T[]>([]);
   const [present, setPresent] = useState<T>(initialPresent);
   const [future, setFuture] = useState<T[]>([]);
 
-  // Ref to access current values synchronously inside callbacks
   const presentRef = useRef(present);
   const pastRef = useRef(past);
   const futureRef = useRef(future);
-  useEffect(() => {
-    presentRef.current = present;
-    pastRef.current = past;
-    futureRef.current = future;
-  }, [present, past, future]);
+
+  const commit = useCallback((nextPast: T[], nextPresent: T, nextFuture: T[]) => {
+    // Keep callback reads synchronous when multiple history actions share one event.
+    pastRef.current = nextPast;
+    presentRef.current = nextPresent;
+    futureRef.current = nextFuture;
+    setPast(nextPast);
+    setPresent(nextPresent);
+    setFuture(nextFuture);
+  }, []);
 
   const canUndo = past.length > 0;
   const canRedo = future.length > 0;
@@ -23,45 +27,38 @@ export function useHistoryState<T>(initialPresent: T, maxHistory = 30) {
   const undo = useCallback(() => {
     if (pastRef.current.length === 0) return;
     const previous = pastRef.current[pastRef.current.length - 1];
-    const newPast = pastRef.current.slice(0, pastRef.current.length - 1);
-    
-    setPast(newPast);
-    setFuture([presentRef.current, ...futureRef.current]);
-    setPresent(previous);
-  }, []);
+    commit(
+      pastRef.current.slice(0, -1),
+      previous,
+      [presentRef.current, ...futureRef.current],
+    );
+  }, [commit]);
 
   const redo = useCallback(() => {
     if (futureRef.current.length === 0) return;
     const next = futureRef.current[0];
-    const newFuture = futureRef.current.slice(1);
-
-    setPast([...pastRef.current, presentRef.current]);
-    setFuture(newFuture);
-    setPresent(next);
-  }, []);
+    commit(
+      [...pastRef.current, presentRef.current],
+      next,
+      futureRef.current.slice(1),
+    );
+  }, [commit]);
 
   const set = useCallback(
     (action: T | ((curr: T) => T)) => {
       const current = presentRef.current;
       const next = typeof action === "function" ? (action as (curr: T) => T)(current) : action;
 
-      // Don't record if identical
-      if (JSON.stringify(current) === JSON.stringify(next)) {
-        return;
-      }
+      if (JSON.stringify(current) === JSON.stringify(next)) return;
 
-      setPast((prev) => [...prev, current].slice(-maxHistory));
-      setPresent(next);
-      setFuture([]);
+      commit([...pastRef.current, current].slice(-maxHistory), next, []);
     },
-    [maxHistory]
+    [commit, maxHistory],
   );
 
   const reset = useCallback((newPresent: T) => {
-    setPast([]);
-    setPresent(newPresent);
-    setFuture([]);
-  }, []);
+    commit([], newPresent, []);
+  }, [commit]);
 
   return {
     state: present,

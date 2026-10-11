@@ -23,8 +23,8 @@ describe("row action menu rollout", () => {
     const list = readFileSync("src/components/expenses/expenses-list-table.tsx", "utf8");
     expect(menu).toContain("getExpenseReceiptDownloadUrl");
     expect(menu).toContain("deleteExpense");
-    // Edit, recurring schedule, receipt download, and delete.
-    expect((menu.match(/<DropdownMenuItem/g) ?? []).length).toBeGreaterThanOrEqual(3);
+    // Edit, recurring schedule, conditional receipt download, and delete.
+    expect(menu.match(/<DropdownMenuItem/g)).toHaveLength(4);
     expect(list).not.toContain("ReceiptLinkButton");
     expect(list).not.toContain("DeleteExpenseButton");
   });

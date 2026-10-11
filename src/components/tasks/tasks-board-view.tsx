@@ -161,7 +161,7 @@ export function TasksBoardView({ tasks, members, projects = [] }: TasksBoardView
                         )}
                         {task.mode === "reusable" && (
                           <Badge variant="outline" className="text-[9px] font-normal px-1.5 py-0">
-                            Reusable
+                            {t("Berulang", "Reusable")}
                           </Badge>
                         )}
                       </div>

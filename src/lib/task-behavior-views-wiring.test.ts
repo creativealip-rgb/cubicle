@@ -14,13 +14,14 @@ describe("task behavior views", () => {
     expect(page).toContain("TaskPageTabs");
   });
 
-  it("shows canonical task mode badges in list and board views", () => {
+  it("keeps canonical task mode data in both views and labels reusable board cards", () => {
     const list = read("src/components/tasks/tasks-list-table.tsx");
     const board = read("src/components/tasks/tasks-board-view.tsx");
 
     expect(list).toContain('mode?: "workflow" | "reusable"');
     expect(board).toContain('mode?: "workflow" | "reusable"');
-    expect(board).toContain("Reusable");
+    expect(board).toContain('task.mode === "reusable"');
+    expect(board).toContain('t("Berulang", "Reusable")');
   });
 
   it("uses canonical task mode in actions and the shared form", () => {
