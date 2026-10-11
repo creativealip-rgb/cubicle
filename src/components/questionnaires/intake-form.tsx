@@ -167,15 +167,6 @@ export function IntakeForm({
 
     // Check required fields on the current page
     for (const f of currentFields) {
-      // Skip if hidden by conditional logic
-      if (f.condition?.fieldId) {
-        const triggerVal = answers[f.condition.fieldId];
-        const match = f.condition.value
-          ? String(triggerVal || "").toLowerCase().includes(f.condition.value.toLowerCase())
-          : Boolean(triggerVal);
-        if (!match) continue;
-      }
-
       if (f.required && f.type !== "heading" && f.type !== "divider" && f.type !== "info" && f.type !== "page_break") {
         const val = answers[f.id];
         if (val === undefined || val === null || val === "" || (Array.isArray(val) && val.length === 0)) {
@@ -290,15 +281,6 @@ export function IntakeForm({
       {/* 12-Column Responsive Grid */}
       <div className="grid grid-cols-12 gap-4 sm:gap-5">
         {currentFields.map((f) => {
-          // Evaluate Conditional Logic
-          if (f.condition?.fieldId) {
-            const triggerVal = answers[f.condition.fieldId];
-            const match = f.condition.value
-              ? String(triggerVal || "").toLowerCase().includes(f.condition.value.toLowerCase())
-              : Boolean(triggerVal);
-            if (!match) return null;
-          }
-
           const isHalf = f.colSpan === "half";
           const colClass = isHalf ? "col-span-12 md:col-span-6" : "col-span-12";
 

@@ -39,7 +39,6 @@ describe("Jotform-Style Form Schema Validation", () => {
 
     const parsed = safeParseQuestionnaireSchema(validFields);
     expect(parsed).toHaveLength(4);
-    expect(parsed[2].condition?.fieldId).toBe("f_2");
-    expect(parsed[2].condition?.value).toBe("Web Dev");
+    expect("condition" in parsed[2]).toBe(false);
   });
 });

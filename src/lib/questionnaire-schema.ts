@@ -95,14 +95,7 @@ export const questionnaireFieldSchema = z.object({
       })
     )
     .optional(),
-  // Conditional Logic: show this field only if another field matches a value
-  condition: z
-    .object({
-      fieldId: z.string().min(1),
-      operator: z.enum(["equals", "not_equals", "is_filled", "is_empty"]).default("equals"),
-      value: z.string().optional(),
-    })
-    .optional(),
+
 });
 
 export type QuestionnaireField = z.infer<typeof questionnaireFieldSchema>;

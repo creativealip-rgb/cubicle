@@ -6,12 +6,12 @@ const canvas = readFileSync("src/components/site/canvas/canvas-editor.tsx", "utf
 
 it("localizes nested Personal Site tab controls", () => {
   for (const english of [
-    "AI Copy Generator", "Tone", "Preview", "Heading", "Animation",
+    "Heading", "Animation",
     "Add service", "Add offer", "Add question", "Call to action",
     "Button label", "Button URL", "Add image", "Alt text",
   ]) expect(properties).toContain(english);
   for (const stale of [
-    ">AI Copy Generator</Label>", ">Tone</Label>", ">Heading</Label>",
+    ">Heading</Label>",
     'label="Add service"', 'label="Add offer"', 'label="Add question"',
     'label="Add image"', '>Alt text</Label>',
   ]) expect(properties).not.toContain(stale);

@@ -15,10 +15,6 @@ it("localizes personal-site editor chrome and accessibility labels", () => {
   ].map(read).join("\n");
   for (const english of [
     "Loading Landing Page Editor...",
-    "Failed to generate copy.",
-    "Copy applied to section.",
-    "Business name",
-    "Target audience",
     "A short invitation for visitors",
     "Image description",
     "Enter an embed URL",

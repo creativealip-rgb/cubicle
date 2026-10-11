@@ -78,8 +78,6 @@ describe("PersonalSiteRenderer", () => {
         }}
       />,
     );
-    expect(html).toContain("Hubungi Saya");
-    expect(html).not.toContain("Contact me");
     expect(html).toContain("aria-label=\"Halaman situs\"");
     expect(html).not.toContain("aria-label=\"Site pages\"");
   });

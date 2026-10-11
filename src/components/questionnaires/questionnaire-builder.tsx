@@ -77,7 +77,6 @@ import {
   Smartphone,
   Monitor,
   Tablet,
-  GitBranch,
   Image as ImageIcon,
   Columns,
   Square,
@@ -2438,89 +2437,6 @@ export function QuestionnaireBuilder({
                               placeholder=".pdf,.doc,.docx,.png,.zip"
                               className="h-8.5 text-xs"
                             />
-                          </div>
-                        )}
-
-                        {/* Conditional Logic (show/hide this field) */}
-                        {!["divider", "heading", "info", "page_break", "logo"].includes(selectedField.type) && (
-                          <div className="space-y-2 pt-2 border-t border-border/60">
-                            <Label className="text-xs font-medium flex items-center gap-1.5">
-                              <GitBranch className="h-3.5 w-3.5 text-primary" />
-                              {t("Logika Kondisional (Opsional)", "Conditional Logic (Optional)")}
-                            </Label>
-                            <Select
-                              value={selectedField.condition?.fieldId || "__none__"}
-                              onValueChange={(v) =>
-                                updateSelectedField({
-                                  condition:
-                                    v === "__none__"
-                                      ? undefined
-                                      : {
-                                          fieldId: v,
-                                          operator: selectedField.condition?.operator || "equals",
-                                          value: selectedField.condition?.value,
-                                        },
-                                })
-                              }
-                            >
-                              <SelectTrigger className="h-8.5 text-xs">
-                                <SelectValue placeholder={t("Selalu tampil", "Always visible")} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="__none__">{t("Selalu tampil", "Always visible")}</SelectItem>
-                                {fields
-                                  .filter((f) => f.id !== selectedField.id && !["heading", "divider", "info", "page_break", "logo"].includes(f.type))
-                                  .map((f) => (
-                                    <SelectItem key={f.id} value={f.id}>
-                                      {f.label || t("Pertanyaan", "Question")}
-                                    </SelectItem>
-                                  ))}
-                              </SelectContent>
-                            </Select>
-                            {selectedField.condition?.fieldId && (
-                              <div className="grid grid-cols-2 gap-1.5">
-                                <Select
-                                  value={selectedField.condition.operator || "equals"}
-                                  onValueChange={(v: any) =>
-                                    updateSelectedField({
-                                      condition: { ...selectedField.condition!, operator: v },
-                                    })
-                                  }
-                                >
-                                  <SelectTrigger className="h-8.5 text-xs">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="equals">{t("Sama dengan", "Equals")}</SelectItem>
-                                    <SelectItem value="not_equals">{t("Tidak sama", "Not equals")}</SelectItem>
-                                    <SelectItem value="is_filled">{t("Terisi", "Is filled")}</SelectItem>
-                                    <SelectItem value="is_empty">{t("Kosong", "Is empty")}</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                                {(selectedField.condition.operator || "equals") === "equals" ||
-                                (selectedField.condition.operator || "equals") === "not_equals" ? (
-                                  <Input
-                                    value={selectedField.condition.value || ""}
-                                    onChange={(e) =>
-                                      updateSelectedField({
-                                        condition: { ...selectedField.condition!, value: e.target.value },
-                                      })
-                                    }
-                                    placeholder={t("Nilai", "Value")}
-                                    className="h-8.5 text-xs"
-                                  />
-                                ) : null}
-                              </div>
-                            )}
-                            {selectedField.condition?.fieldId && (
-                              <button
-                                type="button"
-                                onClick={() => updateSelectedField({ condition: undefined })}
-                                className="text-[10px] text-muted-foreground hover:text-destructive"
-                              >
-                                {t("Reset logika", "Reset logic")}
-                              </button>
-                            )}
                           </div>
                         )}
 

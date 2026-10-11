@@ -453,8 +453,6 @@ export const personalSiteInputSchema = z.object({
   pages: z.array(personalSitePageSchema).max(10).optional(),
   themeConfig: themeConfigSchema.nullish(),
   seo: seoMetadataSchema.optional().nullish(),
-  showContactForm: z.boolean().optional(),
-  contactFormHeading: z.string().trim().max(100).optional(),
 });
 
 export type PersonalSiteInput = z.infer<typeof personalSiteInputSchema>;
@@ -515,8 +513,6 @@ export const DEFAULT_PERSONAL_SITE: PersonalSiteInput = {
       },
     ],
   }],
-  showContactForm: true,
-  contactFormHeading: "",
   themeConfig: {
     primaryColor: "#2563EB",
     secondaryColor: "#1e293b",
@@ -731,8 +727,6 @@ export function normalizeStoredPersonalSite(value: unknown): PersonalSiteInput {
     links: normalizeLegacyLinks(raw.links),
     pages: Array.isArray(raw.pages) && raw.pages.length ? (raw.pages as PersonalSiteInput["pages"]) : undefined,
     themeConfig: raw.themeConfig && typeof raw.themeConfig === "object" ? (raw.themeConfig as PersonalSiteInput["themeConfig"]) : undefined,
-    showContactForm: typeof raw.showContactForm === "boolean" ? raw.showContactForm : true,
-    contactFormHeading: typeof raw.contactFormHeading === "string" ? raw.contactFormHeading : "",
     seo: rawSeo
       ? {
           title: String(rawSeo.title ?? ""),

@@ -10,8 +10,6 @@ import {
   Search,
   Rocket,
   Smartphone,
-  Wand2,
-  MessageSquareText,
 } from "lucide-react";
 import {
   DocsBreadcrumb,
@@ -217,43 +215,7 @@ const SECTIONS = [
       en: <p>On mobile it becomes a step wizard automatically: Pages → Sections → Theme → Publish.</p>,
     },
   },
-  {
-    id: "ai-copy",
-    icon: Wand2,
-    title: { id: "AI Copy Generator", en: "AI Copy Generator" },
-    body: {
-      id: (
-        <p>
-          Properties panel → Generate Copy → isi brief → Generate → Apply/Discard. Support: Layanan, FAQ, CTA.
-        </p>
-      ),
-      en: (
-        <p>
-          Properties panel → Generate Copy → fill in the brief → Generate → Apply/Discard. Supports: Services, FAQ,
-          CTA.
-        </p>
-      ),
-    },
-  },
-  {
-    id: "contact-form",
-    icon: MessageSquareText,
-    title: { id: "Contact Form", en: "Contact Form" },
-    body: {
-      id: (
-        <>
-          <p>Otomatis di bagian bawah landing page. Pesan dikirim ke email owner.</p>
-          <DocsCallout variant="info">Rate limit 3/jam. Anti-spam.</DocsCallout>
-        </>
-      ),
-      en: (
-        <>
-          <p>Automatically placed at the bottom of the landing page. Messages go to the owner&apos;s email.</p>
-          <DocsCallout variant="info">Rate limit: 3/hour. Anti-spam.</DocsCallout>
-        </>
-      ),
-    },
-  },
+
 ];
 
 export default async function DocLandingPage() {

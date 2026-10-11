@@ -1,13 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import {
   Plus,
   X,
-  Sparkles,
-  Check,
-  Loader2,
   Calendar,
   Settings2,
   Trash2,
@@ -19,7 +16,6 @@ import { Textarea } from "@/components/ui/textarea";
 import { ImageUpload } from "./image-upload";
 import type { PersonalSiteSection } from "@/lib/personal-site/model";
 import { PERSONAL_SITE_ANIMATIONS } from "@/lib/personal-site/model";
-import { generatePersonalSiteCopy } from "@/lib/actions/personal-site-ai";
 import { toast } from "sonner";
 import { useT } from "@/lib/i18n-client";
 import {
@@ -65,15 +61,6 @@ export function removeItemAt<T>(items: readonly T[], index: number): T[] {
   return items.filter((_, i) => i !== index);
 }
 
-/**
- * AI copy generation state for preview-before-apply UX.
- */
-interface AiGenerationState {
-  isGenerating: boolean;
-  preview: PersonalSiteSection | null;
-  pendingPatch: PersonalSiteSection | null; // what to apply after user clicks Apply
-}
-
 type PropertiesContentProps = {
   section: PersonalSiteSection;
   onUpdate: (patch: Partial<PersonalSiteSection>) => void;
@@ -88,64 +75,6 @@ type PropertiesContentProps = {
  */
 export function PropertiesContent({ section, onUpdate, onDelete, onClose }: PropertiesContentProps) {
   const { t } = useT();
-  const [aiState, setAiState] = useState<AiGenerationState>({
-    isGenerating: false,
-    preview: null,
-    pendingPatch: null,
-  });
-
-  // Reset AI preview when section changes
-  useEffect(() => {
-    setAiState({ isGenerating: false, preview: null, pendingPatch: null });
-  }, [section.id]);
-
-  const handleGenerateCopy = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    const formData = new FormData(e.currentTarget);
-
-    const businessName = formData.get("businessName") as string;
-    const niche = formData.get("niche") as string;
-    const targetAudience = formData.get("targetAudience") as string;
-    const offer = formData.get("offer") as string;
-    const tone = formData.get("tone") as "professional" | "friendly" | "bold" | "minimal";
-
-    try {
-      setAiState(s => ({ ...s, isGenerating: true }));
-
-      const result = await generatePersonalSiteCopy({
-        sectionType: section.type,
-        businessName,
-        niche,
-        targetAudience,
-        offer,
-        tone,
-      });
-
-      // Store preview for explicit Apply
-      setAiState({
-        isGenerating: false,
-        preview: result.patch,
-        pendingPatch: result.patch,
-      });
-
-      toast.success(t("Copy berhasil dibuat — klik Apply untuk menerapkannya.", "Copy generated — click Apply to use it."));
-    } catch (err) {
-      const msg = err instanceof Error ? err.message : t("Gagal membuat copy.", "Failed to generate copy.");
-      toast.error(msg);
-      setAiState({ isGenerating: false, preview: null, pendingPatch: null });
-    }
-  };
-
-  const handleApplyPreview = () => {
-    if (!aiState.pendingPatch) return;
-    onUpdate(aiState.pendingPatch);
-    setAiState({ isGenerating: false, preview: null, pendingPatch: null });
-    toast.success(t("Copy diterapkan ke bagian.", "Copy applied to section."));
-  };
-
-  const handleDiscardPreview = () => {
-    setAiState({ isGenerating: false, preview: null, pendingPatch: null });
-  };
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
@@ -165,121 +94,6 @@ export function PropertiesContent({ section, onUpdate, onDelete, onClose }: Prop
       </div>
 
       <div className="flex-1 space-y-6 overflow-y-auto p-4 custom-scrollbar">
-        {/* AI Copy Generation */}
-        <div className="rounded-lg border bg-muted/30 p-4">
-          <div className="mb-3 flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Generator Copy AI", "AI Copy Generator")}</Label>
-          </div>
-
-          {section.type === "services" && (
-            <form onSubmit={handleGenerateCopy} className="space-y-3">
-              <Input name="businessName" placeholder={t("Nama bisnis", "Business name")} defaultValue="" required maxLength={80} />
-              <Textarea name="niche" placeholder={t("Niche/spesialisasi (mis: pemasaran digital)", "Niche/specialization (e.g. digital marketing)")} required maxLength={160} className="min-h-10 resize-none text-xs" />
-              <Textarea name="targetAudience" placeholder={t("Target audiens (mis: UMKM Jakarta)", "Target audience (e.g. small businesses)")} required maxLength={240} className="min-h-10 resize-none text-xs" />
-              <Textarea name="offer" placeholder={t("Penawaran utama (mis: landing page siap diluncurkan)", "Main offer (e.g. launch-ready landing page)")} required maxLength={500} className="min-h-12 resize-none text-xs" />
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">{t("Nada", "Tone")}</Label>
-                <select name="tone" className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary">
-                  <option value="professional">{t("Profesional", "Professional")}</option>
-                  <option value="friendly">{t("Ramah", "Friendly")}</option>
-                  <option value="bold">{t("Tegas", "Bold")}</option>
-                  <option value="minimal">{t("Minimal", "Minimal")}</option>
-                </select>
-              </div>
-              <Button type="submit" disabled={aiState.isGenerating} className="w-full gap-1 text-xs">
-                {aiState.isGenerating ? (
-                  <>
-                    <Loader2 className="h-3 w-3 animate-spin" /> Generate...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-3 w-3" /> Generate copy
-                  </>
-                )}
-              </Button>
-            </form>
-          )}
-
-          {section.type === "faq" && (
-            <form onSubmit={handleGenerateCopy} className="space-y-3">
-              <Input name="businessName" placeholder={t("Nama bisnis", "Business name")} defaultValue="" required maxLength={80} />
-              <Textarea name="niche" placeholder={t("Niche/spesialisasi (mis: pengembangan web)", "Niche/specialization (e.g. web development)")} required maxLength={160} className="min-h-10 resize-none text-xs" />
-              <Textarea name="targetAudience" placeholder={t("Target audiens (mis: startup Indonesia)", "Target audience (e.g. startups)")} required maxLength={240} className="min-h-10 resize-none text-xs" />
-              <Textarea name="offer" placeholder={t("Penawaran utama (mis: jasa pembuatan website kustom)", "Main offer (e.g. custom website development)")} required maxLength={500} className="min-h-12 resize-none text-xs" />
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">{t("Nada", "Tone")}</Label>
-                <select name="tone" className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary">
-                  <option value="professional">{t("Profesional", "Professional")}</option>
-                  <option value="friendly">{t("Ramah", "Friendly")}</option>
-                  <option value="bold">{t("Tegas", "Bold")}</option>
-                  <option value="minimal">{t("Minimal", "Minimal")}</option>
-                </select>
-              </div>
-              <Button type="submit" disabled={aiState.isGenerating} className="w-full gap-1 text-xs">
-                {aiState.isGenerating ? (
-                  <>
-                    <Loader2 className="h-3 w-3 animate-spin" /> Generate...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-3 w-3" /> Generate FAQ
-                  </>
-                )}
-              </Button>
-            </form>
-          )}
-
-          {section.type === "cta" && (
-            <form onSubmit={handleGenerateCopy} className="space-y-3">
-              <Input name="businessName" placeholder={t("Nama bisnis", "Business name")} defaultValue="" required maxLength={80} />
-              <Textarea name="niche" placeholder={t("Niche/spesialisasi (mis: konsultasi desain)", "Niche/specialization (e.g. design consultancy)")} required maxLength={160} className="min-h-10 resize-none text-xs" />
-              <Textarea name="targetAudience" placeholder={t("Target audiens (mis: tim produk)", "Target audience (e.g. product teams)")} required maxLength={240} className="min-h-10 resize-none text-xs" />
-              <Textarea name="offer" placeholder={t("Penawaran utama (mis: konsultasi UX/UI & sistem desain)", "Main offer (e.g. UX/UI and design-system consulting)")} required maxLength={500} className="min-h-12 resize-none text-xs" />
-              <div className="space-y-1">
-                <Label className="text-xs text-muted-foreground">{t("Nada", "Tone")}</Label>
-                <select name="tone" className="flex h-8 w-full rounded-md border border-input bg-background px-2 text-xs shadow-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary">
-                  <option value="professional">{t("Profesional", "Professional")}</option>
-                  <option value="friendly">{t("Ramah", "Friendly")}</option>
-                  <option value="bold">{t("Tegas", "Bold")}</option>
-                  <option value="minimal">{t("Minimal", "Minimal")}</option>
-                </select>
-              </div>
-              <Button type="submit" disabled={aiState.isGenerating} className="w-full gap-1 text-xs">
-                {aiState.isGenerating ? (
-                  <>
-                    <Loader2 className="h-3 w-3 animate-spin" /> Generate CTA...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="h-3 w-3" /> Generate CTA
-                  </>
-                )}
-              </Button>
-            </form>
-          )}
-        </div>
-
-        {/* Preview before apply */}
-        {aiState.preview && (
-          <div className="rounded-lg border bg-accent p-4">
-            <div className="mb-2 flex items-center justify-between">
-              <Label className="text-xs font-medium">{t("Pratinjau", "Preview")}</Label>
-              <div className="flex gap-1">
-                <Button type="button" variant="outline" size="sm" className="h-6 text-xs" onClick={handleDiscardPreview}>
-                  <X className="h-3 w-3" /> Discard
-                </Button>
-                <Button type="button" variant="default" size="sm" className="h-6 gap-1 text-xs" onClick={handleApplyPreview}>
-                  <Check className="h-3 w-3" /> Apply
-                </Button>
-              </div>
-            </div>
-            <p className="text-xs text-muted-foreground">
-              {t("Klik Apply untuk menerapkan copy ke bagian ini. Konten saat ini tidak akan hilang sebelum Anda konfirmasi.", "Click Apply to use this copy in the section. Existing content stays until you confirm.")}
-            </p>
-          </div>
-        )}
-
         {/* Shared fields */}
         <div className="space-y-4">
           <div className="space-y-1.5">
