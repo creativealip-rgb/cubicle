@@ -589,62 +589,81 @@ export async function submitQuestionnaire(input: {
   // Mirror getPublicQuestionnaire: a master link carries either the UUID or the
   // slug, and casting a slug straight into a uuid column raises PG 22P02.
   const isUuidToken = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(input.token);
-  const [qMaster] = await db
-    .select()
-    .from(questionnaires)
-    .where(
-      isUuidToken
-        ? or(
-            eq(questionnaires.id, input.token),
-            eq(sql`lower(${questionnaires.slug})`, input.token.toLowerCase())
-          )
-        : eq(sql`lower(${questionnaires.slug})`, input.token.toLowerCase())
-    )
-    .limit(1);
+  const { qMaster, newResponse, inferredEmail, inferredName } = await db.transaction(async (tx) => {
+    const [qMaster] = await tx
+      .select()
+      .from(questionnaires)
+      .where(
+        isUuidToken
+          ? or(
+              eq(questionnaires.id, input.token),
+              eq(sql`lower(${questionnaires.slug})`, input.token.toLowerCase())
+            )
+          : eq(sql`lower(${questionnaires.slug})`, input.token.toLowerCase())
+      )
+      .for("update")
+      .limit(1);
 
-  if (!qMaster) throw new Error("Formulir tidak ditemukan");
-  if (qMaster.formStatus === "disabled") {
-    throw new Error("Formulir ini sedang ditutup / Form is closed");
-  }
-
-  const fields = safeParseQuestionnaireSchema(qMaster.schema);
-  for (const field of fields) {
-    if (field.required && field.type !== "heading" && field.type !== "divider" && field.type !== "info" && field.type !== "page_break") {
-      const val = input.answers[field.id];
-      if (val === undefined || val === null || val === "" || (Array.isArray(val) && val.length === 0)) {
-        throw new Error(`Field "${field.label}" is required`);
+    if (!qMaster) throw new Error("Formulir tidak ditemukan");
+    if (qMaster.formStatus === "disabled") {
+      throw new Error("Formulir ini sedang ditutup / Form is closed");
+    }
+    if (qMaster.expiresAt && qMaster.expiresAt <= new Date()) {
+      throw new Error("Formulir ini sudah kedaluwarsa / Form has expired");
+    }
+    if (qMaster.maxResponses) {
+      const [{ count }] = await tx
+        .select({ count: sql<number>`count(*)::int` })
+        .from(questionnaireResponses)
+        .where(and(
+          eq(questionnaireResponses.questionnaireId, qMaster.id),
+          eq(questionnaireResponses.status, "submitted"),
+        ));
+      if (count >= qMaster.maxResponses) {
+        throw new Error("Batas tanggapan formulir tercapai / Form response limit reached");
       }
     }
-  }
 
-  // Extract respondent info from answers if not explicitly passed
-  const inferredEmail =
-    input.respondentEmail ||
-    Object.entries(input.answers).find(([k, v]) => {
-      if (typeof v === "string" && v.includes("@") && v.includes(".")) return true;
-      const fieldDef = fields.find((f) => f.id === k);
-      return fieldDef?.type === "email";
-    })?.[1] as string | undefined;
+    const fields = safeParseQuestionnaireSchema(qMaster.schema);
+    for (const field of fields) {
+      if (field.required && field.type !== "heading" && field.type !== "divider" && field.type !== "info" && field.type !== "page_break") {
+        const val = input.answers[field.id];
+        if (val === undefined || val === null || val === "" || (Array.isArray(val) && val.length === 0)) {
+          throw new Error(`Field "${field.label}" is required`);
+        }
+      }
+    }
 
-  const inferredName =
-    input.respondentName ||
-    Object.entries(input.answers).find(([k, v]) => {
-      const fieldDef = fields.find((f) => f.id === k);
-      return fieldDef?.type === "text" && (fieldDef.label.toLowerCase().includes("nama") || fieldDef.label.toLowerCase().includes("name"));
-    })?.[1] as string | undefined;
+    const inferredEmail =
+      input.respondentEmail ||
+      Object.entries(input.answers).find(([k, v]) => {
+        if (typeof v === "string" && v.includes("@") && v.includes(".")) return true;
+        const fieldDef = fields.find((f) => f.id === k);
+        return fieldDef?.type === "email";
+      })?.[1] as string | undefined;
 
-  const [newResponse] = await db
-    .insert(questionnaireResponses)
-    .values({
-      workspaceId: qMaster.workspaceId,
-      questionnaireId: qMaster.id,
-      respondentName: inferredName || null,
-      respondentEmail: inferredEmail || null,
-      answers: input.answers,
-      status: "submitted",
-      submittedAt: new Date(),
-    })
-    .returning();
+    const inferredName =
+      input.respondentName ||
+      Object.entries(input.answers).find(([k]) => {
+        const fieldDef = fields.find((f) => f.id === k);
+        return fieldDef?.type === "text" && (fieldDef.label.toLowerCase().includes("nama") || fieldDef.label.toLowerCase().includes("name"));
+      })?.[1] as string | undefined;
+
+    const [newResponse] = await tx
+      .insert(questionnaireResponses)
+      .values({
+        workspaceId: qMaster.workspaceId,
+        questionnaireId: qMaster.id,
+        respondentName: inferredName || null,
+        respondentEmail: inferredEmail || null,
+        answers: input.answers,
+        status: "submitted",
+        submittedAt: new Date(),
+      })
+      .returning();
+
+    return { qMaster, newResponse, inferredEmail, inferredName };
+  });
 
   await writeActivityLog(qMaster.workspaceId, null, "submitted_questionnaire", "questionnaire_response", newResponse.id, {
     questionnaireName: qMaster.name,

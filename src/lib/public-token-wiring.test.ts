@@ -35,7 +35,7 @@ describe("public token lifecycle wiring", () => {
     expect(decline).toContain("assertPublicTokenLifecycle");
     expect(decline).toContain("sharedTokenRevokedAt");
     expect(decline).toContain("sharedTokenExpiresAt");
-    expect(decline).toContain('allowedStatuses: ["draft", "sent", "viewed"]');
+    expect(decline).toContain('allowedStatuses: ["sent", "viewed"]');
   });
 
   it("applies shared lifecycle policy before contract signed-state rejection", () => {

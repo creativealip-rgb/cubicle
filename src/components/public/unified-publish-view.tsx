@@ -114,6 +114,24 @@ export function UnifiedPublishView({
 
   const labels = getDocTypeLabels();
 
+  async function copyShareUrl(value: string, successMessage: string) {
+    try {
+      await navigator.clipboard.writeText(value);
+      toast.success(successMessage);
+    } catch {
+      const textarea = document.createElement("textarea");
+      textarea.value = value;
+      textarea.style.position = "fixed";
+      textarea.style.opacity = "0";
+      document.body.appendChild(textarea);
+      textarea.select();
+      const copied = document.execCommand("copy");
+      textarea.remove();
+      if (copied) toast.success(successMessage);
+      else toast.error(t("Gagal menyalin. Pilih dan salin link secara manual.", "Copy failed. Select and copy the link manually."));
+    }
+  }
+
   if (!hasSaved) {
     return (
       <div className="flex-1 overflow-y-auto bg-muted/30 p-4 sm:p-8 flex items-center justify-center">
@@ -161,12 +179,10 @@ export function UnifiedPublishView({
               <Button
                 type="button"
                 size="sm"
-                onClick={async () => {
-                  if (shareUrl) {
-                    await navigator.clipboard.writeText(shareUrl);
-                    toast.success(t("Link berhasil disalin ke clipboard!", "Link copied to clipboard!"));
-                  }
-                }}
+                onClick={() => shareUrl && copyShareUrl(
+                  shareUrl,
+                  t("Link berhasil disalin ke clipboard!", "Link copied to clipboard!"),
+                )}
                 className="shrink-0 gap-1.5 text-xs font-semibold h-9.5 px-3.5"
               >
                 <Copy className="h-3.5 w-3.5" />
@@ -304,9 +320,11 @@ export function UnifiedPublishView({
               <Button
                 type="button"
                 size="sm"
-                onClick={() => {
-                  navigator.clipboard.writeText(embedCode);
-                  toast.success(t("Kode embed berhasil disalin ke clipboard!", "Embed code copied to clipboard!"));
+                onClick={async () => {
+                  await copyShareUrl(
+                    embedCode,
+                    t("Kode embed berhasil disalin ke clipboard!", "Embed code copied to clipboard!"),
+                  );
                   setShowEmbedModal(false);
                 }}
                 className="text-xs font-semibold gap-1.5"

@@ -1839,8 +1839,8 @@ export function DocumentBlockEditor({
 
               <div className="space-y-4 pt-2">
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-foreground">{t("Judul Dokumen", "Document Title")}</Label>
-                  <Input
+                  <Label htmlFor="document-title" className="text-xs font-semibold text-foreground">{t("Judul Dokumen", "Document Title")}</Label>
+                  <Input id="document-title"
                     value={metaState.title}
                     onChange={(e) => setMetaState((v) => ({ ...v, title: e.target.value }))}
                     placeholder="e.g. Website Revamp & Maintenance"
@@ -1887,7 +1887,7 @@ export function DocumentBlockEditor({
                         }
                       }}
                     >
-                      <SelectTrigger className="h-9 text-xs bg-background">
+                      <SelectTrigger aria-label={t("Pilih klien tersimpan", "Select existing client")} className="h-9 text-xs bg-background">
                         <SelectValue placeholder={t("Pilih klien dari daftar...", "Select client from list...")} />
                       </SelectTrigger>
                       <SelectContent className="max-h-56">
@@ -1906,8 +1906,8 @@ export function DocumentBlockEditor({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-foreground">{t("Nama Klien", "Client Name")}</Label>
-                    <Input
+                    <Label htmlFor="document-client-name" className="text-xs font-semibold text-foreground">{t("Nama Klien", "Client Name")}</Label>
+                    <Input id="document-client-name"
                       value={metaState.clientName}
                       onChange={(e) => setMetaState((v) => ({ ...v, clientName: e.target.value }))}
                       placeholder="e.g. John Doe"
@@ -1916,8 +1916,8 @@ export function DocumentBlockEditor({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-foreground">{t("Email Klien", "Client Email")}</Label>
-                    <Input
+                    <Label htmlFor="document-client-email" className="text-xs font-semibold text-foreground">{t("Email Klien", "Client Email")}</Label>
+                    <Input id="document-client-email"
                       type="email"
                       value={metaState.clientEmail}
                       onChange={(e) => setMetaState((v) => ({ ...v, clientEmail: e.target.value }))}
@@ -1929,8 +1929,8 @@ export function DocumentBlockEditor({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-foreground">{t("Nama Perusahaan", "Company Name")}</Label>
-                    <Input
+                    <Label htmlFor="document-company-name" className="text-xs font-semibold text-foreground">{t("Nama Perusahaan", "Company Name")}</Label>
+                    <Input id="document-company-name"
                       value={metaState.companyName}
                       onChange={(e) => setMetaState((v) => ({ ...v, companyName: e.target.value }))}
                       placeholder="e.g. Acme Corp"
@@ -1938,8 +1938,8 @@ export function DocumentBlockEditor({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-foreground">{t("Masa Berlaku (Valid Until)", "Valid Until")}</Label>
-                    <Input
+                    <Label htmlFor="document-valid-until" className="text-xs font-semibold text-foreground">{t("Masa Berlaku (Valid Until)", "Valid Until")}</Label>
+                    <Input id="document-valid-until"
                       type="date"
                       value={metaState.validUntil}
                       onChange={(e) => setMetaState((v) => ({ ...v, validUntil: e.target.value }))}
@@ -1950,8 +1950,8 @@ export function DocumentBlockEditor({
 
                 {kind === "contract" && (
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-foreground">{t("Nomor Kontrak", "Contract Number")}</Label>
-                    <Input
+                    <Label htmlFor="document-contract-number" className="text-xs font-semibold text-foreground">{t("Nomor Kontrak", "Contract Number")}</Label>
+                    <Input id="document-contract-number"
                       value={metaState.contractNumber}
                       onChange={(e) => setMetaState((v) => ({ ...v, contractNumber: e.target.value }))}
                       placeholder="CONT-2026-0001"
@@ -1976,8 +1976,8 @@ export function DocumentBlockEditor({
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-foreground">{t("Pajak / Tax (%)", "Tax Rate (%)")}</Label>
-                    <Input
+                    <Label htmlFor="proposal-tax-rate" className="text-xs font-semibold text-foreground">{t("Pajak / Tax (%)", "Tax Rate (%)")}</Label>
+                    <Input id="proposal-tax-rate"
                       type="number"
                       min="0"
                       max="100"
@@ -1988,8 +1988,8 @@ export function DocumentBlockEditor({
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <Label className="text-xs font-semibold text-foreground">{t("Down Payment / DP (%)", "Down Payment (%)")}</Label>
-                    <Input
+                    <Label htmlFor="proposal-down-payment" className="text-xs font-semibold text-foreground">{t("Down Payment / DP (%)", "Down Payment (%)")}</Label>
+                    <Input id="proposal-down-payment"
                       type="number"
                       min="0"
                       max="100"
@@ -2024,7 +2024,7 @@ export function DocumentBlockEditor({
 
               <div className="space-y-3 pt-1">
                 <div className="space-y-1.5">
-                  <Label className="text-xs font-semibold text-foreground">
+                  <Label htmlFor="document-custom-slug" className="text-xs font-semibold text-foreground">
                     {t("Slug URL", "URL Slug")}
                   </Label>
                   <div className="flex items-center gap-2">
@@ -2032,6 +2032,7 @@ export function DocumentBlockEditor({
                       https://cubiqlo.com/{kind === "proposal" ? "proposal" : "contract"}/
                     </span>
                     <Input
+                      id="document-custom-slug"
                       value={customSlug || (documentMeta?.id ? `${kind}-${documentMeta.id.slice(0, 8)}` : "")}
                       onChange={(e) => setCustomSlug(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
                       disabled={!isPaidPlan}
