@@ -405,6 +405,7 @@ export function ProjectForm({
                 value={form.billingModel}
                 onValueChange={(v) => setForm((p) => ({ ...p, billingModel: v as BillingModel }))}
                 disabled={billingModelLocked}
+                aria-describedby={billingModelLocked ? "billing-model-locked" : undefined}
               >
                 <SelectTrigger className="h-9 text-sm">
                   <SelectValue />
@@ -415,6 +416,14 @@ export function ProjectForm({
                   {mode === "edit" && defaultValues?.billingModel === "retainer" && <SelectItem value="retainer">Retainer</SelectItem>}
                 </SelectContent>
               </Select>
+              {billingModelLocked && (
+                <p id="billing-model-locked" className="text-[11px] text-muted-foreground">
+                  {t(
+                    "Model tagihan dikunci karena proyek sudah punya catatan waktu atau invoice.",
+                    "Billing model is locked because this project already has time entries or invoices."
+                  )}
+                </p>
+              )}
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">{t("Mata Uang", "Currency")}</Label>

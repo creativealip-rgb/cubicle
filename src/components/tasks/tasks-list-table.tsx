@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { updateTask, bulkUpdateTasksStatus, bulkDeleteTasks, toggleSubtask } from "@/lib/actions/tasks";
+import { updateTask, bulkUpdateTasksStatus, bulkDeleteTasks } from "@/lib/actions/tasks";
 import { startTimer } from "@/lib/actions/time";
 import { useTransition } from "react";
 import { toast } from "sonner";
@@ -17,8 +17,6 @@ import {
   Clock,
   CheckSquare2,
   Folder,
-  ChevronRight,
-  ChevronDown,
   Play,
   Trash2,
   CheckCircle2,

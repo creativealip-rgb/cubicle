@@ -8,7 +8,7 @@ describe("progressive Add Client form", () => {
   it("uses a compact create mode with primary fields and progressive details", () => {
     expect(form).toContain('mode === "create"');
     expect(form).toContain('autoFocus');
-    expect(form).toContain('t("Detail lainnya", "More details")');
+    expect(form).toContain('t("Detail lainnya (opsional)", "More details (optional)")');
     expect(form).toContain('aria-expanded={showMoreDetails}');
   });
 

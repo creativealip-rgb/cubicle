@@ -7,7 +7,7 @@ import { requireUser, assertWorkspaceWritable } from "@/lib/access";
 import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { checkAiRateLimitDb, getAiEntitlementFailure, getUserPlan } from "@/lib/plan";
 import { chat, type ChatMessage } from "@/lib/ai/client";
-import { safeParseQuestionnaireSchema, type QuestionnaireField } from "@/lib/questionnaire-schema";
+import { type QuestionnaireField } from "@/lib/questionnaire-schema";
 
 export interface TranslateFormInput {
   targetLang: "en" | "id";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 export function useHistoryState<T>(initialPresent: T, maxHistory = 30) {
   const [past, setPast] = useState<T[]>([]);
@@ -9,11 +9,13 @@ export function useHistoryState<T>(initialPresent: T, maxHistory = 30) {
 
   // Ref to access current values synchronously inside callbacks
   const presentRef = useRef(present);
-  presentRef.current = present;
   const pastRef = useRef(past);
-  pastRef.current = past;
   const futureRef = useRef(future);
-  futureRef.current = future;
+  useEffect(() => {
+    presentRef.current = present;
+    pastRef.current = past;
+    futureRef.current = future;
+  }, [present, past, future]);
 
   const canUndo = past.length > 0;
   const canRedo = future.length > 0;

@@ -63,7 +63,7 @@ export function GoogleSitesGalleryCanvas({
       const deltaX = e.clientX - startX;
       const deltaY = e.clientY - startY;
 
-      let newWidth = startWidth;
+      const newWidth = startWidth;
       let newHeight = startHeight;
 
       // Handle vertical resizing (N, S, NE, NW, SE, SW)
@@ -136,7 +136,10 @@ export function GoogleSitesGalleryCanvas({
     else if (handle === "ne" || handle === "sw") cursor = "nesw-resize";
     else if (handle === "nw" || handle === "se") cursor = "nwse-resize";
 
+    // React compiler cannot model intentional imperative cursor ownership.
+    // eslint-disable-next-line react-hooks/immutability
     document.body.style.cursor = cursor;
+    // eslint-disable-next-line react-hooks/immutability
     document.body.style.userSelect = "none";
 
     resizeRef.current = {

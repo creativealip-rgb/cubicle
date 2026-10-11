@@ -1,6 +1,5 @@
 import { cookies, headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
-import Image from "next/image";
 import { db } from "@/db";
 import {
   projects,
@@ -29,17 +28,12 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   FolderOpen,
   Globe,
-  LockKeyhole,
-  DollarSign,
   Clock,
-  Layers,
   FileSpreadsheet,
   Bell,
-  Sparkles,
   FolderKanban,
-  Receipt,
   CheckCircle2,
-  ShieldCheck,
+  LockKeyhole,
 } from "lucide-react";
 import { PortalContactButtons } from "@/components/portal/portal-contact";
 import { ProjectAccordion } from "@/components/portal/project-accordion";
@@ -48,7 +42,6 @@ import { PortalRequestList } from "@/components/portal/portal-request-list";
 
 import { PortalTabs } from "@/components/portal/portal-tabs";
 import { PortalFileManager } from "@/components/portal/portal-file-manager";
-import { PortalLanguageSwitch } from "@/components/portal/portal-language-switch";
 import { LangProvider } from "@/lib/i18n-client";
 import { resolveBillingModel } from "@/lib/billing-model";
 import { createT, getCurrentLang } from "@/lib/i18n";
@@ -104,6 +97,10 @@ export default async function ClientPortalPage({
               <div className="text-center"><Globe className="mx-auto mb-3 h-8 w-8 text-primary" />
                 <h1 className="text-lg font-semibold">{t("Portal Klien", "Client Portal")}</h1>
                 <p className="text-sm text-muted-foreground">{t("Masukkan password untuk melanjutkan.", "Enter your password to continue.")}</p>
+                <span className="mt-2 inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-700 dark:text-emerald-400">
+                  <LockKeyhole className="h-3 w-3" />
+                  {t("Akses Aman", "Secure Access")}
+                </span>
               </div>
               <form action={`/client-portal/${slugOrToken}/unlock`} method="post" className="space-y-3">
                 <Input name="password" type="password" autoComplete="current-password" required minLength={8} placeholder={t("Password portal", "Portal password")} />

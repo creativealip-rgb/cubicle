@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { db } from "@/db";
 import { files } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { auth } from "@/lib/auth";
 import { getSignedDownloadUrl, r2, R2_BUCKET } from "@/lib/r2";
 import { canAccessFile } from "../download/route";
 import { GetObjectCommand } from "@aws-sdk/client-s3";

@@ -7,8 +7,6 @@ import { eq, desc, and, isNull } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { FileList } from "@/components/files/file-list";
 import { FileDropZone } from "@/components/files/file-drop-zone";
-import { ChevronRight, Folder } from "lucide-react";
-import Link from "next/link";
 
 import { getCurrentLang, createT } from "@/lib/i18n";
 

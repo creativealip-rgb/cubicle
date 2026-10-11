@@ -31,7 +31,6 @@ import {
   Trash2,
   Filter,
   Loader2,
-  Tag as TagIcon,
   Calendar as CalendarIcon,
   Hourglass,
   Plus,

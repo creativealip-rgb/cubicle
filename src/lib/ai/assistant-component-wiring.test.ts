@@ -14,8 +14,9 @@ describe("full-page Assistant wiring", () => {
   });
   it("prefills primary quick actions instead of sending immediately", () => {
     const empty = read("src/components/ai/assistant-empty-state.tsx");
-    expect(empty).toContain("primaryAssistantActions");
-    expect(empty).toContain("setInput(prompt)");
+    expect(empty).toContain("assistantQuickActions");
+    expect(empty).toContain("setInput(v.prompt)");
+    expect(empty).toContain("localizeAssistantAction");
     expect(empty).not.toContain("send(prompt)");
     expect(empty).not.toContain("AI Assistant tutorial");
     expect(empty).not.toContain("Cara pakai AI Assistant");

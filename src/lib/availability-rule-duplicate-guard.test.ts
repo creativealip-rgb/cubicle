@@ -21,7 +21,9 @@ describe("availability rule duplicate guard", () => {
 
   it("renders duplicate rejection as normal UI feedback", () => {
     const form = read("src/components/calendar/availability-rule-form.tsx");
-    expect(form).toContain("if (!result.ok)");
-    expect(form).toContain("toast.error(result.error)");
+    expect(form).toContain("const result = await createAvailabilityRule({");
+    expect(form).toContain("if (result.ok)");
+    expect(form).toContain('t("Slot waktu sudah ada sebelumnya", "Availability slots already exist")');
+    expect(form).not.toContain("throw new Error(`AVAILABILITY_RULE_DUPLICATE");
   });
 });

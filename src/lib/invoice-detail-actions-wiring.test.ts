@@ -31,7 +31,7 @@ describe("invoice detail actions", () => {
 
     expect(share).toContain("function shareInvoiceUrl");
     expect(share).toContain("`${base}/invoice/${token}`");
-    expect(share).toContain("Lihat Invoice");
+    expect(share).toContain('t("Lihat Invoice", "View Invoice")');
     expect(share).toContain('target="_blank"');
   });
 

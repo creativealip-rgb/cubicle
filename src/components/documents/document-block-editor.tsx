@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSearchParams, usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { UnifiedPublishView } from "@/components/public/unified-publish-view";
 import { SendProposalButton } from "@/components/proposals/send-proposal-button";
@@ -49,7 +49,7 @@ import { resolveBuilderShortcut } from "@/lib/builder-shortcuts";
 import { useUnsavedChanges } from "@/lib/use-unsaved-changes";
 import { renderDocumentBlockHtml } from "@/lib/document-block-renderer";
 import type { DocumentPlaceholderValues } from "@/lib/document-placeholders";
-import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
+import { getFontFamily } from "@/lib/builder-fonts";
 import { FloatingContextToolbar } from "@/components/site/canvas/floating-context-toolbar";
 import { PublicDocumentHeader } from "@/components/public/public-document-header";
 import { cn } from "@/lib/utils";
@@ -62,16 +62,13 @@ import {
   ArrowLeft,
   ArrowUp,
   CheckCircle,
-  ChevronLeft,
   Coins,
   Copy,
-  Download,
   Eye,
   FileText,
   GripVertical,
   Heading,
   Image as ImageIcon,
-  ExternalLink,
   Languages,
   LayoutTemplate,
   List,
@@ -81,11 +78,8 @@ import {
   MoreHorizontal,
   Paperclip,
   Plus,
-  QrCode,
   Redo2,
-  Save,
   Search,
-  Send,
   Settings,
   Share2,
   ShieldCheck,

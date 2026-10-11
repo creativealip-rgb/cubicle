@@ -7,12 +7,11 @@ import {
 } from "./region-preferences";
 
 describe("countryToDefaults", () => {
-  it("uses Indonesian defaults for ID, case-insensitive", () => {
-    expect(countryToDefaults("id")).toEqual({ lang: "id", currency: "IDR" });
-    expect(countryToDefaults(" ID ")).toEqual({ lang: "id", currency: "IDR" });
-  });
-
-  it("uses English/USD defaults for non-ID and missing countries", () => {
+  // Global product standard: language always defaults to English; only the
+  // display currency is country-derived (IDR for Indonesia, USD elsewhere).
+  it("defaults language to English for every country", () => {
+    expect(countryToDefaults("id")).toEqual({ lang: "en", currency: "IDR" });
+    expect(countryToDefaults(" ID ")).toEqual({ lang: "en", currency: "IDR" });
     expect(countryToDefaults("US")).toEqual({ lang: "en", currency: "USD" });
     expect(countryToDefaults(undefined)).toEqual({ lang: "en", currency: "USD" });
     expect(countryToDefaults(null)).toEqual({ lang: "en", currency: "USD" });
@@ -55,7 +54,7 @@ describe("languageToCurrency", () => {
 describe("resolveVisitorPreferences", () => {
   it("uses account language over valid cookie, then inferred language", () => {
     expect(resolveVisitorPreferences({ country: "ID", langCookie: "en" })).toEqual({ lang: "en", currency: "IDR" });
-    expect(resolveVisitorPreferences({ country: "ID", langCookie: "bad" })).toEqual({ lang: "id", currency: "IDR" });
+    expect(resolveVisitorPreferences({ country: "ID", langCookie: "bad" })).toEqual({ lang: "en", currency: "IDR" });
     expect(resolveVisitorPreferences({ country: "ID", accountLang: "en", langCookie: "id" })).toEqual({ lang: "en", currency: "IDR" });
   });
 
@@ -67,6 +66,6 @@ describe("resolveVisitorPreferences", () => {
   it("accepts only valid cookie values and resolves currency independently", () => {
     expect(resolveVisitorPreferences({ country: "US", langCookie: "id", currencyCookie: "IDR" })).toEqual({ lang: "id", currency: "IDR" });
     expect(resolveVisitorPreferences({ country: "US", currencyCookie: "IDR" })).toEqual({ lang: "en", currency: "IDR" });
-    expect(resolveVisitorPreferences({ country: "ID", currencyCookie: "EUR" })).toEqual({ lang: "id", currency: "IDR" });
+    expect(resolveVisitorPreferences({ country: "ID", currencyCookie: "EUR" })).toEqual({ lang: "en", currency: "IDR" });
   });
 });

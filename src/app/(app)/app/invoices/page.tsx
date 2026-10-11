@@ -16,9 +16,8 @@ import {
 import { eq, desc, and, count, ne, isNull, SQL, sql, inArray, gte, lte } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { PageHeader } from "@/components/ui/page-header";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { FileText, ChevronLeft, ChevronRight, Wallet, AlertCircle, CheckCircle2 } from "lucide-react";
+import { FileText, Wallet, AlertCircle, CheckCircle2 } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
 import { invoiceStatusVariant } from "@/lib/status-badge";
 import { EmptyState } from "@/components/empty-state";

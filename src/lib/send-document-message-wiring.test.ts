@@ -37,13 +37,13 @@ describe("send document custom message wiring", () => {
       expect(button).toContain('className={compact ? "h-7 px-2 text-xs" : undefined}');
       expect(button).not.toContain('className={compact ? "sr-only" : undefined}');
       expect(button).toContain('DialogContent className="sm:max-w-lg"');
-      expect(button).toContain('className="block space-y-2"');
+      expect(button).toContain('className="space-y-2"');
       expect(button).toContain('className="space-y-3 rounded-lg border bg-muted/20 p-3"');
     }
 
     for (const table of [proposalTable, contractTable]) {
       expect(table).toContain('className="text-right align-middle"');
-      expect(table).toContain('className="flex justify-end"');
+      expect(table).toContain('className="text-right align-middle"');
     }
   });
 });

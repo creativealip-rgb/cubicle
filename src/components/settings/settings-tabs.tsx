@@ -6,7 +6,6 @@ import {
   Settings,
   Users,
   User,
-  ImageIcon,
   Plug,
   LayoutGrid,
 } from "lucide-react";

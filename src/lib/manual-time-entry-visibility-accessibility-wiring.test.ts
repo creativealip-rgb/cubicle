@@ -11,10 +11,13 @@ describe("manual time entry visibility and accessibility", () => {
 
   it("associates every manual-time label with its control", () => {
     // Date/duration/description/tags keep label htmlFor/id pairs
-    for (const id of ["manual-time-description", "manual-time-date", "manual-time-duration", "manual-time-tags"]) {
+    for (const id of ["manual-time-description", "manual-time-date", "manual-time-duration"]) {
       expect(form).toContain(`htmlFor="${id}"`);
       expect(form).toContain(`id="${id}"`);
     }
+    // The tag label binds through the TimerTagPicker's forwarded input id.
+    expect(form).toContain('htmlFor="manual-time-tags"');
+    expect(form).toContain('id="manual-time-tags"');
     // Client+project is one combined combobox; task is a separate combobox.
     // Both expose id + aria-label for accessible naming.
     expect(form).toContain('id="manual-time-project"');

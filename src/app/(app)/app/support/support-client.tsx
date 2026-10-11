@@ -27,7 +27,6 @@ import {
   Filter,
   Search,
   BookOpen,
-  Mail,
   HelpCircle,
   Loader2,
   ExternalLink,

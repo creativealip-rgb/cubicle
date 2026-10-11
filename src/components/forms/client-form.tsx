@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
 import { Textarea } from "@/components/ui/textarea";
-import { ChevronDown, Eye, EyeOff, KeyRound, Sparkles, Check, Copy, ShieldCheck } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, KeyRound, Copy, ShieldCheck } from "lucide-react";
 
 interface ClientFormProps {
   mode: "create" | "edit";

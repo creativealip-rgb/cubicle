@@ -20,6 +20,8 @@ interface TimerTagPickerProps {
   availableTags?: TimerTag[];
   placeholder?: string;
   className?: string;
+  id?: string;
+  "aria-label"?: string;
 }
 
 export function TimerTagPicker({
@@ -28,6 +30,8 @@ export function TimerTagPicker({
   availableTags: initialTags,
   placeholder,
   className = "",
+  id,
+  "aria-label": ariaLabel,
 }: TimerTagPickerProps) {
   const { t } = useT();
   const [tagsList, setTagsList] = useState<TimerTag[]>(initialTags || []);
@@ -129,6 +133,8 @@ export function TimerTagPicker({
             {/* Real Single Input field */}
             <input
               ref={inputRef}
+              id={id}
+              aria-label={ariaLabel ?? placeholder}
               type="text"
               value={search}
               onChange={(e) => {

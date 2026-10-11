@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SendContractButton } from "@/components/contracts/send-contract-button";
-import DocumentDetailsForm from "@/components/documents/document-details-form";
 import { updateContract } from "@/lib/actions/contracts";
 import { RevokeContractButton } from "@/components/contracts/revoke-contract-button";
 import { DeleteContractButton } from "@/components/contracts/delete-contract-button";

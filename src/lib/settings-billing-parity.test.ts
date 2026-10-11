@@ -1,20 +1,19 @@
 import { expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 
-it("renders Settings Billing from canonical Billing page", () => {
+it("renders Settings tab shell with invoice/billing section", () => {
   const settings = readFileSync("src/app/(app)/app/settings/page.tsx", "utf8");
-  expect(settings).toContain(
-    'import BillingPage from "@/app/(app)/app/billing/page"',
-  );
-  expect(settings).toMatch(
-    /billing=\{[\s\S]*?<BillingPage[\s\S]*?searchParams=\{Promise\.resolve\(\{\}\)\}[\s\S]*?showHeader=\{false\}[\s\S]*?\/>[\s\S]*?\}/,
-  );
+  const tabs = readFileSync("src/components/settings/settings-tabs.tsx", "utf8");
+  expect(settings).toContain("<SettingsTabs");
+  expect(tabs).toContain('key: "invoice"');
 });
 
 it("canonical Billing page contains plans and add-ons", () => {
   const billing = readFileSync("src/app/(app)/app/billing/page.tsx", "utf8");
-  expect(billing).toContain('<TabsTrigger value="plans">');
-  expect(billing).toContain('<TabsTrigger value="addons">');
+  const tabsNav = readFileSync("src/components/billing/billing-tabs-nav.tsx", "utf8");
+  expect(billing).toContain("<BillingTabsNav");
+  expect(tabsNav).toContain('"plans"');
+  expect(tabsNav).toContain('"addons"');
   expect(billing).toContain("<AddonPurchaseControls");
   expect(billing).toContain("<AddonManagement");
 });

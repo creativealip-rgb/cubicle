@@ -18,7 +18,7 @@ describe("task template import dialog", () => {
   it("supports selecting or clearing all preview tasks", () => {
     expect(source).toContain("function toggleAllItems");
     expect(source).toContain('type="checkbox" checked={allItemsSelected}');
-    expect(source).toContain('t("Pilih semua task", "Select all tasks")');
+    expect(source).toContain('t("Pilih semua subtask", "Select all subtasks")');
   });
 
   it("keeps modal and selected template compact", () => {

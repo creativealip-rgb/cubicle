@@ -35,13 +35,15 @@ export function formatRichEmailHtml(rawText: string): string {
   // Markdown syntax conversions
   // Bold: **text**
   text = text.replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>");
-  // Italic: *text* or _text_
+  // Italic: *text* or _text_. Underscore markers need whitespace/punctuation
+  // boundaries so identifiers such as INV_2026_001 and file_name stay literal.
   text = text.replace(/(^|[^*])\*([^*]+)\*([^*]|$)/g, "$1<em>$2</em>$3");
-  text = text.replace(/(^|[^_])_([^_]+)_([^_]|$)/g, "$1<em>$2</em>$3");
+  text = text.replace(/(^|[\s([{>])_([^_\n]+)_(?=$|[\s.,!?;:)}\]<>])/g, "$1<em>$2</em>");
   // Strikethrough: ~~text~~
   text = text.replace(/~~(.*?)~~/g, "<s>$1</s>");
-  // Underline: __text__
-  text = text.replace(/__(.*?)__/g, "<u>$1</u>");
+  // Underline comes from the editor's allowed <u> tag. Do not interpret
+  // double-underscore markdown: `__init__` and similar identifiers are common
+  // in client text and cannot be distinguished safely from underline syntax.
 
   // Headers # and ##
   text = text.replace(/^#\s+(.*?)$/gm, "<h1 style='font-size:20px;font-weight:700;margin:16px 0 8px 0;color:#0F172A;'>$1</h1>");

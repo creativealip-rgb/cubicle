@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
-import { Calendar, Check, X, Clock, User, AlertCircle, MessageSquare } from "lucide-react";
+import { Calendar, Check, X, Clock, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -155,7 +155,7 @@ export function PendingMeetingRequestsPanel({
                 {cleanDesc ? (
                   <p className="text-xs text-muted-foreground bg-muted/40 p-2 rounded-lg mt-1.5 flex items-start gap-1.5 border border-border/50">
                     <MessageSquare className="h-3.5 w-3.5 shrink-0 text-muted-foreground mt-0.5" />
-                    <span className="italic">"{cleanDesc}"</span>
+                    <span className="italic">&ldquo;{cleanDesc}&rdquo;</span>
                   </p>
                 ) : null}
 

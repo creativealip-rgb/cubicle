@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { questionnaireFieldSchema, safeParseQuestionnaireSchema } from "@/lib/questionnaire-schema";
+import { safeParseQuestionnaireSchema } from "@/lib/questionnaire-schema";
 
 describe("Jotform-Style Form Schema Validation", () => {
   it("validates basic, choice, and advanced fields", () => {

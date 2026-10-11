@@ -6,8 +6,7 @@ const read = (p: string) => readFileSync(resolve(process.cwd(), p), "utf8");
 describe("personal planning route", () => {
   it("adds owner-only Planning in exact Personal order", () => {
     const nav = read("src/lib/navigation/app-navigation.ts");
-    expect(nav).toMatch(/direct\("notes"[\s\S]*direct\("productivity"[\s\S]*direct\("planning"[\s\S]*direct\("journal"/);
-    expect(nav).toMatch(/direct\("planning", "\/app\/planning"[\s\S]{0,250}true\)/);
+    expect(nav).toMatch(/direct\("notes", "\/app\/personal"[\s\S]*direct\("productivity"[\s\S]*direct\("planning", "\/app\/planning"[\s\S]*direct\("journal"/);
   });
 
   it("renders budget and report tabs on Planning", () => {

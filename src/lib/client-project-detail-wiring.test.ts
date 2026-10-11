@@ -21,8 +21,9 @@ describe("client and project detail UX", () => {
 
   it("offers an explicit i18n project currency selector with expanded currencies", () => {
     expect(projectForm).toContain('t("Mata Uang", "Currency")');
-    expect(projectForm).toContain('<SelectItem value="IDR">IDR</SelectItem>');
-    expect(projectForm).toContain('<SelectItem value="JPY">JPY</SelectItem>');
+    for (const code of ["IDR", "USD", "EUR", "SGD", "GBP", "AUD"]) {
+      expect(projectForm).toContain(`<SelectItem value="${code}">`);
+    }
   });
 
   it("shows fixed-rate wording with i18n and keeps retired service/activity tabs absent", () => {

@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import {
-  Plus,
   Pencil,
   Trash2,
   Pause,

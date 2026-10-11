@@ -27,8 +27,6 @@ import { AddExpenseButton } from "@/components/expenses/add-expense-button";
 import {
   TrendingDown,
   Tag,
-  ChevronLeft,
-  ChevronRight,
   BarChart3,
 } from "lucide-react";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";

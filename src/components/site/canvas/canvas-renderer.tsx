@@ -8,13 +8,12 @@ import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { InlineText, type TextTypography } from "./inline-text";
-import { FloatingContextToolbar } from "./floating-context-toolbar";
 import { ImageUpload } from "./image-upload";
 import { useT } from "@/lib/i18n-client";
-import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
+import { getFontFamily } from "@/lib/builder-fonts";
 import { GoogleSitesGalleryCanvas } from "./google-sites-gallery";
 import type { PersonalSiteInput, PersonalSiteSection, ThemeConfig } from "@/lib/personal-site/model";
-import { isEditorialPlaceholderText, isPlaceholderHref, PERSONAL_SITE_ANIMATIONS, safeEmbedSrc, safePublicHref } from "@/lib/personal-site/model";
+import { isEditorialPlaceholderText, isPlaceholderHref, safeEmbedSrc, safePublicHref } from "@/lib/personal-site/model";
 
 function patchItem<T>(arr: T[], idx: number, patch: any): T[] {
   return arr.map((item, i) => (i === idx ? { ...item, ...patch } : item));

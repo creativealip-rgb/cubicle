@@ -10,9 +10,10 @@ const dashboard = source("src/app/(app)/app/dashboard/page.tsx");
 
 describe("settings and onboarding source wiring", () => {
   it("keeps settings tab order and legacy aliases", () => {
-    expect(tabs).toMatch(/const TAB_KEYS[\s\S]*?\[\s*"account",\s*"workspace",\s*"invoice",\s*"team",\s*"integrations",\s*"billing",\s*\]/);
+    // Billing tab was removed from Settings (c4e558e3); Plan lives in the user menu.
+    expect(tabs).toMatch(/const TAB_KEYS[\s\S]*?\[\s*"account",\s*"workspace",\s*"invoice",\s*"team",\s*"integrations",\s*\]/);
+    expect(tabs).not.toContain('"billing"');
     expect(tabs).toContain('if (tab === "branding") return "workspace"');
-    expect(tabs).toContain('if (tab === "more") return "billing"');
   });
 
   it("keeps Google Calendar marked as soon", () => {
@@ -22,19 +23,23 @@ describe("settings and onboarding source wiring", () => {
 
   it("keeps BookingSlug out of Settings and in Calendar", () => {
     expect(settings).not.toContain("BookingSlug");
-    expect(calendar).toContain("BookingSlugForm");
+    // Calendar owns the booking slug via the header widget.
+    expect(calendar).toContain("BookingSlugHeaderWidget");
   });
 
-  it("keeps onboarding copy and Settings links exact", () => {
-    expect(onboarding).toContain('"Mulai dari Pengaturan", "Start from Settings"');
-    expect(onboarding).toContain('"Lengkapi workspace dan pengaturan invoice sebelum membuat proyek pertama.",');
-    expect(onboarding).toContain('"Set up your workspace and invoice defaults before creating your first project.",');
-    expect(dashboard).toContain('href: "/app/settings?tab=workspace"');
-    expect(dashboard).toContain('href: "/app/settings?tab=invoice"');
+  it("keeps onboarding copy and dashboard checklist steps exact", () => {
+    expect(onboarding).toContain('"Langkah Awal Memulai", "Getting Started Checklist"');
+    expect(onboarding).toContain('"Selesaikan langkah berikut untuk memaksimalkan workspace Cubiqlo kamu.",');
+    expect(onboarding).toContain('"Complete these initial steps to get the most out of Cubiqlo.",');
+    for (const href of ['"/app/clients"', '"/app/personal-site"', '"/app/personal"', '"/app/docs"']) {
+      expect(dashboard).toContain(`href: ${href}`);
+    }
   });
 
-  it("renders completed onboarding steps instead of returning null", () => {
-    expect(onboarding).not.toContain("if (allDone) return null");
-    expect(onboarding).toContain("pendingSteps.length > 0 ? pendingSteps.slice(0, 3) : steps");
+  it("renders pending checklist steps and dismisses when none remain", () => {
+    expect(onboarding).toContain("pendingSteps = steps.filter((s) => !s.done)");
+    expect(onboarding).toContain("pendingSteps.map((step)");
+    // Dismiss/complete collapse is intentional; assert the guard exists.
+    expect(onboarding).toMatch(/if \(dismissed.*pendingSteps\.length === 0\) return null/);
   });
 });

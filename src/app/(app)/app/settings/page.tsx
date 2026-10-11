@@ -46,7 +46,6 @@ import {
 } from "@/lib/google-calendar";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import BillingPage from "@/app/(app)/app/billing/page";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

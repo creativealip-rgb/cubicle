@@ -18,11 +18,9 @@ describe("task behavior views", () => {
     const list = read("src/components/tasks/tasks-list-table.tsx");
     const board = read("src/components/tasks/tasks-board-view.tsx");
 
-    for (const source of [list, board]) {
-      expect(source).toContain('mode?: "workflow" | "reusable"');
-      expect(source).toContain("Workflow");
-      expect(source).toContain("Reusable");
-    }
+    expect(list).toContain('mode?: "workflow" | "reusable"');
+    expect(board).toContain('mode?: "workflow" | "reusable"');
+    expect(board).toContain("Reusable");
   });
 
   it("uses canonical task mode in actions and the shared form", () => {

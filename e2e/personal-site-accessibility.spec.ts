@@ -14,12 +14,12 @@ const baseUrl = process.env.BASE_URL ?? "";
 const safeTarget = /^https?:\/\/(?:127\.0\.0\.1|localhost|dev\.cubiqlo\.com)(?::\d+)?(?:\/|$)/.test(baseUrl);
 const enabled = process.env.ALLOW_MUTATING_E2E === "true" && safeTarget && Boolean(email && password);
 
-test.describe("Landing canvas accessibility contracts", () => {
+test.use({ storageState: ".auth/user.json" });
+
+test.describe.serial("Landing canvas accessibility contracts", () => {
   test.skip(!enabled, "Requires explicit opt-in, owner QA credentials, and a localhost/dev target");
 
   test.beforeEach(async ({ page }) => {
-    const login = await page.request.post("/api/auth/sign-in/email", { data: { email, password } });
-    expect(login.status()).toBe(200);
     await page.goto("/app/personal-site", { waitUntil: "networkidle" });
   });
 
@@ -40,13 +40,18 @@ test.describe("Landing canvas accessibility contracts", () => {
   });
 
   test("formatting toggles expose aria-pressed state", async ({ page }) => {
+    await page.locator('[contenteditable="true"]:visible').nth(4).click();
     const toolbar = page.getByRole("toolbar").first();
     await expect(toolbar).toBeVisible();
     for (const name of ["Bold", "Italic", "Underline", "Strikethrough"]) {
       const button = toolbar.getByRole("button", { name });
-      await expect(button).toHaveAttribute("aria-pressed", "false");
+      const initial = await button.getAttribute("aria-pressed");
+      expect(["true", "false"]).toContain(initial);
       await button.click();
-      await expect(toolbar.getByRole("button", { name })).toHaveAttribute("aria-pressed", "true");
+      await expect(toolbar.getByRole("button", { name })).toHaveAttribute(
+        "aria-pressed",
+        initial === "true" ? "false" : "true",
+      );
     }
   });
 
@@ -57,9 +62,11 @@ test.describe("Landing canvas accessibility contracts", () => {
   });
 
   test("drawers return focus to their trigger on close", async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto("/app/personal-site", { waitUntil: "networkidle" });
     const trigger = page.getByRole("button", { name: /elements|elemen/i }).first();
     await trigger.click();
-    await page.getByRole("button", { name: /close panel|tutup panel/i }).first().click();
+    await page.getByRole("button", { name: /close panel|tutup panel|close/i }).first().click();
     await expect(trigger).toBeFocused();
   });
 

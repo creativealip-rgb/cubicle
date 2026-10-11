@@ -6,8 +6,8 @@ const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 
 describe("restricted app route wiring", () => {
   it("guards private pages before data loading", () => {
+    expect(read("src/app/(app)/app/personal/page.tsx")).toContain("requireAppSession");
     for (const path of [
-      "src/app/(app)/app/personal/page.tsx",
       "src/app/(app)/app/personal-site/page.tsx",
       "src/app/(app)/app/templates/page.tsx",
     ]) {
@@ -30,9 +30,9 @@ describe("restricted app route wiring", () => {
     }
   });
 
-  it("proposals/new delegates to the proposals list page (dialog create, no write-only page)", () => {
-    const page = read("src/app/(app)/app/proposals/new/page.tsx");
-    expect(page).toContain("ProposalsPage");
-    expect(page).toContain('searchParams={Promise.resolve({ new: "1" })}');
+  it("keeps proposal creation in the list dialog, without a write-only route", () => {
+    const page = read("src/app/(app)/app/proposals/page.tsx");
+    expect(page).toContain("DirectCreateProposalButton");
+    expect(() => read("src/app/(app)/app/proposals/new/page.tsx")).toThrow();
   });
 });

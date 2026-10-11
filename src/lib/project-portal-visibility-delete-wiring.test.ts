@@ -39,8 +39,9 @@ describe("permanent delete contracts", () => {
   });
 
   it("requires typed entity name before permanent deletion", () => {
-    expect(button).toContain("Ketik nama untuk konfirmasi");
-    expect(button).toContain("confirmation !== entityName");
-    expect(button).toContain("Hapus Permanen");
+    expect(button).toContain('t("Ketik DELETE untuk konfirmasi", "Type DELETE to confirm")');
+    // Confirmation token is the literal word DELETE, not the entity name.
+    expect(button).toContain('confirmation.trim() !== "DELETE"');
+    expect(button).toContain('t("Hapus Permanen", "Delete Permanently")');
   });
 });

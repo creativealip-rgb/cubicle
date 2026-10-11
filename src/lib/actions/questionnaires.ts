@@ -100,7 +100,7 @@ export async function createQuestionnaire(input: {
     expiresAt: parsed.expiresAt ? new Date(parsed.expiresAt) : null,
     maxResponses: parsed.maxResponses || null,
     requireAll: parsed.requireAll ?? false,
-    themePreset: parsed.themePreset || "purple",
+    themePreset: parsed.themePreset || "blue",
     cardRadius: parsed.cardRadius || "rounded",
     thankYouMessage: parsed.thankYouMessage || null,
     redirectUrl: parsed.redirectUrl || null,

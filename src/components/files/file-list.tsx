@@ -581,6 +581,7 @@ export function FileList({
                             <Button
                               variant="ghost"
                               size="icon"
+                              aria-label={t(`Aksi folder ${f.name}`, `${f.name} folder actions`)}
                               className="h-6 w-6 text-muted-foreground hover:text-foreground"
                             >
                               <MoreVertical className="h-3.5 w-3.5" />
@@ -671,7 +672,12 @@ export function FileList({
                       <td className="px-3 py-2 text-right" onClick={(e) => e.stopPropagation()}>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-6 w-6 rounded-md">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label={t(`Aksi ${file.name}`, `${file.name} actions`)}
+                              className="h-6 w-6 rounded-md"
+                            >
                               <MoreVertical className="h-3 w-3" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -838,6 +844,7 @@ export function FileList({
                               <Button
                                 variant="ghost"
                                 size="icon"
+                                aria-label={t(`Aksi ${file.name}`, `${file.name} actions`)}
                                 className="h-6 w-6 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
                               >
                                 <MoreVertical className="h-3 w-3" />

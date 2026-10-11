@@ -15,9 +15,8 @@ import { createHash, randomBytes } from "crypto";
 import { hashPassword } from "@better-auth/utils/password";
 import { encryptSecret } from "@/lib/google-calendar";
 import { decryptPortalPassword, encryptPortalPassword } from "@/lib/portal-password-encryption";
-import {
-  buildPortalSlugCandidates,
-} from "@/lib/portal-slug";
+
+
 
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { getUserPlan } from "@/lib/plan";

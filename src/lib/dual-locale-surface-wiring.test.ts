@@ -11,5 +11,5 @@ it("localizes destructive contract and invoice controls", () => {
   expect(deleteContract).toContain('t("Kontrak dihapus", "Contract deleted")');
   expect(revokeContract).toContain('t("Kontrak dicabut", "Contract revoked")');
   expect(deleteItem).toContain('aria-label={t("Hapus item invoice", "Delete invoice item")}');
-  expect(branding).toContain('placeholder={t("PT Contoh / Nama freelancermu", "Company or freelancer name")}');
+  expect(branding).toContain('placeholder={t("PT Contoh / Nama Freelancer", "Company or Freelancer Name")}');
 });

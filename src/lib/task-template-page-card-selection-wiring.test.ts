@@ -27,6 +27,6 @@ describe("task template page card selection", () => {
     expect(dialog).toContain('onTouchMove={(event) => event.stopPropagation()}');
     expect(dialog).toContain("max-h-[min(15rem,45dvh)]");
     expect(dialog).toContain('disabled={loading || !projectId');
-    expect(dialog).toContain('t("subtask ke", "subtasks into")');
+    expect(dialog).toContain("groupedProjects");
   });
 });

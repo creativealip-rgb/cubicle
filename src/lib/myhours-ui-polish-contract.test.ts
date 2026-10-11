@@ -5,7 +5,7 @@ const dialog = readFileSync("src/components/projects/project-create-dialog.tsx",
 const time = readFileSync("src/components/time/timesheet.tsx", "utf8");
 describe("My Hours UI polish", () => {
   it("uses compact single-column quick project modal", () => {
-    expect(dialog).toContain("sm:max-w-md");
+    expect(dialog).toContain("sm:max-w-2xl");
     expect(form).toContain('mode === "create" || section !== "all" ? "grid-cols-1"');
   });
   it("keeps row editing direct without redundant action toolbar", () => {

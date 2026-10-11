@@ -3,7 +3,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { clients, projects, folders as foldersTable, files as filesTable } from "@/db/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { FolderTree } from "@/components/files/folder-tree";
 import { FilesPageHeader } from "@/components/files/files-page-header";

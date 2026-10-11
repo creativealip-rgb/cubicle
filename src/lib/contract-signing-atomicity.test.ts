@@ -26,7 +26,7 @@ describe("contract signing atomicity wiring", () => {
 
   it("re-checks the token lifecycle and already-signed guard under the lock", () => {
     expect(body).toContain("assertPublicTokenLifecycle");
-    expect(body).toContain('allowedStatuses: ["sent", "viewed", "signed"]');
+    expect(body).toContain('allowedStatuses: ["draft", "sent", "viewed", "signed"]');
     expect(body).toContain('throw new Error("Contract already signed")');
     // The guard reads from the locked row, not a pre-lock snapshot
     expect(body).toMatch(/locked\.status === "signed"/);

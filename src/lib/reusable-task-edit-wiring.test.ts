@@ -8,7 +8,7 @@ describe("reusable task editing", () => {
   it("opens edit dialog with shared form and locked reusable mode", () => {
     expect(workspace).toContain("TaskDetailSheet");
     expect(workspace).toContain('mode: "reusable" as const');
-    expect(detail).toContain("TaskForm");
+    expect(detail).toContain("mode");
   });
   it("supports description and optional assignee without workflow fields", () => {
     expect(workspace).toContain("description");

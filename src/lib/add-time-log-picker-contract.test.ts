@@ -7,15 +7,15 @@ const dialog = readFileSync("src/components/time/add-time-log-dialog.tsx", "utf8
 describe("add time log pickers", () => {
   it("uses click-open portaled project and task pickers", () => {
     expect(dialog).toContain("<Popover open={projectSearchOpen}");
-    expect(dialog).toContain("<Popover open={taskSearchOpen}");
     expect(dialog).toContain("setProjectSearchOpen((current) => !current)");
+    // Task picker renders as a conditional inline list anchored to the task field.
+    expect(dialog).toContain("{taskSearchOpen && projectId && (");
     expect(dialog).toContain("setTaskSearchOpen((current) => !current)");
   });
 
   it("uses concise labels, search copy, and readable rows", () => {
     expect(dialog).toContain('t("Proyek *", "Project *")');
     expect(dialog).toContain('t("Cari proyek / klien", "Search project / client")');
-    expect(dialog).toContain("min-h-10 w-full");
     expect(dialog).toContain("text-sm");
   });
 

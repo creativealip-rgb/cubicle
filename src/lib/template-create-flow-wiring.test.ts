@@ -74,9 +74,11 @@ describe("unified template contentBlocks in real create flows (batch 3)", () => 
   });
 
   it("create pages keep passing workspace-scoped templates into the flows", () => {
-    expect(contractsPage).toMatch(/\.from\(contractTemplates\)/);
-    expect(contractsPage).toMatch(/templates=\{templateRows\}/);
-    expect(proposalsPage).toMatch(/listProposalTemplates\(\)/);
-    expect(proposalsPage).toMatch(/templates=\{proposalTemplates\}/);
+    expect(contractsPage).toContain("DirectCreateContractButton");
+    expect(proposalsPage).toContain("DirectCreateProposalButton");
+    // Direct-create buttons call the workspace-scoped create actions; the actions
+    // re-fetch the selected template server-side rather than trusting the client.
+    expect(read("src/components/contracts/direct-create-contract-button.tsx")).toContain("createContract");
+    expect(read("src/components/proposals/direct-create-proposal-button.tsx")).toContain("createProposal");
   });
 });

@@ -2,7 +2,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
-import { clients, projects, users, workspaceMembers } from "@/db/schema";
+import { clients, projects, workspaceMembers } from "@/db/schema";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import Link from "next/link";

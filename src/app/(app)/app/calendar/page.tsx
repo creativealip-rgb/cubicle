@@ -9,7 +9,6 @@ import {
 import { eq, desc, and } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { EmptyState } from "@/components/empty-state";
 import { PageHeader } from "@/components/ui/page-header";
 import { Calendar, Clock, Video, CalendarCheck } from "lucide-react";
 import { getWorkspaceFullForCurrentUser } from "@/lib/workspace";

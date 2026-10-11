@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ShieldCheck } from "lucide-react";
 import { PortalLanguageSwitch } from "@/components/portal/portal-language-switch";
 import { useT } from "@/lib/i18n-client";
 

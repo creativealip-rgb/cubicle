@@ -23,7 +23,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ClientTabsNav } from "@/components/clients/client-tabs-nav";
 import Link from "next/link";
-import { Wallet, FolderKanban, FileSpreadsheet, Receipt, Users, Plus } from "lucide-react";
+import { Wallet, FolderKanban, FileSpreadsheet, Receipt, Users } from "lucide-react";
 import { ClientEditDialog } from "@/components/clients/client-edit-dialog";
 import { ClientGoogleCalendarPanel } from "@/components/clients/client-google-calendar-panel";
 import { ProjectCreateDialog } from "@/components/projects/project-create-dialog";
@@ -39,7 +39,6 @@ import { formatMoney } from "@/lib/utils";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
 import { PermanentDeleteButton } from "@/components/shared/permanent-delete-button";
-import { InvoiceCreateDialog } from "@/components/invoices/invoice-create-dialog";
 import { loadInvoiceSourceProjectOptions } from "@/lib/invoice-source-options";
 
 import { ClientKpis, ClientOverview } from "@/components/clients/client-overview";

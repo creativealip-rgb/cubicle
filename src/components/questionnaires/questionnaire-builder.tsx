@@ -41,7 +41,6 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import {
-  RotateCcw,
   Type,
   AlignLeft,
   Mail,
@@ -73,7 +72,6 @@ import {
   FileCheck,
   Palette,
   X,
-  Code,
   Check,
   Globe,
   Smartphone,
@@ -83,19 +81,13 @@ import {
   Image as ImageIcon,
   Columns,
   Square,
-  QrCode,
-  MessageCircle,
   Sparkles,
   LayoutTemplate,
   Lock,
-  Calculator,
-  Coins,
-  DollarSign,
   Eye,
   Languages,
   MoreHorizontal,
   Upload,
-  Play,
   Search,
   Undo2,
   Redo2,
@@ -1001,6 +993,7 @@ export function QuestionnaireBuilder({
     }
   }
 
+  /* eslint-disable react-hooks/preserve-manual-memoization */
   const selectedField = useMemo(
     () => fields.find((f) => f.id === selectedFieldId) || null,
     [fields, selectedFieldId],
@@ -1174,6 +1167,8 @@ export function QuestionnaireBuilder({
       t,
     ]
   );
+
+  /* eslint-enable react-hooks/preserve-manual-memoization */
 
   // Debounced auto-save on change
   useEffect(() => {

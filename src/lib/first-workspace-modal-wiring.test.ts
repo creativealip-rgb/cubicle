@@ -16,17 +16,16 @@ it("checks for an existing workspace without auto-creating one", () => {
 });
 
 it("creates the first workspace only after modal submission", () => {
-  expect(onboarding).toContain("createWorkspaceForUser(user.id, parsed.workspaceName)");
+  expect(onboarding).toContain("createWorkspaceForUser(user.id, parsed.businessName)");
   expect(workspace).toContain("workspaceName?.trim()");
-  expect(modal).toContain("await finishOnboarding({ workspaceName })");
+  expect(modal).toContain("finishOnboarding({");
 });
 
-it("renders a locked modal over a dashboard backdrop", () => {
-  expect(modal).toContain('open={true}');
-  expect(modal).toContain('onEscapeKeyDown={(event) => event.preventDefault()}');
-  expect(modal).toContain('onPointerDownOutside={(event) => event.preventDefault()}');
-  expect(modal).toContain('{ label: t("Workspace", "Workspace"), icon: Building2 }');
-  expect(modal).toContain('{ label: t("Tim", "Team"), icon: Users }');
-  expect(modal).toContain('{ label: t("Siap", "Ready"), icon: Rocket }');
-  expect(modal).toContain('t("Ke Dashboard", "Enter dashboard")');
+it("renders a locked 3-step modal over a dashboard backdrop", () => {
+  expect(modal).toContain("open={true}");
+  expect(modal).toContain("onEscapeKeyDown={(event) => event.preventDefault()}");
+  expect(modal).toContain("onPointerDownOutside={(event) => event.preventDefault()}");
+  expect(modal).toContain('t("Pilih tipe akun", "Choose account type")');
+  expect(modal).toContain('t("Tau Cubiqlo dari mana?", "Where did you hear about Cubiqlo?")');
+  expect(modal).toContain('t("Lanjut setup account di Settings", "Continue');
 });

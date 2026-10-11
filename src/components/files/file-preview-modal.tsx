@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useT } from "@/lib/i18n-client";
 import {
   Dialog,
@@ -10,29 +10,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import {
   Download,
   FileText,
-  FileSpreadsheet,
-  FileCode,
-  Image as ImageIcon,
-  Film,
   Music,
-  Maximize2,
-  Minimize2,
   ZoomIn,
   ZoomOut,
   RotateCw,
   Loader2,
   AlertCircle,
   ExternalLink,
-  ChevronRight,
   Edit3,
   Save,
   Plus,
   Trash2,
-  Check,
   X,
 } from "lucide-react";
 import { saveFileContent } from "@/lib/actions/files";

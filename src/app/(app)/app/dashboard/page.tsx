@@ -18,7 +18,6 @@ import {
   FileCheck,
   FileText,
   Clock,
-  Sparkles,
   Layers,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useTransition } from "react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,9 +15,7 @@ import {
 import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
-import { ClipboardList, Copy } from "lucide-react";
-import { duplicateQuestionnaire } from "@/lib/actions/questionnaires";
-import { DeleteQuestionnaireButton } from "./delete-questionnaire-button";
+import { ClipboardList } from "lucide-react";
 import { QuestionnaireRowActions } from "./questionnaire-row-actions";
 import { toast } from "sonner";
 import { useAppTransition } from "@/lib/transition-provider";

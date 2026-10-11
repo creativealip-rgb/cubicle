@@ -6,11 +6,9 @@ const read = (path: string) => readFileSync(join(process.cwd(), path), "utf8");
 describe("invoice entry scopes", () => {
   it("wires client-scoped create without a client selector", () => {
     const page = read("src/app/(app)/app/clients/[clientId]/page.tsx");
-    const dialog = read("src/components/invoices/client-invoice-create-dialog.tsx");
-    expect(page).toContain("ClientInvoiceCreateDialog");
-    expect(dialog).toContain("scopedClientId={client.id}");
-    expect(dialog).toContain('max-h-[90dvh]');
-    expect(dialog).toContain("overflow-y-auto");
+    // Client detail creates invoices through the one-click direct button; the
+    // client id is passed in so no client selector is rendered.
+    expect(page).toContain("<DirectCreateInvoiceButton clientId={client.id} />");
   });
 
   it("keeps global time-entry compatibility and project strict scope", () => {

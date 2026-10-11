@@ -5,7 +5,7 @@ import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { db } from "@/db";
 import { proposals, projects, projectServices, invoices, invoiceItems, workspaceInvoiceCounters, workspaces, proposalTemplates, clients } from "@/db/schema";
-import { eq, and, desc, sql, or, notInArray, not } from "drizzle-orm";
+import { eq, and, sql, or, notInArray } from "drizzle-orm";
 import { z } from "zod";
 import crypto from "crypto";
 import { revalidatePath } from "next/cache";

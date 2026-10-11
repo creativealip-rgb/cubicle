@@ -57,7 +57,7 @@ describe("batch 1 i18n wiring", () => {
     const comp = source("src/components/tasks/task-page-tabs.tsx");
     expect(comp).toContain('t("Sekali", "One-time")');
     expect(comp).toContain('t("Berulang", "Recurring")');
-    expect(comp).toContain('t("Template", "Templates")');
+    expect(comp).not.toContain('t("Template", "Templates")');
   });
 
   it("export timesheet button localizes dialog title", () => {

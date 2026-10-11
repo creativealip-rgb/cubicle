@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
 import { SendMessageRichEditor } from "@/components/ui/send-message-rich-editor";
-import { Send, Copy, ExternalLink, Loader2, Check, Link2 } from "lucide-react";
+import { Send, Copy, Loader2, Check, Link2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,

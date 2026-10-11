@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
-import { Check, Loader2, ShoppingCart, X } from "lucide-react";
+import { Check, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";

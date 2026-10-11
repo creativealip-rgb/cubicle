@@ -16,6 +16,9 @@ describe("audit accessibility follow-ups", () => {
   });
 
   it("uses an AA destructive background with white text", () => {
-    expect(css.match(/--destructive: #c2410c/gi)).toHaveLength(2);
+    // Light theme stays on rose-600; dark uses the AA orange with white text.
+    expect(css).toContain("--destructive: #E11D48;");
+    expect(css).toContain("--destructive: #c2410c;");
+    expect(css.match(/--destructive-foreground: #ffffff;/gi)).toHaveLength(2);
   });
 });

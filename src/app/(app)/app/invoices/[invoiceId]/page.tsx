@@ -22,6 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft, Eye } from "lucide-react";
 import { InvoiceItemManager } from "./add-item-button";
 import { PaymentSection } from "./payment-section";
+import { ShareTokenSection } from "./share-token-section";
 import { SendInvoiceButton } from "./send-invoice-button";
 import { SendReminderButton } from "./send-reminder-button";
 import { DeleteInvoiceButton } from "./delete-invoice-button";
@@ -198,7 +199,7 @@ export default async function InvoiceDetailPage({
   const totalPaid = pays.reduce((sum, p) => sum + Number(p.amount), 0);
 
 
-  const hasShareToken = inv.sharedTokenHash && !inv.sharedTokenRevokedAt;
+  const hasShareToken = Boolean(inv.sharedTokenHash) && !inv.sharedTokenRevokedAt;
   const shareExpired = inv.sharedTokenExpiresAt
     ? new Date(inv.sharedTokenExpiresAt) < new Date()
     : false;
@@ -348,6 +349,17 @@ export default async function InvoiceDetailPage({
           />
         }
       >
+        <Card>
+          <CardHeader><CardTitle>{t("Tautan Publik", "Public Link")}</CardTitle></CardHeader>
+          <CardContent>
+            <ShareTokenSection
+              invoiceId={invoiceId}
+              hasToken={hasShareToken}
+              isExpired={shareExpired}
+              initialToken={existingShareToken}
+            />
+          </CardContent>
+        </Card>
         <Card>
           <CardHeader><CardTitle>{t("Pembayaran", "Payments")}</CardTitle></CardHeader>
           <CardContent>

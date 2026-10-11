@@ -21,7 +21,6 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Sparkles,
   ChevronRight,
   Send,
   Loader2,
@@ -56,7 +55,6 @@ import {
   updateTask,
   getTaskSubtasks,
   addSubtask,
-  toggleSubtask,
   setSubtaskStatus,
   updateSubtaskDetails,
   convertSubtaskToTask,

@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
-import { Plus, Loader2, Briefcase, CheckSquare, Tag as TagIcon, Clock, Calendar as CalendarIcon, Hourglass, ChevronDown, ListPlus } from "lucide-react";
+import { Plus, Loader2, Briefcase, CheckSquare, Clock, Calendar as CalendarIcon, Hourglass, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 import { createManualEntry } from "@/lib/actions/time";
 import { Button } from "@/components/ui/button";
@@ -15,7 +15,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { localDateIso } from "@/lib/effective-work-date";
 import { useT } from "@/lib/i18n-client";
 import { Popover, PopoverAnchor, PopoverContent } from "@/components/ui/popover";
-import Link from "next/link";
 
 type Client = { id: string; name: string };
 type Project = { id: string; name: string; customerRef: string | null; billingType?: string | null; rate?: string | null };
@@ -358,6 +357,7 @@ export function AddTimeLogDialog({ workspaceId, clients, projects, tasks }: {
             <div className="space-y-1.5">
               <Label htmlFor="manual-time-tags" className="text-xs">{t("Tag", "Tag")}</Label>
               <TimerTagPicker
+                id="manual-time-tags"
                 value={tags}
                 onChange={setTags}
                 placeholder={t("Pilih atau cari tag...", "Select or search tags...")}

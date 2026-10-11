@@ -8,10 +8,9 @@ describe("personal productivity plan closure", () => {
     const actions = read("src/lib/actions/personal-habits.ts");
     const section = read("src/components/productivity/habits-section.tsx");
     expect(actions).toContain("deletePersonalHabit");
-    expect(section).toContain("updateHabitAction");
-    expect(section).toContain("deleteHabitAction");
-    expect(section).toContain("HabitHeatmap");
-    expect(section).toContain("min-h-11");
+    expect(section).toContain("updatePersonalHabit");
+    expect(section).toContain("HabitWeeklyGrid");
+    expect(section).toContain("HabitDialog");
   });
 
   it("counts only habits scheduled today", () => {

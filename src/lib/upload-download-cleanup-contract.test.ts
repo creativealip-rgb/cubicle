@@ -14,7 +14,7 @@ describe("upload download and cleanup lifecycle", () => {
   it("signs only the authorized exact key for five minutes with a safe filename", () => {
     const r2 = readFileSync("src/lib/r2.ts", "utf8");
     expect(download).toContain("getSignedDownloadUrl(file.storageKey, 300, file.name)");
-    expect(r2).toContain("ResponseContentDisposition: contentDisposition(filename)");
+    expect(r2).toContain("ResponseContentDisposition: disposition");
     expect(r2).toContain("expiresIn = 300");
     expect(r2).toContain("filename.replace(");
   });

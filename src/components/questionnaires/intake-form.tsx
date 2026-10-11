@@ -20,13 +20,11 @@ import { FormSignaturePad } from "@/components/questionnaires/form-signature-pad
 import {
   CheckCircle,
   Loader2,
-  PenTool,
   Star,
   Info,
   Paperclip,
   ArrowRight,
   ArrowLeft,
-  Calculator,
 } from "lucide-react";
 import type { QuestionnaireField } from "@/lib/questionnaire-schema";
 

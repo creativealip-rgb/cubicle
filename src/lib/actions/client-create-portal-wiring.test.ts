@@ -22,11 +22,9 @@ describe("client create portal wiring", () => {
     const insertBody = body.slice(start, next === -1 ? body.length : next);
     // Hardcoded false is gone.
     expect(insertBody).not.toContain("portalSlugEnabled: false");
-    // Flag is derived from parsed input.
-    expect(insertBody).toContain("portalSlugEnabled: parsed.portalSlug");
-    expect(insertBody).toContain("Boolean(parsed.portalSlugEnabled)");
-    // Safe default: no slug ⇒ disabled even if flag was sent true.
-    expect(insertBody).toContain("parsed.portalSlug ? Boolean(parsed.portalSlugEnabled) : false");
+    // Flag is derived from the normalized slug and parsed input. Free plans
+    // receive a generated slug, so the post-normalization value is authoritative.
+    expect(insertBody).toContain("portalSlugEnabled: portalSlugToSave ? Boolean(parsed.portalSlugEnabled) : false");
   });
 
   it("sends portalSlugEnabled from the form slug (empty slug ⇒ disabled)", () => {

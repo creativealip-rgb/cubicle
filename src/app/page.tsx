@@ -12,11 +12,8 @@ import {
   Clock3,
   FileText,
   FolderOpen,
-  LayoutDashboard,
   Menu,
-  MessageSquareText,
   ShieldCheck,
-  Sparkles,
   Users,
   Star,
 } from "lucide-react";

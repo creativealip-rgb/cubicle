@@ -16,8 +16,8 @@ describe("proposal acceptance atomicity wiring", () => {
 
   it("serializes acceptance by locking proposal inside one transaction", () => {
     expect(body).toContain("db.transaction");
-    expect(body).toContain("FOR UPDATE");
-    expect(body.indexOf("FOR UPDATE")).toBeLessThan(body.indexOf("status === \"accepted\""));
+    expect(body).toContain('.for("update")');
+        expect(body.indexOf('.for("update")')).toBeLessThan(body.indexOf("status: \"accepted\""));
   });
 
   it("keeps every acceptance write on transaction client", () => {

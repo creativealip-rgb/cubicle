@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { tasks, users, projects } from "@/db/schema";
-import { eq, and, sql, not, isNotNull } from "drizzle-orm";
+import { eq, and, not, isNotNull } from "drizzle-orm";
 import { notifyTaskDueReminder } from "@/lib/notifications";
 
 export const dynamic = "force-dynamic";

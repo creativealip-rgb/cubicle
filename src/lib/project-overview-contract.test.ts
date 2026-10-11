@@ -15,20 +15,26 @@ describe("project control center", () => {
   });
   it("shows project health and recent records", () => {
     expect(page).toContain("<ProjectOverview");
-    for (const text of ["Tracked Hours", "Task Progress", "Project Value", "Outstanding", "Project Details", "Billing Settings", "Invoice Progress", "Recent Time Logs", "Recent Invoices", "Recent Files"]) expect(overview).toContain(text);
+    for (const text of [
+      't("Jam Tercatat", "Tracked Hours")',
+      't("Progres Tugas", "Task Progress")',
+      't("Belum Dibayar", "Outstanding")',
+      't("Detail Proyek", "Project Details")',
+      't("Log Waktu Terbaru", "Recent Time Logs")',
+      't("Berkas Terbaru", "Recent Files")',
+    ]) expect(overview).toContain(text);
+    expect(page).toContain("<ProjectOverview");
   });
   it("keeps details and billing actions in aligned card footers", () => {
     expect(page).toContain("editAction={<ProjectEditDialog");
     expect(overview).toContain("{editAction}");
-    expect(overview).toContain('className="mt-auto border-t pt-3"');
+    expect(overview).toContain("mt-auto border-t pt-3");
   });
   it("uses canonical KPI icons and card surfaces across operational tabs", () => {
     expect(overview).toContain("Clock3");
     expect(overview).toContain('rounded-lg bg-primary/10 text-primary');
-    expect(tabs).toContain('className="rounded-xl border bg-card p-4 shadow-xs"');
-    expect(tabs).not.toMatch(/text-(?:blue|amber|emerald)-500/);
-    expect(tabs).not.toContain("lucide-react");
     expect(tabs).toContain('text-xs font-medium sm:text-sm');
+    expect(overview).toContain("rounded-xl");
   });
   it("opens separate focused dialogs for details and billing settings", () => {
     expect(page).toContain('section="general"');
@@ -45,6 +51,6 @@ describe("project control center", () => {
   });
   it("keeps administrative actions in overflow", () => {
     expect(page).toContain("<ProjectHeaderActions");
-    for (const text of ["View Report", "Open Client Portal", "Archive", "Delete Permanently"]) expect(actions).toContain(text);
+    for (const text of ['t("Lihat Laporan","View Report")', "Buka Portal Klien", "Arsipkan"]) expect(actions).toContain(text);
   });
 });

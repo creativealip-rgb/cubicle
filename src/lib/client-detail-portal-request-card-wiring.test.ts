@@ -5,9 +5,11 @@ const clientDetail = readFileSync("src/app/(app)/app/clients/[clientId]/page.tsx
 
 describe("client detail portal request card removal", () => {
   it("does not render the admin portal request form on the client detail portal tab", () => {
+    // The admin request form was removed; the page may still read pending client
+    // portal meeting requests to feed the calendar/pending-requests panel.
     expect(clientDetail).not.toContain("PortalRequestAdmin");
-    expect(clientDetail).not.toContain("clientPortalRequests");
-    expect(clientDetail).not.toContain("portalRequests");
+    expect(clientDetail).not.toContain("PortalRequestForm");
+    expect(clientDetail).not.toContain("createPortalRequest");
   });
 
   it("keeps portal password ownership in the edit client form", () => {

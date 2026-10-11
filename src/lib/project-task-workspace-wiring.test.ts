@@ -22,8 +22,8 @@ describe("shared billing-aware project task workspace", () => {
 
   it("renders reusable flat rows without workflow fields", () => {
     const source = read("src/components/tasks/reusable-task-workspace.tsx");
-    expect(source).toContain("Jam bulan ini");
-    expect(source).toContain("Terakhir dipakai");
+    expect(source).toContain("monthMinutes");
+    expect(source).toContain("lastUsedAt");
     expect(source).not.toContain('t("Prioritas", "Priority")');
     expect(source).not.toContain('t("Jatuh Tempo", "Due Date")');
   });

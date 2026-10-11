@@ -13,7 +13,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "sonner";
 import { useT } from "@/lib/i18n-client";
 import {
   Search,
@@ -23,13 +22,8 @@ import {
   Eye,
   CheckCircle2,
   Clock,
-  User,
   Mail,
-  Calendar,
-  Sparkles,
   ExternalLink,
-  ChevronRight,
-  Briefcase,
   X,
   Printer,
   FileSpreadsheet,

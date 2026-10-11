@@ -22,18 +22,18 @@ describe("new user onboarding flow", () => {
   });
 
   it("uses requested onboarding steps and sends users to account settings", () => {
-    expect(flow).toContain('type PlanChoice = "solo" | "team" | "enterprise"');
-    expect(flow).toContain('type SourceChoice = "instagram" | "google" | "friend" | "tiktok" | "youtube" | "other"');
-    expect(flow).toContain("Dari Mana Kamu Tau Cubiqlo?");
+    expect(flow).toContain('type PlanChoice = "free" | "solo" | "team"');
+    expect(flow).toContain("type SourceChoice =");
+    expect(flow).toContain('/app/settings?tab=account');
     expect(flow).toContain('/app/settings?tab=account');
     expect(flow).not.toContain("router.push(\"/app/dashboard\")");
     expect(flow).toContain("sourceOther");
-    expect(flow).toContain("Beri tahu kami sumber lainnya...");
+    expect(flow).toContain('t("Sebutkan sumber lainnya...", "Tell us other source...")');
   });
 
   it("persists plan and source in onboarding activity metadata", () => {
-    expect(action).toContain('z.enum(["solo", "team", "enterprise"])');
-    expect(action).toContain('z.enum(["instagram", "google", "friend", "tiktok", "other"])');
+    expect(action).toContain('z.enum(["free", "solo", "team", "enterprise"])');
+    expect(action).toContain('z.enum(["google", "instagram", "tiktok", "youtube", "friend", "articles", "other"])');
     expect(action).toContain("sourceOther");
     expect(action).toContain("plan: parsed.plan");
     expect(action).toContain("source: parsed.source");

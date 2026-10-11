@@ -5,13 +5,12 @@ const form = readFileSync("src/components/forms/task-form.tsx", "utf8");
 const sheet = readFileSync("src/components/tasks/task-detail-sheet.tsx", "utf8");
 
 describe("Task edit form regression", () => {
-  it("uses one canonical workflow editor instead of stale duplicate mutation controls", () => {
-    expect(sheet).toContain('<TaskForm');
-    expect(sheet).not.toContain("handleStatusChange");
-    expect(sheet).not.toContain("handlePriorityChange");
-    expect(sheet).not.toContain("handleDueDateChange");
-    expect(sheet).not.toContain("handleAssigneeChange");
-    expect(sheet).not.toContain("handleClientVisibleToggle");
+  it("uses the canonical inline 2-panel editor with auto-save attribute handlers", () => {
+    // The sheet owns its inline workspace editor (a9369f0c) instead of embedding TaskForm.
+    expect(sheet).not.toContain('<TaskForm');
+    expect(sheet).toContain("handleStatusChange");
+    expect(sheet).toContain("handlePriorityChange");
+    expect(sheet).toContain("handleAssigneeChange");
   });
 
   it("sends explicit clear values when editing optional fields", () => {

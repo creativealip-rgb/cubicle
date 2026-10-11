@@ -6,13 +6,12 @@ import { DirectCreateContractButton } from "@/components/contracts/direct-create
 import { contracts, clients, contractTemplates } from "@/db/schema";
 import { and, desc, eq, sql } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
-import { CreateContractButton } from "@/components/contracts/create-contract-button";
 import { ContractsListTable } from "@/components/contracts/contracts-list-table";
 import { StatusFilterTabs } from "@/components/ui/status-filter-tabs";
 import { EmptyState } from "@/components/empty-state";
 import { getCurrentLang, createT } from "@/lib/i18n";
 import { PageHeader } from "@/components/ui/page-header";
-import { FileCheck2, FileSignature, Plus } from "lucide-react";
+import { FileCheck2, FileSignature } from "lucide-react";
 import { getProposedContractNumber } from "@/lib/actions/contracts";
 
 export const dynamic = "force-dynamic";

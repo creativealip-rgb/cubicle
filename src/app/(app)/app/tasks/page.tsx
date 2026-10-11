@@ -23,7 +23,6 @@ import { TaskViewToggle } from "@/components/tasks/task-view-toggle";
 import { TaskTemplateWorkspace } from "@/components/tasks/task-template-workspace";
 import { ReusableTaskWorkspace } from "@/components/tasks/reusable-task-workspace";
 import { TaskQuickFilterChips } from "@/components/tasks/task-quick-filter-chips";
-import { TaskInlineQuickAdd } from "@/components/tasks/task-inline-quick-add";
 import { ActiveFilterSummary } from "@/components/ui/active-filter-summary";
 import { resolveBillingModel } from "@/lib/billing-model";
 import { defaultTaskWorkMode } from "@/lib/task-work-mode";

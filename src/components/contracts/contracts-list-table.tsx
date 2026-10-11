@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -23,7 +22,6 @@ import { SortableHeader } from "@/components/ui/sortable-header";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { projectStatusVariant } from "@/lib/status-badge";
-import { DeleteContractButton } from "./delete-contract-button";
 import { ContractRowActions } from "./contract-row-actions";
 import { updateContractStatus } from "@/lib/actions/contracts";
 import { toast } from "sonner";

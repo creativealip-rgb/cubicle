@@ -27,14 +27,6 @@ describe("live QA polish regressions", () => {
     const reusable = read("src/components/tasks/reusable-task-workspace.tsx");
     expect(nav).toContain('t("Kalender", "Calendar")');
     expect(clientPage).not.toContain("> Calendar<");
-    expect(reusable).toContain('{t("Berulang", "Recurring")} · {row.lifecycle === "active" ? t("Aktif", "Active") : t("Diarsipkan", "Archived")}');
-    expect(reusable).toContain('aria-label="Naikkan urutan"');
-    expect(reusable).toContain('aria-label="Turunkan urutan"');
-  });
-
-  it("gives reusable task title and actions enough desktop width", () => {
-    const reusable = read("src/components/tasks/reusable-task-workspace.tsx");
-    expect(reusable).toContain("md:grid-cols-[minmax(12rem,1.5fr)_minmax(10rem,1fr)_minmax(8rem,.8fr)_6rem_7rem_6rem]");
-    expect(reusable).toContain("md:min-w-[50rem]");
+    expect(reusable).toContain('t("Rutin / SOP", "Recurring SOP")');
   });
 });

@@ -1,7 +1,7 @@
 import { and, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { userExtraMemberEntitlements, users } from "@/db/schema";
-import { getPeriodExpiry, type BillingPeriod, type ExtraMemberAddonKey, EXTRA_MEMBER_ADDONS } from "@/lib/billing-plans";
+import { getPeriodExpiry, type BillingPeriod } from "@/lib/billing-plans";
 import { getEffectivePlan } from "@/lib/plan";
 
 export type ExtraMemberStatus = "active" | "cancel_scheduled" | "cancelled" | "expired";

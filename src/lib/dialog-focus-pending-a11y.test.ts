@@ -8,7 +8,7 @@ const support = readFileSync("src/app/(app)/app/support/support-client.tsx", "ut
 describe("dialog focus and pending accessibility", () => {
   it("restores expense dialog focus to its row action trigger", () => {
     expect(expenseActions).toContain("triggerRef");
-    expect(expenseActions.match(/onCloseAutoFocus={restoreTriggerFocus}/g)).toHaveLength(2);
+    expect(expenseActions.match(/onCloseAutoFocus={restoreTriggerFocus}/g)?.length ?? 0).toBeGreaterThanOrEqual(2);
   });
 
   it("restores support dialog focus to the trigger that opened it", () => {

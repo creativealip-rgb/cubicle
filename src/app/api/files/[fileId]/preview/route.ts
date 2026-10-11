@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { headers } from "next/headers";
 import { db } from "@/db";
-import { files, uploadIntents, workspaceMembers } from "@/db/schema";
-import { auth } from "@/lib/auth";
+import { files } from "@/db/schema";
 import { getSignedDownloadUrl } from "@/lib/r2";
-import { and, eq } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import * as ExcelJS from "exceljs";
 import { canAccessFile } from "../download/route";
 

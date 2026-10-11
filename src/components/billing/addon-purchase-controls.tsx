@@ -15,7 +15,6 @@ import {
   type StorageAddonKey,
   type AiRequestsAddonKey,
   type ExtraMemberAddonKey,
-  EXTRA_MEMBER_ADDONS,
 } from "@/lib/billing-plans";
 
 const STORAGE_OPTIONS: StorageAddonKey[] = [5, 10, 15];

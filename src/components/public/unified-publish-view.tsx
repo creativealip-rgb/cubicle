@@ -4,7 +4,6 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
 import { useT } from "@/lib/i18n-client";
 import { toast } from "sonner";
 import {
@@ -12,11 +11,8 @@ import {
   ExternalLink,
   MessageCircle,
   QrCode,
-  Download,
   Code2,
   X,
-  Send,
-  Globe,
   Share2,
 } from "lucide-react";
 

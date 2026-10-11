@@ -8,10 +8,10 @@ const form = readFileSync("src/components/forms/task-form.tsx", "utf8");
 
 describe("global task mode navigation", () => {
   it("renders separate one-time, recurring, and template tabs", () => {
-    expect(tabs).toContain('"workflow" | "reusable" | "templates"');
+    expect(tabs).toContain('type TaskPageTab = "workflow" | "reusable"');
     expect(tabs).toContain('t("Sekali", "One-time")');
     expect(tabs).toContain('t("Berulang", "Recurring")');
-    expect(tabs).toContain('t("Template", "Templates")');
+    expect(page).toContain('t("Template Tugas", "Task Templates")');
     expect(page).toContain('eq(tasks.mode, tab === "templates" ? "workflow" : tab)');
   });
 

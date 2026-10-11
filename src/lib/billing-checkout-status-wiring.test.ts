@@ -16,7 +16,7 @@ describe("billing checkout status wiring", () => {
   it("reads checkout query and renders bilingual status card", () => {
     const page = read("src/app/(app)/app/billing/page.tsx");
     const card = read("src/components/billing/billing-checkout-status-card.tsx");
-    expect(page).toContain('searchParams: Promise<{ checkout?: string }>');
+    expect(page).toContain('searchParams: Promise<{ checkout?: string; tab?: string }>');
     expect(page).toContain("getCheckoutStatusForWorkspaceOwner");
     expect(page).toContain("<BillingCheckoutStatusCard");
     expect(card).toContain('Payment pending');

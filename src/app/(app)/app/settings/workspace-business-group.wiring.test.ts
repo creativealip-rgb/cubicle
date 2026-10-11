@@ -7,8 +7,8 @@ const form = readFileSync(__dirname + "/../../../../components/settings/workspac
 describe("workspace business settings", () => {
   it("groups business identity fields with concise labels", () => {
     expect(form).toContain('data-testid="workspace-business-group"');
-    expect(form).toContain('t("Bisnis", "Business")');
-    expect(form).toContain('t("Nama", "Name")');
+    expect(form).toContain('t("Detail Bisnis", "Business Details")');
+    expect(form).toContain('t("Nama Perusahaan / Brand", "Company or Brand Name")');
     expect(form).toContain('t("Email", "Email")');
     expect(form).not.toContain('t("Nama tagihan", "Billing name")');
     expect(form).not.toContain('t("Email tagihan", "Billing email")');

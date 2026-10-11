@@ -30,13 +30,18 @@ describe("app navigation registry", () => {
     expect(appNavigation.some((entry) => entry.id === "sales")).toBe(false);
   });
 
-  it("shows only Productivity in Personal for member and viewer", () => {
+  it("opens the personal area to every role and still hides retired sales", () => {
     for (const role of ["member", "viewer"] as const) {
       const visible = getVisibleNavigation(role);
       const personal = visible.find((entry) => entry.id === "personal");
       expect(personal?.kind).toBe("group");
       if (personal?.kind === "group")
-        expect(personal.children.map((item) => item.href)).toEqual(["/app/productivity"]);
+        expect(personal.children.map((item) => item.href)).toEqual([
+          "/app/personal",
+          "/app/productivity",
+          "/app/planning",
+          "/app/journal",
+        ]);
       expect(visible.some((entry) => entry.id === "sales")).toBe(false);
     }
   });

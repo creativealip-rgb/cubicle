@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, useEffect, useRef, useMemo } from "react";
-import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { useSearchParams, usePathname } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
 import { useHistoryState } from "@/lib/use-history-state";
@@ -15,8 +15,6 @@ import {
   Eye,
   Loader2,
   Check,
-  Circle,
-  PanelLeft,
   Undo2,
   Redo2,
   LayoutTemplate,
@@ -47,8 +45,6 @@ import {
   Sliders,
   Settings,
   Globe,
-  Send,
-  QrCode,
   AlertCircle,
   RotateCw,
 } from "lucide-react";
@@ -62,7 +58,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CUBIQLO_FONTS, getFontFamily } from "@/lib/builder-fonts";
+import { CUBIQLO_FONTS } from "@/lib/builder-fonts";
 import { resolveBuilderShortcut } from "@/lib/builder-shortcuts";
 import {
   Select,
@@ -601,6 +597,8 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
     window.location.reload();
   }, []);
 
+  // Stable callback is required by dialog props; dependencies are explicit.
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const handleKeepLocal = useCallback(async () => {
     if (!onForceSave) return;
     setSaving(true);

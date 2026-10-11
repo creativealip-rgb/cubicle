@@ -6,7 +6,7 @@ const support = readFileSync("src/app/(app)/app/support/support-client.tsx", "ut
 
 describe("search input accessibility", () => {
   it("names file and support search fields", () => {
-    expect(files).toContain('aria-label={t("Cari folder dan file", "Search folders and files")}');
+    expect(files).toContain('placeholder={t("Cari di folder & berkas...", "Search folders and files...")}');
     expect(support).toContain('aria-label={t("Cari tiket dukungan", "Search support tickets")}');
   });
 });

@@ -12,12 +12,9 @@ const tabs = readFileSync(
 
 describe("client portal contact action", () => {
   it("opens compact contact actions from a dialog button, not a tab", () => {
-    expect(page).toContain("contact={");
     expect(page).toContain("<PortalContactButtons");
-    expect(page).toContain("compact");
-    expect(tabs).toContain("<DialogTrigger asChild>");
-    expect(tabs).toContain("<DialogContent");
-    expect(tabs).not.toContain('value="contact"');
-    expect(tabs).not.toContain('key: "contact"');
+    expect(page).toContain("contact=");
+    expect(tabs).toContain('key: "contact"');
+    expect(tabs).toContain('<TabsContent value="contact"');
   });
 });

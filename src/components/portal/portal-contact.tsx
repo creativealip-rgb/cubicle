@@ -1,6 +1,6 @@
 "use client";
 
-import { MessageCircle, Mail, Clock, ShieldCheck, MapPin, Building2, Send, Calendar, ChevronRight } from "lucide-react";
+import { MessageCircle, Mail, Clock, ShieldCheck, MapPin, Calendar } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { useT } from "@/lib/i18n-client";

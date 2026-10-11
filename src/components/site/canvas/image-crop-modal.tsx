@@ -8,7 +8,6 @@ import {
   ZoomOut,
   RotateCcw,
   Loader2,
-  X,
 } from "lucide-react";
 import {
   Dialog,
@@ -42,6 +41,7 @@ export function ImageCropModal({
 
   const containerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
+  const [isDragging, setIsDragging] = useState(false);
   const startDragRef = useRef({ x: 0, y: 0 });
   const imageObjRef = useRef<HTMLImageElement | null>(null);
 
@@ -69,6 +69,7 @@ export function ImageCropModal({
   function handleMouseDown(e: React.MouseEvent) {
     e.preventDefault();
     isDraggingRef.current = true;
+    setIsDragging(true);
     startDragRef.current = { x: e.clientX - pan.x, y: e.clientY - pan.y };
   }
 
@@ -82,6 +83,7 @@ export function ImageCropModal({
 
   function handleMouseUp() {
     isDraggingRef.current = false;
+    setIsDragging(false);
   }
 
   async function handleApplyCrop() {
@@ -234,7 +236,7 @@ export function ImageCropModal({
                     left: "50%",
                     transform: `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`,
                     transformOrigin: "center center",
-                    transition: isDraggingRef.current ? "none" : "transform 0.05s ease-out",
+                    transition: isDragging ? "none" : "transform 0.05s ease-out",
                     minWidth: "100%",
                     minHeight: "100%",
                     width: "100%",

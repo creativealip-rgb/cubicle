@@ -167,7 +167,7 @@ export async function saveFileContent({
   if (!file) throw new Error("File not found");
 
   let buffer: Buffer;
-  let newMime = file.mimeType;
+  const newMime = file.mimeType;
 
   if (excelData && excelData.length > 0) {
     const ExcelJS = await import("exceljs");

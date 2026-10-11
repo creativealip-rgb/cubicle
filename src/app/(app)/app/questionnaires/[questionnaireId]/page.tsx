@@ -7,12 +7,11 @@ import { eq, and, desc } from "drizzle-orm";
 import { requireUser, assertWorkspaceMember } from "@/lib/access";
 import { safeParseQuestionnaireSchema } from "@/lib/questionnaire-schema";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { SendQuestionnaireButton } from "@/components/questionnaires/send-questionnaire-button";
 import { QuestionnaireResponsesTable } from "@/components/questionnaires/questionnaire-responses-table";
 import { DeleteQuestionnaireButton } from "@/components/questionnaires/delete-questionnaire-button";
 import Link from "next/link";
-import { ArrowLeft, Edit, ExternalLink, Share2, Eye } from "lucide-react";
+import { ArrowLeft, Edit, ExternalLink } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getCurrentLang, createT } from "@/lib/i18n";
 

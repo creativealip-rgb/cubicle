@@ -234,6 +234,8 @@ describe("createQuestionnaire", () => {
     expect(mockInsert).toHaveBeenCalledWith(
       expect.objectContaining({ [Symbol.for("drizzle:Name")]: "questionnaires" }),
     );
+    const valuesCall = (mockInsert.mock.results[0].value as any).values;
+    expect(valuesCall).toHaveBeenCalledWith(expect.objectContaining({ themePreset: "blue" }));
   });
 
   it("rejects a schema with a corrupt field", async () => {

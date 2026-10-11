@@ -3,8 +3,7 @@ import { auth } from "@/lib/auth";
 import { db } from "@/db";
 import { users } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
 import { CheckoutButton } from "@/components/billing/checkout-button";
 import { BillingCheckoutStatusCard } from "@/components/billing/billing-checkout-status-card";
 import { getSubscriptionStatus } from "@/lib/subscription";
@@ -18,7 +17,7 @@ import { BillingTabsNav } from "@/components/billing/billing-tabs-nav";
 import { getWorkspaceRecordForUser } from "@/lib/workspace";
 import { getCheckoutStatusForWorkspaceOwner, type CheckoutStatus } from "@/lib/billing-checkout-status";
 import { getEffectivePlan } from "@/lib/plan";
-import { Check, Crown, Zap, Shield, Sparkles, Calendar, CreditCard } from "lucide-react";
+import { Check, Crown, Zap, Shield, Calendar, CreditCard } from "lucide-react";
 import { PageHeader } from "@/components/ui/page-header";
 
 export const dynamic = "force-dynamic";

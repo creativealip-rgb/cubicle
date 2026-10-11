@@ -8,7 +8,13 @@ describe("calendar and public booking page wiring", () => {
       resolve(__dirname, "../app/(app)/app/calendar/page.tsx"),
       "utf8",
     );
-    expect(calendarPage).toContain('<span>{t("Booking Page", "Booking Page")}</span>');
+    expect(calendarPage).toContain("<BookingSlugHeaderWidget");
+    const widget = readFileSync(
+      resolve(__dirname, "../components/calendar/booking-slug-header-widget.tsx"),
+      "utf8",
+    );
+    expect(widget).toContain('t("Salin Link", "Copy Link")');
+    expect(widget).toContain('t("Aktifkan Link Booking", "Set Booking Slug")');
   });
 
   it("uses PublicBookingForm client component so date apply preserves typed form data", () => {

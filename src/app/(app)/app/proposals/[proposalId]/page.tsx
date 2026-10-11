@@ -20,7 +20,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SendProposalButton } from "@/components/proposals/send-proposal-button";
-import DocumentDetailsForm from "@/components/documents/document-details-form";
 import { updateProposal } from "@/lib/actions/proposals";
 import { DeleteProposalButton } from "@/components/proposals/delete-proposal-button";
 import { ArrowLeft, Eye, FileText } from "lucide-react";

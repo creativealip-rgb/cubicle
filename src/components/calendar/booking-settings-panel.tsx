@@ -15,7 +15,6 @@ import {
 import { updateWorkspaceBookingSlug } from "@/lib/actions/workspace";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { AvailabilityRuleForm } from "@/components/calendar/availability-rule-form";
 import { DeleteAvailabilityRuleButton } from "@/components/calendar/calendar-item-actions";
 import { useT } from "@/lib/i18n-client";

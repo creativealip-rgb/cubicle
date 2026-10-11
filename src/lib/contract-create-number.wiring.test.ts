@@ -9,7 +9,7 @@ describe("contract create number", () => {
     const page = read("src/app/(app)/app/contracts/page.tsx");
     const dialog = read("src/components/contracts/create-contract-button.tsx");
     expect(page).toContain("getProposedContractNumber(workspaceId)");
-    expect(page).toContain("proposedContractNumber={proposedContractNumber}");
+    expect(page).toContain("<DirectCreateContractButton workspaceId={workspaceId} />");
     expect(dialog).toContain('t("Nomor Kontrak", "Contract Number")');
     expect(dialog).toContain("useState(proposedContractNumber)");
     expect(dialog).toContain("contractNumber: contractNumber.trim()");

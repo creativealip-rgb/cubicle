@@ -1,4 +1,4 @@
-import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, randomBytes } from "node:crypto";
 
 export type EncryptedPortalPassword = { ciphertext: string; nonce: string; version: number };
 const VERSION = 1;
@@ -28,7 +28,6 @@ function parseKey(value?: string): Buffer {
       "PORTAL_PASSWORD_ENCRYPTION_KEY belum dikonfigurasi: tidak ada kunci enkripsi Portal",
     );
   }
-  const { createHash } = require("node:crypto");
   return createHash("sha256").update(fallback).digest();
 }
 

@@ -3,21 +3,23 @@ import { readFileSync } from "fs";
 import { resolve } from "path";
 
 describe("files page layout and list wiring", () => {
-  it("keeps sidebar sticky under topbar with lg:top-20 and lg:self-start", () => {
+  it("keeps the folder sidebar in its own scrollable column", () => {
     const layout = readFileSync(
       resolve(__dirname, "../app/(app)/app/files/layout.tsx"),
       "utf8",
     );
-    expect(layout).toContain("lg:sticky lg:top-20 lg:self-start");
+    // Drive-style layout: no page-level sticky, the sidebar column scrolls independently.
+    expect(layout).toContain("lg:col-span-1 h-full flex flex-col overflow-hidden");
+    expect(layout).toContain("overflow-y-auto");
   });
 
-  it("paginates file list to 15 items per page with prev/next navigation", () => {
+  it("paginates the file list with prev/next navigation", () => {
     const fileList = readFileSync(
       resolve(__dirname, "../components/files/file-list.tsx"),
       "utf8",
     );
-    expect(fileList).toContain("const PAGE_SIZE = 15;");
-    expect(fileList).toContain("paginatedItems.map");
-    expect(fileList).toContain("totalPages > 1");
+    expect(fileList).toContain("const PAGE_SIZE = 30");
+    expect(fileList).toContain("paginatedFiles.map");
+    expect(fileList).toContain("totalPages");
   });
 });

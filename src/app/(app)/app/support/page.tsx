@@ -1,4 +1,3 @@
-import { redirect } from "next/navigation";
 import { createTicket, listTickets, getTicketCounts } from "@/lib/actions/support";
 import { db } from "@/db";
 import { clients, projects, users, workspaceMembers } from "@/db/schema";

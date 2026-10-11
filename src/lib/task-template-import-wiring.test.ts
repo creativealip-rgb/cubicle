@@ -19,7 +19,7 @@ describe("atomic flat task-template import wiring", () => {
   it("repeats validation and inserts flat tasks in one transaction", () => {
     expect(source).toContain("db.transaction");
     expect(source).toContain("tx.insert(tasks)");
-    expect(source).toContain("templateItemSourceId");
+    expect(source).toContain("importedSubtaskValues");
     expect(source).not.toMatch(/parent(Task|Group|List)Id/);
   });
 

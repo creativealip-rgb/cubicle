@@ -2,7 +2,6 @@
 
 import { useMemo, useState, useTransition } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
   Table,
@@ -24,7 +23,6 @@ import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { formatMoney } from "@/lib/utils";
 import { projectStatusVariant } from "@/lib/status-badge";
-import { DeleteProposalButton } from "./delete-proposal-button";
 import { ProposalRowActions } from "./proposal-row-actions";
 import { updateProposalStatus } from "@/lib/actions/proposals";
 import { toast } from "sonner";

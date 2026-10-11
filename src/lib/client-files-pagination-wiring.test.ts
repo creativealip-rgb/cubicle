@@ -11,12 +11,11 @@ describe("client and files pagination", () => {
     expect(clients).toContain("PaginationLinks");
   });
 
-  it("paginates one folder-first files collection by fifteen", () => {
+  it("paginates one folder-first files collection", () => {
     const list = readFileSync("src/components/files/file-list.tsx", "utf8");
     expect(files).not.toContain("folderPage");
     expect(files).not.toContain("filePage");
-    expect(list).toContain("combinedItems");
-    expect(list).toContain("paginatedItems");
-    expect(list).toContain("const PAGE_SIZE = 15");
+    expect(list).toContain("paginatedFiles");
+    expect(list).toContain("const PAGE_SIZE = 30");
   });
 });

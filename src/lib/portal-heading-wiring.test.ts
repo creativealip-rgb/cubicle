@@ -6,8 +6,10 @@ const read = (path: string) => readFileSync(path, "utf8");
 describe("client portal heading", () => {
   it("prioritizes client identity and attributes the workspace", () => {
     const page = read("src/app/client-portal/[token]/page.tsx");
-    expect(page).toContain("{client.companyName || client.name}");
-    expect(page).toContain('t("Dikelola oleh", "Managed by")');
+    const header = read("src/components/client-portal/client-portal-header.tsx");
+    expect(page).toContain("<ClientPortalHeader");
+    expect(page).toContain("clientCompanyName={client.companyName}");
+    expect(header).toContain('t("Dikelola oleh", "Managed by")');
     expect(page).not.toContain("workspaceContact.billingAddress && (");
     expect(page).not.toContain("[workspaceContact.email, workspaceContact.phone]");
   });

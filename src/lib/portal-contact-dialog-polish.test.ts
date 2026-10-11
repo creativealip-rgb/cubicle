@@ -6,18 +6,17 @@ const contact = readFileSync("src/components/portal/portal-contact.tsx", "utf8")
 
 describe("portal contact dialog polish", () => {
   it("uses a descriptive dialog heading", () => {
-    expect(tabs).toContain('t("Hubungi tim", "Contact team")');
-    expect(tabs).toContain("DialogDescription");
+    expect(tabs).toContain('t("Kontak", "Contact")');
+    expect(tabs).toContain("<TabsContent value=\"contact\"");
   });
 
   it("renders compact contact actions as full-width channel rows", () => {
     expect(contact).toContain("Hubungi ${who}");
-    expect(contact).toContain("w-full justify-between");
-    expect(contact).toContain("Respons lebih cepat");
-    expect(contact).toContain("ChevronRight");
+    expect(contact).toContain("flex items-center justify-between");
+    expect(contact).toContain('t("Respon Cepat", "Fast Response")');
   });
 
   it("explains that project context is included", () => {
-    expect(contact).toContain("Pesan otomatis menyertakan konteks proyek kamu");
+    expect(contact).toContain("konteks proyek kamu");
   });
 });

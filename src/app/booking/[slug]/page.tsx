@@ -5,7 +5,7 @@ import { eq, or, ilike, sql } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { getAvailableSlots } from "@/lib/actions/appointments";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Calendar, ShieldCheck, Sparkles } from "lucide-react";
+import { CheckCircle2, Calendar, ShieldCheck } from "lucide-react";
 import { createT, getCurrentLang } from "@/lib/i18n";
 import { PublicBookingForm } from "@/components/calendar/public-booking-form";
 

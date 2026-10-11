@@ -101,8 +101,9 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
           <button
             type="button"
             onClick={() => setDismissed(true)}
-            className="rounded-lg p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-600"
             title={t("Tutup", "Dismiss")}
+            aria-label={t("Tutup panduan onboarding", "Dismiss onboarding guide")}
           >
             <X className="h-4 w-4" />
           </button>

@@ -6,7 +6,7 @@ const manual = read("src/components/time/add-time-log-dialog.tsx");
 
 describe("manual Time task UI", () => {
   it("requires Project and Task and exposes complete manual billing metadata", () => {
-    expect(manual).toContain('t("Tugas wajib dipilih untuk proyek ini", "Task is required for this project")');
+    expect(manual).toContain('t("Task wajib dipilih", "Task is required")');
     expect(manual).toContain('id="manual-time-task"');
     expect(manual).toContain('aria-label={projectId ? t("Cari tugas...", "Search task...") : t("Pilih klien & proyek dulu", "Select client & project first")}');
     expect(manual).not.toContain("activityId");
