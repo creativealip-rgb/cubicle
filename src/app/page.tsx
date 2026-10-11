@@ -12,7 +12,7 @@ import {
   Clock3,
   FileText,
   FolderOpen,
-  Menu,
+
   ShieldCheck,
   Users,
   Star,
@@ -25,6 +25,7 @@ import { LandingLanguageSwitch } from "@/components/landing/landing-language-swi
 import { getCountryFromHeaders, resolveVisitorPreferences } from "@/lib/region-preferences";
 import { getLandingPrice, type DisplayCurrency } from "@/lib/landing-pricing";
 import { AcquisitionTracker } from "@/components/analytics/acquisition-tracker";
+import { LandingMobileMenu } from "@/components/landing/landing-mobile-menu";
 
 export const dynamic = "force-dynamic";
 
@@ -192,18 +193,12 @@ const workflowCopy = [
               <a href={`${APP_URL}/login`}>{tx("Masuk", "Log in")}</a>
             </Button>
 
-            <details className="relative md:hidden">
-              <summary aria-label="Buka menu" className="flex h-11 w-11 cursor-pointer list-none items-center justify-center rounded-xl bg-white ring-1 ring-slate-200 hover:bg-slate-50 [&::-webkit-details-marker]:hidden">
-                <Menu className="h-4 w-4" />
-              </summary>
-              <nav className="absolute right-0 top-11 w-52 rounded-2xl bg-white p-2 text-sm shadow-2xl ring-1 ring-slate-950/10 z-50">
-                {[[tx("Alur kerja", "Workflow"), "#workflow"], [tx("Portal", "Portal"), "#portal"], [tx("Perbandingan", "Compare"), "#compare"], [tx("Harga", "Pricing"), "#pricing"]].map(([label, href]) => (
-                  <a key={href} href={href} className="flex min-h-11 items-center rounded-xl px-3 py-2.5 font-medium hover:bg-blue-50">{label}</a>
-                ))}
-                <div className="my-1 border-t border-slate-100" />
-                <a href={`${APP_URL}/signup`} className="flex min-h-11 items-center rounded-xl px-3 py-2.5 font-semibold text-[#2563EB] hover:bg-blue-50">{tx("Buat akun gratis", "Create free account")}</a>
-              </nav>
-            </details>
+            <LandingMobileMenu
+              menuLabel={tx("Buka menu", "Open menu")}
+              signupLabel={tx("Buat akun gratis", "Create free account")}
+              signupHref={`${APP_URL}/signup`}
+              links={[[tx("Alur kerja", "Workflow"), "#workflow"], [tx("Portal", "Portal"), "#portal"], [tx("Perbandingan", "Compare"), "#compare"], [tx("Harga", "Pricing"), "#pricing"]]}
+            />
 
             <Button asChild className="hidden rounded-xl bg-[#292D34] text-white hover:bg-[#17191E] md:inline-flex">
               <a href={`${APP_URL}/signup`}>{tx("Mulai gratis", "Start free")} <ArrowRight className="h-4 w-4 ml-1" /></a>
@@ -302,7 +297,7 @@ const workflowCopy = [
           </div>
         </section>
 
-        <section id="workflow" className="px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+        <section id="workflow" className="scroll-mt-20 px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="grid gap-8 lg:grid-cols-[.8fr_1.2fr] lg:items-end">
               <div><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#2563EB]">{tx("Satu alur kerja", "One workflow")}</p><h2 className="mt-4 max-w-xl text-3xl font-semibold leading-tight tracking-[-.03em] sm:text-5xl">{tx("Data cukup dimasukkan sekali. Sisanya tetap terhubung.", "Enter data once. Everything stays connected.")}</h2></div>
@@ -327,7 +322,7 @@ const workflowCopy = [
           </div>
         </section>
 
-        <section id="portal" className="relative overflow-hidden bg-[#0F172A] px-4 py-20 text-white sm:px-6 sm:py-28 lg:px-8">
+        <section id="portal" className="relative scroll-mt-20 overflow-hidden bg-[#0F172A] px-4 py-20 text-white sm:px-6 sm:py-28 lg:px-8">
           <div className="pointer-events-none absolute inset-0" style={{ background: "radial-gradient(circle at 80% 20%, rgba(37,99,235,.35), transparent 30%), radial-gradient(circle at 5% 90%, rgba(2,132,199,.15), transparent 24%)" }} />
           <div className="relative mx-auto grid max-w-7xl gap-14 lg:grid-cols-[.78fr_1.22fr] lg:items-center">
             <div>
@@ -344,11 +339,11 @@ const workflowCopy = [
           </div>
         </section>
 
-        <section id="compare" className="px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+        <section id="compare" className="scroll-mt-20 px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-6xl">
             <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#2563EB]">{tx("Untuk bisnis berbasis klien", "For client-based businesses")}</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Dibuat untuk cara kerja bisnis modern.", "Built for modern client work.")}</h2><p className="mt-5 text-lg leading-8 text-slate-600">{tx("Mulai gratis, kelola pekerjaan klien tanpa add-on tambahan.", "Start free, manage client work without extra add-ons.")}</p></div>
             <div className="mt-12 hidden overflow-hidden rounded-3xl bg-white shadow-[0_20px_60px_rgba(41,45,52,.08)] ring-1 ring-slate-200 md:block">
-              <table className="w-full text-left text-sm"><thead className="bg-slate-50"><tr><th className="px-6 py-5" /><th className="px-6 py-5 text-slate-500">HoneyBook</th><th className="px-6 py-5 text-slate-500">Bonsai</th><th className="bg-blue-50/80 px-6 py-5 text-[#2563EB]">Cubiqlo</th></tr></thead><tbody>{comparison.map(row => <tr key={row.label} className="border-t border-slate-100"><td className="px-6 py-4 font-medium">{tx(row.label, row.label === "Harga mulai" ? "Starting price" : row.label)}</td><td className="px-6 py-4 text-slate-500">{tx(row.honeybook, row.honeybook === "Ada" ? "Yes" : row.honeybook)}</td><td className="px-6 py-4 text-slate-500">{tx(row.bonsai, row.bonsai === "Ada" ? "Yes" : row.bonsai === "Termasuk" ? "Included" : row.bonsai)}</td><td className="bg-blue-50/40 px-6 py-4 font-semibold text-[#2563EB]">{tx(row.cubiqlo, row.cubiqlo === "Gratis" ? "Free" : row.cubiqlo === "Termasuk" ? "Included" : row.cubiqlo)}</td></tr>)}</tbody></table>
+              <table className="w-full text-left text-sm"><caption className="sr-only">{tx("Perbandingan fitur dan harga", "Feature and pricing comparison")}</caption><thead className="bg-slate-50"><tr><th scope="col" className="px-6 py-5">{tx("Fitur", "Feature")}</th><th scope="col" className="px-6 py-5 text-slate-500">HoneyBook</th><th scope="col" className="px-6 py-5 text-slate-500">Bonsai</th><th scope="col" className="bg-blue-50/80 px-6 py-5 text-[#2563EB]">Cubiqlo</th></tr></thead><tbody>{comparison.map(row => <tr key={row.label} className="border-t border-slate-100"><td className="px-6 py-4 font-medium">{tx(row.label, row.label === "Harga mulai" ? "Starting price" : row.label)}</td><td className="px-6 py-4 text-slate-500">{tx(row.honeybook, row.honeybook === "Ada" ? "Yes" : row.honeybook)}</td><td className="px-6 py-4 text-slate-500">{tx(row.bonsai, row.bonsai === "Ada" ? "Yes" : row.bonsai === "Termasuk" ? "Included" : row.bonsai)}</td><td className="bg-blue-50/40 px-6 py-4 font-semibold text-[#2563EB]">{tx(row.cubiqlo, row.cubiqlo === "Gratis" ? "Free" : row.cubiqlo === "Termasuk" ? "Included" : row.cubiqlo)}</td></tr>)}</tbody></table>
             </div>
             <div className="mt-10 grid gap-3 md:hidden">{comparison.map(row => <div key={row.label} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200"><p className="font-semibold">{tx(row.label, row.label === "Harga mulai" ? "Starting price" : row.label)}</p><div className="mt-3 grid grid-cols-3 gap-2 text-xs"><span className="text-slate-500">HoneyBook<br/><b className="text-slate-700">{tx(row.honeybook, row.honeybook === "Ada" ? "Yes" : row.honeybook)}</b></span><span className="text-slate-500">Bonsai<br/><b className="text-slate-700">{tx(row.bonsai, row.bonsai === "Ada" ? "Yes" : row.bonsai)}</b></span><span className="rounded-lg bg-blue-50 p-2 text-[#2563EB]">Cubiqlo<br/><b>{tx(row.cubiqlo, row.cubiqlo === "Gratis" ? "Free" : row.cubiqlo === "Termasuk" ? "Included" : row.cubiqlo)}</b></span></div></div>)}</div>
             <p className="mt-5 text-center text-xs leading-5 text-slate-500">{tx("Perbandingan dari halaman publik produk, diperiksa Juli 2026. Harga dan paket dapat berubah.", "Comparison based on public product pages, checked July 2026. Prices and packages may change.")}</p>
@@ -381,7 +376,7 @@ const workflowCopy = [
           </div>
         </section>
 
-        <section id="pricing" className="bg-white px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
+        <section id="pricing" className="scroll-mt-20 bg-white px-4 py-20 sm:px-6 sm:py-28 lg:px-8">
           <div className="mx-auto max-w-7xl">
             <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#2563EB]">{tx("Harga transparan", "Transparent pricing")}</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Mulai gratis. Upgrade saat klien bertambah.", "Start free. Upgrade as your client work grows.")}</h2><p className="mt-5 text-lg text-slate-600">{tx("Tidak perlu kartu kredit untuk mulai.", "No credit card required.")}</p></div>
             <div className="mt-12 grid gap-5 lg:grid-cols-3">{pricing.map(plan => <div key={plan.name} className={`relative flex flex-col rounded-3xl p-6 ${plan.featured ? "bg-[#0F172A] text-white shadow-[0_24px_70px_rgba(15,23,42,.22)] lg:-translate-y-3" : "bg-[#F8FAFC] ring-1 ring-slate-200"}`}>{plan.featured && <span className="absolute right-5 top-5 rounded-full bg-[#2563EB] px-3 py-1 text-xs font-semibold">{tx("Paling populer", "Most popular")}</span>}<p className={`text-sm font-semibold ${plan.featured ? "text-blue-300" : "text-[#2563EB]"}`}>{tx(plan.name, plan.name === "Free" ? "Free" : plan.name)}</p><p className={`mt-3 text-sm ${plan.featured ? "text-slate-300" : "text-slate-600"}`}>{plan.name === "Free" ? tx("Coba dulu untuk client work kecil.", "Try it for small client work.") : plan.name === "Solo" ? tx("Untuk freelancer yang punya banyak klien.", "For freelancers with many clients.") : tx("Untuk tim kecil yang kerja bareng.", "For small teams working together.")}</p><div className="mt-7"><strong className="block text-3xl tracking-[-.03em]">{getLandingPrice(plan.name.toLowerCase() as "free" | "solo" | "team", "monthly", currency)}</strong><span className={`mt-1 block text-xs ${plan.featured ? "text-slate-400" : "text-slate-500"}`}>{plan.name === "Solo" || plan.name === "Team" ? `${getLandingPrice(plan.name.toLowerCase() as "solo" | "team", "yearly", currency)} / ${tx("tahun", "year")}` : tx("selamanya", "forever")}</span></div><div className={`my-6 h-px ${plan.featured ? "bg-white/10" : "bg-slate-200"}`} /><div className="flex-1 space-y-3">{plan.items.map(item => <div key={item} className={`flex items-center gap-2 text-sm ${plan.featured ? "text-slate-200" : "text-slate-700"}`}><Check className={`h-4 w-4 ${plan.featured ? "text-emerald-400" : "text-[#2563EB]"}`} />{tx(item, landingEn[item] ?? item)}</div>)}</div><Button asChild className={`mt-8 h-11 rounded-xl ${plan.featured ? "bg-white text-[#0F172A] hover:bg-blue-50" : "bg-[#0F172A] text-white hover:bg-slate-800"}`}><a href={`${APP_URL}/signup`}>{tx(plan.cta, plan.name === "Free" ? "Start free" : plan.name === "Solo" ? "Choose Solo" : "Choose Team")}</a></Button></div>)}</div>
