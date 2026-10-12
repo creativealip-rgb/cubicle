@@ -784,7 +784,10 @@ function GalleryEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
             <Label className="text-xs text-muted-foreground">{t("Unggah Gambar", "Upload Image")}</Label>
             <ImageUpload
               value={image.url}
-              onChange={(url) => onUpdate({ images: patchItem(section.images, i, { url }) })}
+              onChange={(url, cropRatio) => onUpdate({ images: patchItem(section.images, i, {
+                url,
+                ...(cropRatio ? { width: image.width ?? 300, height: Math.round((image.width ?? 300) / cropRatio) } : {}),
+              }) })}
               label={t("Unggah", "Upload")}
             />
           </div>

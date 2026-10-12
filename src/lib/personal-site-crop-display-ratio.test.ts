@@ -20,8 +20,10 @@ describe("personal-site cropped image display ratio", () => {
     const crop = readFileSync("src/components/site/canvas/image-crop-modal.tsx", "utf8");
     const canvas = readFileSync("src/components/site/canvas/canvas-renderer.tsx", "utf8");
     const live = readFileSync("src/components/site/personal-site-renderer.tsx", "utf8");
+    const gallery = readFileSync("src/components/site/canvas/google-sites-gallery.tsx", "utf8");
     expect(crop).toContain("onCropComplete(data.url, width / height)");
     expect(canvas).toContain("aspectRatio: section.imageAspectRatio");
     expect(live).toContain("aspectRatio: section.imageAspectRatio");
+    expect(gallery).toContain("height: Math.round(width / cropRatio)");
   });
 });

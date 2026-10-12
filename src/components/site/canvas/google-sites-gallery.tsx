@@ -410,8 +410,10 @@ export function GoogleSitesGalleryCanvas({
             if (!open) setCropTargetIndex(null);
           }}
           imageUrl={section.images[cropTargetIndex].url}
-          onCropComplete={(croppedUrl) => {
-            updateItem(cropTargetIndex, { url: croppedUrl });
+          onCropComplete={(croppedUrl, cropRatio) => {
+            const image = section.images[cropTargetIndex];
+            const width = image.width ?? 300;
+            updateItem(cropTargetIndex, { url: croppedUrl, width, height: Math.round(width / cropRatio) });
             setCropTargetIndex(null);
           }}
         />
