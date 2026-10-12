@@ -561,7 +561,7 @@ export function PersonalSiteRenderer({
             <section
               data-section-type={section.type}
               className={`${section.type === "hero" ? `${styles.hero} relative overflow-hidden` : index % 2 === 0 ? styles.sectionAlt : ""} px-6 py-14 sm:px-10 lg:px-16 lg:py-20`}
-              style={{ ...(secFontFamily ? { fontFamily: secFontFamily } : {}), ...(section.type === "hero" ? { backgroundColor: accent } : {}) }}
+              style={{ ...(secFontFamily ? { fontFamily: secFontFamily } : {}), ...(section.type === "hero" ? { backgroundColor: accent, ...(section.imageAspectRatio ? { aspectRatio: section.imageAspectRatio } : {}) } : {}) }}
             >
               {section.type === "hero" && section.imageUrl && <><Image src={section.imageUrl} alt="" fill sizes="100vw" aria-hidden="true" className="object-cover opacity-85" /><div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" /></>}
               <div className="relative mx-auto max-w-6xl">

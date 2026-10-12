@@ -325,13 +325,13 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
   switch (section.type) {
     case "hero":
       return (
-        <div className="relative -mx-8 -mt-4 overflow-hidden px-8 py-16 text-center" style={{ backgroundColor: theme?.primaryColor ?? "#2563EB" }}>
+        <div className="relative -mx-8 -mt-4 overflow-hidden px-8 py-16 text-center" style={{ backgroundColor: theme?.primaryColor ?? "#2563EB", ...(section.imageAspectRatio ? { aspectRatio: section.imageAspectRatio } : {}) }}>
           {section.imageUrl && <><Image src={section.imageUrl} alt="" fill sizes="100vw" aria-hidden="true" className="object-cover opacity-85" /><div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/30 to-black/60" /></>}
           <div className="relative z-10">
             <InlineText value={section.heading} onChange={(heading) => onUpdate({ heading })} typography={section.titleTypography} onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })} tag="h1" tagType="heading" className="mb-2 text-3xl font-bold text-white" placeholder={t("Judul...", "Title...")} />
             <InlineText value={section.subtitle} onChange={(subtitle) => onUpdate({ subtitle })} typography={section.subtitleTypography} onTypographyChange={(patch) => onUpdate({ subtitleTypography: { ...section.subtitleTypography, ...patch } })} tag="p" tagType="body" className="mb-4 text-lg text-white/80" placeholder={t("Subjudul...", "Subtitle...")} />
             <InlineText value={isEditorialPlaceholderText(section.content) ? "" : section.content} onChange={(content) => onUpdate({ content })} typography={section.contentTypography} onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })} tag="p" tagType="body" className="mx-auto max-w-2xl text-white/90" placeholder={t("Deskripsi hero...", "Hero description...")} />
-            <div className="mt-6 flex justify-center"><ImageUpload value={section.imageUrl ?? ""} onChange={(imageUrl) => onUpdate({ imageUrl })} label={t("Unggah gambar hero", "Upload hero image")} /></div>
+            <div className="mt-6 flex justify-center"><ImageUpload value={section.imageUrl ?? ""} onChange={(imageUrl, imageAspectRatio) => onUpdate({ imageUrl, ...(imageAspectRatio ? { imageAspectRatio } : {}) })} label={t("Unggah gambar hero", "Upload hero image")} /></div>
           </div>
         </div>
       );

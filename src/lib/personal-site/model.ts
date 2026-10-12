@@ -138,6 +138,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     subtitle: shortTextSchema,
     content: z.string().trim().max(500),
     imageUrl: z.string().trim().max(2_000).nullish(),
+    imageAspectRatio: z.number().positive().max(10).optional(),
     animation: animationSchema,
     ...sectionTypographySchema,
     titleTypography: z.object(elementTypographySchema).optional(),

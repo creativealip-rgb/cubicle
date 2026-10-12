@@ -10,7 +10,7 @@ import { ImageCropModal } from "./image-crop-modal";
 
 type Props = {
   value: string;
-  onChange: (url: string) => void;
+  onChange: (url: string, aspectRatio?: number) => void;
   label?: string;
 };
 
@@ -100,7 +100,7 @@ export function ImageUpload({ value, onChange, label }: Props) {
             open={cropModalOpen}
             onOpenChange={setCropModalOpen}
             imageUrl={value}
-            onCropComplete={(croppedUrl) => onChange(croppedUrl)}
+            onCropComplete={(croppedUrl, aspectRatio) => onChange(croppedUrl, aspectRatio)}
           />
         </div>
       ) : (

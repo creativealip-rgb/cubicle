@@ -24,7 +24,7 @@ interface ImageCropModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   imageUrl: string;
-  onCropComplete: (croppedUrl: string) => void;
+  onCropComplete: (croppedUrl: string, aspectRatio: number) => void;
 }
 
 export function ImageCropModal({
@@ -161,7 +161,7 @@ export function ImageCropModal({
           const res = await fetch("/api/site/upload", { method: "POST", body: fd });
           const data = await res.json().catch(() => ({}));
           if (!res.ok || !data.ok || !data.url) throw new Error(data.error || t("Gagal menyimpan hasil crop", "Failed to save cropped image"));
-          onCropComplete(data.url);
+          onCropComplete(data.url, width / height);
           toast.success(t("Gambar berhasil di-crop", "Image cropped successfully"));
           onOpenChange(false);
         } catch (error) {
