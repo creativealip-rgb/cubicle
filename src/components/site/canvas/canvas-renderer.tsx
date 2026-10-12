@@ -502,6 +502,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
                   <InlineText
                     value={offer.price}
                     onChange={(v) => onUpdate({ offers: patchItem(section.offers, i, { price: v }) })}
+                    typography={offer.priceTypography}
+                    onTypographyChange={(patch) => onUpdate({ offers: patchItem(section.offers, i, { priceTypography: { ...offer.priceTypography, ...patch } }) })}
                     tag="p"
                     tagType="card"
                     className="text-lg font-bold text-primary my-1"
@@ -634,6 +636,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
                         <InlineText
                           value={t.role}
                           onChange={(v) => onUpdate({ testimonials: patchItem(section.testimonials, i, { role: v }) })}
+                          typography={t.roleTypography}
+                          onTypographyChange={(patch) => onUpdate({ testimonials: patchItem(section.testimonials, i, { roleTypography: { ...t.roleTypography, ...patch } }) })}
                           tag="span"
                           tagType="body"
                           className="inline-block w-auto"
@@ -769,8 +773,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
               <span className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center">
                 <Calendar className="h-5 w-5" />
               </span>
-              <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
-              <InlineText value={section.subtitle || ""} onChange={(v) => onUpdate({ subtitle: v })} tag="p" className="text-xs text-muted-foreground max-w-md" />
+              <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} typography={section.titleTypography} onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })} tagType="heading" tag="h2" className={headingStyle.className} style={headingStyle.style} />
+              <InlineText value={section.subtitle || ""} onChange={(v) => onUpdate({ subtitle: v })} typography={section.contentTypography} onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })} tagType="body" tag="p" className="text-xs text-muted-foreground max-w-md" />
             </div>
             <div className="rounded-2xl border border-dashed border-border/80 bg-muted/30 p-6 flex flex-col items-center justify-center gap-2 text-muted-foreground">
               <p className="text-xs font-semibold">{t("Formulir Jadwal Pertemuan Interaktif", "Interactive Appointment Booking Form")}</p>
@@ -783,8 +787,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
     case "custom":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
-          <InlineText value={section.content} onChange={(v) => onUpdate({ content: v })} tag="p" className="text-muted-foreground whitespace-pre-wrap" />
+          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} typography={section.titleTypography} onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })} tagType="heading" tag="h2" className={headingStyle.className} style={headingStyle.style} />
+          <InlineText value={section.content} onChange={(v) => onUpdate({ content: v })} typography={section.contentTypography} onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })} tagType="body" tag="p" className="text-muted-foreground whitespace-pre-wrap" />
         </div>
       );
 
@@ -838,7 +842,7 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
       return (
         <div className="py-6">
           {section.heading && (
-            <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
+            <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} typography={section.titleTypography} onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })} tagType="heading" tag="h2" className={headingStyle.className} style={headingStyle.style} />
           )}
           <div className={`flex flex-col ${section.align === "left" ? "items-start" : section.align === "right" ? "items-end" : "items-center"}`}>
             {/* Preview mode mirrors the public page: the image becomes a real link. Edit mode stays non-navigating. */}
@@ -853,6 +857,9 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
               <InlineText
                 value={section.caption}
                 onChange={(v) => onUpdate({ caption: v })}
+                typography={section.contentTypography}
+                onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })}
+                tagType="body"
                 tag="p"
                 className="mt-2 text-center text-xs text-muted-foreground italic max-w-xl"
               />
@@ -909,12 +916,18 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
               <InlineText
                 value={section.heading}
                 onChange={(v) => onUpdate({ heading: v })}
+                typography={section.titleTypography}
+                onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })}
+                tagType="heading"
                 tag="h2"
                 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground"
               />
               <InlineText
                 value={section.content ?? ""}
                 onChange={(v) => onUpdate({ content: v })}
+                typography={section.contentTypography}
+                onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })}
+                tagType="body"
                 tag="p"
                 className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap"
               />
@@ -938,7 +951,7 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
       const embedSrc = safeEmbedSrc(section.url);
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
+          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} typography={section.titleTypography} onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })} tagType="heading" tag="h2" className="text-xl font-semibold mb-4" />
           <div className="rounded-lg border overflow-hidden" style={{ height: section.height ?? 400 }}>
             {embedSrc ? (
               <iframe src={embedSrc} className="w-full h-full" title={section.heading} />
@@ -955,7 +968,7 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
     case "social":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className="text-xl font-semibold mb-4" />
+          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} typography={section.titleTypography} onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })} tagType="heading" tag="h2" className="text-xl font-semibold mb-4" />
           <div className="flex flex-wrap gap-2">
             {section.links.map((link) => (
               previewMode && !isPlaceholderHref(link.url) && safePublicHref(link.url) !== "#" ? (
@@ -977,7 +990,7 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
     case "cta":
       return (
         <div className="py-8 text-center">
-          <InlineText value={section.text} onChange={(v) => onUpdate({ text: v })} tag="p" className="text-lg mb-4" />
+          <InlineText value={section.text} onChange={(v) => onUpdate({ text: v })} typography={section.contentTypography} onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })} tagType="body" tag="p" className="text-lg mb-4" />
           {section.buttonLabel && (
             previewMode && section.buttonUrl && !isPlaceholderHref(section.buttonUrl) && safePublicHref(section.buttonUrl) !== "#" ? (
               /* Preview mirrors the public CTA: a real, navigable anchor. */
@@ -999,12 +1012,12 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
     case "collapsible":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
+          <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} typography={section.titleTypography} onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })} tagType="heading" tag="h2" className={headingStyle.className} style={headingStyle.style} />
           <div className="space-y-2">
-            {section.items.map((item) => (
+            {section.items.map((item, i) => (
               <details key={item.id} className="rounded-lg border bg-card shadow-sm">
-                <summary className="px-4 py-3 cursor-pointer font-medium">{item.title}</summary>
-                <div className="px-4 pb-3 text-sm text-muted-foreground">{item.content}</div>
+                <summary className="px-4 py-3 cursor-pointer font-medium"><InlineText value={item.title} onChange={(title) => onUpdate({ items: patchItem(section.items, i, { title }) })} typography={item.titleTypography} onTypographyChange={(patch) => onUpdate({ items: patchItem(section.items, i, { titleTypography: { ...item.titleTypography, ...patch } }) })} tag="span" tagType="card" /></summary>
+                <div className="px-4 pb-3 text-sm text-muted-foreground"><InlineText value={item.content} onChange={(content) => onUpdate({ items: patchItem(section.items, i, { content }) })} typography={item.descTypography} onTypographyChange={(patch) => onUpdate({ items: patchItem(section.items, i, { descTypography: { ...item.descTypography, ...patch } }) })} tag="p" tagType="body" /></div>
               </details>
             ))}
           </div>
@@ -1015,11 +1028,11 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
       return (
           <div className="py-6">
             <div className="rounded-2xl border bg-card p-6 sm:p-8 shadow-sm space-y-4 text-center">
-              <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
-              <InlineText value={section.text} onChange={(v) => onUpdate({ text: v })} tag="p" className="text-muted-foreground text-sm max-w-xl mx-auto" />
+              <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} typography={section.titleTypography} onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })} tagType="heading" tag="h2" className={headingStyle.className} style={headingStyle.style} />
+              <InlineText value={section.text} onChange={(v) => onUpdate({ text: v })} typography={section.contentTypography} onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })} tagType="body" tag="p" className="text-muted-foreground text-sm max-w-xl mx-auto" />
               <div className="pt-2">
                 <Button size="lg" className="rounded-xl px-6 font-semibold">
-                  <InlineText value={section.buttonLabel || "Click Here"} onChange={(v) => onUpdate({ buttonLabel: v })} tag="span" />
+                  <InlineText value={section.buttonLabel || "Click Here"} onChange={(v) => onUpdate({ buttonLabel: v })} typography={section.buttonTypography} onTypographyChange={(patch) => onUpdate({ buttonTypography: { ...section.buttonTypography, ...patch } })} tagType="card" tag="span" />
                 </Button>
               </div>
             </div>
@@ -1029,11 +1042,11 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
       case "contentBlock":
         return (
           <div className="py-6">
-            <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} tag="h2" className={headingStyle.className} style={headingStyle.style} />
+            <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} typography={section.titleTypography} onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })} tagType="heading" tag="h2" className={headingStyle.className} style={headingStyle.style} />
             <div className="grid gap-4 sm:grid-cols-2">
               {section.items.map((item, i) => (
                 <div key={item.id} className="rounded-lg border bg-card p-4 shadow-sm">
-                  <InlineText value={item.content} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, content: v } : it) })} tag="p" className="text-sm leading-relaxed" />
+                  <InlineText value={item.content} onChange={(v) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, content: v } : it) })} typography={item.descTypography} onTypographyChange={(patch) => onUpdate({ items: section.items.map((it, j) => j === i ? { ...it, descTypography: { ...it.descTypography, ...patch } } : it) })} tagType="body" tag="p" className="text-sm leading-relaxed" />
                 </div>
               ))}
             </div>

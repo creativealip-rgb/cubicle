@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { useT } from "@/lib/i18n-client";
 import { toast } from "sonner";
 import { ImageCropModal } from "./image-crop-modal";
+import { InlineText } from "./inline-text";
 import type { PersonalSiteSection } from "@/lib/personal-site/model";
 
 type ResizeHandleType = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
@@ -216,12 +217,15 @@ export function GoogleSitesGalleryCanvas({
       />
 
       {/* Section Heading */}
-      <input
-        type="text"
+      <InlineText
         value={section.heading}
-        onChange={(e) => onUpdate({ heading: e.target.value })}
+        onChange={(heading) => onUpdate({ heading })}
+        typography={section.titleTypography}
+        onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })}
+        tag="h2"
+        tagType="heading"
         placeholder={t("Judul Galeri...", "Gallery Heading...")}
-        className="text-xl font-bold bg-transparent border-none outline-none mb-4 w-full focus:ring-1 focus:ring-primary rounded px-1"
+        className="mb-4 text-xl font-bold"
       />
 
       {/* Multi-Column Google Sites Canvas Layout */}
@@ -383,20 +387,8 @@ export function GoogleSitesGalleryCanvas({
 
               {/* SEPARATE TEXT AREA (Clean & Non-Enclosed Background) */}
               <div className="space-y-1 px-0.5">
-                <input
-                  type="text"
-                  value={item.title ?? ""}
-                  onChange={(e) => updateItem(index, { title: e.target.value })}
-                  placeholder={t("Klik untuk mengedit teks", "Click to edit heading")}
-                  className="w-full text-sm font-semibold bg-transparent border-none outline-none text-foreground placeholder:text-muted-foreground/50 focus:ring-1 focus:ring-primary rounded px-1"
-                />
-                <textarea
-                  value={item.description ?? ""}
-                  onChange={(e) => updateItem(index, { description: e.target.value })}
-                  rows={2}
-                  placeholder={t("Klik untuk mengedit teks", "Click to edit text description")}
-                  className="w-full text-xs text-muted-foreground bg-transparent border-none outline-none resize-none placeholder:text-muted-foreground/40 focus:ring-1 focus:ring-primary rounded px-1"
-                />
+                <InlineText value={item.title ?? ""} onChange={(title) => updateItem(index, { title })} typography={item.titleTypography} onTypographyChange={(patch) => updateItem(index, { titleTypography: { ...item.titleTypography, ...patch } })} tag="h3" tagType="card" placeholder={t("Klik untuk mengedit teks", "Click to edit heading")} className="text-sm font-semibold" />
+                <InlineText value={item.description ?? ""} onChange={(description) => updateItem(index, { description })} typography={item.descTypography} onTypographyChange={(patch) => updateItem(index, { descTypography: { ...item.descTypography, ...patch } })} tag="p" tagType="body" placeholder={t("Klik untuk mengedit teks", "Click to edit text description")} className="text-xs text-muted-foreground" />
               </div>
             </div>
           );

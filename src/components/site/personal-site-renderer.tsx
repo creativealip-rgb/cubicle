@@ -114,13 +114,14 @@ function looksLikeFakeProof(quote: string, author: string, role: string) {
 }
 
 function getSectionHeadingStyle(section: any, baseHeadingStyle?: CSSProperties): { className: string; style?: CSSProperties } {
-  const isBold = section.bold;
-  const isItalic = section.italic;
-  const isUnderline = section.underline;
-  const isStrike = section.strikethrough;
-  const align = section.align || "left";
-  const fontSize = section.fontSize || "base";
-  const fontFamily = section.fontFamily ? getFontFamily(section.fontFamily) : undefined;
+  const typography = section.titleTypography || section;
+  const isBold = typography.bold;
+  const isItalic = typography.italic;
+  const isUnderline = typography.underline;
+  const isStrike = typography.strikethrough;
+  const align = typography.align || "left";
+  const fontSize = typography.fontSize || "base";
+  const fontFamily = typography.fontFamily ? getFontFamily(typography.fontFamily) : undefined;
 
   const sizeClass =
     fontSize === "sm"
@@ -157,7 +158,15 @@ function getSectionHeadingStyle(section: any, baseHeadingStyle?: CSSProperties):
   };
 }
 
-function resolveFieldStyle(section: any, item: any, fieldKey: "titleTypography" | "descTypography", defaultSize: "sm" | "base" | "lg" | "xl" = "base") {
+function typographyInlineStyle(typography: any): CSSProperties | undefined {
+  if (!typography) return undefined;
+  return {
+    ...(typography.fontFamily ? { fontFamily: getFontFamily(typography.fontFamily) } : {}),
+    ...(typography.color ? { color: typography.color } : {}),
+  };
+}
+
+function resolveFieldStyle(section: any, item: any, fieldKey: "titleTypography" | "descTypography" | "priceTypography" | "roleTypography" | "contentTypography" | "buttonTypography", defaultSize: "sm" | "base" | "lg" | "xl" = "base") {
   const field = item[fieldKey] || {};
   const isBold = field.bold !== undefined ? field.bold : (item.bold !== undefined ? item.bold : section.bold);
   const isItalic = field.italic !== undefined ? field.italic : (item.italic !== undefined ? item.italic : section.italic);
@@ -247,7 +256,7 @@ function SectionBody({
       return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{section.offers.filter((offer) => offer.name || offer.price || offer.description).map((offer) => {
         const titleCls = resolveFieldStyle(section, offer, "titleTypography", "base");
         const descCls = resolveFieldStyle(section, offer, "descTypography", "sm");
-        return <ItemCard key={offer.id} panel={panel}>{marker}<h3 className={titleCls}>{offer.name}</h3>{offer.price && <p className="mt-3 text-2xl font-bold" style={{ color: accent }}>{offer.price}</p>}{offer.description && <p className={`mt-3 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`}>{offer.description}</p>}</ItemCard>;
+        return <ItemCard key={offer.id} panel={panel}>{marker}<h3 className={titleCls}>{offer.name}</h3>{offer.price && <p className={`mt-3 text-2xl font-bold ${resolveFieldStyle(section, offer, "priceTypography", "lg")}`} style={{ color: offer.priceTypography?.color || accent, ...typographyInlineStyle(offer.priceTypography) }}>{offer.price}</p>}{offer.description && <p className={`mt-3 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`}>{offer.description}</p>}</ItemCard>;
       })}</div>;
     case "portfolio":
       return <div className="grid gap-4 md:grid-cols-2">{section.projects.filter((project) => project.title || project.description || project.url).map((project) => {
@@ -260,7 +269,7 @@ function SectionBody({
         const quoteCls = resolveFieldStyle(section, item, "descTypography", "base");
         const authorCls = resolveFieldStyle(section, item, "titleTypography", "sm");
         return (
-          <figure key={item.id} className={`rounded-2xl p-6 ${panel}`}><blockquote className={`leading-8 ${quoteCls}`}>“{item.quote}”</blockquote><figcaption className={`mt-5 ${authorCls}`}><strong>{item.author}</strong>{item.role && <span className="opacity-65"> · {item.role}</span>}</figcaption></figure>
+          <figure key={item.id} className={`rounded-2xl p-6 ${panel}`}><blockquote className={`leading-8 ${quoteCls}`}>“{item.quote}”</blockquote><figcaption className={`mt-5 ${authorCls}`}><strong>{item.author}</strong>{item.role && <span className={`opacity-65 ${resolveFieldStyle(section, item, "roleTypography", "sm")}`} style={typographyInlineStyle(item.roleTypography)}> · {item.role}</span>}</figcaption></figure>
         );
       })}</div>;
     case "faq":
@@ -274,7 +283,6 @@ function SectionBody({
     case "contact":
       return <div className="flex flex-wrap gap-3">{section.methods.filter((item) => item.label && (item.value || item.url)).map((item) => {
         const labelCls = resolveFieldStyle(section, item, "titleTypography", "sm");
-        const valCls = resolveFieldStyle(section, item, "descTypography", "sm");
         return item.url && !isPlaceholderHref(item.url) ? (
           <a key={item.id} className={`min-h-11 rounded-xl px-4 py-3 font-semibold ${panel} ${labelCls}`} href={safePublicHref(item.url)}>{item.label}{item.value ? ` · ${item.value}` : ""}</a>
         ) : <span key={item.id} className={`rounded-xl px-4 py-3 ${panel} ${labelCls}`}><strong>{item.label}</strong>{item.value ? ` · ${item.value}` : ""}</span>;
@@ -284,7 +292,7 @@ function SectionBody({
       return (
         <div className="max-w-2xl mx-auto">
           {section.subtitle && (
-            <p className="text-center text-sm opacity-75 mb-6">{section.subtitle}</p>
+            <p className={`text-center text-sm opacity-75 mb-6 ${resolveFieldStyle(section, section, "contentTypography", "sm")}`} style={typographyInlineStyle(section.contentTypography)}>{section.subtitle}</p>
           )}
           <PublicBookingForm
             workspace={bookingData.workspace}
@@ -297,7 +305,7 @@ function SectionBody({
         </div>
       );
     case "custom":
-      return <div className={`rounded-2xl p-6 ${panel}`}><p className="max-w-3xl whitespace-pre-wrap text-base leading-8 opacity-75">{section.content}</p></div>;
+      return <div className={`rounded-2xl p-6 ${panel}`}><p className={`max-w-3xl whitespace-pre-wrap text-base leading-8 opacity-75 ${resolveFieldStyle(section, section, "contentTypography", "base")}`} style={typographyInlineStyle(section.contentTypography)}>{section.content}</p></div>;
     case "gallery": {
       const columns = section.columns ?? 3;
       const aspectRatio = section.aspectRatio ?? "video";
@@ -361,8 +369,8 @@ function SectionBody({
                   </div>
                   {!isPureGrid && (img.title || img.description) && (
                     <div className="pt-1">
-                      {img.title && <h3 className="text-base font-semibold">{img.title}</h3>}
-                      {img.description && <p className="mt-1.5 whitespace-pre-wrap text-sm leading-6 opacity-75">{img.description}</p>}
+                      {img.title && <h3 className={`text-base font-semibold ${resolveFieldStyle(section, img, "titleTypography", "base")}`} style={typographyInlineStyle(img.titleTypography)}>{img.title}</h3>}
+                      {img.description && <p className={`mt-1.5 whitespace-pre-wrap text-sm leading-6 opacity-75 ${resolveFieldStyle(section, img, "descTypography", "sm")}`} style={typographyInlineStyle(img.descTypography)}>{img.description}</p>}
                     </div>
                   )}
                 </div>
@@ -405,7 +413,7 @@ function SectionBody({
             />
           </div>
           {section.caption && (
-            <p className="mt-2 text-center text-xs opacity-75 italic max-w-xl">{section.caption}</p>
+            <p className={`mt-2 text-center text-xs opacity-75 italic max-w-xl ${resolveFieldStyle(section, section, "contentTypography", "sm")}`} style={typographyInlineStyle(section.contentTypography)}>{section.caption}</p>
           )}
         </div>
       );
@@ -457,12 +465,12 @@ function SectionBody({
             } ${isLeft ? "order-2" : "order-2 md:order-1"}`}
           >
             {section.heading && (
-              <h3 className="text-xl sm:text-2xl font-bold tracking-tight" style={{ color: accent }}>
+              <h3 className={`text-xl sm:text-2xl font-bold tracking-tight ${resolveFieldStyle(section, section, "titleTypography", "lg")}`} style={{ color: section.titleTypography?.color || accent, ...typographyInlineStyle(section.titleTypography) }}>
                 {section.heading}
               </h3>
             )}
             {section.content && (
-              <p className="text-base leading-relaxed opacity-80 whitespace-pre-wrap">{section.content}</p>
+              <p className={`text-base leading-relaxed opacity-80 whitespace-pre-wrap ${resolveFieldStyle(section, section, "contentTypography", "base")}`} style={typographyInlineStyle(section.contentTypography)}>{section.content}</p>
             )}
             {section.buttonLabel && section.buttonUrl && !isPlaceholderHref(section.buttonUrl) && (
               <div className="pt-2">
@@ -488,12 +496,12 @@ function SectionBody({
         <a key={link.id} className={`inline-flex min-h-11 items-center rounded-xl px-5 py-3 text-sm font-semibold ${panel}`} href={safePublicHref(link.url)} target="_blank" rel="noreferrer">{link.platform}</a>
       ))}</div>;
     case "cta":
-      return <div className={`rounded-2xl p-8 text-center ${panel}`}>{section.text && <p className="mx-auto max-w-xl text-lg leading-8 opacity-75">{section.text}</p>}{section.buttonLabel && section.buttonUrl && !isPlaceholderHref(section.buttonUrl) && safePublicHref(section.buttonUrl) !== "#" && <a className="mt-6 inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-lg" style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }} href={safePublicHref(section.buttonUrl)}>{section.buttonLabel}</a>}</div>;
+      return <div className={`rounded-2xl p-8 text-center ${panel}`}>{section.text && <p className={`mx-auto max-w-xl text-lg leading-8 opacity-75 ${resolveFieldStyle(section, section, "contentTypography", "lg")}`} style={typographyInlineStyle(section.contentTypography)}>{section.text}</p>}{section.buttonLabel && section.buttonUrl && !isPlaceholderHref(section.buttonUrl) && safePublicHref(section.buttonUrl) !== "#" && <a className="mt-6 inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-lg" style={{ backgroundColor: accent, color: section.buttonTypography?.color || accentForeground(accent), borderRadius: buttonRadius, ...typographyInlineStyle(section.buttonTypography) }} href={safePublicHref(section.buttonUrl)}><span className={resolveFieldStyle(section, section, "buttonTypography", "sm")}>{section.buttonLabel}</span></a>}</div>;
     case "divider":
       return <hr className="border-t border-current opacity-15" />;
     case "collapsible":
       return <div className="space-y-3">{section.items.filter((item) => item.title && item.content).map((item) => (
-        <details key={item.id} className={`group rounded-2xl px-5 py-4 ${panel}`}><summary className="cursor-pointer list-none pr-8 font-semibold">{item.title}<span aria-hidden className="float-right text-xl group-open:rotate-45">+</span></summary><p className="mt-3 whitespace-pre-wrap text-sm leading-7 opacity-70">{item.content}</p></details>
+        <details key={item.id} className={`group rounded-2xl px-5 py-4 ${panel}`}><summary className={`cursor-pointer list-none pr-8 font-semibold ${resolveFieldStyle(section, item, "titleTypography", "base")}`} style={typographyInlineStyle(item.titleTypography)}>{item.title}<span aria-hidden className="float-right text-xl group-open:rotate-45">+</span></summary><p className={`mt-3 whitespace-pre-wrap text-sm leading-7 opacity-70 ${resolveFieldStyle(section, item, "descTypography", "sm")}`} style={typographyInlineStyle(item.descTypography)}>{item.content}</p></details>
       ))}</div>;
     case "spacer":
       return <div style={{ height: section.height ?? 40 }} />;
@@ -501,7 +509,7 @@ function SectionBody({
       return null; // Auto-generated, skip in public render
     case "contentBlock":
       return <div className={`grid gap-4 ${section.columns === 2 ? "sm:grid-cols-2" : section.columns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}>{section.items.filter((item) => item.content.trim()).map((item) => (
-        <div key={item.id} className={`rounded-2xl p-6 ${panel}`}><p className="whitespace-pre-wrap text-sm leading-7 opacity-75">{item.content}</p></div>
+        <div key={item.id} className={`rounded-2xl p-6 ${panel}`}><p className={`whitespace-pre-wrap text-sm leading-7 opacity-75 ${resolveFieldStyle(section, item, "descTypography", "sm")}`} style={typographyInlineStyle(item.descTypography)}>{item.content}</p></div>
       ))}</div>;
   }
 }
