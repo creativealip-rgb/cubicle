@@ -138,6 +138,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     subtitle: shortTextSchema,
     content: z.string().trim().max(500),
     imageUrl: z.string().trim().max(2_000).nullish(),
+    originalImageUrl: z.string().trim().max(2_000).nullish(),
     imageAspectRatio: z.number().positive().max(10).optional(),
     animation: animationSchema,
     ...sectionTypographySchema,
@@ -240,6 +241,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     images: z.array(z.object({
       id: idSchema,
       url: z.string().trim().max(2_000),
+      originalUrl: z.string().trim().max(2_000).optional(),
       alt: z.string().trim().max(200).optional(),
       // Optional, never required: an already-saved document has no flag and must
       // keep validating on autosave. Absent means "meaningful image".
@@ -257,6 +259,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     animation: animationSchema,
     ...sectionTypographySchema,
     url: z.string().trim().max(2_000).optional(),
+    originalUrl: z.string().trim().max(2_000).optional(),
     alt: z.string().trim().max(200).optional(),
     decorative: z.boolean().optional(),
     caption: z.string().trim().max(500).optional(),
@@ -275,6 +278,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     mediaWidth: z.enum(["30%", "40%", "50%", "60%"]).optional(),
     verticalAlign: z.enum(["top", "center", "bottom"]).optional(),
     imageUrl: z.string().trim().max(2_000).optional(),
+    originalImageUrl: z.string().trim().max(2_000).optional(),
     imageAlt: z.string().trim().max(200).optional(),
     decorative: z.boolean().optional(),
     content: z.string().trim().max(2_000).optional(),

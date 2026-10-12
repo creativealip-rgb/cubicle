@@ -10,11 +10,12 @@ import { ImageCropModal } from "./image-crop-modal";
 
 type Props = {
   value: string;
-  onChange: (url: string, aspectRatio?: number) => void;
+  originalValue?: string;
+  onChange: (url: string, aspectRatio?: number, originalUrl?: string) => void;
   label?: string;
 };
 
-export function ImageUpload({ value, onChange, label }: Props) {
+export function ImageUpload({ value, originalValue, onChange, label }: Props) {
   const { t } = useT();
   const uploadLabel = label ?? t("Unggah gambar", "Upload image");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -40,7 +41,7 @@ export function ImageUpload({ value, onChange, label }: Props) {
       if (!res.ok || !data.ok || !data.url) {
         throw new Error(data.error || t("Unggah gagal", "Upload failed"));
       }
-      onChange(data.url);
+      onChange(data.url, undefined, data.url);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : t("Unggah gagal", "Upload failed"));
     } finally {
@@ -99,8 +100,8 @@ export function ImageUpload({ value, onChange, label }: Props) {
           <ImageCropModal
             open={cropModalOpen}
             onOpenChange={setCropModalOpen}
-            imageUrl={value}
-            onCropComplete={(croppedUrl, aspectRatio) => onChange(croppedUrl, aspectRatio)}
+            imageUrl={originalValue || value}
+            onCropComplete={(croppedUrl, aspectRatio) => onChange(croppedUrl, aspectRatio, originalValue || value)}
           />
         </div>
       ) : (

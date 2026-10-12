@@ -175,6 +175,7 @@ export function GoogleSitesGalleryCanvas({
       updated[activeUploadIndex] = {
         ...updated[activeUploadIndex],
         url: data.url,
+        originalUrl: data.url,
       };
       onUpdate({ images: updated });
       toast.success(t("Gambar berhasil diunggah", "Image uploaded successfully"));
@@ -409,11 +410,11 @@ export function GoogleSitesGalleryCanvas({
           onOpenChange={(open) => {
             if (!open) setCropTargetIndex(null);
           }}
-          imageUrl={section.images[cropTargetIndex].url}
+          imageUrl={section.images[cropTargetIndex].originalUrl || section.images[cropTargetIndex].url}
           onCropComplete={(croppedUrl, cropRatio) => {
             const image = section.images[cropTargetIndex];
             const width = image.width ?? 300;
-            updateItem(cropTargetIndex, { url: croppedUrl, width, height: Math.round(width / cropRatio) });
+            updateItem(cropTargetIndex, { url: croppedUrl, originalUrl: image.originalUrl || image.url, width, height: Math.round(width / cropRatio) });
             setCropTargetIndex(null);
           }}
         />

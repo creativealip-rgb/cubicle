@@ -25,5 +25,7 @@ describe("personal-site cropped image display ratio", () => {
     expect(canvas).toContain("aspectRatio: section.imageAspectRatio");
     expect(live).toContain("aspectRatio: section.imageAspectRatio");
     expect(gallery).toContain("height: Math.round(width / cropRatio)");
+    expect(gallery).toContain("image.originalUrl || image.url");
+    expect(gallery).toContain("originalUrl: data.url");
   });
 });

@@ -784,8 +784,10 @@ function GalleryEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSe
             <Label className="text-xs text-muted-foreground">{t("Unggah Gambar", "Upload Image")}</Label>
             <ImageUpload
               value={image.url}
-              onChange={(url, cropRatio) => onUpdate({ images: patchItem(section.images, i, {
+              originalValue={image.originalUrl}
+              onChange={(url, cropRatio, originalUrl) => onUpdate({ images: patchItem(section.images, i, {
                 url,
+                ...(originalUrl ? { originalUrl } : {}),
                 ...(cropRatio ? { width: image.width ?? 300, height: Math.round((image.width ?? 300) / cropRatio) } : {}),
               }) })}
               label={t("Unggah", "Upload")}
@@ -878,7 +880,8 @@ function SingleImageEditor({ section, onUpdate }: EditorProps<Extract<PersonalSi
         <Label className="text-xs font-semibold">{t("Unggah Gambar", "Upload Image")}</Label>
         <ImageUpload
           value={section.url || ""}
-          onChange={(url) => onUpdate({ url })}
+          originalValue={section.originalUrl}
+          onChange={(url, _ratio, originalUrl) => onUpdate({ url, ...(originalUrl ? { originalUrl } : {}) })}
           label={t("Unggah", "Upload")}
         />
       </div>
@@ -971,7 +974,8 @@ function MediaTextEditor({ section, onUpdate }: EditorProps<Extract<PersonalSite
         <Label className="text-xs font-semibold">{t("Unggah Gambar Media", "Upload Media Image")}</Label>
         <ImageUpload
           value={section.imageUrl || ""}
-          onChange={(imageUrl) => onUpdate({ imageUrl })}
+          originalValue={section.originalImageUrl}
+          onChange={(imageUrl, _ratio, originalImageUrl) => onUpdate({ imageUrl, ...(originalImageUrl ? { originalImageUrl } : {}) })}
           label={t("Unggah", "Upload")}
         />
       </div>
