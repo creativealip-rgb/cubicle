@@ -1009,8 +1009,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
       return (
           <div className="py-6">
             <div className="rounded-2xl border bg-card p-6 sm:p-8 shadow-sm space-y-4 text-center">
-              <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} typography={section.titleTypography} onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })} tagType="heading" tag="h2" className={headingStyle.className} style={headingStyle.style} />
-              <InlineText value={section.text} onChange={(v) => onUpdate({ text: v })} typography={section.contentTypography} onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })} tagType="body" tag="p" className="text-muted-foreground text-sm max-w-xl mx-auto" />
+              <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} typography={section.titleTypography} onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })} tagType="heading" tag="h2" className="mb-4" />
+              <InlineText value={section.text} onChange={(v) => onUpdate({ text: v })} typography={section.contentTypography} onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })} tagType="body" tag="p" className="max-w-xl mx-auto" />
               {section.buttonLabel && <div className="pt-2">
                 {previewMode && section.buttonUrl && !isPlaceholderHref(section.buttonUrl) && safePublicHref(section.buttonUrl) !== "#" ? (
                   <a href={safePublicHref(section.buttonUrl)} className="inline-flex min-h-11 items-center rounded-xl bg-primary px-6 font-semibold text-primary-foreground">

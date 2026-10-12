@@ -8,6 +8,9 @@ describe("CTA canvas parity", () => {
     const cta = source.slice(source.indexOf('case "cta":'), source.indexOf('case "contentBlock":'));
     expect(cta).toContain("value={section.heading}");
     expect(cta).toContain("value={section.text}");
+    expect(cta).toContain("typography={section.titleTypography}");
+    expect(cta).toContain("typography={section.contentTypography}");
+    expect(cta).not.toContain("className={headingStyle.className}");
     expect(cta).not.toContain('section.buttonLabel || "Click Here"');
   });
 });
