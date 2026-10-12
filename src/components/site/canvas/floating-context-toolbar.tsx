@@ -81,7 +81,7 @@ export function FloatingContextToolbar({
   const [linkInput, setLinkInput] = useState(value.linkUrl || "");
 
   const containerRef = useRef<HTMLDivElement>(null);
-  const [position, setPosition] = useState({ left: 12, top: 12, below: false });
+  const [position, setPosition] = useState<{ left: number; top: number; below: boolean } | null>(null);
 
   useLayoutEffect(() => {
     const toolbar = containerRef.current;
@@ -159,7 +159,7 @@ export function FloatingContextToolbar({
     card: t("Subjudul", "Subheading"),
     body: t("Teks normal", "Normal text"),
   };
-  const openDown = position.top < 320;
+  const openDown = (position?.top ?? 0) < 320;
   const verticalPopoverClass = openDown ? "top-full mt-1.5" : "bottom-full mb-1.5";
 
   return (
@@ -171,8 +171,12 @@ export function FloatingContextToolbar({
         e.stopPropagation();
       }}
       onClick={(e) => e.stopPropagation()}
-      style={{ left: position.left, top: position.top }}
-      data-placement={position.below ? "bottom" : "top"}
+      style={{
+        left: position?.left ?? 0,
+        top: position?.top ?? 0,
+        visibility: position ? "visible" : "hidden",
+      }}
+      data-placement={position?.below ? "bottom" : "top"}
       role="toolbar"
       aria-label={t("Alat pemformatan teks", "Text formatting toolbar")}
       onKeyDown={(e) => {
