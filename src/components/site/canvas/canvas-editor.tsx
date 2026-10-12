@@ -63,6 +63,7 @@ import { CanvasRenderer, CANVAS_DEVICES, type CanvasDevice } from "./canvas-rend
 import { PropertiesPanel } from "./properties-panel";
 import { ReadinessBadge } from "../readiness-badge";
 import { StructurePanel } from "./structure-panel";
+import { SEOPanel } from "./seo-panel";
 import {
   MAX_SECTIONS,
   addSection as addSectionToList,
@@ -979,6 +980,27 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
               {activeTab === "settings" && (
                 <BuilderCanvasViewport className="bg-muted/30 p-4 sm:p-8">
                 <div className="mx-auto max-w-3xl space-y-6">
+                  <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
+                    <div>
+                      <h3 className="text-base font-bold text-foreground">{t("Identitas Situs", "Site Identity")}</h3>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        {t("Ubah judul yang tampil di header builder dan menjadi judul bawaan browser.", "Change the title shown in the builder header and used as the default browser title.")}
+                      </p>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label htmlFor="desktop-personal-site-title" className="text-xs font-semibold text-foreground">
+                        {t("Judul Situs", "Site Title")}
+                      </Label>
+                      <Input
+                        id="desktop-personal-site-title"
+                        value={site.title}
+                        maxLength={120}
+                        onChange={(event) => updateSite({ title: event.target.value })}
+                        placeholder={t("Nama atau brand Anda", "Your name or brand")}
+                      />
+                    </div>
+                  </div>
+
                   {/* Slug & URL Settings Card */}
                   <div className="rounded-2xl border border-border/80 bg-background p-6 sm:p-8 shadow-xs space-y-5">
                     <div>
@@ -995,7 +1017,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                         </Label>
                         <div className="flex items-center gap-2">
                           <span className="text-xs font-mono text-muted-foreground bg-muted px-2.5 py-2 rounded-lg border border-border/60">
-                            {publicSiteBaseUrl.replace(/\/$/, "")}/site/
+                            {publicSiteBaseUrl.replace(/\/$/, "")}/
                           </span>
                           <Input
                             id="desktop-personal-site-slug"
@@ -1017,6 +1039,8 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
                       </div>
                     </div>
                   </div>
+
+                  <SEOPanel site={site} updateSite={updateSite} publicUrl={publicUrl} />
 
                   {/* Bottom Save Settings Button Removed - Unified 1 Save Button on Top Header */}
                 </div>
