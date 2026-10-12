@@ -190,7 +190,7 @@ export function FloatingContextToolbar({
         setLinkOpen(false);
         setEmojiOpen(false);
       }}
-      className={`fixed z-[100] flex items-center bg-white text-slate-800 rounded-xl shadow-2xl border border-slate-200/90 px-2 py-1.5 text-sm gap-1 select-none animate-in fade-in zoom-in-95 duration-100 w-max max-w-[calc(100vw-1.5rem)] flex-wrap justify-center sm:flex-nowrap ${className}`}
+      className={`fixed z-[100] flex items-center bg-white text-slate-800 rounded-xl shadow-2xl border border-slate-200/90 px-2 py-1.5 text-sm gap-1 select-none w-max max-w-[calc(100vw-1.5rem)] flex-wrap justify-center sm:flex-nowrap ${position ? "animate-in fade-in zoom-in-95 duration-100" : ""} ${className}`}
     >
       {/* 1. Tag / Text Type Dropdown */}
       <div className="relative shrink-0">

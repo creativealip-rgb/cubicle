@@ -6,6 +6,7 @@ describe("floating toolbar positioning", () => {
     const source = readFileSync("src/components/site/canvas/floating-context-toolbar.tsx", "utf8");
     expect(source).toContain("| null>(null)");
     expect(source).toContain('visibility: position ? "visible" : "hidden"');
+    expect(source).toContain('position ? "animate-in fade-in zoom-in-95 duration-100" : ""');
     expect(source).not.toContain("useState({ left: 12, top: 12, below: false })");
   });
 });
