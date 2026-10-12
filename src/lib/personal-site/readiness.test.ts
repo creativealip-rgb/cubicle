@@ -82,6 +82,17 @@ describe("getPersonalSiteReadiness", () => {
     expect(issues.some((i) => i.id === "hero-empty")).toBe(true);
   });
 
+  it("accepts section-backed hero content when legacy hero is empty", () => {
+    const hero = { id: "hero", type: "hero" as const, heading: "Studio", subtitle: "", content: "Real hero copy", imageUrl: "" };
+    const site = {
+      ...DEFAULT_PERSONAL_SITE,
+      hero: "",
+      sections: [hero],
+      pages: [{ id: "home", slug: "", title: "Home", isHome: true, sections: [hero] }],
+    };
+    expect(getPersonalSiteReadiness(site).some((issue) => issue.id === "hero-empty")).toBe(false);
+  });
+
   it("flags reserved slugs like 'preview' or 'admin'", () => {
     const reservedSlugs = ["preview", "new", "edit", "admin", "api"];
     for (const slug of reservedSlugs) {

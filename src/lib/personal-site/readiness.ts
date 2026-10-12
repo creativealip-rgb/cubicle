@@ -114,14 +114,18 @@ export function getPersonalSiteReadiness(site: PersonalSiteInput): ReadinessIssu
     });
   }
 
-  // Check hero
-  if (!site.hero || site.hero.trim().length === 0) {
+  // Hero is section-backed on current documents; legacy `site.hero` remains a
+  // fallback only. Publish readiness must validate what the public renderer uses.
+  const heroSection = [...(site.pages ?? []).flatMap((page) => page.sections), ...(site.sections ?? [])]
+    .find((section) => section.type === "hero");
+  const heroCopy = heroSection?.type === "hero" ? heroSection.content : site.hero;
+  if (!heroCopy || heroCopy.trim().length === 0) {
     issues.push({
       id: "hero-empty",
       severity: "error",
       label: "Hero deskripsi perlu diisi",
     });
-  } else if (site.hero.trim().length > 500) {
+  } else if (heroCopy.trim().length > 500) {
     issues.push({
       id: "hero-too-long",
       severity: "warning",
