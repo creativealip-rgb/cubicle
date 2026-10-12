@@ -987,25 +987,6 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
         </div>
       );
 
-    case "cta":
-      return (
-        <div className="py-8 text-center">
-          <InlineText value={section.text} onChange={(v) => onUpdate({ text: v })} typography={section.contentTypography} onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })} tagType="body" tag="p" className="text-lg mb-4" />
-          {section.buttonLabel && (
-            previewMode && section.buttonUrl && !isPlaceholderHref(section.buttonUrl) && safePublicHref(section.buttonUrl) !== "#" ? (
-              /* Preview mirrors the public CTA: a real, navigable anchor. */
-              <a href={safePublicHref(section.buttonUrl)} title={safePublicHref(section.buttonUrl)} className="inline-flex items-center rounded-lg px-6 py-2.5 text-sm font-medium text-white" style={{ backgroundColor: theme?.primaryColor ?? "#2563EB" }}>
-                {section.buttonLabel}
-              </a>
-            ) : (
-              <span className="inline-flex items-center rounded-lg px-6 py-2.5 text-sm font-medium text-white" style={{ backgroundColor: theme?.primaryColor ?? "#2563EB" }}>
-                {section.buttonLabel}
-              </span>
-            )
-          )}
-        </div>
-      );
-
     case "divider":
       return <hr className="my-4 border-border" />;
 
@@ -1030,11 +1011,17 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
             <div className="rounded-2xl border bg-card p-6 sm:p-8 shadow-sm space-y-4 text-center">
               <InlineText value={section.heading} onChange={(v) => onUpdate({ heading: v })} typography={section.titleTypography} onTypographyChange={(patch) => onUpdate({ titleTypography: { ...section.titleTypography, ...patch } })} tagType="heading" tag="h2" className={headingStyle.className} style={headingStyle.style} />
               <InlineText value={section.text} onChange={(v) => onUpdate({ text: v })} typography={section.contentTypography} onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })} tagType="body" tag="p" className="text-muted-foreground text-sm max-w-xl mx-auto" />
-              <div className="pt-2">
-                <Button size="lg" className="rounded-xl px-6 font-semibold">
-                  <InlineText value={section.buttonLabel || "Click Here"} onChange={(v) => onUpdate({ buttonLabel: v })} typography={section.buttonTypography} onTypographyChange={(patch) => onUpdate({ buttonTypography: { ...section.buttonTypography, ...patch } })} tagType="card" tag="span" />
-                </Button>
-              </div>
+              {section.buttonLabel && <div className="pt-2">
+                {previewMode && section.buttonUrl && !isPlaceholderHref(section.buttonUrl) && safePublicHref(section.buttonUrl) !== "#" ? (
+                  <a href={safePublicHref(section.buttonUrl)} className="inline-flex min-h-11 items-center rounded-xl bg-primary px-6 font-semibold text-primary-foreground">
+                    {section.buttonLabel}
+                  </a>
+                ) : (
+                  <Button size="lg" className="rounded-xl px-6 font-semibold">
+                    <InlineText value={section.buttonLabel} onChange={(v) => onUpdate({ buttonLabel: v })} typography={section.buttonTypography} onTypographyChange={(patch) => onUpdate({ buttonTypography: { ...section.buttonTypography, ...patch } })} tagType="card" tag="span" />
+                  </Button>
+                )}
+              </div>}
             </div>
           </div>
         );
