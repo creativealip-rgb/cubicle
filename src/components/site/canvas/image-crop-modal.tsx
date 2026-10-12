@@ -39,6 +39,7 @@ export function ImageCropModal({
   const [aspectRatio, setAspectRatio] = useState<number | null>(16 / 9);
   const [saving, setSaving] = useState(false);
   const [imageReady, setImageReady] = useState(false);
+  const [naturalAspect, setNaturalAspect] = useState(1);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const isDraggingRef = useRef(false);
@@ -62,7 +63,11 @@ export function ImageCropModal({
         .then((blob) => {
           objectUrl = URL.createObjectURL(blob);
           img.src = objectUrl;
-          img.onload = () => { imageObjRef.current = img; setImageReady(true); };
+          img.onload = () => {
+            imageObjRef.current = img;
+            setNaturalAspect(img.naturalWidth / img.naturalHeight);
+            setImageReady(true);
+          };
         })
         .catch((error) => toast.error(error instanceof Error ? error.message : t("Gagal memuat gambar", "Failed to load image")));
       return () => {
@@ -233,7 +238,7 @@ export function ImageCropModal({
                 maxHeight: "85%",
                 maxWidth: "85%",
               }}
-              className="relative rounded-lg overflow-hidden border-2 border-dashed border-primary shadow-[0_0_0_9999px_rgba(0,0,0,0.65)] flex items-center justify-center z-10"
+              className="relative rounded-lg border-2 border-dashed border-primary flex items-center justify-center z-10"
             >
               {imageUrl && (
                 <img
@@ -247,15 +252,20 @@ export function ImageCropModal({
                     transform: `translate(calc(-50% + ${pan.x}px), calc(-50% + ${pan.y}px)) scale(${zoom})`,
                     transformOrigin: "center center",
                     transition: isDragging ? "none" : "transform 0.05s ease-out",
-                    minWidth: "100%",
-                    minHeight: "100%",
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
+                    width: naturalAspect > (aspectRatio ?? naturalAspect)
+                      ? `${(naturalAspect / (aspectRatio ?? naturalAspect)) * 100}%`
+                      : "100%",
+                    height: naturalAspect > (aspectRatio ?? naturalAspect)
+                      ? "100%"
+                      : `${((aspectRatio ?? naturalAspect) / naturalAspect) * 100}%`,
                   }}
                   className="max-w-none max-h-none pointer-events-none select-none"
                 />
               )}
+
+              {/* Dim only the area outside the crop frame while keeping the
+                  original continuation visible for focal-point adjustment. */}
+              <div className="pointer-events-none absolute inset-0 z-20 rounded-lg shadow-[0_0_0_9999px_rgba(0,0,0,0.58)]" />
 
               {/* Grid overlay rule of thirds */}
               <div className="absolute inset-0 grid grid-cols-3 grid-rows-3 pointer-events-none border border-white/20">
