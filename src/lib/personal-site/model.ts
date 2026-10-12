@@ -796,14 +796,16 @@ export function normalizeStoredPersonalSite(value: unknown): PersonalSiteInput {
   const rawSeo: Record<string, unknown> | null = raw.seo && typeof raw.seo === "object" ? (raw.seo as Record<string, unknown>) : null;
   const rawThemeConfig = raw.themeConfig && typeof raw.themeConfig === "object" ? raw.themeConfig as Record<string, unknown> : null;
   const sectionized = raw.sectionizedHeroAbout === true || rawThemeConfig?.sectionizedHeroAbout === true;
+  const legacyTextCta = String(raw.ctaLabel ?? "").trim() && !String(raw.ctaUrl ?? "").trim();
   const migrateSections = (value: unknown) => {
     const sections = normalizeLegacySections(value);
-    if (sectionized || sections.some((section) => section.type === "hero" || section.type === "about")) return sections;
-    return [
+    const sectionizedSections = sectionized || sections.some((section) => section.type === "hero" || section.type === "about") ? sections : [
       { id: "legacy-hero", type: "hero" as const, heading: String(raw.title || DEFAULT_PERSONAL_SITE.title), subtitle: String(raw.subtitle ?? DEFAULT_PERSONAL_SITE.subtitle), content: String(raw.hero ?? DEFAULT_PERSONAL_SITE.hero), imageUrl: raw.heroImage ? String(raw.heroImage) : "" },
       { id: "legacy-about", type: "about" as const, heading: "About", content: String(raw.about ?? DEFAULT_PERSONAL_SITE.about) },
       ...sections,
     ];
+    if (!legacyTextCta || sectionizedSections.some((section) => section.type === "cta")) return sectionizedSections;
+    return [...sectionizedSections, { id: "legacy-site-cta", type: "cta" as const, heading: "", text: String(raw.ctaLabel), buttonLabel: "", buttonUrl: "" }];
   };
   const rawPages = Array.isArray(raw.pages) ? raw.pages : [];
   const candidate: Partial<PersonalSiteInput> & { background?: string } = {
@@ -815,7 +817,7 @@ export function normalizeStoredPersonalSite(value: unknown): PersonalSiteInput {
     subtitle: String(raw.subtitle ?? DEFAULT_PERSONAL_SITE.subtitle),
     hero: String(raw.hero ?? DEFAULT_PERSONAL_SITE.hero),
     about: String(raw.about ?? DEFAULT_PERSONAL_SITE.about),
-    ctaLabel: String(raw.ctaLabel ?? DEFAULT_PERSONAL_SITE.ctaLabel),
+    ctaLabel: legacyTextCta ? "" : String(raw.ctaLabel ?? DEFAULT_PERSONAL_SITE.ctaLabel),
     ctaUrl: String(raw.ctaUrl ?? DEFAULT_PERSONAL_SITE.ctaUrl),
     theme: PERSONAL_SITE_THEMES.includes(raw.theme as (typeof PERSONAL_SITE_THEMES)[number])
       ? (raw.theme as PersonalSiteInput["theme"])
