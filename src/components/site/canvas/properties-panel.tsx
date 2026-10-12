@@ -1068,8 +1068,9 @@ function EmbedEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSect
           maxLength={2000}
           onChange={(e) => onUpdate({ url: e.target.value })}
           className="h-8 text-xs font-mono"
-          placeholder="https://..."
+          placeholder={t("Tempel URL YouTube, Vimeo, Figma, atau embed", "Paste a YouTube, Vimeo, Figma, or embed URL")}
         />
+        <p className="text-[11px] leading-4 text-muted-foreground">{t("URL YouTube, Vimeo, dan Figma biasa otomatis diubah menjadi embed. Situs lain harus mengizinkan iframe.", "Regular YouTube, Vimeo, and Figma URLs are converted automatically. Other sites must allow iframes.")}</p>
       </div>
       <div className="space-y-1">
         <Label className="text-xs text-muted-foreground">{t("Tinggi (px)", "Height (px)")}</Label>

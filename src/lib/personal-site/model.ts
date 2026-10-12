@@ -602,9 +602,36 @@ export function isSafeEmbedUrl(value: string) {
   }
 }
 
-/** Returns the embed source when safe, otherwise empty so the iframe is not rendered. */
+/** Converts common share URLs into iframe-ready URLs. */
+export function normalizeEmbedUrl(value: string) {
+  const trimmed = value.trim();
+  try {
+    const url = new URL(trimmed);
+    const host = url.hostname.replace(/^www\./, "").toLowerCase();
+    if (host === "youtu.be") {
+      const id = url.pathname.split("/").filter(Boolean)[0];
+      return id ? `https://www.youtube.com/embed/${encodeURIComponent(id)}` : trimmed;
+    }
+    if (host === "youtube.com" || host === "m.youtube.com") {
+      const id = url.pathname === "/watch" ? url.searchParams.get("v") : url.pathname.startsWith("/shorts/") ? url.pathname.split("/")[2] : null;
+      return id ? `https://www.youtube.com/embed/${encodeURIComponent(id)}` : trimmed;
+    }
+    if (host === "vimeo.com") {
+      const id = url.pathname.split("/").filter(Boolean)[0];
+      return id && /^\d+$/.test(id) ? `https://player.vimeo.com/video/${id}` : trimmed;
+    }
+    if (host === "figma.com" && !url.pathname.startsWith("/embed")) {
+      return `https://www.figma.com/embed?embed_host=share&url=${encodeURIComponent(trimmed)}`;
+    }
+    return trimmed;
+  } catch {
+    return trimmed;
+  }
+}
+
+/** Returns an iframe-ready source when safe, otherwise empty. */
 export function safeEmbedSrc(value: string) {
-  return isSafeEmbedUrl(value) ? value.trim() : "";
+  return isSafeEmbedUrl(value) ? normalizeEmbedUrl(value) : "";
 }
 
 /**
