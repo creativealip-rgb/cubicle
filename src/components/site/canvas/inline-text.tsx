@@ -43,8 +43,22 @@ export function InlineText({
     // textContent would make Enter continue inside one marker instead of creating
     // a new list item.
     if (listType === "bullet" || listType === "number") return;
-    if (ref.current && ref.current.textContent !== value) ref.current.textContent = value;
-  }, [value, listType]);
+    if (!ref.current) return;
+    const selected = typography.linkText;
+    if (ref.current.textContent === value && (!selected || !typography.linkUrl)) return;
+    ref.current.replaceChildren();
+    const index = selected ? value.indexOf(selected) : -1;
+    if (index >= 0 && selected && typography.linkUrl) {
+      ref.current.append(document.createTextNode(value.slice(0, index)));
+      const link = document.createElement("a");
+      link.textContent = selected;
+      link.href = typography.linkUrl;
+      link.className = "underline text-primary";
+      ref.current.append(link, document.createTextNode(value.slice(index + selected.length)));
+    } else {
+      ref.current.textContent = value;
+    }
+  }, [value, listType, typography.linkText, typography.linkUrl]);
 
   // Compute typography classes
   const isBold = typography.bold;
@@ -156,7 +170,7 @@ export function InlineText({
             isItalic && "italic",
             isUnderline && "underline",
             isStrike && "line-through",
-            typography.linkUrl && "underline text-primary cursor-pointer",
+
             "empty:before:content-[attr(data-placeholder)] empty:before:text-muted-foreground/50",
             className,
           )}

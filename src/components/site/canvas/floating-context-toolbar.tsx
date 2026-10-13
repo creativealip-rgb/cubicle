@@ -33,6 +33,7 @@ export type TypographyState = {
   color?: string;
   listType?: "none" | "bullet" | "number";
   linkUrl?: string;
+  linkText?: string;
 };
 
 type Props = {
@@ -79,6 +80,7 @@ export function FloatingContextToolbar({
   const [linkOpen, setLinkOpen] = useState(false);
   const [emojiOpen, setEmojiOpen] = useState(false);
   const [linkInput, setLinkInput] = useState(value.linkUrl || "");
+  const [linkSelection, setLinkSelection] = useState(value.linkText || "");
 
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState<{ left: number; top: number; below: boolean } | null>(null);
@@ -461,6 +463,8 @@ export function FloatingContextToolbar({
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
+            const selected = window.getSelection()?.toString().trim() || "";
+            if (selected) setLinkSelection(selected);
             setLinkOpen(!linkOpen);
             setFontOpen(false);
             setSizeOpen(false);
@@ -480,6 +484,7 @@ export function FloatingContextToolbar({
             className="absolute top-full mt-1.5 left-0 w-64 bg-white border border-slate-200 rounded-md shadow-xl p-2 z-50"
           >
             <p className="text-[10px] font-semibold text-slate-400 mb-1 uppercase tracking-wider">{t("Tautan URL", "URL Link")}</p>
+            <p className="mb-1 truncate text-[10px] text-slate-500">{linkSelection || t("Pilih teks dulu", "Select text first")}</p>
             <div className="flex items-center gap-1">
               <input
                 type="text"
@@ -494,7 +499,8 @@ export function FloatingContextToolbar({
                 onMouseDown={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  onChange({ linkUrl: linkInput.trim() });
+                  if (!linkSelection) return;
+                  onChange({ linkUrl: linkInput.trim(), linkText: linkSelection });
                   setLinkOpen(false);
                 }}
                 className="bg-primary text-white text-xs px-2 py-1 rounded font-medium hover:bg-primary/90"
@@ -507,7 +513,7 @@ export function FloatingContextToolbar({
                   onMouseDown={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    onChange({ linkUrl: undefined });
+                    onChange({ linkUrl: undefined, linkText: undefined });
                     setLinkInput("");
                     setLinkOpen(false);
                   }}

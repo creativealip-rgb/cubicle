@@ -167,11 +167,17 @@ function typographyInlineStyle(typography: any): CSSProperties | undefined {
 }
 
 function StyledText({ text, typography, className, style }: { text: string; typography?: any; className: string; style?: CSSProperties }) {
+  const selected = typography?.linkText;
+  const href = typography?.linkUrl ? safePublicHref(typography.linkUrl) : "#";
+  const linkedLine = (line: string, key: string) => {
+    const index = selected ? line.indexOf(selected) : -1;
+    return index >= 0 && href !== "#" ? <span key={key}>{line.slice(0, index)}<a href={href} className="underline" target="_blank" rel="noreferrer">{selected}</a>{line.slice(index + selected.length)}</span> : line;
+  };
   if (typography?.listType === "bullet" || typography?.listType === "number") {
     const Tag = typography.listType === "bullet" ? "ul" : "ol";
-    return <Tag className={`${className} ${typography.listType === "bullet" ? "list-disc" : "list-decimal"} pl-6`} style={style}>{text.split(/\r?\n/).filter(Boolean).map((line, index) => <li key={`${index}-${line}`}>{line}</li>)}</Tag>;
+    return <Tag className={`${className} ${typography.listType === "bullet" ? "list-disc" : "list-decimal"} pl-6`} style={style}>{text.split(/\r?\n/).filter(Boolean).map((line, index) => <li key={`${index}-${line}`}>{linkedLine(line, String(index))}</li>)}</Tag>;
   }
-  return <p className={className} style={style}>{text}</p>;
+  return <p className={className} style={style}>{linkedLine(text, "text")}</p>;
 }
 
 function resolveFieldStyle(section: any, item: any, fieldKey: "titleTypography" | "descTypography" | "priceTypography" | "roleTypography" | "contentTypography" | "buttonTypography", defaultSize: "sm" | "base" | "lg" | "xl" = "base") {
