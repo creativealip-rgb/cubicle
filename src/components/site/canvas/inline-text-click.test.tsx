@@ -41,4 +41,27 @@ describe("InlineText toolbar", () => {
     render(<InlineText value={'One\nTwo'} onChange={() => {}} typography={{ listType: "bullet" }} onTypographyChange={() => {}} />);
     expect(screen.getAllByRole("listitem")).toHaveLength(2);
   });
+
+  it("links only selected text inside a list item", () => {
+    function ListHarness() {
+      const [typography, setTypography] = useState<TextTypography>({ listType: "bullet" });
+      return <InlineText value={'Alpha selected Omega\nSecond item'} onChange={() => {}} typography={typography} onTypographyChange={(patch) => setTypography((current) => ({ ...current, ...patch }))} />;
+    }
+    const { container } = render(<ListHarness />);
+    const firstItem = container.querySelector("li")!;
+    fireEvent.focus(container.querySelector("[contenteditable=true]")!);
+    const range = document.createRange();
+    range.setStart(firstItem.firstChild!, 6);
+    range.setEnd(firstItem.firstChild!, 14);
+    const selection = window.getSelection()!;
+    selection.removeAllRanges();
+    selection.addRange(range);
+    fireEvent.click(screen.getByTitle("Insert Link"));
+    fireEvent.change(screen.getByPlaceholderText("https://example.com"), { target: { value: "https://example.com/list" } });
+    fireEvent.mouseDown(screen.getByRole("button", { name: "Save" }));
+    const links = container.querySelectorAll("li a");
+    expect(links).toHaveLength(1);
+    expect(links[0].textContent).toBe("selected");
+    expect(firstItem.textContent).toBe("Alpha selected Omega");
+  });
 });

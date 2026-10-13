@@ -118,6 +118,12 @@ export function InlineText({
   if (listType === "bullet" || listType === "number") {
     const ListTag = listType === "bullet" ? "ul" : "ol";
     const lines = value.split(/\r?\n/).filter(Boolean);
+    const selected = typography.linkText;
+    const linkedLine = (line: string) => {
+      const start = selected ? line.indexOf(selected) : -1;
+      if (start < 0 || !selected || !typography.linkUrl) return line;
+      return <>{line.slice(0, start)}<a href={typography.linkUrl} className="underline text-primary">{selected}</a>{line.slice(start + selected.length)}</>;
+    };
     return (
       <div className="relative group/inline-text inline-block w-full">
         {enableFloatingToolbar && isFocused && onTypographyChange && (
@@ -137,7 +143,7 @@ export function InlineText({
           onFocus={() => setIsFocused(true)}
           onBlur={(e) => finishEditing(e.currentTarget)}
         >
-          {(lines.length ? lines : [""]).map((line, index) => <li key={`${index}-${line}`}>{line}</li>)}
+          {(lines.length ? lines : [""]).map((line, index) => <li key={`${index}-${line}`}>{linkedLine(line)}</li>)}
         </ListTag>
       </div>
     );

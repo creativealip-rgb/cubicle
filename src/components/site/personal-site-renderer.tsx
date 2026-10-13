@@ -210,7 +210,7 @@ function resolveFieldStyle(section: any, item: any, fieldKey: "titleTypography" 
     alignCls,
     isBold && "font-bold",
     isItalic && "italic",
-    (isUnderline || field.linkUrl) && "underline",
+    isUnderline && "underline",
     isStrike && "line-through",
   ].filter(Boolean).join(" ");
 }
