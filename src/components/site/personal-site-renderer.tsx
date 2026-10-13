@@ -251,17 +251,17 @@ function SectionBody({
       const subtitleCls = resolveFieldStyle(section, { ...section, titleTypography: section.subtitleTypography }, "titleTypography", "base");
       const contentCls = resolveFieldStyle(section, { ...section, descTypography: section.contentTypography }, "descTypography", "base");
       const alignedWidth = (align?: string) => align === "center" ? "mx-auto" : align === "right" ? "ml-auto" : "";
-      return <div className="relative z-10 mx-auto max-w-6xl"><p className={`text-xs font-semibold uppercase tracking-[0.2em] sm:text-sm ${subtitleCls}`} style={typographyInlineStyle(section.subtitleTypography)}>{section.subtitle}</p><h1 className={`mt-5 max-w-4xl text-4xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-6xl lg:text-7xl ${alignedWidth(section.titleTypography?.align || section.align)} ${titleCls}`} style={typographyInlineStyle(section.titleTypography)}><LinkedText text={section.heading} typography={section.titleTypography} /></h1>{section.content && <p className={`mt-6 max-w-2xl text-base leading-7 sm:text-xl sm:leading-8 ${alignedWidth(section.contentTypography?.align || section.align)} ${contentCls}`} style={typographyInlineStyle(section.contentTypography)}>{section.content}</p>}{ctaLabel && ctaUrl && !isPlaceholderHref(ctaUrl) && safePublicHref(ctaUrl) !== "#" && <div className={section.titleTypography?.align === "center" || section.align === "center" ? "text-center" : section.titleTypography?.align === "right" || section.align === "right" ? "text-right" : ""}><a className="mt-8 inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-lg" style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }} href={safePublicHref(ctaUrl)}>{ctaLabel}</a></div>}</div>;
+      return <div className="relative z-10 mx-auto max-w-6xl"><p className={`text-xs font-semibold uppercase tracking-[0.2em] sm:text-sm ${subtitleCls}`} style={typographyInlineStyle(section.subtitleTypography)}><LinkedText text={section.subtitle} typography={section.subtitleTypography} /></p><h1 className={`mt-5 max-w-4xl text-4xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-6xl lg:text-7xl ${alignedWidth(section.titleTypography?.align || section.align)} ${titleCls}`} style={typographyInlineStyle(section.titleTypography)}><LinkedText text={section.heading} typography={section.titleTypography} /></h1>{section.content && <p className={`mt-6 max-w-2xl text-base leading-7 sm:text-xl sm:leading-8 ${alignedWidth(section.contentTypography?.align || section.align)} ${contentCls}`} style={typographyInlineStyle(section.contentTypography)}><LinkedText text={section.content} typography={section.contentTypography} /></p>}{ctaLabel && ctaUrl && !isPlaceholderHref(ctaUrl) && safePublicHref(ctaUrl) !== "#" && <div className={section.titleTypography?.align === "center" || section.align === "center" ? "text-center" : section.titleTypography?.align === "right" || section.align === "right" ? "text-right" : ""}><a className="mt-8 inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-lg" style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }} href={safePublicHref(ctaUrl)}>{ctaLabel}</a></div>}</div>;
     }
     case "about": {
       const contentCls = resolveFieldStyle(section, { ...section, descTypography: section.contentTypography }, "descTypography", "base");
-      return <p className={`whitespace-pre-wrap text-base leading-8 opacity-70 ${contentCls}`}>{section.content}</p>;
+      return <p className={`whitespace-pre-wrap text-base leading-8 opacity-70 ${contentCls}`}><LinkedText text={section.content} typography={section.contentTypography} /></p>;
     }
     case "services":
       return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{section.items.filter((item) => item.title || item.description).map((item) => {
         const titleCls = resolveFieldStyle(section, item, "titleTypography", "base");
         const descCls = resolveFieldStyle(section, item, "descTypography", "sm");
-        return <ItemCard key={item.id} panel={panel}>{marker}<h3 className={titleCls}>{item.title}</h3>{item.description && <p className={`mt-2 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`}>{item.description}</p>}</ItemCard>;
+        return <ItemCard key={item.id} panel={panel}>{marker}<h3 className={titleCls}><LinkedText text={item.title} typography={item.titleTypography} /></h3>{item.description && <StyledText text={item.description} typography={item.descTypography} className={`mt-2 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`} style={typographyInlineStyle(item.descTypography)} />}</ItemCard>;
       })}</div>;
     case "process":
       return <ol className="grid gap-5 md:grid-cols-2">{section.steps.filter((step) => step.title || step.description).map((step, index) => {
@@ -270,7 +270,7 @@ function SectionBody({
         return (
           <li key={step.id} className="grid grid-cols-[44px_1fr] gap-4">
             <span className="flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold" style={{ backgroundColor: accent, color: accentForeground(accent) }}>{String(index + 1).padStart(2, "0")}</span>
-            <div className="pt-1"><h3 className={titleCls}>{step.title}</h3>{step.description && <p className={`mt-1 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`}>{step.description}</p>}</div>
+            <div className="pt-1"><h3 className={titleCls}><LinkedText text={step.title} typography={step.titleTypography} /></h3>{step.description && <StyledText text={step.description} typography={step.descTypography} className={`mt-1 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`} style={typographyInlineStyle(step.descTypography)} />}</div>
           </li>
         );
       })}</ol>;
@@ -278,20 +278,20 @@ function SectionBody({
       return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{section.offers.filter((offer) => offer.name || offer.price || offer.description).map((offer) => {
         const titleCls = resolveFieldStyle(section, offer, "titleTypography", "base");
         const descCls = resolveFieldStyle(section, offer, "descTypography", "sm");
-        return <ItemCard key={offer.id} panel={panel}>{marker}<h3 className={titleCls}>{offer.name}</h3>{offer.price && <p className={`mt-3 text-2xl font-bold ${resolveFieldStyle(section, offer, "priceTypography", "lg")}`} style={{ color: offer.priceTypography?.color || accent, ...typographyInlineStyle(offer.priceTypography) }}>{offer.price}</p>}{offer.description && <StyledText text={offer.description} typography={offer.descTypography} className={`mt-3 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`} style={typographyInlineStyle(offer.descTypography)} />}</ItemCard>;
+        return <ItemCard key={offer.id} panel={panel}>{marker}<h3 className={titleCls}><LinkedText text={offer.name} typography={offer.titleTypography} /></h3>{offer.price && <p className={`mt-3 text-2xl font-bold ${resolveFieldStyle(section, offer, "priceTypography", "lg")}`} style={{ color: offer.priceTypography?.color || accent, ...typographyInlineStyle(offer.priceTypography) }}>{offer.price}</p>}{offer.description && <StyledText text={offer.description} typography={offer.descTypography} className={`mt-3 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`} style={typographyInlineStyle(offer.descTypography)} />}</ItemCard>;
       })}</div>;
     case "portfolio":
       return <div className="grid gap-4 md:grid-cols-2">{section.projects.filter((project) => project.title || project.description || project.url).map((project) => {
         const titleCls = resolveFieldStyle(section, project, "titleTypography", "base");
         const descCls = resolveFieldStyle(section, project, "descTypography", "sm");
-        return <ItemCard key={project.id} panel={panel}>{marker}<h3 className={titleCls}>{project.title}</h3>{project.description && <p className={`mt-2 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`}>{project.description}</p>}{project.url && !isPlaceholderHref(project.url) && <a className="mt-4 inline-flex min-h-10 items-center font-semibold underline underline-offset-4" href={safePublicHref(project.url)} target="_blank" rel="noreferrer">{labels.openProject}</a>}</ItemCard>;
+        return <ItemCard key={project.id} panel={panel}>{marker}<h3 className={titleCls}><LinkedText text={project.title} typography={project.titleTypography} /></h3>{project.description && <StyledText text={project.description} typography={project.descTypography} className={`mt-2 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`} style={typographyInlineStyle(project.descTypography)} />}{project.url && !isPlaceholderHref(project.url) && <a className="mt-4 inline-flex min-h-10 items-center font-semibold underline underline-offset-4" href={safePublicHref(project.url)} target="_blank" rel="noreferrer">{labels.openProject}</a>}</ItemCard>;
       })}</div>;
     case "testimonials":
       return <div className="grid gap-4 md:grid-cols-2">{section.testimonials.filter((item) => item.quote && (item.author || item.role) && !looksLikeFakeProof(item.quote, item.author, item.role)).map((item) => {
         const quoteCls = resolveFieldStyle(section, item, "descTypography", "base");
         const authorCls = resolveFieldStyle(section, item, "titleTypography", "sm");
         return (
-          <figure key={item.id} className={`rounded-2xl p-6 ${panel}`}><blockquote className={`leading-8 ${quoteCls}`}>“{item.quote}”</blockquote><figcaption className={`mt-5 ${authorCls}`}><strong>{item.author}</strong>{item.role && <span className={`opacity-65 ${resolveFieldStyle(section, item, "roleTypography", "sm")}`} style={typographyInlineStyle(item.roleTypography)}> · {item.role}</span>}</figcaption></figure>
+          <figure key={item.id} className={`rounded-2xl p-6 ${panel}`}><blockquote className={`leading-8 ${quoteCls}`}>“<LinkedText text={item.quote} typography={item.descTypography} />”</blockquote><figcaption className={`mt-5 ${authorCls}`}><strong><LinkedText text={item.author} typography={item.titleTypography} /></strong>{item.role && <span className={`opacity-65 ${resolveFieldStyle(section, item, "roleTypography", "sm")}`} style={typographyInlineStyle(item.roleTypography)}> · <LinkedText text={item.role} typography={item.roleTypography} /></span>}</figcaption></figure>
         );
       })}</div>;
     case "faq":
@@ -299,7 +299,7 @@ function SectionBody({
         const qCls = resolveFieldStyle(section, item, "titleTypography", "base");
         const aCls = resolveFieldStyle(section, item, "descTypography", "sm");
         return (
-          <details key={item.id} className={`group rounded-2xl px-5 py-4 ${panel}`}><summary className={`cursor-pointer list-none pr-8 marker:content-none ${qCls}`}>{item.question}<span aria-hidden className="float-right text-xl group-open:rotate-45">+</span></summary><p className={`mt-3 whitespace-pre-wrap leading-7 opacity-70 ${aCls}`}>{item.answer}</p></details>
+          <details key={item.id} className={`group rounded-2xl px-5 py-4 ${panel}`}><summary className={`cursor-pointer list-none pr-8 marker:content-none ${qCls}`}><LinkedText text={item.question} typography={item.titleTypography} /><span aria-hidden className="float-right text-xl group-open:rotate-45">+</span></summary><p className={`mt-3 whitespace-pre-wrap leading-7 opacity-70 ${aCls}`}><LinkedText text={item.answer} typography={item.descTypography} /></p></details>
         );
       })}</div>;
     case "contact":
@@ -314,7 +314,7 @@ function SectionBody({
       return (
         <div className="max-w-2xl mx-auto">
           {section.subtitle && (
-            <p className={`text-center text-sm opacity-75 mb-6 ${resolveFieldStyle(section, section, "contentTypography", "sm")}`} style={typographyInlineStyle(section.contentTypography)}>{section.subtitle}</p>
+            <p className={`text-center text-sm opacity-75 mb-6 ${resolveFieldStyle(section, section, "contentTypography", "sm")}`} style={typographyInlineStyle(section.contentTypography)}><LinkedText text={section.subtitle} typography={section.contentTypography} /></p>
           )}
           <PublicBookingForm
             workspace={bookingData.workspace}
@@ -327,7 +327,7 @@ function SectionBody({
         </div>
       );
     case "custom":
-      return <div className={`rounded-2xl p-6 ${panel}`}><p className={`max-w-3xl whitespace-pre-wrap text-base leading-8 opacity-75 ${resolveFieldStyle(section, section, "contentTypography", "base")}`} style={typographyInlineStyle(section.contentTypography)}>{section.content}</p></div>;
+      return <div className={`rounded-2xl p-6 ${panel}`}><p className={`max-w-3xl whitespace-pre-wrap text-base leading-8 opacity-75 ${resolveFieldStyle(section, section, "contentTypography", "base")}`} style={typographyInlineStyle(section.contentTypography)}><LinkedText text={section.content} typography={section.contentTypography} /></p></div>;
     case "gallery": {
       const columns = section.columns ?? 3;
       const aspectRatio = section.aspectRatio ?? "video";
@@ -391,8 +391,8 @@ function SectionBody({
                   </div>
                   {!isPureGrid && (img.title || img.description) && (
                     <div className="pt-1">
-                      {img.title && <h3 className={`text-base font-semibold ${resolveFieldStyle(section, img, "titleTypography", "base")}`} style={typographyInlineStyle(img.titleTypography)}>{img.title}</h3>}
-                      {img.description && <p className={`mt-1.5 whitespace-pre-wrap text-sm leading-6 opacity-75 ${resolveFieldStyle(section, img, "descTypography", "sm")}`} style={typographyInlineStyle(img.descTypography)}>{img.description}</p>}
+                      {img.title && <h3 className={`text-base font-semibold ${resolveFieldStyle(section, img, "titleTypography", "base")}`} style={typographyInlineStyle(img.titleTypography)}><LinkedText text={img.title} typography={img.titleTypography} /></h3>}
+                      {img.description && <p className={`mt-1.5 whitespace-pre-wrap text-sm leading-6 opacity-75 ${resolveFieldStyle(section, img, "descTypography", "sm")}`} style={typographyInlineStyle(img.descTypography)}><LinkedText text={img.description} typography={img.descTypography} /></p>}
                     </div>
                   )}
                 </div>
@@ -435,7 +435,7 @@ function SectionBody({
             />
           </div>
           {section.caption && (
-            <p className={`mt-2 text-center text-xs opacity-75 italic max-w-xl ${resolveFieldStyle(section, section, "contentTypography", "sm")}`} style={typographyInlineStyle(section.contentTypography)}>{section.caption}</p>
+            <p className={`mt-2 text-center text-xs opacity-75 italic max-w-xl ${resolveFieldStyle(section, section, "contentTypography", "sm")}`} style={typographyInlineStyle(section.contentTypography)}><LinkedText text={section.caption} typography={section.contentTypography} /></p>
           )}
         </div>
       );
@@ -488,11 +488,11 @@ function SectionBody({
           >
             {section.heading && (
               <h3 className={`text-xl sm:text-2xl font-bold tracking-tight ${resolveFieldStyle(section, section, "titleTypography", "lg")}`} style={{ color: section.titleTypography?.color || accent, ...typographyInlineStyle(section.titleTypography) }}>
-                {section.heading}
+                <LinkedText text={section.heading} typography={section.titleTypography} />
               </h3>
             )}
             {section.content && (
-              <p className={`text-base leading-relaxed opacity-80 whitespace-pre-wrap ${resolveFieldStyle(section, section, "contentTypography", "base")}`} style={typographyInlineStyle(section.contentTypography)}>{section.content}</p>
+              <p className={`text-base leading-relaxed opacity-80 whitespace-pre-wrap ${resolveFieldStyle(section, section, "contentTypography", "base")}`} style={typographyInlineStyle(section.contentTypography)}><LinkedText text={section.content} typography={section.contentTypography} /></p>
             )}
             {section.buttonLabel && section.buttonUrl && !isPlaceholderHref(section.buttonUrl) && (
               <div className="pt-2">
@@ -518,12 +518,12 @@ function SectionBody({
         <a key={link.id} className={`inline-flex min-h-11 items-center rounded-xl px-5 py-3 text-sm font-semibold ${panel}`} href={safePublicHref(link.url)} target="_blank" rel="noreferrer">{link.platform}</a>
       ))}</div>;
     case "cta":
-      return <div className={`rounded-2xl p-8 text-center ${panel}`}>{section.text && <p className={`mx-auto max-w-xl text-lg leading-8 opacity-75 ${resolveFieldStyle(section, section, "contentTypography", "lg")}`} style={typographyInlineStyle(section.contentTypography)}>{section.text}</p>}{section.buttonLabel && section.buttonUrl && !isPlaceholderHref(section.buttonUrl) && safePublicHref(section.buttonUrl) !== "#" && <a className="mt-6 inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-lg" style={{ backgroundColor: accent, color: section.buttonTypography?.color || accentForeground(accent), borderRadius: buttonRadius, ...typographyInlineStyle(section.buttonTypography) }} href={safePublicHref(section.buttonUrl)} target={section.buttonTarget === "blank" ? "_blank" : undefined} rel={section.buttonTarget === "blank" ? "noreferrer" : undefined}><span className={resolveFieldStyle(section, section, "buttonTypography", "sm")}>{section.buttonLabel}</span></a>}</div>;
+      return <div className={`rounded-2xl p-8 text-center ${panel}`}>{section.text && <p className={`mx-auto max-w-xl text-lg leading-8 opacity-75 ${resolveFieldStyle(section, section, "contentTypography", "lg")}`} style={typographyInlineStyle(section.contentTypography)}><LinkedText text={section.text} typography={section.contentTypography} /></p>}{section.buttonLabel && section.buttonUrl && !isPlaceholderHref(section.buttonUrl) && safePublicHref(section.buttonUrl) !== "#" && <a className="mt-6 inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-lg" style={{ backgroundColor: accent, color: section.buttonTypography?.color || accentForeground(accent), borderRadius: buttonRadius, ...typographyInlineStyle(section.buttonTypography) }} href={safePublicHref(section.buttonUrl)} target={section.buttonTarget === "blank" ? "_blank" : undefined} rel={section.buttonTarget === "blank" ? "noreferrer" : undefined}><span className={resolveFieldStyle(section, section, "buttonTypography", "sm")}>{section.buttonLabel}</span></a>}</div>;
     case "divider":
       return <hr className="border-t border-current opacity-15" />;
     case "collapsible":
       return <div className="space-y-3">{section.items.filter((item) => item.title && item.content).map((item) => (
-        <details key={item.id} className={`group rounded-2xl px-5 py-4 ${panel}`}><summary className={`cursor-pointer list-none pr-8 font-semibold ${resolveFieldStyle(section, item, "titleTypography", "base")}`} style={typographyInlineStyle(item.titleTypography)}>{item.title}<span aria-hidden className="float-right text-xl group-open:rotate-45">+</span></summary><p className={`mt-3 whitespace-pre-wrap text-sm leading-7 opacity-70 ${resolveFieldStyle(section, item, "descTypography", "sm")}`} style={typographyInlineStyle(item.descTypography)}>{item.content}</p></details>
+        <details key={item.id} className={`group rounded-2xl px-5 py-4 ${panel}`}><summary className={`cursor-pointer list-none pr-8 font-semibold ${resolveFieldStyle(section, item, "titleTypography", "base")}`} style={typographyInlineStyle(item.titleTypography)}><LinkedText text={item.title} typography={item.titleTypography} /><span aria-hidden className="float-right text-xl group-open:rotate-45">+</span></summary><p className={`mt-3 whitespace-pre-wrap text-sm leading-7 opacity-70 ${resolveFieldStyle(section, item, "descTypography", "sm")}`} style={typographyInlineStyle(item.descTypography)}><LinkedText text={item.content} typography={item.descTypography} /></p></details>
       ))}</div>;
     case "spacer":
       return <div style={{ height: section.height ?? 40 }} />;
@@ -531,7 +531,7 @@ function SectionBody({
       return null; // Auto-generated, skip in public render
     case "contentBlock":
       return <div className={`grid gap-4 ${section.columns === 2 ? "sm:grid-cols-2" : section.columns === 3 ? "sm:grid-cols-3" : "sm:grid-cols-4"}`}>{section.items.filter((item) => item.content.trim()).map((item) => (
-        <div key={item.id} className={`rounded-2xl p-6 ${panel}`}><p className={`whitespace-pre-wrap text-sm leading-7 opacity-75 ${resolveFieldStyle(section, item, "descTypography", "sm")}`} style={typographyInlineStyle(item.descTypography)}>{item.content}</p></div>
+        <div key={item.id} className={`rounded-2xl p-6 ${panel}`}><p className={`whitespace-pre-wrap text-sm leading-7 opacity-75 ${resolveFieldStyle(section, item, "descTypography", "sm")}`} style={typographyInlineStyle(item.descTypography)}><LinkedText text={item.content} typography={item.descTypography} /></p></div>
       ))}</div>;
   }
 }
@@ -597,7 +597,7 @@ export function PersonalSiteRenderer({
               <div className="relative mx-auto max-w-6xl">
                 {!hideDefaultHeading && section.heading && (
                   <h2 className={secHeadingStyle.className} style={secHeadingStyle.style}>
-                    {section.heading}
+                    <LinkedText text={section.heading} typography={(section as any).titleTypography} />
                   </h2>
                 )}
                 <SectionBody
