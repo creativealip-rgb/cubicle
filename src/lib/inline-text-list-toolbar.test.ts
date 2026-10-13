@@ -19,7 +19,7 @@ describe("inline text list and toolbar", () => {
 
   it("allows toolbar form controls to receive focus", () => {
     const source = readFileSync("src/components/site/canvas/floating-context-toolbar.tsx", "utf8");
-    expect(source).toContain('onMouseDown={(e) => e.stopPropagation()}');
-    expect(source).not.toContain("e.target instanceof HTMLInputElement");
+    expect(source).toContain("e.target instanceof HTMLInputElement");
+    expect(source).toContain("e.target instanceof HTMLSelectElement");
   });
 });

@@ -165,7 +165,12 @@ export function FloatingContextToolbar({
   return (
     <div
       ref={containerRef}
-      onMouseDown={(e) => e.stopPropagation()}
+      onMouseDown={(e) => {
+        // Buttons must not steal focus from edited text. Form controls still
+        // receive focus so link URLs can be typed normally.
+        if (!(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLSelectElement)) e.preventDefault();
+        e.stopPropagation();
+      }}
       onClick={(e) => e.stopPropagation()}
       style={{
         left: position?.left ?? 0,
