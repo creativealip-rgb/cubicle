@@ -49,6 +49,7 @@ export default async function ContractEditPage({ params }: { params: Promise<{ c
         companyName: contract.companyName,
         validUntil: contract.validUntil,
         contractNumber: contract.contractNumber,
+        status: contract.status,
       }}
       onUpdateMeta={async (meta) => {
         "use server";

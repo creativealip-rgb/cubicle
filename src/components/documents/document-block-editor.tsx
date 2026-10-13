@@ -125,6 +125,7 @@ type Props = {
     companyName?: string | null;
     validUntil: Date | string | null;
     contractNumber: string | null;
+    status?: string;
   };
   proposalMeta?: {
     id?: string;
@@ -453,10 +454,11 @@ export function DocumentBlockEditor({
     proposalMeta?.slug || documentMeta?.slug || ""
   );
   // Document status only moves through the send flow; optimistic local state keeps
-  // the PUBLISH tab truthful without a refresh (contracts expose no status prop).
+  // the PUBLISH tab truthful without a refresh.
   const [docStatus, setDocStatus] = useState<string>(
-    proposalMeta?.status || "draft"
+    proposalMeta?.status || documentMeta?.status || "draft"
   );
+  const documentLocked = ["signed", "declined"].includes(docStatus);
   // The custom-slug box is disabled (and hidden behind an upgrade CTA) on a free
   // plan, yet the settings form used to submit `slug: null` on every save. That
   // silently destroyed the server-generated share slug, so the public link the
@@ -595,6 +597,10 @@ export function DocumentBlockEditor({
   async function handleSaveSettings(e?: React.FormEvent) {
     if (e) e.preventDefault();
     if (!onUpdateMeta) return;
+    if (documentLocked) {
+      toast.error(t("Dokumen final tidak dapat diubah", "Final documents cannot be edited"));
+      return;
+    }
     setSavingMeta(true);
     try {
       const payload: Record<string, unknown> = {
@@ -1089,7 +1095,7 @@ export function DocumentBlockEditor({
             }}
             disabled={
               activeTab === "settings"
-                ? savingMeta
+                ? savingMeta || documentLocked
                 : !dirty || saving || pending || stale
             }
             className="h-8 px-3 text-xs font-semibold bg-primary text-primary-foreground shadow-xs gap-1.5"
@@ -1833,7 +1839,7 @@ export function DocumentBlockEditor({
                   </p>
                 </div>
                 <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-300 font-bold uppercase text-[11px]">
-                  {proposalMeta?.status || "Draft"}
+                  {docStatus}
                 </Badge>
               </div>
 
