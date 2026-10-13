@@ -165,11 +165,7 @@ export function FloatingContextToolbar({
   return (
     <div
       ref={containerRef}
-      onMouseDown={(e) => {
-        // Toolbar buttons keep text focus; form controls need real focus for typing.
-        if (!(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLSelectElement)) e.preventDefault();
-        e.stopPropagation();
-      }}
+      onMouseDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
       style={{
         left: position?.left ?? 0,

@@ -166,6 +166,14 @@ function typographyInlineStyle(typography: any): CSSProperties | undefined {
   };
 }
 
+function StyledText({ text, typography, className, style }: { text: string; typography?: any; className: string; style?: CSSProperties }) {
+  if (typography?.listType === "bullet" || typography?.listType === "number") {
+    const Tag = typography.listType === "bullet" ? "ul" : "ol";
+    return <Tag className={`${className} ${typography.listType === "bullet" ? "list-disc" : "list-decimal"} pl-6`} style={style}>{text.split(/\r?\n/).filter(Boolean).map((line, index) => <li key={`${index}-${line}`}>{line}</li>)}</Tag>;
+  }
+  return <p className={className} style={style}>{text}</p>;
+}
+
 function resolveFieldStyle(section: any, item: any, fieldKey: "titleTypography" | "descTypography" | "priceTypography" | "roleTypography" | "contentTypography" | "buttonTypography", defaultSize: "sm" | "base" | "lg" | "xl" = "base") {
   const field = item[fieldKey] || {};
   const isBold = field.bold !== undefined ? field.bold : (item.bold !== undefined ? item.bold : section.bold);
@@ -257,7 +265,7 @@ function SectionBody({
       return <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">{section.offers.filter((offer) => offer.name || offer.price || offer.description).map((offer) => {
         const titleCls = resolveFieldStyle(section, offer, "titleTypography", "base");
         const descCls = resolveFieldStyle(section, offer, "descTypography", "sm");
-        return <ItemCard key={offer.id} panel={panel}>{marker}<h3 className={titleCls}>{offer.name}</h3>{offer.price && <p className={`mt-3 text-2xl font-bold ${resolveFieldStyle(section, offer, "priceTypography", "lg")}`} style={{ color: offer.priceTypography?.color || accent, ...typographyInlineStyle(offer.priceTypography) }}>{offer.price}</p>}{offer.description && <p className={`mt-3 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`}>{offer.description}</p>}</ItemCard>;
+        return <ItemCard key={offer.id} panel={panel}>{marker}<h3 className={titleCls}>{offer.name}</h3>{offer.price && <p className={`mt-3 text-2xl font-bold ${resolveFieldStyle(section, offer, "priceTypography", "lg")}`} style={{ color: offer.priceTypography?.color || accent, ...typographyInlineStyle(offer.priceTypography) }}>{offer.price}</p>}{offer.description && <StyledText text={offer.description} typography={offer.descTypography} className={`mt-3 whitespace-pre-wrap leading-6 opacity-70 ${descCls}`} style={typographyInlineStyle(offer.descTypography)} />}</ItemCard>;
       })}</div>;
     case "portfolio":
       return <div className="grid gap-4 md:grid-cols-2">{section.projects.filter((project) => project.title || project.description || project.url).map((project) => {
