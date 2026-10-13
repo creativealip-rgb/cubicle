@@ -44,6 +44,17 @@ chmod 600 "$config_backup"
 
 docker inspect "$active_url" --format '{{range .Config.Env}}{{println .}}{{end}}' |
   grep -Ev '^(PATH|NODE_VERSION|YARN_VERSION|NEXT_TELEMETRY_DISABLED|NODE_ENV|PORT|HOSTNAME)=' > "$env_file"
+
+# A missing runtime secret must not become permanent just because one active
+# container was started without it. Restore required secrets from canonical env.
+for required_key in PORTAL_PASSWORD_ENCRYPTION_KEY; do
+  if ! grep -q "^${required_key}=" "$env_file"; then
+    grep "^${required_key}=" .env.production >> "$env_file" || {
+      echo "ERROR: missing required secret ${required_key} in runtime and .env.production" >&2
+      exit 1
+    }
+  fi
+done
 chmod 600 "$env_file"
 
 old_image=$(docker inspect "$active_url" --format '{{.Config.Image}}')
