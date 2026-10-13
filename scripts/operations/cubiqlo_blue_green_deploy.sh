@@ -55,6 +55,16 @@ for required_key in PORTAL_PASSWORD_ENCRYPTION_KEY; do
     }
   fi
 done
+
+# Deployment-controlled settings always follow canonical production config,
+# rather than inheriting stale values from the previously active container.
+for canonical_key in AI_MODEL; do
+  sed -i "/^${canonical_key}=/d" "$env_file"
+  grep "^${canonical_key}=" .env.production >> "$env_file" || {
+    echo "ERROR: missing canonical setting ${canonical_key} in .env.production" >&2
+    exit 1
+  }
+done
 chmod 600 "$env_file"
 
 old_image=$(docker inspect "$active_url" --format '{{.Config.Image}}')
