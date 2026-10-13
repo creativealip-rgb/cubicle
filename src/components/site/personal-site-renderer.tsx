@@ -535,7 +535,7 @@ export function PersonalSiteRenderer({
   const activePage = pages.find((page) => page.slug === activePageSlug) ?? pages.find((page) => page.isHome) ?? pages[0];
   const visiblePages = pages.filter((page) => page.title);
   const visibleSections = (activePage?.sections?.length ? activePage.sections : site.sections).filter(sectionHasContent);
-  const visibleLinks = site.links.filter((link) => link.label && !isPlaceholderHref(link.url) && safePublicHref(link.url) !== "#");
+
   const themeConfig = site.themeConfig;
   const accent = themeConfig?.primaryColor ?? site.accent;
   const buttonRadius = themeConfig?.buttonStyle === "pill" ? "999px" : themeConfig?.buttonStyle === "square" ? "0.25rem" : "0.75rem";
@@ -596,7 +596,7 @@ export function PersonalSiteRenderer({
         );
       })}
 
-      {visibleLinks.length > 0 && <section className="px-6 py-14 sm:px-10 lg:px-16 lg:py-20"><div className={`mx-auto max-w-6xl rounded-3xl p-7 text-center sm:p-10 ${styles.panel}`}><h2 className="text-2xl font-bold sm:text-3xl">{labels.workWithMe}</h2><p className="mx-auto mt-3 max-w-xl text-sm leading-6 opacity-65">{labels.contactHint}</p><div className="mt-6 flex flex-wrap justify-center gap-3">{visibleLinks.map((link) => <a key={link.id} className="inline-flex min-h-11 items-center rounded-xl px-5 py-3 text-sm font-semibold" style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }} href={safePublicHref(link.url)} target={/^https?:/i.test(link.url) ? "_blank" : undefined} rel={/^https?:/i.test(link.url) ? "noreferrer" : undefined}>{link.label}</a>)}</div></div></section>}
+
     </main>
   );
 }

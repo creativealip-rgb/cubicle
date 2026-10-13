@@ -150,16 +150,6 @@ export function CanvasRenderer({
         </div>
       )}
 
-      {/* Links */}
-      {site.links.length > 0 && (
-        <div className="px-8 py-6 flex flex-wrap justify-center gap-3">
-          {site.links.map((link) => (
-            <span key={link.id} className="text-sm text-muted-foreground underline">
-              {link.label}
-            </span>
-          ))}
-        </div>
-      )}
     </div>
   );
 }
