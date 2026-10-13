@@ -164,7 +164,7 @@ const WIDGET_LIST: Array<{ type: PersonalSiteSection["type"]; label: string; ico
   { type: "image", label: "Gambar Tunggal", icon: ImageIcon, category: "media" },
   { type: "mediaText", label: "Media & Teks", icon: Columns3, category: "media" },
   { type: "embed", label: "Embed", icon: Code, category: "media" },
-  { type: "social", label: "Sosial", icon: Share2, category: "basic" },
+
   { type: "cta", label: "Tombol CTA", icon: MousePointerClick, category: "basic" },
   { type: "divider", label: "Pemisah", icon: Minus, category: "basic" },
   { type: "spacer", label: "Spasi", icon: MoveVertical, category: "basic" },
@@ -357,7 +357,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
       const template = data.template as SectionTemplate;
       setSite((prev) => {
         const sections = pageSections(prev, activePageId);
-        if (over && typeof over.id === "string" && over.id.startsWith("s_")) {
+        if (over && typeof over.id === "string") {
           const idx = sections.findIndex((s) => s.id === over.id);
           if (idx >= 0) {
             const next = [...sections];
@@ -1233,6 +1233,30 @@ function DraggableTemplateButton({ template, onClick }: { template: SectionTempl
   );
 }
 
+function DraggableWidgetButton({ widget, onClick }: { widget: (typeof WIDGET_LIST)[number]; onClick: () => void }) {
+  const { t } = useT();
+  const template = useMemo<SectionTemplate>(() => ({
+    id: `block-${widget.type}`,
+    type: widget.type,
+    label: WIDGET_EN_LABELS[widget.label] ?? widget.label,
+    description: "",
+    category: "content",
+    build: () => emptySection(widget.type),
+  }), [widget]);
+  const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
+    id: `widget-${widget.type}`,
+    data: { type: "template", template, label: template.label },
+  });
+  return (
+    <button ref={setNodeRef} type="button" {...listeners} {...attributes} onClick={onClick}
+      style={transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, opacity: isDragging ? 0.5 : 1 } : undefined}
+      className="flex flex-col items-center gap-1 rounded-lg border p-2 text-xs hover:bg-muted transition-colors cursor-grab active:cursor-grabbing">
+      <widget.icon className="h-4 w-4 text-muted-foreground" />
+      {t(widget.label, WIDGET_EN_LABELS[widget.label] ?? widget.label)}
+    </button>
+  );
+}
+
 export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addSection, addSectionTemplate, site, activePageId, setActivePageId, updateSite, publicUrl: _publicUrl, onSelectSection, selectedSectionId }: {
   sidebarTab: string;
   setSidebarTab: (tab: string) => void;
@@ -1363,17 +1387,7 @@ export function SidebarContent({ sidebarTab, setSidebarTab, groupedWidgets, addS
                 <div key={category}>
                   <p className="text-xs font-medium text-muted-foreground uppercase mb-2">{t(catLabel.id, catLabel.en)}</p>
                   <div className="grid grid-cols-2 gap-1.5">
-                    {visible.map((w) => (
-                      <button
-                        key={w.type}
-                        type="button"
-                        onClick={() => addSection(w.type)}
-                        className="flex flex-col items-center gap-1 rounded-lg border p-2 text-xs hover:bg-muted transition-colors"
-                      >
-                        <w.icon className="h-4 w-4 text-muted-foreground" />
-                        {t(w.label, WIDGET_EN_LABELS[w.label] ?? w.label)}
-                      </button>
-                    ))}
+                    {visible.map((w) => <DraggableWidgetButton key={w.type} widget={w} onClick={() => addSection(w.type)} />)}
                   </div>
                 </div>
               );

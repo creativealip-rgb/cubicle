@@ -333,6 +333,7 @@ export const personalSiteSectionSchema = z.discriminatedUnion("type", [
     text: z.string().trim().max(500),
     buttonLabel: z.string().trim().max(60),
     buttonUrl: optionalPublicHrefSchema,
+    buttonTarget: z.enum(["self", "blank"]).optional(),
   }),
   z.object({
     id: idSchema,

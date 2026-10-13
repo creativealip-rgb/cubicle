@@ -124,9 +124,13 @@ export function InlineText({
           data-placeholder={placeholder}
           onFocus={() => setIsFocused(true)}
           onBlur={(e) => {
-            // Delay un-focus slightly so clicks inside floating toolbar register
-            setTimeout(() => setIsFocused(false), 200);
-            onChange(e.currentTarget.textContent || "");
+            const text = e.currentTarget.textContent || "";
+            // Keep toolbar mounted while focus moves into its link input/popovers.
+            setTimeout(() => {
+              const wrapper = ref.current?.parentElement?.parentElement;
+              if (!wrapper?.contains(document.activeElement)) setIsFocused(false);
+            }, 0);
+            onChange(text);
           }}
         />
       </div>

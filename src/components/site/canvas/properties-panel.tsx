@@ -666,6 +666,10 @@ function CtaEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSectio
     <div className="space-y-3">
       <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Ajakan bertindak", "Call to action")}</Label>
       <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Judul", "Heading")}</Label>
+        <Input value={section.heading} maxLength={200} onChange={(e) => onUpdate({ heading: e.target.value })} className="h-8 text-sm" placeholder={t("Siap memulai proyek?", "Ready to start a project?")} />
+      </div>
+      <div className="space-y-1">
         <Label className="text-xs text-muted-foreground">{t("Teks", "Text")}</Label>
         <Textarea
           value={section.text}
@@ -695,6 +699,13 @@ function CtaEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSectio
           placeholder="https://… or mailto:…"
         />
         <p className="text-[11px] text-muted-foreground">{t("Kosongkan untuk mematikan tombol. URL harus publik (http/https/mailto/tel).", "Leave empty to disable the button. URL must be public (http/https/mailto/tel).")}</p>
+      </div>
+      <div className="space-y-1">
+        <Label className="text-xs text-muted-foreground">{t("Buka tautan", "Open link")}</Label>
+        <select value={section.buttonTarget ?? "self"} onChange={(e) => onUpdate({ buttonTarget: e.target.value as "self" | "blank" })} className="h-8 w-full rounded-lg border border-input bg-background px-2 text-sm">
+          <option value="self">{t("Di tab yang sama", "In the same tab")}</option>
+          <option value="blank">{t("Di tab baru", "In a new tab")}</option>
+        </select>
       </div>
     </div>
   );

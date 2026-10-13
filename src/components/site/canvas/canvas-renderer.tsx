@@ -111,18 +111,6 @@ export function CanvasRenderer({
           ))}
         </SortableContext>
 
-        {/* Add section button */}
-        <div className="flex justify-center py-4">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={(e) => { e.stopPropagation(); onAddSection("custom"); }}
-            className="gap-2"
-          >
-            <Plus className="h-4 w-4" />
-            {t("Tambah Bagian", "Add Section")}
-          </Button>
-        </div>
       </div>
 
       {/* CTA */}
@@ -1003,7 +991,7 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
               <InlineText value={section.text} onChange={(v) => onUpdate({ text: v })} typography={section.contentTypography} onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })} tagType="body" tag="p" className="max-w-xl mx-auto" />
               {section.buttonLabel && <div className="pt-2">
                 {previewMode && section.buttonUrl && !isPlaceholderHref(section.buttonUrl) && safePublicHref(section.buttonUrl) !== "#" ? (
-                  <a href={safePublicHref(section.buttonUrl)} className="inline-flex min-h-11 items-center rounded-xl bg-primary px-6 font-semibold text-primary-foreground">
+                  <a href={safePublicHref(section.buttonUrl)} target={section.buttonTarget === "blank" ? "_blank" : undefined} rel={section.buttonTarget === "blank" ? "noreferrer" : undefined} className="inline-flex min-h-11 items-center rounded-xl bg-primary px-6 font-semibold text-primary-foreground">
                     {section.buttonLabel}
                   </a>
                 ) : (
