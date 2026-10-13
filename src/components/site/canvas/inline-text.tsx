@@ -36,12 +36,15 @@ export function InlineText({
 }: Props) {
   const ref = useRef<HTMLElement>(null);
   const [isFocused, setIsFocused] = useState(false);
+  const listType = typography.listType;
 
   useEffect(() => {
-    if (ref.current && ref.current.textContent !== value) {
-      ref.current.textContent = value;
-    }
-  }, [value]);
+    // Native contenteditable lists own their <li> structure. Flattening through
+    // textContent would make Enter continue inside one marker instead of creating
+    // a new list item.
+    if (listType === "bullet" || listType === "number") return;
+    if (ref.current && ref.current.textContent !== value) ref.current.textContent = value;
+  }, [value, listType]);
 
   // Compute typography classes
   const isBold = typography.bold;
@@ -51,7 +54,6 @@ export function InlineText({
   const align = typography.align || "left";
   const fontSize = typography.fontSize;
   const color = typography.color;
-  const listType = typography.listType;
 
   const sizeClass =
     fontSize === "sm"
@@ -88,6 +90,45 @@ export function InlineText({
     }
   }
 
+  function finishEditing(element: HTMLElement) {
+    const text = listType && listType !== "none"
+      ? Array.from(element.querySelectorAll("li")).map((item) => item.textContent || "").join("\n")
+      : element.textContent || "";
+    setTimeout(() => {
+      const wrapper = ref.current?.parentElement?.parentElement;
+      if (!wrapper?.contains(document.activeElement)) setIsFocused(false);
+    }, 0);
+    onChange(text);
+  }
+
+  if (listType === "bullet" || listType === "number") {
+    const ListTag = listType === "bullet" ? "ul" : "ol";
+    const lines = value.split(/\r?\n/).filter(Boolean);
+    return (
+      <div className="relative group/inline-text inline-block w-full">
+        {enableFloatingToolbar && isFocused && onTypographyChange && (
+          <FloatingContextToolbar active value={typography} onChange={onTypographyChange} onInsertEmoji={handleInsertEmoji} tagType={tagType} className="-top-16" />
+        )}
+        <ListTag
+          ref={ref as React.Ref<HTMLUListElement & HTMLOListElement>}
+          contentEditable
+          suppressContentEditableWarning
+          style={combinedStyle}
+          className={cn(
+            "outline-none rounded px-1 cursor-text transition-all space-y-1",
+            listType === "bullet" ? "list-disc pl-6" : "list-decimal pl-6",
+            isFocused ? "ring-2 ring-primary ring-offset-2" : "hover:ring-1 hover:ring-primary/40",
+            sizeClass, alignClass, isBold && "font-bold", isItalic && "italic", isUnderline && "underline", isStrike && "line-through", className,
+          )}
+          onFocus={() => setIsFocused(true)}
+          onBlur={(e) => finishEditing(e.currentTarget)}
+        >
+          {(lines.length ? lines : [""]).map((line, index) => <li key={`${index}-${line}`}>{line}</li>)}
+        </ListTag>
+      </div>
+    );
+  }
+
   return (
     <div className="relative group/inline-text inline-block w-full">
       {enableFloatingToolbar && isFocused && onTypographyChange && (
@@ -101,8 +142,6 @@ export function InlineText({
         />
       )}
       <div className={cn("flex items-start gap-2", align === "center" ? "justify-center" : align === "right" ? "justify-end" : "justify-start")}>
-        {listType === "bullet" && <span className="select-none text-primary font-bold mt-0.5">•</span>}
-        {listType === "number" && <span className="select-none text-muted-foreground font-semibold text-xs mt-1">1.</span>}
         <Tag
           ref={ref as React.Ref<HTMLHeadingElement & HTMLParagraphElement & HTMLSpanElement>}
           contentEditable

@@ -166,8 +166,8 @@ export function FloatingContextToolbar({
     <div
       ref={containerRef}
       onMouseDown={(e) => {
-        // Crucial: prevent active input from losing focus/blur
-        e.preventDefault();
+        // Toolbar buttons keep text focus; form controls need real focus for typing.
+        if (!(e.target instanceof HTMLInputElement) && !(e.target instanceof HTMLSelectElement)) e.preventDefault();
         e.stopPropagation();
       }}
       onClick={(e) => e.stopPropagation()}
