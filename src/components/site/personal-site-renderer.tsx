@@ -180,6 +180,13 @@ function StyledText({ text, typography, className, style }: { text: string; typo
   return <p className={className} style={style}>{linkedLine(text, "text")}</p>;
 }
 
+function LinkedText({ text, typography }: { text: string; typography?: any }) {
+  const selected = typography?.linkText;
+  const index = selected ? text.indexOf(selected) : -1;
+  const href = typography?.linkUrl ? safePublicHref(typography.linkUrl) : "#";
+  return index >= 0 && href !== "#" ? <>{text.slice(0, index)}<a href={href} className="underline" target="_blank" rel="noreferrer">{selected}</a>{text.slice(index + selected.length)}</> : <>{text}</>;
+}
+
 function resolveFieldStyle(section: any, item: any, fieldKey: "titleTypography" | "descTypography" | "priceTypography" | "roleTypography" | "contentTypography" | "buttonTypography", defaultSize: "sm" | "base" | "lg" | "xl" = "base") {
   const field = item[fieldKey] || {};
   const isBold = field.bold !== undefined ? field.bold : (item.bold !== undefined ? item.bold : section.bold);
@@ -244,7 +251,7 @@ function SectionBody({
       const subtitleCls = resolveFieldStyle(section, { ...section, titleTypography: section.subtitleTypography }, "titleTypography", "base");
       const contentCls = resolveFieldStyle(section, { ...section, descTypography: section.contentTypography }, "descTypography", "base");
       const alignedWidth = (align?: string) => align === "center" ? "mx-auto" : align === "right" ? "ml-auto" : "";
-      return <div className="relative z-10 mx-auto max-w-6xl"><p className={`text-xs font-semibold uppercase tracking-[0.2em] sm:text-sm ${subtitleCls}`} style={typographyInlineStyle(section.subtitleTypography)}>{section.subtitle}</p><h1 className={`mt-5 max-w-4xl text-4xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-6xl lg:text-7xl ${alignedWidth(section.titleTypography?.align || section.align)} ${titleCls}`} style={typographyInlineStyle(section.titleTypography)}>{section.heading}</h1>{section.content && <p className={`mt-6 max-w-2xl text-base leading-7 sm:text-xl sm:leading-8 ${alignedWidth(section.contentTypography?.align || section.align)} ${contentCls}`} style={typographyInlineStyle(section.contentTypography)}>{section.content}</p>}{ctaLabel && ctaUrl && !isPlaceholderHref(ctaUrl) && safePublicHref(ctaUrl) !== "#" && <div className={section.titleTypography?.align === "center" || section.align === "center" ? "text-center" : section.titleTypography?.align === "right" || section.align === "right" ? "text-right" : ""}><a className="mt-8 inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-lg" style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }} href={safePublicHref(ctaUrl)}>{ctaLabel}</a></div>}</div>;
+      return <div className="relative z-10 mx-auto max-w-6xl"><p className={`text-xs font-semibold uppercase tracking-[0.2em] sm:text-sm ${subtitleCls}`} style={typographyInlineStyle(section.subtitleTypography)}>{section.subtitle}</p><h1 className={`mt-5 max-w-4xl text-4xl font-bold leading-[1.05] tracking-[-0.02em] sm:text-6xl lg:text-7xl ${alignedWidth(section.titleTypography?.align || section.align)} ${titleCls}`} style={typographyInlineStyle(section.titleTypography)}><LinkedText text={section.heading} typography={section.titleTypography} /></h1>{section.content && <p className={`mt-6 max-w-2xl text-base leading-7 sm:text-xl sm:leading-8 ${alignedWidth(section.contentTypography?.align || section.align)} ${contentCls}`} style={typographyInlineStyle(section.contentTypography)}>{section.content}</p>}{ctaLabel && ctaUrl && !isPlaceholderHref(ctaUrl) && safePublicHref(ctaUrl) !== "#" && <div className={section.titleTypography?.align === "center" || section.align === "center" ? "text-center" : section.titleTypography?.align === "right" || section.align === "right" ? "text-right" : ""}><a className="mt-8 inline-flex min-h-11 items-center justify-center px-6 py-3 text-sm font-semibold shadow-lg" style={{ backgroundColor: accent, color: accentForeground(accent), borderRadius: buttonRadius }} href={safePublicHref(ctaUrl)}>{ctaLabel}</a></div>}</div>;
     }
     case "about": {
       const contentCls = resolveFieldStyle(section, { ...section, descTypography: section.contentTypography }, "descTypography", "base");
