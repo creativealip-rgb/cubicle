@@ -131,7 +131,7 @@ describe("desktop section delete safety", () => {
     renderEditor(makeSite(full));
     toastError.mockClear();
 
-    await userEvent.click(screen.getAllByRole("button", { name: /^Add Section$/i })[0]);
+    await userEvent.click(screen.getAllByRole("button", { name: /^Text$/i })[0]);
 
     expect(toastError).toHaveBeenCalledTimes(1);
     expect(String(toastError.mock.calls[0][0])).toContain(String(MAX_SECTIONS));

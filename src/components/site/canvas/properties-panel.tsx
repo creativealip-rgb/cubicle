@@ -666,10 +666,6 @@ function CtaEditor({ section, onUpdate }: EditorProps<Extract<PersonalSiteSectio
     <div className="space-y-3">
       <Label className="text-xs font-medium uppercase text-muted-foreground">{t("Ajakan bertindak", "Call to action")}</Label>
       <div className="space-y-1">
-        <Label className="text-xs text-muted-foreground">{t("Judul", "Heading")}</Label>
-        <Input value={section.heading} maxLength={200} onChange={(e) => onUpdate({ heading: e.target.value })} className="h-8 text-sm" placeholder={t("Siap memulai proyek?", "Ready to start a project?")} />
-      </div>
-      <div className="space-y-1">
         <Label className="text-xs text-muted-foreground">{t("Teks", "Text")}</Label>
         <Textarea
           value={section.text}

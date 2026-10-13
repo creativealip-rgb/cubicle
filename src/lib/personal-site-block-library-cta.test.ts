@@ -15,7 +15,8 @@ describe("personal site block library and CTA", () => {
   it("exposes complete CTA fields and link target", () => {
     const properties = readFileSync("src/components/site/canvas/properties-panel.tsx", "utf8");
     const renderer = readFileSync("src/components/site/personal-site-renderer.tsx", "utf8");
-    for (const field of ["section.heading", "section.text", "section.buttonLabel", "section.buttonUrl", "section.buttonTarget"]) expect(properties).toContain(field);
+    for (const field of ["section.text", "section.buttonLabel", "section.buttonUrl", "section.buttonTarget"]) expect(properties).toContain(field);
     expect(renderer).toContain('section.buttonTarget === "blank"');
+    expect(readFileSync("src/components/site/canvas/canvas-renderer.tsx", "utf8")).toContain("value={section.heading}");
   });
 });
