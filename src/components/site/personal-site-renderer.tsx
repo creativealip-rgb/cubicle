@@ -597,7 +597,7 @@ export function PersonalSiteRenderer({
               <div className="relative mx-auto max-w-6xl">
                 {!hideDefaultHeading && section.heading && (
                   <h2 className={secHeadingStyle.className} style={secHeadingStyle.style}>
-                    <LinkedText text={section.heading} typography={(section as any).titleTypography} />
+                    <LinkedText text={section.heading} typography={(section as any).titleTypography || section} />
                   </h2>
                 )}
                 <SectionBody

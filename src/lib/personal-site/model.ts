@@ -49,6 +49,8 @@ export const sectionTypographySchema = {
   italic: z.boolean().optional(),
   underline: z.boolean().optional(),
   strikethrough: z.boolean().optional(),
+  linkUrl: z.string().max(500).optional(),
+  linkText: z.string().max(500).optional(),
 };
 export const PERSONAL_SITE_ANIMATIONS = ["none", "fade-up", "fade-in", "slide-left", "slide-right", "zoom-in", "bounce"] as const;
 const animationSchema = z.enum(PERSONAL_SITE_ANIMATIONS).optional();

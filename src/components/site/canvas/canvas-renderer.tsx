@@ -317,7 +317,7 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
     case "about":
       return (
         <div className="py-6">
-          <InlineText value={section.heading} onChange={(heading) => onUpdate({ heading })} typography={{ fontFamily: section.fontFamily, fontSize: section.fontSize || "xl", align: section.align, bold: section.bold ?? true, italic: section.italic, underline: section.underline, strikethrough: section.strikethrough }} onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)} tag="h2" tagType="heading" className="mb-3" />
+          <InlineText value={section.heading} onChange={(heading) => onUpdate({ heading })} typography={{ fontFamily: section.fontFamily, fontSize: section.fontSize || "xl", align: section.align, bold: section.bold ?? true, italic: section.italic, underline: section.underline, strikethrough: section.strikethrough, linkUrl: section.linkUrl, linkText: section.linkText }} onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)} tag="h2" tagType="heading" className="mb-3" />
           <InlineText value={isEditorialPlaceholderText(section.content) ? "" : section.content} onChange={(content) => onUpdate({ content })} typography={section.contentTypography} onTypographyChange={(patch) => onUpdate({ contentTypography: { ...section.contentTypography, ...patch } })} tag="p" tagType="body" className="leading-relaxed text-muted-foreground" placeholder={t("Tentang kamu...", "About you...")} />
         </div>
       );
@@ -336,6 +336,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
               italic: section.italic,
               underline: section.underline,
               strikethrough: section.strikethrough,
+              linkUrl: section.linkUrl,
+              linkText: section.linkText,
             }}
             onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
             tag="h2"
@@ -392,6 +394,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
               italic: section.italic,
               underline: section.underline,
               strikethrough: section.strikethrough,
+              linkUrl: section.linkUrl,
+              linkText: section.linkText,
             }}
             onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
             tag="h2"
@@ -451,6 +455,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
               italic: section.italic,
               underline: section.underline,
               strikethrough: section.strikethrough,
+              linkUrl: section.linkUrl,
+              linkText: section.linkText,
             }}
             onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
             tag="h2"
@@ -516,6 +522,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
               italic: section.italic,
               underline: section.underline,
               strikethrough: section.strikethrough,
+              linkUrl: section.linkUrl,
+              linkText: section.linkText,
             }}
             onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
             tag="h2"
@@ -572,6 +580,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
               italic: section.italic,
               underline: section.underline,
               strikethrough: section.strikethrough,
+              linkUrl: section.linkUrl,
+              linkText: section.linkText,
             }}
             onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
             tag="h2"
@@ -644,6 +654,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
               italic: section.italic,
               underline: section.underline,
               strikethrough: section.strikethrough,
+              linkUrl: section.linkUrl,
+              linkText: section.linkText,
             }}
             onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
             tag="h2"
@@ -700,6 +712,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
               italic: section.italic,
               underline: section.underline,
               strikethrough: section.strikethrough,
+              linkUrl: section.linkUrl,
+              linkText: section.linkText,
             }}
             onTypographyChange={(patch) => onUpdate(patch as Partial<PersonalSiteSection>)}
             tag="h2"
