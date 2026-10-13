@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Plus, ChevronDown, ChevronUp, GripVertical, Copy, Trash2, Image as ImageIcon, Calendar } from "lucide-react";
+import { ChevronDown, ChevronUp, GripVertical, Copy, Trash2, Image as ImageIcon, Calendar } from "lucide-react";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
