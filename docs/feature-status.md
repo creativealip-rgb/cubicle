@@ -8,11 +8,11 @@
 - Isolation: personal storage remains user-scoped; business reports, exports, dashboard, AI, recurring, and activity consumers remain workspace-scoped.
 - Migration: `0087_personal_productivity_contract.sql`, after mandatory-MFA migrations `0083`–`0086`.
 
-Last updated: 2026-08-05
+Last updated: 2026-10-14
 Production app: https://app.cubiqlo.com
 Dev app: https://dev.cubiqlo.com
-Latest verified dev branch: `main` at `fea68df`
-Latest verified production commit: `fea68df`
+Latest verified dev branch: `main` at `a142f7c8`
+Latest verified production commit: `a142f7c8`
 
 ## Status legend
 
@@ -26,11 +26,11 @@ Latest verified production commit: `fea68df`
 | Area | Status | Notes |
 | --- | --- | --- |
 | Production domain | DONE | `https://app.cubiqlo.com` live over HTTPS; apex keeps public/redirect behavior. |
-| Docker deploy | DONE | Production uses `cubiqlo-new-app` on `dokploy-network`; current image `cubicle:latest` at `c0f6bbc`. |
+| Docker deploy | DONE | Production uses blue-green `cubiqlo-new-app-next*` services on `dokploy-network`; verified image `cubicle:sha-a142f7c8766a768a5ad9a489f2a47dfd58267bf5`. |
 | Database | DONE | Postgres container healthy; all 21 personal_sites columns present including `seo`, `pages`, `theme_config`, `hero_image`. |
 | Health endpoint | DONE | `/api/health` returns `{"status":"ok","db":"ok"}`. |
 | Protected app routing | DONE | `/app/*` redirects unauthenticated users to `/login?redirect=...`. |
-| Git checkpoint | DONE | Production `main` verified at `c0f6bbc fix(site): use normalizeStoredPersonalSite`; `HEAD` and `origin/main` match. |
+| Git checkpoint | DONE | Production feature release verified at `a142f7c8`; documentation follow-up records the release and keeps `HEAD`/`origin/main` synchronized. |
 | Dev integration checkpoint | DONE | `dev.cubiqlo.com` runs latest `main`; production container in sync. |
 
 ## Core app shell

@@ -1,3 +1,16 @@
+## 2026-10-14 — Branding, landing proof, contract status, AI model, and renderer fixes
+
+- Replaced Cubiqlo horizontal, square, favicon, PWA, Apple touch, SVG compatibility, and Open Graph brand assets with the new `cubiqlo.com` identity.
+- Refreshed landing Dashboard, Tasks, and Client Portal product screenshots from authenticated production surfaces; reorganized footer navigation, legal row, and tagline.
+- Fixed contract editor status wiring so signed/declined documents show their real state and cannot submit editable settings.
+- Pinned production AI traffic to `ds/deepseek-v4-flash` through 9Router and made `AI_MODEL` deployment-controlled from canonical production config.
+- Restored the canonical portal-password encryption secret during blue-green deployment and fail closed when required runtime secrets/settings are unavailable.
+- Completed Personal Site selected-text link persistence/rendering across Hero, lists, legacy headings, and public section renderers.
+- Saved the held Prompt Studio consistency plan at `.hermes/plans/2026-10-14_004203-prompt-studio-consistency.md`; no Prompt Studio implementation started.
+- Production release: `cubicle:sha-a142f7c8766a768a5ad9a489f2a47dfd58267bf5`; health and DB returned `ok`.
+
+Evidence: `docs/operations/evidence/landing-brand-and-runtime-release-2026-10-14.md`.
+
 ## 2026-09-19 — Production E2E core batch
 
 - Created and verified the `testing@cubiqlo.com` QA app credential/session for production Playwright runs.

@@ -1,5 +1,24 @@
 # Deployment Log
 
+## 14 October 2026 — Brand refresh, live product proof, and runtime hardening
+
+- Source: `main` `a142f7c8` (release chain: `3a899a91`, `d1310a2e`, `806b0d5a`, `1aff1a96`, `a142f7c8`).
+- Scope:
+  - New `cubiqlo.com` logo applied to app/landing/auth/sidebar, favicon/PWA/Apple icons, email-facing aliases, and Open Graph image.
+  - Dashboard, Tasks, and Client Portal landing screenshots recaptured from production after authentication; footer reorganized into brand, navigation, legal, and tagline rows.
+  - Contract editor now receives real contract status, renders `SIGNED`/`DECLINED`, and disables settings save for final documents.
+  - Runtime `AI_MODEL=ds/deepseek-v4-flash`; canonical AI model and portal encryption secret survive blue-green recreation.
+  - Personal Site selected-text links persist and render on live Hero, legacy headings, lists, and section fields.
+- Release gate: focused regressions, TypeScript, full release build, and `git diff --check` passed. One unrelated timing-sensitive test passed on isolated rerun before the successful full build.
+- Production deployment:
+  - Image tag: `cubicle:sha-a142f7c8766a768a5ad9a489f2a47dfd58267bf5`.
+  - Active service: `cubiqlo-new-app-next-green`; previous image `cubicle:sha-1aff1a96620772eeb0a2ffcfd62f7650244727d7` retained for rollback at deployment time.
+  - Health: `https://app.cubiqlo.com/api/health` returned app/DB `ok`.
+  - Landing proof: all three refreshed screenshot assets loaded at `835×528`; footer text and navigation verified in a fresh production browser.
+  - Proxy safety: `dokploy-traefik` remained sole public 80/443 owner.
+- Migration: none.
+- Evidence: `docs/operations/evidence/landing-brand-and-runtime-release-2026-10-14.md`.
+
 ## 29 August 2026 — Dashboard approvals and first-workspace setup
 
 - Source: `main` `23f17d7` (feature chain: `fce8eb8`, `488ffa2`, `23f17d7`).
