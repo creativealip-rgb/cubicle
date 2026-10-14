@@ -11,7 +11,7 @@ import { SendQuestionnaireButton } from "@/components/questionnaires/send-questi
 import { QuestionnaireResponsesTable } from "@/components/questionnaires/questionnaire-responses-table";
 import { DeleteQuestionnaireButton } from "@/components/questionnaires/delete-questionnaire-button";
 import Link from "next/link";
-import { ArrowLeft, Edit, ExternalLink, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, Edit, ExternalLink, MoreHorizontal, Send, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -130,21 +130,21 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
                     <MoreHorizontal className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem asChild>
+                <DropdownMenuContent align="end" className="w-48 rounded-xl shadow-lg">
+                <DropdownMenuItem asChild className="text-xs font-medium">
                     <SendQuestionnaireButton
                       questionnaireId={q.id}
                       name={q.name}
                       clients={clientsList}
                       projects={projectsList}
-                      trigger={<span className="flex w-full cursor-pointer items-center">{t("Kirim ke klien", "Send to client")}</span>}
+                      trigger={<span className="flex w-full cursor-pointer items-center gap-2"><Send className="h-3.5 w-3.5 text-muted-foreground" />{t("Kirim ke klien", "Send to client")}</span>}
                     />
                   </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
+                  <DropdownMenuItem asChild className="text-xs font-medium text-destructive focus:text-destructive">
                     <DeleteQuestionnaireButton
                       questionnaireId={q.id}
                       redirectTo="/app/questionnaires"
-                      trigger={<span className="flex w-full cursor-pointer text-destructive">{t("Hapus", "Delete")}</span>}
+                      trigger={<span className="flex w-full cursor-pointer items-center gap-2"><Trash2 className="h-3.5 w-3.5" />{t("Hapus", "Delete")}</span>}
                     />
                   </DropdownMenuItem>
                 </DropdownMenuContent>
