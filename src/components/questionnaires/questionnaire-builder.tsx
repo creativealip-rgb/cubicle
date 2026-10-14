@@ -305,14 +305,6 @@ const ELEMENT_CATALOG: ElementDefinition[] = [
     category: "structure",
     defaultConfig: { label: "Divider", colSpan: "full" },
   },
-  {
-    type: "logo",
-    label: "Brand Logo",
-    description: "Workspace brand mark at the top of the form",
-    icon: ImageIcon,
-    category: "structure",
-    defaultConfig: { label: "Brand Logo", align: "center", logoSize: "md", colSpan: "full" },
-  },
 ];
 
 const FORM_TEMPLATES = [
