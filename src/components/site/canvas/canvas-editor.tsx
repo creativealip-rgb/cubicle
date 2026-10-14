@@ -1250,9 +1250,9 @@ function DraggableWidgetButton({ widget, onClick }: { widget: (typeof WIDGET_LIS
   return (
     <button ref={setNodeRef} type="button" {...listeners} {...attributes} onClick={onClick}
       style={transform ? { transform: `translate3d(${transform.x}px, ${transform.y}px, 0)`, opacity: isDragging ? 0.5 : 1 } : undefined}
-      className="flex flex-col items-center gap-1 rounded-lg border p-2 text-xs hover:bg-muted transition-colors cursor-grab active:cursor-grabbing">
-      <widget.icon className="h-4 w-4 text-muted-foreground" />
-      {t(widget.label, WIDGET_EN_LABELS[widget.label] ?? widget.label)}
+      className="flex min-h-10 items-center gap-2 rounded-lg border border-border/70 bg-background p-2.5 text-left text-xs font-medium text-foreground hover:bg-muted/60 transition-colors cursor-grab active:cursor-grabbing">
+      <widget.icon className="h-4 w-4 shrink-0 text-muted-foreground" />
+      <span className="truncate">{t(widget.label, WIDGET_EN_LABELS[widget.label] ?? widget.label)}</span>
     </button>
   );
 }
