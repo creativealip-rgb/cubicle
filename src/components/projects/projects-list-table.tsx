@@ -204,10 +204,11 @@ export function ProjectsListTable({
           <span className="text-[11px] uppercase tracking-wider font-semibold text-muted-foreground">{t("Status", "Status")}</span>
         </div>
         <div className="col-span-2">
-          <TableHeaderFilter label={t("Progres", "Progress")} queryKey="billingType" value={billingType} basePath="/app/projects" options={[
-            { value: "all", label: t("Semua jenis", "All types") }, { value: "fixed_price", label: "Fixed Price" },
-            { value: "hourly", label: t("Per Jam", "Hourly") }, { value: "retainer", label: "Retainer" }, { value: "package", label: t("Paket", "Package") },
-          ]} className="text-[11px] uppercase tracking-wider" />
+          <TableHeaderFilter label={t("Jenis", "Type")} queryKey="billingType" value={billingType} basePath="/app/projects" options={[
+                       { value: "all", label: t("Semua jenis", "All types") },
+                       { value: "fixed_price", label: t("Harga Tetap", "Fixed Price") },
+                       { value: "hourly", label: t("Per Jam", "Hourly") },
+                     ]} className="text-[11px] uppercase tracking-wider" />
         </div>
         <div className="col-span-2">
           <SortableHeader
