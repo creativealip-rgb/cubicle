@@ -467,9 +467,16 @@ export function IntakeForm({
               {f.type === "url" && (
                 <Input
                   id={`field-${f.id}`}
-                  type="url"
+                  type="text"
+                  inputMode="url"
                   value={answers[f.id] || ""}
                   onChange={(e) => setFieldValue(f.id, e.target.value)}
+                  onBlur={(e) => {
+                    const value = e.target.value.trim();
+                    if (value && !/^https?:\/\//i.test(value)) {
+                      setFieldValue(f.id, `https://${value}`);
+                    }
+                  }}
                   placeholder={f.placeholder || "https://..."}
                   className="h-10 text-xs sm:text-sm bg-background"
                 />
