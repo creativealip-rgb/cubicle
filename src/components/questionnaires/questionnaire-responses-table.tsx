@@ -16,7 +16,6 @@ import {
 import { useT } from "@/lib/i18n-client";
 import {
   Search,
-  Download,
   Table as TableIcon,
   LayoutList,
   Eye,
@@ -25,9 +24,9 @@ import {
   Mail,
   ExternalLink,
   X,
-  Printer,
-  FileSpreadsheet,
+
   Folder,
+  FileSpreadsheet,
 } from "lucide-react";
 import type { QuestionnaireField } from "@/lib/questionnaire-schema";
 
@@ -48,11 +47,9 @@ export type QuestionnaireResponseItem = {
 export function QuestionnaireResponsesTable({
   responses,
   fields,
-  formName,
 }: {
   responses: QuestionnaireResponseItem[];
   fields: QuestionnaireField[];
-  formName: string;
 }) {
   const { t } = useT();
   const [searchTerm, setSearchTerm] = useState("");
@@ -72,52 +69,6 @@ export function QuestionnaireResponsesTable({
     });
   }, [responses, searchTerm]);
 
-  // CSV Export Function
-  function handleExportCsv() {
-    if (responses.length === 0) return;
-
-    // Header columns: Metadata + Each Field Label
-    const headers = [
-      "Respondent Name",
-      "Respondent Email",
-      "Client",
-      "Project",
-      "Status",
-      "Submitted At",
-      ...fields.map((f) => `"${f.label.replace(/"/g, '""')}"`),
-    ];
-
-    const rows = responses.map((r) => {
-      const answers = (r.answers as Record<string, unknown>) || {};
-      const dateStr = r.submittedAt ? new Date(r.submittedAt).toISOString() : "";
-      
-      const fieldValues = fields.map((f) => {
-        const val = answers[f.id];
-        if (val === undefined || val === null) return '""';
-        if (Array.isArray(val)) return `"${val.join("; ").replace(/"/g, '""')}"`;
-        return `"${String(val).replace(/"/g, '""')}"`;
-      });
-
-      return [
-        `"${(r.respondentName || "").replace(/"/g, '""')}"`,
-        `"${(r.respondentEmail || "").replace(/"/g, '""')}"`,
-        `"${(r.clientName || "").replace(/"/g, '""')}"`,
-        `"${(r.projectName || "").replace(/"/g, '""')}"`,
-        `"${r.status}"`,
-        `"${dateStr}"`,
-        ...fieldValues,
-      ].join(",");
-    });
-
-    const csvContent = "data:text/csv;charset=utf-8,\uFEFF" + [headers.join(","), ...rows].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `${formName.toLowerCase().replace(/\s+/g, "-")}-responses.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  }
 
   return (
     <div className="space-y-4">
@@ -158,34 +109,7 @@ export function QuestionnaireResponsesTable({
             </button>
           </div>
 
-          {/* Export CSV & Print PDF Buttons */}
-          <div className="flex items-center gap-1.5">
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() => {
-                if (typeof window !== "undefined") window.print();
-              }}
-              disabled={responses.length === 0}
-              className="h-8.5 gap-1.5 text-xs font-medium"
-              title={t("Cetak atau Simpan PDF Laporan", "Print or Save PDF Report")}
-            >
-              <Printer className="h-3.5 w-3.5" />
-              <span>{t("Cetak / PDF", "Print / PDF")}</span>
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={handleExportCsv}
-              disabled={responses.length === 0}
-              className="h-8.5 gap-1.5 text-xs font-medium"
-            >
-              <Download className="h-3.5 w-3.5" />
-              <span>Export CSV</span>
-            </Button>
-          </div>
+
         </div>
       </div>
 

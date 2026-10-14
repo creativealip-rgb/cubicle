@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, type ReactNode } from "react";
 import { useAppTransition } from "@/lib/transition-provider";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,12 +28,14 @@ export function SendQuestionnaireButton({
   name,
   clients,
   projects,
+  trigger,
 }: {
   questionnaireId: string;
   /** Questionnaire name — used to build the email subject shown in the confirm dialog. */
   name?: string;
   clients: { id: string; name: string; email?: string | null }[];
   projects: { id: string; name: string }[];
+  trigger?: ReactNode;
 }) {
   const { refresh } = useAppTransition();
   const { t } = useT();
@@ -112,10 +114,12 @@ export function SendQuestionnaireButton({
 
   return (
     <>
-      <Button onClick={() => setOpen(true)}>
-        <Send className="h-4 w-4" />
-        {t("Kirim ke klien", "Send to client")}
-      </Button>
+      {trigger ? <span role="button" tabIndex={0} onClick={() => setOpen(true)}>{trigger}</span> : (
+        <Button onClick={() => setOpen(true)}>
+          <Send className="h-4 w-4" />
+          {t("Kirim ke klien", "Send to client")}
+        </Button>
+      )}
 
       <Dialog
         open={open}

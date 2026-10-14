@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useAppTransition } from "@/lib/transition-provider";
 import { toast } from "sonner";
@@ -17,12 +17,14 @@ export function DeleteQuestionnaireButton({
   variant = "outline",
   size = "sm",
   className,
+  trigger,
 }: {
   questionnaireId: string;
   redirectTo?: string;
   variant?: "outline" | "ghost" | "destructive";
   size?: "default" | "sm" | "lg" | "icon";
   className?: string;
+  trigger?: ReactNode;
 }) {
   const { t } = useT();
   const router = useRouter();
@@ -48,7 +50,7 @@ export function DeleteQuestionnaireButton({
 
   return (
     <>
-      <Button
+      {trigger ? <span role="button" tabIndex={0} onClick={() => setOpen(true)}>{trigger}</span> : <Button
         type="button"
         variant={variant}
         size={size}
@@ -57,7 +59,7 @@ export function DeleteQuestionnaireButton({
       >
         <Trash2 className="h-3.5 w-3.5" />
         {size !== "icon" && <span>{t("Hapus", "Delete")}</span>}
-      </Button>
+      </Button>}
       <Dialog open={open} onOpenChange={(next) => !loading && setOpen(next)}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>

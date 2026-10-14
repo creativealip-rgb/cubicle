@@ -11,7 +11,13 @@ import { SendQuestionnaireButton } from "@/components/questionnaires/send-questi
 import { QuestionnaireResponsesTable } from "@/components/questionnaires/questionnaire-responses-table";
 import { DeleteQuestionnaireButton } from "@/components/questionnaires/delete-questionnaire-button";
 import Link from "next/link";
-import { ArrowLeft, Edit, ExternalLink } from "lucide-react";
+import { ArrowLeft, Edit, ExternalLink, MoreHorizontal } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { notFound } from "next/navigation";
 import { getCurrentLang, createT } from "@/lib/i18n";
 
@@ -118,19 +124,31 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
                   <span>Edit Builder</span>
                 </Link>
               </Button>
-              <SendQuestionnaireButton
-                questionnaireId={q.id}
-                name={q.name}
-                clients={clientsList}
-                projects={projectsList}
-              />
-              <DeleteQuestionnaireButton
-                questionnaireId={q.id}
-                redirectTo="/app/questionnaires"
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-destructive"
-              />
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="icon" className="h-8 w-8" aria-label={t("Aksi lainnya", "More actions")}>
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem asChild>
+                    <SendQuestionnaireButton
+                      questionnaireId={q.id}
+                      name={q.name}
+                      clients={clientsList}
+                      projects={projectsList}
+                      trigger={<span className="flex w-full cursor-pointer items-center">{t("Kirim ke klien", "Send to client")}</span>}
+                    />
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <DeleteQuestionnaireButton
+                      questionnaireId={q.id}
+                      redirectTo="/app/questionnaires"
+                      trigger={<span className="flex w-full cursor-pointer text-destructive">{t("Hapus", "Delete")}</span>}
+                    />
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </>
           )}
         </div>
@@ -141,7 +159,6 @@ export default async function QuestionnaireDetailPage({ params }: { params: Prom
         <QuestionnaireResponsesTable
           responses={responses}
           fields={fields}
-          formName={q.name}
         />
       </div>
     </div>
