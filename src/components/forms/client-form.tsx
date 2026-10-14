@@ -148,6 +148,10 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
       toast.error(t("Nama klien wajib diisi", "Client name is required"));
       return;
     }
+    if (form.portalEnabled && !hasPassword && portalPassword.trim().length < 8) {
+      toast.error(t("Buat password portal minimal 8 karakter terlebih dahulu", "Create a portal password of at least 8 characters first"));
+      return;
+    }
     setLoading(true);
     try {
       const data = {
@@ -239,6 +243,16 @@ export function ClientForm({ mode, defaultValues, onSuccess, redirectTo, stayOnP
     if (!defaultValues?.id) return;
     setRestoringPortal(true);
     try {
+      if (!hasPassword && portalPassword.trim().length < 8) {
+        toast.error(t("Buat password portal minimal 8 karakter terlebih dahulu", "Create a portal password of at least 8 characters first"));
+        return;
+      }
+      if (!hasPassword) {
+        await setClientPortalPassword(defaultValues.id, portalPassword.trim());
+        setHasPassword(true);
+        setPortalPassword("");
+        setShowChangePassword(false);
+      }
       await restorePortalAccess(defaultValues.id);
       set("portalEnabled", true);
       toast.success(t("Akses Client Portal berhasil diaktifkan kembali", "Client Portal access restored successfully"));

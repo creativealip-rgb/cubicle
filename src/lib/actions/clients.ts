@@ -131,13 +131,10 @@ async function insertClient(workspaceId: string, userId: string, input: z.infer<
   const plan = await getUserPlan(userId);
   const isPaid = plan === "solo" || plan === "team";
 
-  // Free plan gets auto random alphanumeric slug and cannot customize slug
+  // Portal access always needs a usable URL. Paid plans may customize it; blank means random.
   let portalSlugToSave = parsed.portalSlug || null;
-  if (!isPaid) {
-    if (!portalSlugToSave) {
-      portalSlugToSave = `client-${randomBytes(4).toString("hex")}`;
-    }
-  }
+  if (!portalSlugToSave) portalSlugToSave = `client-${randomBytes(4).toString("hex")}`;
+  if (!isPaid && parsed.portalSlug) portalSlugToSave = `client-${randomBytes(4).toString("hex")}`;
 
   try {
     const [client] = await db.insert(clients).values({
@@ -451,6 +448,9 @@ export async function restorePortalAccess(clientId: string) {
   await assertClientInWorkspace(db, user.id, workspaceId, clientId);
   await assertCanUseClientPortal(workspaceId);
 
+  const [current] = await db.select({ portalSlug: clients.portalSlug }).from(clients)
+    .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)));
+  const portalSlug = current?.portalSlug || `client-${randomBytes(4).toString("hex")}`;
   const rawToken = randomBytes(32).toString("hex");
   const tokenHash = createHash("sha256").update(rawToken).digest("hex");
   const expiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 90); // 90 days
@@ -503,7 +503,7 @@ export async function setClientPortalPassword(clientId: string, password: string
   const value = z.string().min(8, "Password minimal 8 karakter").max(128).parse(password);
   const [current] = await db.select({ slug: clients.portalSlug }).from(clients)
     .where(and(eq(clients.id, clientId), eq(clients.workspaceId, workspaceId)));
-  const slug = current?.slug || `client-${clientId.slice(0, 8)}`;
+  const slug = current?.slug || `client-${randomBytes(4).toString("hex")}`
   const key = process.env.PORTAL_PASSWORD_ENCRYPTION_KEY;
   if (!key) throw new Error("PORTAL_PASSWORD_ENCRYPTION_KEY belum dikonfigurasi");
   const encrypted = encryptPortalPassword(value, key);
