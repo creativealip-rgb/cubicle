@@ -19,6 +19,8 @@ import {
 type TemplateEditorProps = {
   kind: "proposal" | "contract";
   workspaceId: string;
+  workspaceName?: string;
+  workspaceLogoUrl?: string | null;
   template: {
     id: string;
     name: string;
@@ -52,6 +54,8 @@ const sampleValidUntil = () => new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
 export async function TemplateBlocksEditor({
   kind,
   workspaceId,
+  workspaceName,
+  workspaceLogoUrl,
   template,
 }: TemplateEditorProps) {
   const blocks = normalizeDocumentBlocks(template.contentBlocks, kind);
@@ -143,6 +147,9 @@ export async function TemplateBlocksEditor({
       <DocumentBlockEditor
         kind={kind}
         workspaceId={workspaceId}
+        workspaceName={workspaceName || SAMPLE_WORKSPACE}
+        workspaceLogoUrl={workspaceLogoUrl}
+        backHref={`/app/templates?tab=${backTab}`}
         initialBlocks={blocks.length ? blocks : defaultDocumentBlocks(kind)}
         saveBlocks={saveBlocks}
         proposalMeta={proposalMeta}
