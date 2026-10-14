@@ -20,7 +20,6 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { SendProposalButton } from "@/components/proposals/send-proposal-button";
-import { updateProposal } from "@/lib/actions/proposals";
 import { DeleteProposalButton } from "@/components/proposals/delete-proposal-button";
 import { ArrowLeft, Eye, FileText } from "lucide-react";
 import { formatMoney } from "@/lib/utils";
@@ -88,10 +87,6 @@ export default async function ProposalDetailPage({
     .limit(1);
   if (!p) notFound();
 
-  async function saveDetails(input: Record<string, unknown>) {
-    "use server";
-    return updateProposal(p.id, input);
-  }
 
   const items = (
     (p.lineItems as Array<{

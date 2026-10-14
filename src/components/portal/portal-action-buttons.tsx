@@ -47,7 +47,7 @@ export function PortalActionButtons({
   const [preferredDate, setPreferredDate] = useState("");
   const [preferredTime, setPreferredTime] = useState("");
   const [durationMinutes, setDurationMinutes] = useState("60");
-  const [timezone, setTimezone] = useState(
+  const [timezone, _setTimezone] = useState(
     () => Intl.DateTimeFormat().resolvedOptions().timeZone || "Asia/Jakarta",
   );
 

@@ -67,7 +67,7 @@ export default async function GoalDetail({
     "use server";
     await deletePersonalGoalStep(String(fd.get("stepId")));
   }
-  async function remove(fd: FormData) {
+  async function _remove(fd: FormData) {
     "use server";
     await hardDeletePersonalGoal(goalId, String(fd.get("confirmation")));
     redirect("/app/productivity?tab=goals");

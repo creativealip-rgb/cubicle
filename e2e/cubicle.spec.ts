@@ -1,5 +1,9 @@
 import { test, expect } from "@playwright/test"
 
+const e2eEmail = process.env.E2E_EMAIL;
+const e2ePassword = process.env.E2E_PASSWORD;
+if (!e2eEmail || !e2ePassword) throw new Error("E2E_EMAIL and E2E_PASSWORD are required");
+
 test.describe("Cubicle E2E", () => {
   test.describe("Public routes", () => {
     test("landing page loads", async ({ page }) => {
@@ -30,8 +34,8 @@ test.describe("Cubicle E2E", () => {
   test.describe("Auth flow", () => {
     test("login with valid credentials", async ({ page }) => {
       await page.goto("/login")
-      await page.fill("input[type=email]", "owner@cubicle.test")
-      await page.fill("input[type=password]", "password123")
+      await page.fill("input[type=email]", e2eEmail)
+      await page.fill("input[type=password]", e2ePassword)
       await page.click("button[type=submit]")
       await page.waitForURL("**/app/**", { timeout: 10000 })
       await expect(page).toHaveURL(/\/app\/dashboard/)
@@ -39,8 +43,8 @@ test.describe("Cubicle E2E", () => {
 
     test("login with invalid credentials shows error", async ({ page }) => {
       await page.goto("/login")
-      await page.fill("input[type=email]", "owner@cubicle.test")
-      await page.fill("input[type=password]", "wrongpassword")
+      await page.fill("input[type=email]", e2eEmail)
+      await page.fill("input[type=password]", "definitely-wrong-password")
       await page.click("button[type=submit]")
       // Should stay on login or show error
       await page.waitForTimeout(3000)
@@ -56,14 +60,7 @@ test.describe("Cubicle E2E", () => {
   })
 
   test.describe("Authenticated app", () => {
-    test.beforeEach(async ({ page }) => {
-      // Login before each test
-      await page.goto("/login")
-      await page.fill("input[type=email]", "owner@cubicle.test")
-      await page.fill("input[type=password]", "password123")
-      await page.click("button[type=submit]")
-      await page.waitForURL("**/app/**", { timeout: 10000 })
-    })
+    test.use({ storageState: ".auth/user.json" });
 
     test("dashboard loads with KPIs", async ({ page }) => {
       await page.goto("/app/dashboard")
@@ -77,12 +74,12 @@ test.describe("Cubicle E2E", () => {
 
     test("invoices page loads", async ({ page }) => {
       await page.goto("/app/invoices")
-      await expect(page.getByRole("heading", { name: /Invoice|Invoices/i })).toBeVisible({ timeout: 10000 })
+      await expect(page.getByRole("heading", { name: "Invoices", exact: true })).toBeVisible({ timeout: 10000 })
     })
 
     test("brain page loads", async ({ page }) => {
       await page.goto("/app/brain")
-      await expect(page.locator('h2:has-text("How can I help")').first()).toBeVisible({ timeout: 10000 })
+      await expect(page.getByRole("heading", { name: /What would you like to check today\?/i, level: 2 })).toBeVisible({ timeout: 10000 })
     })
 
     test("settings page loads", async ({ page }) => {

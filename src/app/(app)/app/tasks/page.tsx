@@ -129,7 +129,7 @@ export default async function TasksPage({
   const itemRows = await db.select().from(taskTemplateItems).where(eq(taskTemplateItems.workspaceId, workspaceId));
   const templates = templateRows.map((template) => ({ ...template, items: itemRows.filter((item) => item.templateId === template.id) }));
 
-  const tags = await db.select().from(timerTags).where(eq(timerTags.workspaceId, workspaceId)).orderBy(asc(timerTags.name));
+  const _tags = await db.select().from(timerTags).where(eq(timerTags.workspaceId, workspaceId)).orderBy(asc(timerTags.name));
 
   return (
     <div className="min-w-0 space-y-6">

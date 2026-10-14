@@ -72,7 +72,7 @@ export default async function ContractsPage({
     .orderBy(desc(contracts.createdAt))
     .limit(100);
 
-  const clientsList = await db
+  const _clientsList = await db
     .select({
       id: clients.id,
       name: clients.name,
@@ -82,13 +82,13 @@ export default async function ContractsPage({
     .from(clients)
     .where(and(eq(clients.workspaceId, workspaceId), eq(clients.status, "active")))
     .orderBy(clients.name);
-  const templateRows = await db
+  const _templateRows = await db
     .select()
     .from(contractTemplates)
     .where(eq(contractTemplates.workspaceId, workspaceId))
     .orderBy(desc(contractTemplates.isDefault), desc(contractTemplates.updatedAt))
     .limit(100);
-  const proposedContractNumber = canWrite ? await getProposedContractNumber(workspaceId) : "";
+  const _proposedContractNumber = canWrite ? await getProposedContractNumber(workspaceId) : "";
 
   const countRows = await db
     .select({

@@ -338,8 +338,8 @@ export default async function ExpensesPage({
     return `/app/expenses?${sp.toString()}`;
   }
 
-  const rangeStart = totalCount === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
-  const rangeEnd = Math.min(safePage * PAGE_SIZE, totalCount);
+  const _rangeStart = totalCount === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
+  const _rangeEnd = Math.min(safePage * PAGE_SIZE, totalCount);
 
   return (
     <div className="space-y-4 sm:space-y-6">

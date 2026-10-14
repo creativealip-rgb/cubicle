@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
   }
 
   const now = new Date();
-  const todayStr = now.toISOString().split("T")[0];
+  const _todayStr = now.toISOString().split("T")[0];
 
   // 1. Ambil task yang memiliki due_date, belum selesai (bukan 'done'), dan memiliki assignee
   const activeTasksWithDue = await db

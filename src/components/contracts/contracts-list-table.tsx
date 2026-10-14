@@ -116,7 +116,7 @@ export function ContractsListTable({
 }) {
   const { t, lang } = useT();
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [_isPending, startTransition] = useTransition();
 
   const getters = useMemo(
     () => ({

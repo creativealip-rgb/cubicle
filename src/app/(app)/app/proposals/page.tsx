@@ -73,8 +73,8 @@ export default async function ProposalsPage({
     .where(eq(proposals.workspaceId, workspaceId))
     .groupBy(proposals.status);
 
-  const ws = await getWorkspaceFullForCurrentUser();
-  const clientRows = await db
+  const _ws = await getWorkspaceFullForCurrentUser();
+  const _clientRows = await db
     .select({
       id: clients.id,
       name: clients.name,
@@ -84,7 +84,7 @@ export default async function ProposalsPage({
     .from(clients)
     .where(and(eq(clients.workspaceId, workspaceId), eq(clients.status, "active")))
     .orderBy(clients.name);
-  const serviceRows = await db
+  const _serviceRows = await db
     .select({
       id: services.id,
       name: services.name,
@@ -95,7 +95,7 @@ export default async function ProposalsPage({
     .from(services)
     .where(and(eq(services.workspaceId, workspaceId), eq(services.status, "active")))
     .orderBy(services.name);
-  const proposalTemplates = await listProposalTemplates();
+  const _proposalTemplates = await listProposalTemplates();
 
   const counts: Record<string, number> = { all: 0 };
   for (const row of countRows) {

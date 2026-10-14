@@ -403,8 +403,8 @@ export default async function InvoicesPage({
   }
   const missingFxList = Array.from(missingFx).sort();
 
-  const fromItem = filteredTotal === 0 ? 0 : offset + 1;
-  const toItem = Math.min(offset + invoiceList.length, filteredTotal);
+  const _fromItem = filteredTotal === 0 ? 0 : offset + 1;
+  const _toItem = Math.min(offset + invoiceList.length, filteredTotal);
 
   const filtersForHref = {
     status: statusTab,

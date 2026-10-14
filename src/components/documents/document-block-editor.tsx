@@ -497,8 +497,8 @@ export function DocumentBlockEditor({
   );
 
   // History Stack
-  const [history, setHistory] = useState<DocumentBlock[][]>([initialBlocks]);
-  const [historyIndex, setHistoryIndex] = useState(0);
+  const [_history, _setHistory] = useState<DocumentBlock[][]>([initialBlocks]);
+  const [_historyIndex, _setHistoryIndex] = useState(0);
   const [draggedBlockId, setDraggedBlockId] = useState<string | null>(null);
 
   // Upload & UI Modals
@@ -508,8 +508,8 @@ export function DocumentBlockEditor({
   const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
   const [selectedTemplateBlocks, setSelectedTemplateBlocks] = useState<DocumentBlock[] | null>(null);
   const [savedTemplates, setSavedTemplates] = useState<{ id: string; name: string; contentBlocks?: unknown; body?: string | null }[]>([]);
-  const [loadingTemplates, setLoadingTemplates] = useState(false);
-  const [qrModalOpen, setQrModalOpen] = useState(false);
+  const [_loadingTemplates, setLoadingTemplates] = useState(false);
+  const [_qrModalOpen, _setQrModalOpen] = useState(false);
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const revision = useRef(initialRevision);
@@ -543,7 +543,7 @@ export function DocumentBlockEditor({
   const lineItemsSubtotal = metaState.lineItems.reduce((acc, item) => acc + (Number(item.quantity) || 0) * (Number(item.unitPrice) || 0), 0);
   const lineItemsTax = lineItemsSubtotal * ((Number(metaState.taxRate) || 0) / 100);
   const lineItemsTotal = lineItemsSubtotal + lineItemsTax;
-  const lineItemsDpAmount = lineItemsTotal * ((Number(metaState.downPaymentPercent) || 0) / 100);
+  const _lineItemsDpAmount = lineItemsTotal * ((Number(metaState.downPaymentPercent) || 0) / 100);
 
   const blockLabel = (type: string) => {
     const labels: Record<string, [string, string]> = {

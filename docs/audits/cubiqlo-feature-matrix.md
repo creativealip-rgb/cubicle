@@ -1,0 +1,215 @@
+# Cubiqlo Generated Feature Inventory
+*Generated automatically by scripts/audit-feature-inventory.mjs*
+
+## Summary Counts
+- App Pages: 101
+- API Routes: 72
+- Server Action Files: 69
+- Database Tables: 102
+
+## Database Tables
+- `users` (`users`)
+- `twoFactors` (`two_factor`)
+- `mfaRecoveryRequests` (`mfa_recovery_requests`)
+- `mfaRecoveryApprovals` (`mfa_recovery_approvals`)
+- `authLoginOtpChallenges` (`auth_login_otp_challenges`)
+- `authRecoveryAuthorizations` (`auth_recovery_authorizations`)
+- `authBackupCodes` (`auth_backup_codes`)
+- `authTrustedDevices` (`auth_trusted_devices`)
+- `authRecoveryHandoffs` (`auth_recovery_handoffs`)
+- `passkeys` (`passkey`)
+- `personalGoals` (`personal_goals`)
+- `personalGoalSteps` (`personal_goal_steps`)
+- `personalHabits` (`personal_habits`)
+- `personalHabitCheckins` (`personal_habit_checkins`)
+- `personalDailyQuotes` (`personal_daily_quotes`)
+- `personalTransactionCategories` (`personal_transaction_categories`)
+- `personalTransactions` (`personal_transactions`)
+- `personalReceiptCleanupQueue` (`personal_receipt_cleanup_queue`)
+- `personalBudgets` (`personal_budgets`)
+- `adminAuditLogs` (`admin_audit_logs`)
+- `analyticsEvents` (`analytics_events`)
+- `subscriptionEvents` (`subscription_events`)
+- `marketingSpend` (`marketing_spend`)
+- `sessions` (`sessions`)
+- `accounts` (`accounts`)
+- `verifications` (`verifications`)
+- `workspaces` (`workspaces`)
+- `pakasirPayments` (`pakasir_payments`)
+- `workspaceMembers` (`workspace_members`)
+- `workspaceInvoiceCounters` (`workspace_invoice_counters`)
+- `userStorageAddons` (`user_storage_addons`)
+- `workspaceStorageUsage` (`workspace_storage_usage`)
+- `userExtraWorkspaceEntitlements` (`user_extra_workspace_entitlements`)
+- `userExtraMemberEntitlements` (`user_extra_member_entitlements`)
+- `userAiAddons` (`user_ai_addons`)
+- `aiUsageDaily` (`ai_usage_daily`)
+- `clients` (`clients`)
+- `projects` (`projects`)
+- `projectMembers` (`project_members`)
+- `packages` (`packages`)
+- `serviceCategories` (`service_categories`)
+- `services` (`services`)
+- `packageItems` (`package_items`)
+- `projectPackageAssignments` (`project_package_assignments`)
+- `projectServices` (`project_services`)
+- `taskTemplates` (`task_templates`)
+- `taskTemplateItems` (`task_template_items`)
+- `taskTemplateImports` (`task_template_imports`)
+- `timerTags` (`timer_tags`)
+- `tasks` (`tasks`)
+- `taskSubtasks` (`task_subtasks`)
+- `taskComments` (`task_comments`)
+- `portalRequests` (`portal_requests`)
+- `customPackageRequests` (`custom_package_requests`)
+- `packageOrders` (`package_orders`)
+- `comments` (`comments`)
+- `folders` (`folders`)
+- `files` (`files`)
+- `uploadIntents` (`upload_intents`)
+- `uploadQuotaReservations` (`upload_quota_reservations`)
+- `activities` (`activities`)
+- `projectActivities` (`project_activities`)
+- `clientServiceRateCards` (`client_service_rate_cards`)
+- `timesheetSubmissions` (`timesheet_submissions`)
+- `retainerPeriods` (`retainer_periods`)
+- `timeEntries` (`time_entries`)
+- `timerSegments` (`timer_segments`)
+- `invoices` (`invoices`)
+- `legacyProjectBillingClassifications` (`legacy_project_billing_classifications`)
+- `invoiceItems` (`invoice_items`)
+- `recurringInvoiceRules` (`recurring_invoice_rules`)
+- `recurringInvoiceGenerations` (`recurring_invoice_generations`)
+- `payments` (`payments`)
+- `workspaceCurrencyRates` (`workspace_currency_rates`)
+- `availabilityRules` (`availability_rules`)
+- `appointments` (`appointments`)
+- `appointmentCalendarSyncs` (`appointment_calendar_syncs`)
+- `googleCalendarConnections` (`google_calendar_connections`)
+- `clientGoogleCalendarConnections` (`client_google_calendar_connections`)
+- `promptTemplates` (`prompt_templates`)
+- `promptGenerations` (`prompt_generations`)
+- `activityLogs` (`activity_logs`)
+- `portalAccessLogs` (`portal_access_logs`)
+- `aiConversations` (`ai_conversations`)
+- `aiMessages` (`ai_messages`)
+- `expenseCategories` (`expense_categories`)
+- `expenses` (`expenses`)
+- `proposals` (`proposals`)
+- `expenseRecurring` (`expense_recurring`)
+- `questionnaires` (`questionnaires`)
+- `questionnaireResponses` (`questionnaire_responses`)
+- `contractTemplates` (`contract_templates`)
+- `contracts` (`contracts`)
+- `notifications` (`notifications`)
+- `emailTemplates` (`email_templates`)
+- `emailMessages` (`email_messages`)
+- `personalNotes` (`personal_notes`)
+- `personalSites` (`personal_sites`)
+- `supportTickets` (`support_tickets`)
+- `invoiceTemplates` (`invoice_templates`)
+- `proposalTemplates` (`proposal_templates`)
+- `portalVisits` (`portal_visits`)
+
+## App Pages
+- `src/app/(admin)/admin/analytics/page.tsx`
+- `src/app/(admin)/admin/audit/page.tsx`
+- `src/app/(admin)/admin/dashboard/page.tsx`
+- `src/app/(admin)/admin/mfa-recovery/page.tsx`
+- `src/app/(admin)/admin/page.tsx`
+- `src/app/(admin)/admin/payments/page.tsx`
+- `src/app/(admin)/admin/users/[userId]/page.tsx`
+- `src/app/(admin)/admin/users/page.tsx`
+- `src/app/(admin)/admin/workspaces/[workspaceId]/page.tsx`
+- `src/app/(admin)/admin/workspaces/page.tsx`
+- `src/app/(app)/app/activities/page.tsx`
+- `src/app/(app)/app/billing/page.tsx`
+- `src/app/(app)/app/brain/page.tsx`
+- `src/app/(app)/app/calendar/page.tsx`
+- `src/app/(app)/app/clients/[clientId]/page.tsx`
+- `src/app/(app)/app/clients/new/page.tsx`
+- `src/app/(app)/app/clients/page.tsx`
+- `src/app/(app)/app/contract-templates/[templateId]/page.tsx`
+- `src/app/(app)/app/contract-templates/new/page.tsx`
+- `src/app/(app)/app/contract-templates/page.tsx`
+- `src/app/(app)/app/contracts/[contractId]/edit/page.tsx`
+- `src/app/(app)/app/contracts/[contractId]/page.tsx`
+- `src/app/(app)/app/contracts/[contractId]/preview/page.tsx`
+- `src/app/(app)/app/contracts/page.tsx`
+- `src/app/(app)/app/dashboard/page.tsx`
+- `src/app/(app)/app/docs/[slug]/page.tsx`
+- `src/app/(app)/app/docs/getting-started/page.tsx`
+- `src/app/(app)/app/docs/invoice/page.tsx`
+- `src/app/(app)/app/docs/landing-page/page.tsx`
+- `src/app/(app)/app/docs/page.tsx`
+- `src/app/(app)/app/docs/workspace-settings/page.tsx`
+- `src/app/(app)/app/email/page.tsx`
+- `src/app/(app)/app/expenses/page.tsx`
+- `src/app/(app)/app/files/page.tsx`
+- `src/app/(app)/app/invoice-templates/page.tsx`
+- `src/app/(app)/app/invoices/[invoiceId]/page.tsx`
+- `src/app/(app)/app/invoices/new/page.tsx`
+- `src/app/(app)/app/invoices/page.tsx`
+- `src/app/(app)/app/invoices/templates/page.tsx`
+- `src/app/(app)/app/journal/page.tsx`
+- `src/app/(app)/app/notes/page.tsx`
+- `src/app/(app)/app/packages/page.tsx`
+- `src/app/(app)/app/personal/page.tsx`
+- `src/app/(app)/app/personal-site/page.tsx`
+- `src/app/(app)/app/planning/page.tsx`
+- `src/app/(app)/app/productivity/goals/[goalId]/page.tsx`
+- `src/app/(app)/app/productivity/page.tsx`
+- `src/app/(app)/app/projects/[projectId]/page.tsx`
+- `src/app/(app)/app/projects/page.tsx`
+- `src/app/(app)/app/prompts/page.tsx`
+- `src/app/(app)/app/proposals/[proposalId]/edit/page.tsx`
+- `src/app/(app)/app/proposals/[proposalId]/page.tsx`
+- `src/app/(app)/app/proposals/[proposalId]/preview/page.tsx`
+- `src/app/(app)/app/proposals/page.tsx`
+- `src/app/(app)/app/questionnaires/[questionnaireId]/edit/page.tsx`
+- `src/app/(app)/app/questionnaires/[questionnaireId]/page.tsx`
+- `src/app/(app)/app/questionnaires/new/page.tsx`
+- `src/app/(app)/app/questionnaires/page.tsx`
+- `src/app/(app)/app/reports/page.tsx`
+- `src/app/(app)/app/search/page.tsx`
+- `src/app/(app)/app/services/page.tsx`
+- `src/app/(app)/app/settings/page.tsx`
+- `src/app/(app)/app/support/page.tsx`
+- `src/app/(app)/app/tasks/page.tsx`
+- `src/app/(app)/app/templates/[templateId]/edit/page.tsx`
+- `src/app/(app)/app/templates/[templateId]/edit/proposal/page.tsx`
+- `src/app/(app)/app/templates/page.tsx`
+- `src/app/(app)/app/time/activities/page.tsx`
+- `src/app/(app)/app/time/approvals/page.tsx`
+- `src/app/(app)/app/time/history/page.tsx`
+- `src/app/(app)/app/time/page.tsx`
+- `src/app/(app)/app/time/timesheet/page.tsx`
+- `src/app/(app)/app/whats-new/page.tsx`
+- `src/app/(auth)/mfa/recovery/page.tsx`
+- `src/app/(auth)/mfa/setup/page.tsx`
+- `src/app/(auth)/recover-access/[token]/page.tsx`
+- `src/app/(auth)/recover-access/page.tsx`
+- `src/app/(auth)/two-factor/page.tsx`
+- `src/app/(auth)/verify-email-change/page.tsx`
+- `src/app/booking/[slug]/page.tsx`
+- `src/app/client-gcal/page.tsx`
+- `src/app/client-portal/[token]/page.tsx`
+- `src/app/client-portal/s/[slug]/page.tsx`
+- `src/app/contract/[token]/page.tsx`
+- `src/app/forgot-password/page.tsx`
+- `src/app/intake/[token]/page.tsx`
+- `src/app/invoice/[token]/page.tsx`
+- `src/app/login/page.tsx`
+- `src/app/onboarding/page.tsx`
+- `src/app/page.tsx`
+- `src/app/privacy/page.tsx`
+- `src/app/proposal/[token]/page.tsx`
+- `src/app/reset-password/[token]/page.tsx`
+- `src/app/reset-password/page.tsx`
+- `src/app/signup/page.tsx`
+- `src/app/site/[slug]/[pageSlug]/page.tsx`
+- `src/app/site/[slug]/page.tsx`
+- `src/app/site/preview/page.tsx`
+- `src/app/terms/page.tsx`
+- `src/app/verify-email/page.tsx`
+- `src/app/verify-email/success/page.tsx`

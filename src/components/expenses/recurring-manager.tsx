@@ -118,7 +118,7 @@ export function RecurringManager({
   const [genId, setGenId] = useState<string | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm(defaultCurrency));
 
-  function openCreate() {
+  function _openCreate() {
     setEditing(null);
     setForm(emptyForm(defaultCurrency));
     setOpen(true);

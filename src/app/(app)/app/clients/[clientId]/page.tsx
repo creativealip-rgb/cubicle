@@ -66,7 +66,7 @@ export default async function ClientDetailPage({
   const session = await auth.api.getSession({ headers: await headers() });
   const user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
-  const proposedInvoiceNumber = await getProposedInvoiceNumber();
+  const _proposedInvoiceNumber = await getProposedInvoiceNumber();
   const { clientId } = await params;
   const { tab: tabParam } = await searchParams;
   const allowedTabs = new Set([
@@ -222,7 +222,7 @@ export default async function ClientDetailPage({
   });
 
   // Invoices
-  const sourceOptions = await loadInvoiceSourceProjectOptions({ workspaceId, clientId, projectIds });
+  const _sourceOptions = await loadInvoiceSourceProjectOptions({ workspaceId, clientId, projectIds });
   const [workspace] = await db.select({ defaultCurrency: workspaces.defaultCurrency }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
   const currencyRates = await db.select({ fromCurrency: workspaceCurrencyRates.fromCurrency, rate: workspaceCurrencyRates.rate }).from(workspaceCurrencyRates).where(eq(workspaceCurrencyRates.workspaceId, workspaceId));
 

@@ -32,6 +32,27 @@ Reserve a number here before creating SQL. Recheck remote refs and every worktre
 - `0076` — Unified template content blocks (contract/proposal template `content_blocks`) — Coder — `fix/landing-id-headline-underline` — reserved; not applied anywhere yet; production not applied.
 - `0077` — Disable unfunded add-on auto-renewal (Phase 3 corrective) — Coder — `main` — committed; not applied anywhere yet; production not applied.
 - `0082` — Production hardening task status constraint — Coder — `fix/production-hardening-2026-08-29` — committed; applied-production 2026-08-29.
+- `0097` — Upload intent foundation — existing main history; verify through custom migration ledger.
+- `0098` — File upload lifecycle — existing main history; verify through custom migration ledger.
+- `0099` — Upload lifecycle recovery — existing main history; verify through custom migration ledger.
+- `0100` — Upload intent canonical metadata — existing main history; verify through custom migration ledger.
+- `0101` — AI usage per user — existing main history; verify through custom migration ledger.
+- `0102` — Analytics attribution entitlement and marketing spend — existing main history; verify through custom migration ledger.
+- `0103` — Analytics usage events — existing main history; verify through custom migration ledger.
+- `0104` — Admin audit integrity — existing main history; verify through custom migration ledger.
+- `0105` — Availability rule uniqueness — existing main history; verify through custom migration ledger.
+- `0106` — Task subtask description — existing main history; verify through custom migration ledger.
+- `0107` — Task comments — existing main history; verify through custom migration ledger.
+- `0108` — Task comment attachments — existing main history; verify through custom migration ledger.
+- `0109` — Task subtask status — existing main history; verify through custom migration ledger.
+- `0110` — Subtask comments — existing main history; verify through custom migration ledger.
+- `0111` — User recovery PIN — existing main history; verify through custom migration ledger.
+- `0112` — Workspace service info — existing main history; verify through custom migration ledger.
+- `0113` — Document slugs — existing main history; verify through custom migration ledger.
+- `0114` — Support ticket category — existing main history; verify through custom migration ledger.
+- `0115` — Support ticket screenshot — existing main history; verify through custom migration ledger.
+- `0116` — Onboarding profile fields — existing main history; verify through custom migration ledger.
+- `0117` — Extra member add-ons — existing main history; verify through custom migration ledger.
 
 ## Reservation protocol
 

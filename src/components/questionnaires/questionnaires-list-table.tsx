@@ -17,7 +17,6 @@ import { useTableSort } from "@/hooks/use-table-sort";
 import { useT } from "@/lib/i18n-client";
 import { ClipboardList } from "lucide-react";
 import { QuestionnaireRowActions } from "./questionnaire-row-actions";
-import { toast } from "sonner";
 import { useAppTransition } from "@/lib/transition-provider";
 
 export type QuestionnaireListItem = {
@@ -41,20 +40,8 @@ export function QuestionnairesListTable({
 }) {
   const { t, lang } = useT();
   const { refresh } = useAppTransition();
-  const [pending, startTransition] = useTransition();
+  const [_pending, startTransition] = useTransition();
 
-  function handleDuplicate(id: string) {
-    startTransition(async () => {
-      try {
-        const { duplicateQuestionnaire } = await import("@/lib/actions/questionnaires");
-        await duplicateQuestionnaire(id);
-        toast.success(t("Formulir berhasil diduplikasi!", "Form duplicated successfully!"));
-        refresh();
-      } catch (err: unknown) {
-        toast.error(err instanceof Error ? err.message : t("Gagal menduplikasi formulir", "Failed to duplicate form"));
-      }
-    });
-  }
 
   const getters = useMemo(
     () => ({

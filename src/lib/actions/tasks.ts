@@ -389,7 +389,7 @@ const respondPortalTaskSchema = z.object({
  */
 export async function getTaskSubtasks(taskId: string) {
   const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
+  const _user = requireUser(session?.user);
   const workspaceId = await getWorkspaceForCurrentUser();
 
   return await db

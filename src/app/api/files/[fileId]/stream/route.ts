@@ -29,7 +29,7 @@ export async function GET(
   }
 
   const range = request.headers.get("range");
-  const isMedia =
+  const _isMedia =
     (file.mimeType && (file.mimeType.startsWith("video/") || file.mimeType.startsWith("audio/"))) ||
     file.name.endsWith(".mp4") ||
     file.name.endsWith(".webm") ||

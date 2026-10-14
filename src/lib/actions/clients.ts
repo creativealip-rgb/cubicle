@@ -280,7 +280,7 @@ export async function checkPortalSlugAvailability(
 
 export async function getCurrentUserPlanForPortal(): Promise<{ isPaid: boolean; plan: string }> {
   const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
+  const _user = requireUser(session?.user);
   const workspaceId = await getWorkspaceId();
   const { getWorkspaceOwnerPlan } = await import("@/lib/plan");
   const { plan } = await getWorkspaceOwnerPlan(workspaceId);

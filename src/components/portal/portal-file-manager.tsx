@@ -207,7 +207,7 @@ export function PortalFileManager({
     });
   }, [clientRootFiles, files, folderId, projectId]);
 
-  const totalFiles = files.length;
+  const _totalFiles = files.length;
   const showRootProjects = !projectId && !folderId;
   // Upload allowed at root (client-level), project root, or inside folder.
   const canUpload = true;

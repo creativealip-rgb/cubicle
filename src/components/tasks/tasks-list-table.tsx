@@ -111,8 +111,8 @@ export function TasksListTable({
   const [, startTransition] = useTransition();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [expandedSubtaskTaskIds, setExpandedSubtaskTaskIds] = useState<Set<string>>(new Set());
-  const [subtasksByTaskId, setSubtasksByTaskId] = useState<Record<string, Array<{ id: string; title: string; completed: boolean; description: string | null }>>>({});
-  const [loadingSubtasks, setLoadingSubtasks] = useState<Record<string, boolean>>({});
+  const [subtasksByTaskId, _setSubtasksByTaskId] = useState<Record<string, Array<{ id: string; title: string; completed: boolean; description: string | null }>>>({});
+  const [_loadingSubtasks, setLoadingSubtasks] = useState<Record<string, boolean>>({});
 
   const handleStartTimer = async (task: TasksListItem, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -140,7 +140,7 @@ export function TasksListTable({
     }
   };
 
-  const toggleExpandSubtasks = async (taskId: string, e: React.MouseEvent) => {
+  const _toggleExpandSubtasks = async (taskId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     e.preventDefault();
     const next = new Set(expandedSubtaskTaskIds);
@@ -155,7 +155,7 @@ export function TasksListTable({
     if (!subtasksByTaskId[taskId]) {
       setLoadingSubtasks((prev) => ({ ...prev, [taskId]: true }));
       try {
-        const res = await fetch(`/api/tasks/${taskId}/subtasks`);
+        const _res = await fetch(`/api/tasks/${taskId}/subtasks`);
         // if api route exists or call server action directly
       } catch {
         // fallback

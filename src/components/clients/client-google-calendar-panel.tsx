@@ -213,7 +213,7 @@ export function ClientGoogleCalendarPanel({
     }
   }
 
-  async function handleCopy() {
+  async function _handleCopy() {
     if (!inviteUrl) return;
     await navigator.clipboard.writeText(inviteUrl);
     toast.success(t("Link undangan disalin", "Invitation link copied"));

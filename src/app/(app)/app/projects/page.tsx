@@ -184,8 +184,8 @@ export default async function ProjectsPage({
     ? clientOptions.find((c) => c.id === clientId)
     : undefined;
 
-  const fromItem = filteredTotal === 0 ? 0 : offset + 1;
-  const toItem = Math.min(offset + PAGE_SIZE, filteredTotal);
+  const _fromItem = filteredTotal === 0 ? 0 : offset + 1;
+  const _toItem = Math.min(offset + PAGE_SIZE, filteredTotal);
 
   return (
     <div className="min-w-0 space-y-4 sm:space-y-6">

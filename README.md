@@ -16,9 +16,13 @@ Built for freelancers, agencies, and small service teams who want to stop juggli
 - **Client portal** — branded workspace header (logo/billing), tabbed portal (Overview / Projects / Folders / Invoices / Contact), client file upload in Folders, invoices + secure token/slug access
 - **Project timeline** — internal and client-visible activity feed for project/task/file/comment updates
 - **Calendar** — see appointments + tasks due
-- **Reports & billing** — AR aging, P&L, cash-flow forecast, Pakasir QRIS Solo/Team checkout
+- **Reports & billing** — AR aging, P&L, cash-flow forecast, Pakasir QRIS Solo/Team checkout, recurring invoices, retainers, and billing add-ons
+- **Forms & document builders** — questionnaires/intake, proposals, contracts, templates, public preview, signatures, and publish workflows
+- **Personal site builder** — responsive canvas, sections, media crop/embed, SEO, custom slug, readiness gate, draft/publish, and public pages
+- **Personal productivity** — goals, habits, notes, journal, budgets, transactions, receipts, and personal expenses
 - **AI prompt generator** — built-in prompt templates for creative/service work
-- **AI Assistant** — chat panel that knows your workspace data, can mark tasks done and draft invoice reminders (with your confirm)
+- **AI Assistant** — workspace-aware chat, quota/add-ons, export, and confirmed task/invoice actions
+- **Admin control plane** — users, workspaces, plans, payments, marketing spend, audit logs, and MFA recovery
 
 ## Stack
 

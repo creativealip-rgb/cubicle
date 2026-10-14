@@ -318,7 +318,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   const [livePreviewMode, setLivePreviewMode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [sidebarTab, setSidebarTab] = useState("insert");
-  const [mobileSidebar, setMobileSidebar] = useState(false);
+  const [_mobileSidebar, _setMobileSidebar] = useState(false);
   const lastIssueJump = useRef<string | null>(null);
   const [readinessTarget, setReadinessTarget] = useState<string | null>(null);
 
@@ -331,7 +331,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   // Polite live region: screen-reader announcements for structural mutations
   // (reorder/duplicate/delete/limit) that a toast cannot reliably surface.
   const [liveMessage, setLiveMessage] = useState("");
-  const [showQrModal, setShowQrModal] = useState(false);
+  const [_showQrModal, _setShowQrModal] = useState(false);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -383,7 +383,7 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   }
 
   const activeSections = useMemo(() => pageSections(site, activePageId), [site, activePageId]);
-  const activePage = useMemo(() => normalizePages(site).find((page) => page.id === activePageId) ?? normalizePages(site)[0], [site, activePageId]);
+  const _activePage = useMemo(() => normalizePages(site).find((page) => page.id === activePageId) ?? normalizePages(site)[0], [site, activePageId]);
   const selectedSection = useMemo(() => activeSections.find((s) => s.id === selectedSectionId) ?? null, [activeSections, selectedSectionId]);
   // Set when the stored row moved on since this editor loaded it.
   const [saveConflict, setSaveConflict] = useState(false);

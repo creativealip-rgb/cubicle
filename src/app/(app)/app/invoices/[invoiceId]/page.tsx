@@ -58,7 +58,7 @@ export default async function InvoiceDetailPage({
   const lang = await getCurrentLang();
   const t = createT(lang);
   const locale = lang === "en" ? "en-US" : "id-ID";
-  const formatDate = (value: string | Date | null) => value
+  const _formatDate = (value: string | Date | null) => value
     ? new Date(`${String(value).slice(0, 10)}T00:00:00`).toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" })
     : "—";
   const session = await auth.api.getSession({ headers: await headers() });

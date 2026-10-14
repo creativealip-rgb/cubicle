@@ -112,7 +112,7 @@ export function IntakeForm({
   }, [fields]);
 
   // Calculate live total price from choices with optionPrices
-  const totalCalculated = useMemo(() => {
+  const _totalCalculated = useMemo(() => {
     let sum = 0;
     fields.forEach((f) => {
       if (f.optionPrices) {

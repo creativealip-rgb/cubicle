@@ -56,7 +56,7 @@ export function PublicBookingForm({
       : allowed[0] || "google_meet"
   );
 
-  const [selectedDuration] = useState(30);
+  const [_selectedDuration] = useState(30);
   const [slots, setSlots] = useState<Slot[]>(initialSlots);
   const [slotsError, setSlotsError] = useState(initialError);
   const [submitting, setSubmitting] = useState(false);

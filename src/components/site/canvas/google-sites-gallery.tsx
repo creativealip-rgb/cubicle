@@ -61,7 +61,7 @@ export function GoogleSitesGalleryCanvas({
     function handleMouseMove(e: MouseEvent) {
       if (!resizeRef.current) return;
       const { handle, id, startX, startY, startWidth, startHeight } = resizeRef.current;
-      const deltaX = e.clientX - startX;
+      const _deltaX = e.clientX - startX;
       const deltaY = e.clientY - startY;
 
       const newWidth = startWidth;

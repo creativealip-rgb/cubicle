@@ -725,7 +725,7 @@ Hard launch gate:
 - Framework/security headers: `next.config.ts`
 - Auth: `src/lib/auth.ts`, `src/lib/env-validation.ts`
 - Access control: `src/lib/access.ts`, `src/lib/require-workspace-owner.ts`
-- Rate limit: `src/lib/rate-limit.ts`, `src/proxy.ts`
+- Rate limit: `src/lib/distributed-rate-limit.ts` (Redis-backed); legacy in-memory limiter retired.
 - Database schema: `src/db/schema.ts`
 - Migrations: `drizzle/*.sql`, `drizzle/meta/_journal.json`, `migrate.sh`
 - Proposal transaction: `src/lib/actions/proposals.ts`

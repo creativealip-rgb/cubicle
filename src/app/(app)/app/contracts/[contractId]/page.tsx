@@ -9,7 +9,6 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { SendContractButton } from "@/components/contracts/send-contract-button";
-import { updateContract } from "@/lib/actions/contracts";
 import { RevokeContractButton } from "@/components/contracts/revoke-contract-button";
 import { DeleteContractButton } from "@/components/contracts/delete-contract-button";
 import { PostSignClientBanner } from "@/components/contracts/post-sign-client-banner";
@@ -47,10 +46,6 @@ export default async function ContractDetailPage({
     .limit(1);
   if (!c) notFound();
 
-  async function saveDetails(input: Record<string, unknown>) {
-    "use server";
-    return updateContract(c.id, input);
-  }
 
   const client = c.clientId ? (await db
     .select()

@@ -19,7 +19,7 @@ function patchItem<T>(arr: T[], idx: number, patch: any): T[] {
   return arr.map((item, i) => (i === idx ? { ...item, ...patch } : item));
 }
 
-function removeItemAt<T>(arr: T[], idx: number): T[] {
+function _removeItemAt<T>(arr: T[], idx: number): T[] {
   return arr.filter((_, i) => i !== idx);
 }
 
