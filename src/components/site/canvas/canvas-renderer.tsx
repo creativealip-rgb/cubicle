@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { ChevronDown, ChevronUp, GripVertical, Copy, Trash2, Image as ImageIcon, Calendar } from "lucide-react";
 import { SortableContext, verticalListSortingStrategy, useSortable } from "@dnd-kit/sortable";
@@ -78,6 +78,25 @@ export function CanvasRenderer({
   onReorderSections: _onReorderSections,
 }: Props & { onReorderSections?: (sections: PersonalSiteSection[]) => void }) { // reserved for future use
   const { t } = useT();
+  const inlineImageInputRef = useRef<HTMLInputElement>(null);
+
+  async function uploadCanvasImage(file: File | undefined, sectionId: string) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024 || !["image/png", "image/jpeg", "image/webp", "image/gif"].includes(file.type)) return;
+    const form = new FormData();
+    form.append("file", file);
+    const response = await fetch("/api/site/upload", { method: "POST", body: form });
+    const data = (await response.json().catch(() => ({}))) as { ok?: boolean; url?: string };
+    if (response.ok && data.ok && data.url) onUpdateSection(sectionId, { url: data.url });
+  }
+  const inlineUpload = (sectionId: string) => (
+    <>
+      <input ref={inlineImageInputRef} type="file" accept="image/png,image/jpeg,image/webp,image/gif" className="hidden" onChange={(e) => uploadCanvasImage(e.target.files?.[0], sectionId)} />
+      <button type="button" className="rounded-lg border border-primary/30 bg-background px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/5" onClick={() => inlineImageInputRef.current?.click()}>
+        {t("Unggah gambar", "Upload image")}
+      </button>
+    </>
+  );
   const theme = site.themeConfig ?? undefined;
 
   return (
@@ -107,6 +126,7 @@ export function CanvasRenderer({
               onUpdate={(patch) => onUpdateSection(section.id, patch)}
               theme={theme}
               previewMode={previewMode}
+              inlineUpload={inlineUpload}
             />
           ))}
         </SortableContext>
@@ -142,7 +162,7 @@ export function CanvasRenderer({
   );
 }
 
-function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, onUpdate, theme, previewMode }: {
+function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDown, onDuplicate, onDelete, onUpdate, theme, previewMode, inlineUpload }: {
   section: PersonalSiteSection;
   selected: boolean;
   onSelect: () => void;
@@ -153,6 +173,7 @@ function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDo
   onUpdate: (patch: Partial<PersonalSiteSection>) => void;
   theme?: ThemeConfig;
   previewMode?: boolean;
+  inlineUpload?: (sectionId: string) => ReactNode;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: section.id });
 
@@ -178,7 +199,7 @@ function SortableCanvasSection({ section, selected, onSelect, onMoveUp, onMoveDo
         onAnimationChange={(anim) => onUpdate({ animation: anim } as Partial<PersonalSiteSection>)}
         dragHandleProps={listeners}
       >
-        <SectionRenderer section={section} onUpdate={onUpdate} theme={theme} previewMode={previewMode} />
+        <SectionRenderer section={section} onUpdate={onUpdate} theme={theme} previewMode={previewMode} inlineUpload={inlineUpload} />
       </CanvasSectionWrapper>
     </div>
   );
@@ -296,7 +317,7 @@ function getResolvedFieldTypography(section: any, item: any, fieldKey: "titleTyp
   };
 }
 
-function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { section: PersonalSiteSection; onUpdate: (patch: Partial<PersonalSiteSection>) => void; theme?: ThemeConfig; previewMode?: boolean }) {
+function SectionRenderer({ section, onUpdate, theme, previewMode = false, inlineUpload }: { section: PersonalSiteSection; onUpdate: (patch: Partial<PersonalSiteSection>) => void; theme?: ThemeConfig; previewMode?: boolean; inlineUpload?: (sectionId: string) => ReactNode }) {
   const { t } = useT();
   const headingStyle = getHeadingStyle(section as any);
 
@@ -826,7 +847,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
           ) : (
             <div className="py-16 flex flex-col items-center justify-center text-muted-foreground gap-2">
               <ImageIcon className="h-8 w-8 text-muted-foreground/60" />
-              <p className="text-xs font-medium">{t("Pilih atau unggah gambar di panel kanan", "Select or upload an image in the right panel")}</p>
+              <p className="text-xs font-medium">{t("Pilih atau unggah gambar", "Select or upload an image")}</p>
+              {inlineUpload?.(section.id)}
             </div>
           )}
         </div>
@@ -888,7 +910,8 @@ function SectionRenderer({ section, onUpdate, theme, previewMode = false }: { se
               ) : (
                 <div className="py-16 flex flex-col items-center justify-center text-muted-foreground gap-2">
                   <ImageIcon className="h-8 w-8 text-muted-foreground/60" />
-                  <p className="text-xs font-medium">{t("Unggah media di panel kanan", "Upload media in right panel")}</p>
+                  <p className="text-xs font-medium">{t("Pilih atau unggah media", "Select or upload media")}</p>
+                {inlineUpload?.(section.id)}
                 </div>
               )}
             </div>
