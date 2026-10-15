@@ -47,7 +47,7 @@ docker inspect "$active_url" --format '{{range .Config.Env}}{{println .}}{{end}}
 
 # A missing runtime secret must not become permanent just because one active
 # container was started without it. Restore required secrets from canonical env.
-for required_key in PORTAL_PASSWORD_ENCRYPTION_KEY RESEND_API_KEY EMAIL_FROM; do
+for required_key in PORTAL_PASSWORD_ENCRYPTION_KEY RESEND_API_KEY EMAIL_FROM GOOGLE_CLIENT_ID GOOGLE_CLIENT_SECRET; do
   if ! grep -q "^${required_key}=" "$env_file"; then
     grep "^${required_key}=" .env.production >> "$env_file" || {
       echo "ERROR: missing required secret ${required_key} in runtime and .env.production" >&2
