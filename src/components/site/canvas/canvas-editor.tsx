@@ -1203,6 +1203,24 @@ export function CanvasEditor({ initialSite, previewUrl, publicSiteBaseUrl, onSav
   );
 }
 
+function TemplateIcon({ template }: { template: SectionTemplate }) {
+  const className = "h-3.5 w-3.5 text-muted-foreground shrink-0";
+  if (template.type === "pricing") return <Tag className={className} />;
+  if (template.type === "faq" || template.label.toLowerCase().includes("faq")) return <HelpCircle className={className} />;
+  if (template.type === "services") return <Briefcase className={className} />;
+  if (template.type === "process") return <ListOrdered className={className} />;
+  if (template.type === "booking") return <Calendar className={className} />;
+  if (template.type === "gallery" || template.type === "image") return <ImageIcon className={className} />;
+  if (template.type === "mediaText" || template.type === "contentBlock") return <Columns3 className={className} />;
+  if (template.type === "cta") return <MousePointerClick className={className} />;
+  if (template.type === "testimonials") return <Quote className={className} />;
+  if (template.type === "contact") return <Mail className={className} />;
+  if (template.type === "embed") return <Code className={className} />;
+  if (template.category === "proof") return <Share2 className={className} />;
+  if (template.category === "hero") return <LayoutTemplate className={className} />;
+  return <Layers className={className} />;
+}
+
 function DraggableTemplateButton({ template, onClick }: { template: SectionTemplate; onClick: () => void }) {
   const { t } = useT();
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
@@ -1227,7 +1245,7 @@ function DraggableTemplateButton({ template, onClick }: { template: SectionTempl
       className="flex flex-col items-center gap-1 rounded-lg border p-2 text-[10px] hover:bg-muted transition-colors text-left cursor-grab active:cursor-grabbing"
       title={t(template.description, SECTION_TEMPLATE_EN_DESCRIPTIONS[template.label] ?? template.description)}
     >
-      <Layers className="h-3 w-3 text-muted-foreground shrink-0" />
+      <TemplateIcon template={template} />
       <span className="line-clamp-2">{t(template.label, SECTION_TEMPLATE_EN_LABELS[template.label] ?? template.label)}</span>
     </button>
   );
