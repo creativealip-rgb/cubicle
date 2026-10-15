@@ -68,8 +68,13 @@ export function LoginForm({
         const data = await response.json();
         if (!response.ok) {
           setError(
-            data.error ??
-              t("Email atau password salah", "Email or password incorrect"),
+            data.code === "INVALID_CREDENTIALS"
+              ? t("Email atau password salah", "Email or password incorrect")
+              : data.code === "DELIVERY_FAILED"
+                ? t("Kode OTP gagal dikirim. Coba lagi.", "OTP delivery failed. Please try again.")
+                : data.code === "RATE_LIMITED"
+                  ? t("Terlalu banyak percobaan. Coba lagi nanti.", "Too many attempts. Please try again later.")
+                  : t("Gagal masuk. Coba lagi.", "Failed to sign in. Please try again."),
           );
           return;
         }

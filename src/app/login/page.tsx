@@ -7,7 +7,7 @@ import { getCurrentLang, createT } from "@/lib/i18n";
 export async function generateMetadata(): Promise<Metadata> {
   const t = createT(await getCurrentLang("en"));
   return {
-    title: `${t("Masuk", "Sign in")} | Cubiqlo`,
+    title: t("Masuk", "Sign in"),
     description: t(
       "Masuk ke workspace Cubiqlo untuk mengelola kerja klien.",
       "Sign in to your Cubiqlo workspace to manage client work.",

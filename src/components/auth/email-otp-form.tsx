@@ -40,8 +40,11 @@ export function EmailOtpForm({
       const data = await r.json();
       if (!r.ok) {
         setError(
-          data.error ??
-            t("Kode OTP tidak valid atau kadaluarsa", "Invalid or expired OTP code"),
+          data.code === "INVALID_OTP"
+            ? t("Kode OTP tidak valid atau kadaluarsa", "Invalid or expired OTP code")
+            : data.code === "RATE_LIMITED"
+              ? t("Terlalu banyak percobaan. Coba lagi nanti.", "Too many attempts. Please try again later.")
+              : t("Gagal memverifikasi OTP. Coba lagi.", "Failed to verify OTP. Please try again."),
         );
       } else {
         onSuccess(data.redirectTo ?? "/app/dashboard");
