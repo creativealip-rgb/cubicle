@@ -58,7 +58,7 @@ done
 
 # Deployment-controlled settings always follow canonical production config,
 # rather than inheriting stale values from the previously active container.
-for canonical_key in AI_MODEL PASSWORD_EMAIL_OTP_LOGIN_ENABLED; do
+for canonical_key in AI_MODEL PASSWORD_EMAIL_OTP_LOGIN_ENABLED BETTER_AUTH_URL CUBICLE_URL NEXT_PUBLIC_APP_URL; do
   sed -i "/^${canonical_key}=/d" "$env_file"
   grep "^${canonical_key}=" .env.production >> "$env_file" || {
     echo "ERROR: missing canonical setting ${canonical_key} in .env.production" >&2
