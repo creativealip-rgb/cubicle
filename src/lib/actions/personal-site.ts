@@ -2,7 +2,7 @@
 
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { db } from "@/db";
 import { personalSites } from "@/db/schema";
 import { assertWorkspaceOwner, requireUser } from "@/lib/access";
@@ -18,6 +18,7 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
 import { getEffectivePlan } from "@/lib/plan";
 import { getPersonalSiteOwnerPlanContext, listPersonalSiteRows } from "@/lib/personal-site/plan-context";
 import { canEditPersonalSiteSlug, getEffectivePersonalSiteSlug } from "@/lib/personal-site/slug-policy";
+import { createT } from "@/lib/i18n";
 import { findPersonalSiteByEffectiveSlug, hasEffectiveSlugCollision } from "@/lib/personal-site/slug-records";
 import { resolvePublicationState } from "@/lib/personal-site/publication-intent";
 import { resolveSaveConflict, STALE_REVISION_MESSAGE } from "@/lib/personal-site/save-revision";
@@ -121,6 +122,8 @@ export async function savePersonalSite(
   _previousState: PersonalSiteActionState,
   formData: FormData,
 ): Promise<PersonalSiteActionState> {
+  const lang = (await cookies()).get("cubiqlo_lang")?.value === "id" ? "id" : "en";
+  const t = createT(lang);
   const rawPayload = formData.get("site");
   // Omitted intent === plain autosave === preserve (see resolvePublicationState).
   const intent = String(formData.get("intent") || "save");
@@ -133,7 +136,7 @@ export async function savePersonalSite(
   try {
     decoded = JSON.parse(String(rawPayload || "{}"));
   } catch {
-    return { status: "error", message: "Data landing page tidak valid. Muat ulang lalu coba lagi." };
+    return { status: "error", message: t("Data landing page tidak valid. Muat ulang lalu coba lagi.", "Landing page data is invalid. Reload and try again.") };
   }
 
   const { userId, workspaceId, planContext } = await ownerContext();
@@ -154,7 +157,7 @@ export async function savePersonalSite(
   if (!payload.success) {
     return {
       status: "error",
-      message: "Periksa kembali field yang ditandai.",
+      message: t("Periksa kembali field yang ditandai.", "Please check the highlighted fields."),
       fieldErrors: payload.error.flatten().fieldErrors,
       // flatten() collapses nested issues under their top-level key; keep the
       // full paths so the client can jump to the offending section/property.

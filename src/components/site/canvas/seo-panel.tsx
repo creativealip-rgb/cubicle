@@ -66,7 +66,7 @@ export function SEOPanel({ site, updateSite, publicUrl }: SEOPanelProps) {
           value={seo.title ?? ""}
           maxLength={SEO_TITLE_MAX}
           onChange={(e) => patchSeo({ title: e.target.value })}
-          placeholder={site.title}
+          placeholder={t("Contoh: Portofolio Profesional", "Example: Professional Portfolio")}
           className="h-8 text-xs"
           aria-label={t("Judul SEO", "SEO title")}
         />
