@@ -26,7 +26,7 @@ export function PublicDocumentHeader({
   const [imgError, setImgError] = useState(false);
 
   const brandDisplayName = workspaceName || "Cubiqlo Workspace";
-  const initialLetter = (workspaceName || "C").trim().charAt(0).toUpperCase();
+
 
   const subtext =
     documentType === "proposal"
@@ -52,8 +52,8 @@ export function PublicDocumentHeader({
               />
             </div>
           ) : (
-            <div className="flex h-11 w-11 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/10 text-lg font-bold text-primary shadow-2xs">
-              {initialLetter}
+            <div className="relative h-11 w-11 sm:h-12 sm:w-12 shrink-0 overflow-hidden rounded-xl shadow-2xs">
+              <Image src="/logo-icon.png" alt="Cubiqlo" fill sizes="48px" className="object-contain" />
             </div>
           )}
 

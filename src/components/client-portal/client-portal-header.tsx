@@ -23,7 +23,7 @@ export function ClientPortalHeader({
 
   const displayName = clientCompanyName || clientName || "Client";
   const brandName = workspaceName || "Cubiqlo";
-  const initialLetter = displayName.trim().charAt(0).toUpperCase() || "C";
+
 
   return (
     <header className="relative overflow-hidden rounded-2xl border border-border/80 bg-card p-4 sm:p-6 shadow-xs transition-all">
@@ -42,8 +42,8 @@ export function ClientPortalHeader({
               />
             </div>
           ) : (
-            <div className="flex h-12 w-12 sm:h-14 sm:w-14 shrink-0 items-center justify-center rounded-2xl border border-primary/20 bg-primary/10 text-xl font-bold text-primary shadow-2xs">
-              {initialLetter}
+            <div className="relative h-12 w-12 sm:h-14 sm:w-14 shrink-0 overflow-hidden rounded-2xl shadow-2xs">
+              <Image src="/logo-icon.png" alt="Cubiqlo" fill sizes="56px" className="object-contain" />
             </div>
           )}
 
