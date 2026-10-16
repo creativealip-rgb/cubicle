@@ -151,6 +151,8 @@ export async function savePersonalSite(
   );
   const payload = personalSiteInputSchema.safeParse({
     ...(decoded as Record<string, unknown>),
+    ctaLabel: (decoded as Record<string, unknown>).ctaLabel ?? "",
+    ctaUrl: (decoded as Record<string, unknown>).ctaUrl ?? "",
     slug: effectiveSlug,
     published: resolvePublicationState(intent, currentRow?.published ?? false),
   });
