@@ -1,4 +1,3 @@
-import Link from "next/link";
 import Image from "next/image";
 import type { CSSProperties, ReactNode } from "react";
 import {
@@ -540,7 +539,6 @@ export function PersonalSiteRenderer({
   site,
   labels = defaultLabels,
   embedded = false,
-  activePageSlug = "",
   bookingData,
   lang = "id",
 }: {
@@ -552,10 +550,8 @@ export function PersonalSiteRenderer({
   lang?: string;
 }) {
   const styles = themeStyles[site.theme];
-  const pages = site.pages?.length ? site.pages : [{ id: "home", slug: "", title: "Home", isHome: true, sections: site.sections }];
-  const activePage = pages.find((page) => page.slug === activePageSlug) ?? pages.find((page) => page.isHome) ?? pages[0];
-  const visiblePages = pages.filter((page) => page.title);
-  const visibleSections = (activePage?.sections?.length ? activePage.sections : site.sections).filter(sectionHasContent);
+  const homePage = site.pages?.find((page) => page.isHome);
+  const visibleSections = (homePage?.sections?.length ? homePage.sections : site.sections).filter(sectionHasContent);
 
   const themeConfig = site.themeConfig;
   const accent = themeConfig?.primaryColor ?? site.accent;
@@ -571,7 +567,7 @@ export function PersonalSiteRenderer({
 
   return (
     <main data-testid="personal-site-renderer" data-theme={site.theme} style={accentStyle} className={`${embedded ? "min-h-0" : "min-h-screen"} overflow-hidden ${styles.page}`}>
-      {visiblePages.length > 1 && <nav className="mx-auto flex max-w-6xl flex-wrap gap-2 px-6 py-4" aria-label={labels.pageNav}>{visiblePages.map((page) => <Link key={page.id} href={page.slug ? `/site/${site.slug}/${page.slug}` : `/site/${site.slug}`} className="rounded-full border px-4 py-2 text-sm font-semibold">{page.title}</Link>)}</nav>}
+
       {visibleSections.map((section, index) => {
         const isPlaceholderHeading =
           !section.heading ||

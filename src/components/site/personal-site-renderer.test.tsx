@@ -78,8 +78,8 @@ describe("PersonalSiteRenderer", () => {
         }}
       />,
     );
-    expect(html).toContain("aria-label=\"Halaman situs\"");
-    expect(html).not.toContain("aria-label=\"Site pages\"");
+    expect(html).not.toContain("aria-label=\"Halaman situs\"");
+    expect(html).not.toContain("href=\"/site/my-studio/about\"");
   });
 
   it.each(["midnight", "paper", "studio"] as const)("renders the %s theme", (theme) => {

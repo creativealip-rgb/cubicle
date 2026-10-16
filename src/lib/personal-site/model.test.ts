@@ -23,6 +23,13 @@ describe("personal site model", () => {
     expect(personalSiteInputSchema.safeParse({ ...DEFAULT_PERSONAL_SITE, slug: "Bad Slug" }).success).toBe(false);
   });
 
+  it("accepts uploaded site images as OG images", () => {
+    expect(personalSiteInputSchema.safeParse({
+      ...DEFAULT_PERSONAL_SITE,
+      seo: { title: "", description: "", ogImage: "/api/site/image/af29b681-ceb3-47d2-bc1a-1e94c8ff3ec5.png" },
+    }).success).toBe(true);
+  });
+
   it("allows public destinations and rejects script/app routes", () => {
     expect(isSafePublicHref("https://example.com/book")).toBe(true);
     expect(isSafePublicHref("mailto:hello@example.com")).toBe(true);

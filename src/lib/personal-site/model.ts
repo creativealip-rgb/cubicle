@@ -478,7 +478,13 @@ const seoOgImageSchema = z
   .string()
   .trim()
   .max(2_000)
-  .refine((value) => !value || isSafePublicHref(value), "Gunakan URL publik yang aman")
+  .refine(
+    (value) =>
+      !value ||
+      isSafePublicHref(value) ||
+      /^\/api\/site\/image\/[a-z0-9-]+\.(?:png|jpe?g|webp)$/i.test(value),
+    "Gunakan URL publik yang aman",
+  )
   .optional()
   .nullish();
 
