@@ -990,16 +990,22 @@ export function QuestionnaireBuilder({
     [fields, selectedFieldId],
   );
 
-  const dirty = useMemo(
-    () =>
-      JSON.stringify({ name, description, fields }) !==
-      JSON.stringify({
-        name: initial?.name || "",
-        description: initial?.description || "",
-        fields: initial?.schema || [],
-      }),
-    [name, description, fields, initial],
-  );
+  const currentSnapshot = JSON.stringify({
+    name,
+    description,
+    fields,
+    customSlug,
+    expiresAt,
+    maxResponses,
+    requireAll,
+    selectedTheme,
+    cardRoundness,
+    thankYouMessage,
+    redirectUrl,
+    formStatus,
+  });
+  const [savedSnapshot, setSavedSnapshot] = useState(currentSnapshot);
+  const dirty = currentSnapshot !== savedSnapshot;
 
   useUnsavedChanges(dirty && !pending);
 
@@ -1133,6 +1139,7 @@ export function QuestionnaireBuilder({
           if (!isAuto) toast.success(t("Formulir berhasil dibuat", "Form created"));
           window.history.replaceState(null, "", `/app/questionnaires/${qId}`);
         }
+        setSavedSnapshot(currentSnapshot);
         setSavedStatus("saved");
       } catch (err: any) {
         setSavedStatus("idle");
@@ -1155,6 +1162,7 @@ export function QuestionnaireBuilder({
       activeQuestionnaireId,
       isPaidPlan,
       workspaceId,
+      currentSnapshot,
       t,
     ]
   );
