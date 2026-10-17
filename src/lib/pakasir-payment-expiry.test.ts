@@ -17,7 +17,7 @@ function expirySection() {
 describe("Pakasir payment expiry: stale pending rows close out as expired, never activate", () => {
   it("provider status 'expired' triggers a pending -> expired update and returns outcome expired", () => {
     const section = expirySection();
-    expect(section).toContain('verifiedStatus === "expired"');
+    expect(section).toContain('verifiedStatus === "canceled"');
     expect(section).toContain('.set({ status: "expired"');
     expect(section).toMatch(/outcome: "expired" as const/);
   });
@@ -42,7 +42,7 @@ describe("Pakasir payment expiry: stale pending rows close out as expired, never
 
   it("expired_at check runs BEFORE any activation work", () => {
     const src = sync();
-    const statusExpiry = src.indexOf('verifiedStatus === "expired"');
+    const statusExpiry = src.indexOf('verifiedStatus === "canceled"');
     const timeExpiry = src.indexOf("transaction?.expired_at");
     const activationCall = src.indexOf("activateCompletedPakasirPayment(payment.id, {");
     expect(statusExpiry).toBeGreaterThan(-1);

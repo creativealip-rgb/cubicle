@@ -19,7 +19,7 @@ describe("pakasir-sync missed-webhook recovery wiring", () => {
 
   it("re-fetches provider detail fail-closed before activating", () => {
     const src = sync();
-    expect(src).toContain("getPakasirTransactionDetail({ orderId: payment.orderId, amount })");
+    expect(src).toContain("getPakasirTransactionDetail({ txnId })");
     // The cron must never trust the local pending row alone — only a
     // provider-confirmed "completed" status may activate.
     expect(src).toContain('verifiedStatus !== "completed"');

@@ -2,7 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { db } from "@/db";
 import { pakasirPayments, users, workspaces, subscriptionEvents } from "@/db/schema";
-import { getPakasirTransactionDetail, type PakasirWebhook } from "@/lib/pakasir";
+import { getPakasirTransactionDetail, pakasirTxnId, type PakasirWebhook } from "@/lib/pakasir";
 import { getPeriodExpiry } from "@/lib/billing-plans";
 import { getEffectivePlan } from "@/lib/plan";
 import { activateExtraWorkspaceEntitlementTx } from "@/lib/extra-workspace";
@@ -333,7 +333,15 @@ export async function processPakasirPayment(paymentId: string) {
   const amount = Math.round(Number(payment.amount));
   let detail: Awaited<ReturnType<typeof getPakasirTransactionDetail>>;
   try {
-    detail = await getPakasirTransactionDetail({ orderId: payment.orderId, amount });
+    const txnId = pakasirTxnId(payment.rawPayload);
+    if (!txnId) {
+      if (payment.createdAt.getTime() < Date.now() - STALE_PENDING_MS
+        && await expireStalePendingPakasirPayment(payment.id)) {
+        return { orderId: payment.orderId, outcome: "expired" as const, status: "missing_txn_id" };
+      }
+      return { orderId: payment.orderId, outcome: "ignored" as const, status: "missing_txn_id" };
+    }
+    detail = await getPakasirTransactionDetail({ txnId });
   } catch (err) {
     if (
       payment.createdAt.getTime() < Date.now() - STALE_PENDING_MS
@@ -353,7 +361,7 @@ export async function processPakasirPayment(paymentId: string) {
   // row is never activated, and the terminal transition is conditional on the
   // row still being pending so a concurrent completion cannot be overwritten.
   if (!verifiedStatus || verifiedStatus !== "completed") {
-    if (transaction && verifiedStatus === "expired") {
+    if (transaction && verifiedStatus === "canceled") {
       const updated = await db
         .update(pakasirPayments)
         .set({ status: "expired", updatedAt: new Date() })

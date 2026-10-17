@@ -75,12 +75,7 @@ export async function POST(request: Request) {
     const payment = await createPakasirTransaction({ orderId, amount, method: "qris" });
     const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "https://cubiqlo.com").replace(/\/$/, "");
     const redirectUrl = `${appUrl}/app/billing?checkout=${encodeURIComponent(orderId)}`;
-    const paymentUrl = pakasirPaymentUrl({
-      project: payment.project,
-      amount: payment.amount,
-      orderId: payment.order_id,
-      redirectUrl,
-    });
+    const paymentUrl = pakasirPaymentUrl({ txnId: payment.txn_id, redirectUrl });
 
     await db.insert(pakasirPayments).values({
       workspaceId: membership.workspaceId,

@@ -2,21 +2,19 @@ import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
 import { db } from "@/db";
 import { pakasirPayments } from "@/db/schema";
-import { getPakasirTransactionDetail, pakasirProject, type PakasirWebhook } from "@/lib/pakasir";
+import { getPakasirTransactionDetail, verifyPakasirWebhookSecret, type PakasirWebhook } from "@/lib/pakasir";
 import { enforceRateLimitResponse } from "@/lib/distributed-rate-limit";
 import { activateCompletedPakasirPayment } from "@/lib/pakasir-sync";
 
 export async function POST(request: Request) {
   const limited = await enforceRateLimitResponse(request, "webhook:pakasir", { limit: 120, windowSec: 60 });
   if (limited) return limited;
-  const body = (await request.json().catch(() => null)) as PakasirWebhook | null;
-  if (!body?.order_id || !body.amount || !body.project) {
-    return NextResponse.json({ error: "Invalid webhook" }, { status: 400 });
+  if (!verifyPakasirWebhookSecret(request.headers.get("x-secret"))) {
+    return NextResponse.json({ error: "Invalid webhook secret" }, { status: 401 });
   }
-
-  const expectedProject = pakasirProject();
-  if (expectedProject && body.project !== expectedProject) {
-    return NextResponse.json({ error: "Project mismatch" }, { status: 403 });
+  const body = (await request.json().catch(() => null)) as PakasirWebhook | null;
+  if (!body?.txn_id || !body.order_id || !body.amount) {
+    return NextResponse.json({ error: "Invalid webhook" }, { status: 400 });
   }
 
   const [payment] = await db
@@ -41,8 +39,12 @@ export async function POST(request: Request) {
   // Fail-closed verification: only trust the status re-fetched from Pakasir,
   // NEVER the raw webhook body. A forged webhook with status:"completed" must
   // not be able to activate a plan when Pakasir itself has no such transaction.
-  const detail = await getPakasirTransactionDetail({ orderId: payment.orderId, amount });
-  const verifiedStatus = detail.transaction?.status;
+  const detail = await getPakasirTransactionDetail({ txnId: body.txn_id });
+  const verified = detail.transaction;
+  if (verified?.txn_id !== body.txn_id || verified?.order_id !== payment.orderId || Number(verified?.amount) !== amount) {
+    return NextResponse.json({ error: "Provider transaction mismatch" }, { status: 400 });
+  }
+  const verifiedStatus = verified.status;
   if (!verifiedStatus) {
     await db
       .update(pakasirPayments)
