@@ -626,7 +626,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                 const copy = [...prev];
                 const last = copy[copy.length - 1];
                 if (!last || last.role !== "assistant") return prev;
-                const stripped = stripThinking(delta);
+                const stripped = stripThinking(delta, false);
                 if (!stripped) return prev;
                 copy[copy.length - 1] = {
                   ...last,

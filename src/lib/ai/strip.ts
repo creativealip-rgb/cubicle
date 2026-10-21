@@ -7,7 +7,7 @@
  *   - "### Thinking" / "### Response" style blocks (textual, line-based)
  *   - Leading "Reasoning:" / "Analysis:" meta lines
  */
-export function stripThinking(text: string): string {
+export function stripThinking(text: string, trim = true): string {
   if (!text) return text;
   let out = text;
 
@@ -42,5 +42,7 @@ export function stripThinking(text: string): string {
     "",
   );
 
-  return out.trim();
+  // Streaming callers must preserve leading/trailing whitespace on every delta;
+  // trimming each chunk turns " Mau cek apa?" into "Maucekapa?".
+  return trim ? out.trim() : out;
 }
