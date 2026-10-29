@@ -390,17 +390,27 @@ const workflowCopy = [
 
       <footer className="border-t border-slate-200 bg-white px-4 py-12 sm:px-6 sm:py-14 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="grid gap-10 border-b border-slate-200 pb-10 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start">
+          <div className="grid gap-10 border-b border-slate-200 pb-10 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start lg:gap-20">
             <div>
               <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-9 w-auto" />
               <p className="mt-4 max-w-sm text-sm leading-6 text-slate-500">{tx("Hub kerja klien all-in-one untuk pekerja remote & tim.", "All-in-one client hub for remote workers & teams.")}</p>
             </div>
-            <nav aria-label="Footer" className="grid grid-cols-2 gap-x-10 gap-y-1 text-sm sm:grid-cols-4 sm:gap-x-8">
-              <a href="#workflow" className="inline-flex min-h-11 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Alur kerja", "Workflow")}</a>
-              <a href="#pricing" className="inline-flex min-h-11 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Harga", "Pricing")}</a>
-              <a href="https://blog.cubiqlo.com" className="inline-flex min-h-11 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Blog", "Blog")}</a>
-              <Link href="/terms" className="inline-flex min-h-11 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Syarat", "Terms")}</Link>
-              <Link href="/privacy" className="inline-flex min-h-11 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Privasi", "Privacy")}</Link>
+            <nav aria-label="Footer" className="grid grid-cols-2 gap-x-12 text-sm sm:gap-x-16">
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[.16em] text-slate-400">{tx("Produk", "Product")}</p>
+                <div className="flex flex-col">
+                  <a href="#workflow" className="inline-flex min-h-10 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Alur kerja", "Workflow")}</a>
+                  <a href="#pricing" className="inline-flex min-h-10 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Harga", "Pricing")}</a>
+                  <a href="https://blog.cubiqlo.com" className="inline-flex min-h-10 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Blog", "Blog")}</a>
+                </div>
+              </div>
+              <div>
+                <p className="mb-3 text-xs font-semibold uppercase tracking-[.16em] text-slate-400">{tx("Legal", "Legal")}</p>
+                <div className="flex flex-col">
+                  <Link href="/terms" className="inline-flex min-h-10 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Syarat", "Terms")}</Link>
+                  <Link href="/privacy" className="inline-flex min-h-10 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Privasi", "Privacy")}</Link>
+                </div>
+              </div>
             </nav>
           </div>
           <div className="flex flex-col gap-2 pt-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
