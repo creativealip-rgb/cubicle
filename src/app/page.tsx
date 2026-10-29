@@ -398,6 +398,7 @@ const workflowCopy = [
             <nav aria-label="Footer" className="grid grid-cols-2 gap-x-10 gap-y-1 text-sm sm:grid-cols-4 sm:gap-x-8">
               <a href="#workflow" className="inline-flex min-h-11 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Alur kerja", "Workflow")}</a>
               <a href="#pricing" className="inline-flex min-h-11 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Harga", "Pricing")}</a>
+              <a href="https://blog.cubiqlo.com" className="inline-flex min-h-11 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Blog", "Blog")}</a>
               <Link href="/terms" className="inline-flex min-h-11 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Syarat", "Terms")}</Link>
               <Link href="/privacy" className="inline-flex min-h-11 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Privasi", "Privacy")}</Link>
             </nav>
