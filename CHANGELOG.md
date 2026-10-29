@@ -1,3 +1,12 @@
+## 2026-10-29 — Standalone blog and landing footer polish
+
+- Launched and polished the standalone WordPress publication at `blog.cubiqlo.com` with isolated database/storage, custom Cubiqlo theme, sticky responsive navigation, category/search/archive routes, pagination, branded 404, related insights, contextual CTA, and generated cover images for all posts.
+- Added the Blog link to the Cubiqlo landing footer and grouped landing footer navigation into Product and Legal columns so Privacy no longer wraps below Workflow.
+- Verified desktop/mobile layouts, live category filtering, article cards, mobile drawer, pagination, public routes, and production health.
+- Production release: `cubiqlo-prod:sha-f46482d6`; health and DB returned `ok`.
+
+Evidence: `docs/operations/evidence/cubiqlo-blog-and-footer-release-2026-10-29.md`.
+
 ## 2026-10-14 — Branding, landing proof, contract status, AI model, and renderer fixes
 
 - Replaced Cubiqlo horizontal, square, favicon, PWA, Apple touch, SVG compatibility, and Open Graph brand assets with the new `cubiqlo.com` identity.
