@@ -42,6 +42,10 @@
 - Footer desktop/mobile browser QA: no horizontal overflow; all five links visible in intended groups.
 - WordPress homepage, categories, search, articles, related cards, pagination, mobile drawer, and 404 were browser-tested on desktop and mobile.
 
-## Repository note
+## Repository
 
-`/root/projects/cubiqlo-blog-wordpress` was created as an operational project without an upstream Git remote. A local Git history records the deployed theme/config state; publishing that repository requires an authenticated GitHub remote.
+- Private GitHub repository: `https://github.com/creativealip-rgb/cubiqlo-blog-wordpress`.
+- Branch: `main`.
+- Initial commit: `cc37916e8f7b2fa6cef8d07621562529c12d838c`.
+- Local and remote commit hashes were verified identical.
+- Real `.env`, credentials, passwords, logs, backups, and caches are excluded from Git.
