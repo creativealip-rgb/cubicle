@@ -438,7 +438,10 @@ export async function streamChat(
         const delta = choice.delta;
         if (delta?.content) {
           // Strip any <think>…</think> that may have streamed (defense in depth)
-          const piece = _stripThinking(delta.content);
+          // trim=false is required on streamed deltas: each chunk often starts or
+          // ends mid-word, so trimming destroys the spaces between words and the
+          // user sees "Maucekapa?". See strip.ts:45.
+          const piece = _stripThinking(delta.content, false);
           if (piece) {
             content += piece;
             queueEmit(piece);
