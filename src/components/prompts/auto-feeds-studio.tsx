@@ -264,6 +264,7 @@ export function AutoFeedsStudio() {
         notes,
         draftPrompt: output,
       });
+      if (!result.ok) throw new Error(result.error);
       setAiOutput(result.generation.generatedOutput || "");
       toast.success(
         `AI output generated · $${Number(result.usage?.costUsd ?? 0).toFixed(4)}`,

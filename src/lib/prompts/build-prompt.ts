@@ -41,13 +41,26 @@ export function buildPromptRequest(raw: PromptBriefInput) {
   };
 }
 
+/** Models often echo the contract numbering ("1. Caption") into labels. Strip
+ * list markers, punctuation and case so the contract check compares meaning,
+ * not formatting. */
+function normalizeLabel(label: string): string {
+  return label
+    .trim()
+    .toLocaleLowerCase()
+    .replace(/^[\s\d]+[.)\-:]?\s*/, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 export function parsePromptResult(raw: string, fallbackType: PromptTypeId): { result: PromptGenerationResult; structured: boolean } {
   const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, "").replace(/\s*```$/, "");
   try {
     const parsed = promptGenerationResultSchema.parse(JSON.parse(cleaned));
     if (parsed.promptType !== fallbackType) throw new Error("Prompt type mismatch");
-    const required = getPromptType(fallbackType).outputContract.map((label) => label.toLocaleLowerCase());
-    const actual = parsed.readyOutput.map((item) => item.label.trim().toLocaleLowerCase());
+    const required = getPromptType(fallbackType).outputContract.map((label) => normalizeLabel(label));
+    const actual = parsed.readyOutput.map((item) => normalizeLabel(item.label));
     if (!required.every((label) => actual.includes(label))) throw new Error("Incomplete output contract");
     return { result: parsed, structured: true };
   } catch {

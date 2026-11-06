@@ -18,6 +18,25 @@ const DISPLAY_MONTHLY_BUDGET_USD = 50;
 const SERVER_MODEL = process.env.AI_MODEL ?? "ag/gemini-3.7-flash";
 const visualPromptSchema = promptBriefSchema;
 
+async function currentUser() {
+  const session = await auth.api.getSession({ headers: await headers() });
+  return session?.user ?? null;
+}
+
+/** Server actions must never throw to the client: production redacts the
+ * message into "An error occurred in the Server Components render" (React #441)
+ * and the error boundary wipes the user's brief. Return the failure instead. */
+export async function generateVisualPrompt(rawInput: unknown) {
+  try {
+    return { ok: true as const, ...(await runGenerate(rawInput)) };
+  } catch (error) {
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : "Materi gagal dibuat.",
+    };
+  }
+}
+
 function getApiKey() {
   try {
     const secret = readFileSync("/run/secrets/9router_api_key", "utf8").trim();
@@ -46,6 +65,29 @@ function estimateCost(model: string, inputTokens: number, outputTokens: number):
   };
   const p = pricing[model] ?? { input: 0.15, output: 0.6 };
   return (inputTokens / 1_000_000) * p.input + (outputTokens / 1_000_000) * p.output;
+}
+
+/** Return the first balanced {...} substring, so a trailing second document or
+ * SSE tail emitted by the router cannot break JSON.parse. */
+function firstJsonObject(text: string): string {
+  const start = text.indexOf("{");
+  if (start === -1) throw new Error("Respons AI kosong.");
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') inString = true;
+    else if (ch === "{") depth++;
+    else if (ch === "}" && --depth === 0) return text.slice(start, i + 1);
+  }
+  throw new Error("Respons AI terpotong.");
 }
 
 function parseAiResponse(rawText: string) {
@@ -85,7 +127,9 @@ function parseAiResponse(rawText: string) {
     };
   }
 
-  const data = JSON.parse(text);
+  // Some routers append a second JSON document (or SSE tail) after the body.
+  // Take the first balanced JSON object and ignore whatever follows.
+  const data = JSON.parse(firstJsonObject(text));
   return {
     content: String(data.choices?.[0]?.message?.content ?? "").trim(),
     promptTokens: Number(data.usage?.prompt_tokens ?? 0) || 0,
@@ -94,9 +138,8 @@ function parseAiResponse(rawText: string) {
 }
 
 
-export async function generateVisualPrompt(rawInput: unknown) {
-  const session = await auth.api.getSession({ headers: await headers() });
-  const user = requireUser(session?.user);
+async function runGenerate(rawInput: unknown) {
+  const user = requireUser(await currentUser());
   const workspaceId = await getWorkspaceForCurrentUser();
   await assertWorkspaceWritable(db, user.id, workspaceId);
 

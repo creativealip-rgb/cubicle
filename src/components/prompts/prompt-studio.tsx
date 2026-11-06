@@ -179,6 +179,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
     setLoading(true);
     try {
       const response = await generateVisualPrompt({ promptType: typeId, outputLanguage: lang, ...form });
+      if (!response.ok) throw new Error(response.error);
       const next = parsePromptResult(response.generation.generatedOutput || "", typeId).result;
       setResult(next);
       toast.success(t("Materi selesai dibuat", "Material generated"));
