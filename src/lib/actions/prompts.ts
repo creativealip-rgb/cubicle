@@ -52,7 +52,7 @@ export async function listSystemTemplates(workspaceId?: string) {
 const generatePromptSchema = z.object({
   templateId: z.string().uuid(),
   input: z.record(z.string(), z.string()).default({}),
-  model: z.string().default("ag/gemini-pro-agent"),
+  model: z.string().default("ds/deepseek-v4-flash"),
   projectId: z.string().uuid().optional(),
 });
 

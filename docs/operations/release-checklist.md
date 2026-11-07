@@ -14,8 +14,8 @@ Catat sebelum deploy:
 
 ```bash
 git rev-parse HEAD
-docker inspect cubicle-cubicle-1 --format '{{.Image}} {{.State.Health.Status}} {{.HostConfig.RestartPolicy.Name}}'
-docker image inspect cubicle-cubicle:latest --format '{{.Id}}'
+grep -n 'cubiqlo-new-app-next' /etc/dokploy/traefik/dynamic/cubiqlo-new.yml
+docker inspect <active-container> --format '{{.Config.Image}} {{.State.Status}} {{.HostConfig.RestartPolicy.Name}}'
 curl -fsS https://app.cubiqlo.com/api/health
 ```
 
@@ -50,8 +50,9 @@ npm run build
 ## 5. Deploy
 
 ```bash
-docker compose build cubicle
-docker compose up -d --no-deps --force-recreate cubicle
+SHA=$(git rev-parse --short HEAD)
+docker build --no-cache -t "cubiqlo-prod:sha-$SHA" .
+# Follow DEPLOY.md blue-green candidate health + one-line Traefik backend swap.
 ```
 
 Catat image baru setelah recreate.
@@ -59,7 +60,7 @@ Catat image baru setelah recreate.
 ## 6. Post-deploy verification
 
 ```bash
-docker inspect cubicle-cubicle-1 --format '{{.Image}} {{.State.Status}} {{.State.Health.Status}} {{.HostConfig.RestartPolicy.Name}}'
+docker inspect <active-container> --format '{{.Config.Image}} {{.State.Status}} {{.HostConfig.RestartPolicy.Name}}'
 curl -fsS https://app.cubiqlo.com/api/health
 curl -LsS -o /dev/null -w '%{http_code} %{url_effective}\n' https://cubiqlo.com/
 curl -LsS -o /dev/null -w '%{http_code} %{url_effective}\n' https://app.cubiqlo.com/login

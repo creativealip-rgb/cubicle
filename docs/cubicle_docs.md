@@ -1,7 +1,7 @@
 # Cubiqlo — Client Operations Hub
 
 > **Status:** Production live · **URL:** https://app.cubiqlo.com
-> **Stack:** Next.js 16 · React 19 · Drizzle ORM + PostgreSQL 16 · Better Auth v5 · Tailwind CSS v4 · shadcn/ui · Dokploy + Docker · Cloudflare R2 · Resend · Pakasir QRIS · **AI Assistant (9router + ag/gemini-3-flash)**
+> **Stack:** Next.js 16 · React 19 · Drizzle ORM + PostgreSQL 16 · Better Auth v5 · Tailwind CSS v4 · shadcn/ui · Dokploy + Docker · Cloudflare R2 · Resend · Pakasir QRIS · **AI Assistant (9Router + `ds/deepseek-v4-flash` → DeepSeek)**
 
 ---
 
@@ -214,7 +214,7 @@ GET /app/prompts | Floating Chat Widget (/app/*)
 ```
 
 - **AI Prompt Studio (`/app/prompts`)**: Generator materi kampanye & brief visual dengan 18 preset katalog (Feed Instagram, Carousel, Story, Product Ad, Thumbnail, UGC Script, Logo, dll) berdukungan bilingual (ID/EN).
-- **AI Assistant (`/app/brain`)**: Asisten pintar berbasis Agentic RAG (model default `ag/gemini-3-flash` via 9Router) untuk tanya-jawab data workspace & eksekusi tindakan terkonfirmasi UI. Tersedia juga sebagai widget mengambang di seluruh halaman `/app/*`.
+- **AI Assistant (`/app/brain`)**: Asisten pintar berbasis Agentic RAG (model production `ds/deepseek-v4-flash` via internal 9Router, routed to DeepSeek) untuk tanya-jawab data workspace & eksekusi tindakan terkonfirmasi UI. Tersedia juga sebagai widget mengambang di seluruh halaman `/app/*`.
 
 ---
 

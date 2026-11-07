@@ -17,7 +17,7 @@ Production monitor source:
 3. `/api/health` reports app and database `ok`.
 4. Anonymous `/api/time/active` returns `401` as synthetic auth-boundary proof.
 5. App and PostgreSQL containers are healthy.
-6. Dokploy Redis service has `1/1` replicas.
+6. Cubiqlo Redis container `cubiqlo-new-redis` is running.
 7. PostgreSQL active connections stay below 80% of `max_connections`.
 8. Root disk stays below 90% and host memory below 90%.
 9. Latest local PostgreSQL backup is newer than 26 hours and checksum-valid.
@@ -40,7 +40,7 @@ A 99.5% monthly availability target permits about 3 hours 39 minutes downtime in
 ## Alert response
 
 1. Confirm public `/api/health`, landing, and login status.
-2. Check `cubicle-cubicle-1`, `cubicle-pg`, `dokploy-redis`, and `dokploy-traefik`.
+2. Resolve the active app backend from `/etc/dokploy/traefik/dynamic/cubiqlo-new.yml`, then check it with `cubiqlo-new-pg`, `cubiqlo-new-redis`, and `dokploy-traefik`.
 3. For a deploy regression, use `/root/releases/cubiqlo/previous.env` and the health-gated deployment procedure.
 4. For DB saturation, inspect `pg_stat_activity` before terminating sessions.
 5. For stale backup, inspect local backup cron and encrypted offsite backup logs.

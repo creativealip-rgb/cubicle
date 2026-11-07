@@ -263,7 +263,7 @@ Fitur kecerdasan buatan terintegrasi (`/app/prompts` & `/app/brain`).
 - Widget asisten mengambang di seluruh halaman `/app/*`.
 - Menggunakan arsitektur Agentic RAG untuk menjawab pertanyaan seputar data workspace (Klien, Proyek, Invoice, Task) tanpa mengirim data Sensitif ke luar.
 - Eksekusi tindakan aman (misal: buat draft reminder invoice) dengan persetujuan UI pengguna.
-- Model default: `ag/gemini-3-flash` via 9Router (`AI_MODEL`).
+- Model production: `ds/deepseek-v4-flash` via internal 9Router (`AI_MODEL`), routed to DeepSeek.
 
 ---
 

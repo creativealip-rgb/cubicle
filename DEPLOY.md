@@ -1,229 +1,170 @@
-# Cubicle — Deployment Guide
+# Cubiqlo — Production Deployment Guide
 
-## Table of contents
-1. [Dokploy (recommended)](#1-dokploy-recommended)
-2. [Manual Docker](#2-manual-docker)
-3. [Other platforms](#3-other-platforms)
-4. [Post-deploy verification](#4-post-deploy-verification)
-5. [Rollback](#5-rollback)
+> Canonical production topology for Alip VPS. Historical plans/evidence under `docs/plans/` and `docs/operations/evidence/` are records, not current runbooks.
 
----
+## Production topology
 
-## 1. Dokploy (recommended)
+- Public app: `https://app.cubiqlo.com`
+- Public landing: `https://cubiqlo.com`
+- Admin: `https://admin.cubiqlo.com`
+- Database: `cubiqlo-new-pg` / database `cubicle`
+- Docker network: `dokploy-network`
+- Public reverse proxy: **`dokploy-traefik` only** on ports 80/443
+- Traefik config: `/etc/dokploy/traefik/dynamic/cubiqlo-new.yml`
+- App containers expose port 3000 only inside Docker. Never publish app port 3000 publicly.
+- Never start project-local Traefik/nginx/Caddy on 80/443.
 
-This repo includes a `docker-compose.yml` optimized for Dokploy.
+Before every deploy, read:
 
-### Steps
-
-1. **Create a new Compose service in Dokploy**
-   - Source: Git repository (this repo)
-   - Branch: `main`
-   - Compose file: `docker-compose.yml`
-
-2. **Set environment variables in Dokploy UI**
-   ```
-   DATABASE_URL=postgresql://cubiqlo_app:***@cubicle-pg:5432/cubicle
-   MIGRATION_DATABASE_URL=postgresql://cubiqlo_migrator:***@cubicle-pg:5432/cubicle
-   BETTER_AUTH_SECRET=<openssl rand -base64 32>
-   BETTER_AUTH_URL=https://cubicle.your-domain.com
-   APP_URL=https://cubicle.your-domain.com
-   NODE_ENV=production
-
-   R2_ACCOUNT_ID=...
-   R2_ACCESS_KEY_ID=...
-   R2_SECRET_ACCESS_KEY=...
-   R2_BUCKET_NAME=cubicle-prod
-   R2_PUBLIC_ENDPOINT=https://pub-xxx.r2.dev
-   R2_PUBLIC_URL=https://pub-xxx.r2.dev   # alias for site-upload API
-
-   RESEND_API_KEY=re_...
-   RESEND_FROM_EMAIL=noreply@your-domain.com
-
-   OPENAI_API_KEY=...
-   OPENAI_API_BASE=https://api.example.com/v1
-   AI_API_KEY=...
-   AI_BASE_URL=http://10.0.1.12:20128/v1
-   AI_MODEL=ag/gemini-3.7-flash
-   AI_MONTHLY_CAP_USD=5
-   ```
-
-3. **Configure Traefik labels (Dokploy does this automatically if you set the domain)**
-   - Host: `cubicle.your-domain.com`
-   - HTTPS: auto via Let's Encrypt
-   - Port: 3000
-
-4. **Deploy**
-   - Click "Deploy" in Dokploy UI
-   - Application startup never mutates schema. Provision roles first, then run the explicit migration release step before deploying app code.
-   - Watch logs for "ready on :3000"
-
-5. **Run migrations + seed (one-time, post first deploy)**
-   ```bash
-   MIGRATION_DATABASE_URL="postgresql://cubiqlo_migrator:***@cubicle-pg:5432/cubicle" DB_CONTAINER=cubicle-pg ALLOW_PRODUCTION_MIGRATION=1 npm run db:migrate
-   docker exec -it cubicle-cubicle-1 npm run db:seed
-   docker exec -it cubicle-cubicle-1 npm run auth:seed
-   ```
-
-### Resource limits (in `docker-compose.yml`)
-
-| Service | CPU limit | Memory limit |
-|---|---|---|
-| `cubicle` | 1.5 | 1G |
-| `cubicle-pg` | 1.0 | 1G |
-
-Adjust via Dokploy UI if traffic warrants.
-
-### Backup strategy
-
-- **Database**: nightly `pg_dump`, retained 7 days
-- **R2 bucket**: Cloudflare handles redundancy; no extra backup needed for MVP
-- **Logs**: 10m rotation × 3 files (configured in compose)
-
----
-
-## 2. Manual Docker
-
-If you don't use Dokploy:
-
-### 1. Provision Postgres
-
-```bash
-docker run -d \
-  --name cubicle-pg \
-  --restart unless-stopped \
-  -e POSTGRES_DB=cubicle \
-  -e POSTGRES_USER=postgres \
-  -e POSTGRES_PASSWORD=*** \
-  -e POSTGRES_HOST_AUTH_METHOD=scram-sha-256 \
-  -v cubicle-pg-data:/var/lib/postgresql/data \
-  postgres:16
+```text
+/root/.hermes/shared-workspace/DEPLOYMENT_GUARDRAILS.md
+/root/.hermes/shared-workspace/DEPLOY_RULES.md
 ```
 
-### 2. Build app image
+Then run from this repository:
 
 ```bash
-docker build -t cubicle:latest .
+/root/.hermes/shared-workspace/PRE_DEPLOY_CHECK.sh
 ```
 
-### 3. Run app
+## Canonical production environment
+
+Secrets stay in ignored `/root/projects/cubicle/.env.production` or the active container environment. Never commit or print them.
+
+```env
+NODE_ENV=production
+DATABASE_URL=postgresql://...@cubiqlo-new-pg:5432/cubicle
+BETTER_AUTH_URL=https://app.cubiqlo.com
+NEXT_PUBLIC_APP_URL=https://app.cubiqlo.com
+CUBICLE_URL=https://app.cubiqlo.com
+RATE_LIMIT_REDIS_URL=redis://cubiqlo-new-redis:6379
+
+# DeepSeek through the internal 9Router OpenAI-compatible gateway.
+# ds/deepseek-v4-flash is a 9Router model alias, not a direct api.deepseek.com model ID.
+AI_BASE_URL=http://9router:20128/v1
+AI_API_KEY=<9router-api-key>
+AI_MODEL=ds/deepseek-v4-flash
+```
+
+Production currently uses 9Router as transport and DeepSeek as provider/model. Do not replace the 9Router key with a direct DeepSeek key unless architecture is intentionally changed and all AI contracts are re-probed.
+
+## Quality gates
 
 ```bash
-docker run -d \
-  --name cubicle \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  --env-file .env \
-  --link cubicle-pg \
-  cubicle:latest
+npm run db:check-migrations
+npm run lint
+npx tsc --noEmit
+npm test
+npm run build
 ```
 
-### 4. Migrate + seed
+`npm run db:seed`, `npm run auth:seed`, and `npm run db:generate` do not exist. Do not copy old commands from historical documents.
+
+## Database migrations
+
+Application startup never mutates schema. Apply only checked-in ledger migrations, using the dedicated migration workflow:
 
 ```bash
-MIGRATION_DATABASE_URL="postgresql://cubiqlo_migrator:***@cubicle-pg:5432/cubicle" DB_CONTAINER=cubicle-pg ALLOW_PRODUCTION_MIGRATION=1 npm run db:migrate
-docker exec -it cubicle npm run db:seed
-docker exec -it cubicle npm run auth:seed
+MIGRATION_DATABASE_URL='postgresql://cubiqlo_migrator:...@cubiqlo-new-pg:5432/cubicle' \
+DB_CONTAINER=cubiqlo-new-pg \
+ALLOW_PRODUCTION_MIGRATION=1 \
+npm run db:migrate
 ```
 
-### 5. Reverse proxy
+Take a fresh backup before any production migration.
 
-Use Caddy / nginx / Traefik in front of `localhost:3000`. See `docker-compose.yml` for Traefik labels.
+## Backup and restore verification
 
----
+Daily local backup is active:
 
-## 3. Other platforms
+```text
+Script:    /root/scripts/cubiqlo_pg_backup.sh
+Schedule:  17 2 * * * (02:17 UTC)
+Output:    /root/backups/cubiqlo/daily/<UTC timestamp>/
+Retention: 14 days
+Log:       /var/log/cubiqlo_pg_backup.log
+```
 
-### Vercel (Next.js native)
+Each set contains compressed custom-format DB dump, PostgreSQL globals/roles, manifest, and SHA-256 checksums.
 
-Works, but **not recommended for MVP**:
-- No built-in Postgres — need Neon/Supabase
-- No built-in R2 — need to refactor file upload to use Vercel Blob or external
-- Cold starts on serverless can break Better-Auth sessions
-- Better-Auth requires a Node.js runtime, not Edge
-
-If you must use Vercel:
-- Use Neon for Postgres
-- Use Vercel Blob for files (replace R2 calls)
-- Configure `runtime = "nodejs"` in `next.config.js`
-
-### Railway / Render / Fly.io
-
-All work with the included `Dockerfile`. Just point at the repo, set env vars, deploy.
-
----
-
-## 4. Post-deploy verification
-
-Run these from any machine with `curl`:
+Manual backup and disposable restore test:
 
 ```bash
-# Public landing
-curl -sI https://cubicle.your-domain.com/ | head -1
-# expect: HTTP/2 200
-
-# Auth flow
-curl -sI https://cubicle.your-domain.com/login | head -1
-# expect: HTTP/2 200
-
-# Public booking
-curl -sI https://cubicle.your-domain.com/booking/acme-creative | head -1
-# expect: HTTP/2 200
-
-# Protected app (should redirect to /login)
-curl -sI https://cubicle.your-domain.com/app/dashboard
-# expect: HTTP/2 307 (or 200 if auth cookie present)
+/root/scripts/cubiqlo_pg_backup.sh
+/root/scripts/cubiqlo_pg_restore_verify.sh
 ```
 
-Then manually:
-1. Open `https://cubicle.your-domain.com/login` in browser
-2. Log in as `owner@cubicle.test` / `password123`
-3. Verify dashboard shows KPIs (active clients, projects, etc.)
-4. Open `/booking/acme-creative` in incognito — verify form is public
-5. Create a test invoice → copy public link → open in incognito → mark as paid
+Local backup protects against bad deploys and accidental deletion, not total VPS loss. Encrypted offsite backup remains required for full disaster recovery.
 
----
+## Blue-green release
 
-## 5. Rollback
+1. Confirm clean/synchronized Git state.
+2. Run quality gates and backup.
+3. Build immutable image:
 
-### Dokploy
-- Click "Rollback" in UI → select previous deployment
-
-### Manual Docker
 ```bash
-# Save current container as fallback
-docker commit cubicle cubicle:current
-
-# Pull old image
-docker pull cubicle:previous-tag
-
-# Stop current
-docker stop cubicle
-docker rm cubicle
-
-# Start old
-docker run -d --name cubicle ... cubicle:previous-tag
+SHA=$(git rev-parse --short HEAD)
+docker build --no-cache -t "cubiqlo-prod:sha-$SHA" .
 ```
 
-### Database
-- Restore from latest `pg_dump` backup
-- ⚠️ Migrations are forward-only; down-migrations are manual
+4. Start a candidate container on `dokploy-network`, port 3000 internal only, with the canonical production env.
+5. Verify candidate internally:
 
----
+```bash
+docker exec <candidate> wget -qO- http://127.0.0.1:3000/api/health
+```
 
-## Troubleshooting
+6. Change exactly the `cubiqlo-new-service` backend URL in `/etc/dokploy/traefik/dynamic/cubiqlo-new.yml`.
+7. Verify public health and affected flows.
+8. Stop, but do not immediately remove, the previous container. Keep one stopped rollback slot.
 
-### App won't start, "DATABASE_URL not set"
-- Check Dokploy env vars are set + container restarted after change
-- `docker exec -it cubicle-cubicle-1 env | grep DATABASE`
+The helper `scripts/operations/cubiqlo_blue_green_deploy.sh` supports only the slot names configured at its top. Inspect `docker ps -a` and the active Traefik backend before using it; do not assume historical slot names match runtime.
 
-### "Better-Auth session invalid" loop
-- `BETTER_AUTH_URL` doesn't match the actual URL the user is accessing
-- Check `metadataBase` in `src/app/layout.tsx` matches production URL
+## Post-deploy verification
 
-### R2 uploads return 403
-- `R2_*` env vars not set or wrong
-- Check bucket CORS policy allows PUT from your domain
+```bash
+curl -fsS https://app.cubiqlo.com/api/health
+curl -LsS -o /dev/null -w '%{http_code} %{url_effective}\n' https://cubiqlo.com/
+curl -LsS -o /dev/null -w '%{http_code} %{url_effective}\n' https://app.cubiqlo.com/login
+curl -LsS -o /dev/null -w '%{http_code} %{url_effective}\n' https://admin.cubiqlo.com/
 
-### Postgres connection refused
-- `cubicle-pg` container not running
-- Or `DATABASE_URL` points to wrong host (must be `cubicle-pg:5432` inside docker network, not `localhost`)
+ss -tulpn | grep -E ':80 |:443 '
+docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Networks}}'
+```
+
+Expected:
+
+- health body contains `"status":"ok"` and `"db":"ok"`
+- only `dokploy-traefik` owns host ports 80/443
+- app container has no host port binding
+- exact `Host(...)` routers remain intact
+
+After AI changes, verify both authenticated flows:
+
+- Prompt Studio: `/app/prompts`
+- Work Assistant: `/app/brain`
+
+A generic provider `200` is not enough; verify structured Prompt Studio output, persisted generation row, streamed assistant whitespace, quota, and visible error handling.
+
+## Rollback
+
+If health or smoke fails:
+
+1. Restore the previous Traefik backend URL or its saved config.
+2. Start the previous stopped app container.
+3. Confirm `/api/health`, login, and affected workflow.
+4. Never roll back database schema blindly.
+5. Preserve failure logs and record the rollback decision.
+
+Do not remove the previous image/container until the new release is verified.
+
+## Logs
+
+Resolve the active backend from Traefik before reading logs:
+
+```bash
+grep -n 'cubiqlo-new-app-next' /etc/dokploy/traefik/dynamic/cubiqlo-new.yml
+docker logs --tail 200 <active-container>
+```
+
+Do not use obsolete `cubicle-cubicle-1`; that container is not part of current production.

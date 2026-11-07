@@ -8,11 +8,11 @@
 - Isolation: personal storage remains user-scoped; business reports, exports, dashboard, AI, recurring, and activity consumers remain workspace-scoped.
 - Migration: `0087_personal_productivity_contract.sql`, after mandatory-MFA migrations `0083`–`0086`.
 
-Last updated: 2026-10-14
+Last updated: 2026-11-07
 Production app: https://app.cubiqlo.com
 Dev app: https://dev.cubiqlo.com
-Latest verified dev branch: `main` at `a142f7c8`
-Latest verified production commit: `a142f7c8`
+Latest verified dev branch: `main` at `f644917f`
+Latest verified production commit: `f644917f`
 
 ## Status legend
 
@@ -26,11 +26,11 @@ Latest verified production commit: `a142f7c8`
 | Area | Status | Notes |
 | --- | --- | --- |
 | Production domain | DONE | `https://app.cubiqlo.com` live over HTTPS; apex keeps public/redirect behavior. |
-| Docker deploy | DONE | Production uses blue-green `cubiqlo-new-app-next*` services on `dokploy-network`; verified image `cubicle:sha-a142f7c8766a768a5ad9a489f2a47dfd58267bf5`. |
+| Docker deploy | DONE | Production uses blue-green `cubiqlo-new-app-next*` services on `dokploy-network`; verified live image `cubiqlo-prod:sha-f644917f`. |
 | Database | DONE | Postgres container healthy; all 21 personal_sites columns present including `seo`, `pages`, `theme_config`, `hero_image`. |
 | Health endpoint | DONE | `/api/health` returns `{"status":"ok","db":"ok"}`. |
 | Protected app routing | DONE | `/app/*` redirects unauthenticated users to `/login?redirect=...`. |
-| Git checkpoint | DONE | Production feature release verified at `a142f7c8`; documentation follow-up records the release and keeps `HEAD`/`origin/main` synchronized. |
+| Git checkpoint | DONE | Production feature release verified at `f644917f`; `HEAD` and `origin/main` are synchronized. |
 | Dev integration checkpoint | DONE | `dev.cubiqlo.com` runs latest `main`; production container in sync. |
 
 ## Core app shell
@@ -137,7 +137,7 @@ Latest verified production commit: `a142f7c8`
 | Feature | Route/API | Status | Notes |
 | --- | --- | --- | --- |
 | AI chat/action | `/api/ai/chat`, `/api/ai/action` | PARTIAL | AI endpoints and conversations exist; role guard hardened. |
-| Prompts | `/app/prompts` | DONE | Prompt Studio uses one source of truth for Platform/Ratio/Tone/Offer, eliminating duplicate required fields. Dev AI routes through 9Router model `ag/gemini-3.6-flash-low`; production deployment unchanged. |
+| Prompts | `/app/prompts` | DONE | Prompt Studio and Work Assistant use `ds/deepseek-v4-flash` through internal 9Router, which routes the alias to DeepSeek. Prompt Studio validates numbered contract labels and tolerates router response trailers. |
 | Brain | `/app/brain` | PARTIAL | Route exists; knowledge/automation maturity pending. |
 | Unified Template Center | `/app/templates` | DONE | Invoice+proposal+contract hub; apply-template on create form still TODO; prompt tab soon. |
 

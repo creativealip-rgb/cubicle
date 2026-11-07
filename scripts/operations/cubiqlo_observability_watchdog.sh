@@ -8,7 +8,8 @@ HEALTH_URL=${HEALTH_URL:-https://cubiqlo.com/api/health}
 LANDING_URL=${LANDING_URL:-https://cubiqlo.com/}
 LOGIN_URL=${LOGIN_URL:-https://cubiqlo.com/login}
 AUTH_PROBE_URL=${AUTH_PROBE_URL:-https://cubiqlo.com/api/time/active}
-BACKUP_DIR=${BACKUP_DIR:-/root/backups/cubicle}
+BACKUP_DIR=${BACKUP_DIR:-/root/backups/cubiqlo/daily}
+TRAEFIK_CONFIG=${TRAEFIK_CONFIG:-/etc/dokploy/traefik/dynamic/cubiqlo-new.yml}
 BACKUP_MAX_AGE_SECONDS=${BACKUP_MAX_AGE_SECONDS:-93600}
 DISK_THRESHOLD=${DISK_THRESHOLD:-90}
 MEM_THRESHOLD=${MEM_THRESHOLD:-90}
@@ -39,14 +40,15 @@ if ! grep -q '"status":"ok"' <<<"$health" || ! grep -q '"db":"ok"' <<<"$health";
 fi
 check_http synthetic-auth-boundary "$AUTH_PROBE_URL" 401
 
-for container in cubicle-cubicle-1 cubicle-pg; do
+active_app=$(sed -n 's/.*url: "http:\/\/\(cubiqlo-new-app-next[^:]*\):3000".*/\1/p' "$TRAEFIK_CONFIG" | head -1)
+for container in "$active_app" cubiqlo-new-pg; do
   state=$(docker inspect "$container" --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' 2>/dev/null || true)
   [[ "$state" == healthy || "$state" == running ]] || alerts+=("container $container state=${state:-missing}")
 done
-redis_replicas=$(docker service ls --format '{{.Name}}|{{.Replicas}}' 2>/dev/null | sed -n 's/^dokploy-redis|//p')
-[[ "$redis_replicas" == "1/1" ]] || alerts+=("dokploy-redis replicas=${redis_replicas:-missing}")
+redis_state=$(docker inspect cubiqlo-new-redis --format '{{.State.Status}}' 2>/dev/null || true)
+[[ "$redis_state" == "running" ]] || alerts+=("cubiqlo-new-redis state=${redis_state:-missing}")
 
-read -r max_connections active_connections < <(docker exec cubicle-pg psql -U postgres -d cubicle -AtF' ' -c "select current_setting('max_connections'),count(*) from pg_stat_activity" 2>/dev/null || printf '0 0')
+read -r max_connections active_connections < <(docker exec cubiqlo-new-pg psql -U postgres -d cubicle -AtF' ' -c "select current_setting('max_connections'),count(*) from pg_stat_activity" 2>/dev/null || printf '0 0')
 if [[ "$max_connections" =~ ^[0-9]+$ && "$max_connections" -gt 0 ]]; then
   db_pct=$((active_connections * 100 / max_connections))
   (( db_pct < DB_CONNECTION_THRESHOLD )) || alerts+=("DB connections ${active_connections}/${max_connections} (${db_pct}%)")
@@ -59,14 +61,13 @@ mem=$(free | awk '/Mem:/ {printf "%.0f", $3/$2*100}')
 (( disk < DISK_THRESHOLD )) || alerts+=("disk ${disk}%")
 (( mem < MEM_THRESHOLD )) || alerts+=("memory ${mem}%")
 
-latest=$(find "$BACKUP_DIR" -maxdepth 1 -type f -name 'cubicle_2*.sql.gz' -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2-)
-if [[ -z "$latest" ]]; then
+latest=$(find "$BACKUP_DIR" -mindepth 1 -maxdepth 1 -type d -name '????????T??????Z' -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2-)
+if [[ -z "$latest" || ! -f "$latest/SHA256SUMS" ]]; then
   alerts+=("backup missing")
 else
   age=$((now - $(stat -c %Y "$latest")))
   (( age <= BACKUP_MAX_AGE_SECONDS )) || alerts+=("backup stale age=$((age/3600))h")
-  [[ -f "$latest.sha256" ]] || alerts+=("backup checksum sidecar missing")
-  if [[ -f "$latest.sha256" ]] && ! sha256sum -c "$latest.sha256" >/dev/null 2>&1; then
+  if ! (cd "$latest" && sha256sum -c SHA256SUMS >/dev/null 2>&1); then
     alerts+=("backup checksum invalid")
   fi
 fi

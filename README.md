@@ -83,12 +83,11 @@ R2_PUBLIC_URL=<public-r2-url>   # alias used by site-upload API (same base)
 RESEND_API_KEY=<your-resend-key>
 EMAIL_FROM=Cubicle <noreply@your-domain.com>   # optional, defaults to onboarding@resend.dev
 
-# AI (optional, OpenAI-compatible) — used by Prompt Generator + AI Assistant
-OPENAI_API_KEY=<key>          # fallback key for prompt generator
-OPENAI_API_BASE=https://api.example.com/v1
-AI_API_KEY=***                # AI Assistant key (or Docker secret /run/secrets/9router_api_key)
-AI_BASE_URL=http://10.0.1.12:20128/v1
-AI_MODEL=ag/gemini-3.7-flash
+# AI (optional, OpenAI-compatible) — used by Prompt Studio + Work Assistant
+# Canonical production: DeepSeek via the internal 9Router gateway.
+AI_API_KEY=<9router-api-key>
+AI_BASE_URL=http://9router:20128/v1
+AI_MODEL=ds/deepseek-v4-flash
 ```
 
 ### 3. Start database
@@ -97,12 +96,10 @@ AI_MODEL=ag/gemini-3.7-flash
 docker compose up -d cubicle-pg
 ```
 
-### 4. Run migrations + seed
+### 4. Run migrations
 
 ```bash
 npm run db:migrate     # apply checksummed migrations with dedicated migrator role
-npm run db:seed        # seed demo workspace + clients + projects
-npm run auth:seed      # create demo user accounts with passwords
 ```
 
 ### 5. Start the app
@@ -113,48 +110,16 @@ npm run dev
 
 Open <http://localhost:3000>.
 
-### Demo accounts (after seeding)
-
-| Email | Password | Role |
-|---|---|---|
-| `owner@cubicle.test` | `password123` | owner |
-| `member@cubicle.test` | `password123` | member |
-| `viewer@cubicle.test` | `password123` | viewer |
-
-Workspace slug: `acme-creative`
-
 ## Production deploy
 
-Cubicle is designed to deploy as a single Docker container behind a reverse proxy (Traefik, Caddy, nginx).
+Production uses immutable Docker images and a blue-green swap behind the VPS-wide
+`dokploy-traefik`. App containers join `dokploy-network`, expose port 3000 only
+inside Docker, and never bind public 80/443 or a host app port.
 
-### Build the image
-
-```bash
-docker build -t cubicle:latest .
-```
-
-### Run
-
-```bash
-docker run -d \
-  --name cubicle \
-  --restart unless-stopped \
-  -p 3000:3000 \
-  --env-file .env \
-  -v cubicle-pg-data:/var/lib/postgresql/data \
-  cubicle:latest
-```
-
-### Dokploy
-
-This repo includes a `docker-compose.yml` for one-click deploy via Dokploy:
-
-- Service: `cubicle` (Next.js on port 3000)
-- Service: `cubicle-pg` (Postgres 16 on internal network, port 5432 not exposed)
-- Traefik labels auto-configure HTTPS for `cubicle.<your-domain>`
-- Both services have CPU + memory limits + log rotation
-- Health checks on Postgres
-- Restart: `unless-stopped`
+See [`DEPLOY.md`](DEPLOY.md) for the canonical environment, backup, migration,
+blue-green deployment, rollback, and verification procedure. Do not deploy with
+the historical `docker compose up` / `cubicle-cubicle-1` instructions found in
+old evidence or plan documents.
 
 See `docs/cubicle_p0_hardening_report.md` for the security audit + hardening checklist.
 
@@ -220,40 +185,36 @@ src/
 
 ### Database backups
 
-**Already wired on this VPS** (see `/root/scripts/cubicle_pg_backup.sh`):
+**Active on this VPS**:
 
-- Daily `pg_dump` of the cubicle database + `pg_dumpall --globals-only` for roles
-- `sha256` checksums for tamper detection
-- 7 daily + 4 weekly retention (30-day safety net)
-- Optional Telegram alert on failure (`--alert-on-fail` flag)
-- Cron: `0 19 * * *` (02:00 WIB) on the host
-- Restore-test cron: `0 20 * * 0` (Sun 03:00 WIB) — spins up throwaway
-  postgres, loads latest dump, asserts ≥10 public tables, prints row
-  counts on key tables, cleans up
+- `/root/scripts/cubiqlo_pg_backup.sh`: daily custom-format dump of `cubicle`
+  plus `pg_dumpall --globals-only`, manifest, and SHA-256 checksums
+- Cron: `17 2 * * *` (02:17 UTC)
+- Output: `/root/backups/cubiqlo/daily/<UTC timestamp>/`
+- Retention: 14 days
+- `/root/scripts/cubiqlo_pg_restore_verify.sh`: checksum + disposable restore proof
+- Local-only backup; encrypted offsite copy is still required for VPS-loss recovery
 
 Manual run:
 
 ```bash
-bash /root/scripts/cubicle_pg_backup.sh            # local backup
-bash /root/scripts/cubicle_pg_restore_test.sh     # verify latest backup
+/root/scripts/cubiqlo_pg_backup.sh
+/root/scripts/cubiqlo_pg_restore_verify.sh
 ```
 
 ### Logs
 
-Both containers are configured with `10m` log rotation × 3 files. Tail with:
+Resolve the active backend from Traefik, then tail it:
 
 ```bash
-docker logs -f cubicle-cubicle-1
-docker logs -f cubicle-pg
+grep -n 'cubiqlo-new-app-next' /etc/dokploy/traefik/dynamic/cubiqlo-new.yml
+docker logs -f <active-container>
 ```
 
 ### Updating
 
-```bash
-git pull
-docker compose -p cubicle build cubicle
-docker compose -p cubicle up -d cubicle
-```
+Use the blue-green procedure in [`DEPLOY.md`](DEPLOY.md). Never recreate the
+production app in place or publish port 3000 on the host.
 
 ### Versioning
 
@@ -273,8 +234,8 @@ How it flows:
    Cubiqlo v{process.env.NEXT_PUBLIC_APP_VERSION ?? "0.0.0"}
    ```
 
-Because it's baked in at **build time**, the sidebar only updates after a rebuild
-(`docker compose build`). It does not change at runtime.
+Because it's baked in at **build time**, the sidebar only updates after a new
+image build and blue-green release. It does not change at runtime.
 
 **To cut a new release:**
 
@@ -287,9 +248,7 @@ npm version major --no-git-tag-version   # 0.1.21 -> 1.0.0  (breaking changes)
 
 # 2. Add a matching entry at the top of CHANGELOG.md (format: ## vX.Y.Z — YYYY-MM-DD — summary)
 
-# 3. Rebuild + redeploy so the sidebar picks up the new version
-docker compose -p cubicle build cubicle
-docker compose -p cubicle up -d --force-recreate cubicle
+# 3. Build an immutable image and follow DEPLOY.md blue-green release
 ```
 
 Follow [semver](https://semver.org): `MAJOR.MINOR.PATCH`.
@@ -300,10 +259,10 @@ Drizzle migrations live in `drizzle/*.sql`. To add a new one:
 
 ```bash
 # 1. Edit src/db/schema.ts
-# 2. Generate migration
-npm run db:generate
-# 3. Review the generated SQL
-# 4. Apply
+# 2. Add the next checksummed SQL migration and register it in the ledger
+# 3. Review the SQL and migration integrity
+npm run db:check-migrations
+# 4. Back up production, then apply with the dedicated migrator workflow
 npm run db:migrate
 ```
 

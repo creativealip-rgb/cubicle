@@ -15,7 +15,7 @@ import { buildPromptRequest, parsePromptResult, serializePromptResult } from "@/
 import { checkAiRateLimitDb, getPlanLimits, getUserPlan, releaseAiQuota } from "@/lib/plan";
 
 const DISPLAY_MONTHLY_BUDGET_USD = 50;
-const SERVER_MODEL = process.env.AI_MODEL ?? "ag/gemini-3.7-flash";
+const SERVER_MODEL = process.env.AI_MODEL ?? "ds/deepseek-v4-flash";
 const visualPromptSchema = promptBriefSchema;
 
 async function currentUser() {

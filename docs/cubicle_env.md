@@ -15,8 +15,8 @@ Target stack:
 ```env
 DATABASE_URL=postgresql://USER:PASSWORD@HOST/DATABASE
 BETTER_AUTH_SECRET=replace-with-random-secret
-BETTER_AUTH_URL=https://cubiqlo.com
-NEXT_PUBLIC_APP_URL=https://cubiqlo.com
+BETTER_AUTH_URL=https://app.cubiqlo.com
+NEXT_PUBLIC_APP_URL=https://app.cubiqlo.com
 CRON_SECRET=replace-with-random-cron-secret
 
 R2_ACCOUNT_ID=your-account-id
@@ -49,8 +49,8 @@ openssl rand -base64 32
 
 ```env
 AI_API_KEY=your-ai-api-key
-AI_BASE_URL=https://your-openai-compatible-endpoint/v1
-AI_MODEL=ag/gemini-3.7-flash
+AI_BASE_URL=http://9router:20128/v1
+AI_MODEL=ds/deepseek-v4-flash
 AI_MONTHLY_CAP_USD=5
 
 # Legacy/fallback names used by prompt generator:

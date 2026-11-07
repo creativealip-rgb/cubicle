@@ -73,7 +73,7 @@ export async function generatePersonalSiteCopy(
 
   // Fetch from OpenAI-compatible endpoint
   const baseUrl = process.env.AI_BASE_URL || "http://9router:20128/v1";
-  const model = process.env.AI_MODEL || "ag/gemini-3.7-flash";
+  const model = process.env.AI_MODEL || "ds/deepseek-v4-flash";
 
   // Refund gate: the reservation made by checkAiRateLimitDb above is only
   // released when the provider call never succeeded. Once the provider has
