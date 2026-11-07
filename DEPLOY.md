@@ -96,6 +96,32 @@ Manual backup and disposable restore test:
 
 Local backup protects against bad deploys and accidental deletion, not total VPS loss. Encrypted offsite backup remains required for full disaster recovery.
 
+### Encrypted offsite backup (active)
+
+```text
+Script:      /root/scripts/cubiqlo_pg_offsite_backup.sh
+Schedule:    47 2 * * * (02:47 UTC, after the local dump)
+Verify:      /root/scripts/cubiqlo_pg_offsite_restore_verify.sh
+Destination: R2 bucket R2_BUCKET_NAME, prefix db-backups/cubiqlo/
+Format:      <stamp>.tar.gpg (GPG symmetric AES-256) + .sha256 sidecar
+Retention:   30 days (pruned by object LastModified)
+Passphrase:  /root/.secrets/cubiqlo-backup/gpg-passphrase (mode 600)
+```
+
+The upload fails closed: it verifies the local `SHA256SUMS` before encrypting,
+compares the remote object size after upload, and never overwrites a partial set.
+
+Restore proof (downloads from R2, decrypts, restores into a disposable database,
+drops it afterwards):
+
+```bash
+/root/scripts/cubiqlo_pg_offsite_restore_verify.sh
+```
+
+CRITICAL: the GPG passphrase lives only on this VPS. Without a copy of it stored
+offline, the offsite archives are unrecoverable if the VPS itself is lost. Store
+it in a password manager now.
+
 ## Blue-green release
 
 1. Confirm clean/synchronized Git state.

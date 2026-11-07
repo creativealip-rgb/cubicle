@@ -193,13 +193,18 @@ src/
 - Output: `/root/backups/cubiqlo/daily/<UTC timestamp>/`
 - Retention: 14 days
 - `/root/scripts/cubiqlo_pg_restore_verify.sh`: checksum + disposable restore proof
-- Local-only backup; encrypted offsite copy is still required for VPS-loss recovery
+- Encrypted offsite copy to Cloudflare R2 under `db-backups/cubiqlo/`
+  (GPG AES-256, 30-day retention, cron `47 2 * * *`) — see [`DEPLOY.md`](DEPLOY.md)
+- The GPG passphrase is stored only on this VPS; keep an offline copy or the
+  offsite archives cannot be opened
 
 Manual run:
 
 ```bash
 /root/scripts/cubiqlo_pg_backup.sh
 /root/scripts/cubiqlo_pg_restore_verify.sh
+/root/scripts/cubiqlo_pg_offsite_backup.sh
+/root/scripts/cubiqlo_pg_offsite_restore_verify.sh
 ```
 
 ### Logs
