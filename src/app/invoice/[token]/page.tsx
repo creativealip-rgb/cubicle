@@ -308,8 +308,8 @@ export default async function SharedInvoicePage({
 
         {/* Footer */}
         <p className="text-center text-xs text-muted-foreground mt-12">
-          This invoice was shared via Cubiqlo. Powered by{" "}
-          <span className="font-medium">Cubiqlo</span>
+          This invoice was shared via Koobikel. Powered by{" "}
+          <span className="font-medium">Koobikel</span>
         </p>
       </div>
     </div>

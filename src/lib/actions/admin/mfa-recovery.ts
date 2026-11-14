@@ -21,7 +21,7 @@ export async function requestMfaRecovery(input: z.infer<typeof requestSchema>) {
   if (!user?.password || !(await verifyPassword(user.password, password))) throw new Error("Unable to create recovery request");
   const [existing] = await db.select({ id: mfaRecoveryRequests.id }).from(mfaRecoveryRequests).where(and(eq(mfaRecoveryRequests.userId, user.id), eq(mfaRecoveryRequests.status, "pending"))).limit(1); if (existing) return { ok: true, requestId: existing.id };
   const createdAt = new Date(); const [request] = await db.insert(mfaRecoveryRequests).values({ userId: user.id, reason, coolingUntil: recoveryCoolingUntil(createdAt), evidence: { source: "authenticated-session" }, createdAt, updatedAt: createdAt }).returning({ id: mfaRecoveryRequests.id, coolingUntil: mfaRecoveryRequests.coolingUntil });
-  if (user.email) await sendNotification({ to: user.email, subject: "Cubiqlo MFA recovery requested", text: `A manual MFA recovery was requested. No account change can happen before ${request.coolingUntil.toISOString()} and two administrators must approve it.`, type: "mfa-recovery", idempotencyKey: `mfa-recovery-${request.id}` }); return { ok: true, requestId: request.id };
+  if (user.email) await sendNotification({ to: user.email, subject: "Koobikel MFA recovery requested", text: `A manual MFA recovery was requested. No account change can happen before ${request.coolingUntil.toISOString()} and two administrators must approve it.`, type: "mfa-recovery", idempotencyKey: `mfa-recovery-${request.id}` }); return { ok: true, requestId: request.id };
 }
 
 async function auditTx(tx: any, adminId: string, action: "mfa.recovery.approve" | "mfa.recovery.reject" | "mfa.recovery.execute", targetUserId: string, metadata: Record<string, unknown>) {

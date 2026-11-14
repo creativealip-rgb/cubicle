@@ -15,6 +15,6 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
     },
-    sitemap: "https://cubiqlo.com/sitemap.xml",
+    sitemap: "https://koobikel.com/sitemap.xml",
   };
 }

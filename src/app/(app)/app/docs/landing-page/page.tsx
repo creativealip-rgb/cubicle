@@ -195,13 +195,13 @@ const SECTIONS = [
       id: (
         <p>
           Cek readiness badge → klik Draft/Live → konfirmasi. URL:{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">cubiqlo.com/site/[slug]</code>.
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">koobikel.com/site/[slug]</code>.
         </p>
       ),
       en: (
         <p>
           Check the readiness badge → click Draft/Live → confirm. URL:{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">cubiqlo.com/site/[slug]</code>.
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs">koobikel.com/site/[slug]</code>.
         </p>
       ),
     },

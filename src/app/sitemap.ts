@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 
-const SITE_URL = "https://cubiqlo.com";
+const SITE_URL = "https://koobikel.com";
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return ["/", "/terms", "/privacy"].map((path) => ({

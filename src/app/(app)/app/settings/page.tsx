@@ -50,7 +50,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Pengaturan",
-  description: "Kelola pengaturan workspace, akun, tim, dan integrasi Cubiqlo.",
+  description: "Kelola pengaturan workspace, akun, tim, dan integrasi Koobikel.",
 };
 
 async function getWorkspaceId(): Promise<string> {

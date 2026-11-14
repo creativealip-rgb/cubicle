@@ -16,7 +16,7 @@ function appOrigin() {
   return (
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
     process.env.BETTER_AUTH_URL?.replace(/\/$/, "") ||
-    "https://cubiqlo.com"
+    "https://koobikel.com"
   );
 }
 
@@ -27,7 +27,7 @@ export async function GET(req: NextRequest) {
     const state = req.nextUrl.searchParams.get("state");
     const error = req.nextUrl.searchParams.get("error");
 
-    // Client invite OAuth does NOT require Cubiqlo login
+    // Client invite OAuth does NOT require Koobikel login
     if (state && isClientOAuthState(state)) {
       if (error) {
         return NextResponse.redirect(

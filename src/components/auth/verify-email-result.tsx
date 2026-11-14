@@ -41,7 +41,7 @@ export function VerifyEmailSuccess() {
       <CardHeader className="space-y-1 text-center">
         <Image
           src="/logo-icon.png"
-          alt="Cubiqlo"
+          alt="Koobikel"
           width={40}
           height={40}
           className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover"
@@ -49,7 +49,7 @@ export function VerifyEmailSuccess() {
         <CheckCircle className="mx-auto h-12 w-12 text-green-500" />
         <CardTitle className="text-2xl">{t("Email berhasil diverifikasi!", "Email verified successfully!")}</CardTitle>
         <CardDescription>
-          {t("Akun kamu sudah aktif. Selamat datang di Cubiqlo!", "Your account is active. Welcome to Cubiqlo!")}
+          {t("Akun kamu sudah aktif. Selamat datang di Koobikel!", "Your account is active. Welcome to Koobikel!")}
         </CardDescription>
       </CardHeader>
       <CardContent className="text-center">
@@ -73,7 +73,7 @@ export function VerifyEmailError() {
       <CardHeader className="space-y-1 text-center">
         <Image
           src="/logo-icon.png"
-          alt="Cubiqlo"
+          alt="Koobikel"
           width={40}
           height={40}
           className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover"

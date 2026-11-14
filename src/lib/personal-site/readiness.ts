@@ -95,7 +95,7 @@ export function getPersonalSiteReadiness(site: PersonalSiteInput): ReadinessIssu
     issues.push({
       id: "slug-reserved",
       severity: "error",
-      label: "Slug ini dicadangkan untuk sistem Cubiqlo",
+      label: "Slug ini dicadangkan untuk sistem Koobikel",
     });
   }
 

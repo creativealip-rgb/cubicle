@@ -172,7 +172,7 @@ export function UnifiedPublishView({
             <label className="text-xs font-bold text-foreground">{labels.fieldLabel}</label>
             <div className="flex items-center gap-2">
               <Input
-                value={shareUrl || "https://cubiqlo.com/..."}
+                value={shareUrl || "https://koobikel.com/..."}
                 readOnly
                 className="font-mono text-xs bg-background h-9.5"
               />

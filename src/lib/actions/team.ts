@@ -64,7 +64,7 @@ export async function addWorkspaceMember(input: z.infer<typeof addMemberSchema>)
   const appUrl = (
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.BETTER_AUTH_URL ??
-    "https://cubiqlo.com"
+    "https://koobikel.com"
   ).replace(/\/$/, "");
 
   if (!targetUser) {
@@ -73,7 +73,7 @@ export async function addWorkspaceMember(input: z.infer<typeof addMemberSchema>)
     try {
       await notifyWorkspaceInvite({
         email,
-        workspaceName: workspace?.name || "Cubiqlo",
+        workspaceName: workspace?.name || "Koobikel",
         inviterName,
         inviteUrl,
         replyTo,
@@ -114,7 +114,7 @@ export async function addWorkspaceMember(input: z.infer<typeof addMemberSchema>)
   try {
     await notifyWorkspaceInvite({
       email: targetUser.email,
-      workspaceName: workspace?.name || "Cubiqlo",
+      workspaceName: workspace?.name || "Koobikel",
       inviterName,
       inviteUrl,
       replyTo,

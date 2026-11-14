@@ -16,10 +16,10 @@ afterEach(() => {
 describe("personal site URLs", () => {
   it("uses canonical public host when app host is production", () => {
     delete process.env.NEXT_PUBLIC_SITE_URL;
-    process.env.NEXT_PUBLIC_APP_URL = "https://app.cubiqlo.com";
-    expect(personalSitePublicBaseUrl()).toBe("https://cubiqlo.com/site");
-    expect(personalSitePublicUrl("Alip Studio")).toBe("https://cubiqlo.com/site/alip-studio");
-    expect(personalSitePreviewUrl()).toBe("https://app.cubiqlo.com/site/preview");
+    process.env.NEXT_PUBLIC_APP_URL = "https://app.koobikel.com";
+    expect(personalSitePublicBaseUrl()).toBe("https://koobikel.com/site");
+    expect(personalSitePublicUrl("Alip Studio")).toBe("https://koobikel.com/site/alip-studio");
+    expect(personalSitePreviewUrl()).toBe("https://app.koobikel.com/site/preview");
   });
 
   it("keeps dev and local origins isolated", () => {

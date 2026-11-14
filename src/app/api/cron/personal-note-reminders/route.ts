@@ -109,11 +109,11 @@ export async function GET(request: Request) {
         const text =
           `Hi ${owner.name},\n\n` +
           `Reminder: "${note.title}" akan jatuh tempo dalam ${days} hari (${dueDateStr}).\n\n` +
-          `Kelola catatan di Cubiqlo → Catatan.`;
+          `Kelola catatan di Koobikel → Catatan.`;
 
         const emailed = await sendNotification({
           to: owner.email,
-          subject: `[Cubiqlo] Reminder: ${note.title} — ${days} hari lagi`,
+          subject: `[Koobikel] Reminder: ${note.title} — ${days} hari lagi`,
           text,
           type: "personal_note_reminder",
         });

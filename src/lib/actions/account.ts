@@ -157,12 +157,12 @@ export async function requestAccountEmailChange(
   <tr><td align="center">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;">
       <tr><td style="padding:24px 32px;border-bottom:1px solid #e5e7eb;">
-        <div style="font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6b7280;">Cubiqlo</div>
+        <div style="font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6b7280;">Koobikel</div>
       </td></tr>
       <tr><td style="padding:32px;font-size:15px;line-height:1.6;color:#1a1d24;">
         <h2 style="margin:0 0 16px;font-size:20px;font-weight:600;">Confirm Email Change / Konfirmasi Perubahan Email</h2>
         <p style="margin:0 0 16px;">Hello / Halo ${session.user.name ?? "User"},</p>
-        <p style="margin:0 0 24px;">We received a request to change your Cubiqlo login email to <strong>${newEmail}</strong>. Click the button below to confirm (link valid for 1 hour). / Kami menerima permintaan untuk mengganti email login akun Cubiqlo kamu ke <strong>${newEmail}</strong>. Klik tombol di bawah untuk mengonfirmasi (link berlaku selama 1 jam).</p>
+        <p style="margin:0 0 24px;">We received a request to change your Koobikel login email to <strong>${newEmail}</strong>. Click the button below to confirm (link valid for 1 hour). / Kami menerima permintaan untuk mengganti email login akun Koobikel kamu ke <strong>${newEmail}</strong>. Klik tombol di bawah untuk mengonfirmasi (link berlaku selama 1 jam).</p>
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
           <tr><td style="border-radius:8px;background:#1a1d24;">
             <a href="${verifyUrl}" target="_blank" style="display:inline-block;padding:12px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">Confirm New Email / Konfirmasi Email Baru</a>
@@ -181,7 +181,7 @@ export async function requestAccountEmailChange(
 
   await sendNotification({
     to: newEmail,
-    subject: "Konfirmasi Perubahan Email Akun Cubiqlo",
+    subject: "Konfirmasi Perubahan Email Akun Koobikel",
     text: `Halo,\n\nKonfirmasi perubahan email ke ${newEmail} melalui tautan ini:\n${verifyUrl}\n\nLink berlaku 1 jam.`,
     html,
     type: "email_verification",

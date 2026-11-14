@@ -42,7 +42,7 @@ export function BookingSlugForm({
     const origin =
       typeof window !== "undefined"
         ? window.location.origin
-        : process.env.NEXT_PUBLIC_APP_URL || "https://cubiqlo.com";
+        : process.env.NEXT_PUBLIC_APP_URL || "https://koobikel.com";
     return `${origin}/booking/${clean}`;
   }, [slug]);
 

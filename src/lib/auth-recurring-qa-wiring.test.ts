@@ -8,7 +8,7 @@ describe("auth and recurring QA wiring", () => {
   it("localizes auth accessibility labels", () => {
     const shell = read("src/components/auth/auth-shell.tsx");
     const password = read("src/components/ui/password-input.tsx");
-    expect(shell).toContain('t("Kembali ke beranda Cubiqlo", "Back to Cubiqlo home")');
+    expect(shell).toContain('t("Kembali ke beranda Koobikel", "Back to Koobikel home")');
     expect(password).toContain('t("Tampilkan password", "Show password")');
     expect(password).toContain('t("Sembunyikan password", "Hide password")');
   });

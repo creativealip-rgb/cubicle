@@ -33,7 +33,7 @@ export default async function MfaSetupPage({
         </Link>
         <div className="inline-flex items-center gap-1.5 text-xs text-slate-500 font-medium">
           <ShieldCheck className="h-4 w-4 text-emerald-400" />
-          <span>Cubiqlo Auth Guard</span>
+          <span>Koobikel Auth Guard</span>
         </div>
       </div>
 

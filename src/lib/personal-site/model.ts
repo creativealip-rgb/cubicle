@@ -503,7 +503,7 @@ export const personalSiteInputSchema = z.object({
     .min(2)
     .max(48)
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug hanya boleh memakai huruf kecil, angka, dan tanda hubung")
-    .refine((slug) => !RESERVED_PERSONAL_SITE_SLUGS.has(slug), "Slug ini dicadangkan Cubiqlo"),
+    .refine((slug) => !RESERVED_PERSONAL_SITE_SLUGS.has(slug), "Slug ini dicadangkan Koobikel"),
   published: z.boolean(),
   title: z.string().trim().min(1).max(100),
   subtitle: shortTextSchema,

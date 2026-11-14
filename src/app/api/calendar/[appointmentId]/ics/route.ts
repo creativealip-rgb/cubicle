@@ -47,7 +47,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ app
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Cubiqlo//Calendar//EN",
+    "PRODID:-//Koobikel//Calendar//EN",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
     "BEGIN:VEVENT",

@@ -50,7 +50,7 @@ export async function GET(request: Request, { params }: Props) {
   const baseUrl =
     process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ||
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
-    "https://cubiqlo.com";
+    "https://koobikel.com";
   let domain = baseUrl;
   try {
     domain = new URL(baseUrl).hostname;

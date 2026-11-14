@@ -37,17 +37,17 @@ export const viewport: Viewport = {
 };
 
 const isDevelopment = process.env.CUBIQLO_ENV === "development";
-const siteUrl = "https://cubiqlo.com";
+const siteUrl = "https://koobikel.com";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   alternates: { canonical: siteUrl },
   title: {
-    default: "Cubiqlo — Client Operations Hub",
-    template: "%s | Cubiqlo",
+    default: "Koobikel — Client Operations Hub",
+    template: "%s | Koobikel",
   },
   description:
-    "Manage client work from request to invoice. Cubiqlo helps freelancers and small service teams manage clients, projects, files, time tracking, invoices, booking, and client portals.",
+    "Manage client work from request to invoice. Koobikel helps freelancers and small service teams manage clients, projects, files, time tracking, invoices, booking, and client portals.",
   keywords: [
     "client operations hub",
     "client portal",
@@ -56,22 +56,22 @@ export const metadata: Metadata = {
     "time tracking invoicing",
     "client work management",
   ],
-  authors: [{ name: "Cubiqlo" }],
-  creator: "Cubiqlo",
-  publisher: "Cubiqlo",
+  authors: [{ name: "Koobikel" }],
+  creator: "Koobikel",
+  publisher: "Koobikel",
   openGraph: {
-    title: "Cubiqlo — Run client work from request to invoice",
+    title: "Koobikel — Run client work from request to invoice",
     description:
       "One calm workspace for clients, projects, tasks, files, time tracking, invoices, booking, and client portals.",
     url: siteUrl,
-    siteName: "Cubiqlo",
+    siteName: "Koobikel",
     type: "website",
     locale: "en_US",
-    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Cubiqlo client operations hub" }],
+    images: [{ url: "/og-image.png", width: 1200, height: 630, alt: "Koobikel client operations hub" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Cubiqlo — Client Operations Hub",
+    title: "Koobikel — Client Operations Hub",
     description:
       "Manage client work from request to invoice in one calm workspace.",
     images: ["/og-image.png"],

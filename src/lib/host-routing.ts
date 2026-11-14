@@ -26,14 +26,14 @@ export function getCanonicalRedirect(
   const normalizedHost = host.split(":", 1)[0].toLowerCase();
 
   if (normalizedHost === "www.cubiqlo.com") {
-    return withQuery("https://cubiqlo.com", pathname, search);
+    return withQuery("https://koobikel.com", pathname, search);
   }
 
   if (normalizedHost === "app.cubiqlo.com" && pathname === "/") {
     return "https://app.cubiqlo.com/app/dashboard";
   }
 
-  if (normalizedHost === "cubiqlo.com") {
+  if (normalizedHost === "koobikel.com") {
     const belongsToApp =
       pathname.startsWith("/app") ||
       pathname.startsWith("/onboarding") ||
@@ -42,7 +42,7 @@ export function getCanonicalRedirect(
       return withQuery("https://app.cubiqlo.com", pathname, search);
     }
   }
-  // Public client-facing routes: redirect from app.cubiqlo.com to cubiqlo.com
+  // Public client-facing routes: redirect from app.cubiqlo.com to koobikel.com
   if (normalizedHost === "app.cubiqlo.com") {
     const isPublicGuestRoute =
       pathname.startsWith("/booking/") ||
@@ -54,7 +54,7 @@ export function getCanonicalRedirect(
       pathname.startsWith("/site/");
 
     if (isPublicGuestRoute) {
-      return withQuery("https://cubiqlo.com", pathname, search);
+      return withQuery("https://koobikel.com", pathname, search);
     }
   }
 
@@ -62,7 +62,7 @@ export function getCanonicalRedirect(
   // path arriving on the app host is a user mistyping the URL — send them to
   // the admin subdomain.
   if (
-    (normalizedHost === "app.cubiqlo.com" || normalizedHost === "cubiqlo.com") &&
+    (normalizedHost === "app.cubiqlo.com" || normalizedHost === "koobikel.com") &&
     (pathname === "/admin" || pathname.startsWith("/admin/"))
   ) {
     return withQuery("https://admin.cubiqlo.com", pathname, search);

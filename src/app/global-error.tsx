@@ -16,7 +16,7 @@ export default function GlobalError({
   const { t } = useT();
 
   useEffect(() => {
-    console.error("Cubiqlo global error:", error);
+    console.error("Koobikel global error:", error);
   }, [error]);
 
   return (

@@ -72,7 +72,7 @@ export async function GET(
       sentAt: p.sentAt ? new Date(p.sentAt).toLocaleDateString("id-ID", { day: "numeric", month: "long", year: "numeric" }) : null,
     },
     workspace: {
-      name: ws?.name || "Cubiqlo",
+      name: ws?.name || "Koobikel",
       billingName: ws?.billingName ?? null,
       billingAddress: ws?.billingAddress ?? null,
     },

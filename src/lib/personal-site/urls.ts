@@ -7,7 +7,7 @@ function configuredPublicOrigin() {
   const appOrigin = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "");
   if (appOrigin?.includes("dev.cubiqlo.com")) return appOrigin;
   if (appOrigin?.includes("localhost") || appOrigin?.includes("127.0.0.1")) return appOrigin;
-  return "https://cubiqlo.com";
+  return "https://koobikel.com";
 }
 
 export function personalSitePublicBaseUrl() {

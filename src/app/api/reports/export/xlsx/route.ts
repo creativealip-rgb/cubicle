@@ -196,7 +196,7 @@ export async function GET(request: Request) {
     }
     const timeReport = buildTimeReport(timeRows);
     const wb = new ExcelJS.Workbook();
-    wb.creator = "Cubiqlo";
+    wb.creator = "Koobikel";
     wb.created = new Date();
     const add = (
       name: string,

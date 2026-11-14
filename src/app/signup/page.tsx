@@ -6,7 +6,7 @@ import { AcquisitionTracker } from "@/components/analytics/acquisition-tracker";
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = createT(await getCurrentLang("en"));
-  return { title: `${t("Daftar", "Sign up")} | Cubiqlo`, description: t("Buat workspace Cubiqlo gratis untuk mengelola kerja klien.", "Create your free Cubiqlo workspace to manage client work.") };
+  return { title: `${t("Daftar", "Sign up")} | Koobikel`, description: t("Buat workspace Koobikel gratis untuk mengelola kerja klien.", "Create your free Koobikel workspace to manage client work.") };
 }
 
 export default function SignupPage() {

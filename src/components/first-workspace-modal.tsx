@@ -72,7 +72,7 @@ export function FirstWorkspaceModal({ lang }: { lang: "id" | "en" }) {
               </div>;
             })}
           </div>
-          <DialogTitle>{t("Setup akun Cubiqlo", "Set up your Cubiqlo account")}</DialogTitle>
+          <DialogTitle>{t("Setup akun Koobikel", "Set up your Koobikel account")}</DialogTitle>
           <DialogDescription>{t("Pilih kebutuhan, sumber, lalu lanjutkan setup di Settings.", "Choose your need, source, then continue setup in Settings.")}</DialogDescription>
         </DialogHeader>
 
@@ -83,7 +83,7 @@ export function FirstWorkspaceModal({ lang }: { lang: "id" | "en" }) {
           </div>}
 
           {step === 2 && <div className="space-y-4">
-            <div className="text-center"><Compass className="mx-auto h-12 w-12 text-primary" /><h3 className="mt-2 text-lg font-semibold">{t("Tau Cubiqlo dari mana?", "Where did you hear about Cubiqlo?")}</h3><p className="text-sm text-muted-foreground">{t("Pilih satu sumber utama.", "Choose one main source.")}</p></div>
+            <div className="text-center"><Compass className="mx-auto h-12 w-12 text-primary" /><h3 className="mt-2 text-lg font-semibold">{t("Tau Koobikel dari mana?", "Where did you hear about Koobikel?")}</h3><p className="text-sm text-muted-foreground">{t("Pilih satu sumber utama.", "Choose one main source.")}</p></div>
             <div className="grid gap-2 sm:grid-cols-2">{sources.map((item) => <button key={item.id} type="button" onClick={() => setSource(item.id)} className={`flex items-center justify-between rounded-xl border px-4 py-3 text-sm transition hover:border-primary ${source === item.id ? "border-primary bg-primary/5 ring-1 ring-primary/30" : "border-border bg-card"}`}>{item.label}{source === item.id && <Check className="h-4 w-4 text-primary" />}</button>)}</div>
           </div>}
 

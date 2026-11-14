@@ -867,7 +867,7 @@ export default async function ClientPortalPage({
           <ClientPortalHeader
             clientName={client.name}
             clientCompanyName={client.companyName}
-            workspaceName={workspaceContact?.billingName?.trim() || workspaceContact?.name?.trim() || "Cubiqlo Labs"}
+            workspaceName={workspaceContact?.billingName?.trim() || workspaceContact?.name?.trim() || "Koobikel Labs"}
             workspaceLogoUrl={workspaceContact?.logoUrl}
           />
 
@@ -1148,7 +1148,7 @@ export default async function ClientPortalPage({
 
           <p className="text-center text-xs text-muted-foreground pt-8">
             {t("Didukung", "Powered by")}{" "}
-            <span className="font-medium">Cubiqlo</span> —{" "}
+            <span className="font-medium">Koobikel</span> —{" "}
             {t("Portal Klien", "Client Portal")}
           </p>
         </div>

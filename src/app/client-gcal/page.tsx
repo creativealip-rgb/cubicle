@@ -32,11 +32,11 @@ async function ClientGcalMessage({
 
   const body =
     status === "connected"
-      ? "Terima kasih. Kalender Google klien sudah terhubung ke Cubiqlo. Kamu bisa tutup halaman ini."
+      ? "Terima kasih. Kalender Google klien sudah terhubung ke Koobikel. Kamu bisa tutup halaman ini."
       : status === "denied"
         ? "Izin Google dibatalkan. Minta ulang link undangan ke asisten/VA kamu."
         : status === "missing_config"
-          ? "Server Cubiqlo belum dikonfigurasi untuk Google Calendar."
+          ? "Server Koobikel belum dikonfigurasi untuk Google Calendar."
           : status === "invalid"
             ? "Link undangan tidak valid atau sudah dipakai."
             : error || "Terjadi kesalahan saat menghubungkan Google Calendar.";
@@ -48,7 +48,7 @@ async function ClientGcalMessage({
 
   return (
     <div className={`rounded-xl border p-6 shadow-sm ${tone}`}>
-      <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Cubiqlo</p>
+      <p className="text-xs font-semibold uppercase tracking-wide opacity-70">Koobikel</p>
       <h1 className="mt-2 text-xl font-semibold">{title}</h1>
       <p className="mt-2 text-sm leading-relaxed opacity-90">{body}</p>
     </div>

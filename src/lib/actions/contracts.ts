@@ -433,7 +433,7 @@ export async function sendContract(input: {
     contractNumber: c.contractNumber,
     contractDate: c.contractDate,
     validUntil: c.validUntil,
-    workspaceName: ws?.name || "Cubiqlo",
+    workspaceName: ws?.name || "Koobikel",
     workspaceAddress: ws?.billingAddress,
   });
   const legacyVars: Record<string, string> = {
@@ -473,14 +473,14 @@ export async function sendContract(input: {
     const appUrl = (
       process.env.NEXT_PUBLIC_APP_URL ??
       process.env.BETTER_AUTH_URL ??
-      "https://cubiqlo.com"
+      "https://koobikel.com"
     ).replace(/\/$/, "");
     const replyTo = await resolveWorkspaceReplyTo(workspaceId);
     const contractUrl = `${appUrl}/contract/${token}`;
     const text = (
       input.customMessage?.trim() ||
       `Hi ${recipientName || "there"},\n\n` +
-        `${ws?.name || "Cubiqlo"} sent you a contract for signature: "${c.title}".\n\n` +
+        `${ws?.name || "Koobikel"} sent you a contract for signature: "${c.title}".\n\n` +
         `Review and sign it here:\n{{contract_link}}\n\n` +
         (vars.valid_until ? `This link is valid until ${vars.valid_until}.\n\n` : "\n") +
         `If you have any questions, just reply to this email.`

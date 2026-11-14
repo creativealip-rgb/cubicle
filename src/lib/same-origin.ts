@@ -47,9 +47,9 @@ export function assertSameOrigin(
 
   const allowed = new Set([
     expected,
-    "https://cubiqlo.com",
+    "https://koobikel.com",
     "https://app.cubiqlo.com",
-    "https://www.cubiqlo.com",
+    "https://www.koobikel.com",
   ]);
   // Development override: NEXT_PUBLIC_APP_URL may point at the canonical
   // production URL while the dev server actually runs on dev.cubiqlo.com.

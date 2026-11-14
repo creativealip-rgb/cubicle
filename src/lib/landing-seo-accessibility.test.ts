@@ -7,8 +7,8 @@ const layout = read("src/app/layout.tsx");
 const sitemap = read("src/app/sitemap.ts");
 
 describe("landing SEO and accessibility", () => {
-  it("keeps public Open Graph metadata on cubiqlo.com with a preview image", () => {
-    expect(layout).toContain('const siteUrl = "https://cubiqlo.com"');
+  it("keeps public Open Graph metadata on koobikel.com with a preview image", () => {
+    expect(layout).toContain('const siteUrl = "https://koobikel.com"');
     expect(layout).toContain("metadataBase: new URL(siteUrl)");
     expect(layout).toContain('url: siteUrl');
     expect(layout).toContain('images: [{ url: "/og-image.png"');

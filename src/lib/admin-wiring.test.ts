@@ -103,7 +103,7 @@ describe("admin control plane wiring", () => {
     expect(actions).toContain("changeUserPlan");
     expect(actions).toContain("resetUserPassword");
     const shell = read("src/components/admin/admin-shell.tsx");
-    expect(shell).toContain("Cubiqlo Admin");
+    expect(shell).toContain("Koobikel Admin");
   });
 
   it("layout requires admin before rendering", () => {

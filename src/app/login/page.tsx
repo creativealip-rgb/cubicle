@@ -9,8 +9,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: t("Masuk", "Sign in"),
     description: t(
-      "Masuk ke workspace Cubiqlo untuk mengelola kerja klien.",
-      "Sign in to your Cubiqlo workspace to manage client work.",
+      "Masuk ke workspace Koobikel untuk mengelola kerja klien.",
+      "Sign in to your Koobikel workspace to manage client work.",
     ),
   };
 }

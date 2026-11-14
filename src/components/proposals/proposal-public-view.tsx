@@ -123,7 +123,7 @@ export function ProposalPublicView({
         {!embedded && (
           <div className="text-center space-y-1">
             <Link href="/" className="inline-block text-2xl font-black tracking-tight text-foreground">
-              Cubiqlo
+              Koobikel
             </Link>
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
               Proposal & Scope Estimation
@@ -249,7 +249,7 @@ export function ProposalPublicView({
           <p className="text-[11px] text-muted-foreground">
             Created securely using{" "}
             <Link href="/" className="font-semibold text-foreground hover:underline">
-              Cubiqlo Proposals
+              Koobikel Proposals
             </Link>
           </p>
         </div>

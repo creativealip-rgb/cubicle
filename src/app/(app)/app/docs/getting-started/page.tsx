@@ -34,8 +34,8 @@ export default async function DocGettingStarted() {
         category={t("Panduan", "Guide")}
         title={t("Panduan Alur Operasional End-to-End", "End-to-End Operational Workflow Guide")}
         description={t(
-          "Langkah demi langkah mengoperasikan pekerjaan klien di Cubiqlo: dari pendaftaran klien hingga penagihan lunas.",
-          "Step-by-step guide operating client work in Cubiqlo: from client onboarding to invoice payment."
+          "Langkah demi langkah mengoperasikan pekerjaan klien di Koobikel: dari pendaftaran klien hingga penagihan lunas.",
+          "Step-by-step guide operating client work in Koobikel: from client onboarding to invoice payment."
         )}
         readMinutes={7}
       />

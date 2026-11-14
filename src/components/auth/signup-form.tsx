@@ -60,7 +60,7 @@ export function SignupForm() {
       <CardHeader className="space-y-1 text-center">
         <h1 className="text-2xl font-semibold tracking-tight">{t("Buat akun", "Create your account")}</h1>
         <CardDescription>
-          {t("Mulai workspace Cubiqlo gratis", "Start your free Cubiqlo workspace")}
+          {t("Mulai workspace Koobikel gratis", "Start your free Koobikel workspace")}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit} aria-busy={loading}>

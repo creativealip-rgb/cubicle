@@ -183,7 +183,7 @@ const SUGGESTED_CARDS = [
   },
 ];
 
-// App integration bar — Cubiqlo-native modules
+// App integration bar — Koobikel-native modules
 const MODULE_ICONS = [
   { icon: <Users className="h-3.5 w-3.5" />, label: "Clients" },
   { icon: <FolderKanban className="h-3.5 w-3.5" />, label: "Projects" },
@@ -991,7 +991,7 @@ export function AIChatPanel({ variant = "floating" }: { variant?: "floating" | "
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="text-xs font-bold leading-none">{lang === "id" ? "Asisten Cubiqlo" : "Cubiqlo AI"}</p>
+                            <p className="text-xs font-bold leading-none">{lang === "id" ? "Asisten Koobikel" : "Koobikel AI"}</p>
                             <span className="flex items-center gap-1 text-[9px] font-semibold text-emerald-300 bg-emerald-500/20 px-1.5 py-0.2 rounded-full">
                               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
                               Ready
@@ -1497,7 +1497,7 @@ function _WelcomeScreen({
 
         {/* App integration bar */}
         <div className="mt-3 flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs">
-          <span className="font-medium text-slate-500">Works with your Cubiqlo data</span>
+          <span className="font-medium text-slate-500">Works with your Koobikel data</span>
           <div className="flex items-center gap-1">
             {MODULE_ICONS.map((m) => (
               <span

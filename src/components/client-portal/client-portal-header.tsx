@@ -22,7 +22,7 @@ export function ClientPortalHeader({
   const [imgError, setImgError] = useState(false);
 
   const displayName = clientCompanyName || clientName || "Client";
-  const brandName = workspaceName || "Cubiqlo";
+  const brandName = workspaceName || "Koobikel";
 
 
   return (
@@ -43,7 +43,7 @@ export function ClientPortalHeader({
             </div>
           ) : (
             <div className="relative h-12 w-12 sm:h-14 sm:w-14 shrink-0 overflow-hidden rounded-2xl shadow-2xs">
-              <Image src="/logo-icon.png" alt="Cubiqlo" fill sizes="56px" className="object-contain" />
+              <Image src="/logo-icon.png" alt="Koobikel" fill sizes="56px" className="object-contain" />
             </div>
           )}
 

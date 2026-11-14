@@ -1,7 +1,7 @@
 import { timingSafeEqual } from "node:crypto";
 
 const PAKASIR_BASE_URL = "https://app.pakasir.com";
-const USER_AGENT = "Cubiqlo/1.0 (+https://cubiqlo.com)";
+const USER_AGENT = "Koobikel/1.0 (+https://koobikel.com)";
 
 export type PakasirPayment = {
   txn_id: string;

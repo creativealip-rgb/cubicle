@@ -353,7 +353,7 @@ export async function createPublicAppointment(
 
   const replyTo = await resolveWorkspaceReplyTo(parsed.workspaceId);
   const formatCalendarDate = (date: Date) => date.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}Z$/, "Z");
-  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(parsed.title)}&dates=${formatCalendarDate(startTime)}/${formatCalendarDate(endTime)}&details=${encodeURIComponent(parsed.notes || "Booked via Cubiqlo")}&location=${encodeURIComponent(ws.name)}`;
+  const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(parsed.title)}&dates=${formatCalendarDate(startTime)}/${formatCalendarDate(endTime)}&details=${encodeURIComponent(parsed.notes || "Booked via Koobikel")}&location=${encodeURIComponent(ws.name)}`;
 
   // Find host email for workspace owner notification
   const [hostUser] = await db

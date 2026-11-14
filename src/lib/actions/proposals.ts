@@ -381,14 +381,14 @@ export async function sendProposal(proposalId: string, customMessage?: string) {
     const appUrl = (
       process.env.NEXT_PUBLIC_APP_URL ??
       process.env.BETTER_AUTH_URL ??
-      "https://cubiqlo.com"
+      "https://koobikel.com"
     ).replace(/\/$/, "");
     const replyTo = await resolveWorkspaceReplyTo(workspaceId);
     const proposalUrl = `${appUrl}/proposal/${token}`;
     const text = (
       customMessage?.trim() ||
       `Hi ${recipientName || "there"},\n\n` +
-        `${ws?.name || "Cubiqlo"} sent you a proposal: "${existing.title}".\n\n` +
+        `${ws?.name || "Koobikel"} sent you a proposal: "${existing.title}".\n\n` +
         `Review it here:\n{{proposal_link}}\n\n` +
         `This link is valid for 30 days. If you have any questions, just reply to this email.`
     ).replace(/\{\{proposal_link\}\}/g, proposalUrl);

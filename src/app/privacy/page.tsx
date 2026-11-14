@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Kebijakan Privasi",
   description:
-    "Kebijakan Privasi Cubiqlo — bagaimana kami mengumpulkan, menggunakan, dan melindungi data kamu.",
+    "Kebijakan Privasi Koobikel — bagaimana kami mengumpulkan, menggunakan, dan melindungi data kamu.",
 };
 
 const LAST_UPDATED = "14 Juli 2026";
@@ -19,7 +19,7 @@ export default function PrivacyPage() {
           <Link href="/" className="flex items-center gap-2">
             <Image
               src="/logo-header.png"
-              alt="Cubiqlo"
+              alt="Koobikel"
               width={140}
               height={48}
               className="h-8 w-auto object-contain"
@@ -46,7 +46,7 @@ export default function PrivacyPage() {
         <div className="mt-8 space-y-8 text-sm leading-relaxed text-slate-700">
           <section className="space-y-3">
             <p>
-              Kebijakan ini menjelaskan bagaimana Cubiqlo mengumpulkan,
+              Kebijakan ini menjelaskan bagaimana Koobikel mengumpulkan,
               menggunakan, dan melindungi informasi kamu saat menggunakan
               layanan kami. Kami berkomitmen menjaga data kamu tetap aman dan
               hanya digunakan untuk menjalankan Layanan.
@@ -98,7 +98,7 @@ export default function PrivacyPage() {
             <p>
               Kami tidak menjual data pribadi kamu. Kami hanya membagikan data
               seperlunya kepada penyedia layanan yang membantu menjalankan
-              Cubiqlo — misalnya penyedia hosting, pengiriman email, dan gerbang
+              Koobikel — misalnya penyedia hosting, pengiriman email, dan gerbang
               pembayaran — yang wajib menjaga kerahasiaan data.
             </p>
           </section>

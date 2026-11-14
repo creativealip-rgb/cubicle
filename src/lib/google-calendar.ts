@@ -19,7 +19,7 @@ function appUrl() {
   return (
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
     process.env.BETTER_AUTH_URL?.replace(/\/$/, "") ||
-    "https://cubiqlo.com"
+    "https://koobikel.com"
   );
 }
 
@@ -192,7 +192,7 @@ export async function saveGoogleConnectionFromCode(userId: string, code: string)
       .where(eq(googleCalendarConnections.userId, userId))
       .limit(1);
     if (!existing?.refreshTokenEnc) {
-      throw new Error("Google tidak mengirim refresh token. Cabut akses Cubiqlo di Google Account lalu connect ulang.");
+      throw new Error("Google tidak mengirim refresh token. Cabut akses Koobikel di Google Account lalu connect ulang.");
     }
   }
 
@@ -358,7 +358,7 @@ function eventBody(input: {
     input.notes?.trim() || null,
     input.attendeeName ? `Attendee: ${input.attendeeName}` : null,
     input.attendeeEmail ? `Email: ${input.attendeeEmail}` : null,
-    "Created by Cubiqlo booking",
+    "Created by Koobikel booking",
   ].filter(Boolean);
 
   return {

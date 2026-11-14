@@ -55,13 +55,13 @@ export function AppSidebar({ collapsed, onToggle, badgeCounts, workspaceRole }: 
       {!collapsed && (
         <Link href="/app/dashboard" className="flex min-w-0 items-center gap-2 font-semibold text-sidebar-foreground">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-header.png" alt="Cubiqlo" className="h-8 w-auto object-contain" />
+          <img src="/logo-header.png" alt="Koobikel" className="h-8 w-auto object-contain" />
         </Link>
       )}
       {collapsed && (
         <Link href="/app/dashboard" className="hidden lg:flex">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-icon.png" alt="Cubiqlo" className="h-8 w-8 rounded-lg object-contain shadow-2xs" />
+          <img src="/logo-icon.png" alt="Koobikel" className="h-8 w-8 rounded-lg object-contain shadow-2xs" />
         </Link>
       )}
       <Button variant="ghost" size="icon" className="h-11 w-11 text-sidebar-foreground hover:bg-sidebar-accent lg:hidden" onClick={() => setMobileOpen(false)} aria-label={t("Tutup menu", "Close menu")}><X className="h-4 w-4" /></Button>

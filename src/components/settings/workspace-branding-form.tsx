@@ -179,7 +179,7 @@ export function WorkspaceBrandingForm({
                       {t("Nama Workspace", "Workspace Name")}
                     </Label>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                      {t("Nama ruang kerja utama kamu di Cubiqlo.", "Your primary team or solo workspace.")}
+                      {t("Nama ruang kerja utama kamu di Koobikel.", "Your primary team or solo workspace.")}
                     </p>
                   </div>
                   <Input

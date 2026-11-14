@@ -1,6 +1,6 @@
 // Notifications — Resend-backed with console fallback when API key missing.
 // Set RESEND_API_KEY in env to enable. Set EMAIL_FROM to override sender
-// (default: Cubiqlo <onboarding@resend.dev> until you verify a domain).
+// (default: Koobikel <onboarding@resend.dev> until you verify a domain).
 
 import { Resend } from "resend";
 
@@ -15,8 +15,8 @@ type SendOpts = {
 };
 
 const apiKey = process.env.RESEND_API_KEY;
-const fromAddress = process.env.EMAIL_FROM ?? "Cubiqlo <onboarding@resend.dev>";
-const appUrl = process.env.APP_URL ?? process.env.BETTER_AUTH_URL ?? "https://cubiqlo.com";
+const fromAddress = process.env.EMAIL_FROM ?? "Koobikel <onboarding@resend.dev>";
+const appUrl = process.env.APP_URL ?? process.env.BETTER_AUTH_URL ?? "https://koobikel.com";
 const brandLogoUrl = `${appUrl.replace(/\/$/, "")}/logo-icon.png`;
 
 const resend = apiKey ? new Resend(apiKey) : null;
@@ -41,10 +41,10 @@ function wrapTemplate(opts: { title: string; bodyHtml: string }): string {
         <table role="presentation" cellpadding="0" cellspacing="0" style="width:100%;">
           <tr>
             <td style="width:48px;vertical-align:middle;">
-              <img src="${brandLogoUrl}" width="40" height="40" alt="Cubiqlo" style="display:block;border-radius:10px;object-fit:cover;">
+              <img src="${brandLogoUrl}" width="40" height="40" alt="Koobikel" style="display:block;border-radius:10px;object-fit:cover;">
             </td>
             <td style="vertical-align:middle;">
-              <div style="font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#111827;">Cubiqlo</div>
+              <div style="font-size:14px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#111827;">Koobikel</div>
               <div style="font-size:12px;color:#6b7280;margin-top:2px;">Client operations hub</div>
             </td>
           </tr>
@@ -52,7 +52,7 @@ function wrapTemplate(opts: { title: string; bodyHtml: string }): string {
       </td></tr>
       <tr><td style="padding:32px;font-size:15px;line-height:1.6;color:#1a1d24;">${opts.bodyHtml}</td></tr>
       <tr><td style="padding:16px 32px;border-top:1px solid #e5e7eb;font-size:12px;color:#6b7280;text-align:center;">
-        Sent by Cubiqlo — client operations hub
+        Sent by Koobikel — client operations hub
       </td></tr>
     </table>
   </td></tr>
@@ -142,10 +142,10 @@ export async function notifyAppointmentBooked(opts: {
     replyTo: opts.replyTo,
   });
 
-  // 2. Email notifikasi ke Host / Owner Cubiqlo
+  // 2. Email notifikasi ke Host / Owner Koobikel
   let hostPromise: Promise<unknown> = Promise.resolve();
   if (opts.hostEmail && opts.hostEmail.includes("@")) {
-    const wsName = opts.workspaceName || "Cubiqlo";
+    const wsName = opts.workspaceName || "Koobikel";
     const hostText =
       `Halo,\n\n` +
       `Ada jadwal appointment baru yang telah dibooking oleh klien!\n\n` +
@@ -155,7 +155,7 @@ export async function notifyAppointmentBooked(opts: {
       `- Email Klien: ${opts.attendeeEmail}\n` +
       `- Waktu Pertemuan: ${readableDateTime}\n` +
       (opts.notes ? `- Catatan / Keperluan: ${opts.notes}\n` : "") +
-      `\nBuka kalender untuk melihat jadwal:\nhttps://app.cubiqlo.com/app/calendar\n\n` +
+      `\nBuka kalender untuk melihat jadwal:\nhttps://app.koobikel.com/app/calendar\n\n` +
       (opts.calendarUrl ? `Tambahkan ke Google Calendar: ${opts.calendarUrl}\n\n` : "") +
       `Salam,\n${wsName} Notification`;
 
@@ -170,7 +170,7 @@ export async function notifyAppointmentBooked(opts: {
       (opts.notes ? `<p style="margin:0;"><strong>Notes / Catatan:</strong> ${escapeHtml(opts.notes)}</p>` : "") +
       `</div>` +
       `<div style="margin:24px 0 0;display:flex;gap:12px;">` +
-      `<a href="https://app.cubiqlo.com/app/calendar" style="display:inline-block;background:#0f172a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Open Calendar / Buka Kalender</a>` +
+      `<a href="https://app.koobikel.com/app/calendar" style="display:inline-block;background:#0f172a;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Open Calendar / Buka Kalender</a>` +
       (opts.calendarUrl ? ` &nbsp; <a href="${escapeHtml(opts.calendarUrl)}" style="display:inline-block;background:#2563eb;color:#fff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Google Calendar</a>` : "") +
       `</div>` +
       `</div>`;
@@ -227,7 +227,7 @@ export async function notifyAppointmentCancelled(opts: {
     const hostText =
       `Halo,\n\n` +
       `Jadwal appointment "${opts.appointmentTitle}" bersama ${opts.attendeeName ?? opts.attendeeEmail} untuk ${readableDateTime} telah dibatalkan.\n\n` +
-      `Buka dashboard kalender:\nhttps://app.cubiqlo.com/app/calendar`;
+      `Buka dashboard kalender:\nhttps://app.koobikel.com/app/calendar`;
 
     hostPromise = sendNotification({
       to: opts.hostEmail,
@@ -252,7 +252,7 @@ export async function notifyProposalAccepted(opts: {
   downPaymentAmount?: number;
   workspaceName?: string;
 }) {
-  const wsName = opts.workspaceName || "Cubiqlo";
+  const wsName = opts.workspaceName || "Koobikel";
   const currency = opts.currency || "IDR";
   const formattedTotal = `${currency} ${Number(opts.totalAmount || 0).toLocaleString("en-US")}`;
   const formattedDp = opts.downPaymentAmount
@@ -270,7 +270,7 @@ export async function notifyProposalAccepted(opts: {
     (formattedDp ? `- Down Payment: ${formattedDp}\n` : "") +
     `- Accepted Date: ${new Date().toLocaleDateString("en-US", { dateStyle: "long" })}\n\n` +
     `View proposal details in your dashboard:\n` +
-    `https://app.cubiqlo.com/app/proposals/${opts.proposalId}\n\n` +
+    `https://app.koobikel.com/app/proposals/${opts.proposalId}\n\n` +
     `---\n` +
     `Kabar baik! Proposal "${opts.proposalTitle}" Anda telah disetujui oleh klien ${opts.clientName}. Project baru dan draft invoice DP otomatis dibuatkan di workspace Anda.\n\n` +
     `Best regards,\n${wsName} Notification`;
@@ -288,7 +288,7 @@ export async function notifyProposalAccepted(opts: {
     `<p style="margin:0;font-size:13px;"><strong>Accepted On:</strong> ${escapeHtml(new Date().toLocaleDateString("en-US", { dateStyle: "long" }))}</p>` +
     `</div>` +
     `<div style="margin:20px 0 0;">` +
-    `<a href="https://app.cubiqlo.com/app/proposals/${encodeURIComponent(opts.proposalId)}" style="display:inline-block;background:#059669;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Open Proposal in Dashboard</a>` +
+    `<a href="https://app.koobikel.com/app/proposals/${encodeURIComponent(opts.proposalId)}" style="display:inline-block;background:#059669;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">Open Proposal in Dashboard</a>` +
     `</div>` +
     `</div>`;
 
@@ -313,7 +313,7 @@ export async function notifyContractSigned(opts: {
   signedEmail: string;
   workspaceName?: string;
 }) {
-  const wsName = opts.workspaceName || "Cubiqlo";
+  const wsName = opts.workspaceName || "Koobikel";
   const numDisplay = opts.contractNumber ? `(${opts.contractNumber})` : "";
 
   // English default + Indonesian bilingual structure
@@ -327,7 +327,7 @@ export async function notifyContractSigned(opts: {
     `- Signer Email: ${opts.signedEmail}\n` +
     `- Signed Date: ${new Date().toLocaleDateString("en-US", { dateStyle: "long" })}\n\n` +
     `View contract audit trail and signed document:\n` +
-    `https://app.cubiqlo.com/app/contracts/${opts.contractId}\n\n` +
+    `https://app.koobikel.com/app/contracts/${opts.contractId}\n\n` +
     `---\n` +
     `Kabar baik! Kontrak "${opts.contractTitle}" telah ditandatangani secara digital oleh ${opts.signedName}. Dokumen ini sekarang resmi dan terkunci.\n\n` +
     `Best regards,\n${wsName} Notification`;
@@ -343,7 +343,7 @@ export async function notifyContractSigned(opts: {
     `<p style="margin:0;font-size:13px;"><strong>Signed On:</strong> ${escapeHtml(new Date().toLocaleDateString("en-US", { dateStyle: "long" }))}</p>` +
     `</div>` +
     `<div style="margin:20px 0 0;">` +
-    `<a href="https://app.cubiqlo.com/app/contracts/${encodeURIComponent(opts.contractId)}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">View Signed Contract</a>` +
+    `<a href="https://app.koobikel.com/app/contracts/${encodeURIComponent(opts.contractId)}" style="display:inline-block;background:#2563eb;color:#ffffff;padding:10px 18px;border-radius:6px;text-decoration:none;font-weight:600;font-size:13px;">View Signed Contract</a>` +
     `</div>` +
     `</div>`;
 
@@ -387,7 +387,7 @@ export async function notifyInvoiceSent(opts: {
     due_date: opts.dueDate ?? "",
     invoice_link: opts.portalUrl,
     detail_report_link: opts.detailReportUrl ?? "",
-    workspace_name: opts.workspaceName ?? "Cubiqlo",
+    workspace_name: opts.workspaceName ?? "Koobikel",
   };
 
   const defaultText =
@@ -405,7 +405,7 @@ export async function notifyInvoiceSent(opts: {
 
   return sendNotification({
     to: opts.clientEmail,
-    subject: `Invoice ${opts.invoiceNumber} from ${opts.workspaceName ?? "Cubiqlo"}`,
+    subject: `Invoice ${opts.invoiceNumber} from ${opts.workspaceName ?? "Koobikel"}`,
     text,
     type: "invoice_sent",
     replyTo: opts.replyTo,
@@ -485,7 +485,7 @@ export async function notifyWorkspaceInvite(opts: {
     subject: `${opts.inviterName} invited you to ${opts.workspaceName}`,
     text:
       `Hi,\n\n` +
-      `${opts.inviterName} has invited you to join the "${opts.workspaceName}" workspace on Cubiqlo.\n\n` +
+      `${opts.inviterName} has invited you to join the "${opts.workspaceName}" workspace on Koobikel.\n\n` +
       `Accept the invitation: ${opts.inviteUrl}`,
     type: "workspace_invite",
     replyTo: opts.replyTo,
@@ -522,7 +522,7 @@ export async function notifyTaskAssigned(opts: {
       </div>
       <div style="text-align:center;margin:24px 0;">
         <a href="${taskUrl}" style="background:#4f46e5;color:#ffffff;text-decoration:none;padding:10px 24px;border-radius:6px;font-weight:600;font-size:14px;display:inline-block;">
-          Open Task in Cubiqlo →
+          Open Task in Koobikel →
         </a>
       </div>
     `,
@@ -536,7 +536,7 @@ export async function notifyTaskAssigned(opts: {
       `Hi ${opts.assigneeName},\n\n` +
       `${opts.assignerName} assigned you to "${opts.taskTitle}".\n\n` +
       (opts.dueDate ? `Due Date: ${opts.dueDate}\n\n` : "") +
-      `Open in Cubiqlo: ${taskUrl}`,
+      `Open in Koobikel: ${taskUrl}`,
     type: "task_assigned",
   });
 }
@@ -571,7 +571,7 @@ export async function notifySubtaskAssigned(opts: {
       </div>
       <div style="text-align:center;margin:24px 0;">
         <a href="${taskUrl}" style="background:#7c3aed;color:#ffffff;text-decoration:none;padding:10px 24px;border-radius:6px;font-weight:600;font-size:14px;display:inline-block;">
-          Open Subtask in Cubiqlo →
+          Open Subtask in Koobikel →
         </a>
       </div>
     `,
@@ -585,7 +585,7 @@ export async function notifySubtaskAssigned(opts: {
       `Hi ${opts.assigneeName},\n\n` +
       `${opts.assignerName} assigned you to subtask "${opts.subtaskTitle}" under "${opts.parentTaskTitle}".\n\n` +
       (opts.dueDate ? `Due Date: ${opts.dueDate}\n\n` : "") +
-      `Open in Cubiqlo: ${taskUrl}`,
+      `Open in Koobikel: ${taskUrl}`,
     type: "subtask_assigned",
   });
 }
@@ -630,7 +630,7 @@ export async function notifyCommentMention(opts: {
       `Hi ${opts.mentionedName},\n\n` +
       `${opts.authorName} mentioned you in a comment on ${targetName}:\n\n` +
       `"${opts.commentSnippet}"\n\n` +
-      `Reply in Cubiqlo: ${taskUrl}`,
+      `Reply in Koobikel: ${taskUrl}`,
     type: "task_comment_mention",
   });
 }
@@ -677,7 +677,7 @@ export async function notifyTaskDueReminder(opts: {
     text:
       `Hi ${opts.assigneeName},\n\n` +
       `Your task "${opts.taskTitle}" is due ${dueLabel} (${opts.dueDate}).\n\n` +
-      `Open in Cubiqlo: ${taskUrl}`,
+      `Open in Koobikel: ${taskUrl}`,
     type: "task_due_reminder",
   });
 }

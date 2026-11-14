@@ -26,6 +26,6 @@ it("renders a locked 3-step modal over a dashboard backdrop", () => {
   expect(modal).toContain("onEscapeKeyDown={(event) => event.preventDefault()}");
   expect(modal).toContain("onPointerDownOutside={(event) => event.preventDefault()}");
   expect(modal).toContain('t("Pilih tipe akun", "Choose account type")');
-  expect(modal).toContain('t("Tau Cubiqlo dari mana?", "Where did you hear about Cubiqlo?")');
+  expect(modal).toContain('t("Tau Koobikel dari mana?", "Where did you hear about Koobikel?")');
   expect(modal).toContain('t("Lanjut setup account di Settings", "Continue');
 });

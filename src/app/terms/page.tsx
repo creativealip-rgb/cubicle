@@ -6,7 +6,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Syarat & Ketentuan",
   description:
-    "Syarat & Ketentuan penggunaan layanan Cubiqlo — hub operasional klien untuk freelancer, agency, dan studio.",
+    "Syarat & Ketentuan penggunaan layanan Koobikel — hub operasional klien untuk freelancer, agency, dan studio.",
 };
 
 const LAST_UPDATED = "14 Juli 2026";
@@ -19,7 +19,7 @@ export default function TermsPage() {
           <Link href="/" className="flex items-center gap-2">
             <Image
               src="/logo-header.png"
-              alt="Cubiqlo"
+              alt="Koobikel"
               width={140}
               height={48}
               className="h-8 w-auto object-contain"
@@ -46,8 +46,8 @@ export default function TermsPage() {
         <div className="mt-8 space-y-8 text-sm leading-relaxed text-slate-700">
           <section className="space-y-3">
             <p>
-              Selamat datang di Cubiqlo. Dengan membuat akun atau menggunakan
-              layanan Cubiqlo (&ldquo;Layanan&rdquo;), kamu setuju terikat pada
+              Selamat datang di Koobikel. Dengan membuat akun atau menggunakan
+              layanan Koobikel (&ldquo;Layanan&rdquo;), kamu setuju terikat pada
               Syarat &amp; Ketentuan ini. Kalau kamu tidak setuju, mohon tidak
               menggunakan Layanan.
             </p>
@@ -58,7 +58,7 @@ export default function TermsPage() {
               1. Tentang Layanan
             </h2>
             <p>
-              Cubiqlo adalah platform operasional klien (client operations hub)
+              Koobikel adalah platform operasional klien (client operations hub)
               untuk freelancer, agency, dan studio: mengelola klien, proyek,
               tugas, file, pelacakan waktu, invoice, booking, dan portal klien
               dalam satu tempat.
@@ -108,7 +108,7 @@ export default function TermsPage() {
               4. Konten &amp; Data Kamu
             </h2>
             <p>
-              Kamu tetap memiliki seluruh data yang kamu masukkan ke Cubiqlo
+              Kamu tetap memiliki seluruh data yang kamu masukkan ke Koobikel
               (data klien, proyek, file, invoice, dan lainnya). Kamu memberi
               kami izin terbatas untuk memproses data tersebut semata-mata untuk
               menjalankan Layanan. Kami tidak menjual datamu.
@@ -145,7 +145,7 @@ export default function TermsPage() {
             </h2>
             <p>
               Layanan disediakan &ldquo;sebagaimana adanya&rdquo; tanpa jaminan
-              apa pun. Sejauh diizinkan hukum, Cubiqlo tidak bertanggung jawab
+              apa pun. Sejauh diizinkan hukum, Koobikel tidak bertanggung jawab
               atas kerugian tidak langsung, insidental, atau konsekuensial yang
               timbul dari penggunaan Layanan.
             </p>

@@ -86,7 +86,7 @@ export function ForgotPasswordForm() {
       <CardHeader className="space-y-1 text-center">
         <Image
           src="/logo-icon.png"
-          alt="Cubiqlo"
+          alt="Koobikel"
           width={40}
           height={40}
           className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover"

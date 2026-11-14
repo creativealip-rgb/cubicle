@@ -44,7 +44,7 @@ export function BookingSlugHeaderWidget({
   const publicUrl = useMemo(() => {
     const clean = normalizeSlug(defaultSlug || workspaceSlug || "");
     if (!clean) return null;
-    return `https://cubiqlo.com/booking/${clean}`;
+    return `https://koobikel.com/booking/${clean}`;
   }, [defaultSlug, workspaceSlug]);
 
 
@@ -148,7 +148,7 @@ export function BookingSlugHeaderWidget({
                   <Label className="text-xs font-semibold text-foreground">{t("Slug URL", "URL Slug")}</Label>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono text-muted-foreground bg-muted px-2.5 py-2 rounded-lg border border-border/60 whitespace-nowrap">
-                      https://cubiqlo.com/booking/
+                      https://koobikel.com/booking/
                     </span>
                     <Input
                       value={isFreePlan ? (workspaceSlug || slug) : slug}

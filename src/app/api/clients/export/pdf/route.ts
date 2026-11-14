@@ -37,7 +37,7 @@ export async function GET(_req: NextRequest) {
   const buf = await renderClientPdf({
     title: lang === "en" ? "All Clients" : "Semua Klien",
     generatedAt: new Date().toLocaleString(lang === "en" ? "en-US" : "id-ID", { timeZone: "Asia/Jakarta" }),
-    workspaceName: workspace?.name ?? "Cubiqlo",
+    workspaceName: workspace?.name ?? "Koobikel",
     lang,
     clients: clientRows.map((client) => ({
       name: client.name,

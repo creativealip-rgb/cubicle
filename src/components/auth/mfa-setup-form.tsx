@@ -37,7 +37,7 @@ export function MfaSetupForm() {
     setLoading(true);
     try {
       const result = await authClient.passkey.addPasskey({
-        name: "Cubiqlo passkey",
+        name: "Koobikel passkey",
         createSession: false,
       });
       if (result.error) {
@@ -65,7 +65,7 @@ export function MfaSetupForm() {
       const result = await authClient.twoFactor.enable({
         password,
         method: "totp",
-        issuer: "Cubiqlo",
+        issuer: "Koobikel",
       });
       if (result.error) {
         setError(result.error.message ?? "Could not start MFA setup");

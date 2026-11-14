@@ -29,8 +29,8 @@ describe("settings and onboarding source wiring", () => {
 
   it("keeps onboarding copy and dashboard checklist steps exact", () => {
     expect(onboarding).toContain('"Langkah Awal Memulai", "Getting Started Checklist"');
-    expect(onboarding).toContain('"Selesaikan langkah berikut untuk memaksimalkan workspace Cubiqlo kamu.",');
-    expect(onboarding).toContain('"Complete these initial steps to get the most out of Cubiqlo.",');
+    expect(onboarding).toContain('"Selesaikan langkah berikut untuk memaksimalkan workspace Koobikel kamu.",');
+    expect(onboarding).toContain('"Complete these initial steps to get the most out of Koobikel.",');
     for (const href of ['"/app/clients"', '"/app/personal-site"', '"/app/personal"', '"/app/docs"']) {
       expect(dashboard).toContain(`href: ${href}`);
     }

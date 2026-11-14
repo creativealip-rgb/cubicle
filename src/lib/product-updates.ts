@@ -52,8 +52,8 @@ export const productUpdates: ProductUpdate[] = [
           en: "AI Assistant Hub 2.0 (Dual-Pane Full-Viewport)",
         },
         description: {
-          id: "Pengalaman AI split 2-kolom ala ChatGPT/Claude tanpa double scroll, composer sticky di bagian bawah, dukungan multi-turn chat bersambung, dan knowledge base lengkap seluruh fitur Cubiqlo.",
-          en: "Dual-column ChatGPT/Claude experience without double scrolling, sticky bottom composer, continuous multi-turn sessions, and comprehensive knowledge across all Cubiqlo features.",
+          id: "Pengalaman AI split 2-kolom ala ChatGPT/Claude tanpa double scroll, composer sticky di bagian bawah, dukungan multi-turn chat bersambung, dan knowledge base lengkap seluruh fitur Koobikel.",
+          en: "Dual-column ChatGPT/Claude experience without double scrolling, sticky bottom composer, continuous multi-turn sessions, and comprehensive knowledge across all Koobikel features.",
         },
         href: "/app/brain",
         cta: {
@@ -211,7 +211,7 @@ export const productUpdates: ProductUpdate[] = [
           en: "Cross-subdomain Auth Session Routing",
         },
         description: {
-          id: "Landing Cubiqlo dan dashboard app kini menangani sesi valid, logout, dan cookie lama tanpa redirect berulang.",
+          id: "Landing Koobikel dan dashboard app kini menangani sesi valid, logout, dan cookie lama tanpa redirect berulang.",
           en: "Clean session transitions between public landing and app dashboard without redirect loops or stale cookies.",
         },
       },

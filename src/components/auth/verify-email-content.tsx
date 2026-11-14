@@ -47,7 +47,7 @@ export function VerifyEmailContent() {
       <CardHeader className="space-y-1 text-center">
         <Image
           src="/logo-icon.png"
-          alt="Cubiqlo"
+          alt="Koobikel"
           width={40}
           height={40}
           className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover"
@@ -68,7 +68,7 @@ export function VerifyEmailContent() {
           <p className="mb-1 font-medium text-foreground">{t("Langkah selanjutnya:", "Next steps:")}</p>
           <ol className="list-inside list-decimal space-y-1">
             <li>{t("Buka inbox email kamu", "Open your email inbox")}</li>
-            <li>{t("Cari email dari", "Look for an email from")} <span className="font-medium">Cubiqlo</span></li>
+            <li>{t("Cari email dari", "Look for an email from")} <span className="font-medium">Koobikel</span></li>
             <li>{t("Klik tombol \u201CVerify Email\u201D", "Click the \u201CVerify Email\u201D button")}</li>
           </ol>
         </div>

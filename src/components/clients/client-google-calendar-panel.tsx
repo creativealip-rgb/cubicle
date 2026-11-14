@@ -596,15 +596,15 @@ export function ClientGoogleCalendarPanel({
 
       <Card>
         <CardHeader className="pb-3">
-          <CardTitle className="text-base">Jadwal Cubiqlo (client)</CardTitle>
+          <CardTitle className="text-base">Jadwal Koobikel (client)</CardTitle>
           <p className="text-sm text-muted-foreground">
-            Meeting / appointment Cubiqlo untuk klien ini (booking form). Bukan campur event Google di atas.
+            Meeting / appointment Koobikel untuk klien ini (booking form). Bukan campur event Google di atas.
           </p>
         </CardHeader>
         <CardContent className="space-y-3">
           {appointments.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
-              Belum ada jadwal Cubiqlo.
+              Belum ada jadwal Koobikel.
             </p>
           ) : (
             appointments.map((apt) => (

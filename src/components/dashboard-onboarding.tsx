@@ -78,8 +78,8 @@ export function DashboardOnboarding({ lang, steps }: DashboardOnboardingProps) {
             </h2>
             <p className="text-xs text-muted-foreground">
               {t(
-                "Selesaikan langkah berikut untuk memaksimalkan workspace Cubiqlo kamu.",
-                "Complete these initial steps to get the most out of Cubiqlo.",
+                "Selesaikan langkah berikut untuk memaksimalkan workspace Koobikel kamu.",
+                "Complete these initial steps to get the most out of Koobikel.",
               )}
             </p>
           </div>

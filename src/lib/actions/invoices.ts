@@ -1365,7 +1365,7 @@ async function sendInvoiceEmailForInvoice(
   const appUrl = (
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.BETTER_AUTH_URL ??
-    "https://cubiqlo.com"
+    "https://koobikel.com"
   ).replace(/\/$/, "");
   // Same PDF layout as /api/invoices/:id/pdf (Unduh PDF) — public via share token.
   const portalUrl = `${appUrl}/api/invoices/share/${generated.token}/pdf`;
@@ -1544,7 +1544,7 @@ export async function sendInvoicePaymentReminder(invoiceId: string) {
   const appUrl = (
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.BETTER_AUTH_URL ??
-    "https://cubiqlo.com"
+    "https://koobikel.com"
   ).replace(/\/$/, "");
   const portalUrl = `${appUrl}/api/invoices/share/${generated.token}/pdf`;
   const replyTo = await resolveWorkspaceReplyTo(workspaceId);

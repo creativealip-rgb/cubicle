@@ -39,7 +39,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
         <div className="flex items-center gap-2 border-b border-slate-100 px-4 py-4">
           <ShieldCheck className="h-5 w-5 text-[#2563EB]" />
           <div>
-            <p className="text-sm font-semibold leading-tight text-[#292D34]">Cubiqlo Admin</p>
+            <p className="text-sm font-semibold leading-tight text-[#292D34]">Koobikel Admin</p>
             <p className="text-xs text-muted-foreground">Control plane</p>
           </div>
         </div>
@@ -72,7 +72,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
       <div className="fixed inset-x-0 top-0 z-30 border-b border-slate-200 bg-white md:hidden">
         <div className="flex items-center gap-2 px-4 py-2.5">
           <ShieldCheck className="h-5 w-5 text-[#2563EB]" />
-          <span className="text-sm font-semibold text-[#292D34]">Cubiqlo Admin</span>
+          <span className="text-sm font-semibold text-[#292D34]">Koobikel Admin</span>
         </div>
         <nav className="flex gap-1 overflow-x-auto px-2 pb-2">
           {NAV.map(({ href, label, icon: Icon }) => {

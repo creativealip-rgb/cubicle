@@ -18,8 +18,8 @@ export default async function DocsPage() {
         icon={BookOpen}
         title={t("Pusat Dokumentasi", "Documentation Hub")}
         description={t(
-          "Panduan lengkap dan tutorial fitur untuk memaksimalkan seluruh modul operasional Cubiqlo.",
-          "Complete guides and tutorials to get the most out of all Cubiqlo operational modules.",
+          "Panduan lengkap dan tutorial fitur untuk memaksimalkan seluruh modul operasional Koobikel.",
+          "Complete guides and tutorials to get the most out of all Koobikel operational modules.",
         )}
       />
 

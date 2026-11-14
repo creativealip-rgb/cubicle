@@ -35,7 +35,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Catatan",
-  description: "Catatan pribadi workspace Cubiqlo.",
+  description: "Catatan pribadi workspace Koobikel.",
 };
 
 type Tab = "open" | "done" | "archived" | "all";

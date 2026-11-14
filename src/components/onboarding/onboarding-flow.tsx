@@ -247,7 +247,7 @@ export function OnboardingFlow() {
 
               <div className="space-y-2 pt-1">
                 <Label className="text-xs font-semibold">
-                  {t("Tahu Cubiqlo dari mana? *", "How did you find Cubiqlo? *")}
+                  {t("Tahu Koobikel dari mana? *", "How did you find Koobikel? *")}
                 </Label>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {SOURCES.map((s) => {

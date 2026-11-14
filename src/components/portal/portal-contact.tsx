@@ -46,7 +46,7 @@ export function PortalContactButtons({
   inline = false,
 }: PortalContactProps) {
   const { lang, t } = useT();
-  const who = ownerName?.trim() || "Cubiqlo Team";
+  const who = ownerName?.trim() || "Koobikel Team";
   const about = projectName
     ? `${t("proyek", "project")} ${projectName}`
     : clientName

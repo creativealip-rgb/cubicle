@@ -132,7 +132,7 @@ export const auth = betterAuth({
   <tr><td align="center">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;">
       <tr><td style="padding:24px 32px;border-bottom:1px solid #e5e7eb;">
-        <div style="font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6b7280;">Cubiqlo</div>
+        <div style="font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6b7280;">Koobikel</div>
       </td></tr>
       <tr><td style="padding:32px;font-size:15px;line-height:1.6;color:#1a1d24;">
         <h2 style="margin:0 0 16px;font-size:20px;font-weight:600;">Reset your password</h2>
@@ -150,7 +150,7 @@ export const auth = betterAuth({
         <p style="margin:0;">If you didn't request this, you can safely ignore this email.</p>
       </td></tr>
       <tr><td style="padding:12px 32px;font-size:11px;color:#9ca3af;text-align:center;">
-        Sent by Cubiqlo — client operations hub
+        Sent by Koobikel — client operations hub
       </td></tr>
     </table>
   </td></tr>
@@ -158,7 +158,7 @@ export const auth = betterAuth({
 </body></html>`;
       await sendNotification({
         to: user.email,
-        subject: "Reset your Cubiqlo password",
+        subject: "Reset your Koobikel password",
         text:
           `Hi ${user.name ?? ""},\n\n` +
           `We received a request to reset your password.\n\n` +
@@ -202,12 +202,12 @@ export const auth = betterAuth({
   <tr><td align="center">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#ffffff;border-radius:12px;border:1px solid #e5e7eb;">
       <tr><td style="padding:24px 32px;border-bottom:1px solid #e5e7eb;">
-        <div style="font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6b7280;">Cubiqlo</div>
+        <div style="font-size:14px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:#6b7280;">Koobikel</div>
       </td></tr>
       <tr><td style="padding:32px;font-size:15px;line-height:1.6;color:#1a1d24;">
         <h2 style="margin:0 0 16px;font-size:20px;font-weight:600;">Verify your email</h2>
         <p style="margin:0 0 16px;">Hi ${user.name ?? "there"},</p>
-        <p style="margin:0 0 24px;">Welcome to Cubiqlo! Verify your email to activate your workspace and start managing clients, invoices, and projects.</p>
+        <p style="margin:0 0 24px;">Welcome to Koobikel! Verify your email to activate your workspace and start managing clients, invoices, and projects.</p>
         <table role="presentation" cellpadding="0" cellspacing="0" style="margin:0 auto 24px;">
           <tr><td style="border-radius:8px;background:#1a1d24;">
             <a href="${verifyUrl}" target="_blank" style="display:inline-block;padding:12px 32px;font-size:15px;font-weight:600;color:#ffffff;text-decoration:none;">Verify Email</a>
@@ -220,7 +220,7 @@ export const auth = betterAuth({
         <p style="margin:0;">If you didn't sign up, you can safely ignore this email.</p>
       </td></tr>
       <tr><td style="padding:12px 32px;font-size:11px;color:#9ca3af;text-align:center;">
-        Sent by Cubiqlo — client operations hub
+        Sent by Koobikel — client operations hub
       </td></tr>
     </table>
   </td></tr>
@@ -228,10 +228,10 @@ export const auth = betterAuth({
 </body></html>`;
       await sendNotification({
         to: user.email,
-        subject: "Verify your Cubiqlo email",
+        subject: "Verify your Koobikel email",
         text:
           `Hi ${user.name ?? ""},\n\n` +
-          `Welcome to Cubiqlo! Verify your email to activate your workspace.\n\n` +
+          `Welcome to Koobikel! Verify your email to activate your workspace.\n\n` +
           `Verify link:\n${verifyUrl}\n\n` +
           `If you didn't sign up, ignore this email.`,
         html,
@@ -242,13 +242,13 @@ export const auth = betterAuth({
       const name = user.name?.trim() || "there";
       await sendNotification({
         to: user.email,
-        subject: "Welcome to Cubiqlo",
+        subject: "Welcome to Koobikel",
         text:
           `Hi ${name},\n\n` +
-          "Your email is verified. Your Cubiqlo workspace is ready.\n\n" +
+          "Your email is verified. Your Koobikel workspace is ready.\n\n" +
           "Start by setting up your workspace, invoice defaults, and first client.\n\n" +
-          "Open Cubiqlo: https://app.cubiqlo.com/app/dashboard\n\n" +
-          "— Cubiqlo",
+          "Open Koobikel: https://app.cubiqlo.com/app/dashboard\n\n" +
+          "— Koobikel",
         type: "welcome_email",
       });
     },
@@ -262,9 +262,9 @@ export const auth = betterAuth({
     process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
     "https://app.cubiqlo.com",
     "http://app.cubiqlo.com",
-    "https://cubiqlo.com",
-    "http://cubiqlo.com",
-    "https://www.cubiqlo.com",
+    "https://koobikel.com",
+    "http://koobikel.com",
+    "https://www.koobikel.com",
     "http://www.cubiqlo.com",
     "https://admin.cubiqlo.com",
     "http://admin.cubiqlo.com",
@@ -283,7 +283,7 @@ export const auth = betterAuth({
     passkey({
       rpID:
         process.env.NODE_ENV === "production" ? "app.cubiqlo.com" : "localhost",
-      rpName: "Cubiqlo",
+      rpName: "Koobikel",
       origin: process.env.BETTER_AUTH_URL ?? "https://app.cubiqlo.com",
     }),
   ],

@@ -13,8 +13,8 @@ export async function GET(request: Request) {
     const results = await Promise.all(expiring.map(async (user) => {
       const result = await sendNotification({
         to: user.email,
-        subject: `Cubiqlo ${user.plan.toUpperCase()} expires in ${user.daysUntilExpiry} day${user.daysUntilExpiry === 1 ? "" : "s"}`,
-        text: `Hi ${user.name || "there"},\n\nYour Cubiqlo ${user.plan.toUpperCase()} plan expires on ${user.planExpiresAt.toISOString().slice(0, 10)}. Renew from Settings → Billing to keep your workspace active.`,
+        subject: `Koobikel ${user.plan.toUpperCase()} expires in ${user.daysUntilExpiry} day${user.daysUntilExpiry === 1 ? "" : "s"}`,
+        text: `Hi ${user.name || "there"},\n\nYour Koobikel ${user.plan.toUpperCase()} plan expires on ${user.planExpiresAt.toISOString().slice(0, 10)}. Renew from Settings → Billing to keep your workspace active.`,
         type: `plan-expiry-${user.daysUntilExpiry}d`,
         idempotencyKey: `plan-expiry-${user.id}-${user.planExpiresAt.toISOString().slice(0, 10)}-${user.daysUntilExpiry}d`,
       });

@@ -535,7 +535,7 @@ export function DocumentBlockEditor({
     proposalMeta?.id ||
     documentMeta?.id ||
     "";
-  const baseUrl = customOrigin || "https://cubiqlo.com";
+  const baseUrl = customOrigin || "https://koobikel.com";
   const sharePath = kind === "proposal" ? `/proposal/${effectiveDocId}` : `/contract/${effectiveDocId}`;
   const fullShareUrl = effectiveDocId ? `${baseUrl}${sharePath}` : "";
 
@@ -1235,7 +1235,7 @@ export function DocumentBlockEditor({
                     badgeLabel={kind === "proposal" ? "Official Proposal" : "Official Contract"}
                     documentType={kind}
                     documentTitle={docTitle}
-                    workspaceName={workspaceName || (typeof placeholderValues.workspaceName === "string" ? placeholderValues.workspaceName : "Cubiqlo Workspace")}
+                    workspaceName={workspaceName || (typeof placeholderValues.workspaceName === "string" ? placeholderValues.workspaceName : "Koobikel Workspace")}
                     workspaceLogoUrl={workspaceLogoUrl || null}
                   />
 
@@ -2035,7 +2035,7 @@ export function DocumentBlockEditor({
                   </Label>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono text-muted-foreground bg-muted px-2.5 py-2 rounded-lg border border-border/60 whitespace-nowrap">
-                      https://cubiqlo.com/{kind === "proposal" ? "proposal" : "contract"}/
+                      https://koobikel.com/{kind === "proposal" ? "proposal" : "contract"}/
                     </span>
                     <Input
                       id="document-custom-slug"

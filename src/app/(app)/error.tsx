@@ -18,7 +18,7 @@ export default function AppError({
   const { t } = useT();
 
   useEffect(() => {
-    console.error("Cubiqlo app error:", error);
+    console.error("Koobikel app error:", error);
     if (stale) {
       const timer = setTimeout(() => window.location.reload(), 1200);
       return () => clearTimeout(timer);

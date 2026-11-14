@@ -6,12 +6,12 @@ import { getWorkspaceForCurrentUser } from "@/lib/workspace";
  *   → 200 text/markdown (Content-Disposition: attachment)
  *
  * Body:
- *   # Cubiqlo AI — <conversation title>
+ *   # Koobikel AI — <conversation title>
  *   *Exported YYYY-MM-DD HH:mm UTC*
  *   ---
  *   **You** · 2026-06-16 14:00
  *   List all invoices.
- *   **Cubiqlo AI** · 2026-06-16 14:00 · 1 tool call · 320 tokens
+ *   **Koobikel AI** · 2026-06-16 14:00 · 1 tool call · 320 tokens
  *   3 invoices...
  */
 
@@ -102,7 +102,7 @@ function renderMarkdown(
 ): string {
   const exportedAt = new Date().toISOString().replace("T", " ").slice(0, 16) + " UTC";
   const lines: string[] = [];
-  lines.push(`# Cubiqlo AI — ${title || "Untitled conversation"}`);
+  lines.push(`# Koobikel AI — ${title || "Untitled conversation"}`);
   lines.push("");
   lines.push(`*Exported ${exportedAt} · ${rows.length} message${rows.length === 1 ? "" : "s"}*`);
   lines.push("");
@@ -129,7 +129,7 @@ function renderMarkdown(
       if (tcCount > 0) meta.push(`${tcCount} tool call${tcCount === 1 ? "" : "s"}`);
       if (r.tokens) meta.push(`${r.tokens} tokens`);
       const metaStr = meta.length ? ` · ${meta.join(" · ")}` : "";
-      lines.push(`**Cubiqlo AI** · ${ts}${metaStr}`);
+      lines.push(`**Koobikel AI** · ${ts}${metaStr}`);
       lines.push("");
       if (tcCount > 0 && Array.isArray(r.toolCalls)) {
         for (const tc of r.toolCalls as Array<{ name: string }>) {

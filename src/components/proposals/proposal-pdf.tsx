@@ -349,7 +349,7 @@ export function ProposalPDF({ proposal, workspace, client }: ProposalData) {
 
   return (
     <Document
-      title={`${proposal.title} — Cubiqlo`}
+      title={`${proposal.title} — Koobikel`}
       author={workspace.billingName || workspace.name}
       subject="Proposal"
     >
@@ -462,7 +462,7 @@ export function ProposalPDF({ proposal, workspace, client }: ProposalData) {
         )}
 
         <View style={styles.footer} fixed>
-          <Text>{workspace.billingName || workspace.name} · Powered by Cubiqlo</Text>
+          <Text>{workspace.billingName || workspace.name} · Powered by Koobikel</Text>
           <Text
             render={({ pageNumber, totalPages }) => `Page ${pageNumber} of ${totalPages}`}
           />

@@ -191,7 +191,7 @@ export function PromptStudio({ generations, usage }: { generations: PromptHistor
   }
 
   const briefPlaceholders: Record<string, { id: string; en: string }> = {
-    brand: { id: "Contoh: Cubiqlo", en: "e.g.: Cubiqlo" },
+    brand: { id: "Contoh: Koobikel", en: "e.g.: Koobikel" },
     campaign: { id: "Contoh: Aplikasi manajemen klien freelance", en: "e.g.: Freelancer client management app" },
     goal: { id: "Contoh: Mendorong pendaftaran akun", en: "e.g.: Drive free account signups" },
     audience: { id: "Contoh: Freelancer & studio kreatif", en: "e.g.: Freelancers & creative studios" },

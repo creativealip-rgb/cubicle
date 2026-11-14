@@ -84,7 +84,7 @@ const GUIDES = {
       en: "Working hours availability rules, public online booking link (/booking/slug), and calendar sync.",
     },
     items: [
-      ["1. Link Booking Publik", "Dapatkan URL pemesanan janji temu personal (misal: cubiqlo.com/booking/budi-setiawan) untuk ditaruh di bio atau email signature.", "1. Public Booking Link", "Share a personal appointment URL in your bio or email signature so clients can book."],
+      ["1. Link Booking Publik", "Dapatkan URL pemesanan janji temu personal (misal: koobikel.com/booking/budi-setiawan) untuk ditaruh di bio atau email signature.", "1. Public Booking Link", "Share a personal appointment URL in your bio or email signature so clients can book."],
       ["2. Kustomisasi Slug Booking", "Atur nama slug URL pemesanan kamu di tab Pengaturan Kalender sesuai nama brand/personal.", "2. Customize the Booking Slug", "Set a branded booking URL slug from Calendar Settings."],
       ["3. Aturan Hari & Jam Kerja", "Tentukan hari aktif (misal Senin–Jumat) serta rentang jam ketersediaan kamu agar klien tidak bisa booking di luar jam kerja.", "3. Working Days and Hours", "Define available days and hours so clients cannot book outside your working schedule."],
       ["4. Manajemen Janji Temu", "Lihat daftar booking mendatang dengan Date Badge Tiles yang jelas (hari, tanggal, jam WIB), konfirmasi, atau batalkan jadwal.", "4. Appointment Management", "Review upcoming bookings with clear date and time badges, then confirm or cancel them."],
@@ -260,7 +260,7 @@ const GUIDES = {
       ["1. Email Bisnis Kustom", "Gunakan alamat email domain bisnis kamu sendiri untuk pengiriman notifikasi profesional ke klien.", "1. Custom Business Email", "Send professional client notifications from your own business domain address."],
       ["2. Dispatch Otomatis", "Kirim invoice, proposal penawaran, dan link kontrak langsung ke inbox klien dengan template email rapi.", "2. Automatic Dispatch", "Send invoices, estimates, and contract links to client inboxes with polished templates."],
       ["3. Reply-To Workspace", "Balasan dari klien otomatis masuk ke email utama yang kamu atur di pengaturan workspace.", "3. Workspace Reply-To", "Route client replies automatically to the primary workspace email."],
-      ["4. Akses Webmail", "Akses webmail terintegrasi untuk membaca dan membalas pesan klien langsung dari ekosistem Cubiqlo.", "4. Webmail Access", "Read and reply to client messages from Cubiqlo integrated webmail."],
+      ["4. Akses Webmail", "Akses webmail terintegrasi untuk membaca dan membalas pesan klien langsung dari ekosistem Koobikel.", "4. Webmail Access", "Read and reply to client messages from Koobikel integrated webmail."],
     ],
   },
   "privacy-policy": {
@@ -268,8 +268,8 @@ const GUIDES = {
     category: { id: "Keamanan", en: "Security" },
     title: { id: "Kebijakan Privasi & Perlindungan Data", en: "Data Privacy & Protection Policy" },
     description: {
-      id: "Prinsip perlindungan data, transparansi pengumpulan informasi, enkripsi penyimpanan, dan hak privasi pengguna di Cubiqlo.",
-      en: "Data protection principles, collection transparency, storage encryption, and user privacy rights in Cubiqlo.",
+      id: "Prinsip perlindungan data, transparansi pengumpulan informasi, enkripsi penyimpanan, dan hak privasi pengguna di Koobikel.",
+      en: "Data protection principles, collection transparency, storage encryption, and user privacy rights in Koobikel.",
     },
     items: [
       ["1. Prinsip Kerahasiaan Data", "Kami tidak pernah menjual data pribadi, data klien, file deliverable, maupun rincian finansial workspace kamu ke pihak mana pun.", "1. Data Confidentiality Principle", "We never sell your personal data, client records, deliverable files, or workspace financial details to anyone."],

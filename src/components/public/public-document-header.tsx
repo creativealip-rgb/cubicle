@@ -25,15 +25,15 @@ export function PublicDocumentHeader({
   const { t } = useT();
   const [imgError, setImgError] = useState(false);
 
-  const brandDisplayName = workspaceName || "Cubiqlo Workspace";
+  const brandDisplayName = workspaceName || "Koobikel Workspace";
 
 
   const subtext =
     documentType === "proposal"
-      ? t("Proposal dibuat via Cubiqlo", "Proposal created via Cubiqlo")
+      ? t("Proposal dibuat via Koobikel", "Proposal created via Koobikel")
       : documentType === "contract"
-      ? t("Kontrak dibuat via Cubiqlo", "Contract created via Cubiqlo")
-      : t("Formulir dibuat via Cubiqlo", "Form created via Cubiqlo");
+      ? t("Kontrak dibuat via Koobikel", "Contract created via Koobikel")
+      : t("Formulir dibuat via Koobikel", "Form created via Koobikel");
 
   return (
     <header className="mb-6 rounded-2xl border border-border/80 bg-card p-4 sm:p-5 shadow-xs transition-all">
@@ -53,7 +53,7 @@ export function PublicDocumentHeader({
             </div>
           ) : (
             <div className="relative h-11 w-11 sm:h-12 sm:w-12 shrink-0 overflow-hidden rounded-xl shadow-2xs">
-              <Image src="/logo-icon.png" alt="Cubiqlo" fill sizes="48px" className="object-contain" />
+              <Image src="/logo-icon.png" alt="Koobikel" fill sizes="48px" className="object-contain" />
             </div>
           )}
 

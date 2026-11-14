@@ -13,7 +13,7 @@ export function buildOpenGraphImageUrl(site: PersonalSiteInput): string | undefi
 
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL ||
                   process.env.NEXT_PUBLIC_APP_URL ||
-                  "https://cubiqlo.com";
+                  "https://koobikel.com";
   return `${baseUrl}/api/og/personal-site/${encodeURIComponent(site.slug)}`;
 }
 

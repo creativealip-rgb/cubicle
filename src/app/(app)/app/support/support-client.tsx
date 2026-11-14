@@ -88,8 +88,8 @@ const PRIORITY_BADGE_STYLES: Record<string, { bg: string; icon: React.ReactNode 
 
 const CATEGORY_MAP: Record<string, { labelEn: string; labelId: string; color: string }> = {
   features: {
-    labelEn: "Cubiqlo Features",
-    labelId: "Fitur Cubiqlo",
+    labelEn: "Koobikel Features",
+    labelId: "Fitur Koobikel",
     color: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900/50",
   },
   free_plan_pricing: {
@@ -617,7 +617,7 @@ export function SupportPageClient({ tickets, counts, clients, projects, members,
                     <SelectValue placeholder={t("Pilih kategori bantuan ▾", "Select a support category ▾")} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="features">{t("Fitur Cubiqlo", "Cubiqlo Features")}</SelectItem>
+                    <SelectItem value="features">{t("Fitur Koobikel", "Koobikel Features")}</SelectItem>
                     <SelectItem value="free_plan_pricing">{t("Paket Gratis & Harga", "Free Plan & Pricing")}</SelectItem>
                     <SelectItem value="account">{t("Akun", "Account")}</SelectItem>
                     <SelectItem value="workspace">{t("Workspace", "Workspace")}</SelectItem>

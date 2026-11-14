@@ -64,7 +64,7 @@ export default function WhatsNewPage() {
             {t("Pembaruan Produk", "Product Updates")}
           </div>
           <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-3xl">
-            {t("Cubiqlo terus jadi lebih baik.", "Cubiqlo keeps getting better.")}
+            {t("Koobikel terus jadi lebih baik.", "Koobikel keeps getting better.")}
           </h1>
           <p className="mt-2 text-xs leading-5 text-slate-300 sm:text-sm sm:leading-6">
             {t(

@@ -154,8 +154,8 @@ export function LoginForm({
         </h1>
         <CardDescription>
           {t(
-            "Masuk ke workspace Cubiqlo kamu",
-            "Sign in to your Cubiqlo workspace",
+            "Masuk ke workspace Koobikel kamu",
+            "Sign in to your Koobikel workspace",
           )}
         </CardDescription>
       </CardHeader>

@@ -63,7 +63,7 @@ export async function GET(
     ];
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = "Cubiqlo";
+    workbook.creator = "Koobikel";
     workbook.created = new Date();
 
     const worksheet = workbook.addWorksheet("Klien");

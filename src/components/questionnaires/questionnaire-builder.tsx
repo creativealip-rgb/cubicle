@@ -332,7 +332,7 @@ const FORM_TEMPLATES = [
     title: "Branding & Logo Design Brief",
     description: "Gather visual preferences, brand values, and design requirements.",
     fields: [
-      { id: makeId(), type: "text" as const, label: "Brand Name", required: true, placeholder: "Cubiqlo Studio", colSpan: "half" as const },
+      { id: makeId(), type: "text" as const, label: "Brand Name", required: true, placeholder: "Koobikel Studio", colSpan: "half" as const },
       { id: makeId(), type: "text" as const, label: "Tagline or Slogan", required: false, placeholder: "Crafting modern experiences", colSpan: "half" as const },
       { id: makeId(), type: "textarea" as const, label: "Tell Us About Your Brand & Target Audience", required: true, placeholder: "Our audience consists of modern professionals aged 20-35...", colSpan: "full" as const },
       { id: makeId(), type: "multiselect" as const, label: "Desired Visual Vibe / Style", options: ["Modern & Minimalist", "Bold & Energetic", "Luxury & Elegant", "Friendly & Approachable", "Tech / Futuristic"], required: true, colSpan: "full" as const },
@@ -1211,7 +1211,7 @@ export function QuestionnaireBuilder({
   }, []);
 
   const activeSlugOrId = customSlug.trim() || initial?.slug || activeQuestionnaireId || questionnaireId;
-  const baseUrl = customOrigin || "https://cubiqlo.com";
+  const baseUrl = customOrigin || "https://koobikel.com";
   const shareUrl = activeSlugOrId ? `${baseUrl}/intake/${activeSlugOrId}` : "";
   const embedCode = activeSlugOrId ? `<iframe src="${baseUrl}/intake/${activeSlugOrId}" width="100%" height="700px" frameborder="0" style="border:0;border-radius:12px;"></iframe>` : "";
 
@@ -1516,7 +1516,7 @@ export function QuestionnaireBuilder({
                   badgeLabel="Official Form"
                   documentType="form"
                   documentTitle={name || t("Formulir", "Form")}
-                  workspaceName={workspaceName || "Cubiqlo Workspace"}
+                  workspaceName={workspaceName || "Koobikel Workspace"}
                   workspaceLogoUrl={workspaceLogoUrl}
                 />
 
@@ -1880,7 +1880,7 @@ export function QuestionnaireBuilder({
                       >
                         {t("Kirim Tanggapan", "Submit Form")}
                       </Button>
-                      <span className="text-[10px] text-muted-foreground">Powered by Cubiqlo Forms</span>
+                      <span className="text-[10px] text-muted-foreground">Powered by Koobikel Forms</span>
                     </div>
                   </div>
                 </div>
@@ -2691,7 +2691,7 @@ export function QuestionnaireBuilder({
                   </Label>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-mono text-muted-foreground bg-muted px-2.5 py-2 rounded-lg border border-border/60 whitespace-nowrap">
-                      https://cubiqlo.com/intake/
+                      https://koobikel.com/intake/
                     </span>
                     <Input
                       value={customSlug || (questionnaireId ? `form-${questionnaireId.slice(0, 8)}` : "")}

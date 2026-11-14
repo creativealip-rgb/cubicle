@@ -48,7 +48,7 @@ export async function GET(_req: NextRequest) {
     }));
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = "Cubiqlo";
+    workbook.creator = "Koobikel";
     workbook.created = new Date();
 
     const worksheet = workbook.addWorksheet("Klien");

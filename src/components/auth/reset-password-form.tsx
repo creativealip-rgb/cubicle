@@ -101,10 +101,10 @@ export function ResetPasswordForm({
   return (
     <Card className="w-full max-w-md">
       <CardHeader className="space-y-1 text-center">
-        <Image src="/logo-icon.png" alt="Cubiqlo" width={40} height={40} className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover" />
+        <Image src="/logo-icon.png" alt="Koobikel" width={40} height={40} className="mx-auto mb-3 h-10 w-10 rounded-lg object-cover" />
         <CardTitle className="text-2xl">{t("Buat password baru", "Create new password")}</CardTitle>
         <CardDescription>
-          {t("Masukkan password baru untuk akun Cubiqlo kamu.", "Enter a new password for your Cubiqlo account.")}
+          {t("Masukkan password baru untuk akun Koobikel kamu.", "Enter a new password for your Koobikel account.")}
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>

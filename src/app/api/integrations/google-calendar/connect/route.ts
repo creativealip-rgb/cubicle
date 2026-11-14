@@ -16,7 +16,7 @@ export async function GET() {
     return NextResponse.redirect(
       new URL(
         "/app/settings?gcal=missing_config",
-        process.env.NEXT_PUBLIC_APP_URL || "https://cubiqlo.com",
+        process.env.NEXT_PUBLIC_APP_URL || "https://koobikel.com",
       ),
     );
   }

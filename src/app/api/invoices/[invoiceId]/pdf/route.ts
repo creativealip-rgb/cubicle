@@ -69,7 +69,7 @@ export async function GET(
   const appUrl = (
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.BETTER_AUTH_URL ??
-    "https://cubiqlo.com"
+    "https://koobikel.com"
   ).replace(/\/$/, "");
   const timesheetParams = new URLSearchParams({
     report: "full",

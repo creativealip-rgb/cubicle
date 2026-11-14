@@ -11,8 +11,8 @@ export async function AuthShell({ children }: { children: React.ReactNode }) {
         <div className="absolute -left-32 top-1/3 h-96 w-96 rounded-full bg-[#2563EB]/20 blur-3xl" />
         <div className="absolute -bottom-40 -right-32 h-96 w-96 rounded-full bg-blue-500/15 blur-3xl" />
 
-        <Link href="https://cubiqlo.com/" aria-label={t("Kembali ke beranda Cubiqlo", "Back to Cubiqlo home")} className="relative z-10 w-fit">
-          <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-10 w-auto brightness-0 invert" />
+        <Link href="https://koobikel.com/" aria-label={t("Kembali ke beranda Koobikel", "Back to Koobikel home")} className="relative z-10 w-fit">
+          <Image src="/logo-header.png" alt="Koobikel" width={160} height={54} className="h-10 w-auto brightness-0 invert" />
         </Link>
 
         <div className="relative z-10 my-auto max-w-lg">
@@ -37,14 +37,14 @@ export async function AuthShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <p className="relative z-10 text-xs leading-5 text-slate-500">
-          Cubiqlo · Client Operations Hub
+          Koobikel · Client Operations Hub
         </p>
       </section>
 
       <section className="flex min-h-screen items-center justify-center px-5 py-10 sm:px-10 lg:px-16">
         <div className="w-full max-w-md">
-          <Link href="https://cubiqlo.com/" aria-label={t("Kembali ke beranda Cubiqlo", "Back to Cubiqlo home")} className="mb-8 flex justify-center lg:hidden">
-            <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-10 w-auto" />
+          <Link href="https://koobikel.com/" aria-label={t("Kembali ke beranda Koobikel", "Back to Koobikel home")} className="mb-8 flex justify-center lg:hidden">
+            <Image src="/logo-header.png" alt="Koobikel" width={160} height={54} className="h-10 w-auto" />
           </Link>
           {children}
           <div className="mt-6 flex items-center justify-center gap-2 border-t border-slate-100 pt-5 text-xs text-slate-500">

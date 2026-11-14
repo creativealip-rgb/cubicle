@@ -15,8 +15,8 @@ export function parseDailyQuote(raw: string) {
 }
 
 export const FALLBACK_QUOTES = {
-  id: ["Langkah kecil hari ini membangun hidup yang besar. — Cubiqlo", "Kemajuan lahir dari keberanian untuk mulai. — Cubiqlo"],
-  en: ["Small steps today build a bigger life. — Cubiqlo", "Progress begins with the courage to start. — Cubiqlo"],
+  id: ["Langkah kecil hari ini membangun hidup yang besar. — Koobikel", "Kemajuan lahir dari keberanian untuk mulai. — Koobikel"],
+  en: ["Small steps today build a bigger life. — Koobikel", "Progress begins with the courage to start. — Koobikel"],
 } as const;
 
 export function fallbackQuote(lang: "id" | "en", localDate: string) {

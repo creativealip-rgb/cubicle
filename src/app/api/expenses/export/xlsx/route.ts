@@ -65,7 +65,7 @@ export async function GET(request: Request) {
       : rows;
 
     const workbook = new ExcelJS.Workbook();
-    workbook.creator = "Cubiqlo";
+    workbook.creator = "Koobikel";
     workbook.created = new Date();
     const sheet = workbook.addWorksheet("Pengeluaran");
     sheet.columns = [

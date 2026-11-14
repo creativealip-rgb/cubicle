@@ -22,7 +22,7 @@ function appUrl() {
   return (
     process.env.NEXT_PUBLIC_APP_URL?.replace(/\/$/, "") ||
     process.env.BETTER_AUTH_URL?.replace(/\/$/, "") ||
-    "https://cubiqlo.com"
+    "https://koobikel.com"
   );
 }
 
@@ -260,7 +260,7 @@ export async function resolveClientInviteToken(rawToken: string) {
 
   if (!conn) throw new Error("Invite link tidak valid");
   if (!conn.inviteTokenExpiresAt || conn.inviteTokenExpiresAt.getTime() < Date.now()) {
-    throw new Error("Invite link sudah kedaluwarsa. Minta user Cubiqlo generate ulang.");
+    throw new Error("Invite link sudah kedaluwarsa. Minta user Koobikel generate ulang.");
   }
 
   const [client] = await db
@@ -293,7 +293,7 @@ export async function saveClientGoogleConnectionFromCode(input: {
   const tokens = await exchangeCode(input.code);
   if (!tokens.refresh_token && !conn.refreshTokenEnc) {
     throw new Error(
-      "Google tidak mengirim refresh token. Cabut akses Cubiqlo di Google Account lalu connect ulang.",
+      "Google tidak mengirim refresh token. Cabut akses Koobikel di Google Account lalu connect ulang.",
     );
   }
 

@@ -32,7 +32,7 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Jurnal",
-  description: "Catatan harian, refleksi, dan insight workspace Cubiqlo.",
+  description: "Catatan harian, refleksi, dan insight workspace Koobikel.",
 };
 
 export default async function JournalPage({

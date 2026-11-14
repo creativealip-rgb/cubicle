@@ -176,8 +176,8 @@ const workflowCopy = [
       <AcquisitionTracker />
       <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-950/[0.06] bg-[#F8FAFC]/85 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between">
-          <Link href="/" aria-label="Cubiqlo home">
-            <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-10 w-auto object-contain" priority />
+          <Link href="/" aria-label="Koobikel home">
+            <Image src="/logo-header.png" alt="Koobikel" width={160} height={54} className="h-10 w-auto object-contain" priority />
           </Link>
           <nav aria-label="Navigasi utama" className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
             <a href="#workflow" className="inline-flex min-h-11 items-center hover:text-[#2563EB]">{t("Alur kerja", "Workflow")}</a>
@@ -241,7 +241,7 @@ const workflowCopy = [
             </div>
 
             <div className="relative min-w-0 lg:pl-4">
-              <BrowserFrame src="/screenshots/dashboard.png" alt="Dashboard Cubiqlo untuk mengelola klien, proyek, tugas, dan invoice" className="relative shadow-2xl" />
+              <BrowserFrame src="/screenshots/dashboard.png" alt="Dashboard Koobikel untuk mengelola klien, proyek, tugas, dan invoice" className="relative shadow-2xl" />
               <div className="absolute -bottom-5 left-3 flex items-center gap-3 rounded-2xl bg-white p-3 shadow-xl ring-1 ring-slate-950/10 sm:left-8 sm:p-4">
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600"><CheckCircle2 className="h-5 w-5" /></span>
                 <div><p className="text-xs text-slate-500">{tx("Invoice terbaru", "Latest invoice")}</p><p className="text-sm font-semibold">{getLandingInvoiceBadge(currency)} · {tx("Dibayar", "Paid")}</p></div>
@@ -284,7 +284,7 @@ const workflowCopy = [
                 2,610+
               </span>
               <p className="text-sm font-semibold text-[#292D34]">
-                {tx("Freelancer & Agensi Menggunakan Cubiqlo", "Freelancers & Agencies using Cubiqlo")}
+                {tx("Freelancer & Agensi Menggunakan Koobikel", "Freelancers & Agencies using Koobikel")}
               </p>
             </div>
           </div>
@@ -292,7 +292,7 @@ const workflowCopy = [
 
         <section className="bg-white px-4 py-8 sm:px-6 lg:px-8">
           <div className="mx-auto grid max-w-7xl gap-6 sm:grid-cols-[1fr_auto] sm:items-center">
-            <p className="max-w-3xl text-lg font-medium leading-8 text-[#292D34] sm:text-xl">{tx("Project management berhenti di task. ", "Project management stops at tasks. ")}<span className="text-[#2563EB]">{tx("Cubiqlo lanjut sampai hasil diterima dan invoice dibayar.", "Cubiqlo keeps going until work is accepted and invoices are paid.")}</span></p>
+            <p className="max-w-3xl text-lg font-medium leading-8 text-[#292D34] sm:text-xl">{tx("Project management berhenti di task. ", "Project management stops at tasks. ")}<span className="text-[#2563EB]">{tx("Koobikel lanjut sampai hasil diterima dan invoice dibayar.", "Koobikel keeps going until work is accepted and invoices are paid.")}</span></p>
             <p className="text-xs font-semibold uppercase tracking-[.18em] text-slate-400">{tx("Dari proyek sampai pembayaran", "From project to payment")}</p>
           </div>
         </section>
@@ -313,7 +313,7 @@ const workflowCopy = [
                   </li>
                 ))}
               </ol>
-              <BrowserFrame src="/screenshots/tasks.png" alt="Tampilan task dan pekerjaan di Cubiqlo" />
+              <BrowserFrame src="/screenshots/tasks.png" alt="Tampilan task dan pekerjaan di Koobikel" />
             </div>
 
             <div className="mt-14 grid gap-px overflow-hidden rounded-3xl bg-slate-200 ring-1 ring-slate-200 sm:grid-cols-2 lg:grid-cols-4">
@@ -334,7 +334,7 @@ const workflowCopy = [
               </div>
             </div>
             <div className="relative rounded-[2rem] bg-white/[.07] p-3 ring-1 ring-white/15 backdrop-blur sm:p-5">
-              <BrowserFrame src="/screenshots/client-portal.png" alt="Tampilan Portal Klien Resmi di Cubiqlo" />
+              <BrowserFrame src="/screenshots/client-portal.png" alt="Tampilan Portal Klien Resmi di Koobikel" />
             </div>
           </div>
         </section>
@@ -343,9 +343,9 @@ const workflowCopy = [
           <div className="mx-auto max-w-6xl">
             <div className="mx-auto max-w-3xl text-center"><p className="text-xs font-semibold uppercase tracking-[.2em] text-[#2563EB]">{tx("Untuk bisnis berbasis klien", "For client-based businesses")}</p><h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Dibuat untuk cara kerja bisnis modern.", "Built for modern client work.")}</h2><p className="mt-5 text-lg leading-8 text-slate-600">{tx("Mulai gratis, kelola pekerjaan klien tanpa add-on tambahan.", "Start free, manage client work without extra add-ons.")}</p></div>
             <div className="mt-12 hidden overflow-hidden rounded-3xl bg-white shadow-[0_20px_60px_rgba(41,45,52,.08)] ring-1 ring-slate-200 md:block">
-              <table className="w-full text-left text-sm"><caption className="sr-only">{tx("Perbandingan fitur dan harga", "Feature and pricing comparison")}</caption><thead className="bg-slate-50"><tr><th scope="col" className="px-6 py-5">{tx("Fitur", "Feature")}</th><th scope="col" className="px-6 py-5 text-slate-500">HoneyBook</th><th scope="col" className="px-6 py-5 text-slate-500">Bonsai</th><th scope="col" className="bg-blue-50/80 px-6 py-5 text-[#2563EB]">Cubiqlo</th></tr></thead><tbody>{comparison.map(row => <tr key={row.label} className="border-t border-slate-100"><td className="px-6 py-4 font-medium">{tx(row.label, row.label === "Harga mulai" ? "Starting price" : row.label)}</td><td className="px-6 py-4 text-slate-500">{tx(row.honeybook, row.honeybook === "Ada" ? "Yes" : row.honeybook)}</td><td className="px-6 py-4 text-slate-500">{tx(row.bonsai, row.bonsai === "Ada" ? "Yes" : row.bonsai === "Termasuk" ? "Included" : row.bonsai)}</td><td className="bg-blue-50/40 px-6 py-4 font-semibold text-[#2563EB]">{tx(row.cubiqlo, row.cubiqlo === "Gratis" ? "Free" : row.cubiqlo === "Termasuk" ? "Included" : row.cubiqlo)}</td></tr>)}</tbody></table>
+              <table className="w-full text-left text-sm"><caption className="sr-only">{tx("Perbandingan fitur dan harga", "Feature and pricing comparison")}</caption><thead className="bg-slate-50"><tr><th scope="col" className="px-6 py-5">{tx("Fitur", "Feature")}</th><th scope="col" className="px-6 py-5 text-slate-500">HoneyBook</th><th scope="col" className="px-6 py-5 text-slate-500">Bonsai</th><th scope="col" className="bg-blue-50/80 px-6 py-5 text-[#2563EB]">Koobikel</th></tr></thead><tbody>{comparison.map(row => <tr key={row.label} className="border-t border-slate-100"><td className="px-6 py-4 font-medium">{tx(row.label, row.label === "Harga mulai" ? "Starting price" : row.label)}</td><td className="px-6 py-4 text-slate-500">{tx(row.honeybook, row.honeybook === "Ada" ? "Yes" : row.honeybook)}</td><td className="px-6 py-4 text-slate-500">{tx(row.bonsai, row.bonsai === "Ada" ? "Yes" : row.bonsai === "Termasuk" ? "Included" : row.bonsai)}</td><td className="bg-blue-50/40 px-6 py-4 font-semibold text-[#2563EB]">{tx(row.cubiqlo, row.cubiqlo === "Gratis" ? "Free" : row.cubiqlo === "Termasuk" ? "Included" : row.cubiqlo)}</td></tr>)}</tbody></table>
             </div>
-            <div className="mt-10 grid gap-3 md:hidden">{comparison.map(row => <div key={row.label} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200"><p className="font-semibold">{tx(row.label, row.label === "Harga mulai" ? "Starting price" : row.label)}</p><div className="mt-3 grid grid-cols-3 gap-2 text-xs"><span className="text-slate-500">HoneyBook<br/><b className="text-slate-700">{tx(row.honeybook, row.honeybook === "Ada" ? "Yes" : row.honeybook)}</b></span><span className="text-slate-500">Bonsai<br/><b className="text-slate-700">{tx(row.bonsai, row.bonsai === "Ada" ? "Yes" : row.bonsai)}</b></span><span className="rounded-lg bg-blue-50 p-2 text-[#2563EB]">Cubiqlo<br/><b>{tx(row.cubiqlo, row.cubiqlo === "Gratis" ? "Free" : row.cubiqlo === "Termasuk" ? "Included" : row.cubiqlo)}</b></span></div></div>)}</div>
+            <div className="mt-10 grid gap-3 md:hidden">{comparison.map(row => <div key={row.label} className="rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200"><p className="font-semibold">{tx(row.label, row.label === "Harga mulai" ? "Starting price" : row.label)}</p><div className="mt-3 grid grid-cols-3 gap-2 text-xs"><span className="text-slate-500">HoneyBook<br/><b className="text-slate-700">{tx(row.honeybook, row.honeybook === "Ada" ? "Yes" : row.honeybook)}</b></span><span className="text-slate-500">Bonsai<br/><b className="text-slate-700">{tx(row.bonsai, row.bonsai === "Ada" ? "Yes" : row.bonsai)}</b></span><span className="rounded-lg bg-blue-50 p-2 text-[#2563EB]">Koobikel<br/><b>{tx(row.cubiqlo, row.cubiqlo === "Gratis" ? "Free" : row.cubiqlo === "Termasuk" ? "Included" : row.cubiqlo)}</b></span></div></div>)}</div>
             <p className="mt-5 text-center text-xs leading-5 text-slate-500">{tx("Perbandingan dari halaman publik produk, diperiksa Juli 2026. Harga dan paket dapat berubah.", "Comparison based on public product pages, checked July 2026. Prices and packages may change.")}</p>
           </div>
         </section>
@@ -362,7 +362,7 @@ const workflowCopy = [
             <div className="mx-auto max-w-3xl text-center">
               <p className="text-xs font-semibold uppercase tracking-[.2em] text-[#2563EB]">{tx("Cerita pengguna awal", "Early user stories")}</p>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-.03em] sm:text-5xl">{tx("Client work terasa lebih terkendali.", "Client work feels more manageable.")}</h2>
-              <p className="mt-5 text-lg text-slate-600">{tx("Contoh bagaimana Cubiqlo membantu berbagai cara kerja.", "Illustrative examples of how Cubiqlo supports different workflows.")}</p>
+              <p className="mt-5 text-lg text-slate-600">{tx("Contoh bagaimana Koobikel membantu berbagai cara kerja.", "Illustrative examples of how Koobikel supports different workflows.")}</p>
             </div>
             <div className="mt-12 grid gap-5 lg:grid-cols-3">
               {testimonials.map((item) => <figure key={item.name} className="flex flex-col rounded-3xl bg-white p-6 shadow-[0_16px_50px_rgba(41,45,52,.07)] ring-1 ring-slate-200">
@@ -392,7 +392,7 @@ const workflowCopy = [
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 border-b border-slate-200 pb-10 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start lg:gap-20">
             <div>
-              <Image src="/logo-header.png" alt="Cubiqlo" width={160} height={54} className="h-9 w-auto" />
+              <Image src="/logo-header.png" alt="Koobikel" width={160} height={54} className="h-9 w-auto" />
               <p className="mt-4 max-w-sm text-sm leading-6 text-slate-500">{tx("Hub kerja klien all-in-one untuk pekerja remote & tim.", "All-in-one client hub for remote workers & teams.")}</p>
             </div>
             <nav aria-label="Footer" className="grid grid-cols-2 gap-x-12 text-sm sm:gap-x-16">
@@ -414,7 +414,7 @@ const workflowCopy = [
             </nav>
           </div>
           <div className="flex flex-col gap-2 pt-6 text-xs text-slate-400 sm:flex-row sm:items-center sm:justify-between">
-            <span>© 2026 Cubiqlo. {tx("Seluruh hak dilindungi.", "All rights reserved.")}</span>
+            <span>© 2026 Koobikel. {tx("Seluruh hak dilindungi.", "All rights reserved.")}</span>
             <span>Fewer apps. More work delivered.</span>
           </div>
         </div>

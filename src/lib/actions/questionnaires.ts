@@ -235,7 +235,7 @@ export async function sendQuestionnaire(input: {
     const appUrl = (
       process.env.NEXT_PUBLIC_APP_URL ??
       process.env.BETTER_AUTH_URL ??
-      "https://cubiqlo.com"
+      "https://koobikel.com"
     ).replace(/\/$/, "");
     const replyTo = await resolveWorkspaceReplyTo(workspaceId);
     const emailResult = await sendNotification({
@@ -243,7 +243,7 @@ export async function sendQuestionnaire(input: {
       subject: `Questionnaire: ${q.name}`,
       text:
         `Hi ${c.name || "there"},\n\n` +
-        `${ws?.name || "Cubiqlo"} sent you a questionnaire: "${q.name}".\n\n` +
+        `${ws?.name || "Koobikel"} sent you a questionnaire: "${q.name}".\n\n` +
         `Fill it out here:\n${appUrl}/intake/${token}\n\n` +
         `This link is valid for ${ttl} days. If you have any questions, just reply to this email.`,
       type: "questionnaire_sent",
@@ -695,7 +695,7 @@ export async function submitQuestionnaire(input: {
         .limit(1);
 
       const replyTo = await resolveWorkspaceReplyTo(qMaster.workspaceId);
-      const wsName = workspace?.name || "Cubiqlo";
+      const wsName = workspace?.name || "Koobikel";
       const clientName = inferredName || "Klien";
 
       const subject = `Form Submission Confirmation: ${qMaster.name} — ${wsName}`;
@@ -723,9 +723,9 @@ export async function submitQuestionnaire(input: {
         .where(eq(workspaces.id, qMaster.workspaceId))
         .limit(1);
 
-      const wsName = workspace?.name || "Cubiqlo";
+      const wsName = workspace?.name || "Koobikel";
       const subject = `[Respon Baru] ${inferredName || inferredEmail || "Responden"} mengisi "${qMaster.name}"`;
-      const text = `Halo,\n\nAda tanggapan baru yang masuk untuk formulir "${qMaster.name}" pada workspace ${wsName}.\n\nDetail Responden:\n- Nama: ${inferredName || "-"}\n- Email: ${inferredEmail || "-"}\n- Waktu: ${new Date().toLocaleString("id-ID")}\n\nBuka dashboard untuk melihat jawaban lengkap:\nhttps://app.cubiqlo.com/app/questionnaires/${qMaster.id}\n\nSalam,\nCubiqlo System`;
+      const text = `Halo,\n\nAda tanggapan baru yang masuk untuk formulir "${qMaster.name}" pada workspace ${wsName}.\n\nDetail Responden:\n- Nama: ${inferredName || "-"}\n- Email: ${inferredEmail || "-"}\n- Waktu: ${new Date().toLocaleString("id-ID")}\n\nBuka dashboard untuk melihat jawaban lengkap:\nhttps://app.cubiqlo.com/app/questionnaires/${qMaster.id}\n\nSalam,\nKoobikel System`;
 
       await sendNotification({
         to: adminEmail,

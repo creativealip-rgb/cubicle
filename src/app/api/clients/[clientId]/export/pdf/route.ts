@@ -35,7 +35,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ cli
   const buf = await renderClientPdf({
     title: lang === "en" ? "Client Detail" : "Detail Klien",
     generatedAt: new Date().toLocaleString(lang === "en" ? "en-US" : "id-ID", { timeZone: "Asia/Jakarta" }),
-    workspaceName: workspace?.name ?? "Cubiqlo",
+    workspaceName: workspace?.name ?? "Koobikel",
     lang,
     clients: [{
       name: client.name,

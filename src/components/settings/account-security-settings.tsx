@@ -184,7 +184,7 @@ export function AccountSecuritySettings({
     setAdding(true);
     try {
       const result = await authClient.passkey.addPasskey({
-        name: "Cubiqlo passkey",
+        name: "Koobikel passkey",
         createSession: false,
       });
       if (result.error) throw new Error(result.error.message);

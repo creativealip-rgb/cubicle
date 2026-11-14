@@ -132,7 +132,7 @@ export default async function PublicBookingPage({ params, searchParams }: Props)
       {/* Footer Branding */}
       <footer className="relative mt-8 text-center text-xs text-muted-foreground flex items-center justify-center gap-1.5">
         <ShieldCheck className="h-3.5 w-3.5 text-emerald-600" />
-        <span>{t("Didukung oleh", "Powered by")} <strong className="text-foreground font-semibold">Cubiqlo</strong> · Client Operations Hub</span>
+        <span>{t("Didukung oleh", "Powered by")} <strong className="text-foreground font-semibold">Koobikel</strong> · Client Operations Hub</span>
       </footer>
     </div>
   );

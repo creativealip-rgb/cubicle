@@ -1,5 +1,5 @@
 /**
- * Shared typography & font styling definitions for Cubiqlo builders:
+ * Shared typography & font styling definitions for Koobikel builders:
  * (Document Builder, Questionnaire / Form Builder, Personal Site Canvas)
  */
 
