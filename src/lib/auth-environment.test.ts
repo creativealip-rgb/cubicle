@@ -3,14 +3,14 @@ import { getAuthEnvironmentOptions } from "./auth-environment";
 
 describe("getAuthEnvironmentOptions", () => {
   it("uses shared production cookies for the canonical app host", () => {
-    expect(getAuthEnvironmentOptions("https://app.cubiqlo.com", "production")).toEqual({
+    expect(getAuthEnvironmentOptions("https://app.koobikel.com", "production")).toEqual({
       cookiePrefix: "better-auth",
-      crossSubDomainCookies: { enabled: true, domain: ".cubiqlo.com" },
+      crossSubDomainCookies: { enabled: true, domain: ".koobikel.com" },
     });
   });
 
-  it("uses isolated host-only cookies for dev.cubiqlo.com", () => {
-    expect(getAuthEnvironmentOptions("https://dev.cubiqlo.com", "development")).toEqual({
+  it("uses isolated host-only cookies for dev.koobikel.com", () => {
+    expect(getAuthEnvironmentOptions("https://dev.koobikel.com", "development")).toEqual({
       cookiePrefix: "cubiqlo_dev",
       crossSubDomainCookies: { enabled: false },
     });

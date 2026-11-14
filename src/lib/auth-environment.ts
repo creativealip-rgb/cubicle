@@ -18,7 +18,7 @@ export function getAuthEnvironmentOptions(
       cookiePrefix: "better-auth",
       crossSubDomainCookies: {
         enabled: true,
-        domain: ".cubiqlo.com",
+        domain: ".koobikel.com",
       },
     };
   }
