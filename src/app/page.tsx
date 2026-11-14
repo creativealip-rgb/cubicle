@@ -177,7 +177,7 @@ const workflowCopy = [
       <header className="fixed inset-x-0 top-0 z-50 border-b border-slate-950/[0.06] bg-[#F8FAFC]/85 px-4 backdrop-blur-xl sm:px-6 lg:px-8">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between">
           <Link href="/" aria-label="Koobikel home">
-            <Image src="/logo-header.png" alt="Koobikel" width={160} height={54} className="h-10 w-auto object-contain" priority />
+            <Image src="/logo-header.png" alt="Koobikel" width={128} height={33} className="h-8 w-auto object-contain" priority />
           </Link>
           <nav aria-label="Navigasi utama" className="hidden items-center gap-8 text-sm font-medium text-slate-600 md:flex">
             <a href="#workflow" className="inline-flex min-h-11 items-center hover:text-[#2563EB]">{t("Alur kerja", "Workflow")}</a>
@@ -392,7 +392,7 @@ const workflowCopy = [
         <div className="mx-auto max-w-7xl">
           <div className="grid gap-10 border-b border-slate-200 pb-10 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start lg:gap-20">
             <div>
-              <Image src="/logo-header.png" alt="Koobikel" width={160} height={54} className="h-9 w-auto" />
+              <Image src="/logo-header.png" alt="Koobikel" width={112} height={29} className="h-7 w-auto" />
               <p className="mt-4 max-w-sm text-sm leading-6 text-slate-500">{tx("Hub kerja klien all-in-one untuk pekerja remote & tim.", "All-in-one client hub for remote workers & teams.")}</p>
             </div>
             <nav aria-label="Footer" className="grid grid-cols-2 gap-x-12 text-sm sm:gap-x-16">
