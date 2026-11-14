@@ -29,7 +29,7 @@ import { LandingMobileMenu } from "@/components/landing/landing-mobile-menu";
 
 export const dynamic = "force-dynamic";
 
-const APP_URL = "https://app.cubiqlo.com";
+const APP_URL = "https://app.koobikel.com";
 
 const workflow = [
   {
@@ -132,7 +132,7 @@ function BrowserFrame({ src, alt, className = "" }: { src: string; alt: string; 
 
 export default async function HomePage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  if (session?.user?.id) redirect("https://app.cubiqlo.com/app/dashboard");
+  if (session?.user?.id) redirect("https://app.koobikel.com/app/dashboard");
   const requestHeaders = await headers();
   const cookieStore = await cookies();
   const country = getCountryFromHeaders(requestHeaders);

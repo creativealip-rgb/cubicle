@@ -73,7 +73,7 @@ export async function POST(request: Request) {
       expectedChallenge: challenge,
       expectedOrigin:
         process.env.NODE_ENV === "production"
-          ? "https://app.cubiqlo.com"
+          ? "https://app.koobikel.com"
           : "http://localhost:3000",
       expectedRPID:
         process.env.NODE_ENV === "production" ? "app.cubiqlo.com" : "localhost",

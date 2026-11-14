@@ -38,7 +38,7 @@ export function contentSecurityPolicy(
       "connect-src 'self'",
       "https://koobikel.com",
       "wss://cubiqlo.com",
-      "https://app.cubiqlo.com",
+      "https://app.koobikel.com",
       "wss://app.cubiqlo.com",
       ...(isDevelopment
         ? ["https://dev.cubiqlo.com", "wss://dev.cubiqlo.com"]

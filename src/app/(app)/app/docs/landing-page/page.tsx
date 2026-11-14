@@ -28,13 +28,13 @@ const SECTIONS = [
     body: {
       id: (
         <>
-          Login ke <DocsInlineLink href="https://app.cubiqlo.com">app.cubiqlo.com</DocsInlineLink> → Sidebar →{" "}
+          Login ke <DocsInlineLink href="https://app.koobikel.com">app.cubiqlo.com</DocsInlineLink> → Sidebar →{" "}
           <strong>Personal</strong> → <strong>Landing Page</strong>.
         </>
       ),
       en: (
         <>
-          Log in to <DocsInlineLink href="https://app.cubiqlo.com">app.cubiqlo.com</DocsInlineLink> → Sidebar →{" "}
+          Log in to <DocsInlineLink href="https://app.koobikel.com">app.cubiqlo.com</DocsInlineLink> → Sidebar →{" "}
           <strong>Personal</strong> → <strong>Landing Page</strong>.
         </>
       ),

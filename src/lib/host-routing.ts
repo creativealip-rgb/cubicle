@@ -30,7 +30,7 @@ export function getCanonicalRedirect(
   }
 
   if (normalizedHost === "app.cubiqlo.com" && pathname === "/") {
-    return "https://app.cubiqlo.com/app/dashboard";
+    return "https://app.koobikel.com/app/dashboard";
   }
 
   if (normalizedHost === "koobikel.com") {
@@ -39,7 +39,7 @@ export function getCanonicalRedirect(
       pathname.startsWith("/onboarding") ||
       AUTH_PATHS.some((path) => pathname === path);
     if (belongsToApp) {
-      return withQuery("https://app.cubiqlo.com", pathname, search);
+      return withQuery("https://app.koobikel.com", pathname, search);
     }
   }
   // Public client-facing routes: redirect from app.cubiqlo.com to koobikel.com

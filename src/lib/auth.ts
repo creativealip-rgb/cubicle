@@ -120,7 +120,7 @@ export const auth = betterAuth({
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
       // Better Auth builds the reset link against `baseURL + basePath`, which
-      // resolves to `https://app.cubiqlo.com/api/auth/reset-password/{token}`.
+      // resolves to `https://app.koobikel.com/api/auth/reset-password/{token}`.
       // That path is the *API* GET endpoint (which redirects), not the app's
       // `/reset-password/{token}` page. Strip the `/api/auth` segment so the
       // email link points straight at the frontend reset page.
@@ -247,7 +247,7 @@ export const auth = betterAuth({
           `Hi ${name},\n\n` +
           "Your email is verified. Your Koobikel workspace is ready.\n\n" +
           "Start by setting up your workspace, invoice defaults, and first client.\n\n" +
-          "Open Koobikel: https://app.cubiqlo.com/app/dashboard\n\n" +
+          "Open Koobikel: https://app.koobikel.com/app/dashboard\n\n" +
           "— Koobikel",
         type: "welcome_email",
       });
@@ -260,6 +260,7 @@ export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL,
   trustedOrigins: [
     process.env.BETTER_AUTH_URL ?? "http://localhost:3000",
+    "https://app.koobikel.com",
     "https://app.cubiqlo.com",
     "http://app.cubiqlo.com",
     "https://koobikel.com",
@@ -284,7 +285,7 @@ export const auth = betterAuth({
       rpID:
         process.env.NODE_ENV === "production" ? "app.cubiqlo.com" : "localhost",
       rpName: "Koobikel",
-      origin: process.env.BETTER_AUTH_URL ?? "https://app.cubiqlo.com",
+      origin: process.env.BETTER_AUTH_URL ?? "https://app.koobikel.com",
     }),
   ],
 });

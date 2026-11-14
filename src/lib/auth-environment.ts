@@ -11,7 +11,7 @@ export function getAuthEnvironmentOptions(
 ): AuthEnvironmentOptions {
   const isProductionApp =
     nodeEnv === "production" &&
-    (baseUrl === "https://app.cubiqlo.com" || baseUrl === "https://koobikel.com");
+    (baseUrl === "https://app.koobikel.com" || baseUrl === "https://koobikel.com");
 
   if (isProductionApp) {
     return {

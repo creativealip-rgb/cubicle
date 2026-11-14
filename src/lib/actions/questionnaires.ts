@@ -725,7 +725,7 @@ export async function submitQuestionnaire(input: {
 
       const wsName = workspace?.name || "Koobikel";
       const subject = `[Respon Baru] ${inferredName || inferredEmail || "Responden"} mengisi "${qMaster.name}"`;
-      const text = `Halo,\n\nAda tanggapan baru yang masuk untuk formulir "${qMaster.name}" pada workspace ${wsName}.\n\nDetail Responden:\n- Nama: ${inferredName || "-"}\n- Email: ${inferredEmail || "-"}\n- Waktu: ${new Date().toLocaleString("id-ID")}\n\nBuka dashboard untuk melihat jawaban lengkap:\nhttps://app.cubiqlo.com/app/questionnaires/${qMaster.id}\n\nSalam,\nKoobikel System`;
+      const text = `Halo,\n\nAda tanggapan baru yang masuk untuk formulir "${qMaster.name}" pada workspace ${wsName}.\n\nDetail Responden:\n- Nama: ${inferredName || "-"}\n- Email: ${inferredEmail || "-"}\n- Waktu: ${new Date().toLocaleString("id-ID")}\n\nBuka dashboard untuk melihat jawaban lengkap:\nhttps://app.koobikel.com/app/questionnaires/${qMaster.id}\n\nSalam,\nKoobikel System`;
 
       await sendNotification({
         to: adminEmail,
