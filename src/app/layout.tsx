@@ -77,9 +77,9 @@ export const metadata: Metadata = {
     images: ["/og-image.png"],
   },
   icons: {
-    icon: "/favicon-32x32.png",
-    shortcut: "/favicon.ico",
-    apple: "/apple-touch-icon.png",
+    icon: "/koobikel-favicon.png",
+    shortcut: "/koobikel-favicon.png",
+    apple: "/koobikel-favicon.png",
   },
   robots: {
     index: !isDevelopment,
