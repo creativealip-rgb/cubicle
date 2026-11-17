@@ -401,7 +401,7 @@ const workflowCopy = [
                 <div className="flex flex-col">
                   <a href="#workflow" className="inline-flex min-h-10 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Alur kerja", "Workflow")}</a>
                   <a href="#pricing" className="inline-flex min-h-10 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Harga", "Pricing")}</a>
-                  <a href="https://blog.cubiqlo.com" className="inline-flex min-h-10 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Blog", "Blog")}</a>
+                  <a href="https://blog.koobikel.com" className="inline-flex min-h-10 items-center font-medium text-slate-600 transition-colors hover:text-[#2563EB]">{tx("Blog", "Blog")}</a>
                 </div>
               </div>
               <div>

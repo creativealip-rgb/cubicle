@@ -182,7 +182,7 @@ export function PortalContactButtons({
                     Email
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5 truncate" title={email || ""}>
-                    {email || "admin@cubiqlo.com"}
+                    {email || "admin@koobikel.com"}
                   </p>
                 </div>
               </a>
