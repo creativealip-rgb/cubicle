@@ -62,7 +62,11 @@ export function getCanonicalRedirect(
   // path arriving on the app host is a user mistyping the URL — send them to
   // the admin subdomain.
   if (
-    (normalizedHost === "app.cubiqlo.com" || normalizedHost === "koobikel.com") &&
+    (
+      normalizedHost === "app.cubiqlo.com" ||
+      normalizedHost === "app.koobikel.com" ||
+      normalizedHost === "koobikel.com"
+    ) &&
     (pathname === "/admin" || pathname.startsWith("/admin/"))
   ) {
     return withQuery("https://admin.koobikel.com", pathname, search);
