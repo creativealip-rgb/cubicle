@@ -1,4 +1,4 @@
-# Cubicle
+# Koobikel
 
 **Client Operations Hub** — manage client work from request to invoice in one calm workspace.
 
@@ -109,6 +109,15 @@ npm run dev
 ```
 
 Open <http://localhost:3000>.
+
+Production surfaces:
+
+- Landing: <https://koobikel.com>
+- App: <https://app.koobikel.com>
+- Admin: <https://admin.koobikel.com>
+- Blog: <https://blog.koobikel.com>
+
+Legacy Cubiqlo domains remain during migration. Do not use them as canonical URLs.
 
 ## Production deploy
 

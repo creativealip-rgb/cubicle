@@ -1,12 +1,13 @@
-# Cubiqlo — Production Deployment Guide
+# Koobikel — Production Deployment Guide
 
 > Canonical production topology for Alip VPS. Historical plans/evidence under `docs/plans/` and `docs/operations/evidence/` are records, not current runbooks.
 
 ## Production topology
 
-- Public app: `https://app.cubiqlo.com`
-- Public landing: `https://cubiqlo.com`
-- Admin: `https://admin.cubiqlo.com`
+- Public app: `https://app.koobikel.com` (legacy `app.cubiqlo.com` remains during migration)
+- Public landing: `https://koobikel.com` (legacy `cubiqlo.com` remains during migration)
+- Blog: `https://blog.koobikel.com`
+- Admin: `https://admin.koobikel.com` (legacy `admin.cubiqlo.com` remains during migration)
 - Database: `cubiqlo-new-pg` / database `cubicle`
 - Docker network: `dokploy-network`
 - Public reverse proxy: **`dokploy-traefik` only** on ports 80/443
@@ -34,9 +35,9 @@ Secrets stay in ignored `/root/projects/cubicle/.env.production` or the active c
 ```env
 NODE_ENV=production
 DATABASE_URL=postgresql://...@cubiqlo-new-pg:5432/cubicle
-BETTER_AUTH_URL=https://app.cubiqlo.com
-NEXT_PUBLIC_APP_URL=https://app.cubiqlo.com
-CUBICLE_URL=https://app.cubiqlo.com
+BETTER_AUTH_URL=https://app.koobikel.com
+NEXT_PUBLIC_APP_URL=https://app.koobikel.com
+CUBICLE_URL=https://app.koobikel.com
 RATE_LIMIT_REDIS_URL=redis://cubiqlo-new-redis:6379
 
 # DeepSeek through the internal 9Router OpenAI-compatible gateway.
@@ -149,10 +150,11 @@ The helper `scripts/operations/cubiqlo_blue_green_deploy.sh` supports only the s
 ## Post-deploy verification
 
 ```bash
-curl -fsS https://app.cubiqlo.com/api/health
-curl -LsS -o /dev/null -w '%{http_code} %{url_effective}\n' https://cubiqlo.com/
-curl -LsS -o /dev/null -w '%{http_code} %{url_effective}\n' https://app.cubiqlo.com/login
-curl -LsS -o /dev/null -w '%{http_code} %{url_effective}\n' https://admin.cubiqlo.com/
+curl -fsS https://app.koobikel.com/api/health
+curl -LsS -o /dev/null -w '%{http_code} %{url_effective}\n' https://koobikel.com/
+curl -LsS -o /dev/null -w '%{http_code} %{url_effective}\n' https://app.koobikel.com/login
+curl -LsS -o /dev/null -w '%{http_code} %{url_effective}\n' https://admin.koobikel.com/
+curl -LsS -o /dev/null -w '%{http_code} %{url_effective}\n' https://blog.koobikel.com/
 
 ss -tulpn | grep -E ':80 |:443 '
 docker ps --format 'table {{.Names}}\t{{.Ports}}\t{{.Networks}}'
