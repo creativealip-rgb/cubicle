@@ -269,6 +269,7 @@ export const auth = betterAuth({
     "http://www.cubiqlo.com",
     "https://admin.cubiqlo.com",
     "http://admin.cubiqlo.com",
+    "https://admin.koobikel.com",
     "https://localhost:3000",
     "http://localhost:3000",
     "https://127.0.0.1:3000",

@@ -22,9 +22,13 @@ export function proxy(request: NextRequest) {
   // Superadmin subdomain: serve the SAME app, rewritten to the (admin) route
   // group. Transparent to the browser — visible URLs stay /dashboard, /users,
   // etc., while internally Next serves /admin/dashboard, /admin/users.
-  if (normalizedHost === "admin.cubiqlo.com") {
+  if (normalizedHost === "admin.koobikel.com" || normalizedHost === "admin.cubiqlo.com") {
     // Public brand assets live at the root; do not rewrite them into /admin/*.
-    if (pathname === "/logo-icon.png" || pathname === "/favicon-32.png") {
+    if (
+      pathname === "/logo-icon.png" ||
+      pathname === "/favicon-32.png" ||
+      pathname === "/koobikel-favicon.png"
+    ) {
       return NextResponse.next();
     }
     const rewritten = getAdminRewritePath(pathname);

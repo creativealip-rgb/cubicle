@@ -1,5 +1,5 @@
 export const APP_HOST = "app.cubiqlo.com";
-export const ADMIN_HOST = "admin.cubiqlo.com";
+export const ADMIN_HOST = "admin.koobikel.com";
 
 const AUTH_PATHS = [
   "/login",
@@ -58,14 +58,14 @@ export function getCanonicalRedirect(
     }
   }
 
-  // Admin subdomain is ONLY reachable via admin.cubiqlo.com. Any /admin*
+  // Admin subdomain is ONLY reachable via admin.koobikel.com. Any /admin*
   // path arriving on the app host is a user mistyping the URL — send them to
   // the admin subdomain.
   if (
     (normalizedHost === "app.cubiqlo.com" || normalizedHost === "koobikel.com") &&
     (pathname === "/admin" || pathname.startsWith("/admin/"))
   ) {
-    return withQuery("https://admin.cubiqlo.com", pathname, search);
+    return withQuery("https://admin.koobikel.com", pathname, search);
   }
 
   return null;

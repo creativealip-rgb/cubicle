@@ -25,7 +25,7 @@ const NAV = [
 
 /**
  * Admin control-plane shell (client) — own sidebar/topbar, separate from the
- * (app) AppShell. Visible URLs on admin.cubiqlo.com are the clean paths
+ * (app) AppShell. Visible URLs on admin.koobikel.com are the clean paths
  * (/dashboard, /users, ...); the proxy rewrites them to /admin/* internally,
  * so internal links use the clean hrefs.
  */
@@ -64,7 +64,7 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           })}
         </nav>
         <div className="border-t border-slate-100 p-3 text-xs text-muted-foreground">
-          admin.cubiqlo.com
+          admin.koobikel.com
         </div>
       </aside>
 
